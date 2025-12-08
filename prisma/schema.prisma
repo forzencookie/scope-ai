@@ -1,0 +1,156 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// Company/Organization model - Swedish business entity
+model Company {
+  id              String   @id @default(cuid())
+  name            String
+  organisationsnr String   @unique // Swedish org number: 556XXX-XXXX
+  vatNumber       String?  // SE + 12 digits
+  address         String?
+  postalCode      String?
+  city            String?
+  email           String?
+  phone           String?
+  bankgiro        String?  // BG number
+  plusgiro        String?  // PG number
+  fiscalYearStart Int      @default(1) // Month (1-12)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  transactions Transaction[]
+  receipts     Receipt[]
+  vatReports   VATReport[]
+  accounts     Account[]
+  invoices     Invoice[]
+}
+
+// Chart of Accounts (BAS-kontoplan)
+model Account {
+  id          String   @id @default(cuid())
+  accountNr   String   // BAS account number (1000-9999)
+  name        String
+  description String?
+  type        String   // ASSET, LIABILITY, EQUITY, REVENUE, EXPENSE
+  vatRate     Float?   // Default VAT rate for this account
+  companyId   String
+  company     Company  @relation(fields: [companyId], references: [id])
+  createdAt   DateTime @default(now())
+
+  journalEntries JournalEntry[]
+
+  @@unique([companyId, accountNr])
+}
+
+// Transaction - main financial transaction
+model Transaction {
+  id            String   @id @default(cuid())
+  date          DateTime
+  description   String
+  amount        Float    // Amount in SEK (positive = income, negative = expense)
+  vatAmount     Float    @default(0)
+  vatRate       Float    @default(0) // 0, 6, 12, or 25
+  category      String   // e.g., "Försäljning", "Inköp", "Lön"
+  type          String   // INCOME, EXPENSE, TRANSFER
+  status        String   @default("PENDING") // PENDING, VERIFIED, BOOKED
+  reference     String?  // Invoice number, receipt ID, etc.
+  counterparty  String?  // Customer/supplier name
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+  receiptId     String?
+  receipt       Receipt? @relation(fields: [receiptId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  journalEntries JournalEntry[]
+}
+
+// Receipt/Document storage
+model Receipt {
+  id           String   @id @default(cuid())
+  fileName     String
+  fileUrl      String
+  fileType     String   // PDF, JPG, PNG
+  ocrText      String?  // Extracted text from OCR
+  uploadedAt   DateTime @default(now())
+  companyId    String
+  company      Company  @relation(fields: [companyId], references: [id])
+
+  transactions Transaction[]
+}
+
+// Journal Entry for double-entry bookkeeping
+model JournalEntry {
+  id            String      @id @default(cuid())
+  date          DateTime
+  verNr         Int         // Verification number
+  description   String
+  debitAmount   Float
+  creditAmount  Float
+  accountId     String
+  account       Account     @relation(fields: [accountId], references: [id])
+  transactionId String?
+  transaction   Transaction? @relation(fields: [transactionId], references: [id])
+  createdAt     DateTime    @default(now())
+}
+
+// VAT Report (Momsdeklaration)
+model VATReport {
+  id               String   @id @default(cuid())
+  period           String   // e.g., "2024-Q1", "2024-01" (monthly)
+  periodType       String   // MONTHLY, QUARTERLY, YEARLY
+  startDate        DateTime
+  endDate          DateTime
+  salesVAT25       Float    @default(0) // Utgående moms 25%
+  salesVAT12       Float    @default(0) // Utgående moms 12%
+  salesVAT6        Float    @default(0) // Utgående moms 6%
+  purchaseVAT      Float    @default(0) // Ingående moms
+  vatToPay         Float    @default(0) // Moms att betala/få tillbaka
+  status           String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED
+  submittedAt      DateTime?
+  companyId        String
+  company          Company  @relation(fields: [companyId], references: [id])
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+}
+
+// Invoice
+model Invoice {
+  id            String   @id @default(cuid())
+  invoiceNr     String
+  type          String   // OUTGOING (kundfaktura), INCOMING (leverantörsfaktura)
+  customerName  String?
+  customerOrgNr String?
+  issueDate     DateTime
+  dueDate       DateTime
+  amount        Float
+  vatAmount     Float
+  currency      String   @default("SEK")
+  status        String   @default("DRAFT") // DRAFT, SENT, PAID, OVERDUE
+  paidAt        DateTime?
+  companyId     String
+  company       Company  @relation(fields: [companyId], references: [id])
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// Tax Return (Inkomstdeklaration)
+model TaxReturn {
+  id            String   @id @default(cuid())
+  year          Int
+  type          String   // INK1 (individual), INK2 (company)
+  revenue       Float    @default(0)
+  expenses      Float    @default(0)
+  result        Float    @default(0) // Profit/loss
+  taxableIncome Float    @default(0)
+  estimatedTax  Float    @default(0)
+  status        String   @default("DRAFT") // DRAFT, SUBMITTED, APPROVED
+  submittedAt   DateTime?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
