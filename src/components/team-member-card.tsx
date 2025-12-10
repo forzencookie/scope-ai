@@ -43,12 +43,12 @@ export function TeamMemberCard({ member, className }: TeamMemberCardProps) {
     return (
         <Card
             className={cn(
-                "group bg-muted/50 p-2 hover:shadow-md transition-all duration-200 cursor-pointer",
+                "group bg-muted/50 p-2 hover:shadow-md transition-all duration-200 cursor-pointer border-border/30",
                 className
             )}
         >
             {/* Inner white card */}
-            <Card className="relative h-full w-full bg-white border-0 shadow-none p-5">
+            <Card className="relative h-full w-full bg-white border-border/30 shadow-none p-5">
                 {/* Header with Avatar and Status */}
                 <div className="flex items-start justify-between mb-4">
                     <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center overflow-hidden relative">

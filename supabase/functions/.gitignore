@@ -1,0 +1,5 @@
+# Supabase Edge Functions local environment
+.env
+
+# Dependencies
+node_modules/

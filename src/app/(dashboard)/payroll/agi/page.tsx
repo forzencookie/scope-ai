@@ -4,10 +4,19 @@ import {
     BreadcrumbList,
     BreadcrumbPage, BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Search, Settings, Download, Send, CheckCircle2, Clock, Sparkles } from "lucide-react"
+import { 
+    DataTable,
+    DataTableHeader,
+    DataTableHeaderCell,
+    DataTableBody,
+    DataTableRow,
+    DataTableCell,
+} from "@/components/ui/data-table"
+import { Search, Settings, Download, Send, CheckCircle2, Clock, Sparkles, Calendar, Banknote, Users, Wallet, Calculator } from "lucide-react"
 
 const agiReports = [
     { period: "December 2024", dueDate: "12 jan 2025", employees: 2, totalSalary: 85000, tax: 20400, contributions: 26690, status: "pending" },
@@ -19,8 +28,8 @@ const agiReports = [
 export default function AGIPage() {
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -38,6 +47,7 @@ export default function AGIPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
             <div className="flex-1 flex flex-col bg-background">
                 {/* Action Buttons Bar */}
@@ -78,71 +88,64 @@ export default function AGIPage() {
                     </div>
 
                     {/* AI Notice */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                        <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="border border-border/50 rounded-lg p-4 flex items-start gap-3">
+                        <Sparkles className="h-5 w-5 text-muted-foreground mt-0.5" />
                         <div>
-                            <p className="text-sm font-medium text-blue-900">Automatisk AGI-hantering</p>
-                            <p className="text-sm text-blue-700 mt-1">Vår AI skapar arbetsgivardeklarationen automatiskt baserat på löneutbetalningar och beräknar korrekta skatteavdrag och arbetsgivaravgifter.</p>
+                            <p className="text-sm font-medium">Automatisk AGI-hantering</p>
+                            <p className="text-sm text-muted-foreground mt-1">Vår AI skapar arbetsgivardeklarationen automatiskt baserat på löneutbetalningar och beräknar korrekta skatteavdrag och arbetsgivaravgifter.</p>
                         </div>
                     </div>
 
                     {/* AGI Reports Table */}
-                    <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                        <div className="px-4 py-3 border-b border-border/40">
-                            <h2 className="font-medium">Arbetsgivardeklarationer (AGI)</h2>
-                        </div>
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border/40 text-left text-muted-foreground">
-                                    <th className="px-4 py-3 font-medium">Period</th>
-                                    <th className="px-4 py-3 font-medium">Deadline</th>
-                                    <th className="px-4 py-3 font-medium">Anställda</th>
-                                    <th className="px-4 py-3 font-medium">Bruttolön</th>
-                                    <th className="px-4 py-3 font-medium">Skatteavdrag</th>
-                                    <th className="px-4 py-3 font-medium">Arbetsgivaravgifter</th>
-                                    <th className="px-4 py-3 font-medium">Status</th>
-                                    <th className="px-4 py-3 font-medium"></th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {agiReports.map((report) => (
-                                    <tr key={report.period} className="border-b border-border/40 hover:bg-muted/30">
-                                        <td className="px-4 py-3 font-medium">{report.period}</td>
-                                        <td className="px-4 py-3 text-muted-foreground">{report.dueDate}</td>
-                                        <td className="px-4 py-3">{report.employees}</td>
-                                        <td className="px-4 py-3">{report.totalSalary.toLocaleString()} kr</td>
-                                        <td className="px-4 py-3">{report.tax.toLocaleString()} kr</td>
-                                        <td className="px-4 py-3">{report.contributions.toLocaleString()} kr</td>
-                                        <td className="px-4 py-3">
-                                            {report.status === "pending" ? (
-                                                <span className="inline-flex items-center gap-1.5 text-amber-600">
-                                                    <Clock className="h-3.5 w-3.5" />
-                                                    Väntar
-                                                </span>
-                                            ) : (
-                                                <span className="inline-flex items-center gap-1.5 text-green-600">
-                                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                                    Inskickad
-                                                </span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-3">
-                                            <div className="flex items-center gap-1">
+                    <DataTable title="Arbetsgivardeklarationer (AGI)">
+                        <DataTableHeader>
+                            <DataTableHeaderCell icon={Calendar} label="Period" />
+                            <DataTableHeaderCell icon={Clock} label="Deadline" />
+                            <DataTableHeaderCell icon={Users} label="Anställda" />
+                            <DataTableHeaderCell icon={Banknote} label="Bruttolön" />
+                            <DataTableHeaderCell icon={Wallet} label="Skatteavdrag" />
+                            <DataTableHeaderCell icon={Calculator} label="Arbetsgivaravgifter" />
+                            <DataTableHeaderCell icon={CheckCircle2} label="Status" />
+                            <DataTableHeaderCell label="" />
+                        </DataTableHeader>
+                        <DataTableBody>
+                            {agiReports.map((report) => (
+                                <DataTableRow key={report.period}>
+                                    <DataTableCell bold>{report.period}</DataTableCell>
+                                    <DataTableCell muted>{report.dueDate}</DataTableCell>
+                                    <DataTableCell>{report.employees}</DataTableCell>
+                                    <DataTableCell>{report.totalSalary.toLocaleString()} kr</DataTableCell>
+                                    <DataTableCell>{report.tax.toLocaleString()} kr</DataTableCell>
+                                    <DataTableCell>{report.contributions.toLocaleString()} kr</DataTableCell>
+                                    <DataTableCell>
+                                        {report.status === "pending" ? (
+                                            <span className="inline-flex items-center gap-1.5 text-amber-600">
+                                                <Clock className="h-3.5 w-3.5" />
+                                                Väntar
+                                            </span>
+                                        ) : (
+                                            <span className="inline-flex items-center gap-1.5 text-green-600">
+                                                <CheckCircle2 className="h-3.5 w-3.5" />
+                                                Inskickad
+                                            </span>
+                                        )}
+                                    </DataTableCell>
+                                    <DataTableCell>
+                                        <div className="flex items-center gap-1">
+                                            <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                                                <Download className="h-4 w-4" />
+                                            </button>
+                                            {report.status === "pending" && (
                                                 <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                                    <Download className="h-4 w-4" />
+                                                    <Send className="h-4 w-4" />
                                                 </button>
-                                                {report.status === "pending" && (
-                                                    <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                                        <Send className="h-4 w-4" />
-                                                    </button>
-                                                )}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                            )}
+                                        </div>
+                                    </DataTableCell>
+                                </DataTableRow>
+                            ))}
+                        </DataTableBody>
+                    </DataTable>
                 </main>
             </div>
         </>

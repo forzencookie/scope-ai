@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -17,6 +18,7 @@ import {
     TooltipProvider 
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { 
     PieChart, 
     FileBarChart, 
@@ -36,8 +38,37 @@ import {
     TrendingUp,
     Wallet,
     Shield,
-    Droplets
+    Droplets,
+    Calendar,
+    Calculator,
+    HelpCircle,
 } from "lucide-react"
+import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+import { StatusBadge } from "@/components/ui/status-badge"
+import { IconButton, IconButtonGroup } from "@/components/ui/icon-button"
+import { 
+    DataTable, 
+    DataTableHeader, 
+    DataTableHeaderCell, 
+    DataTableBody, 
+    DataTableRow, 
+    DataTableCell 
+} from "@/components/ui/data-table"
+import { SectionCard } from "@/components/ui/section-card"
+
+// Swedish tax/accounting term explanations
+const termExplanations: Record<string, string> = {
+    "Momsdeklaration": "Rapport till Skatteverket om moms (mervärdesskatt) du samlat in och betalat. Lämnas månads- eller kvartalsvis.",
+    "Inkomstdeklaration": "Årlig rapport till Skatteverket om företagets inkomster och kostnader. Används för att beräkna inkomstskatt.",
+    "Årsredovisning": "Sammanfattning av företagets ekonomi för ett räkenskapsår. Obligatorisk för aktiebolag.",
+    "Utgående moms": "Moms du tar ut av dina kunder vid försäljning (25%, 12% eller 6%).",
+    "Ingående moms": "Moms du betalar på inköp som du får dra av.",
+    "Moms att betala": "Skillnaden mellan utgående och ingående moms. Betalas till Skatteverket.",
+    "INK2": "Inkomstdeklaration 2 - skatteblanketten för aktiebolag.",
+    "Rörelseresultat": "Vinst/förlust från kärnverksamheten, före finansiella poster och skatt.",
+    "3:12-regler": "Regler för hur utdelning från fåmansbolag beskattas. Påverkar hur mycket du kan ta ut som kapitalinkomst.",
+    "Gränsbelopp": "Max belopp du kan ta ut som kapitalinkomst (lägre skatt) enligt 3:12-reglerna.",
+}
 
 // Tab configuration
 const tabs = [
@@ -142,78 +173,66 @@ function MomsdeklarationContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Nästa deklaration</p>
-                    <p className="text-2xl font-semibold mt-1">Q4 2024</p>
-                    <p className="text-sm text-muted-foreground mt-1">Deadline: 12 feb 2025</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Beräknad moms att betala</p>
-                    <p className="text-2xl font-semibold mt-1">80 000 kr</p>
-                    <p className="text-sm text-green-600 mt-1">Utgående: 125 000 kr</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Ingående moms</p>
-                    <p className="text-2xl font-semibold mt-1">45 000 kr</p>
-                    <p className="text-sm text-muted-foreground mt-1">Avdragsgill</p>
-                </div>
-            </div>
+            <StatCardGrid columns={3}>
+                <StatCard
+                    label="Nästa deklaration"
+                    value="Q4 2024"
+                    subtitle="Deadline: 12 feb 2025"
+                    icon={Calendar}
+                    tooltip={termExplanations["Momsdeklaration"]}
+                />
+                <StatCard
+                    label="Moms att betala"
+                    value="80 000 kr"
+                    subtitle="Utgående: 125 000 kr"
+                    icon={Wallet}
+                    tooltip={termExplanations["Moms att betala"]}
+                />
+                <StatCard
+                    label="Ingående moms"
+                    value="45 000 kr"
+                    subtitle="Avdragsgill"
+                    icon={TrendingUp}
+                    tooltip={termExplanations["Ingående moms"]}
+                />
+            </StatCardGrid>
 
-            <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-border/40">
-                    <h2 className="font-medium">Momsperioder</h2>
-                </div>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-border/40 text-left text-muted-foreground">
-                            <th className="px-4 py-3 font-medium">Period</th>
-                            <th className="px-4 py-3 font-medium">Deadline</th>
-                            <th className="px-4 py-3 font-medium">Utgående moms</th>
-                            <th className="px-4 py-3 font-medium">Ingående moms</th>
-                            <th className="px-4 py-3 font-medium">Att betala</th>
-                            <th className="px-4 py-3 font-medium">Status</th>
-                            <th className="px-4 py-3 font-medium"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {vatPeriods.map((item) => (
-                            <tr key={item.period} className="border-b border-border/40 hover:bg-muted/30">
-                                <td className="px-4 py-3 font-medium">{item.period}</td>
-                                <td className="px-4 py-3 text-muted-foreground">{item.dueDate}</td>
-                                <td className="px-4 py-3">{item.salesVat.toLocaleString("sv-SE")} kr</td>
-                                <td className="px-4 py-3">{item.inputVat.toLocaleString("sv-SE")} kr</td>
-                                <td className="px-4 py-3 font-medium">{item.netVat.toLocaleString("sv-SE")} kr</td>
-                                <td className="px-4 py-3">
-                                    {item.status === "upcoming" ? (
-                                        <span className="inline-flex items-center gap-1.5 text-amber-600">
-                                            <Clock className="h-3.5 w-3.5" />
-                                            Kommande
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1.5 text-green-600">
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                            Inskickad
-                                        </span>
+            <DataTable title="Momsperioder">
+                <DataTableHeader>
+                    <DataTableHeaderCell label="Period" icon={Calendar} />
+                    <DataTableHeaderCell label="Deadline" icon={Clock} />
+                    <DataTableHeaderCell label="Utgående moms" icon={ArrowUpRight} />
+                    <DataTableHeaderCell label="Ingående moms" icon={ArrowDownRight} />
+                    <DataTableHeaderCell label="Att betala" icon={Wallet} />
+                    <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                    <DataTableHeaderCell label="" />
+                </DataTableHeader>
+                <DataTableBody>
+                    {vatPeriods.map((item) => (
+                        <DataTableRow key={item.period}>
+                            <DataTableCell bold>{item.period}</DataTableCell>
+                            <DataTableCell muted>{item.dueDate}</DataTableCell>
+                            <DataTableCell>{item.salesVat.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell>{item.inputVat.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell bold>{item.netVat.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell>
+                                <StatusBadge 
+                                    status={item.status === "upcoming" ? "Kommande" : "Inskickad"} 
+                                    variant={item.status === "upcoming" ? "warning" : "success"} 
+                                />
+                            </DataTableCell>
+                            <DataTableCell>
+                                <IconButtonGroup>
+                                    <IconButton icon={Download} tooltip="Ladda ner" />
+                                    {item.status === "upcoming" && (
+                                        <IconButton icon={Send} tooltip="Skicka" />
                                     )}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-1">
-                                        <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                            <Download className="h-4 w-4" />
-                                        </button>
-                                        {item.status === "upcoming" && (
-                                            <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                                <Send className="h-4 w-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                </IconButtonGroup>
+                            </DataTableCell>
+                        </DataTableRow>
+                    ))}
+                </DataTableBody>
+            </DataTable>
             </div>
         </main>
     )
@@ -221,147 +240,56 @@ function MomsdeklarationContent() {
 
 // Inkomstdeklaration content
 function InkomstdeklarationContent() {
-    const [activeView, setActiveView] = useState<"summary" | "ink2">("summary")
-
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-lg w-fit">
-                <button
-                    onClick={() => setActiveView("summary")}
-                    className={cn(
-                        "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                        activeView === "summary"
-                            ? "bg-white text-black shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                    )}
+                <StatCardGrid columns={3}>
+                    <StatCard
+                        label="Beskattningsår"
+                        value="2024"
+                        subtitle="Inkomstdeklaration 2"
+                        icon={Calendar}
+                    />
+                    <StatCard
+                        label="Bokfört resultat"
+                        value="379 000 kr"
+                        subtitle="Före skattemässiga justeringar"
+                        icon={TrendingUp}
+                    />
+                    <StatCard
+                        label="Status"
+                        value={INVOICE_STATUS_LABELS.DRAFT}
+                        subtitle="Deadline: 1 jul 2025"
+                        icon={Clock}
+                    />
+                </StatCardGrid>
+
+                <DataTable 
+                    title="INK2 – Fält"
+                    headerActions={
+                        <>
+                            <IconButton icon={Download} label="Exportera SRU" showLabel />
+                            <IconButton icon={Send} label="Skicka till Skatteverket" showLabel />
+                        </>
+                    }
                 >
-                    Översikt
-                </button>
-                <button
-                    onClick={() => setActiveView("ink2")}
-                    className={cn(
-                        "px-4 py-1.5 text-sm font-medium rounded-md transition-all",
-                        activeView === "ink2"
-                            ? "bg-white text-black shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                    )}
-                >
-                    INK2 (Blankett)
-                </button>
-            </div>
-
-            {activeView === "summary" ? (
-                <>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-card border border-border/40 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground">Beskattningsår</p>
-                            <p className="text-2xl font-semibold mt-1">2024</p>
-                            <p className="text-sm text-muted-foreground mt-1">Räkenskapsår: jan - dec</p>
-                        </div>
-                        <div className="bg-card border border-border/40 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground">Beräknad bolagsskatt</p>
-                            <p className="text-2xl font-semibold mt-1">87 344 kr</p>
-                            <p className="text-sm text-muted-foreground mt-1">Skattesats: 20,6%</p>
-                        </div>
-                        <div className="bg-card border border-border/40 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Clock className="h-5 w-5 text-amber-500" />
-                                <p className="text-lg font-semibold">Ej inlämnad</p>
-                            </div>
-                            <p className="text-sm text-amber-600 mt-1">Deadline: 1 jul 2025</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                        <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
-                        <div>
-                            <p className="text-sm font-medium text-blue-900">AI-assisterad deklaration</p>
-                            <p className="text-sm text-blue-700 mt-1">Vår AI kan automatiskt fylla i din inkomstdeklaration baserat på dina bokförda transaktioner och underlag.</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-                            <h2 className="font-medium">Resultaträkning - förhandsgranskning</h2>
-                            <button className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-                                <Download className="h-4 w-4" />
-                                Ladda ner
-                            </button>
-                        </div>
-                        <div className="divide-y divide-border/40">
-                            {declarationItems.map((item) => (
-                                <div key={item.label} className={`px-4 py-3 flex items-center justify-between ${item.highlight ? 'bg-muted/30 font-medium' : ''}`}>
-                                    <span className="text-sm">{item.label}</span>
-                                    <span className={`text-sm ${item.value < 0 ? 'text-red-600' : ''}`}>
-                                        {item.value.toLocaleString('sv-SE')} kr
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    </div>
-                </>
-            ) : (
-                <>
-                    <div className="grid grid-cols-3 gap-4">
-                        <div className="bg-card border border-border/40 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground">Beskattningsår</p>
-                            <p className="text-2xl font-semibold mt-1">2024</p>
-                            <p className="text-sm text-muted-foreground mt-1">Inkomstdeklaration 2</p>
-                        </div>
-                        <div className="bg-card border border-border/40 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground">Bokfört resultat</p>
-                            <p className="text-2xl font-semibold mt-1">379 000 kr</p>
-                            <p className="text-sm text-green-600 mt-1">Före skattemässiga justeringar</p>
-                        </div>
-                        <div className="bg-card border border-border/40 rounded-lg p-4">
-                            <p className="text-sm text-muted-foreground">Status</p>
-                            <div className="flex items-center gap-2 mt-1">
-                                <Clock className="h-5 w-5 text-amber-500" />
-                                <p className="text-lg font-semibold">Utkast</p>
-                            </div>
-                            <p className="text-sm text-amber-600 mt-1">Deadline: 1 jul 2025</p>
-                        </div>
-                    </div>
-
-                    <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                        <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-                            <h2 className="font-medium">INK2 – Fält</h2>
-                            <div className="flex items-center gap-2">
-                                <button className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-                                    <Download className="h-4 w-4" />
-                                    Exportera SRU
-                                </button>
-                                <button className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground ml-4">
-                                    <Send className="h-4 w-4" />
-                                    Skicka till Skatteverket
-                                </button>
-                            </div>
-                        </div>
-                        <table className="w-full text-sm">
-                            <thead>
-                                <tr className="border-b border-border/40 text-left text-muted-foreground">
-                                    <th className="px-4 py-3 font-medium w-24">Fält</th>
-                                    <th className="px-4 py-3 font-medium">Beskrivning</th>
-                                    <th className="px-4 py-3 font-medium text-right">Belopp</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {ink2Fields.map((item) => (
-                                    <tr key={item.field} className="border-b border-border/40 hover:bg-muted/30">
-                                        <td className="px-4 py-3 font-mono text-muted-foreground">{item.field}</td>
-                                        <td className="px-4 py-3">{item.label}</td>
-                                        <td className={`px-4 py-3 text-right font-medium ${item.value < 0 ? 'text-red-600' : ''}`}>
-                                            {item.value.toLocaleString('sv-SE')} kr
-                                        </td>
-                                    </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
-                </>
-            )}
+                    <DataTableHeader>
+                        <DataTableHeaderCell label="Fält" icon={FileText} width="96px" />
+                        <DataTableHeaderCell label="Beskrivning" icon={FileBarChart} />
+                        <DataTableHeaderCell label="Belopp" icon={Wallet} align="right" />
+                    </DataTableHeader>
+                    <DataTableBody>
+                        {ink2Fields.map((item) => (
+                            <DataTableRow key={item.field}>
+                                <DataTableCell mono muted>{item.field}</DataTableCell>
+                                <DataTableCell>{item.label}</DataTableCell>
+                                <DataTableCell align="right" bold className={item.value < 0 ? 'text-red-600' : ''}>
+                                    {item.value.toLocaleString('sv-SE')} kr
+                                </DataTableCell>
+                            </DataTableRow>
+                        ))}
+                    </DataTableBody>
+                </DataTable>
             </div>
         </main>
     )
@@ -372,78 +300,62 @@ function ArsredovisningContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Räkenskapsår</p>
-                    <p className="text-2xl font-semibold mt-1">2024</p>
-                    <p className="text-sm text-muted-foreground mt-1">2024-01-01 – 2024-12-31</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Bolagsform</p>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Building2 className="h-5 w-5 text-muted-foreground" />
-                        <p className="text-lg font-semibold">Aktiebolag (AB)</p>
-                    </div>
-                    <p className="text-sm text-muted-foreground mt-1">K2-regelverk</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Status</p>
-                    <div className="flex items-center gap-2 mt-1">
-                        <Clock className="h-5 w-5 text-amber-500" />
-                        <p className="text-lg font-semibold">Under arbete</p>
-                    </div>
-                    <p className="text-sm text-amber-600 mt-1">Deadline: 30 jun 2025</p>
-                </div>
-            </div>
+            <StatCardGrid columns={3}>
+                <StatCard
+                    label="Räkenskapsår"
+                    value="2024"
+                    subtitle="2024-01-01 – 2024-12-31"
+                    icon={Calendar}
+                />
+                <StatCard
+                    label="Bolagsform"
+                    value="Aktiebolag (AB)"
+                    subtitle="K2-regelverk"
+                    icon={Building2}
+                />
+                <StatCard
+                    label="Status"
+                    value="Under arbete"
+                    subtitle="Deadline: 30 jun 2025"
+                    icon={Clock}
+                />
+            </StatCardGrid>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                    <p className="text-sm font-medium text-blue-900">AI-genererad årsredovisning</p>
-                    <p className="text-sm text-blue-700 mt-1">Låt vår AI skapa en komplett årsredovisning enligt K2-regelverket baserat på din bokföring. Alla siffror hämtas automatiskt.</p>
-                </div>
-            </div>
+            <SectionCard
+                icon={Sparkles}
+                title="AI-genererad årsredovisning"
+                description="Låt vår AI skapa en komplett årsredovisning enligt K2-regelverket baserat på din bokföring. Alla siffror hämtas automatiskt."
+            />
 
-            <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
-                    <h2 className="font-medium">Delar av årsredovisningen</h2>
-                    <button className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground">
-                        <Download className="h-4 w-4" />
-                        Ladda ner utkast
-                    </button>
-                </div>
-                <div className="divide-y divide-border/40">
+            <DataTable 
+                title="Delar av årsredovisningen"
+                headerActions={
+                    <IconButton icon={Download} label="Ladda ner utkast" showLabel />
+                }
+            >
+                <DataTableBody>
                     {reportSections.map((section) => (
-                        <div key={section.name} className="px-4 py-3 flex items-center justify-between hover:bg-muted/30">
-                            <div className="flex items-center gap-3">
-                                <FileText className="h-5 w-5 text-muted-foreground" />
-                                <div>
-                                    <p className="text-sm font-medium">{section.name}</p>
-                                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                        <DataTableRow key={section.name}>
+                            <DataTableCell>
+                                <div className="flex items-center gap-3">
+                                    <FileText className="h-5 w-5 text-muted-foreground" />
+                                    <div>
+                                        <p className="text-sm font-medium">{section.name}</p>
+                                        <p className="text-sm text-muted-foreground">{section.description}</p>
+                                    </div>
                                 </div>
-                            </div>
-                            <div>
-                                {section.status === "complete" ? (
-                                    <span className="inline-flex items-center gap-1.5 text-sm text-green-600">
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        Klar
-                                    </span>
-                                ) : section.status === "incomplete" ? (
-                                    <span className="inline-flex items-center gap-1.5 text-sm text-amber-600">
-                                        <Clock className="h-4 w-4" />
-                                        Ofullständig
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1.5 text-sm text-muted-foreground">
-                                        <Clock className="h-4 w-4" />
-                                        Väntar
-                                    </span>
-                                )}
-                            </div>
-                        </div>
+                            </DataTableCell>
+                            <DataTableCell align="right">
+                                <StatusBadge 
+                                    status={section.status === "complete" ? "Klar" : section.status === "incomplete" ? "Ofullständig" : "Väntar"} 
+                                    variant={section.status === "complete" ? "success" : section.status === "incomplete" ? "warning" : "neutral"} 
+                                    size="md"
+                                />
+                            </DataTableCell>
+                        </DataTableRow>
                     ))}
-                </div>
-            </div>
+                </DataTableBody>
+            </DataTable>
             </div>
         </main>
     )
@@ -472,24 +384,19 @@ function ForetagsstatistikContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="grid grid-cols-4 gap-4">
-                {kpis.map((kpi) => {
-                    const Icon = kpi.icon
-                    return (
-                        <div key={kpi.label} className="bg-card border border-border/40 rounded-lg p-4">
-                            <div className="flex items-center justify-between mb-1">
-                                <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                                <Icon className="h-5 w-5 text-muted-foreground" />
-                            </div>
-                            <p className="text-2xl font-semibold mt-1">{kpi.value}</p>
-                            <div className={`flex items-center gap-1 mt-1 text-sm ${kpi.positive ? 'text-green-600' : 'text-red-600'}`}>
-                                {kpi.positive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                                {kpi.change} vs förra året
-                            </div>
-                        </div>
-                    )
-                })}
-            </div>
+            <StatCardGrid columns={4}>
+                {kpis.map((kpi) => (
+                    <StatCard
+                        key={kpi.label}
+                        label={kpi.label}
+                        value={kpi.value}
+                        change={`${kpi.change} vs förra året`}
+                        changeType={kpi.positive ? "positive" : "negative"}
+                        icon={kpi.icon}
+                        variant="filled"
+                    />
+                ))}
+            </StatCardGrid>
 
             <div className="grid grid-cols-2 gap-6">
                 <div className="bg-card border border-border/40 rounded-lg p-4 flex flex-col">
@@ -613,7 +520,7 @@ function ForetagsstatistikContent() {
     )
 }
 
-export default function ReportsPage() {
+function ReportsPageContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const currentTab = searchParams.get("tab") || "momsdeklaration"
@@ -625,10 +532,10 @@ export default function ReportsPage() {
     const currentTabConfig = tabs.find(t => t.id === currentTab) || tabs[0]
 
     return (
-        <TooltipProvider delayDuration={0}>
-            <div className="flex flex-col h-svh">
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4">
+        <TooltipProvider delayDuration={400}>
+            <div className="flex flex-col h-svh overflow-auto">
+                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                    <div className="flex items-center gap-2">
                         <SidebarTrigger className="-ml-1" />
                         <Separator
                             orientation="vertical"
@@ -642,6 +549,7 @@ export default function ReportsPage() {
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
+                    <BreadcrumbAIBadge />
                 </header>
 
                 {/* Tabs */}
@@ -685,12 +593,28 @@ export default function ReportsPage() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="flex-1 flex flex-col bg-background overflow-auto">
+                <div className="flex-1 flex flex-col bg-background">
                     {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
                     {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
                     {currentTab === "arsredovisning" && <ArsredovisningContent />}
                 </div>
             </div>
         </TooltipProvider>
+    )
+}
+
+function ReportsPageLoading() {
+    return (
+        <div className="flex items-center justify-center h-svh">
+            <div className="animate-pulse text-muted-foreground">Laddar...</div>
+        </div>
+    )
+}
+
+export default function ReportsPage() {
+    return (
+        <Suspense fallback={<ReportsPageLoading />}>
+            <ReportsPageContent />
+        </Suspense>
     )
 }

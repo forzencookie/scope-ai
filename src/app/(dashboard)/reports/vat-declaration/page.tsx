@@ -4,10 +4,11 @@ import {
     BreadcrumbList,
     BreadcrumbPage, BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Search, Settings, CheckCircle2, Clock, Download, Send } from "lucide-react"
+import { Search, Settings, CheckCircle2, Clock, Download, Send, Calendar, ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react"
 
 const vatPeriods = [
     { period: "Q4 2024", dueDate: "12 feb 2025", status: "upcoming", salesVat: 125000, inputVat: 45000, netVat: 80000 },
@@ -19,8 +20,8 @@ const vatPeriods = [
 export default function VATDeclarationPage() {
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -38,6 +39,7 @@ export default function VATDeclarationPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
             <div className="flex-1 flex flex-col bg-background">
                 {/* Action Buttons Bar */}
@@ -82,26 +84,26 @@ export default function VATDeclarationPage() {
                             <h2 className="font-medium">Momsperioder</h2>
                         </div>
                         <table className="w-full text-sm">
-                            <thead>
+                            <thead className="bg-muted/50">
                                 <tr className="border-b border-border/40 text-left text-muted-foreground">
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">Period</th>
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">Deadline</th>
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">Utgående moms</th>
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">Ingående moms</th>
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">Att betala</th>
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">Status</th>
-                                    <th className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0"></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5" />Period</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" />Deadline</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><ArrowUpRight className="h-3.5 w-3.5" />Utgående moms</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><ArrowDownRight className="h-3.5 w-3.5" />Ingående moms</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Wallet className="h-3.5 w-3.5" />Att betala</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5" />Status</span></th>
+                                    <th className="px-4 py-3 font-medium"></th>
                                 </tr>
                             </thead>
                             <tbody>
                                 {vatPeriods.map((item) => (
                                     <tr key={item.period} className="border-b border-border/40 hover:bg-muted/30">
-                                        <td className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">{item.period}</td>
-                                        <td className="px-4 py-3 text-muted-foreground border-r border-border/40 last:border-r-0">{item.dueDate}</td>
-                                        <td className="px-4 py-3 border-r border-border/40 last:border-r-0">{item.salesVat.toLocaleString()} kr</td>
-                                        <td className="px-4 py-3 border-r border-border/40 last:border-r-0">{item.inputVat.toLocaleString()} kr</td>
-                                        <td className="px-4 py-3 font-medium border-r border-border/40 last:border-r-0">{item.netVat.toLocaleString()} kr</td>
-                                        <td className="px-4 py-3 border-r border-border/40 last:border-r-0">
+                                        <td className="px-4 py-3 font-medium">{item.period}</td>
+                                        <td className="px-4 py-3 text-muted-foreground">{item.dueDate}</td>
+                                        <td className="px-4 py-3">{item.salesVat.toLocaleString()} kr</td>
+                                        <td className="px-4 py-3">{item.inputVat.toLocaleString()} kr</td>
+                                        <td className="px-4 py-3 font-medium">{item.netVat.toLocaleString()} kr</td>
+                                        <td className="px-4 py-3">
                                             {item.status === "upcoming" ? (
                                                 <span className="inline-flex items-center gap-1.5 text-amber-600">
                                                     <Clock className="h-3.5 w-3.5" />
@@ -114,7 +116,7 @@ export default function VATDeclarationPage() {
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-4 py-3 border-r border-border/40 last:border-r-0">
+                                        <td className="px-4 py-3">
                                             <div className="flex items-center gap-1">
                                                 <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
                                                     <Download className="h-4 w-4" />

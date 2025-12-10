@@ -1,11 +1,11 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
-import { ChevronRight, MoreHorizontal } from "lucide-react"
+import { ChevronRight, MoreHorizontal, Bot } from "lucide-react"
 
 import { cn } from "@/lib/utils"
 
-function Breadcrumb({ ...props }: React.ComponentProps<"nav">) {
-  return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />
+function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
+  return <nav aria-label="breadcrumb" data-slot="breadcrumb" className={cn("flex items-center justify-between w-full", className)} {...props} />
 }
 
 function BreadcrumbList({ className, ...props }: React.ComponentProps<"ol">) {
@@ -98,6 +98,22 @@ function BreadcrumbEllipsis({
   )
 }
 
+function BreadcrumbAIBadge({ className, ...props }: React.ComponentProps<"span">) {
+  return (
+    <span
+      data-slot="breadcrumb-ai-badge"
+      className={cn(
+        "inline-flex items-center justify-center rounded-md bg-purple-100/50 dark:bg-purple-900/20 p-1.5",
+        className
+      )}
+      {...props}
+    >
+      <Bot className="size-4 text-purple-600 dark:text-purple-400" />
+      <span className="sr-only">AI-driven</span>
+    </span>
+  )
+}
+
 export {
   Breadcrumb,
   BreadcrumbList,
@@ -106,4 +122,5 @@ export {
   BreadcrumbPage,
   BreadcrumbSeparator,
   BreadcrumbEllipsis,
+  BreadcrumbAIBadge,
 }

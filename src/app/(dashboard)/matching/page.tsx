@@ -8,11 +8,13 @@ import {
     BreadcrumbPage,
     BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
+import { useToast } from "@/components/ui/toast"
 import {
     ArrowLeftRight,
     Check,
@@ -365,12 +367,16 @@ export default function MatchingPage() {
     const [selectedMatches, setSelectedMatches] = useState<Set<string>>(new Set())
     const [isProcessing, setIsProcessing] = useState(false)
     const [showApprovedAnimation, setShowApprovedAnimation] = useState<string | null>(null)
+    const toast = useToast()
 
     const pendingMatches = matches.filter(m => m.status === "pending")
     const approvedCount = matches.filter(m => m.status === "approved").length
     const highConfidenceCount = pendingMatches.filter(m => m.confidence === "high").length
+    // Also count medium-high confidence (>= 70%)
+    const mediumHighConfidenceCount = pendingMatches.filter(m => m.confidence === "high" || m.confidence === "medium").length
 
-    const handleApprove = (matchId: string) => {
+    const handleApprove = (matchId: string, showToast = true) => {
+        const match = matches.find(m => m.id === matchId)
         setShowApprovedAnimation(matchId)
         setTimeout(() => {
             setMatches(prev => prev.map(m => 
@@ -382,10 +388,14 @@ export default function MatchingPage() {
                 return next
             })
             setShowApprovedAnimation(null)
+            if (showToast && match) {
+                toast.success("Matchning godkänd", `${match.transaction.name} matchad med ${match.underlag.vendor}`)
+            }
         }, 400)
     }
 
     const handleReject = (matchId: string) => {
+        const match = matches.find(m => m.id === matchId)
         setMatches(prev => prev.map(m => 
             m.id === matchId ? { ...m, status: "rejected" } : m
         ))
@@ -394,20 +404,25 @@ export default function MatchingPage() {
             next.delete(matchId)
             return next
         })
+        if (match) {
+            toast.info("Matchning avvisad", `${match.transaction.name} avvisades`)
+        }
     }
 
     const handleApproveSelected = () => {
         setIsProcessing(true)
         const toApprove = Array.from(selectedMatches)
         let index = 0
+        const count = toApprove.length
 
         const approveNext = () => {
             if (index < toApprove.length) {
-                handleApprove(toApprove[index])
+                handleApprove(toApprove[index], false)
                 index++
                 setTimeout(approveNext, 300)
             } else {
                 setIsProcessing(false)
+                toast.success(`${count} matchningar godkända`, "Alla valda matchningar har bokförts")
             }
         }
 
@@ -416,6 +431,7 @@ export default function MatchingPage() {
 
     const handleApproveAllHighConfidence = () => {
         const highConfidence = pendingMatches.filter(m => m.confidence === "high").map(m => m.id)
+        const count = highConfidence.length
         setSelectedMatches(new Set(highConfidence))
         setTimeout(() => {
             setIsProcessing(true)
@@ -423,12 +439,38 @@ export default function MatchingPage() {
 
             const approveNext = () => {
                 if (index < highConfidence.length) {
-                    handleApprove(highConfidence[index])
+                    handleApprove(highConfidence[index], false)
                     index++
                     setTimeout(approveNext, 300)
                 } else {
                     setIsProcessing(false)
                     setSelectedMatches(new Set())
+                    toast.success(`${count} matchningar godkända`, "Alla högkonfidenta matchningar (>90%) har bokförts")
+                }
+            }
+
+            approveNext()
+        }, 100)
+    }
+
+    // New: Approve all above 70% confidence
+    const handleApproveAbove70Percent = () => {
+        const aboveThreshold = pendingMatches.filter(m => m.confidence === "high" || m.confidence === "medium").map(m => m.id)
+        const count = aboveThreshold.length
+        setSelectedMatches(new Set(aboveThreshold))
+        setTimeout(() => {
+            setIsProcessing(true)
+            let index = 0
+
+            const approveNext = () => {
+                if (index < aboveThreshold.length) {
+                    handleApprove(aboveThreshold[index], false)
+                    index++
+                    setTimeout(approveNext, 300)
+                } else {
+                    setIsProcessing(false)
+                    setSelectedMatches(new Set())
+                    toast.success(`${count} matchningar godkända`, "Alla matchningar över 70% säkerhet har bokförts")
                 }
             }
 
@@ -459,8 +501,8 @@ export default function MatchingPage() {
     return (
         <>
             {/* Header */}
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator orientation="vertical" className="mr-2 h-4" />
                     <Breadcrumb>
@@ -475,6 +517,7 @@ export default function MatchingPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
 
             {/* Main content */}
@@ -537,7 +580,7 @@ export default function MatchingPage() {
                                         : `${pendingMatches.length} matchningar att granska`}
                                 </span>
                             </div>
-                            <div className="flex items-center gap-3">
+                            <div className="flex items-center gap-2">
                                 {selectedMatches.size > 0 && (
                                     <Button
                                         onClick={handleApproveSelected}
@@ -552,15 +595,25 @@ export default function MatchingPage() {
                                         Godkänn valda ({selectedMatches.size})
                                     </Button>
                                 )}
-                                {highConfidenceCount > 0 && selectedMatches.size === 0 && (
+                                {selectedMatches.size === 0 && mediumHighConfidenceCount > 0 && (
                                     <Button
                                         variant="outline"
+                                        onClick={handleApproveAbove70Percent}
+                                        disabled={isProcessing}
+                                        className="border-amber-200 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950"
+                                    >
+                                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                                        Godkänn alla &gt;70% ({mediumHighConfidenceCount})
+                                    </Button>
+                                )}
+                                {highConfidenceCount > 0 && selectedMatches.size === 0 && (
+                                    <Button
                                         onClick={handleApproveAllHighConfidence}
                                         disabled={isProcessing}
-                                        className="border-emerald-200 text-emerald-700 hover:bg-emerald-50 dark:border-emerald-800 dark:text-emerald-400 dark:hover:bg-emerald-950"
+                                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
                                     >
                                         <Zap className="h-4 w-4 mr-2" />
-                                        Snabbgodkänn alla med hög säkerhet ({highConfidenceCount})
+                                        Godkänn alla &gt;90% ({highConfidenceCount})
                                     </Button>
                                 )}
                             </div>

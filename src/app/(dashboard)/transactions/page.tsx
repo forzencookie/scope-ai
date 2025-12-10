@@ -1,52 +1,48 @@
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage, 
-    BreadcrumbLink,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Filter, ArrowUpDown, Zap, Search, Settings } from "lucide-react"
+import { Metadata } from "next"
+import { TransactionsTable, type AISuggestionsMap } from "@/components/transactions"
+import { mockTransactions, mockAISuggestions } from "@/data/transactions"
 
-import { TransactionsTable } from "@/components/transactions-table"
-import { allTransactions } from "@/lib/transaction-data"
+export const metadata: Metadata = {
+    title: "Transaktioner | Bokio",
+    description: "Hantera dina transaktioner och bokföringar",
+}
 
+/**
+ * Transactions Page
+ * 
+ * Displays all transactions with AI categorization suggestions.
+ * 
+ * In production, transactions and AI suggestions would be fetched from:
+ * - Supabase database (via transactions-unified service)
+ * - AI service for categorization suggestions
+ * 
+ * For now, we use mock data for development.
+ */
 export default function TransactionsPage() {
+    // TODO: Replace with server-side data fetching
+    // const { data: transactions } = await transactionService.getTransactions(userId)
+    // const { data: aiSuggestions } = await transactionService.getAISuggestionsMap(userId)
+    
+    const transactions = mockTransactions
+    const aiSuggestions: AISuggestionsMap = mockAISuggestions
+
     return (
-        <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
-                    <SidebarTrigger className="-ml-1" />
-                    <Separator
-                        orientation="vertical"
-                        className="mr-2 data-[orientation=vertical]:h-4"
-                    />
-                    <Breadcrumb>
-                        <BreadcrumbList>
-                            <BreadcrumbItem>
-                                <BreadcrumbLink href="/accounting">Bokföring</BreadcrumbLink>
-                            </BreadcrumbItem>
-                            <BreadcrumbSeparator />
-                            <BreadcrumbItem>
-                                <BreadcrumbPage>Transaktioner</BreadcrumbPage>
-                            </BreadcrumbItem>
-                        </BreadcrumbList>
-                    </Breadcrumb>
+        <div className="flex flex-col gap-6 p-6">
+            <div className="flex items-center justify-between">
+                <div>
+                    <h1 className="text-2xl font-semibold tracking-tight">Transaktioner</h1>
+                    <p className="text-sm text-muted-foreground">
+                        Hantera och kategorisera dina banktransaktioner
+                    </p>
                 </div>
-            </header>
-            <div className="flex-1 flex flex-col bg-background">
-                {/* Page Content */}
-                <main className="flex-1 flex flex-col items-center p-6">
-                    <div className="w-full max-w-6xl space-y-6">
-                        <TransactionsTable 
-                            title="Alla transaktioner" 
-                            transactions={allTransactions} 
-                        />
-                    </div>
-                </main>
             </div>
-        </>
+            
+            <TransactionsTable 
+                title="Alla transaktioner"
+                subtitle={`${transactions.length} transaktioner totalt`}
+                transactions={transactions}
+                aiSuggestions={aiSuggestions}
+            />
+        </div>
     )
 }

@@ -5,6 +5,7 @@ import {
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -14,16 +15,31 @@ import {
     TooltipTrigger, 
     TooltipProvider 
 } from "@/components/ui/tooltip"
+import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { 
     PieChart, 
     BarChart3,
-    ArrowUpRight,
-    ArrowDownRight,
     TrendingUp,
     Wallet,
     Shield,
-    Droplets
+    Droplets,
+    Percent,
+    LineChart,
+    Scale,
+    Banknote,
 } from "lucide-react"
+
+// Swedish accounting term explanations
+const termExplanations: Record<string, string> = {
+    "Omsättning": "Total försäljning under perioden, exklusive moms. Visar företagets intäkter från kärnverksamheten.",
+    "Resultat": "Vinst eller förlust efter att alla kostnader dragits av. Positivt värde = vinst.",
+    "Soliditet": "Andel eget kapital i förhållande till totala tillgångar. Högre = stabilare ekonomi. Över 30% anses bra.",
+    "Kassalikviditet": "Förmåga att betala kortfristiga skulder med likvida medel. Över 100% = kan täcka alla kortsiktiga skulder.",
+    "Bruttovinst": "Intäkter minus direkta kostnader (varor/tjänster). Visar lönsamhet före fasta kostnader.",
+    "Vinstmarginal": "Resultat delat med omsättning i procent. Visar hur stor del av försäljningen som blir vinst.",
+    "Skuldsättningsgrad": "Skulder delat med eget kapital. Lägre = mindre finansiell risk.",
+    "Räntabilitet": "Avkastning på investerat kapital. Visar hur effektivt företaget använder sina resurser.",
+}
 
 const kpis = [
     { label: "Omsättning", value: "1,85 mkr", change: "+12%", positive: true, icon: TrendingUp },
@@ -75,10 +91,10 @@ export default function CompanyStatisticsPage() {
     ]
 
     return (
-        <TooltipProvider delayDuration={0}>
-            <div className="flex flex-col h-svh">
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4">
+        <TooltipProvider delayDuration={400}>
+            <div className="flex flex-col h-svh overflow-auto">
+                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                    <div className="flex items-center gap-2">
                         <SidebarTrigger className="-ml-1" />
                         <Separator
                             orientation="vertical"
@@ -92,34 +108,33 @@ export default function CompanyStatisticsPage() {
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
+                    <BreadcrumbAIBadge />
                 </header>
 
-                <main className="flex-1 flex flex-col p-6 overflow-auto">
+                <main className="flex-1 flex flex-col p-6">
                     <div className="max-w-6xl w-full space-y-6">
-                        <div className="grid grid-cols-4 gap-4">
-                            {kpis.map((kpi) => {
-                                const Icon = kpi.icon
-                                return (
-                                    <div key={kpi.label} className="bg-card border border-border/40 rounded-lg p-4">
-                                        <div className="flex items-center justify-between mb-1">
-                                            <p className="text-sm text-muted-foreground">{kpi.label}</p>
-                                            <Icon className="h-5 w-5 text-muted-foreground" />
-                                        </div>
-                                        <p className="text-2xl font-semibold mt-1">{kpi.value}</p>
-                                        <div className={`flex items-center gap-1 mt-1 text-sm ${kpi.positive ? 'text-green-600' : 'text-red-600'}`}>
-                                            {kpi.positive ? <ArrowUpRight className="h-4 w-4" /> : <ArrowDownRight className="h-4 w-4" />}
-                                            {kpi.change} vs förra året
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
+                        <StatCardGrid columns={4}>
+                            {kpis.map((kpi) => (
+                                <StatCard
+                                    key={kpi.label}
+                                    label={kpi.label}
+                                    value={kpi.value}
+                                    icon={kpi.icon}
+                                    tooltip={termExplanations[kpi.label]}
+                                    change={kpi.change}
+                                    changeType={kpi.positive ? "positive" : "negative"}
+                                    subtitle="vs förra året"
+                                />
+                            ))}
+                        </StatCardGrid>
 
                         <div className="grid grid-cols-2 gap-6">
-                            <div className="bg-card border border-border/40 rounded-lg p-4 flex flex-col">
+                            <div className="border border-border/50 rounded-lg p-4 flex flex-col">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-medium">Omsättning per månad</h2>
-                                    <BarChart3 className="h-5 w-5 text-muted-foreground" />
+                                    <div className="h-8 w-8 rounded-md flex items-center justify-center">
+                                        <BarChart3 className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
+                                    </div>
                                 </div>
                                 <div className="flex items-end gap-1 flex-1 min-h-[144px]">
                                     {monthlyRevenue.map((m, index) => {
@@ -185,10 +200,12 @@ export default function CompanyStatisticsPage() {
                                 </div>
                             </div>
 
-                            <div className="bg-card border border-border/40 rounded-lg p-4">
+                            <div className="border border-border/50 rounded-lg p-4">
                                 <div className="flex items-center justify-between mb-4">
                                     <h2 className="font-medium">Kostnadsfördelning</h2>
-                                    <PieChart className="h-5 w-5 text-muted-foreground" />
+                                    <div className="h-8 w-8 rounded-md flex items-center justify-center">
+                                        <PieChart className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
+                                    </div>
                                 </div>
                                 <div className="space-y-3">
                                     {expenseCategories.map((cat) => (
@@ -209,29 +226,32 @@ export default function CompanyStatisticsPage() {
                             </div>
                         </div>
 
-                        <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                            <div className="px-4 py-3 border-b border-border/40">
-                                <h2 className="font-medium">Nyckeltal</h2>
-                            </div>
-                            <div className="grid grid-cols-4 divide-x divide-border/40">
-                                <div className="p-4 text-center">
-                                    <p className="text-sm text-muted-foreground">Vinstmarginal</p>
-                                    <p className="text-xl font-semibold mt-1">20,5%</p>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <p className="text-sm text-muted-foreground">Avkastning på EK</p>
-                                    <p className="text-xl font-semibold mt-1">28,3%</p>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <p className="text-sm text-muted-foreground">Skuldsättningsgrad</p>
-                                    <p className="text-xl font-semibold mt-1">0,8</p>
-                                </div>
-                                <div className="p-4 text-center">
-                                    <p className="text-sm text-muted-foreground">Rörelsekapital</p>
-                                    <p className="text-xl font-semibold mt-1">245 tkr</p>
-                                </div>
-                            </div>
-                        </div>
+                        <StatCardGrid columns={4}>
+                            <StatCard
+                                label="Vinstmarginal"
+                                value="20,5%"
+                                icon={Percent}
+                                subtitle="Andel vinst av omsättning"
+                            />
+                            <StatCard
+                                label="Avkastning på EK"
+                                value="28,3%"
+                                icon={LineChart}
+                                subtitle="Avkastning på eget kapital"
+                            />
+                            <StatCard
+                                label="Skuldsättningsgrad"
+                                value="0,8"
+                                icon={Scale}
+                                subtitle="Skulder / Eget kapital"
+                            />
+                            <StatCard
+                                label="Rörelsekapital"
+                                value="245 tkr"
+                                icon={Banknote}
+                                subtitle="Tillgångar - Skulder"
+                            />
+                        </StatCardGrid>
                     </div>
                 </main>
             </div>

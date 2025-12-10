@@ -1,12 +1,13 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -25,6 +26,7 @@ import {
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { RECEIPT_STATUS_LABELS, INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { 
     Frame, 
     FileText, 
@@ -37,15 +39,42 @@ import {
     Download, 
     Sparkles,
     User,
+    Users,
     Calendar,
     Banknote,
     Wallet,
     TrendingUp,
     Calculator,
     AlertTriangle,
-    Expand
+    Expand,
+    HelpCircle,
 } from "lucide-react"
-import { TableShell, HeaderCell, AmountText } from "@/components/table/table-shell"
+import { AmountText } from "@/components/table/table-shell"
+import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+import { AppStatusBadge } from "@/components/ui/status-badge"
+import { IconButton, IconButtonGroup } from "@/components/ui/icon-button"
+import { SectionCard } from "@/components/ui/section-card"
+import { 
+    DataTable, 
+    DataTableHeader, 
+    DataTableHeaderCell, 
+    DataTableBody, 
+    DataTableRow, 
+    DataTableCell 
+} from "@/components/ui/data-table"
+
+// Swedish payroll term explanations
+const termExplanations: Record<string, string> = {
+    "Lönebesked": "Specifikation av lönen till anställd. Visar bruttolön, skatteavdrag och nettolön.",
+    "AGI": "Arbetsgivardeklaration på individnivå. Månadsvis rapport till Skatteverket om löner och skatter.",
+    "Utdelning": "Vinst som betalas ut till aktieägare. I fåmansbolag gäller särskilda 3:12-regler.",
+    "3:12-regler": "Skatteregler för fåmansbolag. Bestämmer hur utdelning beskattas - som kapital (30%) eller tjänst (upp till 52%).",
+    "Gränsbelopp": "Max belopp du kan ta ut som kapitalinkomst (30% skatt) enligt 3:12-reglerna. Beräknas årligen.",
+    "Arbetsgivaravgifter": "Avgifter arbetsgivaren betalar utöver lönen (ca 31,42%). Inkluderar pensionsavgift, sjukförsäkring m.m.",
+    "Preliminärskatt": "Skatt som dras från lönen varje månad. Justeras vid deklarationen.",
+    "Bruttolön": "Lön före skatteavdrag.",
+    "Nettolön": "Lön efter skatteavdrag - det som betalas ut till den anställde.",
+}
 
 // Tab configuration
 const tabs = [
@@ -100,38 +129,29 @@ function DividendTable({ data, maxRows }: { data: typeof dividendHistory; maxRow
     const displayData = maxRows ? data.slice(0, maxRows) : data
     
     return (
-        <table className="w-full text-sm">
-            <thead>
-                <tr className="border-b border-border/40 text-left text-muted-foreground">
-                    <th className="px-4 py-3 font-medium">År</th>
-                    <th className="px-4 py-3 font-medium">Belopp</th>
-                    <th className="px-4 py-3 font-medium">Skatt</th>
-                    <th className="px-4 py-3 font-medium">Status</th>
-                </tr>
-            </thead>
-            <tbody>
+        <DataTable>
+            <DataTableHeader>
+                <DataTableHeaderCell label="År" icon={Calendar} />
+                <DataTableHeaderCell label="Belopp" icon={Banknote} />
+                <DataTableHeaderCell label="Skatt" icon={Wallet} />
+                <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+            </DataTableHeader>
+            <DataTableBody>
                 {displayData.map((div) => (
-                    <tr key={div.year} className="border-b border-border/40 hover:bg-muted/30">
-                        <td className="px-4 py-3 font-medium">{div.year}</td>
-                        <td className="px-4 py-3">{div.amount.toLocaleString("sv-SE")} kr</td>
-                        <td className="px-4 py-3 text-red-600">-{div.tax.toLocaleString("sv-SE")} kr</td>
-                        <td className="px-4 py-3">
-                            {div.status === "planned" ? (
-                                <span className="inline-flex items-center gap-1.5 text-amber-600">
-                                    <TrendingUp className="h-3.5 w-3.5" />
-                                    Planerad
-                                </span>
-                            ) : (
-                                <span className="inline-flex items-center gap-1.5 text-green-600">
-                                    <CheckCircle2 className="h-3.5 w-3.5" />
-                                    Utbetald
-                                </span>
-                            )}
-                        </td>
-                    </tr>
+                    <DataTableRow key={div.year}>
+                        <DataTableCell bold>{div.year}</DataTableCell>
+                        <DataTableCell>{div.amount.toLocaleString("sv-SE")} kr</DataTableCell>
+                        <DataTableCell className="text-red-600">-{div.tax.toLocaleString("sv-SE")} kr</DataTableCell>
+                        <DataTableCell>
+                            <AppStatusBadge 
+                                status={div.status === "planned" ? "Planerad" : "Utbetald"} 
+                                size="sm"
+                            />
+                        </DataTableCell>
+                    </DataTableRow>
                 ))}
-            </tbody>
-        </table>
+            </DataTableBody>
+        </DataTable>
     )
 }
 
@@ -140,84 +160,63 @@ function LonesbeskContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Aktuell period</p>
-                    <p className="text-2xl font-semibold mt-1">December 2024</p>
-                    <p className="text-sm text-muted-foreground mt-1">2 anställda</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Total bruttolön</p>
-                    <p className="text-2xl font-semibold mt-1">85 000 kr</p>
-                    <p className="text-sm text-muted-foreground mt-1">Denna månad</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Skatt att betala</p>
-                    <p className="text-2xl font-semibold mt-1">20 400 kr</p>
-                    <p className="text-sm text-amber-600 mt-1">Deadline: 12 jan 2025</p>
-                </div>
-            </div>
+            <StatCardGrid columns={3}>
+                <StatCard
+                    label="Aktuell period"
+                    value="December 2024"
+                    subtitle="2 anställda"
+                    icon={Calendar}
+                />
+                <StatCard
+                    label="Total bruttolön"
+                    value="85 000 kr"
+                    subtitle="Denna månad"
+                    icon={Banknote}
+                />
+                <StatCard
+                    label="Skatt att betala"
+                    value="20 400 kr"
+                    subtitle="Deadline: 12 jan 2025"
+                    icon={Wallet}
+                />
+            </StatCardGrid>
 
-            <div className="w-full overflow-hidden">
-                <div className="px-4 py-3 border-b border-border/40">
-                    <h2 className="font-medium">Lönespecifikationer</h2>
-                </div>
-                <TableShell
-                    header={
-                        <tr className="border-b border-border/50 transition-colors hover:bg-muted/50 text-left text-muted-foreground">
-                            <HeaderCell label="Anställd" icon={<User className="h-3.5 w-3.5" />} minWidth="min-w-[200px]" />
-                            <HeaderCell label="Period" icon={<Calendar className="h-3.5 w-3.5" />} minWidth="min-w-[140px]" />
-                            <HeaderCell label="Bruttolön" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                            <HeaderCell label="Skatt" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                            <HeaderCell label="Nettolön" icon={<Wallet className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                            <HeaderCell label="Status" icon={<Clock className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                            <HeaderCell label="Åtgärder" icon={<Download className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" align="right" />
-                        </tr>
-                    }
-                >
+            <DataTable title="Lönespecifikationer">
+                <DataTableHeader>
+                    <DataTableHeaderCell label="Anställd" icon={User} />
+                    <DataTableHeaderCell label="Period" icon={Calendar} />
+                    <DataTableHeaderCell label="Bruttolön" icon={Banknote} />
+                    <DataTableHeaderCell label="Skatt" icon={Banknote} />
+                    <DataTableHeaderCell label="Nettolön" icon={Wallet} />
+                    <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                    <DataTableHeaderCell label="" />
+                </DataTableHeader>
+                <DataTableBody>
                     {payslips.map((slip) => (
-                        <tr key={slip.id} className="h-[36px] border-b border-border/50 transition-colors hover:bg-muted/30">
-                            <td className="px-2 py-0.5">
-                                <div className="flex items-center gap-2">
-                                    <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
-                                        <User className="h-4 w-4 text-muted-foreground" />
-                                    </div>
-                                    <span className="font-medium">{slip.employee}</span>
-                                </div>
-                            </td>
-                            <td className="px-2 py-0.5 text-muted-foreground">{slip.period}</td>
-                            <td className="px-2 py-0.5 text-right"><AmountText value={slip.grossSalary} /></td>
-                            <td className="px-2 py-0.5 text-right text-red-600">-{slip.tax.toLocaleString("sv-SE")} kr</td>
-                            <td className="px-2 py-0.5 text-right font-medium"><AmountText value={slip.netSalary} /></td>
-                            <td className="px-2 py-0.5">
-                                {slip.status === "pending" ? (
-                                    <span className="inline-flex items-center gap-1.5 text-amber-600">
-                                        <Clock className="h-3.5 w-3.5" />
-                                        Väntar
-                                    </span>
-                                ) : (
-                                    <span className="inline-flex items-center gap-1.5 text-green-600">
-                                        <CheckCircle2 className="h-3.5 w-3.5" />
-                                        Skickad
-                                    </span>
-                                )}
-                            </td>
-                            <td className="px-2 py-0.5 text-right">
-                                <div className="flex items-center justify-end gap-1">
-                                    <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                        <Download className="h-4 w-4" />
-                                    </button>
+                        <DataTableRow key={slip.id}>
+                            <DataTableCell bold>{slip.employee}</DataTableCell>
+                            <DataTableCell muted>{slip.period}</DataTableCell>
+                            <DataTableCell><AmountText value={slip.grossSalary} /></DataTableCell>
+                            <DataTableCell className="text-red-600">-{slip.tax.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell bold><AmountText value={slip.netSalary} /></DataTableCell>
+                            <DataTableCell>
+                                <AppStatusBadge 
+                                    status={slip.status === "pending" ? "Väntar" : "Skickad"} 
+                                    size="sm"
+                                />
+                            </DataTableCell>
+                            <DataTableCell>
+                                <IconButtonGroup>
+                                    <IconButton icon={Download} tooltip="Ladda ner" />
                                     {slip.status === "pending" && (
-                                        <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                            <Send className="h-4 w-4" />
-                                        </button>
+                                        <IconButton icon={Send} tooltip="Skicka" />
                                     )}
-                                </div>
-                            </td>
-                        </tr>
+                                </IconButtonGroup>
+                            </DataTableCell>
+                        </DataTableRow>
                     ))}
-                </TableShell>
-            </div>
+                </DataTableBody>
+            </DataTable>
             </div>
         </main>
     )
@@ -228,88 +227,74 @@ function AGIContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Nästa AGI</p>
-                    <p className="text-2xl font-semibold mt-1">December 2024</p>
-                    <p className="text-sm text-amber-600 mt-1">Deadline: 12 jan 2025</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Skatteavdrag</p>
-                    <p className="text-2xl font-semibold mt-1">20 400 kr</p>
-                    <p className="text-sm text-muted-foreground mt-1">Preliminärskatt</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Arbetsgivaravgifter</p>
-                    <p className="text-2xl font-semibold mt-1">26 690 kr</p>
-                    <p className="text-sm text-muted-foreground mt-1">31,42% av bruttolön</p>
-                </div>
-            </div>
+            <StatCardGrid columns={3}>
+                <StatCard
+                    label="Nästa AGI"
+                    value="December 2024"
+                    subtitle="Deadline: 12 jan 2025"
+                    icon={Calendar}
+                    tooltip={termExplanations["AGI"]}
+                />
+                <StatCard
+                    label="Skatteavdrag"
+                    value="20 400 kr"
+                    subtitle="Preliminärskatt"
+                    icon={Wallet}
+                    tooltip={termExplanations["Preliminärskatt"]}
+                />
+                <StatCard
+                    label="Arbetsgivaravgifter"
+                    value="26 690 kr"
+                    subtitle="31,42% av bruttolön"
+                    icon={Calculator}
+                    tooltip={termExplanations["Arbetsgivaravgifter"]}
+                />
+            </StatCardGrid>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
-                <div>
-                    <p className="text-sm font-medium text-blue-900">Automatisk AGI-hantering</p>
-                    <p className="text-sm text-blue-700 mt-1">Vår AI skapar arbetsgivardeklarationen automatiskt baserat på löneutbetalningar och beräknar korrekta skatteavdrag och arbetsgivaravgifter.</p>
-                </div>
-            </div>
+            <SectionCard
+                icon={Sparkles}
+                title="Automatisk AGI-hantering"
+                description="Vår AI skapar arbetsgivardeklarationen automatiskt baserat på löneutbetalningar och beräknar korrekta skatteavdrag och arbetsgivaravgifter."
+            />
 
-            <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
-                <div className="px-4 py-3 border-b border-border/40">
-                    <h2 className="font-medium">Arbetsgivardeklarationer (AGI)</h2>
-                </div>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-border/40 text-left text-muted-foreground">
-                            <th className="px-4 py-3 font-medium">Period</th>
-                            <th className="px-4 py-3 font-medium">Deadline</th>
-                            <th className="px-4 py-3 font-medium">Anställda</th>
-                            <th className="px-4 py-3 font-medium">Bruttolön</th>
-                            <th className="px-4 py-3 font-medium">Skatteavdrag</th>
-                            <th className="px-4 py-3 font-medium">Arbetsgivaravgifter</th>
-                            <th className="px-4 py-3 font-medium">Status</th>
-                            <th className="px-4 py-3 font-medium"></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {agiReports.map((report) => (
-                            <tr key={report.period} className="border-b border-border/40 hover:bg-muted/30">
-                                <td className="px-4 py-3 font-medium">{report.period}</td>
-                                <td className="px-4 py-3 text-muted-foreground">{report.dueDate}</td>
-                                <td className="px-4 py-3">{report.employees}</td>
-                                <td className="px-4 py-3">{report.totalSalary.toLocaleString("sv-SE")} kr</td>
-                                <td className="px-4 py-3">{report.tax.toLocaleString("sv-SE")} kr</td>
-                                <td className="px-4 py-3">{report.contributions.toLocaleString("sv-SE")} kr</td>
-                                <td className="px-4 py-3">
-                                    {report.status === "pending" ? (
-                                        <span className="inline-flex items-center gap-1.5 text-amber-600">
-                                            <Clock className="h-3.5 w-3.5" />
-                                            Väntar
-                                        </span>
-                                    ) : (
-                                        <span className="inline-flex items-center gap-1.5 text-green-600">
-                                            <CheckCircle2 className="h-3.5 w-3.5" />
-                                            Inskickad
-                                        </span>
+            <DataTable title="Arbetsgivardeklarationer (AGI)">
+                <DataTableHeader>
+                    <DataTableHeaderCell label="Period" icon={Calendar} />
+                    <DataTableHeaderCell label="Deadline" icon={Clock} />
+                    <DataTableHeaderCell label="Anställda" icon={Users} />
+                    <DataTableHeaderCell label="Bruttolön" icon={Banknote} />
+                    <DataTableHeaderCell label="Skatteavdrag" icon={Wallet} />
+                    <DataTableHeaderCell label="Arbetsgivaravgifter" icon={Calculator} />
+                    <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                    <DataTableHeaderCell label="" />
+                </DataTableHeader>
+                <DataTableBody>
+                    {agiReports.map((report) => (
+                        <DataTableRow key={report.period}>
+                            <DataTableCell bold>{report.period}</DataTableCell>
+                            <DataTableCell muted>{report.dueDate}</DataTableCell>
+                            <DataTableCell>{report.employees}</DataTableCell>
+                            <DataTableCell>{report.totalSalary.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell>{report.tax.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell>{report.contributions.toLocaleString("sv-SE")} kr</DataTableCell>
+                            <DataTableCell>
+                                <AppStatusBadge 
+                                    status={report.status === "pending" ? "Väntar" : "Inskickad"} 
+                                    size="sm"
+                                />
+                            </DataTableCell>
+                            <DataTableCell>
+                                <IconButtonGroup>
+                                    <IconButton icon={Download} tooltip="Ladda ner" />
+                                    {report.status === "pending" && (
+                                        <IconButton icon={Send} tooltip="Skicka" />
                                     )}
-                                </td>
-                                <td className="px-4 py-3">
-                                    <div className="flex items-center gap-1">
-                                        <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                            <Download className="h-4 w-4" />
-                                        </button>
-                                        {report.status === "pending" && (
-                                            <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                                <Send className="h-4 w-4" />
-                                            </button>
-                                        )}
-                                    </div>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
-            </div>
+                                </IconButtonGroup>
+                            </DataTableCell>
+                        </DataTableRow>
+                    ))}
+                </DataTableBody>
+            </DataTable>
             </div>
         </main>
     )
@@ -320,31 +305,34 @@ function UtdelningContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
-            <div className="grid grid-cols-3 gap-4">
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Gränsbelopp 2024</p>
-                    <p className="text-2xl font-semibold mt-1">195 250 kr</p>
-                    <p className="text-sm text-muted-foreground mt-1">Schablonmetoden (2,75 IBB)</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Planerad utdelning</p>
-                    <p className="text-2xl font-semibold mt-1">150 000 kr</p>
-                    <p className="text-sm text-green-600 mt-1">Inom gränsbeloppet</p>
-                </div>
-                <div className="bg-card border border-border/40 rounded-lg p-4">
-                    <p className="text-sm text-muted-foreground">Skatt på utdelning</p>
-                    <p className="text-2xl font-semibold mt-1">30 000 kr</p>
-                    <p className="text-sm text-muted-foreground mt-1">20% kapitalskatt</p>
-                </div>
-            </div>
+            <StatCardGrid columns={3}>
+                <StatCard
+                    label="Gränsbelopp 2024"
+                    value="195 250 kr"
+                    subtitle="Schablonmetoden (2,75 IBB)"
+                    icon={TrendingUp}
+                    tooltip={termExplanations["Gränsbelopp"]}
+                />
+                <StatCard
+                    label="Planerad utdelning"
+                    value="150 000 kr"
+                    subtitle="Inom gränsbeloppet"
+                    icon={DollarSign}
+                    tooltip={termExplanations["Utdelning"]}
+                />
+                <StatCard
+                    label="Skatt på utdelning"
+                    value="30 000 kr"
+                    subtitle="20% kapitalskatt"
+                    icon={Calculator}
+                />
+            </StatCardGrid>
 
-            <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600 mt-0.5" />
-                <div>
-                    <p className="text-sm font-medium text-amber-900">3:12-reglerna</p>
-                    <p className="text-sm text-amber-700 mt-1">Som fåmansföretagare gäller särskilda regler för utdelning. Utdelning inom gränsbeloppet beskattas med 20% kapitalskatt. Utdelning över gränsbeloppet beskattas som tjänst.</p>
-                </div>
-            </div>
+            <SectionCard
+                icon={AlertTriangle}
+                title="3:12-reglerna"
+                description="Som fåmansföretagare gäller särskilda regler för utdelning. Utdelning inom gränsbeloppet beskattas med 20% kapitalskatt. Utdelning över gränsbeloppet beskattas som tjänst."
+            />
 
             <div className="grid grid-cols-2 gap-6">
                 <div className="bg-card border border-border/40 rounded-lg p-4">
@@ -400,7 +388,7 @@ function UtdelningContent() {
     )
 }
 
-export default function PayrollPage() {
+function PayrollPageContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const currentTab = searchParams.get("tab") || "lonebesked"
@@ -413,9 +401,9 @@ export default function PayrollPage() {
 
     return (
         <TooltipProvider>
-            <div className="flex flex-col h-svh">
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4">
+            <div className="flex flex-col h-svh overflow-auto">
+                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                    <div className="flex items-center gap-2">
                         <SidebarTrigger className="-ml-1" />
                         <Separator
                             orientation="vertical"
@@ -429,6 +417,7 @@ export default function PayrollPage() {
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
+                    <BreadcrumbAIBadge />
                 </header>
 
                 {/* Tabs */}
@@ -472,12 +461,28 @@ export default function PayrollPage() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="flex-1 flex flex-col bg-background overflow-auto">
+                <div className="flex-1 flex flex-col bg-background">
                     {currentTab === "lonebesked" && <LonesbeskContent />}
                     {currentTab === "agi" && <AGIContent />}
                     {currentTab === "utdelning" && <UtdelningContent />}
                 </div>
             </div>
         </TooltipProvider>
+    )
+}
+
+function PayrollPageLoading() {
+    return (
+        <div className="flex items-center justify-center h-svh">
+            <div className="animate-pulse text-muted-foreground">Laddar...</div>
+        </div>
+    )
+}
+
+export default function PayrollPage() {
+    return (
+        <Suspense fallback={<PayrollPageLoading />}>
+            <PayrollPageContent />
+        </Suspense>
     )
 }

@@ -6,8 +6,9 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Building2, Users, Puzzle, Plus } from "lucide-react"
+import { Building2, Users, Puzzle, Plus, FileCode, Shield, Database } from "lucide-react"
 import Link from "next/link"
+import { ProgressiveDisclosure } from "@/components/progressive-disclosure"
 
 const items = [
     {
@@ -90,16 +91,63 @@ export default function SettingsPage() {
                                 <div className="bg-background rounded-lg p-4 border border-border/50 shadow-sm">
                                     <div className="flex items-center justify-between mb-2">
                                         <span className="text-sm font-medium">Integrationer</span>
-                                        <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">2 Aktiva</span>
+                                        <span className="text-xs text-green-600 bg-green-50 px-2 py-0.5 rounded-full">1 Aktiv</span>
                                     </div>
                                     <div className="flex items-center gap-2 mt-1">
-                                        <div className="h-6 w-6 rounded bg-blue-500/10 flex items-center justify-center text-xs font-bold text-blue-600">F</div>
                                         <div className="h-6 w-6 rounded bg-green-500/10 flex items-center justify-center text-xs font-bold text-green-600">S</div>
                                     </div>
-                                    <div className="text-xs text-muted-foreground mt-2">Fortnox & Skatteverket</div>
+                                    <div className="text-xs text-muted-foreground mt-2">Skatteverket</div>
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    {/* Advanced Settings - Progressive Disclosure (Issue #6) */}
+                    <div className="mt-8">
+                        <ProgressiveDisclosure 
+                            variant="settings"
+                            title="Avancerade inställningar"
+                            description="Export, API-åtkomst och datahantering för avancerade användare"
+                        >
+                            <div className="space-y-3">
+                                <Link 
+                                    href="/settings/api" 
+                                    className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors group border border-border/50"
+                                >
+                                    <div className="h-9 w-9 rounded-lg bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
+                                        <FileCode className="h-4 w-4 text-amber-600 dark:text-amber-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="text-sm font-medium">API-åtkomst</span>
+                                        <p className="text-xs text-muted-foreground">Hantera API-nycklar för externa integrationer</p>
+                                    </div>
+                                </Link>
+                                <Link 
+                                    href="/settings/security" 
+                                    className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors group border border-border/50"
+                                >
+                                    <div className="h-9 w-9 rounded-lg bg-blue-100 dark:bg-blue-900/30 flex items-center justify-center">
+                                        <Shield className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="text-sm font-medium">Säkerhet & sekretess</span>
+                                        <p className="text-xs text-muted-foreground">Tvåfaktorautentisering och sessionsinställningar</p>
+                                    </div>
+                                </Link>
+                                <Link 
+                                    href="/settings/export" 
+                                    className="flex items-center gap-3 p-3 hover:bg-muted rounded-lg transition-colors group border border-border/50"
+                                >
+                                    <div className="h-9 w-9 rounded-lg bg-purple-100 dark:bg-purple-900/30 flex items-center justify-center">
+                                        <Database className="h-4 w-4 text-purple-600 dark:text-purple-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <span className="text-sm font-medium">Dataexport</span>
+                                        <p className="text-xs text-muted-foreground">Exportera alla uppgifter i SIE-format eller Excel</p>
+                                    </div>
+                                </Link>
+                            </div>
+                        </ProgressiveDisclosure>
                     </div>
                 </div>
             </div>

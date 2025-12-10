@@ -14,7 +14,7 @@ export function HeaderCell({ label, icon, align = "left", minWidth, className }:
   return (
     <th
       className={cn(
-        "h-8 px-2 text-left align-middle font-medium text-muted-foreground",
+        "px-4 py-3 text-left align-middle font-medium text-muted-foreground",
         align === "center" && "text-center",
         align === "right" && "text-right",
         minWidth,
@@ -35,14 +35,12 @@ export function HeaderCell({ label, icon, align = "left", minWidth, className }:
 
 export function TableShell({ header, children, bodyClassName }: { header: React.ReactNode; children: React.ReactNode; bodyClassName?: string }) {
   return (
-    <div className="w-full overflow-hidden">
-      <div className="w-full overflow-auto">
-        <table className="w-full caption-bottom text-sm border-t border-b border-border/40">
-          <thead className="[&_tr]:border-b">{header}</thead>
-          <tbody className={cn("[&_tr:last-child]:border-0", bodyClassName)}>{children}</tbody>
-        </table>
-      </div>
-    </div>
+    <table className="w-full text-sm">
+      <thead className="bg-muted/50">
+        {header}
+      </thead>
+      <tbody className={cn("[&_tr:last-child]:border-0", bodyClassName)}>{children}</tbody>
+    </table>
   )
 }
 
@@ -57,16 +55,28 @@ export function CategoryBadge({ children }: { children: React.ReactNode }) {
 export function AmountText({ value, suffix = " kr" }: { value: number; suffix?: string }) {
   const isPositive = value >= 0
   return (
-    <span className={cn(isPositive && "text-green-600")}>{`${isPositive ? "+" : ""}${value.toLocaleString()}${suffix}`}</span>
+    <span className={cn("font-medium", isPositive && "text-green-600")}>{`${isPositive ? "+" : ""}${value.toLocaleString()}${suffix}`}</span>
   )
 }
 
-export function RowCheckbox({ checked, showOnHover }: { checked?: boolean; showOnHover?: boolean }) {
+export function RowCheckbox({ 
+  checked, 
+  showOnHover, 
+  onClick,
+  label = "Välj rad"
+}: { 
+  checked?: boolean
+  showOnHover?: boolean
+  onClick?: () => void
+  label?: string
+}) {
   return (
     <Checkbox
       checked={checked}
+      onClick={onClick}
+      aria-label={label}
       className={cn(
-        "translate-y-[2px] transition-opacity",
+        "translate-y-[2px] transition-opacity cursor-pointer",
         showOnHover ? "opacity-0 group-hover:opacity-100 data-[state=checked]:opacity-100" : undefined,
       )}
     />

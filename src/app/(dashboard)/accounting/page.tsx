@@ -1,12 +1,15 @@
 "use client"
 
-import { useCallback, useState } from "react"
+import { useCallback, useState, Suspense, lazy } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
+    BreadcrumbLink,
+    BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -18,6 +21,7 @@ import {
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { 
     BookOpen, 
@@ -33,11 +37,30 @@ import {
     CheckCircle2,
 } from "lucide-react"
 
-import { TransactionsTable } from "@/components/transactions-table"
-import { ReceiptsTable } from "@/components/receipts-table"
-import { InvoicesTable } from "@/components/invoices-table"
-import { VerifikationerTable } from "@/components/verifikationer-table"
-import { allTransactions } from "@/lib/transaction-data"
+import { mockTransactions } from "@/data/transactions"
+
+// Lazy load table components for code splitting
+const TransactionsTable = lazy(() => import("@/components/transactions-table").then(mod => ({ default: mod.TransactionsTable })))
+const ReceiptsTable = lazy(() => import("@/components/receipts-table").then(mod => ({ default: mod.ReceiptsTable })))
+const InvoicesTable = lazy(() => import("@/components/invoices-table").then(mod => ({ default: mod.InvoicesTable })))
+const VerifikationerTable = lazy(() => import("@/components/verifikationer-table").then(mod => ({ default: mod.VerifikationerTable })))
+
+// Loading skeleton for tables
+function TableSkeleton() {
+    return (
+        <div className="flex flex-col gap-4 w-full">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-8 w-32" />
+            </div>
+            <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                ))}
+            </div>
+        </div>
+    )
+}
 
 // Tab configuration
 const tabs = [
@@ -53,38 +76,17 @@ const tabs = [
     },
     {
         id: "underlag",
-        label: "Underlag",
-        icon: FileText,
+        label: "Fakturor & Kvitton",
+        icon: Receipt,
     },
     {
         id: "verifikationer",
         label: "Verifikationer",
         icon: ClipboardCheck,
     },
-    {
-        id: "fakturor",
-        label: "Fakturor",
-        icon: Receipt,
-    },
 ]
 
-// Get contextual info for each tab
-function getTabInfo(tabId: string) {
-    switch (tabId) {
-        case "transaktioner":
-            return "Senast uppdaterad: idag 14:32 • 12 nya denna vecka"
-        case "ai-matchning":
-            return "Senast uppdaterad: idag 14:32"
-        case "underlag":
-            return "Senast uppdaterad: idag 14:32"
-        case "verifikationer":
-            return "Senast uppdaterad: idag 14:32"
-        case "fakturor":
-            return "Senast uppdaterad: idag 14:32"
-        default:
-            return ""
-    }
-}
+
 
 // ============ AI MATCHING TYPES & DATA ============
 type MatchConfidence = "high" | "medium" | "low"
@@ -245,6 +247,7 @@ function AIMatchingContent() {
     const pendingMatches = matches.filter(m => m.status === "pending")
     const approvedCount = matches.filter(m => m.status === "approved").length
     const highConfidenceCount = pendingMatches.filter(m => m.confidence === "high").length
+    const mediumHighConfidenceCount = pendingMatches.filter(m => m.confidence === "high" || m.confidence === "medium").length
 
     const handleApprove = (matchId: string) => {
         setMatches(prev => prev.map(m => m.id === matchId ? { ...m, status: "approved" } : m))
@@ -270,6 +273,13 @@ function AIMatchingContent() {
         setTimeout(() => setIsProcessing(false), highConfidence.length * 200 + 100)
     }
 
+    const handleApproveAbove70Percent = () => {
+        const aboveThreshold = pendingMatches.filter(m => m.confidence === "high" || m.confidence === "medium").map(m => m.id)
+        setIsProcessing(true)
+        aboveThreshold.forEach((id, i) => setTimeout(() => handleApprove(id), i * 200))
+        setTimeout(() => setIsProcessing(false), aboveThreshold.length * 200 + 100)
+    }
+
     const toggleSelect = (matchId: string) => {
         setSelectedMatches(prev => { const next = new Set(prev); next.has(matchId) ? next.delete(matchId) : next.add(matchId); return next })
     }
@@ -286,7 +296,7 @@ function AIMatchingContent() {
                     <span className="font-medium text-foreground">{pendingMatches.length}</span> att granska
                 </span>
                 <span className="text-muted-foreground">
-                    <span className="font-medium text-emerald-600">{highConfidenceCount}</span> hög säkerhet
+                    <span className="font-medium text-emerald-600">{highConfidenceCount}</span> hög säkerhet (&gt;90%)
                 </span>
                 <span className="text-muted-foreground">
                     <span className="font-medium text-foreground">{approvedCount}</span> godkända idag
@@ -301,9 +311,16 @@ function AIMatchingContent() {
                         Godkänn {selectedMatches.size} valda
                     </Button>
                 )}
+                {selectedMatches.size === 0 && mediumHighConfidenceCount > 0 && (
+                    <Button size="sm" variant="outline" onClick={handleApproveAbove70Percent} disabled={isProcessing} className="h-7 border-amber-200 text-amber-700 hover:bg-amber-50">
+                        <CheckCircle2 className="h-3 w-3 mr-1.5" />
+                        Godkänn &gt;70% ({mediumHighConfidenceCount})
+                    </Button>
+                )}
                 {highConfidenceCount > 0 && selectedMatches.size === 0 && (
-                    <Button size="sm" variant="ghost" onClick={handleApproveAllHighConfidence} disabled={isProcessing} className="h-7 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50">
-                        <Zap className="h-3 w-3 mr-1.5" />Snabbgodkänn {highConfidenceCount} st
+                    <Button size="sm" onClick={handleApproveAllHighConfidence} disabled={isProcessing} className="h-7 bg-emerald-600 hover:bg-emerald-700 text-white">
+                        <Zap className="h-3 w-3 mr-1.5" />
+                        Godkänn &gt;90% ({highConfidenceCount})
                     </Button>
                 )}
             </div>
@@ -355,7 +372,7 @@ function AIMatchingContent() {
 }
 
 // ============ MAIN PAGE COMPONENT ============
-export default function AccountingPage() {
+function AccountingPageContent() {
     const searchParams = useSearchParams()
     const router = useRouter()
     const currentTab = searchParams.get("tab") || "transaktioner"
@@ -364,11 +381,14 @@ export default function AccountingPage() {
         router.push(`/accounting?tab=${tab}`, { scroll: false })
     }, [router])
 
+    // Get current tab label for breadcrumb
+    const currentTabLabel = tabs.find(t => t.id === currentTab)?.label || "Transaktioner"
+
     return (
         <TooltipProvider>
-            <div className="flex flex-col h-svh">
-                <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                    <div className="flex items-center gap-2 px-4">
+            <div className="flex flex-col h-svh overflow-auto">
+                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                    <div className="flex items-center gap-2">
                         <SidebarTrigger className="-ml-1" />
                         <Separator
                             orientation="vertical"
@@ -377,15 +397,20 @@ export default function AccountingPage() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage>Bokföring</BreadcrumbPage>
+                                    <BreadcrumbLink href="/accounting">Bokföring</BreadcrumbLink>
+                                </BreadcrumbItem>
+                                <BreadcrumbSeparator />
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage>{currentTabLabel}</BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
+                    <BreadcrumbAIBadge />
                 </header>
 
                 {/* Tab Content */}
-                <div className="flex-1 flex flex-col bg-background overflow-auto p-6">
+                <div className="flex-1 flex flex-col bg-background p-6">
                     <div className="max-w-6xl w-full">
                         {/* Tabs */}
                         <div className="flex items-center gap-1 pb-2 mb-6 border-b border-border/20">
@@ -417,62 +442,60 @@ export default function AccountingPage() {
                                     </Tooltip>
                                 )
                             })}
-                            
-                            <div className="ml-auto text-sm text-muted-foreground">
-                                {getTabInfo(currentTab)}
-                            </div>
                         </div>
 
                         {/* Content */}
                         {currentTab === "transaktioner" && (
-                            <TransactionsTable 
-                                title="Transaktioner" 
-                                subtitle="Senast uppdaterad: idag 14:32 • 12 nya denna vecka"
-                                transactions={allTransactions} 
-                            />
+                            <Suspense fallback={<TableSkeleton />}>
+                                <TransactionsTable 
+                                    title="Transaktioner" 
+                                    transactions={mockTransactions} 
+                                />
+                            </Suspense>
                         )}
                         {currentTab === "ai-matchning" && (
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <span>Senast uppdaterad: idag 14:32</span>
-                                    <div className="flex items-center gap-2">
-                                        <Sparkles className="h-4 w-4 text-primary" />
-                                        <span>AI analyserar kontinuerligt nya transaktioner</span>
-                                    </div>
-                                </div>
                                 <AIMatchingContent />
                             </div>
                         )}
                         {currentTab === "underlag" && (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <span>Senast uppdaterad: idag 14:32</span>
-                                    <span>3 underlag väntar på granskning</span>
-                                </div>
-                                <ReceiptsTable />
+                            <div className="space-y-8">
+                                <Suspense fallback={<TableSkeleton />}>
+                                    <ReceiptsTable />
+                                </Suspense>
+                                <Suspense fallback={<TableSkeleton />}>
+                                    <InvoicesTable />
+                                </Suspense>
                             </div>
                         )}
                         {currentTab === "verifikationer" && (
                             <div className="space-y-4">
-                                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <span>Senast uppdaterad: idag 14:32</span>
-                                    <span>7 verifikationer denna månad</span>
-                                </div>
-                                <VerifikationerTable />
-                            </div>
-                        )}
-                        {currentTab === "fakturor" && (
-                            <div className="space-y-4">
-                                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                                    <span>Senast uppdaterad: idag 14:32</span>
-                                    <span>2 obetalda fakturor</span>
-                                </div>
-                                <InvoicesTable />
+                                <Suspense fallback={<TableSkeleton />}>
+                                    <VerifikationerTable />
+                                </Suspense>
                             </div>
                         )}
                     </div>
                 </div>
             </div>
         </TooltipProvider>
+    )
+}
+
+// Loading fallback for Suspense
+function AccountingPageLoading() {
+    return (
+        <div className="flex items-center justify-center h-svh">
+            <div className="animate-pulse text-muted-foreground">Laddar...</div>
+        </div>
+    )
+}
+
+// Export wrapped in Suspense for useSearchParams
+export default function AccountingPage() {
+    return (
+        <Suspense fallback={<AccountingPageLoading />}>
+            <AccountingPageContent />
+        </Suspense>
     )
 }

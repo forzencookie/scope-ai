@@ -30,7 +30,7 @@ export default function DagbokPage() {
                 </div>
             </header>
             <div className="flex-1 flex flex-col bg-background">
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto px-4 pt-6">
                     <JournalCalendar />
                 </div>
             </div>

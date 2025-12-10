@@ -1,11 +1,16 @@
-import * as React from "react"
+import { useState, useEffect } from "react"
 
 const MOBILE_BREAKPOINT = 768
 
-export function useIsMobile() {
-  const [isMobile, setIsMobile] = React.useState<boolean | undefined>(undefined)
+/**
+ * Hook to detect if the current viewport is mobile.
+ * Returns `undefined` during SSR to prevent hydration mismatch.
+ * Returns `true` if viewport is < 768px, `false` otherwise.
+ */
+export function useIsMobile(): boolean | undefined {
+  const [isMobile, setIsMobile] = useState<boolean | undefined>(undefined)
 
-  React.useEffect(() => {
+  useEffect(() => {
     const mql = window.matchMedia(`(max-width: ${MOBILE_BREAKPOINT - 1}px)`)
     const onChange = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT)
@@ -15,5 +20,6 @@ export function useIsMobile() {
     return () => mql.removeEventListener("change", onChange)
   }, [])
 
-  return !!isMobile
+  // Return undefined during SSR, actual value after hydration
+  return isMobile
 }

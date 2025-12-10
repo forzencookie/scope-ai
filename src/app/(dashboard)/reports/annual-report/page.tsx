@@ -5,6 +5,7 @@ import {
     BreadcrumbPage,
     BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -21,8 +22,8 @@ const reportSections = [
 export default function AnnualReportPage() {
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -40,6 +41,7 @@ export default function AnnualReportPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
             <div className="flex-1 flex flex-col bg-background">
                 {/* Action Buttons Bar */}
@@ -86,11 +88,11 @@ export default function AnnualReportPage() {
                     </div>
 
                     {/* AI Notice */}
-                    <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 flex items-start gap-3">
-                        <Sparkles className="h-5 w-5 text-blue-600 mt-0.5" />
+                    <div className="border border-border/50 rounded-lg p-4 flex items-start gap-3">
+                        <Sparkles className="h-5 w-5 text-muted-foreground mt-0.5" />
                         <div>
-                            <p className="text-sm font-medium text-blue-900">AI-genererad årsredovisning</p>
-                            <p className="text-sm text-blue-700 mt-1">Låt vår AI skapa en komplett årsredovisning enligt K2-regelverket baserat på din bokföring. Alla siffror hämtas automatiskt.</p>
+                            <p className="text-sm font-medium">AI-genererad årsredovisning</p>
+                            <p className="text-sm text-muted-foreground mt-1">Låt vår AI skapa en komplett årsredovisning enligt K2-regelverket baserat på din bokföring. Alla siffror hämtas automatiskt.</p>
                         </div>
                     </div>
 

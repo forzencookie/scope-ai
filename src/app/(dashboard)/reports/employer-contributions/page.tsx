@@ -4,10 +4,11 @@ import {
     BreadcrumbList,
     BreadcrumbPage, BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Search, Settings, CheckCircle2, Clock, Download, Users } from "lucide-react"
+import { Search, Settings, CheckCircle2, Clock, Download, Users, Calendar, Banknote, Wallet } from "lucide-react"
 
 const contributionPeriods = [
     { month: "December 2024", dueDate: "12 jan 2025", status: "upcoming", grossSalary: 85000, contributions: 26690, employees: 2 },
@@ -20,8 +21,8 @@ const contributionPeriods = [
 export default function EmployerContributionsPage() {
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -39,6 +40,7 @@ export default function EmployerContributionsPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
             <div className="flex-1 flex flex-col bg-background">
                 {/* Action Buttons Bar */}
@@ -86,14 +88,14 @@ export default function EmployerContributionsPage() {
                             <h2 className="font-medium">Arbetsgivaravgifter per månad</h2>
                         </div>
                         <table className="w-full text-sm">
-                            <thead>
+                            <thead className="bg-muted/50">
                                 <tr className="border-b border-border/40 text-left text-muted-foreground">
-                                    <th className="px-4 py-3 font-medium">Månad</th>
-                                    <th className="px-4 py-3 font-medium">Deadline</th>
-                                    <th className="px-4 py-3 font-medium">Bruttolön</th>
-                                    <th className="px-4 py-3 font-medium">Anställda</th>
-                                    <th className="px-4 py-3 font-medium">Avgift att betala</th>
-                                    <th className="px-4 py-3 font-medium">Status</th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Calendar className="h-3.5 w-3.5" />Månad</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Clock className="h-3.5 w-3.5" />Deadline</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Banknote className="h-3.5 w-3.5" />Bruttolön</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Users className="h-3.5 w-3.5" />Anställda</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><Wallet className="h-3.5 w-3.5" />Avgift att betala</span></th>
+                                    <th className="px-4 py-3 font-medium"><span className="flex items-center gap-2"><CheckCircle2 className="h-3.5 w-3.5" />Status</span></th>
                                     <th className="px-4 py-3 font-medium"></th>
                                 </tr>
                             </thead>

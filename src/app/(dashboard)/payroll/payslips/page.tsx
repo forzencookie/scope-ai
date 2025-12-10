@@ -4,6 +4,7 @@ import {
     BreadcrumbList,
     BreadcrumbPage, BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -22,8 +23,8 @@ const payslips = [
 export default function PayslipsPage() {
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -41,6 +42,7 @@ export default function PayslipsPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
             <div className="flex-1 flex flex-col bg-background">
                 {/* Action Buttons Bar */}
@@ -80,26 +82,26 @@ export default function PayslipsPage() {
                     </div>
 
                     {/* Payslips Table */}
-                    <div className="w-full overflow-hidden">
+                    <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
                         <div className="px-4 py-3 border-b border-border/40">
                             <h2 className="font-medium">Lönespecifikationer</h2>
                         </div>
                         <TableShell
                             header={
-                                <tr className="border-b border-border/50 transition-colors hover:bg-muted/50 text-left text-muted-foreground">
+                                <tr className="border-b border-border/40 text-left text-muted-foreground">
                                     <HeaderCell label="Anställd" icon={<User className="h-3.5 w-3.5" />} minWidth="min-w-[200px]" />
                                     <HeaderCell label="Period" icon={<Calendar className="h-3.5 w-3.5" />} minWidth="min-w-[140px]" />
                                     <HeaderCell label="Bruttolön" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
                                     <HeaderCell label="Skatt" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
                                     <HeaderCell label="Nettolön" icon={<Wallet className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                                    <HeaderCell label="Status" icon={<Clock className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
+                                    <HeaderCell label="Status" icon={<CheckCircle2 className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
                                     <HeaderCell label="Åtgärder" icon={<Download className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" align="right" />
                                 </tr>
                             }
                         >
                             {payslips.map((slip) => (
-                                <tr key={slip.id} className="h-[36px] border-b border-border/50 transition-colors hover:bg-muted/30">
-                                    <td className="px-2 py-0.5">
+                                <tr key={slip.id} className="border-b border-border/40 hover:bg-muted/30">
+                                    <td className="px-4 py-3">
                                         <div className="flex items-center gap-2">
                                             <div className="h-8 w-8 rounded-full bg-muted flex items-center justify-center">
                                                 <User className="h-4 w-4 text-muted-foreground" />
@@ -107,11 +109,11 @@ export default function PayslipsPage() {
                                             <span className="font-medium">{slip.employee}</span>
                                         </div>
                                     </td>
-                                    <td className="px-2 py-0.5 text-muted-foreground">{slip.period}</td>
-                                    <td className="px-2 py-0.5 text-right"><AmountText value={slip.grossSalary} /></td>
-                                    <td className="px-2 py-0.5 text-right text-red-600">-{slip.tax.toLocaleString()} kr</td>
-                                    <td className="px-2 py-0.5 text-right font-medium"><AmountText value={slip.netSalary} /></td>
-                                    <td className="px-2 py-0.5">
+                                    <td className="px-4 py-3 text-muted-foreground">{slip.period}</td>
+                                    <td className="px-4 py-3 text-right"><AmountText value={slip.grossSalary} /></td>
+                                    <td className="px-4 py-3 text-right text-red-600">-{slip.tax.toLocaleString()} kr</td>
+                                    <td className="px-4 py-3 text-right font-medium"><AmountText value={slip.netSalary} /></td>
+                                    <td className="px-4 py-3">
                                         {slip.status === "pending" ? (
                                             <span className="inline-flex items-center gap-1.5 text-amber-600">
                                                 <Clock className="h-3.5 w-3.5" />
@@ -124,7 +126,7 @@ export default function PayslipsPage() {
                                             </span>
                                         )}
                                     </td>
-                                    <td className="px-2 py-0.5 text-right">
+                                    <td className="px-4 py-3 text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <button className="p-1.5 text-muted-foreground hover:text-foreground transition-colors">
                                                 <Download className="h-4 w-4" />

@@ -137,7 +137,6 @@ export default function VerifikationerPage() {
         { label: "Belopp", icon: <Banknote className="h-3.5 w-3.5" />, minWidth: "min-w-[130px]", align: "right" as const },
         { label: "Transaktion", icon: <Link2 className="h-3.5 w-3.5" />, minWidth: "min-w-[110px]", align: "center" as const },
         { label: "Underlag", icon: <Paperclip className="h-3.5 w-3.5" />, minWidth: "min-w-[110px]", align: "center" as const },
-        { label: "Klarmarkera", icon: <CheckCircle2 className="h-3.5 w-3.5" />, minWidth: "min-w-[60px]" },
     ]
 
     return (
@@ -245,9 +244,10 @@ export default function VerifikationerPage() {
 
                 {/* Table View */}
                 {view === "table" && (
+                    <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
                     <TableShell
                         header={
-                            <tr className="border-b border-border/50 transition-colors hover:bg-muted/50">
+                            <tr className="border-b border-border/40 text-left text-muted-foreground">
                                 {tableHeaders.map((h) => (
                                     <HeaderCell key={h.label} {...h} />
                                 ))}
@@ -257,43 +257,45 @@ export default function VerifikationerPage() {
                         {verifikationer.map((v) => (
                             <tr
                                 key={v.id}
-                                className="h-[36px] border-b border-border/50 transition-colors hover:bg-muted/30 group"
+                                className="border-b border-border/40 hover:bg-muted/30 group"
                             >
-                                <td className="px-2 py-0.5 align-middle font-mono text-muted-foreground">
+                                <td className="px-4 py-3 font-mono text-muted-foreground">
                                     {v.id}
                                 </td>
-                                <td className="px-2 py-0.5 align-middle text-muted-foreground">
+                                <td className="px-4 py-3 text-muted-foreground">
                                     {v.date}
                                 </td>
-                                <td className="px-2 py-0.5 align-middle font-mono text-muted-foreground">
+                                <td className="px-4 py-3 font-mono text-muted-foreground">
                                     {v.konto}
                                 </td>
-                                <td className="px-2 py-0.5 align-middle">
+                                <td className="px-4 py-3">
                                     <CategoryBadge>{kontoLookup[v.konto]?.name ?? "Kategori saknas"}</CategoryBadge>
                                 </td>
-                                <td className="px-2 py-0.5 align-middle text-right font-medium">
+                                <td className="px-4 py-3 text-right font-medium">
                                     <AmountText value={v.amount} />
                                 </td>
-                                <td className="px-2 py-0.5 align-middle text-center">
+                                <td className="px-4 py-3 text-center">
                                     <RowCheckbox checked={v.hasTransaction} />
                                 </td>
-                                <td className="px-2 py-0.5 align-middle text-center">
+                                <td className="px-4 py-3 text-center">
                                     <RowCheckbox checked={v.hasUnderlag} />
                                 </td>
-                                <td className="px-2 py-0.5 align-middle leading-none">
+                                <td className="px-4 py-3">
                                     <RowCheckbox showOnHover />
                                 </td>
                             </tr>
                         ))}
                     </TableShell>
+                    </div>
                 )}
 
                 {/* Kontoplan View */}
                 {view === "kontoplan" && (
+                    <div className="bg-card border border-border/40 rounded-lg overflow-hidden">
                     <TableShell
                         header={
                             selectedKonto ? (
-                                <tr className="border-b border-border/50 transition-colors hover:bg-muted/50">
+                                <tr className="border-b border-border/40 text-left text-muted-foreground">
                                     <HeaderCell label="Nr" icon={<Hash className="h-3.5 w-3.5" />} minWidth="min-w-[70px]" />
                                     <HeaderCell label="Datum" icon={<Calendar className="h-3.5 w-3.5" />} minWidth="min-w-[140px]" />
                                     <HeaderCell label="Konto" icon={<FolderTree className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" />
@@ -301,10 +303,9 @@ export default function VerifikationerPage() {
                                     <HeaderCell label="Belopp" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" align="right" />
                                     <HeaderCell label="Transaktion" icon={<Link2 className="h-3.5 w-3.5" />} minWidth="min-w-[110px]" align="center" />
                                     <HeaderCell label="Underlag" icon={<Paperclip className="h-3.5 w-3.5" />} minWidth="min-w-[110px]" align="center" />
-                                    <HeaderCell label="Klarmarkera" icon={<CheckCircle2 className="h-3.5 w-3.5" />} minWidth="min-w-[60px]" />
                                 </tr>
                             ) : (
-                                <tr className="border-b border-border/50 transition-colors hover:bg-muted/50">
+                                <tr className="border-b border-border/40 text-left text-muted-foreground">
                                     <HeaderCell label="Konto" icon={<FolderTree className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" />
                                     <HeaderCell label="Kategori" icon={<Tag className="h-3.5 w-3.5" />} minWidth="min-w-[140px]" />
                                     <HeaderCell label="Typ" icon={<Calendar className="h-3.5 w-3.5" />} minWidth="min-w-[140px]" />
@@ -320,38 +321,34 @@ export default function VerifikationerPage() {
                                 {filteredVerifikationer.map((v) => (
                                     <tr
                                         key={v.id}
-                                        className="h-[36px] border-b border-border/50 transition-colors hover:bg-muted/30 group"
+                                        className="border-b border-border/40 hover:bg-muted/30 group"
                                     >
-                                        <td className="px-2 py-0.5 align-middle font-mono text-muted-foreground">{v.id}</td>
-                                        <td className="px-2 py-0.5 align-middle text-muted-foreground">{v.date}</td>
-                                        <td className="px-2 py-0.5 align-middle font-mono text-muted-foreground">{v.konto}</td>
-                                        <td className="px-2 py-0.5 align-middle">
+                                        <td className="px-4 py-3 font-mono text-muted-foreground">{v.id}</td>
+                                        <td className="px-4 py-3 text-muted-foreground">{v.date}</td>
+                                        <td className="px-4 py-3 font-mono text-muted-foreground">{v.konto}</td>
+                                        <td className="px-4 py-3">
                                             <CategoryBadge>{kontoLookup[v.konto]?.name ?? "Kategori saknas"}</CategoryBadge>
                                         </td>
-                                        <td className="px-2 py-0.5 align-middle text-right font-medium">
+                                        <td className="px-4 py-3 text-right font-medium">
                                             <AmountText value={v.amount} />
                                         </td>
-                                        <td className="px-2 py-0.5 align-middle text-center">
+                                        <td className="px-4 py-3 text-center">
                                             <RowCheckbox checked={v.hasTransaction} />
                                         </td>
-                                        <td className="px-2 py-0.5 align-middle text-center">
+                                        <td className="px-4 py-3 text-center">
                                             <RowCheckbox checked={v.hasUnderlag} />
-                                        </td>
-                                        <td className="px-2 py-0.5 align-middle leading-none">
-                                            <RowCheckbox showOnHover />
                                         </td>
                                     </tr>
                                 ))}
-                                <tr className="bg-muted/30 border-t border-border/50">
-                                    <td colSpan={4} className="h-10 px-2 align-middle font-medium text-muted-foreground text-right">
+                                <tr className="bg-muted/30 border-t border-border/40">
+                                    <td colSpan={4} className="px-4 py-3 font-medium text-muted-foreground text-right">
                                         Summa {selectedKontoData?.name}
                                     </td>
-                                    <td className="h-10 px-2 align-middle text-right font-bold">
+                                    <td className="px-4 py-3 text-right font-bold">
                                         <AmountText value={filteredVerifikationer.reduce((sum, v) => sum + v.amount, 0)} />
                                     </td>
                                     <td className="text-center"></td>
                                     <td className="text-center"></td>
-                                    <td></td>
                                 </tr>
                             </>
                         ) : (
@@ -359,22 +356,23 @@ export default function VerifikationerPage() {
                                 <tr
                                     key={k.konto}
                                     onClick={() => setSelectedKonto(k.konto)}
-                                    className="h-[36px] border-b border-border/50 transition-colors hover:bg-muted/30 cursor-pointer"
+                                    className="border-b border-border/40 hover:bg-muted/30 cursor-pointer"
                                 >
-                                    <td className="px-2 py-0.5 align-middle font-mono text-muted-foreground">{k.konto}</td>
-                                    <td className="px-2 py-0.5 align-middle">
+                                    <td className="px-4 py-3 font-mono text-muted-foreground">{k.konto}</td>
+                                    <td className="px-4 py-3">
                                         <CategoryBadge>{k.name}</CategoryBadge>
                                     </td>
-                                    <td className="px-2 py-0.5 align-middle text-muted-foreground">{k.type}</td>
-                                    <td className="px-2 py-0.5 align-middle text-right font-medium">
+                                    <td className="px-4 py-3 text-muted-foreground">{k.type}</td>
+                                    <td className="px-4 py-3 text-right font-medium">
                                         <AmountText value={k.total} />
                                     </td>
-                                    <td className="px-2 py-0.5 align-middle text-center text-muted-foreground">{k.verifikationer.length} st</td>
-                                    <td className="px-2 py-0.5 align-middle text-center text-muted-foreground">→</td>
+                                    <td className="px-4 py-3 text-center text-muted-foreground">{k.verifikationer.length} st</td>
+                                    <td className="px-4 py-3 text-center text-muted-foreground">→</td>
                                 </tr>
                             ))
                         )}
                     </TableShell>
+                    </div>
                 )}
             </div>
         </div>

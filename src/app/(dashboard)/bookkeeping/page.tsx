@@ -1,3 +1,4 @@
+import { Suspense, lazy } from "react"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -5,17 +6,36 @@ import {
     BreadcrumbPage, 
     BreadcrumbLink,
     BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Skeleton } from "@/components/ui/skeleton"
 
-import { ReceiptsTable } from "@/components/receipts-table"
+// Lazy load the table component for code splitting
+const ReceiptsTable = lazy(() => import("@/components/receipts-table").then(mod => ({ default: mod.ReceiptsTable })))
+
+function TableSkeleton() {
+    return (
+        <div className="flex flex-col gap-4 w-full">
+            <div className="flex items-center justify-between">
+                <Skeleton className="h-8 w-48" />
+                <Skeleton className="h-8 w-32" />
+            </div>
+            <div className="space-y-2">
+                {Array.from({ length: 5 }).map((_, i) => (
+                    <Skeleton key={i} className="h-12 w-full" />
+                ))}
+            </div>
+        </div>
+    )
+}
 
 export default function BookkeepingPage() {
     return (
         <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -33,6 +53,7 @@ export default function BookkeepingPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
             <div className="flex-1 flex flex-col bg-background">
                 {/* Action Buttons Bar - Navigation Only */}
@@ -41,7 +62,9 @@ export default function BookkeepingPage() {
 
                 {/* Page Content */}
                 <main className="flex-1 flex flex-col p-6 overflow-hidden">
-                    <ReceiptsTable />
+                    <Suspense fallback={<TableSkeleton />}>
+                        <ReceiptsTable />
+                    </Suspense>
                 </main>
             </div>
         </>
