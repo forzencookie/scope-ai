@@ -284,9 +284,9 @@ export function TransactionsTable({
                             <HeaderCell icon={<Building2 className="h-3.5 w-3.5" />} label="Leverantör" />
                             <HeaderCell icon={<Calendar className="h-3.5 w-3.5" />} label="Datum" />
                             <HeaderCell 
-                                icon={<Sparkles className="h-3.5 w-3.5 text-violet-500" />} 
+                                icon={<Sparkles className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400/70" />} 
                                 label="AI-kategorisering" 
-                                className="text-violet-600"
+                                className="text-violet-600 dark:text-violet-400/70"
                             />
                             <HeaderCell icon={<Banknote className="h-3.5 w-3.5" />} label="Belopp" />
                             <HeaderCell icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Status" />

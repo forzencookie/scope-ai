@@ -55,7 +55,7 @@ export function CategoryBadge({ children }: { children: React.ReactNode }) {
 export function AmountText({ value, suffix = " kr" }: { value: number; suffix?: string }) {
   const isPositive = value >= 0
   return (
-    <span className={cn("font-medium", isPositive && "text-green-600")}>{`${isPositive ? "+" : ""}${value.toLocaleString()}${suffix}`}</span>
+    <span className={cn("font-medium", isPositive && "text-green-600 dark:text-green-500/80")}>{`${isPositive ? "+" : ""}${value.toLocaleString()}${suffix}`}</span>
   )
 }
 

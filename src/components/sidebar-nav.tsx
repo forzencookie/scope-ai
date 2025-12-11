@@ -1,12 +1,15 @@
 "use client"
 
-import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Bell, ChevronsUpDown, CreditCard, LogOut, Sparkles, User } from "lucide-react"
+import * as React from "react"
+import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check } from "lucide-react"
+import { useTheme } from "next-themes"
 import Link from "next/link"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar"
+import { SettingsDialog } from "@/components/settings-dialog"
 
 // ============================================================================
 // NavMain - Main sidebar navigation with collapsible submenus
@@ -130,21 +133,30 @@ export function NavProjects({
 
 export function NavSettings({
   items,
+  onSettingsClick,
 }: {
   items: { title: string; url: string; icon?: LucideIcon }[]
+  onSettingsClick?: () => void
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>Inställningar</SidebarGroupLabel>
+      <SidebarGroupLabel>Mer</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => (
           <SidebarMenuItem key={item.title}>
-            <SidebarMenuButton asChild tooltip={item.title}>
-              <Link href={item.url}>
+            {item.title === "Inställningar" && onSettingsClick ? (
+              <SidebarMenuButton onClick={onSettingsClick} tooltip={item.title}>
                 {item.icon && <item.icon />}
                 <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
-              </Link>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            ) : (
+              <SidebarMenuButton asChild tooltip={item.title}>
+                <Link href={item.url}>
+                  {item.icon && <item.icon />}
+                  <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
+                </Link>
+              </SidebarMenuButton>
+            )}
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
@@ -162,8 +174,11 @@ export function NavUser({
   user: { name: string; email: string; avatar: string }
 }) {
   const { isMobile } = useSidebar()
+  const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const { theme, setTheme } = useTheme()
 
   return (
+    <>
     <SidebarMenu>
       <SidebarMenuItem>
         <DropdownMenu>
@@ -195,19 +210,44 @@ export function NavUser({
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem><Sparkles />Upgrade to Pro</DropdownMenuItem>
+              <DropdownMenuItem><Sparkles />Uppgradera till Pro</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem><BadgeCheck />Account</DropdownMenuItem>
-              <DropdownMenuItem><CreditCard />Billing</DropdownMenuItem>
-              <DropdownMenuItem><Bell />Notifications</DropdownMenuItem>
+              <DropdownMenuItem><BadgeCheck />Konto</DropdownMenuItem>
+              <DropdownMenuItem><CreditCard />Fakturering</DropdownMenuItem>
+              <DropdownMenuSub>
+                <DropdownMenuSubTrigger><Palette className="mr-2 h-4 w-4" />Utseende</DropdownMenuSubTrigger>
+                <DropdownMenuPortal>
+                  <DropdownMenuSubContent>
+                    <DropdownMenuItem onClick={() => setTheme("light")}>
+                      <Sun className="mr-2 h-4 w-4" />
+                      Ljus
+                      {theme === "light" && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setTheme("dark")}>
+                      <Moon className="mr-2 h-4 w-4" />
+                      Mörk
+                      {theme === "dark" && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => setTheme("system")}>
+                      <Monitor className="mr-2 h-4 w-4" />
+                      System
+                      {theme === "system" && <Check className="ml-auto h-4 w-4" />}
+                    </DropdownMenuItem>
+                  </DropdownMenuSubContent>
+                </DropdownMenuPortal>
+              </DropdownMenuSub>
+              <DropdownMenuItem onSelect={() => setSettingsOpen(true)}><Settings />Inställningar</DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem><LogOut />Log out</DropdownMenuItem>
+            <DropdownMenuItem><LogOut />Logga ut</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </SidebarMenuItem>
     </SidebarMenu>
+    <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+    </>
   )
 }

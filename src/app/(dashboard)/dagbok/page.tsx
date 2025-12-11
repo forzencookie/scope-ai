@@ -1,20 +1,21 @@
+"use client"
+
 import {
     Breadcrumb,
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbLink,
-    BreadcrumbSeparator,
+    BreadcrumbAIBadge,
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
-import { JournalCalendar } from "@/components/journal-calendar"
+import { LazyJournalCalendar } from "@/components/lazy-modules"
 
 export default function DagbokPage() {
     return (
-        <>
-            <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12">
-                <div className="flex items-center gap-2 px-4">
+        <div className="flex flex-col min-h-svh">
+            <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                <div className="flex items-center gap-2">
                     <SidebarTrigger className="-ml-1" />
                     <Separator
                         orientation="vertical"
@@ -28,12 +29,14 @@ export default function DagbokPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
+                <BreadcrumbAIBadge />
             </header>
-            <div className="flex-1 flex flex-col bg-background">
-                <div className="flex-1 overflow-auto px-4 pt-6">
-                    <JournalCalendar />
+
+            <main className="flex-1 p-6">
+                <div className="max-w-6xl w-full">
+                    <LazyJournalCalendar />
                 </div>
-            </div>
-        </>
+            </main>
+        </div>
     )
 }

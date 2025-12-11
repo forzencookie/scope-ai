@@ -15,6 +15,7 @@ import {
   Building2,
   Users,
   Puzzle,
+  Settings,
 } from "lucide-react"
 import type { User, Team, NavItem } from "@/types"
 
@@ -55,15 +56,10 @@ export const mockTeams: Team[] = [
 
 export const navPlatform: NavItem[] = [
   {
-    title: "Dashboard",
-    url: "/dashboard",
-    icon: Home,
-    isActive: true,
-  },
-  {
     title: "Inkorg",
     url: "/inbox",
     icon: Inbox,
+    isActive: true,
   },
   {
     title: "Uppgifter",
@@ -95,10 +91,6 @@ export const navEconomy: NavItem[] = [
       {
         title: "Transaktioner",
         url: "/accounting?tab=transaktioner",
-      },
-      {
-        title: "AI-matchning",
-        url: "/accounting?tab=ai-matchning",
       },
       {
         title: "Fakturor & Kvitton",
@@ -156,23 +148,13 @@ export const navEconomy: NavItem[] = [
 
 export const navSettings: NavItem[] = [
   {
+    title: "Inställningar",
+    url: "/settings",
+    icon: Settings,
+  },
+  {
     title: "Företagsstatistik",
     url: "/company-statistics",
     icon: PieChart,
-  },
-  {
-    title: "Företags information",
-    url: "/settings/company-info",
-    icon: Building2,
-  },
-  {
-    title: "Team och anställda",
-    url: "/settings/team",
-    icon: Users,
-  },
-  {
-    title: "Integrationer",
-    url: "/settings/integrations",
-    icon: Puzzle,
   },
 ]

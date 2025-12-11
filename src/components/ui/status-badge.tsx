@@ -42,10 +42,10 @@ export interface StatusBadgeProps {
 }
 
 const variantConfig: Record<StatusVariant, { color: string; bgColor: string; defaultIcon: LucideIcon; srLabel: string }> = {
-    success: { color: "text-green-700 dark:text-green-400", bgColor: "bg-green-100 dark:bg-green-900/30", defaultIcon: CheckCircle2, srLabel: "Slutförd" },
-    warning: { color: "text-amber-700 dark:text-amber-400", bgColor: "bg-amber-100 dark:bg-amber-900/30", defaultIcon: Clock, srLabel: "Väntar" },
-    error: { color: "text-red-700 dark:text-red-400", bgColor: "bg-red-100 dark:bg-red-900/30", defaultIcon: AlertCircle, srLabel: "Fel" },
-    info: { color: "text-blue-700 dark:text-blue-400", bgColor: "bg-blue-100 dark:bg-blue-900/30", defaultIcon: AlertCircle, srLabel: "Information" },
+    success: { color: "text-green-700 dark:text-green-500/70", bgColor: "bg-green-100 dark:bg-green-900/20", defaultIcon: CheckCircle2, srLabel: "Slutförd" },
+    warning: { color: "text-amber-700 dark:text-amber-500/70", bgColor: "bg-amber-100 dark:bg-amber-900/20", defaultIcon: Clock, srLabel: "Väntar" },
+    error: { color: "text-red-700 dark:text-red-500/70", bgColor: "bg-red-100 dark:bg-red-900/20", defaultIcon: AlertCircle, srLabel: "Fel" },
+    info: { color: "text-blue-700 dark:text-blue-500/70", bgColor: "bg-blue-100 dark:bg-blue-900/20", defaultIcon: AlertCircle, srLabel: "Information" },
     neutral: { color: "text-muted-foreground", bgColor: "bg-muted/50", defaultIcon: Clock, srLabel: "Neutral" },
 }
 

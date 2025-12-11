@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { LucideIcon } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 
 export interface SectionCardProps {
     /** Optional icon to display */
@@ -18,7 +18,7 @@ export interface SectionCardProps {
     /** Additional className */
     className?: string
     /** Card variant */
-    variant?: "default" | "highlight" | "info"
+    variant?: "default" | "highlight" | "info" | "ai"
 }
 
 export function SectionCard({
@@ -33,10 +33,11 @@ export function SectionCard({
     return (
         <div
             className={cn(
-                "border rounded-lg p-4",
-                variant === "default" && "border-border/50",
-                variant === "highlight" && "border-primary/30 bg-primary/5",
-                variant === "info" && "border-border/50 bg-muted/30",
+                "rounded-lg p-4",
+                variant === "default" && "border-2 border-border/60",
+                variant === "highlight" && "border-2 border-primary/30 bg-primary/5",
+                variant === "info" && "border-2 border-border/60 bg-muted/30",
+                variant === "ai" && "bg-[oklch(0.98_0.01_290)] dark:bg-[oklch(0.18_0.02_290)] border-0",
                 className
             )}
         >
@@ -44,11 +45,13 @@ export function SectionCard({
                 {Icon && (
                     <Icon className={cn(
                         "h-5 w-5 mt-0.5 shrink-0",
-                        variant === "highlight" ? "text-primary" : "text-muted-foreground"
+                        variant === "highlight" && "text-primary",
+                        variant === "ai" && "text-purple-600 dark:text-purple-500",
+                        variant !== "highlight" && variant !== "ai" && "text-muted-foreground"
                     )} />
                 )}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center justify-between gap-4">
                         <div>
                             <p className="text-sm font-medium">{title}</p>
                             {description && (

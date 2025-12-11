@@ -201,7 +201,7 @@ export function VerifikationerTable() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Belopp</p>
-                                    <p className={`font-medium ${selectedVerifikation.amount >= 0 ? "text-green-600" : ""}`}>
+                                    <p className={`font-medium ${selectedVerifikation.amount >= 0 ? "text-green-600 dark:text-green-500/70" : ""}`}>
                                         {selectedVerifikation.amount.toLocaleString('sv-SE')} kr
                                     </p>
                                 </div>

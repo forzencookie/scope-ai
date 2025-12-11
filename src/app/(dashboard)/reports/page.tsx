@@ -17,6 +17,14 @@ import {
     TooltipTrigger, 
     TooltipProvider 
 } from "@/components/ui/tooltip"
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogHeader,
+    DialogTitle,
+} from "@/components/ui/dialog"
+import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { 
@@ -31,10 +39,11 @@ import {
     Clock, 
     Download, 
     Send, 
-    Sparkles,
+    Bot,
     ArrowUpRight,
     ArrowDownRight,
     Users,
+    User,
     TrendingUp,
     Wallet,
     Shield,
@@ -72,8 +81,8 @@ const termExplanations: Record<string, string> = {
 
 // Tab configuration
 const tabs = [
-    { id: "momsdeklaration", label: "Momsdeklaration", icon: FileText },
-    { id: "inkomstdeklaration", label: "Inkomstdeklaration", icon: FileText },
+    { id: "momsdeklaration", label: "Momsdeklaration", icon: Calculator },
+    { id: "inkomstdeklaration", label: "Inkomstdeklaration", icon: Send },
     { id: "arsredovisning", label: "Årsredovisning", icon: FileBarChart },
 ]
 
@@ -170,6 +179,37 @@ function getTabInfo(tabId: string) {
 
 // Momsdeklaration content
 function MomsdeklarationContent() {
+    const [showAIDialog, setShowAIDialog] = useState(false)
+    const [step, setStep] = useState(1)
+    const [chatInput, setChatInput] = useState("")
+    const [chatMessages, setChatMessages] = useState<Array<{role: "user" | "ai", text: string}>>([])
+    const [useAIRecommendation, setUseAIRecommendation] = useState(true)
+    
+    const resetDialog = () => {
+        setStep(1)
+        setChatInput("")
+        setChatMessages([])
+        setUseAIRecommendation(true)
+        setShowAIDialog(false)
+    }
+    
+    const handleSendMessage = () => {
+        if (!chatInput.trim()) return
+        const userMsg = chatInput.trim()
+        setChatMessages(prev => [...prev, { role: "user", text: userMsg }])
+        setChatInput("")
+        
+        setTimeout(() => {
+            let response = "Jag har noterat det. Finns det något mer som påverkar momsdeklarationen?"
+            if (userMsg.toLowerCase().includes("export") || userMsg.toLowerCase().includes("eu")) {
+                response = "Förstått! Jag har justerat för EU-försäljning/export med 0% moms."
+            } else if (userMsg.toLowerCase().includes("fel") || userMsg.toLowerCase().includes("korrigera")) {
+                response = "Jag har noterat korrigeringen. Den kommer att inkluderas i beräkningen."
+            }
+            setChatMessages(prev => [...prev, { role: "ai", text: response }])
+        }, 500)
+    }
+    
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
@@ -196,6 +236,226 @@ function MomsdeklarationContent() {
                     tooltip={termExplanations["Ingående moms"]}
                 />
             </StatCardGrid>
+
+            <SectionCard
+                icon={Bot}
+                title="AI-momsdeklaration"
+                description="Beräknas automatiskt från bokföringens momskonton (2610, 2640)."
+                variant="ai"
+                action={
+                    <button 
+                        onClick={() => setShowAIDialog(true)}
+                        className="px-4 py-2 rounded-lg font-medium bg-white dark:bg-purple-900/60 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-800/50 transition-colors text-sm"
+                    >
+                        Generera
+                    </button>
+                }
+            />
+
+            {/* AI Moms Wizard Dialog */}
+            <Dialog open={showAIDialog} onOpenChange={(open) => !open && resetDialog()}>
+                <DialogContent className="sm:max-w-lg">
+                    {/* Step indicator */}
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        {[1, 2, 3].map((s) => (
+                            <div key={s} className="flex items-center gap-2">
+                                <div className={cn(
+                                    "h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium",
+                                    step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                                )}>
+                                    {s}
+                                </div>
+                                {s < 3 && <div className={cn("w-8 h-0.5", step > s ? "bg-primary" : "bg-muted")} />}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Step 1: Confirm Period */}
+                    {step === 1 && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Välj momsperiod</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3 py-4">
+                                <button
+                                    className="w-full p-4 rounded-lg border-2 border-primary bg-primary/5 text-left"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <Calendar className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-medium">Q4 2024</p>
+                                            <p className="text-sm text-muted-foreground">Oktober - December 2024</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-muted-foreground">Deadline</p>
+                                            <p className="font-medium">12 feb 2025</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground">
+                                    <p>📊 Baserat på bokföringen:</p>
+                                    <div className="mt-2 space-y-1">
+                                        <div className="flex justify-between">
+                                            <span>Utgående moms (konto 2610)</span>
+                                            <span className="font-medium text-foreground">125 000 kr</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Ingående moms (konto 2640)</span>
+                                            <span className="font-medium text-foreground">45 000 kr</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1" onClick={resetDialog}>
+                                    Avbryt
+                                </Button>
+                                <Button className="flex-1" onClick={() => setStep(2)}>
+                                    Nästa
+                                </Button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Step 2: AI Chat */}
+                    {step === 2 && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Bot className="h-5 w-5 text-purple-600" />
+                                    Finns det något speciellt?
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="bg-muted/30 rounded-lg p-4 min-h-[200px] max-h-[280px] overflow-y-auto space-y-3">
+                                    <div className="flex gap-2">
+                                        <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center flex-shrink-0">
+                                            <Bot className="h-4 w-4 text-purple-600" />
+                                        </div>
+                                        <div className="bg-white dark:bg-background rounded-lg p-3 text-sm max-w-[85%]">
+                                            <p>Finns det något speciellt som påverkar momsen för Q4?</p>
+                                            <p className="text-muted-foreground mt-1 text-xs">T.ex. EU-försäljning, korrigeringar, export</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {chatMessages.map((msg, i) => (
+                                        <div key={i} className={cn("flex gap-2", msg.role === "user" && "justify-end")}>
+                                            {msg.role === "ai" && (
+                                                <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center flex-shrink-0">
+                                                    <Bot className="h-4 w-4 text-purple-600" />
+                                                </div>
+                                            )}
+                                            <div className={cn(
+                                                "rounded-lg p-3 text-sm max-w-[85%]",
+                                                msg.role === "user" 
+                                                    ? "bg-primary text-primary-foreground" 
+                                                    : "bg-white dark:bg-background"
+                                            )}>
+                                                {msg.text}
+                                            </div>
+                                            {msg.role === "user" && (
+                                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                                    <User className="h-4 w-4 text-primary" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                        placeholder="Skriv här..."
+                                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                    />
+                                    <Button size="icon" onClick={handleSendMessage} disabled={!chatInput.trim()}>
+                                        <Send className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                                    Tillbaka
+                                </Button>
+                                <Button className="flex-1" onClick={() => setStep(3)}>
+                                    Klar, visa förslag
+                                </Button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Step 3: Confirmation */}
+                    {step === 3 && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Bekräfta momsdeklaration</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className={cn(
+                                    "rounded-lg p-5 space-y-5 border-2 transition-colors",
+                                    useAIRecommendation 
+                                        ? "bg-muted/40 border-foreground" 
+                                        : "bg-muted/30 border-border"
+                                )}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <FileText className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-medium">Momsdeklaration Q4 2024</p>
+                                            <p className="text-sm text-muted-foreground">Oktober - December</p>
+                                        </div>
+                                        {useAIRecommendation && (
+                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-medium">
+                                                <Bot className="h-3 w-3" strokeWidth={2.5} />
+                                                AI-förslag
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="border-t pt-3 space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Utgående moms</span>
+                                            <span>125 000 kr</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Ingående moms</span>
+                                            <span className="text-green-600 dark:text-green-500/70">-45 000 kr</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="border-t pt-3">
+                                        <div className="flex justify-between items-baseline">
+                                            <span className="font-medium">Moms att betala</span>
+                                            <span className="text-2xl font-bold">80 000 kr</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    onClick={() => setUseAIRecommendation(!useAIRecommendation)}
+                                    className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-2"
+                                >
+                                    {useAIRecommendation ? "Vill du redigera manuellt?" : "Använd AI-förslag"}
+                                </button>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                                    Tillbaka
+                                </Button>
+                                <Button className="flex-1" onClick={resetDialog}>
+                                    Bekräfta
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <DataTable title="Momsperioder">
                 <DataTableHeader>
@@ -224,9 +484,11 @@ function MomsdeklarationContent() {
                             <DataTableCell>
                                 <IconButtonGroup>
                                     <IconButton icon={Download} tooltip="Ladda ner" />
-                                    {item.status === "upcoming" && (
-                                        <IconButton icon={Send} tooltip="Skicka" />
-                                    )}
+                                    <IconButton 
+                                        icon={Send} 
+                                        tooltip={item.status === "upcoming" ? "Skicka" : "Redan inskickad"} 
+                                        disabled={item.status !== "upcoming"}
+                                    />
                                 </IconButtonGroup>
                             </DataTableCell>
                         </DataTableRow>
@@ -240,6 +502,37 @@ function MomsdeklarationContent() {
 
 // Inkomstdeklaration content
 function InkomstdeklarationContent() {
+    const [showAIDialog, setShowAIDialog] = useState(false)
+    const [step, setStep] = useState(1)
+    const [chatInput, setChatInput] = useState("")
+    const [chatMessages, setChatMessages] = useState<Array<{role: "user" | "ai", text: string}>>([])
+    const [useAIRecommendation, setUseAIRecommendation] = useState(true)
+    
+    const resetDialog = () => {
+        setStep(1)
+        setChatInput("")
+        setChatMessages([])
+        setUseAIRecommendation(true)
+        setShowAIDialog(false)
+    }
+    
+    const handleSendMessage = () => {
+        if (!chatInput.trim()) return
+        const userMsg = chatInput.trim()
+        setChatMessages(prev => [...prev, { role: "user", text: userMsg }])
+        setChatInput("")
+        
+        setTimeout(() => {
+            let response = "Jag har noterat det. Finns det något mer som påverkar deklarationen?"
+            if (userMsg.toLowerCase().includes("avskrivning") || userMsg.toLowerCase().includes("inventarier")) {
+                response = "Förstått! Jag har justerat avskrivningar enligt bokföringen."
+            } else if (userMsg.toLowerCase().includes("underskott") || userMsg.toLowerCase().includes("förlust")) {
+                response = "Noterat! Underskottet kommer att rullas framåt enligt reglerna."
+            }
+            setChatMessages(prev => [...prev, { role: "ai", text: response }])
+        }, 500)
+    }
+    
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
@@ -264,13 +557,246 @@ function InkomstdeklarationContent() {
                     />
                 </StatCardGrid>
 
+                <SectionCard
+                    icon={Bot}
+                    title="AI-inkomstdeklaration"
+                    description="INK2-fälten genereras automatiskt från bokföringen."
+                    variant="ai"
+                    action={
+                        <button 
+                            onClick={() => setShowAIDialog(true)}
+                            className="px-4 py-2 rounded-lg font-medium bg-white dark:bg-purple-900/60 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-800/50 transition-colors text-sm"
+                        >
+                            Generera
+                        </button>
+                    }
+                />
+
+                {/* AI INK2 Wizard Dialog */}
+                <Dialog open={showAIDialog} onOpenChange={(open) => !open && resetDialog()}>
+                    <DialogContent className="sm:max-w-lg">
+                        {/* Step indicator */}
+                        <div className="flex items-center justify-center gap-2 mb-2">
+                            {[1, 2, 3].map((s) => (
+                                <div key={s} className="flex items-center gap-2">
+                                    <div className={cn(
+                                        "h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium",
+                                        step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                                    )}>
+                                        {s}
+                                    </div>
+                                    {s < 3 && <div className={cn("w-8 h-0.5", step > s ? "bg-primary" : "bg-muted")} />}
+                                </div>
+                            ))}
+                        </div>
+
+                        {/* Step 1: Confirm Year */}
+                        {step === 1 && (
+                            <>
+                                <DialogHeader>
+                                    <DialogTitle>Välj beskattningsår</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-3 py-4">
+                                    <button
+                                        className="w-full p-4 rounded-lg border-2 border-primary bg-primary/5 text-left"
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <Calendar className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">Inkomstår 2024</p>
+                                                <p className="text-sm text-muted-foreground">INK2 - Aktiebolag</p>
+                                            </div>
+                                            <div className="text-right">
+                                                <p className="text-sm text-muted-foreground">Deadline</p>
+                                                <p className="font-medium">1 jul 2025</p>
+                                            </div>
+                                        </div>
+                                    </button>
+                                    <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground">
+                                        <p>📊 Baserat på bokföringen:</p>
+                                        <div className="mt-2 space-y-1">
+                                            <div className="flex justify-between">
+                                                <span>Rörelseintäkter</span>
+                                                <span className="font-medium text-foreground">1 420 000 kr</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Rörelsekostnader</span>
+                                                <span className="font-medium text-foreground">-1 041 000 kr</span>
+                                            </div>
+                                            <div className="flex justify-between border-t pt-1 mt-1">
+                                                <span>Bokfört resultat</span>
+                                                <span className="font-medium text-foreground">379 000 kr</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button variant="outline" className="flex-1" onClick={resetDialog}>
+                                        Avbryt
+                                    </Button>
+                                    <Button className="flex-1" onClick={() => setStep(2)}>
+                                        Nästa
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Step 2: AI Chat */}
+                        {step === 2 && (
+                            <>
+                                <DialogHeader>
+                                    <DialogTitle className="flex items-center gap-2">
+                                        <Bot className="h-5 w-5 text-purple-600" />
+                                        Finns det något speciellt?
+                                    </DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className="bg-muted/30 rounded-lg p-4 min-h-[200px] max-h-[280px] overflow-y-auto space-y-3">
+                                        <div className="flex gap-2">
+                                            <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center flex-shrink-0">
+                                                <Bot className="h-4 w-4 text-purple-600" />
+                                            </div>
+                                            <div className="bg-white dark:bg-background rounded-lg p-3 text-sm max-w-[85%]">
+                                                <p>Finns det något speciellt som påverkar inkomstdeklarationen?</p>
+                                                <p className="text-muted-foreground mt-1 text-xs">T.ex. skattemässiga justeringar, underskott att rulla, särskilda avdrag</p>
+                                            </div>
+                                        </div>
+                                        
+                                        {chatMessages.map((msg, i) => (
+                                            <div key={i} className={cn("flex gap-2", msg.role === "user" && "justify-end")}>
+                                                {msg.role === "ai" && (
+                                                    <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center flex-shrink-0">
+                                                        <Bot className="h-4 w-4 text-purple-600" />
+                                                    </div>
+                                                )}
+                                                <div className={cn(
+                                                    "rounded-lg p-3 text-sm max-w-[85%]",
+                                                    msg.role === "user" 
+                                                        ? "bg-primary text-primary-foreground" 
+                                                        : "bg-white dark:bg-background"
+                                                )}>
+                                                    {msg.text}
+                                                </div>
+                                                {msg.role === "user" && (
+                                                    <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                                        <User className="h-4 w-4 text-primary" />
+                                                    </div>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                    
+                                    <div className="flex gap-2">
+                                        <input
+                                            type="text"
+                                            value={chatInput}
+                                            onChange={(e) => setChatInput(e.target.value)}
+                                            onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                            placeholder="Skriv här..."
+                                            className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                        />
+                                        <Button size="icon" onClick={handleSendMessage} disabled={!chatInput.trim()}>
+                                            <Send className="h-4 w-4" />
+                                        </Button>
+                                    </div>
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                                        Tillbaka
+                                    </Button>
+                                    <Button className="flex-1" onClick={() => setStep(3)}>
+                                        Klar, visa förslag
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+
+                        {/* Step 3: Confirmation */}
+                        {step === 3 && (
+                            <>
+                                <DialogHeader>
+                                    <DialogTitle>Bekräfta inkomstdeklaration</DialogTitle>
+                                </DialogHeader>
+                                <div className="space-y-4 py-4">
+                                    <div className={cn(
+                                        "rounded-lg p-5 space-y-5 border-2 transition-colors",
+                                        useAIRecommendation 
+                                            ? "bg-muted/40 border-foreground" 
+                                            : "bg-muted/30 border-border"
+                                    )}>
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                                <FileText className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div className="flex-1">
+                                                <p className="font-medium">INK2 - Inkomstår 2024</p>
+                                                <p className="text-sm text-muted-foreground">Aktiebolag</p>
+                                            </div>
+                                            {useAIRecommendation && (
+                                                <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-medium">
+                                                    <Bot className="h-3 w-3" strokeWidth={2.5} />
+                                                    AI-förslag
+                                                </div>
+                                            )}
+                                        </div>
+                                        
+                                        <div className="border-t pt-3 space-y-2">
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Rörelseresultat</span>
+                                                <span>379 000 kr</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm">
+                                                <span className="text-muted-foreground">Skattemässiga justeringar</span>
+                                                <span>0 kr</span>
+                                            </div>
+                                        </div>
+                                        
+                                        <div className="border-t pt-3">
+                                            <div className="flex justify-between items-baseline">
+                                                <span className="font-medium">Skattemässigt resultat</span>
+                                                <span className="text-2xl font-bold">379 000 kr</span>
+                                            </div>
+                                            <div className="flex justify-between text-sm mt-2">
+                                                <span className="text-muted-foreground">Beräknad skatt (20,6%)</span>
+                                                <span className="text-red-600 dark:text-red-500/70">78 074 kr</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={() => setUseAIRecommendation(!useAIRecommendation)}
+                                        className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-2"
+                                    >
+                                        {useAIRecommendation ? "Vill du redigera manuellt?" : "Använd AI-förslag"}
+                                    </button>
+                                </div>
+                                <div className="flex gap-3">
+                                    <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                                        Tillbaka
+                                    </Button>
+                                    <Button className="flex-1" onClick={resetDialog}>
+                                        Bekräfta
+                                    </Button>
+                                </div>
+                            </>
+                        )}
+                    </DialogContent>
+                </Dialog>
+
                 <DataTable 
                     title="INK2 – Fält"
                     headerActions={
-                        <>
+                        <div className="flex items-center gap-2">
                             <IconButton icon={Download} label="Exportera SRU" showLabel />
-                            <IconButton icon={Send} label="Skicka till Skatteverket" showLabel />
-                        </>
+                            <button
+                                className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm"
+                            >
+                                <Send className="h-4 w-4" />
+                                Skicka till Skatteverket
+                            </button>
+                        </div>
                     }
                 >
                     <DataTableHeader>
@@ -283,7 +809,7 @@ function InkomstdeklarationContent() {
                             <DataTableRow key={item.field}>
                                 <DataTableCell mono muted>{item.field}</DataTableCell>
                                 <DataTableCell>{item.label}</DataTableCell>
-                                <DataTableCell align="right" bold className={item.value < 0 ? 'text-red-600' : ''}>
+                                <DataTableCell align="right" bold className={item.value < 0 ? 'text-red-600 dark:text-red-500/70' : ''}>
                                     {item.value.toLocaleString('sv-SE')} kr
                                 </DataTableCell>
                             </DataTableRow>
@@ -297,6 +823,38 @@ function InkomstdeklarationContent() {
 
 // Årsredovisning content
 function ArsredovisningContent() {
+    const [showBankIdDialog, setShowBankIdDialog] = useState(false)
+    const [showAIDialog, setShowAIDialog] = useState(false)
+    const [step, setStep] = useState(1)
+    const [chatInput, setChatInput] = useState("")
+    const [chatMessages, setChatMessages] = useState<Array<{role: "user" | "ai", text: string}>>([])
+    const [useAIRecommendation, setUseAIRecommendation] = useState(true)
+    
+    const resetDialog = () => {
+        setStep(1)
+        setChatInput("")
+        setChatMessages([])
+        setUseAIRecommendation(true)
+        setShowAIDialog(false)
+    }
+    
+    const handleSendMessage = () => {
+        if (!chatInput.trim()) return
+        const userMsg = chatInput.trim()
+        setChatMessages(prev => [...prev, { role: "user", text: userMsg }])
+        setChatInput("")
+        
+        setTimeout(() => {
+            let response = "Jag har noterat det. Finns det något mer att ta med i förvaltningsberättelsen?"
+            if (userMsg.toLowerCase().includes("händelse") || userMsg.toLowerCase().includes("väsentlig")) {
+                response = "Förstått! Jag lägger till detta under Väsentliga händelser i förvaltningsberättelsen."
+            } else if (userMsg.toLowerCase().includes("personal") || userMsg.toLowerCase().includes("anställd")) {
+                response = "Noterat! Jag uppdaterar personalnoten med den informationen."
+            }
+            setChatMessages(prev => [...prev, { role: "ai", text: response }])
+        }, 500)
+    }
+    
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
@@ -322,15 +880,261 @@ function ArsredovisningContent() {
             </StatCardGrid>
 
             <SectionCard
-                icon={Sparkles}
-                title="AI-genererad årsredovisning"
-                description="Låt vår AI skapa en komplett årsredovisning enligt K2-regelverket baserat på din bokföring. Alla siffror hämtas automatiskt."
+                icon={Bot}
+                title="AI-årsredovisning"
+                description="Genereras automatiskt från bokföringen enligt K2."
+                variant="ai"
+                action={
+                    <button 
+                        onClick={() => setShowAIDialog(true)}
+                        className="px-4 py-2 rounded-lg font-medium bg-white dark:bg-purple-900/60 text-purple-600 dark:text-purple-400 hover:bg-purple-50 dark:hover:bg-purple-800/50 transition-colors text-sm"
+                    >
+                        Generera
+                    </button>
+                }
             />
+
+            {/* AI Årsredovisning Wizard Dialog */}
+            <Dialog open={showAIDialog} onOpenChange={(open) => !open && resetDialog()}>
+                <DialogContent className="sm:max-w-lg">
+                    {/* Step indicator */}
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                        {[1, 2, 3].map((s) => (
+                            <div key={s} className="flex items-center gap-2">
+                                <div className={cn(
+                                    "h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium",
+                                    step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
+                                )}>
+                                    {s}
+                                </div>
+                                {s < 3 && <div className={cn("w-8 h-0.5", step > s ? "bg-primary" : "bg-muted")} />}
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Step 1: Confirm Year */}
+                    {step === 1 && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Välj räkenskapsår</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-3 py-4">
+                                <button
+                                    className="w-full p-4 rounded-lg border-2 border-primary bg-primary/5 text-left"
+                                >
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <Building2 className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-medium">Räkenskapsår 2024</p>
+                                            <p className="text-sm text-muted-foreground">2024-01-01 – 2024-12-31</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <p className="text-sm text-muted-foreground">Deadline</p>
+                                            <p className="font-medium">30 jun 2025</p>
+                                        </div>
+                                    </div>
+                                </button>
+                                <div className="bg-muted/30 rounded-lg p-3 text-sm text-muted-foreground">
+                                    <p>📊 Baserat på bokföringen:</p>
+                                    <div className="mt-2 space-y-1">
+                                        <div className="flex justify-between">
+                                            <span>Nettoomsättning</span>
+                                            <span className="font-medium text-foreground">1 420 000 kr</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Årets resultat</span>
+                                            <span className="font-medium text-foreground">301 000 kr</span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                            <span>Balansomslutning</span>
+                                            <span className="font-medium text-foreground">890 000 kr</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1" onClick={resetDialog}>
+                                    Avbryt
+                                </Button>
+                                <Button className="flex-1" onClick={() => setStep(2)}>
+                                    Nästa
+                                </Button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Step 2: AI Chat */}
+                    {step === 2 && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="flex items-center gap-2">
+                                    <Bot className="h-5 w-5 text-purple-600" />
+                                    Finns det något speciellt?
+                                </DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className="bg-muted/30 rounded-lg p-4 min-h-[200px] max-h-[280px] overflow-y-auto space-y-3">
+                                    <div className="flex gap-2">
+                                        <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center flex-shrink-0">
+                                            <Bot className="h-4 w-4 text-purple-600" />
+                                        </div>
+                                        <div className="bg-white dark:bg-background rounded-lg p-3 text-sm max-w-[85%]">
+                                            <p>Finns det något speciellt som ska med i årsredovisningen?</p>
+                                            <p className="text-muted-foreground mt-1 text-xs">T.ex. väsentliga händelser, personalförändringar, framtidsutsikter</p>
+                                        </div>
+                                    </div>
+                                    
+                                    {chatMessages.map((msg, i) => (
+                                        <div key={i} className={cn("flex gap-2", msg.role === "user" && "justify-end")}>
+                                            {msg.role === "ai" && (
+                                                <div className="h-7 w-7 rounded-full bg-purple-100 dark:bg-purple-900/60 flex items-center justify-center flex-shrink-0">
+                                                    <Bot className="h-4 w-4 text-purple-600" />
+                                                </div>
+                                            )}
+                                            <div className={cn(
+                                                "rounded-lg p-3 text-sm max-w-[85%]",
+                                                msg.role === "user" 
+                                                    ? "bg-primary text-primary-foreground" 
+                                                    : "bg-white dark:bg-background"
+                                            )}>
+                                                {msg.text}
+                                            </div>
+                                            {msg.role === "user" && (
+                                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
+                                                    <User className="h-4 w-4 text-primary" />
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                                
+                                <div className="flex gap-2">
+                                    <input
+                                        type="text"
+                                        value={chatInput}
+                                        onChange={(e) => setChatInput(e.target.value)}
+                                        onKeyDown={(e) => e.key === "Enter" && handleSendMessage()}
+                                        placeholder="Skriv här..."
+                                        className="flex-1 px-3 py-2 rounded-lg border border-border bg-background text-sm"
+                                    />
+                                    <Button size="icon" onClick={handleSendMessage} disabled={!chatInput.trim()}>
+                                        <Send className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1" onClick={() => setStep(1)}>
+                                    Tillbaka
+                                </Button>
+                                <Button className="flex-1" onClick={() => setStep(3)}>
+                                    Klar, visa förslag
+                                </Button>
+                            </div>
+                        </>
+                    )}
+
+                    {/* Step 3: Confirmation */}
+                    {step === 3 && (
+                        <>
+                            <DialogHeader>
+                                <DialogTitle>Bekräfta årsredovisning</DialogTitle>
+                            </DialogHeader>
+                            <div className="space-y-4 py-4">
+                                <div className={cn(
+                                    "rounded-lg p-5 space-y-5 border-2 transition-colors",
+                                    useAIRecommendation 
+                                        ? "bg-muted/40 border-foreground" 
+                                        : "bg-muted/30 border-border"
+                                )}>
+                                    <div className="flex items-center gap-3">
+                                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                                            <Building2 className="h-5 w-5 text-primary" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <p className="font-medium">Årsredovisning 2024</p>
+                                            <p className="text-sm text-muted-foreground">K2-regelverk</p>
+                                        </div>
+                                        {useAIRecommendation && (
+                                            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-purple-100 dark:bg-purple-900/50 text-purple-600 dark:text-purple-400 text-xs font-medium">
+                                                <Bot className="h-3 w-3" strokeWidth={2.5} />
+                                                AI-förslag
+                                            </div>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="border-t pt-3 space-y-2">
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Nettoomsättning</span>
+                                            <span>1 420 000 kr</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Årets resultat</span>
+                                            <span className="text-green-600 dark:text-green-500/70">301 000 kr</span>
+                                        </div>
+                                        <div className="flex justify-between text-sm">
+                                            <span className="text-muted-foreground">Balansomslutning</span>
+                                            <span>890 000 kr</span>
+                                        </div>
+                                    </div>
+                                    
+                                    <div className="border-t pt-3">
+                                        <p className="text-sm text-muted-foreground mb-2">Genererade delar:</p>
+                                        <div className="space-y-1 text-sm">
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                <span>Förvaltningsberättelse</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                <span>Resultaträkning</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                <span>Balansräkning</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                                                <span>Noter</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <button 
+                                    onClick={() => setUseAIRecommendation(!useAIRecommendation)}
+                                    className="w-full text-sm text-muted-foreground hover:text-foreground text-center py-2"
+                                >
+                                    {useAIRecommendation ? "Vill du redigera manuellt?" : "Använd AI-förslag"}
+                                </button>
+                            </div>
+                            <div className="flex gap-3">
+                                <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                                    Tillbaka
+                                </Button>
+                                <Button className="flex-1" onClick={resetDialog}>
+                                    Bekräfta
+                                </Button>
+                            </div>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             <DataTable 
                 title="Delar av årsredovisningen"
                 headerActions={
-                    <IconButton icon={Download} label="Ladda ner utkast" showLabel />
+                    <div className="flex items-center gap-2">
+                        <IconButton icon={Download} label="Ladda ner PDF" showLabel />
+                        <button
+                            onClick={() => setShowBankIdDialog(true)}
+                            className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm"
+                        >
+                            <Send className="h-4 w-4" />
+                            Skicka till Bolagsverket
+                        </button>
+                    </div>
                 }
             >
                 <DataTableBody>
@@ -356,6 +1160,58 @@ function ArsredovisningContent() {
                     ))}
                 </DataTableBody>
             </DataTable>
+
+            {/* BankID Signing Dialog */}
+            <Dialog open={showBankIdDialog} onOpenChange={setShowBankIdDialog}>
+                <DialogContent className="sm:max-w-md">
+                    <DialogHeader>
+                        <DialogTitle>Skicka årsredovisning till Bolagsverket</DialogTitle>
+                        <DialogDescription>
+                            Du är på väg att skicka in årsredovisningen för räkenskapsåret 2024.
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div className="bg-muted/50 rounded-lg p-4 space-y-2">
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Bolag</span>
+                                <span className="font-medium">Mitt Företag AB</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Org.nr</span>
+                                <span className="font-medium">559123-4567</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Räkenskapsår</span>
+                                <span className="font-medium">2024-01-01 – 2024-12-31</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                                <span className="text-muted-foreground">Regelverk</span>
+                                <span className="font-medium">K2</span>
+                            </div>
+                        </div>
+                        <p className="text-sm text-muted-foreground">
+                            Genom att signera bekräftar du att uppgifterna i årsredovisningen är korrekta och att du har behörighet att företräda bolaget.
+                        </p>
+                    </div>
+                    <div className="flex flex-col gap-3">
+                        <button
+                            onClick={() => setShowBankIdDialog(false)}
+                            className="w-full px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 bg-[#183E4F] text-white hover:bg-[#183E4F]/90 transition-colors"
+                        >
+                            <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Signera med BankID
+                        </button>
+                        <button
+                            onClick={() => setShowBankIdDialog(false)}
+                            className="w-full px-4 py-2 rounded-lg font-medium text-muted-foreground hover:bg-muted/50 transition-colors text-sm"
+                        >
+                            Avbryt
+                        </button>
+                    </div>
+                </DialogContent>
+            </Dialog>
             </div>
         </main>
     )
@@ -533,7 +1389,7 @@ function ReportsPageContent() {
 
     return (
         <TooltipProvider delayDuration={400}>
-            <div className="flex flex-col h-svh overflow-auto">
+            <div className="flex flex-col min-h-svh">
                 <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
                     <div className="flex items-center gap-2">
                         <SidebarTrigger className="-ml-1" />
@@ -593,7 +1449,7 @@ function ReportsPageContent() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="flex-1 flex flex-col bg-background">
+                <div className="bg-background">
                     {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
                     {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
                     {currentTab === "arsredovisning" && <ArsredovisningContent />}

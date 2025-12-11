@@ -24,9 +24,9 @@ export function DataTable({
     className,
 }: DataTableProps) {
     return (
-        <div className={cn("bg-card border-y border-border/40 overflow-hidden", className)}>
+        <div className={cn("bg-card border-y-2 border-border/60 overflow-hidden", className)}>
             {(title || headerActions) && (
-                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+                <div className="px-4 py-3 border-b-2 border-border/60 flex items-center justify-between">
                     {title && <h2 className="font-medium">{title}</h2>}
                     {headerActions && (
                         <div className="flex items-center gap-2">{headerActions}</div>
@@ -262,7 +262,7 @@ export function DataTableRaw({
     footer,
 }: DataTableRawProps) {
     return (
-        <div className={cn("bg-card border-y border-border/40 overflow-hidden", className)}>
+        <div className={cn("bg-card border-y-2 border-border/60 overflow-hidden", className)}>
             <div className="w-full overflow-auto">
                 {children}
             </div>

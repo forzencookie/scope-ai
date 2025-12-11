@@ -83,15 +83,15 @@ export const AISuggestionBadge = memo(function AISuggestionBadge({
             "flex items-center gap-3",
             compact ? "flex-row" : "flex-col sm:flex-row"
         )}>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-violet-50 border border-violet-100">
-                <span className="text-sm font-medium text-violet-700">{suggestion.category}</span>
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-violet-50 dark:bg-violet-950/50 border border-violet-100 dark:border-violet-800/50">
+                <span className="text-sm font-medium text-violet-700 dark:text-violet-400/80">{suggestion.category}</span>
                 <span className={cn(
                     "text-xs font-semibold px-1.5 py-0.5 rounded",
                     suggestion.confidence >= 90 
-                        ? "bg-emerald-100 text-emerald-700" 
+                        ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400/80" 
                         : suggestion.confidence >= 70 
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-gray-100 text-gray-700"
+                            ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400/80"
+                            : "bg-gray-100 dark:bg-gray-800/50 text-gray-700 dark:text-gray-400/80"
                 )}>
                     {suggestion.confidence}%
                 </span>
@@ -235,7 +235,7 @@ export function AISuggestionsBanner({
                                         <span className="text-xs text-muted-foreground">Kategorier som tillämpas:</span>
                                         <div className="flex flex-wrap gap-1">
                                             {categories.slice(0, 5).map((cat, i) => (
-                                                <span key={i} className="text-xs px-2 py-0.5 bg-violet-100 text-violet-700 rounded">
+                                                <span key={i} className="text-xs px-2 py-0.5 bg-violet-100 dark:bg-violet-900/50 text-violet-700 dark:text-violet-400 rounded">
                                                     {cat}
                                                 </span>
                                             ))}
@@ -255,7 +255,7 @@ export function AISuggestionsBanner({
                     </AlertDialogHeader>
                     <AlertDialogFooter>
                         <AlertDialogCancel>Avbryt</AlertDialogCancel>
-                        <AlertDialogAction onClick={handleConfirmedApproval} className="bg-violet-600 hover:bg-violet-700">
+                        <AlertDialogAction onClick={handleConfirmedApproval} className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-600">
                             <Zap className="h-4 w-4 mr-1" />
                             Godkänn alla
                         </AlertDialogAction>
@@ -263,10 +263,10 @@ export function AISuggestionsBanner({
                 </AlertDialogContent>
             </AlertDialog>
 
-            <div className="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-violet-50 to-blue-50 rounded-lg border border-violet-100">
+            <div className="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-950 dark:to-blue-950 rounded-lg border border-violet-100 dark:border-violet-800">
                 <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-violet-100 flex items-center justify-center">
-                        <Sparkles className="h-5 w-5 text-violet-600" />
+                    <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                     </div>
                     <div>
                         <p className="font-medium text-sm">AI har {pendingSuggestions} kategoriseringsförslag</p>
@@ -276,7 +276,7 @@ export function AISuggestionsBanner({
                 <Button 
                     variant="default" 
                     size="default"
-                    className="bg-violet-600 hover:bg-violet-700 text-white min-h-[44px] px-4"
+                    className="bg-violet-600 hover:bg-violet-700 dark:bg-violet-700 dark:hover:bg-violet-600 text-white min-h-[44px] px-4"
                     onClick={() => setShowConfirmDialog(true)}
                 >
                     <Zap className="h-4 w-4 mr-2" />
@@ -341,7 +341,7 @@ export const TransactionRow = memo(function TransactionRow({
                         )}
                     </td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap">
-                        <span className={cn(transaction.amount.startsWith("+") ? "text-green-600" : "text-foreground")}>
+                        <span className={cn(transaction.amount.startsWith("+") ? "text-green-600 dark:text-green-500/70" : "text-foreground")}>
                             {transaction.amount}
                         </span>
                     </td>

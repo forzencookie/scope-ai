@@ -10,7 +10,7 @@ import {
     Clock,
     ChevronDown,
     ChevronUp,
-    Sparkles,
+    Bot,
     AlertCircle,
     ArrowUpRight,
     ArrowDownRight,
@@ -104,7 +104,7 @@ function MetricCard({
                 {change && (
                     <span className={cn(
                         "text-xs font-medium flex items-center gap-0.5",
-                        change.positive ? "text-green-600" : "text-red-600"
+                        change.positive ? "text-green-600 dark:text-green-500/70" : "text-red-600 dark:text-red-500/70"
                     )}>
                         {change.positive ? (
                             <ArrowUpRight className="h-3 w-3" />
@@ -159,7 +159,7 @@ function AccuracyBar({
                     {TrendIcon && (
                         <TrendIcon className={cn(
                             "h-3 w-3",
-                            trend === "up" ? "text-green-600" : "text-red-600"
+                            trend === "up" ? "text-green-600 dark:text-green-500/70" : "text-red-600 dark:text-red-500/70"
                         )} />
                     )}
                     <span className="text-muted-foreground tabular-nums">
@@ -235,13 +235,13 @@ export function AIConfidenceDashboard({
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between">
                                     <span className="text-xs font-medium">AI-precision</span>
-                                    <span className="text-xs font-semibold text-green-600 tabular-nums">
+                                    <span className="text-xs font-semibold text-green-600 dark:text-green-500/70 tabular-nums">
                                         {metrics.overallAccuracy.toFixed(1)}%
                                     </span>
                                 </div>
                                 <div className="h-1 mt-1 bg-muted rounded-full overflow-hidden">
                                     <div 
-                                        className="h-full bg-green-500 rounded-full"
+                                        className="h-full bg-green-500 dark:bg-green-500/70 rounded-full"
                                         style={{ width: `${metrics.overallAccuracy}%` }}
                                     />
                                 </div>
@@ -268,7 +268,7 @@ export function AIConfidenceDashboard({
                                     <span className="text-muted-foreground">Trend denna vecka:</span>
                                     <span className={cn(
                                         "ml-1 font-medium",
-                                        metrics.weeklyChange >= 0 ? "text-green-600" : "text-red-600"
+                                        metrics.weeklyChange >= 0 ? "text-green-600 dark:text-green-500/70" : "text-red-600 dark:text-red-500/70"
                                     )}>
                                         {metrics.weeklyChange >= 0 ? "+" : ""}{metrics.weeklyChange}%
                                     </span>
@@ -309,8 +309,8 @@ export function AIConfidenceDashboard({
                             <span className={cn(
                                 "text-xs font-medium px-2 py-0.5 rounded-full",
                                 metrics.weeklyChange >= 0 
-                                    ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                                    : "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400"
+                                    ? "bg-green-100 text-green-700 dark:bg-green-900/15 dark:text-green-500/70"
+                                    : "bg-red-100 text-red-700 dark:bg-red-900/15 dark:text-red-500/70"
                             )}>
                                 {metrics.weeklyChange >= 0 ? "+" : ""}{metrics.weeklyChange}% denna vecka
                             </span>
@@ -346,7 +346,7 @@ export function AIConfidenceDashboard({
                                 label="Genomsnittlig konfidens"
                                 value={metrics.avgConfidence}
                                 suffix="%"
-                                icon={Sparkles}
+                                icon={Bot}
                                 tooltip="AI-modellens genomsnittliga säkerhet på sina förslag"
                             />
                             <MetricCard
@@ -376,13 +376,13 @@ export function AIConfidenceDashboard({
 
                         {/* Low Accuracy Alert */}
                         {categoryAccuracy.some(c => c.accuracy < 85) && (
-                            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800">
-                                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-400 flex-shrink-0 mt-0.5" />
+                            <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50">
+                                <AlertCircle className="h-4 w-4 text-amber-600 dark:text-amber-500/70 flex-shrink-0 mt-0.5" />
                                 <div className="space-y-1">
-                                    <p className="text-xs font-medium text-amber-800 dark:text-amber-300">
+                                    <p className="text-xs font-medium text-amber-800 dark:text-amber-400/80">
                                         Några kategorier har lägre precision
                                     </p>
-                                    <p className="text-[11px] text-amber-700 dark:text-amber-400">
+                                    <p className="text-[11px] text-amber-700 dark:text-amber-500/70">
                                         Granska och korrigera fler förslag i dessa kategorier för att förbättra AI-modellen.
                                     </p>
                                 </div>

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { 
     Inbox, 
     Mail, 
@@ -35,6 +36,7 @@ import { mockInboxItems, categoryColors, categoryLabels } from "@/data/inbox"
 import type { InboxItem, InboxFilter } from "@/types"
 
 export default function InboxPage() {
+    const router = useRouter()
     const [items, setItems] = useState<InboxItem[]>(mockInboxItems)
     const [filter, setFilter] = useState<InboxFilter>("all")
 
@@ -120,16 +122,14 @@ export default function InboxPage() {
                 {filteredItems.map((item) => (
                     <div 
                         key={item.id}
-                        onClick={() => handleMarkRead(item.id)}
-                        className={`flex items-center gap-4 p-4 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors group cursor-pointer ${
+                        onClick={() => {
+                            handleMarkRead(item.id)
+                            router.push(`/inbox/${item.id}`)
+                        }}
+                        className={`flex items-center gap-3 p-3 rounded-lg border border-border/50 hover:bg-muted/30 transition-colors group cursor-pointer ${
                             !item.read ? "bg-muted/20" : ""
                         }`}
                     >
-                        {/* Sender icon */}
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-muted">
-                            <Building2 className="h-5 w-5 text-muted-foreground" />
-                        </div>
-
                         {/* Content */}
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">

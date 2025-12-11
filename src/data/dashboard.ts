@@ -53,8 +53,8 @@ export const quickStats: QuickStat[] = [
 export const pendingTasks: PendingTask[] = [
   { 
     id: "task-1",
-    title: "5 transaktioner väntar på godkännande", 
-    href: "/accounting?tab=ai-matchning",
+    title: "5 transaktioner väntar på bokföring", 
+    href: "/accounting?tab=transaktioner",
     priority: "high",
   },
   { 

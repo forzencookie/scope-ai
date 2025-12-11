@@ -83,6 +83,7 @@ export const GENERAL_STATUS_VARIANT: Record<GeneralStatus, StatusVariant> = {
     "Ofullständig": "warning",
     "Planerad": "info",
     "Utbetald": "success",
+    "Godkänd": "success",
 }
 
 // =============================================================================

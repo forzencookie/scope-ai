@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 /**
  * OAuth callback handler
- * Exchanges the auth code for a session and redirects to dashboard
+ * Exchanges the auth code for a session and redirects to inbox
  * 
  * SECURITY: Validates that session exchange succeeds before redirecting
  */
@@ -80,6 +80,6 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Success - redirect to dashboard
-  return NextResponse.redirect(new URL('/dashboard', requestUrl.origin))
+  // Success - redirect to inbox
+  return NextResponse.redirect(new URL('/inbox', requestUrl.origin))
 }

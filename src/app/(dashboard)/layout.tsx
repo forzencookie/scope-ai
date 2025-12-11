@@ -7,7 +7,8 @@ import {
     SidebarProvider,
 } from "@/components/ui/sidebar"
 import { ToastProvider } from "@/components/ui/toast"
-import { OnboardingWizard, useOnboarding } from "@/components/onboarding-wizard"
+import { useOnboarding } from "@/components/onboarding-wizard"
+import { LazyOnboardingWizard } from "@/components/lazy-modules"
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding()
@@ -23,7 +24,7 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </SidebarInset>
             </SidebarProvider>
             <MobileBottomNav />
-            <OnboardingWizard 
+            <LazyOnboardingWizard 
                 isOpen={showOnboarding} 
                 onClose={skipOnboarding}
                 onComplete={completeOnboarding}

@@ -32,6 +32,7 @@ export function IconButton({
     size = "md",
     variant = "ghost",
     className,
+    disabled,
     ...props
 }: IconButtonProps) {
     const sizeConfig = {
@@ -54,8 +55,10 @@ export function IconButton({
                 "inline-flex items-center justify-center gap-1.5",
                 sizeConfig[size].button,
                 variantConfig[variant],
+                disabled && "opacity-30 cursor-not-allowed hover:text-muted-foreground",
                 className
             )}
+            disabled={disabled}
             {...props}
         >
             <Icon className={sizeConfig[size].icon} />

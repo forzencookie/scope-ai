@@ -78,6 +78,7 @@ export const GENERAL_STATUS_LABELS = {
     INCOMPLETE: "Ofullständig",
     PLANNED: "Planerad",
     PAID_OUT: "Utbetald",
+    APPROVED: "Godkänd",
 } as const
 
 // =============================================================================

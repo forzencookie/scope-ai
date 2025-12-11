@@ -48,10 +48,8 @@ export function StatCard({
     const cardContent = (
         <div
             className={cn(
-                "rounded-lg p-4 transition-colors",
-                variant === "bordered" && "border border-border/30",
-                variant === "filled" && "bg-card border border-border/30",
-                href && "hover:border-border cursor-pointer",
+                "bg-card rounded-lg p-4 transition-colors border-2 border-border/60",
+                href && "hover:bg-muted/30 cursor-pointer",
                 className
             )}
         >
@@ -77,21 +75,22 @@ export function StatCard({
             </div>
             <p className="text-2xl font-semibold mt-1">{value}</p>
             {(subtitle || change) && (
-                <div className="mt-1 flex items-center gap-1">
-                    {change ? (
+                <div className="mt-1 flex items-center gap-2">
+                    {change && (
                         <div
                             className={cn(
-                                "flex items-center gap-1 text-sm",
-                                changeType === "positive" && "text-green-600",
-                                changeType === "negative" && "text-red-600",
-                                changeType === "neutral" && "text-muted-foreground"
+                                "flex items-center gap-1 text-sm px-2 py-0.5 rounded-md",
+                                changeType === "positive" && "text-green-600 dark:text-green-500/70 bg-green-50 dark:bg-green-950/15",
+                                changeType === "negative" && "text-red-600 dark:text-red-500/70 bg-red-50 dark:bg-red-950/15",
+                                changeType === "neutral" && "text-muted-foreground bg-muted/50"
                             )}
                         >
                             {changeType === "positive" && <ArrowUpRight className="h-3.5 w-3.5" />}
                             {changeType === "negative" && <ArrowDownRight className="h-3.5 w-3.5" />}
                             {change}
                         </div>
-                    ) : (
+                    )}
+                    {subtitle && (
                         <p className="text-sm text-muted-foreground">{subtitle}</p>
                     )}
                 </div>
