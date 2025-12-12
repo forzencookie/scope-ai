@@ -45,7 +45,7 @@ export function IntegrationMesh() {
                     x1={x} y1={y} x2="150" y2="150"
                     gradientUnits="userSpaceOnUse"
                   >
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0">
                       <animate 
                         attributeName="offset" 
                         values="0;1" 
@@ -54,7 +54,7 @@ export function IntegrationMesh() {
                         begin={`${i * 0.2}s`}
                       />
                     </stop>
-                    <stop offset="10%" stopColor="#3b82f6" stopOpacity="1">
+                    <stop offset="10%" stopColor="#8b5cf6" stopOpacity="1">
                       <animate 
                         attributeName="offset" 
                         values="0.1;1.1" 
@@ -63,7 +63,7 @@ export function IntegrationMesh() {
                         begin={`${i * 0.2}s`}
                       />
                     </stop>
-                    <stop offset="20%" stopColor="#60a5fa" stopOpacity="0">
+                    <stop offset="20%" stopColor="#a78bfa" stopOpacity="0">
                       <animate 
                         attributeName="offset" 
                         values="0.2;1.2" 

@@ -79,6 +79,80 @@ export const GENERAL_STATUS_LABELS = {
     PLANNED: "Planerad",
     PAID_OUT: "Utbetald",
     APPROVED: "Godkänd",
+    // Verifikationer statuses
+    TRANSACTION_LINKED: "Transaktion kopplad",
+    TRANSACTION_MISSING: "Transaktion saknas",
+    DOCUMENT_EXISTS: "Underlag finns",
+    DOCUMENT_MISSING: "Underlag saknas",
+    // Account type labels
+    ASSET: "Tillgång",
+    LIABILITY: "Skuld",
+    EQUITY: "Eget kapital",
+    REVENUE: "Intäkt",
+    EXPENSE: "Kostnad",
+    // Partner types (HB/KB)
+    KOMPLEMENTAR: "Komplementär",
+    KOMMANDITDELAGARE: "Kommanditdelägare",
+    // Withdrawal types
+    UTTAG: "Uttag",
+    INSATTNING: "Insättning",
+} as const
+
+// =============================================================================
+// Supplier Invoice Statuses (Leverantörsfakturor)
+// =============================================================================
+
+export const SUPPLIER_INVOICE_STATUS_LABELS = {
+    RECEIVED: "Mottagen",
+    ATTESTED: "Attesterad",
+    PAID: "Betald",
+    OVERDUE: "Förfallen",
+    DISPUTE: "Tvist",
+} as const
+
+// =============================================================================
+// Ownership/Stock Transaction Types (Aktiebok)
+// =============================================================================
+
+export const STOCK_TRANSACTION_TYPE_LABELS = {
+    NEW_ISSUE: "Nyemission",
+    PURCHASE: "Köp",
+    SALE: "Försäljning",
+    GIFT: "Gåva",
+    INHERITANCE: "Arv",
+    SPLIT: "Split",
+} as const
+
+// =============================================================================
+// Membership Statuses (Medlemsregister)
+// =============================================================================
+
+export const MEMBERSHIP_STATUS_LABELS = {
+    ACTIVE: "Aktiv",
+    DORMANT: "Vilande",
+    TERMINATED: "Avslutad",
+} as const
+
+// =============================================================================
+// Membership Change Types (Medlemsregister)
+// =============================================================================
+
+export const MEMBERSHIP_CHANGE_TYPE_LABELS = {
+    JOINED: "Gått med",
+    LEFT: "Lämnat",
+    STATUS_CHANGE: "Statusändring",
+    ROLE_CHANGE: "Rollbyte",
+} as const
+
+// =============================================================================
+// Meeting Status (Styrelseprotokoll/Bolagsstämma)
+// =============================================================================
+
+export const MEETING_STATUS_LABELS = {
+    PLANNED: "Planerad",
+    CALLED: "Kallad",
+    COMPLETED: "Genomförd",
+    SIGNED: "Signerat",
 } as const
 
 // =============================================================================

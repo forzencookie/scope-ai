@@ -43,7 +43,7 @@ export function IconButton({
 
     const variantConfig = {
         ghost: "text-muted-foreground hover:text-foreground transition-colors",
-        outline: "text-muted-foreground hover:text-foreground border border-border/50 hover:border-border rounded-md transition-colors",
+        outline: "text-muted-foreground hover:text-foreground border-2 border-border/60 hover:border-border rounded-md transition-colors",
         default: "text-foreground bg-muted hover:bg-muted/80 rounded-md transition-colors",
     }
 

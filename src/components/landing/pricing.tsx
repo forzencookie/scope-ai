@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import Link from "next/link"
 import { Check } from "lucide-react"
 import { cn } from "@/lib/utils"
 
@@ -12,8 +13,8 @@ export function Pricing() {
   return (
     <Section id="pricing">
       <div className="text-center mb-12">
-        <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Transparent pricing</h2>
-        <p className="text-stone-600 mb-8">No hidden fees. Cancel anytime.</p>
+        <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Enkel prissättning</h2>
+        <p className="text-stone-600 mb-8">Inga dolda avgifter. Avsluta när du vill.</p>
         
         {/* Billing toggle */}
         <div className="inline-flex border border-stone-200 rounded-lg p-1 bg-stone-50">
@@ -38,9 +39,9 @@ export function Pricing() {
       
       <div className="grid md:grid-cols-3 gap-0">
         {[
-          { name: "Starter", price: billing === "monthly" ? "0 kr" : "0 kr", period: "/mån", desc: "For dormant or new ABs", features: ["Basic bookkeeping", "Receipt scanning", "Bank sync", "Email support"] },
-          { name: "Standard", price: billing === "monthly" ? "299 kr" : "249 kr", period: "/mån", desc: "For growing companies", highlight: true, features: ["Everything in Starter", "Payroll automation", "VAT filings", "Priority support", "Unlimited users"] },
-          { name: "Enterprise", price: "Custom", period: "", desc: "Multi-entity support", features: ["Everything in Standard", "Multi-company", "API access", "Dedicated manager", "Custom integrations"] },
+          { name: "Free", price: billing === "monthly" ? "0 kr" : "0 kr", period: "/mån", desc: "Alla funktioner — du bokför själv", features: ["Bokföring & transaktioner", "Momsdeklarationer", "Löner & AGI", "Kvitton & fakturor", "Banksynk", "Rapporter & årsredovisning"] },
+          { name: "Professional", price: billing === "monthly" ? "449 kr" : "379 kr", period: "/mån", desc: "AI gör jobbet åt dig", highlight: true, features: ["Allt i Free, plus:", "AI-kategoriserar transaktioner", "AI-assisterad bokföring", "AI-genererade deklarationer", "AI-lönebesk ed & AGI", "Prioriterad support"] },
+          { name: "Enterprise", price: "Kommer snart", period: "", desc: "För koncerner och flerbolagsstrukturer", comingSoon: true, features: ["Allt i Professional", "Hantera flera bolag", "API-åtkomst", "Dedikerad kontaktperson", "Skräddarsydda integrationer"] },
         ].map((tier, i) => (
           <div
             key={i}
@@ -72,14 +73,18 @@ export function Pricing() {
               ))}
             </ul>
 
-            <button className={cn(
-              "w-full py-3 text-sm font-medium rounded-lg transition-colors border",
+            <Link 
+              href={tier.price === "Kommer snart" ? "#" : "/register"}
+              className={cn(
+              "w-full py-3 text-sm font-medium rounded-lg transition-colors border text-center block",
               tier.highlight 
                 ? "bg-stone-900 text-white border-stone-900 hover:bg-stone-800" 
-                : "bg-white text-stone-900 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
+                : tier.price === "Kommer snart"
+                  ? "bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed"
+                  : "bg-white text-stone-900 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
             )}>
-              {tier.price === "Custom" ? "Contact sales" : "Get started"}
-            </button>
+              {tier.price === "Kommer snart" ? "Meddela mig" : "Kom igång"}
+            </Link>
           </div>
         ))}
       </div>

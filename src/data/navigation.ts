@@ -6,17 +6,23 @@ import {
   BookOpen,
   Bot,
   Box,
-  Calendar,
+  Apple,
   CheckSquare,
   Frame,
   Home,
-  Inbox,
+  Mail,
   PieChart,
   Building2,
   Users,
   Puzzle,
   Settings,
+  Landmark,
+  Vote,
+  FileText,
+  PiggyBank,
+  Captions,
 } from "lucide-react"
+import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
 
 // ============================================
@@ -57,24 +63,19 @@ export const mockTeams: Team[] = [
 export const navPlatform: NavItem[] = [
   {
     title: "Inkorg",
-    url: "/inbox",
-    icon: Inbox,
+    url: "/dashboard/inbox",
+    icon: Mail,
     isActive: true,
   },
   {
-    title: "Uppgifter",
-    url: "/tasks",
-    icon: CheckSquare,
-  },
-  {
     title: "AI Robot",
-    url: "/ai-robot",
+    url: "/dashboard/ai-robot",
     icon: Bot,
   },
   {
     title: "Dagbok",
-    url: "/dagbok",
-    icon: Calendar,
+    url: "/dashboard/dagbok",
+    icon: Apple,
   },
 ]
 
@@ -85,58 +86,116 @@ export const navPlatform: NavItem[] = [
 export const navEconomy: NavItem[] = [
   {
     title: "Bokföring",
-    url: "/accounting",
+    url: "/dashboard/accounting",
     icon: BookOpen,
     items: [
       {
         title: "Transaktioner",
-        url: "/accounting?tab=transaktioner",
+        url: "/dashboard/accounting?tab=transaktioner",
       },
       {
         title: "Fakturor & Kvitton",
-        url: "/accounting?tab=underlag",
+        url: "/dashboard/accounting?tab=underlag",
       },
       {
         title: "Verifikationer",
-        url: "/accounting?tab=verifikationer",
+        url: "/dashboard/accounting?tab=verifikationer",
       },
     ],
   },
   {
     title: "Rapporter",
-    url: "/reports",
+    url: "/dashboard/reports",
     icon: PieChart,
     items: [
       {
         title: "Momsdeklaration",
-        url: "/reports?tab=momsdeklaration",
+        url: "/dashboard/reports?tab=momsdeklaration",
+        featureKey: "momsdeklaration",
       },
       {
         title: "Inkomstdeklaration",
-        url: "/reports?tab=inkomstdeklaration",
+        url: "/dashboard/reports?tab=inkomstdeklaration",
+        featureKey: "inkomstdeklaration",
       },
       {
         title: "Årsredovisning",
-        url: "/reports?tab=arsredovisning",
+        url: "/dashboard/reports?tab=arsredovisning",
+        featureKey: "arsredovisning",
+      },
+      {
+        title: "Årsbokslut",
+        url: "/dashboard/reports?tab=arsbokslut",
+        featureKey: "arsbokslut",
       },
     ],
   },
   {
     title: "Löner",
-    url: "/payroll",
-    icon: Frame,
+    url: "/dashboard/payroll",
+    icon: PiggyBank,
     items: [
       {
         title: "Lönebesked",
-        url: "/payroll?tab=lonebesked",
+        url: "/dashboard/payroll?tab=lonebesked",
+        featureKey: "lonebesked",
       },
       {
         title: "AGI",
-        url: "/payroll?tab=agi",
+        url: "/dashboard/payroll?tab=agi",
+        featureKey: "agi",
       },
       {
         title: "Utdelning",
-        url: "/payroll?tab=utdelning",
+        url: "/dashboard/payroll?tab=utdelning",
+        featureKey: "utdelning",
+      },
+      {
+        title: "Egenavgifter",
+        url: "/dashboard/payroll?tab=egenavgifter",
+        featureKey: "egenavgifter",
+      },
+      {
+        title: "Delägaruttag",
+        url: "/dashboard/payroll?tab=delagaruttag",
+        featureKey: "delagaruttag",
+      },
+    ],
+  },
+  {
+    title: "Ägare & Styrning",
+    url: "/dashboard/agare",
+    icon: Landmark,
+    items: [
+      {
+        title: "Aktiebok",
+        url: "/dashboard/agare?tab=aktiebok",
+        featureKey: "aktiebok",
+      },
+      {
+        title: "Delägare",
+        url: "/dashboard/agare?tab=delagare",
+        featureKey: "delagare",
+      },
+      {
+        title: "Medlemsregister",
+        url: "/dashboard/agare?tab=medlemsregister",
+        featureKey: "medlemsregister",
+      },
+      {
+        title: "Styrelseprotokoll",
+        url: "/dashboard/agare?tab=styrelseprotokoll",
+        featureKey: "styrelseprotokoll",
+      },
+      {
+        title: "Bolagsstämma",
+        url: "/dashboard/agare?tab=bolagsstamma",
+        featureKey: "bolagsstamma",
+      },
+      {
+        title: "Årsmöte",
+        url: "/dashboard/agare?tab=arsmote",
+        featureKey: "arsmote",
       },
     ],
   },
@@ -149,12 +208,12 @@ export const navEconomy: NavItem[] = [
 export const navSettings: NavItem[] = [
   {
     title: "Inställningar",
-    url: "/settings",
+    url: "/dashboard/settings",
     icon: Settings,
   },
   {
     title: "Företagsstatistik",
-    url: "/company-statistics",
-    icon: PieChart,
+    url: "/dashboard/company-statistics",
+    icon: Captions,
   },
 ]

@@ -3,7 +3,7 @@
 import * as React from "react"
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { Home, Inbox, BookOpen, BarChart3 } from "lucide-react"
+import { Home, Inbox, BookOpen, PieChart } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Top 4 most used navigation items for mobile
@@ -26,7 +26,7 @@ const mobileNavItems = [
   {
     title: "Rapporter",
     href: "/reports",
-    icon: BarChart3,
+    icon: PieChart,
   },
 ]
 

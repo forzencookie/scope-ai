@@ -88,14 +88,14 @@ export function ListCard({
     className,
 }: ListCardProps) {
     return (
-        <div className={cn("border border-border/50 rounded-lg", className)}>
+        <div className={cn("border-2 border-border/60 rounded-lg", className)}>
             {(title || headerActions) && (
-                <div className="px-4 py-3 border-b border-border/40 flex items-center justify-between">
+                <div className="px-4 py-3 border-b-2 border-border/60 flex items-center justify-between">
                     {title && <h2 className="font-medium">{title}</h2>}
                     {headerActions}
                 </div>
             )}
-            <div className={cn(dividers && "divide-y divide-border/40")}>
+            <div className={cn(dividers && "divide-y-2 divide-border/60")}>
                 {children}
             </div>
         </div>

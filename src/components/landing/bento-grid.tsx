@@ -66,7 +66,7 @@ export function BentoGrid() {
                   <div className={cn("w-2 h-2 rounded-full", {
                     "bg-emerald-500": item.status === "complete",
                     "bg-amber-500": item.status === "pending",
-                    "bg-blue-500": item.status === "active",
+                    "bg-violet-500": item.status === "active",
                   })} />
                 </div>
               ))}

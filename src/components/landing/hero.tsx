@@ -23,14 +23,14 @@ export function Hero() {
           <span className="text-xs font-mono text-stone-600 uppercase tracking-widest relative z-10">Systemet är redo</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-bold text-stone-900 tracking-tight leading-[1.05] mb-6">
-          Ditt svenska företag, smart och enkelt.
+          AI-driven bokföring för svenska företag.
         </h1>
         <p className="text-xl text-stone-600 leading-relaxed max-w-lg mb-10">
-          Scope AI tar hand om bokföring, löner, moms och kvitton automatiskt — så du kan fokusera på det som verkligen betyder något.
+          Scope AI automatiserar hela din ekonomi — från transaktioner och kvitton till moms, löner och årsredovisning. Allt med svensk AI som förstår BAS-kontoplanen.
         </p>
         <div className="flex items-center gap-4">
           <Link
-            href="/dashboard"
+            href="/register"
             className="group h-12 px-6 bg-stone-900 text-white rounded-lg flex items-center gap-2 font-medium hover:bg-stone-800 transition-all hover:pr-4 relative overflow-hidden"
           >
             <DitherPattern className="inset-0 opacity-[0.15]" />
@@ -68,7 +68,7 @@ export function Hero() {
           <div className="space-y-2">
             <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-violet-500 rounded-full"
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}

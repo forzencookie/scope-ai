@@ -47,6 +47,8 @@ const variantConfig: Record<StatusVariant, { color: string; bgColor: string; def
     error: { color: "text-red-700 dark:text-red-500/70", bgColor: "bg-red-100 dark:bg-red-900/20", defaultIcon: AlertCircle, srLabel: "Fel" },
     info: { color: "text-blue-700 dark:text-blue-500/70", bgColor: "bg-blue-100 dark:bg-blue-900/20", defaultIcon: AlertCircle, srLabel: "Information" },
     neutral: { color: "text-muted-foreground", bgColor: "bg-muted/50", defaultIcon: Clock, srLabel: "Neutral" },
+    violet: { color: "text-violet-700 dark:text-violet-500/70", bgColor: "bg-violet-100 dark:bg-violet-900/20", defaultIcon: AlertCircle, srLabel: "Info" },
+    purple: { color: "text-purple-700 dark:text-purple-500/70", bgColor: "bg-purple-100 dark:bg-purple-900/20", defaultIcon: AlertCircle, srLabel: "Info" },
 }
 
 export function StatusBadge({
@@ -64,7 +66,7 @@ export function StatusBadge({
         <span
             role="status"
             className={cn(
-                "inline-flex items-center gap-1.5 rounded-full font-medium",
+                "inline-flex items-center gap-1.5 rounded-md font-medium",
                 config.color,
                 config.bgColor,
                 size === "sm" && "text-xs px-2 py-0.5",

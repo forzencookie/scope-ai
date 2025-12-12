@@ -24,9 +24,9 @@ export function DataTable({
     className,
 }: DataTableProps) {
     return (
-        <div className={cn("bg-card border-y-2 border-border/60 overflow-hidden", className)}>
+        <div className={cn("bg-card overflow-hidden", className)}>
             {(title || headerActions) && (
-                <div className="px-4 py-3 border-b-2 border-border/60 flex items-center justify-between">
+                <div className="px-4 py-3 border-t-2 border-b-2 border-border/60 flex items-center justify-between">
                     {title && <h2 className="font-medium">{title}</h2>}
                     {headerActions && (
                         <div className="flex items-center gap-2">{headerActions}</div>
@@ -61,7 +61,7 @@ export function DataTableHeader({ children, className }: DataTableHeaderProps) {
 
 export interface DataTableHeaderCellProps {
     /** Column label */
-    label: string
+    label?: string
     /** Optional icon */
     icon?: LucideIcon
     /** Text alignment */
@@ -70,6 +70,8 @@ export interface DataTableHeaderCellProps {
     className?: string
     /** Column width */
     width?: string
+    /** Custom children (overrides label/icon) */
+    children?: React.ReactNode
 }
 
 export function DataTableHeaderCell({
@@ -78,6 +80,7 @@ export function DataTableHeaderCell({
     align = "left",
     className,
     width,
+    children,
 }: DataTableHeaderCellProps) {
     return (
         <th
@@ -89,7 +92,9 @@ export function DataTableHeaderCell({
             )}
             style={width ? { width } : undefined}
         >
-            {Icon ? (
+            {children ? (
+                children
+            ) : Icon ? (
                 <span className={cn(
                     "flex items-center gap-2",
                     align === "right" && "justify-end",
@@ -153,6 +158,8 @@ export interface DataTableCellProps {
     muted?: boolean
     /** Make content bold */
     bold?: boolean
+    /** Column span */
+    colSpan?: number
 }
 
 export function DataTableCell({
@@ -162,6 +169,7 @@ export function DataTableCell({
     mono,
     muted,
     bold,
+    colSpan,
 }: DataTableCellProps) {
     return (
         <td
@@ -174,6 +182,7 @@ export function DataTableCell({
                 bold && "font-medium",
                 className
             )}
+            colSpan={colSpan}
         >
             {children}
         </td>

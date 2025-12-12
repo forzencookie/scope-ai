@@ -3,6 +3,7 @@
 import * as React from "react"
 
 import { NavMain, NavSettings, NavUser } from "@/components/sidebar-nav"
+import { AdaptiveNavMain } from "@/components/adaptive-nav"
 import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
@@ -33,7 +34,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarHeader>
       <SidebarContent>
         <NavMain items={navPlatform} />
-        <NavMain items={navEconomy} label="Ekonomi" />
+        <AdaptiveNavMain items={navEconomy} label="Ekonomi" />
         <NavSettings items={navSettings} onSettingsClick={() => setSettingsOpen(true)} />
       </SidebarContent>
       <SidebarFooter>

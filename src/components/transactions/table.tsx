@@ -3,10 +3,6 @@
 import { useState, useCallback, useMemo } from "react"
 import {
     ArrowRightLeft,
-    Search,
-    SlidersHorizontal,
-    ArrowUpDown,
-    Settings,
     X,
     Plus,
     Banknote,
@@ -14,11 +10,15 @@ import {
     Calendar,
     CheckCircle2,
     CreditCard,
-    Sparkles,
+    Bot,
+    TrendingUp,
+    TrendingDown,
+    Clock,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
+import { SearchBar } from "@/components/ui/search-bar"
+import { FilterButton } from "@/components/ui/filter-button"
 import { TRANSACTION_STATUSES, type TransactionStatus, type Transaction, type AISuggestion } from "@/types"
 import {
     DropdownMenu,
@@ -29,8 +29,14 @@ import {
     DropdownMenuTrigger,
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
-import { HeaderCell } from "@/components/table/table-shell"
-import { DataTableRaw, DataTableAddRow } from "@/components/ui/data-table"
+import { 
+    DataTable, 
+    DataTableHeader, 
+    DataTableHeaderCell,
+    DataTableBody,
+    DataTableAddRow 
+} from "@/components/ui/data-table"
+import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { useTableFilter, useTableSort, commonSortHandlers } from "@/hooks/use-table"
 
 import {
@@ -41,122 +47,6 @@ import {
     AISuggestionsBanner,
     TransactionsEmptyState,
 } from "./components"
-
-// =============================================================================
-// TransactionsToolbar
-// =============================================================================
-
-interface TransactionsToolbarProps {
-    title: string
-    subtitle?: string
-    transactionCount: number
-    searchQuery: string
-    onSearchChange: (value: string) => void
-    statusFilter: TransactionStatus[]
-    onStatusFilterChange: (status: TransactionStatus) => void
-    onClearStatusFilter: () => void
-    sortBy: "date" | "amount" | "name"
-    sortOrder: "asc" | "desc"
-    onSortChange: (sortBy: "date" | "amount" | "name") => void
-    onNewTransaction: () => void
-}
-
-export function TransactionsToolbar({
-    title,
-    transactionCount,
-    searchQuery,
-    onSearchChange,
-    statusFilter,
-    onStatusFilterChange,
-    onClearStatusFilter,
-    sortBy,
-    sortOrder,
-    onSortChange,
-    onNewTransaction,
-}: TransactionsToolbarProps) {
-    return (
-        <div className="flex items-center justify-between pb-2">
-            <div>
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
-                        <ArrowRightLeft className="h-4 w-4 text-primary" />
-                    </div>
-                    {title}
-                </h2>
-            </div>
-            <div className="flex items-center gap-2">
-                <InputGroup className="w-64">
-                    <InputGroupAddon>
-                        <InputGroupText>
-                            <Search />
-                        </InputGroupText>
-                    </InputGroupAddon>
-                    <InputGroupInput 
-                        placeholder="Sök transaktioner..." 
-                        value={searchQuery}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                    />
-                </InputGroup>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className={cn("h-9 w-9", statusFilter.length > 0 && "text-blue-600")}>
-                            <SlidersHorizontal className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        {Object.values(TRANSACTION_STATUSES).map((status) => (
-                            <DropdownMenuCheckboxItem
-                                key={status}
-                                checked={statusFilter.includes(status)}
-                                onCheckedChange={() => onStatusFilterChange(status)}
-                            >
-                                {status}
-                            </DropdownMenuCheckboxItem>
-                        ))}
-                        {statusFilter.length > 0 && (
-                            <>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={onClearStatusFilter}>
-                                    <X className="h-3.5 w-3.5 mr-2" />
-                                    Rensa filter
-                                </DropdownMenuItem>
-                            </>
-                        )}
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-9 w-9">
-                            <ArrowUpDown className="h-4 w-4" />
-                        </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                        <DropdownMenuLabel>Sortera efter</DropdownMenuLabel>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem onClick={() => onSortChange("date")}>
-                            Datum {sortBy === "date" && (sortOrder === "asc" ? "↑" : "↓")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onSortChange("amount")}>
-                            Belopp {sortBy === "amount" && (sortOrder === "asc" ? "↑" : "↓")}
-                        </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onSortChange("name")}>
-                            Namn {sortBy === "name" && (sortOrder === "asc" ? "↑" : "↓")}
-                        </DropdownMenuItem>
-                    </DropdownMenuContent>
-                </DropdownMenu>
-                <Button variant="ghost" size="icon" className="h-9 w-9">
-                    <Settings className="h-4 w-4" />
-                </Button>
-                <Button size="sm" className="h-9 gap-1 bg-blue-600 hover:bg-blue-700" onClick={onNewTransaction}>
-                    <Plus className="h-3.5 w-3.5" />
-                    Ny
-                </Button>
-            </div>
-        </div>
-    )
-}
 
 // =============================================================================
 // TransactionsTable
@@ -229,6 +119,36 @@ export function TransactionsTable({
         t => aiSuggestions[t.id] && !approvedSuggestions.has(t.id) && !rejectedSuggestions.has(t.id)
     ).length
 
+    // Calculate stats for the stat cards
+    const stats = useMemo(() => {
+        const parseAmount = (amount: string | number) => {
+            if (typeof amount === 'number') return amount
+            const cleaned = amount.replace(/[^\d,.-]/g, '').replace(',', '.')
+            return parseFloat(cleaned) || 0
+        }
+        
+        const income = transactions
+            .filter(t => parseAmount(t.amount) > 0)
+            .reduce((sum, t) => sum + parseAmount(t.amount), 0)
+        
+        const expenses = transactions
+            .filter(t => parseAmount(t.amount) < 0)
+            .reduce((sum, t) => sum + Math.abs(parseAmount(t.amount)), 0)
+        
+        const pending = transactions.filter(t => t.status === 'Väntar på granskning').length
+        
+        return { income, expenses, pending, total: transactions.length }
+    }, [transactions])
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'currency',
+            currency: 'SEK',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount)
+    }
+
     const handleApproveAll = useCallback(() => {
         filteredTransactions.forEach(t => {
             const suggestion = aiSuggestions[t.id]
@@ -239,7 +159,37 @@ export function TransactionsTable({
     }, [filteredTransactions, approvedSuggestions, handleApprove, aiSuggestions])
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-6">
+            <StatCardGrid columns={4}>
+                <StatCard
+                    label="Totalt transaktioner"
+                    value={stats.total}
+                    subtitle="Denna period"
+                    icon={ArrowRightLeft}
+                />
+                <StatCard
+                    label="Inkomster"
+                    value={formatCurrency(stats.income)}
+                    icon={TrendingUp}
+                    changeType="positive"
+                />
+                <StatCard
+                    label="Utgifter"
+                    value={formatCurrency(stats.expenses)}
+                    icon={TrendingDown}
+                    changeType="negative"
+                />
+                <StatCard
+                    label="Väntar på granskning"
+                    value={stats.pending}
+                    subtitle={pendingSuggestions > 0 ? `${pendingSuggestions} AI-förslag` : undefined}
+                    icon={Clock}
+                />
+            </StatCardGrid>
+
+            {/* Section Separator */}
+            <div className="border-b-2 border-border/60" />
+
             <NewTransactionDialog 
                 open={newTransactionDialogOpen} 
                 onOpenChange={setNewTransactionDialogOpen} 
@@ -250,75 +200,110 @@ export function TransactionsTable({
                 transaction={selectedTransaction}
             />
 
-            <TransactionsToolbar
-                title={title}
-                subtitle={subtitle}
-                transactionCount={filteredTransactions.length}
-                searchQuery={filter.searchQuery}
-                onSearchChange={filter.setSearchQuery}
-                statusFilter={filter.statusFilter as TransactionStatus[]}
-                onStatusFilterChange={filter.toggleStatusFilter}
-                onClearStatusFilter={() => filter.setStatusFilter([])}
-                sortBy={sort.sortBy as "date" | "amount" | "name"}
-                sortOrder={sort.sortOrder}
-                onSortChange={handleSortChange}
-                onNewTransaction={() => setNewTransactionDialogOpen(true)}
-            />
-
             <AISuggestionsBanner 
                 pendingSuggestions={pendingSuggestions}
                 onApproveAll={handleApproveAll}
             />
 
-            <DataTableRaw
-                footer={
-                    <DataTableAddRow 
-                        label="Ny transaktion" 
-                        onClick={() => setNewTransactionDialogOpen(true)} 
-                    />
+            <DataTable
+                title={title}
+                headerActions={
+                    <div className="flex items-center gap-2">
+                        <SearchBar
+                            placeholder="Sök transaktioner..."
+                            value={filter.searchQuery}
+                            onChange={filter.setSearchQuery}
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <FilterButton
+                                    label="Filter"
+                                    isActive={filter.statusFilter.length > 0}
+                                    activeCount={filter.statusFilter.length}
+                                />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {Object.values(TRANSACTION_STATUSES).map((status) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={status}
+                                        checked={filter.statusFilter.includes(status)}
+                                        onCheckedChange={() => filter.toggleStatusFilter(status)}
+                                    >
+                                        {status}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                                {filter.statusFilter.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => filter.setStatusFilter([])}>
+                                            <X className="h-3.5 w-3.5 mr-2" />
+                                            Rensa filter
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Sortera efter</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => handleSortChange("date")}>
+                                    Datum {sort.sortBy === "date" && (sort.sortOrder === "asc" ? "↑" : "↓")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSortChange("amount")}>
+                                    Belopp {sort.sortBy === "amount" && (sort.sortOrder === "asc" ? "↑" : "↓")}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleSortChange("name")}>
+                                    Namn {sort.sortBy === "name" && (sort.sortOrder === "asc" ? "↑" : "↓")}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button size="sm" className="h-8 gap-1" onClick={() => setNewTransactionDialogOpen(true)}>
+                            <Plus className="h-3.5 w-3.5" />
+                            Ny
+                        </Button>
+                    </div>
                 }
             >
-                <table className="w-full text-sm">
-                    <thead className="bg-muted/50">
-                        <tr className="border-b border-border/40 text-left text-muted-foreground">
-                            <HeaderCell icon={<Building2 className="h-3.5 w-3.5" />} label="Leverantör" />
-                            <HeaderCell icon={<Calendar className="h-3.5 w-3.5" />} label="Datum" />
-                            <HeaderCell 
-                                icon={<Sparkles className="h-3.5 w-3.5 text-violet-500 dark:text-violet-400/70" />} 
-                                label="AI-kategorisering" 
-                                className="text-violet-600 dark:text-violet-400/70"
+                <DataTableHeader>
+                    <DataTableHeaderCell icon={Building2} label="Leverantör" />
+                    <DataTableHeaderCell icon={Calendar} label="Datum" />
+                    <DataTableHeaderCell 
+                        icon={Bot} 
+                        label="AI-kategorisering" 
+                        className="text-violet-600 dark:text-violet-400/70"
+                    />
+                    <DataTableHeaderCell icon={Banknote} label="Belopp" />
+                    <DataTableHeaderCell icon={CheckCircle2} label="Status" />
+                    <DataTableHeaderCell icon={CreditCard} label="Konto" />
+                    <DataTableHeaderCell label="" />
+                </DataTableHeader>
+                <DataTableBody>
+                    {filteredTransactions.map((transaction) => {
+                        const suggestion = aiSuggestions[transaction.id]
+                        const isRejected = rejectedSuggestions.has(transaction.id)
+                        return (
+                            <TransactionRow 
+                                key={transaction.id} 
+                                transaction={transaction}
+                                suggestion={!isRejected ? suggestion : undefined}
+                                onApproveSuggestion={() => handleApprove(transaction.id)}
+                                onRejectSuggestion={() => handleReject(transaction.id)}
+                                isApproved={approvedSuggestions.has(transaction.id)}
+                                isRejected={isRejected}
                             />
-                            <HeaderCell icon={<Banknote className="h-3.5 w-3.5" />} label="Belopp" />
-                            <HeaderCell icon={<CheckCircle2 className="h-3.5 w-3.5" />} label="Status" />
-                            <HeaderCell icon={<CreditCard className="h-3.5 w-3.5" />} label="Konto" />
-                            <HeaderCell label="" />
-                        </tr>
-                    </thead>
-                    <tbody className="[&_tr:last-child]:border-0">
-                        {filteredTransactions.map((transaction) => {
-                            const suggestion = aiSuggestions[transaction.id]
-                            const isRejected = rejectedSuggestions.has(transaction.id)
-                            return (
-                                <TransactionRow 
-                                    key={transaction.id} 
-                                    transaction={transaction}
-                                    suggestion={!isRejected ? suggestion : undefined}
-                                    onApproveSuggestion={() => handleApprove(transaction.id)}
-                                    onRejectSuggestion={() => handleReject(transaction.id)}
-                                    isApproved={approvedSuggestions.has(transaction.id)}
-                                    isRejected={isRejected}
-                                />
-                            )
-                        })}
-                        {filteredTransactions.length === 0 && (
-                            <TransactionsEmptyState 
-                                hasFilters={filter.hasActiveFilters}
-                                onAddTransaction={() => setNewTransactionDialogOpen(true)}
-                            />
-                        )}
-                    </tbody>
-                </table>
-            </DataTableRaw>
+                        )
+                    })}
+                    {filteredTransactions.length === 0 && (
+                        <TransactionsEmptyState 
+                            hasFilters={filter.hasActiveFilters}
+                            onAddTransaction={() => setNewTransactionDialogOpen(true)}
+                        />
+                    )}
+                </DataTableBody>
+            </DataTable>
+            <DataTableAddRow 
+                label="Ny transaktion" 
+                onClick={() => setNewTransactionDialogOpen(true)} 
+            />
         </div>
     )
 }

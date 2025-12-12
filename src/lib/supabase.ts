@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
+import { createBrowserClient } from '@supabase/ssr'
 import type { Database } from '@/types/database'
 
 // Environment variables - validated lazily to prevent build-time crashes
@@ -19,7 +20,7 @@ export function isSupabaseConfigured(): boolean {
 
 /**
  * Get the Supabase client for client-side operations
- * Uses the anon key which respects Row Level Security (RLS) policies
+ * Uses @supabase/ssr for proper cookie-based session handling
  * 
  * @throws Error if Supabase environment variables are not configured
  */
@@ -32,7 +33,8 @@ export function getSupabaseClient(): SupabaseClient<Database> {
   }
   
   if (!_supabaseClient) {
-    _supabaseClient = createClient<Database>(supabaseUrl, supabaseAnonKey)
+    // Use createBrowserClient from @supabase/ssr for proper cookie handling
+    _supabaseClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
   }
   
   return _supabaseClient

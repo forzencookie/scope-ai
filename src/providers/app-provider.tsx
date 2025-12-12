@@ -6,6 +6,7 @@ import type { Transaction, TransactionWithAI } from "@/types"
 import { mockTransactions as defaultTransactions } from "@/data/transactions"
 import { type Invoice, mockInvoices as defaultInvoices } from "@/data/invoices"
 import { type Receipt, mockReceipts as defaultReceipts } from "@/data/receipts"
+import { CompanyProvider } from "./company-provider"
 
 // Re-export types
 export type { Invoice, Receipt }
@@ -148,9 +149,11 @@ export function AppProviders({
 
     return (
         <QueryClientProvider client={queryClient}>
-            <DataContext.Provider value={value}>
-                {children}
-            </DataContext.Provider>
+            <CompanyProvider>
+                <DataContext.Provider value={value}>
+                    {children}
+                </DataContext.Provider>
+            </CompanyProvider>
         </QueryClientProvider>
     )
 }

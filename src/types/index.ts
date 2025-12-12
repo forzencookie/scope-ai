@@ -32,6 +32,17 @@ export type {
   AppStatus,
 } from "@/lib/status-types"
 
+// Re-export company types
+export type {
+  CompanyType,
+  FeatureKey,
+  CompanyTypeInfo,
+  FeatureInfo,
+} from "@/lib/company-types"
+
+// Import FeatureKey for use in this file
+import type { FeatureKey } from "@/lib/company-types"
+
 // Re-export status constants for convenience
 export { 
   TRANSACTION_STATUSES,
@@ -65,14 +76,16 @@ export interface Team {
 export interface NavItem {
   title: string
   url: string
-  icon: LucideIcon
+  icon?: LucideIcon
   isActive?: boolean
+  featureKey?: FeatureKey
   items?: NavSubItem[]
 }
 
 export interface NavSubItem {
   title: string
   url: string
+  featureKey?: FeatureKey
 }
 
 export interface NavigationData {

@@ -45,7 +45,7 @@ const stateConfig: Record<SyncState, {
     },
     syncing: { 
         icon: RefreshCw, 
-        color: "text-blue-600", 
+        color: "text-violet-600", 
         label: "Synkroniserar...",
         animate: true
     },

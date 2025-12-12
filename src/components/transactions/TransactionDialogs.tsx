@@ -54,7 +54,7 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
                     <DialogClose asChild>
                         <Button variant="outline">Avbryt</Button>
                     </DialogClose>
-                    <Button className="bg-blue-600 hover:bg-blue-700">Lägg till</Button>
+                    <Button>Lägg till</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -100,7 +100,7 @@ export function TransactionDetailsDialog({
                                 <p className="text-sm text-muted-foreground">Belopp</p>
                                 <p className={cn(
                                     "font-medium",
-                                    transaction.amount.startsWith("+") ? "text-green-600" : ""
+                                    transaction.amount.startsWith("+") ? "text-green-600 dark:text-green-500/70" : ""
                                 )}>{transaction.amount}</p>
                             </div>
                             <div>
@@ -126,7 +126,7 @@ export function TransactionDetailsDialog({
                     <DialogClose asChild>
                         <Button variant="outline">Stäng</Button>
                     </DialogClose>
-                    <Button className="bg-blue-600 hover:bg-blue-700">Bokför</Button>
+                    <Button>Bokför</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

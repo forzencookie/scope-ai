@@ -13,13 +13,18 @@ import {
     INVOICE_STATUS_LABELS,
     RECEIPT_STATUS_LABELS,
     GENERAL_STATUS_LABELS,
+    SUPPLIER_INVOICE_STATUS_LABELS,
+    STOCK_TRANSACTION_TYPE_LABELS,
+    MEMBERSHIP_STATUS_LABELS,
+    MEMBERSHIP_CHANGE_TYPE_LABELS,
+    MEETING_STATUS_LABELS,
 } from "./localization"
 
 // =============================================================================
 // Status Variants (for UI styling)
 // =============================================================================
 
-export type StatusVariant = "success" | "warning" | "error" | "info" | "neutral"
+export type StatusVariant = "success" | "warning" | "error" | "info" | "neutral" | "violet" | "purple"
 
 // =============================================================================
 // Transaction Status (Bokföring)
@@ -84,19 +89,128 @@ export const GENERAL_STATUS_VARIANT: Record<GeneralStatus, StatusVariant> = {
     "Planerad": "info",
     "Utbetald": "success",
     "Godkänd": "success",
+    // Verifikationer statuses
+    "Transaktion kopplad": "success",
+    "Transaktion saknas": "error",
+    "Underlag finns": "success",
+    "Underlag saknas": "warning",
+    // Account type labels
+    "Tillgång": "info",
+    "Skuld": "error",
+    "Eget kapital": "purple",
+    "Intäkt": "success",
+    "Kostnad": "warning",
+    // Partner types (HB/KB)
+    "Komplementär": "info",
+    "Kommanditdelägare": "neutral",
+    // Withdrawal types
+    "Uttag": "error",
+    "Insättning": "success",
+    "Lön": "violet",
+}
+
+// =============================================================================
+// Supplier Invoice Status (Leverantörsfakturor)
+// =============================================================================
+
+export const SUPPLIER_INVOICE_STATUSES = SUPPLIER_INVOICE_STATUS_LABELS
+
+export type SupplierInvoiceStatus = (typeof SUPPLIER_INVOICE_STATUSES)[keyof typeof SUPPLIER_INVOICE_STATUSES]
+
+export const SUPPLIER_INVOICE_STATUS_VARIANT: Record<SupplierInvoiceStatus, StatusVariant> = {
+    "Mottagen": "violet",
+    "Attesterad": "warning",
+    "Betald": "success",
+    "Förfallen": "error",
+    "Tvist": "purple",
+}
+
+// =============================================================================
+// Stock Transaction Types (Aktiebok)
+// =============================================================================
+
+export const STOCK_TRANSACTION_TYPES = STOCK_TRANSACTION_TYPE_LABELS
+
+export type StockTransactionType = (typeof STOCK_TRANSACTION_TYPES)[keyof typeof STOCK_TRANSACTION_TYPES]
+
+export const STOCK_TRANSACTION_TYPE_VARIANT: Record<StockTransactionType, StatusVariant> = {
+    "Nyemission": "success",
+    "Köp": "violet",
+    "Försäljning": "warning",
+    "Gåva": "purple",
+    "Arv": "neutral",
+    "Split": "info",
+}
+
+// =============================================================================
+// Membership Status (Medlemsregister)
+// =============================================================================
+
+export const MEMBERSHIP_STATUSES = MEMBERSHIP_STATUS_LABELS
+
+export type MembershipStatus = (typeof MEMBERSHIP_STATUSES)[keyof typeof MEMBERSHIP_STATUSES]
+
+export const MEMBERSHIP_STATUS_VARIANT: Record<MembershipStatus, StatusVariant> = {
+    "Aktiv": "success",
+    "Vilande": "warning",
+    "Avslutad": "neutral",
+}
+
+// =============================================================================
+// Membership Change Types (Medlemsregister)
+// =============================================================================
+
+export const MEMBERSHIP_CHANGE_TYPES = MEMBERSHIP_CHANGE_TYPE_LABELS
+
+export type MembershipChangeType = (typeof MEMBERSHIP_CHANGE_TYPES)[keyof typeof MEMBERSHIP_CHANGE_TYPES]
+
+export const MEMBERSHIP_CHANGE_TYPE_VARIANT: Record<MembershipChangeType, StatusVariant> = {
+    "Gått med": "success",
+    "Lämnat": "error",
+    "Statusändring": "violet",
+    "Rollbyte": "purple",
+}
+
+// =============================================================================
+// Meeting Status (Styrelseprotokoll/Bolagsstämma)
+// =============================================================================
+
+export const MEETING_STATUSES = MEETING_STATUS_LABELS
+
+export type MeetingStatus = (typeof MEETING_STATUSES)[keyof typeof MEETING_STATUSES]
+
+export const MEETING_STATUS_VARIANT: Record<MeetingStatus, StatusVariant> = {
+    "Planerad": "info",
+    "Kallad": "warning",
+    "Genomförd": "violet",
+    "Signerat": "success",
 }
 
 // =============================================================================
 // Combined Status Type (for StatusBadge component)
 // =============================================================================
 
-export type AppStatus = TransactionStatus | InvoiceStatus | ReceiptStatus | GeneralStatus
+export type AppStatus = 
+    | TransactionStatus 
+    | InvoiceStatus 
+    | ReceiptStatus 
+    | GeneralStatus
+    | SupplierInvoiceStatus
+    | StockTransactionType
+    | MembershipStatus
+    | MembershipChangeType
+    | MeetingStatus
 
 export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...TRANSACTION_STATUS_VARIANT,
     ...INVOICE_STATUS_VARIANT,
     ...RECEIPT_STATUS_VARIANT,
     ...GENERAL_STATUS_VARIANT,
+    ...SUPPLIER_INVOICE_STATUS_VARIANT,
+    ...STOCK_TRANSACTION_TYPE_VARIANT,
+    ...MEMBERSHIP_STATUS_VARIANT,
+    ...MEMBERSHIP_CHANGE_TYPE_VARIANT,
+    ...MEETING_STATUS_VARIANT,
 }
 
 // =============================================================================

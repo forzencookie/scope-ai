@@ -11,21 +11,21 @@ export function Footer() {
             <span className="text-stone-900 font-bold tracking-tight text-lg">Scope AI</span>
           </div>
           <p className="text-sm leading-relaxed max-w-xs mb-8">
-            The operating system for the next generation of Swedish companies.
+            AI-driven bokföring för svenska företag. Automatisera hela din ekonomi.
           </p>
           <Link
-            href="/dashboard"
+            href="/register"
             className="inline-flex items-center gap-2 text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors"
           >
-            Get started
+            Kom igång gratis
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {[
-          { title: "Product", links: ["Platform", "Features", "Pricing", "API"] },
-          { title: "Company", links: ["About", "Careers", "Blog", "Contact"] },
-          { title: "Legal", links: ["Privacy", "Terms", "Security", "GDPR"] },
+          { title: "Produkt", links: ["Plattform", "Funktioner", "Priser", "API"] },
+          { title: "Företag", links: ["Om oss", "Karriär", "Blogg", "Kontakt"] },
+          { title: "Juridik", links: ["Integritetspolicy", "Villkor", "Säkerhet", "GDPR"] },
         ].map((col) => (
           <nav key={col.title} aria-labelledby={`footer-${col.title.toLowerCase()}`}>
             <h4 id={`footer-${col.title.toLowerCase()}`} className="text-stone-900 font-medium mb-6">{col.title}</h4>

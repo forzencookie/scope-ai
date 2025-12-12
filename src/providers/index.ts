@@ -29,6 +29,14 @@ export {
     ReceiptsProvider, // Legacy alias
 } from "./app-provider"
 
+// Company provider
+export {
+    CompanyProvider,
+    useCompany,
+    useFeature,
+    useCompanyType,
+} from "./company-provider"
+
 export type {
     AppProvidersProps,
     DataProviderProps,

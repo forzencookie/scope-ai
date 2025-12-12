@@ -19,18 +19,18 @@ export function Navbar() {
 
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-600">
-            <Link href="#features" className="hover:text-stone-900 transition-colors">Platform</Link>
-            <Link href="#pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
+            <Link href="#features" className="hover:text-stone-900 transition-colors">Funktioner</Link>
+            <Link href="#pricing" className="hover:text-stone-900 transition-colors">Priser</Link>
           </div>
           <div className="h-4 w-[1px] bg-stone-200 hidden md:block" />
-          <Link href="/company-statistics" className="text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors">
-            Log in
+          <Link href="/login" className="text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors">
+            Logga in
           </Link>
           <Link
-            href="/dashboard"
+            href="/register"
             className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-md hover:bg-stone-800 transition-colors"
           >
-            Get started
+            Kom igång
           </Link>
         </div>
       </div>

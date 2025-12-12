@@ -33,7 +33,7 @@ const sampleEvents: CalendarEvent[] = [
 // Event type colors
 const eventTypeColors: Record<CalendarEvent["type"], string> = {
     deadline: "bg-red-500/20 text-red-600 dark:bg-red-900/30 dark:text-red-400/80",
-    reminder: "bg-blue-500/20 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400/80",
+    reminder: "bg-violet-500/20 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400/80",
     tax: "bg-amber-500/20 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400/80",
     submission: "bg-purple-500/20 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400/80",
     meeting: "bg-green-500/20 text-green-600 dark:bg-green-900/30 dark:text-green-400/80",

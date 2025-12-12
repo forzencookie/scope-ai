@@ -29,6 +29,10 @@ export type {
 // Data layer hooks
 export * from "./use-inbox"
 export * from "./use-transactions"
+export * from "./use-account-balances"
+
+// Last updated timestamp hook
+export { useLastUpdated, useLastUpdatedTime, formatLastUpdated } from "./use-last-updated"
 
 // React Query based hooks (recommended for new code)
 export {

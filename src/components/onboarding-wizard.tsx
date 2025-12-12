@@ -14,10 +14,12 @@ import {
   Sparkles,
   ArrowRight,
   ExternalLink,
-  CheckCircle2
+  CheckCircle2,
+  Landmark,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
+import { CompanyTypeSelector } from "@/components/company-type-selector"
 
 // Onboarding steps configuration with warm Swedish messaging
 const onboardingSteps = [
@@ -30,15 +32,25 @@ const onboardingSteps = [
     bgColor: "bg-primary/10",
   },
   {
+    id: "company-type",
+    title: "Vilken företagsform har du?",
+    description: "Vi anpassar funktioner, rapporter och deklarationer baserat på din företagsform.",
+    icon: Landmark,
+    color: "text-indigo-600",
+    bgColor: "bg-indigo-500/10",
+    hasCompanyTypeSelector: true,
+  },
+  {
     id: "company",
     title: "Ditt företag",
     description: "Vi hämtar uppgifterna direkt från Bolagsverket så du slipper skriva något själv.",
     icon: Building2,
-    color: "text-blue-600",
-    bgColor: "bg-blue-500/10",
+    color: "text-violet-600",
+    bgColor: "bg-violet-500/10",
     action: {
       label: "Hämta från Bolagsverket",
-      href: "/settings/company-info",
+      href: "https://www.bolagsverket.se/foretag/hitta",
+      external: true,
     },
     fields: [
       { label: "Organisationsnummer", placeholder: "XXXXXX-XXXX", value: "559123-4567" },
@@ -58,6 +70,16 @@ const onboardingSteps = [
       { name: "Nordea", logo: "/logos/nordea.svg", popular: true },
       { name: "Handelsbanken", logo: "/logos/handelsbanken.svg" },
       { name: "Danske Bank", logo: "/logos/danske.svg" },
+    ],
+    moreBanks: [
+      { name: "Sparbankerna", logo: "/logos/sparbanken.svg" },
+      { name: "Länsförsäkringar", logo: "/logos/lansforsakringar.svg" },
+      { name: "ICA Banken", logo: "/logos/ica.svg" },
+      { name: "Skandiabanken", logo: "/logos/skandia.svg" },
+      { name: "SBAB", logo: "/logos/sbab.svg" },
+      { name: "Avanza", logo: "/logos/avanza.svg" },
+      { name: "Nordnet", logo: "/logos/nordnet.svg" },
+      { name: "Klarna", logo: "/logos/klarna.svg" },
     ],
   },
   {
@@ -98,49 +120,34 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
-  const [isAnimating, setIsAnimating] = useState(false)
+  const [showMoreBanks, setShowMoreBanks] = useState(false)
 
   const step = onboardingSteps[currentStep]
   const isLastStep = currentStep === onboardingSteps.length - 1
   const isFirstStep = currentStep === 0
 
   const handleNext = useCallback(() => {
-    if (isAnimating) return
-    setIsAnimating(true)
-    
     // Mark current step as completed
     setCompletedSteps(prev => new Set([...prev, step.id]))
+    setShowMoreBanks(false)
     
     if (isLastStep) {
-      // Complete onboarding
-      setTimeout(() => {
-        onComplete()
-      }, 300)
+      onComplete()
     } else {
-      setTimeout(() => {
-        setCurrentStep(prev => prev + 1)
-        setIsAnimating(false)
-      }, 200)
+      setCurrentStep(prev => prev + 1)
     }
-  }, [isAnimating, isLastStep, onComplete, step.id])
+  }, [isLastStep, onComplete, step.id])
 
   const handleSkip = useCallback(() => {
-    if (isAnimating) return
-    setIsAnimating(true)
-    setTimeout(() => {
-      setCurrentStep(prev => prev + 1)
-      setIsAnimating(false)
-    }, 200)
-  }, [isAnimating])
+    setShowMoreBanks(false)
+    setCurrentStep(prev => prev + 1)
+  }, [])
 
   const handleBack = useCallback(() => {
-    if (isAnimating || isFirstStep) return
-    setIsAnimating(true)
-    setTimeout(() => {
-      setCurrentStep(prev => prev - 1)
-      setIsAnimating(false)
-    }, 200)
-  }, [isAnimating, isFirstStep])
+    if (isFirstStep) return
+    setShowMoreBanks(false)
+    setCurrentStep(prev => prev - 1)
+  }, [isFirstStep])
 
   if (!isOpen) return null
 
@@ -152,14 +159,15 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         exit={{ opacity: 0 }}
+        transition={{ duration: 0.15 }}
         className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
       >
         <motion.div
-          initial={{ opacity: 0, scale: 0.95, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          exit={{ opacity: 0, scale: 0.95, y: 20 }}
-          transition={{ duration: 0.3 }}
-          className="relative w-full max-w-2xl bg-background rounded-2xl shadow-2xl overflow-hidden"
+          initial={{ opacity: 0, scale: 0.98 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.98 }}
+          transition={{ duration: 0.15 }}
+          className="relative w-full max-w-3xl bg-background rounded-2xl shadow-2xl overflow-hidden"
         >
           {/* Close button */}
           <button
@@ -169,23 +177,13 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
             <X className="h-5 w-5 text-muted-foreground" />
           </button>
 
-          {/* Progress bar */}
-          <div className="absolute top-0 left-0 right-0 h-1 bg-muted">
-            <motion.div
-              className="h-full bg-primary"
-              initial={{ width: 0 }}
-              animate={{ width: `${((currentStep + 1) / onboardingSteps.length) * 100}%` }}
-              transition={{ duration: 0.3 }}
-            />
-          </div>
-
           {/* Step indicators */}
           <div className="flex items-center justify-center gap-2 pt-8 pb-4">
             {onboardingSteps.map((s, index) => (
               <div
                 key={s.id}
                 className={cn(
-                  "w-2 h-2 rounded-full transition-all duration-300",
+                  "w-2 h-2 rounded-full transition-all duration-150",
                   index === currentStep 
                     ? "w-8 bg-primary" 
                     : completedSteps.has(s.id)
@@ -197,13 +195,13 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
           </div>
 
           {/* Content */}
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="popLayout" initial={false}>
             <motion.div
               key={step.id}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.2 }}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
               className="px-8 pb-8"
             >
               {/* Step header */}
@@ -233,6 +231,12 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                 </div>
               )}
 
+              {step.id === "company-type" && (
+                <div className="w-full">
+                  <CompanyTypeSelector showDescription={true} columns={2} />
+                </div>
+              )}
+
               {step.id === "company" && step.fields && (
                 <div className="space-y-4 max-w-sm mx-auto">
                   {step.fields.map((field) => (
@@ -248,7 +252,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                   ))}
                   {step.action && (
                     <Button variant="outline" className="w-full mt-2" asChild>
-                      <a href={step.action.href}>
+                      <a href={step.action.href} target="_blank" rel="noopener noreferrer">
                         {step.action.label}
                         <ExternalLink className="h-4 w-4 ml-2" />
                       </a>
@@ -257,7 +261,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                 </div>
               )}
 
-              {step.id === "bank" && step.integrations && (
+              {step.id === "bank" && step.integrations && !showMoreBanks && (
                 <div className="grid grid-cols-3 gap-3 max-w-md mx-auto">
                   {step.integrations.map((bank) => (
                     <button
@@ -278,12 +282,40 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                       )}
                     </button>
                   ))}
-                  <button className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/50 text-muted-foreground hover:border-border hover:text-foreground transition-all">
+                  <button 
+                    onClick={() => setShowMoreBanks(true)}
+                    className="flex flex-col items-center gap-2 p-4 rounded-xl border border-dashed border-border/50 text-muted-foreground hover:border-border hover:text-foreground transition-all"
+                  >
                     <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center">
                       +
                     </div>
                     <span className="text-sm">Fler banker</span>
                   </button>
+                </div>
+              )}
+
+              {step.id === "bank" && step.moreBanks && showMoreBanks && (
+                <div className="max-w-lg mx-auto">
+                  <button 
+                    onClick={() => setShowMoreBanks(false)}
+                    className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors"
+                  >
+                    <ChevronRight className="h-4 w-4 rotate-180" />
+                    Tillbaka till populära banker
+                  </button>
+                  <div className="grid grid-cols-4 gap-3">
+                    {step.moreBanks.map((bank) => (
+                      <button
+                        key={bank.name}
+                        className="flex flex-col items-center gap-2 p-4 rounded-xl border border-border/50 transition-all hover:border-primary hover:bg-primary/5"
+                      >
+                        <div className="w-10 h-10 rounded-lg bg-muted flex items-center justify-center text-lg font-semibold">
+                          {bank.name.charAt(0)}
+                        </div>
+                        <span className="text-sm font-medium text-center">{bank.name}</span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -343,18 +375,18 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
           <div className="flex items-center justify-between px-8 py-4 border-t bg-muted/30">
             <div>
               {!isFirstStep && (
-                <Button variant="ghost" onClick={handleBack} disabled={isAnimating}>
+                <Button variant="ghost" onClick={handleBack}>
                   Tillbaka
                 </Button>
               )}
             </div>
             <div className="flex items-center gap-2">
               {step.optional && (
-                <Button variant="ghost" onClick={handleSkip} disabled={isAnimating}>
+                <Button variant="ghost" onClick={handleSkip}>
                   Hoppa över
                 </Button>
               )}
-              <Button onClick={handleNext} disabled={isAnimating}>
+              <Button onClick={handleNext}>
                 {isLastStep ? (
                   <>
                     <CheckCircle2 className="h-4 w-4 mr-2" />

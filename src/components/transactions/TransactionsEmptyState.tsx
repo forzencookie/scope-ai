@@ -36,7 +36,6 @@ export function TransactionsEmptyState({
                     {!hasFilters && (
                         <Button 
                             size="sm" 
-                            className="bg-blue-600 hover:bg-blue-700"
                             onClick={onAddTransaction}
                         >
                             <Plus className="h-3.5 w-3.5 mr-1" />

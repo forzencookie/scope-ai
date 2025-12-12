@@ -28,18 +28,18 @@ export function Navbar() {
 
         <div className="flex items-center gap-6">
           <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-600">
-            <Link href="#features" className="hover:text-stone-900 transition-colors">Platform</Link>
-            <Link href="#pricing" className="hover:text-stone-900 transition-colors">Pricing</Link>
+            <Link href="#features" className="hover:text-stone-900 transition-colors">Funktioner</Link>
+            <Link href="#pricing" className="hover:text-stone-900 transition-colors">Priser</Link>
           </div>
           <div className="h-4 w-[1px] bg-stone-200 hidden md:block" />
-          <Link href="/company-statistics" className="text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors">
-            Log in
+          <Link href="/login" className="text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors">
+            Logga in
           </Link>
           <Link
-            href="/dashboard"
+            href="/register"
             className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-md hover:bg-stone-800 transition-colors"
           >
-            Get started
+            Kom igång
           </Link>
         </div>
       </div>
@@ -83,9 +83,9 @@ export function Pricing() {
       
       <div className="grid md:grid-cols-3 gap-0">
         {[
-          { name: "Starter", price: billing === "monthly" ? "0 kr" : "0 kr", period: "/mån", desc: "For dormant or new ABs", features: ["Basic bookkeeping", "Receipt scanning", "Bank sync", "Email support"] },
-          { name: "Standard", price: billing === "monthly" ? "299 kr" : "249 kr", period: "/mån", desc: "For growing companies", highlight: true, features: ["Everything in Starter", "Payroll automation", "VAT filings", "Priority support", "Unlimited users"] },
-          { name: "Enterprise", price: "Custom", period: "", desc: "Multi-entity support", features: ["Everything in Standard", "Multi-company", "API access", "Dedicated manager", "Custom integrations"] },
+          { name: "Free", price: billing === "monthly" ? "0 kr" : "0 kr", period: "/mån", desc: "Alla funktioner — du bokför själv", features: ["Bokföring & transaktioner", "Momsdeklarationer", "Löner & AGI", "Kvitton & fakturor", "Banksynk", "Rapporter & årsredovisning"] },
+          { name: "Professional", price: billing === "monthly" ? "449 kr" : "379 kr", period: "/mån", desc: "AI gör jobbet åt dig", highlight: true, features: ["Allt i Free, plus:", "AI-kategoriserar transaktioner", "AI-assisterad bokföring", "AI-genererade deklarationer", "AI-lönebesked & AGI", "Prioriterad support"] },
+          { name: "Enterprise", price: "Kommer snart", period: "", desc: "För koncerner och flerbolagsstrukturer", comingSoon: true, features: ["Allt i Professional", "Hantera flera bolag", "API-åtkomst", "Dedikerad kontaktperson", "Skräddarsydda integrationer"] },
         ].map((tier, i) => (
           <div
             key={i}
@@ -117,14 +117,18 @@ export function Pricing() {
               ))}
             </ul>
 
-            <button className={cn(
-              "w-full py-3 text-sm font-medium rounded-lg transition-colors border",
+            <Link 
+              href={tier.price === "Kommer snart" ? "#" : "/register"}
+              className={cn(
+              "w-full py-3 text-sm font-medium rounded-lg transition-colors border text-center block",
               tier.highlight 
                 ? "bg-stone-900 text-white border-stone-900 hover:bg-stone-800" 
-                : "bg-white text-stone-900 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
+                : tier.price === "Kommer snart"
+                  ? "bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed"
+                  : "bg-white text-stone-900 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
             )}>
-              {tier.price === "Custom" ? "Contact sales" : "Get started"}
-            </button>
+              {tier.price === "Kommer snart" ? "Meddela mig" : "Kom igång"}
+            </Link>
           </div>
         ))}
       </div>
@@ -293,21 +297,21 @@ export function Footer() {
             <span className="text-stone-900 font-bold tracking-tight text-lg">Scope AI</span>
           </div>
           <p className="text-sm leading-relaxed max-w-xs mb-8">
-            The operating system for the next generation of Swedish companies.
+            AI-driven bokföring för svenska företag. Automatisera hela din ekonomi.
           </p>
           <Link
-            href="/dashboard"
+            href="/register"
             className="inline-flex items-center gap-2 text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors"
           >
-            Get started
+            Kom igång gratis
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>
 
         {[
-          { title: "Product", links: ["Platform", "Features", "Pricing", "API"] },
-          { title: "Company", links: ["About", "Careers", "Blog", "Contact"] },
-          { title: "Legal", links: ["Privacy", "Terms", "Security", "GDPR"] },
+          { title: "Produkt", links: ["Plattform", "Funktioner", "Priser", "API"] },
+          { title: "Företag", links: ["Om oss", "Karriär", "Blogg", "Kontakt"] },
+          { title: "Juridik", links: ["Integritetspolicy", "Villkor", "Säkerhet", "GDPR"] },
         ].map((col) => (
           <nav key={col.title} aria-labelledby={`footer-${col.title.toLowerCase()}`}>
             <h4 id={`footer-${col.title.toLowerCase()}`} className="text-stone-900 font-medium mb-6">{col.title}</h4>

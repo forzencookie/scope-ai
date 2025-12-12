@@ -66,7 +66,7 @@ export const TransactionRow = memo(function TransactionRow({
                     </td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap">
                         <span className={cn(
-                            transaction.amount.startsWith("+") ? "text-green-600" : "text-foreground"
+                            transaction.amount.startsWith("+") ? "text-green-600 dark:text-green-500/70" : "text-foreground"
                         )}>
                             {transaction.amount}
                         </span>

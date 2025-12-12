@@ -91,7 +91,7 @@ function MetricCard({
     tooltip?: string
 }) {
     const content = (
-        <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 border border-border/50">
+        <div className="flex flex-col gap-1 p-3 rounded-lg bg-muted/30 border-2 border-border/60">
             <div className="flex items-center justify-between">
                 <span className="text-xs text-muted-foreground">{label}</span>
                 <Icon className="h-3.5 w-3.5 text-muted-foreground" />
@@ -287,7 +287,7 @@ export function AIConfidenceDashboard({
             <Collapsible 
                 open={isExpanded} 
                 onOpenChange={setIsExpanded}
-                className={cn("border border-border/50 rounded-lg overflow-hidden", className)}
+                className={cn("border-2 border-border/60 rounded-lg overflow-hidden", className)}
             >
                 <CollapsibleTrigger asChild>
                     <Button

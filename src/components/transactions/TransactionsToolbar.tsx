@@ -2,8 +2,6 @@
 
 import {
     ArrowRightLeft,
-    Search,
-    SlidersHorizontal,
     ArrowUpDown,
     Settings,
     X,
@@ -11,7 +9,8 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
+import { SearchBar } from "@/components/ui/search-bar"
+import { FilterButtonIcon } from "@/components/ui/filter-button"
 import { TRANSACTION_STATUSES, type TransactionStatus } from "@/types"
 import {
     DropdownMenu,
@@ -63,23 +62,15 @@ export function TransactionsToolbar({
                 </h2>
             </div>
             <div className="flex items-center gap-2">
-                <InputGroup className="w-64">
-                    <InputGroupAddon>
-                        <InputGroupText>
-                            <Search />
-                        </InputGroupText>
-                    </InputGroupAddon>
-                    <InputGroupInput 
-                        placeholder="Sök transaktioner..." 
-                        value={searchQuery}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                    />
-                </InputGroup>
+                <SearchBar
+                    placeholder="Sök transaktioner..."
+                    value={searchQuery}
+                    onChange={onSearchChange}
+                    className="w-64"
+                />
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className={cn("h-9 w-9", statusFilter.length > 0 && "text-blue-600")}>
-                            <SlidersHorizontal className="h-4 w-4" />
-                        </Button>
+                        <FilterButtonIcon isActive={statusFilter.length > 0} />
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                         <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
@@ -127,7 +118,7 @@ export function TransactionsToolbar({
                 <Button variant="ghost" size="icon" className="h-9 w-9">
                     <Settings className="h-4 w-4" />
                 </Button>
-                <Button size="sm" className="h-9 gap-1 bg-blue-600 hover:bg-blue-700" onClick={onNewTransaction}>
+                <Button size="sm" className="h-8 gap-1" onClick={onNewTransaction}>
                     <Plus className="h-3.5 w-3.5" />
                     Ny
                 </Button>

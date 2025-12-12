@@ -2,7 +2,7 @@
 
 import { memo, useState } from "react"
 import { 
-    Check, X, Search, ArrowRightLeft, Plus,
+    X, Search, ArrowRightLeft, Plus,
     Sparkles, Zap, AlertTriangle, Undo2,
     Building2, Coffee, Smartphone, Plane, Briefcase, Tag, User,
     type LucideIcon,
@@ -31,6 +31,10 @@ import {
     DialogClose,
 } from "@/components/ui/dialog"
 import type { Transaction, AISuggestion } from "@/types"
+import { AISuggestionBadge } from "./AISuggestionBadge"
+
+// Re-export AISuggestionBadge for convenience
+export { AISuggestionBadge }
 
 // =============================================================================
 // Constants
@@ -47,91 +51,6 @@ export const ICON_MAP: Record<string, LucideIcon> = {
     Tag,
     User,
 }
-
-// =============================================================================
-// AISuggestionBadge
-// =============================================================================
-
-interface AISuggestionBadgeProps {
-    suggestion: AISuggestion
-    onApprove: () => void
-    onReject: () => void
-    isApproved: boolean
-    compact?: boolean
-}
-
-export const AISuggestionBadge = memo(function AISuggestionBadge({ 
-    suggestion, 
-    onApprove, 
-    onReject,
-    isApproved,
-    compact = false,
-}: AISuggestionBadgeProps) {
-    if (isApproved) {
-        return (
-            <div className="flex items-center gap-2 text-emerald-600 py-1">
-                <div className="h-6 w-6 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Check className="h-4 w-4" />
-                </div>
-                <span className="text-sm font-medium">Godkänd</span>
-            </div>
-        )
-    }
-
-    return (
-        <div className={cn(
-            "flex items-center gap-3",
-            compact ? "flex-row" : "flex-col sm:flex-row"
-        )}>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-md bg-violet-50 dark:bg-violet-950/50 border border-violet-100 dark:border-violet-800/50">
-                <span className="text-sm font-medium text-violet-700 dark:text-violet-400/80">{suggestion.category}</span>
-                <span className={cn(
-                    "text-xs font-semibold px-1.5 py-0.5 rounded",
-                    suggestion.confidence >= 90 
-                        ? "bg-emerald-100 dark:bg-emerald-900/40 text-emerald-700 dark:text-emerald-400/80" 
-                        : suggestion.confidence >= 70 
-                            ? "bg-amber-100 dark:bg-amber-900/40 text-amber-700 dark:text-amber-400/80"
-                            : "bg-gray-100 dark:bg-gray-800/50 text-gray-700 dark:text-gray-400/80"
-                )}>
-                    {suggestion.confidence}%
-                </span>
-            </div>
-            
-            <div className="flex items-center gap-1">
-                <button
-                    onClick={(e) => { e.stopPropagation(); onApprove(); }}
-                    className={cn(
-                        "min-h-[44px] min-w-[44px] px-3 rounded-lg flex items-center justify-center gap-2",
-                        "text-emerald-700 bg-emerald-50 border border-emerald-200",
-                        "hover:bg-emerald-100 hover:border-emerald-300",
-                        "focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1",
-                        "active:bg-emerald-200 transition-colors touch-manipulation"
-                    )}
-                    title="Godkänn förslag"
-                    aria-label={`Godkänn kategorisering: ${suggestion.category}`}
-                >
-                    <Check className="h-5 w-5" />
-                    <span className="text-sm font-medium hidden sm:inline">Godkänn</span>
-                </button>
-                <button
-                    onClick={(e) => { e.stopPropagation(); onReject(); }}
-                    className={cn(
-                        "min-h-[44px] min-w-[44px] px-3 rounded-lg flex items-center justify-center gap-2",
-                        "text-muted-foreground bg-muted/50 border border-border/50",
-                        "hover:text-red-600 hover:bg-red-50 hover:border-red-200",
-                        "focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-1",
-                        "active:bg-red-100 transition-colors touch-manipulation"
-                    )}
-                    title="Avvisa förslag"
-                    aria-label={`Avvisa kategorisering: ${suggestion.category}`}
-                >
-                    <X className="h-5 w-5" />
-                    <span className="text-sm font-medium hidden sm:inline">Avvisa</span>
-                </button>
-            </div>
-        </div>
-    )
-})
 
 // =============================================================================
 // AISuggestionsBanner
@@ -263,7 +182,7 @@ export function AISuggestionsBanner({
                 </AlertDialogContent>
             </AlertDialog>
 
-            <div className="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-violet-50 to-blue-50 dark:from-violet-950 dark:to-blue-950 rounded-lg border border-violet-100 dark:border-violet-800">
+            <div className="flex items-center justify-between py-3 px-4 bg-gradient-to-r from-violet-50 to-violet-100/50 dark:from-violet-950 dark:to-violet-900/50 rounded-lg border border-violet-100 dark:border-violet-800">
                 <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-violet-100 dark:bg-violet-900/50 flex items-center justify-center">
                         <Sparkles className="h-5 w-5 text-violet-600 dark:text-violet-400" />
@@ -400,7 +319,7 @@ export function TransactionsEmptyState({ hasFilters, onAddTransaction }: Transac
                             : "Koppla din bank så börjar vi jobba — du kommer älska hur enkelt det blir"}
                     </p>
                     {!hasFilters && (
-                        <Button size="sm" className="bg-blue-600 hover:bg-blue-700" onClick={onAddTransaction}>
+                        <Button size="sm" onClick={onAddTransaction}>
                             <Plus className="h-3.5 w-3.5 mr-1" />
                             Lägg till transaktion
                         </Button>
@@ -451,7 +370,7 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
                     <DialogClose asChild>
                         <Button variant="outline">Avbryt</Button>
                     </DialogClose>
-                    <Button className="bg-blue-600 hover:bg-blue-700">Lägg till</Button>
+                    <Button>Lägg till</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>
@@ -494,7 +413,7 @@ export function TransactionDetailsDialog({
                             </div>
                             <div>
                                 <p className="text-sm text-muted-foreground">Belopp</p>
-                                <p className={cn("font-medium", transaction.amount.startsWith("+") ? "text-green-600" : "")}>
+                                <p className={cn("font-medium", transaction.amount.startsWith("+") ? "text-green-600 dark:text-green-500/70" : "")}>
                                     {transaction.amount}
                                 </p>
                             </div>
@@ -519,7 +438,7 @@ export function TransactionDetailsDialog({
                     <DialogClose asChild>
                         <Button variant="outline">Stäng</Button>
                     </DialogClose>
-                    <Button className="bg-blue-600 hover:bg-blue-700">Bokför</Button>
+                    <Button>Bokför</Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

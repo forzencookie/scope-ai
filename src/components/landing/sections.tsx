@@ -31,14 +31,14 @@ export function Hero() {
           <span className="text-xs font-mono text-stone-600 uppercase tracking-widest relative z-10">Systemet är redo</span>
         </div>
         <h1 className="text-5xl md:text-7xl font-bold text-stone-900 tracking-tight leading-[1.05] mb-6">
-          Ditt svenska företag, smart och enkelt.
+          AI-driven bokföring för svenska företag.
         </h1>
         <p className="text-xl text-stone-600 leading-relaxed max-w-lg mb-10">
-          Scope AI tar hand om bokföring, löner, moms och kvitton automatiskt — så du kan fokusera på det som verkligen betyder något.
+          Scope AI automatiserar hela din ekonomi — från transaktioner och kvitton till moms, löner och årsredovisning. Allt med svensk AI som förstår BAS-kontoplanen.
         </p>
         <div className="flex items-center gap-4">
           <Link
-            href="/dashboard"
+            href="/register"
             className="group h-12 px-6 bg-stone-900 text-white rounded-lg flex items-center gap-2 font-medium hover:bg-stone-800 transition-all hover:pr-4 relative overflow-hidden"
           >
             <DitherPattern className="inset-0 opacity-[0.15]" />
@@ -76,7 +76,7 @@ export function Hero() {
           <div className="space-y-2">
             <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
               <motion.div
-                className="h-full bg-blue-500 rounded-full"
+                className="h-full bg-violet-500 rounded-full"
                 initial={{ width: "0%" }}
                 animate={{ width: "100%" }}
                 transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
@@ -140,16 +140,16 @@ export function Analytics() {
     <Section id="analytics" className="bg-white border-y border-stone-200">
       <div className="grid md:grid-cols-2 gap-16 items-center">
         <div>
-          <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Financial Clarity</h2>
+          <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Realtidsöversikt över din ekonomi</h2>
           <p className="text-stone-600 leading-relaxed mb-8">
-            Real-time visibility into cash flow, tax obligations, payroll trends, and filing deadlines. 
-            No spreadsheets, no guessing.
+            Se kassaflöde, momsunderlag, lönekostnader och deadlines — allt uppdaterat i realtid. 
+            AI:n kategoriserar transaktioner automatiskt och flaggar avvikelser.
           </p>
           <div className="space-y-4">
             {[
-              { label: "Cash flow forecasting", icon: TrendingUp },
-              { label: "Tax deadline tracking", icon: Calendar },
-              { label: "Expense breakdown", icon: PieChart },
+              { label: "AI-kategorisering av transaktioner", icon: TrendingUp },
+              { label: "Automatiska momsberäkningar", icon: Calendar },
+              { label: "Intelligenta varningar & påminnelser", icon: PieChart },
             ].map((item, i) => (
               <div key={i} className="flex items-center gap-3 text-stone-700">
                 <div className="p-2 bg-stone-100 border border-stone-200 rounded-lg">
@@ -241,9 +241,9 @@ export function BentoGrid() {
   return (
     <Section id="features">
       <div className="mb-16">
-        <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">The Architectural Interface</h2>
+        <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Allt du behöver. Automatiserat.</h2>
         <p className="text-stone-600 max-w-2xl">
-          Every financial operation is isolated, modularized, and automated. No clutter, just control.
+          Från daglig bokföring till årsredovisning — varje modul är byggd för att spara dig tid med AI som förstår svensk redovisning.
         </p>
       </div>
 
@@ -258,9 +258,9 @@ export function BentoGrid() {
               <StatusBadge status="complete" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-black transition-colors">Autonomous Bookkeeping</h3>
+              <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-black transition-colors">AI-bokföring</h3>
               <p className="text-stone-600 text-sm leading-relaxed">
-                Direct bank feeds are classified by AI, reconciled against receipts, and balanced in real-time.
+                Banktransaktioner kategoriseras automatiskt mot BAS-kontoplanen. AI:n lär sig dina mönster och föreslår konteringar.
               </p>
             </div>
           </div>
@@ -273,9 +273,9 @@ export function BentoGrid() {
               <Building className="w-5 h-5 text-stone-600" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-black transition-colors">VAT Automation</h3>
+              <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-black transition-colors">Momsdeklaration</h3>
               <p className="text-stone-600 text-sm leading-relaxed">
-                Accurate filings, delivered.
+                Genereras automatiskt från bokföringen. Skicka direkt till Skatteverket.
               </p>
             </div>
           </div>
@@ -289,25 +289,25 @@ export function BentoGrid() {
             </div>
             <div className="space-y-4 flex-1">
               {[
-                { label: "Salaries", status: "complete" as const },
-                { label: "Employer Tax", status: "complete" as const },
+                { label: "Löner", status: "complete" as const },
+                { label: "Arbetsgivaravgift", status: "complete" as const },
                 { label: "Pension", status: "pending" as const },
-                { label: "Vacation", status: "active" as const },
+                { label: "Semester", status: "active" as const },
               ].map((item, i) => (
                 <div key={i} className="flex items-center justify-between py-3 border-b border-stone-200 last:border-0">
                   <span className="text-sm font-medium text-stone-700">{item.label}</span>
                   <div className={cn("w-2 h-2 rounded-full", {
                     "bg-emerald-500": item.status === "complete",
                     "bg-amber-500": item.status === "pending",
-                    "bg-blue-500": item.status === "active",
+                    "bg-violet-500": item.status === "active",
                   })} />
                 </div>
               ))}
             </div>
             <div className="mt-8">
-              <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-black transition-colors">Payroll Engine</h3>
+              <h3 className="text-lg font-bold text-stone-900 mb-2 group-hover:text-black transition-colors">Löner & AGI</h3>
               <p className="text-stone-600 text-sm leading-relaxed">
-                One click calculates salaries, generates payslips, and files taxes.
+                AI beräknar löner, skatter och arbetsgivaravgifter. Lönebesked och AGI-deklarationer genereras automatiskt.
               </p>
             </div>
           </div>
@@ -321,9 +321,9 @@ export function BentoGrid() {
               <div className="p-2 bg-stone-100 border border-stone-200 rounded-lg w-fit mb-6">
                 <FileText className="w-5 h-5 text-stone-700" />
               </div>
-              <h3 className="text-lg font-bold text-stone-900 mb-2">Unified Document System</h3>
+              <h3 className="text-lg font-bold text-stone-900 mb-2">Kvitton & Fakturor</h3>
               <p className="text-stone-600 text-sm leading-relaxed">
-                Every invoice, receipt, and contract is automatically sorted, tagged, and linked to its corresponding transaction.
+                Skanna kvitton, ladda upp fakturor — AI:n matchar automatiskt mot transaktioner och föreslår kontering.
               </p>
             </div>
             <div className="hidden md:flex gap-4">
@@ -358,9 +358,9 @@ export function IntegrationMesh() {
       <div className="grid md:grid-cols-2 gap-12 items-center">
         {/* Left side - Text only */}
         <div>
-          <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Your entire company. Synchronized.</h2>
+          <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Kopplat till allt du behöver.</h2>
           <p className="text-stone-600 leading-relaxed">
-            Bank feeds, tax authority integrations, payroll, receipts, and compliance — unified into one intelligent system.
+            Direktkoppling till svenska banker, Skatteverket, Kivra och BankID. Allt synkas automatiskt — inga manuella importer.
           </p>
         </div>
 
@@ -381,7 +381,7 @@ export function IntegrationMesh() {
                     x1={x} y1={y} x2="150" y2="150"
                     gradientUnits="userSpaceOnUse"
                   >
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity="0">
+                    <stop offset="0%" stopColor="#8b5cf6" stopOpacity="0">
                       <animate 
                         attributeName="offset" 
                         values="0;1" 
@@ -390,7 +390,7 @@ export function IntegrationMesh() {
                         begin={`${i * 0.2}s`}
                       />
                     </stop>
-                    <stop offset="10%" stopColor="#3b82f6" stopOpacity="1">
+                    <stop offset="10%" stopColor="#8b5cf6" stopOpacity="1">
                       <animate 
                         attributeName="offset" 
                         values="0.1;1.1" 
@@ -399,7 +399,7 @@ export function IntegrationMesh() {
                         begin={`${i * 0.2}s`}
                       />
                     </stop>
-                    <stop offset="20%" stopColor="#60a5fa" stopOpacity="0">
+                    <stop offset="20%" stopColor="#a78bfa" stopOpacity="0">
                       <animate 
                         attributeName="offset" 
                         values="0.2;1.2" 

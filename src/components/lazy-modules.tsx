@@ -177,6 +177,64 @@ export const LazyOnboardingWizard = createLazyComponent(
 )
 
 // ============================================================================
+// Reports Tab Components (Lazy Loaded)
+// ============================================================================
+
+// Momsdeklaration tab
+export const LazyMomsdeklarationContent = createLazyComponent(
+    async () => {
+        const { MomsdeklarationContent } = await import('@/components/reports/momsdeklaration-content');
+        return { default: MomsdeklarationContent };
+    },
+    'table'
+)
+
+// Inkomstdeklaration tab
+export const LazyInkomstdeklarationContent = createLazyComponent(
+    async () => {
+        const { InkomstdeklarationContent } = await import('@/components/reports/inkomstdeklaration-content');
+        return { default: InkomstdeklarationContent };
+    },
+    'table'
+)
+
+// Årsredovisning tab
+export const LazyArsredovisningContent = createLazyComponent(
+    async () => {
+        const { ArsredovisningContent } = await import('@/components/reports/arsredovisning-content');
+        return { default: ArsredovisningContent };
+    },
+    'table'
+)
+
+// Resultaträkning tab
+export const LazyResultatrakningContent = createLazyComponent(
+    async () => {
+        const { ResultatrakningContent } = await import('@/components/reports/financial-statements');
+        return { default: ResultatrakningContent };
+    },
+    'table'
+)
+
+// Balansräkning tab
+export const LazyBalansrakningContent = createLazyComponent(
+    async () => {
+        const { BalansrakningContent } = await import('@/components/reports/financial-statements');
+        return { default: BalansrakningContent };
+    },
+    'table'
+)
+
+// Företagsstatistik tab
+export const LazyForetagsstatistikContent = createLazyComponent(
+    async () => {
+        const { ForetagsstatistikContent } = await import('@/components/reports/foretagsstatistik-content');
+        return { default: ForetagsstatistikContent };
+    },
+    'chart'
+)
+
+// ============================================================================
 // Route-based Lazy Loading Helpers
 // ============================================================================
 
@@ -198,6 +256,96 @@ export const dashboardModulePreloaders = {
     invoices: () => import('@/components/invoices-table'),
     receipts: () => import('@/components/receipts-table'),
 } as const
+
+/**
+ * Reports modules to preload when user hovers over reports nav
+ */
+export const reportsModulePreloaders = {
+    momsdeklaration: () => import('@/components/reports/momsdeklaration-content'),
+    inkomstdeklaration: () => import('@/components/reports/inkomstdeklaration-content'),
+    arsredovisning: () => import('@/components/reports/arsredovisning-content'),
+    financialStatements: () => import('@/components/reports/financial-statements'),
+    foretagsstatistik: () => import('@/components/reports/foretagsstatistik-content'),
+} as const
+
+/**
+ * Preload a specific reports tab module
+ */
+export function preloadReportsTab(tabId: string): void {
+    const preloaders: Record<string, () => Promise<unknown>> = {
+        momsdeklaration: reportsModulePreloaders.momsdeklaration,
+        inkomstdeklaration: reportsModulePreloaders.inkomstdeklaration,
+        arsredovisning: reportsModulePreloaders.arsredovisning,
+        arsbokslut: reportsModulePreloaders.arsredovisning,
+        resultatrakning: reportsModulePreloaders.financialStatements,
+        balansrakning: reportsModulePreloaders.financialStatements,
+    }
+    
+    const preloader = preloaders[tabId]
+    if (preloader) {
+        preloadModule(preloader)
+    }
+}
+
+// ============================================================================
+// Payroll Tab Components (Lazy Loaded)
+// ============================================================================
+
+// Lönebesked tab
+export const LazyLonesbeskContent = createLazyComponent(
+    async () => {
+        const { LonesbeskContent } = await import('@/components/payroll/lonebesked-content');
+        return { default: LonesbeskContent };
+    },
+    'table'
+)
+
+// AGI tab
+export const LazyAGIContent = createLazyComponent(
+    async () => {
+        const { AGIContent } = await import('@/components/payroll/agi-content');
+        return { default: AGIContent };
+    },
+    'table'
+)
+
+// Utdelning tab
+export const LazyUtdelningContent = createLazyComponent(
+    async () => {
+        const { UtdelningContent } = await import('@/components/payroll/utdelning-content');
+        return { default: UtdelningContent };
+    },
+    'table'
+)
+
+/**
+ * Payroll modules to preload when user hovers over payroll nav
+ */
+export const payrollModulePreloaders = {
+    lonebesked: () => import('@/components/payroll/lonebesked-content'),
+    agi: () => import('@/components/payroll/agi-content'),
+    utdelning: () => import('@/components/payroll/utdelning-content'),
+    egenavgifter: () => import('@/components/egenavgifter'),
+    delagaruttag: () => import('@/components/delagaruttag'),
+} as const
+
+/**
+ * Preload a specific payroll tab module
+ */
+export function preloadPayrollTab(tabId: string): void {
+    const preloaders: Record<string, () => Promise<unknown>> = {
+        lonebesked: payrollModulePreloaders.lonebesked,
+        agi: payrollModulePreloaders.agi,
+        utdelning: payrollModulePreloaders.utdelning,
+        egenavgifter: payrollModulePreloaders.egenavgifter,
+        delagaruttag: payrollModulePreloaders.delagaruttag,
+    }
+    
+    const preloader = preloaders[tabId]
+    if (preloader) {
+        preloadModule(preloader)
+    }
+}
 
 /**
  * Preload common dashboard modules

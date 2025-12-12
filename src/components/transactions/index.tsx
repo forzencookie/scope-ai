@@ -14,10 +14,10 @@ export {
 
 export type { TransactionRowProps } from "./components"
 
-// Table and Toolbar
-export {
-    TransactionsToolbar,
-    TransactionsTable,
-} from "./table"
+// Toolbar
+export { TransactionsToolbar } from "./TransactionsToolbar"
+
+// Table
+export { TransactionsTable } from "./table"
 
 export type { AISuggestionsMap } from "./table"

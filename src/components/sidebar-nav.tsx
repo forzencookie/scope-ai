@@ -4,8 +4,35 @@ import * as React from "react"
 import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
+import { cn } from "@/lib/utils"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
+
+// Icon color configuration for sidebar items
+const iconColors: Record<string, { bg: string; icon: string }> = {
+  // Economy
+  "Bokföring": { bg: "bg-emerald-500/15", icon: "text-emerald-500" },
+  "Rapporter": { bg: "bg-orange-500/15", icon: "text-orange-500" },
+  "Löner": { bg: "bg-pink-500/15", icon: "text-pink-500" },
+  "Ägare & Styrning": { bg: "bg-indigo-500/15", icon: "text-indigo-500" },
+  // Settings
+  "Inställningar": { bg: "bg-slate-500/15", icon: "text-slate-500" },
+  "Företagsstatistik": { bg: "bg-cyan-500/15", icon: "text-cyan-500" },
+}
+
+// Helper component for styled icons
+function IconWrapper({ title, Icon }: { title: string; Icon: LucideIcon }) {
+  const colors = iconColors[title]
+  if (!colors) {
+    // No color config - render plain icon
+    return <Icon className="size-4" />
+  }
+  return (
+    <span className={cn("flex items-center justify-center size-6 rounded", colors.bg)}>
+      <Icon className={cn("size-4", colors.icon)} />
+    </span>
+  )
+}
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar"
@@ -17,7 +44,7 @@ import { SettingsDialog } from "@/components/settings-dialog"
 
 export function NavMain({
   items,
-  label = "Platform",
+  label,
 }: {
   items: {
     title: string
@@ -30,7 +57,7 @@ export function NavMain({
 }) {
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{label}</SidebarGroupLabel>
+      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
       <SidebarMenu>
         {items.map((item) => (
           item.items && item.items.length > 0 ? (
@@ -38,7 +65,7 @@ export function NavMain({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={item.title}>
                   <Link href={item.url}>
-                    {item.icon && <item.icon />}
+                    {item.icon && <IconWrapper title={item.title} Icon={item.icon} />}
                     <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -65,7 +92,7 @@ export function NavMain({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={item.title}>
                 <Link href={item.url}>
-                  {item.icon && <item.icon />}
+                  {item.icon && <IconWrapper title={item.title} Icon={item.icon} />}
                   <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
@@ -146,13 +173,13 @@ export function NavSettings({
           <SidebarMenuItem key={item.title}>
             {item.title === "Inställningar" && onSettingsClick ? (
               <SidebarMenuButton onClick={onSettingsClick} tooltip={item.title}>
-                {item.icon && <item.icon />}
+                {item.icon && <IconWrapper title={item.title} Icon={item.icon} />}
                 <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
               </SidebarMenuButton>
             ) : (
               <SidebarMenuButton asChild tooltip={item.title}>
                 <Link href={item.url}>
-                  {item.icon && <item.icon />}
+                  {item.icon && <IconWrapper title={item.title} Icon={item.icon} />}
                   <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{item.title}</span>
                 </Link>
               </SidebarMenuButton>
@@ -163,6 +190,9 @@ export function NavSettings({
     </SidebarGroup>
   )
 }
+
+// Export IconWrapper and iconColors for use in other components
+export { IconWrapper, iconColors }
 
 // ============================================================================
 // NavUser - User profile dropdown in sidebar

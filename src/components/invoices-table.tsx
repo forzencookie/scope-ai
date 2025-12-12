@@ -6,7 +6,6 @@ import {
     Calendar,
     Search,
     SlidersHorizontal,
-    ArrowUpDown,
     FileText,
     MoreHorizontal,
     Plus,
@@ -19,13 +18,24 @@ import {
     Send,
     Mail,
     AlertCircle,
+    AlertTriangle,
+    TrendingUp,
 } from "lucide-react"
 import { cn, parseAmount } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
 import { useToast } from "@/components/ui/toast"
-import { TableShell, HeaderCell, AmountText } from "@/components/table/table-shell"
-import { DataTableRaw, DataTableAddRow } from "@/components/ui/data-table"
+import { AmountText } from "@/components/table/table-shell"
+import { 
+    DataTable, 
+    DataTableHeader, 
+    DataTableHeaderCell,
+    DataTableBody,
+    DataTableRow,
+    DataTableCell,
+    DataTableAddRow 
+} from "@/components/ui/data-table"
+import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { 
     type InvoiceStatus, 
@@ -119,6 +129,40 @@ export function InvoicesTable() {
         tableData.processItems(invoices),
         [tableData, invoices]
     )
+
+    // Calculate stats for stat cards
+    const stats = useMemo(() => {
+        const outstanding = invoices.filter(inv => 
+            inv.status !== INVOICE_STATUS_LABELS.PAID && inv.status !== INVOICE_STATUS_LABELS.CANCELLED
+        )
+        const overdue = invoices.filter(inv => 
+            inv.status === INVOICE_STATUS_LABELS.OVERDUE || 
+            (inv.status !== INVOICE_STATUS_LABELS.PAID && new Date(inv.dueDate) < new Date())
+        )
+        const paid = invoices.filter(inv => inv.status === INVOICE_STATUS_LABELS.PAID)
+        
+        const outstandingAmount = outstanding.reduce((sum, inv) => sum + parseAmount(inv.amount), 0)
+        const overdueAmount = overdue.reduce((sum, inv) => sum + parseAmount(inv.amount), 0)
+        const paidAmount = paid.reduce((sum, inv) => sum + parseAmount(inv.amount), 0)
+        
+        return { 
+            outstandingCount: outstanding.length,
+            outstandingAmount,
+            overdueCount: overdue.length,
+            overdueAmount,
+            paidAmount,
+            total: invoices.length
+        }
+    }, [invoices])
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'currency',
+            currency: 'SEK',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount)
+    }
 
     // Bulk selection
     const bulkSelection = useBulkSelection(filteredInvoices)
@@ -250,7 +294,39 @@ export function InvoicesTable() {
     }
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-6">
+            {/* Stats Cards */}
+            <StatCardGrid columns={4}>
+                <StatCard
+                    label="Totalt fakturor"
+                    value={stats.total}
+                    subtitle="Alla fakturor"
+                    icon={FileText}
+                />
+                <StatCard
+                    label="Utestående"
+                    value={formatCurrency(stats.outstandingAmount)}
+                    subtitle={`${stats.outstandingCount} fakturor`}
+                    icon={Clock}
+                />
+                <StatCard
+                    label="Förfallna"
+                    value={formatCurrency(stats.overdueAmount)}
+                    subtitle={`${stats.overdueCount} fakturor`}
+                    icon={AlertTriangle}
+                    changeType="negative"
+                />
+                <StatCard
+                    label="Betalt"
+                    value={formatCurrency(stats.paidAmount)}
+                    icon={TrendingUp}
+                    changeType="positive"
+                />
+            </StatCardGrid>
+
+            {/* Section Separator */}
+            <div className="border-b-2 border-border/60" />
+
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
@@ -368,7 +444,6 @@ export function InvoicesTable() {
                             <Button variant="outline" disabled={isCreating}>Avbryt</Button>
                         </DialogClose>
                         <Button 
-                            className="bg-blue-600 hover:bg-blue-700" 
                             onClick={handleCreateInvoice}
                             disabled={isCreating}
                         >
@@ -418,7 +493,7 @@ export function InvoicesTable() {
                         <DialogClose asChild>
                             <Button variant="outline">Stäng</Button>
                         </DialogClose>
-                        <Button className="bg-blue-600 hover:bg-blue-700">
+                        <Button>
                             <Send className="h-4 w-4 mr-2" />
                             Skicka
                         </Button>
@@ -426,199 +501,167 @@ export function InvoicesTable() {
                 </DialogContent>
             </Dialog>
 
-            {/* Table Toolbar */}
-            <div className="flex items-center justify-between pb-2">
-                <div className="flex items-center gap-4">
-                    <div className="flex items-center gap-2">
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
-                                <FileText className="h-4 w-4 text-primary" />
-                            </div>
-                            Utgående Fakturor
-                        </h2>
-                        <span className="text-sm text-muted-foreground ml-2">
-                            {filteredInvoices.length} fakturor
-                        </span>
-                    </div>
-                    {reminderSent && (
-                        <span className="text-sm text-green-600 flex items-center gap-1">
-                            <Mail className="h-3.5 w-3.5" />
-                            Påminnelse skickad!
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-2">
-                    <InputGroup className="w-64">
-                        <InputGroupAddon>
-                            <InputGroupText>
-                                <Search />
-                            </InputGroupText>
-                        </InputGroupAddon>
-                        <InputGroupInput 
-                            placeholder="Sök fakturor..." 
-                            value={tableData.searchQuery}
-                            onChange={(e) => tableData.setSearchQuery(e.target.value)}
-                        />
-                    </InputGroup>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className={cn("h-9 gap-1", tableData.statusFilter.length > 0 && "border-blue-500 text-blue-600")}>
-                                <SlidersHorizontal className="h-3.5 w-3.5" />
-                                Filter
-                                {tableData.statusFilter.length > 0 && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-xs">{tableData.statusFilter.length}</span>}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {Object.values(INVOICE_STATUSES).map((status) => (
-                                <DropdownMenuCheckboxItem
-                                    key={status}
-                                    checked={tableData.statusFilter.includes(status)}
-                                    onCheckedChange={() => tableData.toggleStatusFilter(status)}
-                                >
-                                    {status}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                            {tableData.statusFilter.length > 0 && (
-                                <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => tableData.clearFilters()}>
-                                        <X className="h-3.5 w-3.5 mr-2" />
-                                        Rensa filter
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 gap-1">
-                                <ArrowUpDown className="h-3.5 w-3.5" />
-                                Sortera
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Sortera efter</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => tableData.toggleSort("issueDate")}>
-                                Datum {tableData.getSortIndicator("issueDate") === "asc" ? "↑" : tableData.getSortIndicator("issueDate") === "desc" ? "↓" : ""}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => tableData.toggleSort("amount")}>
-                                Belopp {tableData.getSortIndicator("amount") === "asc" ? "↑" : tableData.getSortIndicator("amount") === "desc" ? "↓" : ""}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => tableData.toggleSort("customer")}>
-                                Kund {tableData.getSortIndicator("customer") === "asc" ? "↑" : tableData.getSortIndicator("customer") === "desc" ? "↓" : ""}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button size="sm" className="h-9 gap-1 bg-blue-600 hover:bg-blue-700" onClick={() => setNewInvoiceDialogOpen(true)}>
-                        <Plus className="h-3.5 w-3.5" />
-                        Ny Faktura
-                    </Button>
-                </div>
-            </div>
-
             {/* Table */}
-            <DataTableRaw
-                footer={
-                    <DataTableAddRow 
-                        label="Ny Faktura" 
-                        onClick={() => setNewInvoiceDialogOpen(true)} 
-                    />
+            <DataTable 
+                title="Utgående Fakturor"
+                headerActions={
+                    <div className="flex items-center gap-2">
+                        {reminderSent && (
+                            <span className="text-sm text-green-600 dark:text-green-500/70 flex items-center gap-1">
+                                <Mail className="h-3.5 w-3.5" />
+                                Påminnelse skickad!
+                            </span>
+                        )}
+                        <InputGroup className="w-56">
+                            <InputGroupAddon>
+                                <InputGroupText>
+                                    <Search />
+                                </InputGroupText>
+                            </InputGroupAddon>
+                            <InputGroupInput 
+                                placeholder="Sök fakturor..." 
+                                value={tableData.searchQuery}
+                                onChange={(e) => tableData.setSearchQuery(e.target.value)}
+                            />
+                        </InputGroup>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className={cn("h-9 gap-1", tableData.statusFilter.length > 0 && "border-primary text-primary")}>
+                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                    Filter
+                                    {tableData.statusFilter.length > 0 && <span className="ml-1 rounded-full bg-primary/10 px-1.5 text-xs">{tableData.statusFilter.length}</span>}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {Object.values(INVOICE_STATUSES).map((status) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={status}
+                                        checked={tableData.statusFilter.includes(status)}
+                                        onCheckedChange={() => tableData.toggleStatusFilter(status)}
+                                    >
+                                        {status}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                                {tableData.statusFilter.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => tableData.clearFilters()}>
+                                            <X className="h-3.5 w-3.5 mr-2" />
+                                            Rensa filter
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Sortera efter</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => tableData.toggleSort("issueDate")}>
+                                    Datum {tableData.getSortIndicator("issueDate") === "asc" ? "↑" : tableData.getSortIndicator("issueDate") === "desc" ? "↓" : ""}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => tableData.toggleSort("amount")}>
+                                    Belopp {tableData.getSortIndicator("amount") === "asc" ? "↑" : tableData.getSortIndicator("amount") === "desc" ? "↓" : ""}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => tableData.toggleSort("customer")}>
+                                    Kund {tableData.getSortIndicator("customer") === "asc" ? "↑" : tableData.getSortIndicator("customer") === "desc" ? "↓" : ""}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button size="sm" className="h-8 gap-1" onClick={() => setNewInvoiceDialogOpen(true)}>
+                            <Plus className="h-3.5 w-3.5" />
+                            Ny Faktura
+                        </Button>
+                    </div>
                 }
             >
-                <TableShell
-                        header={
-                            <tr className="border-b border-border/40 text-left text-muted-foreground">
-                                <th className="px-4 py-3 w-[40px]">
-                                    <Checkbox 
-                                        checked={bulkSelection.allSelected}
-                                        onCheckedChange={bulkSelection.toggleAll}
-                                        aria-label="Välj alla"
-                                    />
-                                </th>
-                                <HeaderCell label="Faktura Nr" icon={<Hash className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" />
-                                <HeaderCell label="Kund" icon={<User className="h-3.5 w-3.5" />} minWidth="min-w-[180px]" />
-                                <HeaderCell label="Fakturadatum" icon={<Calendar className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                                <HeaderCell label="Förfallodatum" icon={<Clock className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                                <HeaderCell label="Belopp" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" />
-                                <HeaderCell label="Status" icon={<CheckCircle2 className="h-3.5 w-3.5" />} minWidth="min-w-[110px]" />
-                                <HeaderCell label="" minWidth="min-w-[50px]" align="right" />
-                            </tr>
-                        }
-                    >
-                        {filteredInvoices.map((invoice) => (
-                            <tr key={invoice.id} className={cn(
-                                "border-b border-border/40 hover:bg-muted/30 group",
-                                bulkSelection.isSelected(invoice.id) && "bg-muted/50"
-                            )}>
-                                <td className="px-4 py-3">
-                                    <Checkbox 
-                                        checked={bulkSelection.isSelected(invoice.id)}
-                                        onCheckedChange={() => bulkSelection.toggleItem(invoice.id)}
-                                        aria-label={`Välj faktura ${invoice.id}`}
-                                    />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className="font-medium">{invoice.id}</span>
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className="font-medium">{invoice.customer}</span>
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground">{invoice.issueDate}</td>
-                                <td className="px-4 py-3 text-muted-foreground">{invoice.dueDate}</td>
-                                <td className="px-4 py-3 text-right">
-                                    <AmountText value={parseAmount(invoice.amount)} />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <AppStatusBadge 
-                                        status={invoice.status} 
-                                        size="sm"
-                                    />
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                <span className="sr-only">Öppna meny</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => handleViewDetails(invoice)}>
-                                                Visa detaljer
+                <DataTableHeader>
+                    <DataTableHeaderCell width="40px">
+                        <Checkbox 
+                            checked={bulkSelection.allSelected}
+                            onCheckedChange={bulkSelection.toggleAll}
+                            aria-label="Välj alla"
+                        />
+                    </DataTableHeaderCell>
+                    <DataTableHeaderCell label="Faktura Nr" icon={Hash} />
+                    <DataTableHeaderCell label="Kund" icon={User} />
+                    <DataTableHeaderCell label="Fakturadatum" icon={Calendar} />
+                    <DataTableHeaderCell label="Förfallodatum" icon={Clock} />
+                    <DataTableHeaderCell label="Belopp" icon={Banknote} />
+                    <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                    <DataTableHeaderCell label="" align="right" />
+                </DataTableHeader>
+                <DataTableBody>
+                    {filteredInvoices.map((invoice) => (
+                        <DataTableRow 
+                            key={invoice.id}
+                            selected={bulkSelection.isSelected(invoice.id)}
+                            className="group"
+                        >
+                            <DataTableCell>
+                                <Checkbox 
+                                    checked={bulkSelection.isSelected(invoice.id)}
+                                    onCheckedChange={() => bulkSelection.toggleItem(invoice.id)}
+                                    aria-label={`Välj faktura ${invoice.id}`}
+                                />
+                            </DataTableCell>
+                            <DataTableCell bold>{invoice.id}</DataTableCell>
+                            <DataTableCell bold>{invoice.customer}</DataTableCell>
+                            <DataTableCell muted>{invoice.issueDate}</DataTableCell>
+                            <DataTableCell muted>{invoice.dueDate}</DataTableCell>
+                            <DataTableCell align="right">
+                                <AmountText value={parseAmount(invoice.amount)} />
+                            </DataTableCell>
+                            <DataTableCell>
+                                <AppStatusBadge 
+                                    status={invoice.status} 
+                                    size="sm"
+                                />
+                            </DataTableCell>
+                            <DataTableCell align="right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            <span className="sr-only">Öppna meny</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => handleViewDetails(invoice)}>
+                                            Visa detaljer
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleViewDetails(invoice)}>
+                                            Redigera
+                                        </DropdownMenuItem>
+                                        {(invoice.status === INVOICE_STATUSES.SENT || invoice.status === INVOICE_STATUSES.OVERDUE) && (
+                                            <DropdownMenuItem onClick={() => handleSendReminder(invoice.id)}>
+                                                <Mail className="h-3.5 w-3.5 mr-2" />
+                                                Skicka påminnelse
                                             </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleViewDetails(invoice)}>
-                                                Redigera
-                                            </DropdownMenuItem>
-                                            {(invoice.status === INVOICE_STATUSES.SENT || invoice.status === INVOICE_STATUSES.OVERDUE) && (
-                                                <DropdownMenuItem onClick={() => handleSendReminder(invoice.id)}>
-                                                    <Mail className="h-3.5 w-3.5 mr-2" />
-                                                    Skicka påminnelse
-                                                </DropdownMenuItem>
-                                            )}
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(invoice.id)}>
-                                                Radera
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredInvoices.length === 0 && (
-                            <tr>
-                                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
-                                    {tableData.searchQuery || tableData.statusFilter.length > 0 
-                                        ? "Inga fakturor matchar din sökning" 
-                                        : "Inga fakturor ännu"}
-                                </td>
-                            </tr>
-                        )}
-                    </TableShell>
-            </DataTableRaw>
+                                        )}
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(invoice.id)}>
+                                            Radera
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </DataTableCell>
+                        </DataTableRow>
+                    ))}
+                    {filteredInvoices.length === 0 && (
+                        <DataTableRow>
+                            <DataTableCell className="text-center py-8" colSpan={8}>
+                                {tableData.searchQuery || tableData.statusFilter.length > 0 
+                                    ? "Inga fakturor matchar din sökning" 
+                                    : "Inga fakturor ännu"}
+                            </DataTableCell>
+                        </DataTableRow>
+                    )}
+                </DataTableBody>
+            </DataTable>
+            <DataTableAddRow 
+                label="Ny Faktura" 
+                onClick={() => setNewInvoiceDialogOpen(true)} 
+            />
 
             {/* Bulk Action Toolbar */}
             <BulkActionToolbar

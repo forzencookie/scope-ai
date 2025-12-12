@@ -58,7 +58,7 @@ const variantConfig: Record<ProgressiveDisclosureVariant, {
         defaultDescription: "Ytterligare konfigurationsalternativ för erfarna användare",
         defaultIcon: Settings2,
         triggerLabel: "Visa avancerade inställningar",
-        className: "border-border/50 bg-muted/20",
+        className: "border-2 border-border/60 bg-muted/20",
     },
     advanced: {
         defaultTitle: "Avancerat",
@@ -79,7 +79,7 @@ const variantConfig: Record<ProgressiveDisclosureVariant, {
         defaultDescription: "",
         defaultIcon: ChevronDown,
         triggerLabel: "Visa mer",
-        className: "border-border/50",
+        className: "border-2 border-border/60",
     },
 }
 

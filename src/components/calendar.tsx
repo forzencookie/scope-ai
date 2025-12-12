@@ -50,7 +50,7 @@ export function Calendar() {
         cells.push(
             <Link
                 key={day}
-                href="/daily-journal"
+                href="/dashboard/daily-journal"
                 className={`border-r border-b border-gray-100 min-h-[80px] p-2 transition-colors hover:bg-gray-50 group relative cursor-pointer ${isToday ? "bg-gray-50" : ""
                     }`}
             >

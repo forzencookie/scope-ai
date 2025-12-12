@@ -13,15 +13,25 @@ import {
     UploadCloud,
     Building2,
     X,
-    ArrowUpDown,
     Banknote,
     CheckCircle2,
+    Clock,
+    Link2,
 } from "lucide-react"
 import { cn, parseAmount } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
-import { TableShell, HeaderCell, CategoryBadge, AmountText } from "@/components/table/table-shell"
-import { DataTableRaw, DataTableAddRow } from "@/components/ui/data-table"
+import { CategoryBadge, AmountText } from "@/components/table/table-shell"
+import { 
+    DataTable, 
+    DataTableHeader, 
+    DataTableHeaderCell,
+    DataTableBody,
+    DataTableRow,
+    DataTableCell,
+    DataTableAddRow 
+} from "@/components/ui/data-table"
+import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { 
     type ReceiptStatus, 
@@ -96,6 +106,29 @@ export function ReceiptsTable() {
         [tableData, receipts]
     )
 
+    // Calculate stats for stat cards
+    const stats = useMemo(() => {
+        const matched = receipts.filter(r => r.status === RECEIPT_STATUSES.MATCHED)
+        const unmatched = receipts.filter(r => r.status === RECEIPT_STATUSES.UNMATCHED || r.status === RECEIPT_STATUSES.UPLOADED)
+        const totalAmount = receipts.reduce((sum, r) => sum + parseAmount(r.amount), 0)
+        
+        return { 
+            total: receipts.length,
+            matchedCount: matched.length,
+            unmatchedCount: unmatched.length,
+            totalAmount
+        }
+    }, [receipts])
+
+    const formatCurrency = (amount: number) => {
+        return new Intl.NumberFormat('sv-SE', {
+            style: 'currency',
+            currency: 'SEK',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0,
+        }).format(amount)
+    }
+
     // Bulk selection
     const bulkSelection = useBulkSelection(filteredReceipts)
     
@@ -152,7 +185,39 @@ export function ReceiptsTable() {
     }
 
     return (
-        <div className="w-full space-y-4">
+        <div className="w-full space-y-6">
+            {/* Stats Cards */}
+            <StatCardGrid columns={4}>
+                <StatCard
+                    label="Totalt underlag"
+                    value={stats.total}
+                    subtitle="Alla kvitton"
+                    icon={FileText}
+                />
+                <StatCard
+                    label="Matchade"
+                    value={stats.matchedCount}
+                    subtitle="Kopplade till transaktion"
+                    icon={Link2}
+                    changeType="positive"
+                />
+                <StatCard
+                    label="Omatchade"
+                    value={stats.unmatchedCount}
+                    subtitle="Behöver granskas"
+                    icon={Clock}
+                    changeType={stats.unmatchedCount > 0 ? "negative" : "neutral"}
+                />
+                <StatCard
+                    label="Totalt belopp"
+                    value={formatCurrency(stats.totalAmount)}
+                    icon={Banknote}
+                />
+            </StatCardGrid>
+
+            {/* Section Separator */}
+            <div className="border-b-2 border-border/60" />
+
             {/* Delete Confirmation Dialog */}
             <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
                 <AlertDialogContent>
@@ -225,7 +290,7 @@ export function ReceiptsTable() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-muted-foreground">Bilaga</p>
-                                    <p className="font-medium text-blue-600 cursor-pointer hover:underline">{selectedReceipt.attachment}</p>
+                                    <p className="font-medium text-primary cursor-pointer hover:underline">{selectedReceipt.attachment}</p>
                                 </div>
                             </div>
                         </div>
@@ -238,188 +303,161 @@ export function ReceiptsTable() {
                 </DialogContent>
             </Dialog>
 
-            {/* Table Toolbar */}
-            <div className="flex items-center justify-between pb-2">
-                <div className="flex flex-col gap-0.5">
-                    <div className="flex items-center gap-4">
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <div className="h-6 w-6 rounded bg-primary/10 flex items-center justify-center">
-                                <FileText className="h-4 w-4 text-primary" />
-                            </div>
-                            Inkomna Underlag
-                        </h2>
-                    </div>
-                </div>
-                <div className="flex items-center gap-2">
-                    <InputGroup className="w-64">
-                        <InputGroupAddon>
-                            <InputGroupText>
-                                <Search />
-                            </InputGroupText>
-                        </InputGroupAddon>
-                        <InputGroupInput 
-                            placeholder="Sök underlag..." 
-                            value={tableData.searchQuery}
-                            onChange={(e) => tableData.setSearchQuery(e.target.value)}
-                        />
-                    </InputGroup>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className={cn("h-9 gap-1", tableData.statusFilter.length > 0 && "border-blue-500 text-blue-600")}>
-                                <SlidersHorizontal className="h-3.5 w-3.5" />
-                                Filter
-                                {tableData.statusFilter.length > 0 && <span className="ml-1 rounded-full bg-blue-100 px-1.5 text-xs">{tableData.statusFilter.length}</span>}
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            {Object.values(RECEIPT_STATUSES).map((status) => (
-                                <DropdownMenuCheckboxItem
-                                    key={status}
-                                    checked={tableData.statusFilter.includes(status)}
-                                    onCheckedChange={() => tableData.toggleStatusFilter(status)}
-                                >
-                                    {status}
-                                </DropdownMenuCheckboxItem>
-                            ))}
-                            {tableData.statusFilter.length > 0 && (
-                                <>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem onClick={() => tableData.clearFilters()}>
-                                        <X className="h-3.5 w-3.5 mr-2" />
-                                        Rensa filter
-                                    </DropdownMenuItem>
-                                </>
-                            )}
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="h-9 gap-1">
-                                <ArrowUpDown className="h-3.5 w-3.5" />
-                                Sortera
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Sortera efter</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => tableData.toggleSort("date")}>
-                                Datum {tableData.getSortIndicator("date") === "asc" ? "↑" : tableData.getSortIndicator("date") === "desc" ? "↓" : ""}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => tableData.toggleSort("amount")}>
-                                Belopp {tableData.getSortIndicator("amount") === "asc" ? "↑" : tableData.getSortIndicator("amount") === "desc" ? "↓" : ""}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => tableData.toggleSort("supplier")}>
-                                Leverantör {tableData.getSortIndicator("supplier") === "asc" ? "↑" : tableData.getSortIndicator("supplier") === "desc" ? "↓" : ""}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <Button size="sm" className="h-9 gap-1 bg-blue-600 hover:bg-blue-700" onClick={() => setUploadDialogOpen(true)}>
-                        <UploadCloud className="h-3.5 w-3.5" />
-                        Ladda upp
-                    </Button>
-                </div>
-            </div>
-
             {/* Table */}
-            <DataTableRaw
-                footer={
-                    <DataTableAddRow 
-                        label="Nytt underlag" 
-                        onClick={() => setUploadDialogOpen(true)} 
-                    />
+            <DataTable
+                title="Inkomna Underlag"
+                headerActions={
+                    <div className="flex items-center gap-2">
+                        <InputGroup className="w-56">
+                            <InputGroupAddon>
+                                <InputGroupText>
+                                    <Search />
+                                </InputGroupText>
+                            </InputGroupAddon>
+                            <InputGroupInput 
+                                placeholder="Sök underlag..." 
+                                value={tableData.searchQuery}
+                                onChange={(e) => tableData.setSearchQuery(e.target.value)}
+                            />
+                        </InputGroup>
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button variant="outline" size="sm" className={cn("h-9 gap-1", tableData.statusFilter.length > 0 && "border-primary text-primary")}>
+                                    <SlidersHorizontal className="h-3.5 w-3.5" />
+                                    Filter
+                                    {tableData.statusFilter.length > 0 && <span className="ml-1 rounded-full bg-primary/10 px-1.5 text-xs">{tableData.statusFilter.length}</span>}
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-56">
+                                <DropdownMenuLabel>Filtrera på status</DropdownMenuLabel>
+                                <DropdownMenuSeparator />
+                                {Object.values(RECEIPT_STATUSES).map((status) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={status}
+                                        checked={tableData.statusFilter.includes(status)}
+                                        onCheckedChange={() => tableData.toggleStatusFilter(status)}
+                                    >
+                                        {status}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                                {tableData.statusFilter.length > 0 && (
+                                    <>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem onClick={() => tableData.clearFilters()}>
+                                            <X className="h-3.5 w-3.5 mr-2" />
+                                            Rensa filter
+                                        </DropdownMenuItem>
+                                    </>
+                                )}
+                                <DropdownMenuSeparator />
+                                <DropdownMenuLabel>Sortera efter</DropdownMenuLabel>
+                                <DropdownMenuItem onClick={() => tableData.toggleSort("date")}>
+                                    Datum {tableData.getSortIndicator("date") === "asc" ? "↑" : tableData.getSortIndicator("date") === "desc" ? "↓" : ""}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => tableData.toggleSort("amount")}>
+                                    Belopp {tableData.getSortIndicator("amount") === "asc" ? "↑" : tableData.getSortIndicator("amount") === "desc" ? "↓" : ""}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => tableData.toggleSort("supplier")}>
+                                    Leverantör {tableData.getSortIndicator("supplier") === "asc" ? "↑" : tableData.getSortIndicator("supplier") === "desc" ? "↓" : ""}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button size="sm" className="h-8 gap-1" onClick={() => setUploadDialogOpen(true)}>
+                            <UploadCloud className="h-3.5 w-3.5" />
+                            Ladda upp
+                        </Button>
+                    </div>
                 }
             >
-                <TableShell
-                        header={
-                            <tr className="border-b border-border/40 text-left text-muted-foreground">
-                                <th className="px-4 py-3 w-[40px]">
-                                    <Checkbox 
-                                        checked={bulkSelection.allSelected}
-                                        onCheckedChange={bulkSelection.toggleAll}
-                                        aria-label="Välj alla"
-                                    />
-                                </th>
-                                <HeaderCell label="Leverantör" icon={<Building2 className="h-3.5 w-3.5" />} minWidth="min-w-[180px]" />
-                                <HeaderCell label="Datum" icon={<Calendar className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" />
-                                <HeaderCell label="Kategori" icon={<Tag className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                                <HeaderCell label="Belopp" icon={<Banknote className="h-3.5 w-3.5" />} minWidth="min-w-[120px]" />
-                                <HeaderCell label="Status" icon={<CheckCircle2 className="h-3.5 w-3.5" />} minWidth="min-w-[130px]" />
-                                <HeaderCell label="Bilaga" icon={<Paperclip className="h-3.5 w-3.5" />} minWidth="min-w-[140px]" />
-                                <HeaderCell label="" minWidth="min-w-[50px]" align="right" />
-                            </tr>
-                        }
-                    >
-                        {filteredReceipts.map((receipt) => (
-                            <tr key={receipt.id} className={cn(
-                                "border-b border-border/40 hover:bg-muted/30 group",
-                                bulkSelection.isSelected(receipt.id) && "bg-muted/50"
-                            )}>
-                                <td className="px-4 py-3">
-                                    <Checkbox 
-                                        checked={bulkSelection.isSelected(receipt.id)}
-                                        onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
-                                        aria-label={`Välj underlag ${receipt.supplier}`}
-                                    />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <span className="font-medium">{receipt.supplier}</span>
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground">{receipt.date}</td>
-                                <td className="px-4 py-3">
-                                    <CategoryBadge>{receipt.category}</CategoryBadge>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    <AmountText value={parseAmount(receipt.amount)} />
-                                </td>
-                                <td className="px-4 py-3">
-                                    <AppStatusBadge 
-                                        status={receipt.status} 
-                                        size="sm"
-                                    />
-                                </td>
-                                <td className="px-4 py-3 text-muted-foreground">
-                                    <div className="flex items-center gap-2 hover:text-foreground cursor-pointer transition-colors">
-                                        <span className="text-xs truncate max-w-[100px]">{receipt.attachment}</span>
-                                    </div>
-                                </td>
-                                <td className="px-4 py-3 text-right">
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity" >
-                                                <span className="sr-only">Öppna meny</span>
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end">
-                                            <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
-                                            <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
-                                                Visa detaljer
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
-                                                Redigera
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(receipt.id)}>
-                                                Radera
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
-                                </td>
-                            </tr>
-                        ))}
-                        {filteredReceipts.length === 0 && (
-                            <tr>
-                                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
-                                    {tableData.searchQuery || tableData.statusFilter.length > 0 
-                                        ? "Inga underlag matchar din sökning" 
-                                        : "Inga underlag ännu"}
-                                </td>
-                            </tr>
-                        )}
-                    </TableShell>
-            </DataTableRaw>
+                <DataTableHeader>
+                    <DataTableHeaderCell width="40px">
+                        <Checkbox 
+                            checked={bulkSelection.allSelected}
+                            onCheckedChange={bulkSelection.toggleAll}
+                            aria-label="Välj alla"
+                        />
+                    </DataTableHeaderCell>
+                    <DataTableHeaderCell label="Leverantör" icon={Building2} />
+                    <DataTableHeaderCell label="Datum" icon={Calendar} />
+                    <DataTableHeaderCell label="Kategori" icon={Tag} />
+                    <DataTableHeaderCell label="Belopp" icon={Banknote} />
+                    <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                    <DataTableHeaderCell label="Bilaga" icon={Paperclip} />
+                    <DataTableHeaderCell label="" align="right" />
+                </DataTableHeader>
+                <DataTableBody>
+                    {filteredReceipts.map((receipt) => (
+                        <DataTableRow 
+                            key={receipt.id}
+                            selected={bulkSelection.isSelected(receipt.id)}
+                            className="group"
+                        >
+                            <DataTableCell>
+                                <Checkbox 
+                                    checked={bulkSelection.isSelected(receipt.id)}
+                                    onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
+                                    aria-label={`Välj underlag ${receipt.supplier}`}
+                                />
+                            </DataTableCell>
+                            <DataTableCell bold>{receipt.supplier}</DataTableCell>
+                            <DataTableCell muted>{receipt.date}</DataTableCell>
+                            <DataTableCell>
+                                <CategoryBadge>{receipt.category}</CategoryBadge>
+                            </DataTableCell>
+                            <DataTableCell align="right">
+                                <AmountText value={parseAmount(receipt.amount)} />
+                            </DataTableCell>
+                            <DataTableCell>
+                                <AppStatusBadge 
+                                    status={receipt.status} 
+                                    size="sm"
+                                />
+                            </DataTableCell>
+                            <DataTableCell muted>
+                                <div className="flex items-center gap-2 hover:text-foreground cursor-pointer transition-colors">
+                                    <span className="text-xs truncate max-w-[100px]">{receipt.attachment}</span>
+                                </div>
+                            </DataTableCell>
+                            <DataTableCell align="right">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity" >
+                                            <span className="sr-only">Öppna meny</span>
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
+                                        <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
+                                            Visa detaljer
+                                        </DropdownMenuItem>
+                                        <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
+                                            Redigera
+                                        </DropdownMenuItem>
+                                        <DropdownMenuSeparator />
+                                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(receipt.id)}>
+                                            Radera
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </DataTableCell>
+                        </DataTableRow>
+                    ))}
+                    {filteredReceipts.length === 0 && (
+                        <DataTableRow>
+                            <DataTableCell colSpan={8} className="text-center py-8">
+                                {tableData.searchQuery || tableData.statusFilter.length > 0 
+                                    ? "Inga underlag matchar din sökning" 
+                                    : "Inga underlag ännu"}
+                            </DataTableCell>
+                        </DataTableRow>
+                    )}
+                </DataTableBody>
+            </DataTable>
+            <DataTableAddRow 
+                label="Nytt underlag" 
+                onClick={() => setUploadDialogOpen(true)} 
+            />
 
             {/* Bulk Action Toolbar */}
             <BulkActionToolbar
