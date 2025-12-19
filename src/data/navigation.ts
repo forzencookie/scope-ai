@@ -21,6 +21,7 @@ import {
   FileText,
   PiggyBank,
   Captions,
+  Search,
 } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
@@ -62,6 +63,12 @@ export const mockTeams: Team[] = [
 
 export const navPlatform: NavItem[] = [
   {
+    title: "Sök",
+    titleEnkel: "Sök",
+    url: "/dashboard/sok",
+    icon: Search,
+  },
+  {
     title: "Inkorg",
     titleEnkel: "Inkorg",
     url: "/dashboard/inbox",
@@ -70,157 +77,25 @@ export const navPlatform: NavItem[] = [
     muted: true,
   },
   {
-    title: "Händelser",
-    titleEnkel: "Nyheter",
+    title: "Uppgifter",
+    titleEnkel: "Uppgifter",
     url: "/dashboard/dagbok",
-    icon: Apple,
+    icon: CheckSquare,
     muted: true,
   },
+  {
+    title: "AI-assistent",
+    titleEnkel: "AI-bot",
+    url: "/dashboard/ai-robot",
+    icon: Bot,
+  },
 ]
 
 // ============================================
-// Economy Navigation
+// Economy Navigation (REMOVED - accessed via Sök page now)
 // ============================================
 
-export const navEconomy: NavItem[] = [
-  {
-    title: "Bokföring",
-    titleEnkel: "Min bokföring",
-    url: "/dashboard/accounting",
-    icon: BookOpen,
-    items: [
-      {
-        title: "Transaktioner",
-        titleEnkel: "Pengar in & ut",
-        url: "/dashboard/accounting?tab=transaktioner",
-      },
-      {
-        title: "Fakturor & Kvitton",
-        titleEnkel: "Kvitton",
-        url: "/dashboard/accounting?tab=underlag",
-      },
-      {
-        title: "Verifikationer",
-        titleEnkel: "Alla bokningar",
-        url: "/dashboard/accounting?tab=verifikationer",
-      },
-    ],
-  },
-  {
-    title: "Rapporter",
-    titleEnkel: "Rapporter",
-    url: "/dashboard/reports",
-    icon: PieChart,
-    items: [
-      {
-        title: "Momsdeklaration",
-        titleEnkel: "Momsrapport",
-        url: "/dashboard/reports?tab=momsdeklaration",
-        featureKey: "momsdeklaration",
-      },
-      {
-        title: "Inkomstdeklaration",
-        titleEnkel: "Skatterapport",
-        url: "/dashboard/reports?tab=inkomstdeklaration",
-        featureKey: "inkomstdeklaration",
-      },
-      {
-        title: "Årsredovisning",
-        titleEnkel: "Årssammanställning",
-        url: "/dashboard/reports?tab=arsredovisning",
-        featureKey: "arsredovisning",
-      },
-      {
-        title: "Årsbokslut",
-        titleEnkel: "Bokslut",
-        url: "/dashboard/reports?tab=arsbokslut",
-        featureKey: "arsbokslut",
-      },
-    ],
-  },
-  {
-    title: "Löner",
-    titleEnkel: "Löner",
-    url: "/dashboard/payroll",
-    icon: PiggyBank,
-    items: [
-      {
-        title: "Lönebesked",
-        titleEnkel: "Lönebesked",
-        url: "/dashboard/payroll?tab=lonebesked",
-        featureKey: "lonebesked",
-      },
-      {
-        title: "AGI",
-        titleEnkel: "Arbetsgivarinfo",
-        url: "/dashboard/payroll?tab=agi",
-        featureKey: "agi",
-      },
-      {
-        title: "Utdelning",
-        titleEnkel: "Utdelning",
-        url: "/dashboard/payroll?tab=utdelning",
-        featureKey: "utdelning",
-      },
-      {
-        title: "Egenavgifter",
-        titleEnkel: "Mina avgifter",
-        url: "/dashboard/payroll?tab=egenavgifter",
-        featureKey: "egenavgifter",
-      },
-      {
-        title: "Delägaruttag",
-        titleEnkel: "Ägaruttag",
-        url: "/dashboard/payroll?tab=delagaruttag",
-        featureKey: "delagaruttag",
-      },
-    ],
-  },
-  {
-    title: "Ägare & Styrning",
-    titleEnkel: "Ägarinfo",
-    url: "/dashboard/agare",
-    icon: Landmark,
-    items: [
-      {
-        title: "Aktiebok",
-        titleEnkel: "Aktiebok",
-        url: "/dashboard/agare?tab=aktiebok",
-        featureKey: "aktiebok",
-      },
-      {
-        title: "Delägare",
-        titleEnkel: "Ägare",
-        url: "/dashboard/agare?tab=delagare",
-        featureKey: "delagare",
-      },
-      {
-        title: "Medlemsregister",
-        titleEnkel: "Medlemmar",
-        url: "/dashboard/agare?tab=medlemsregister",
-        featureKey: "medlemsregister",
-      },
-      {
-        title: "Styrelseprotokoll",
-        titleEnkel: "Styrelseanteckningar",
-        url: "/dashboard/agare?tab=styrelseprotokoll",
-        featureKey: "styrelseprotokoll",
-      },
-      {
-        title: "Bolagsstämma",
-        titleEnkel: "Årsmöte (AB)",
-        url: "/dashboard/agare?tab=bolagsstamma",
-        featureKey: "bolagsstamma",
-      },
-      {
-        title: "Årsmöte",
-        titleEnkel: "Årsmöte",
-        url: "/dashboard/agare?tab=arsmote",
-        featureKey: "arsmote",
-      },
-    ],
-  },
-]
+// navEconomy has been removed - all economy pages are accessed via /dashboard/sok/
 
 // ============================================
 // Settings Navigation

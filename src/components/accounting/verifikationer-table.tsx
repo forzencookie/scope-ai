@@ -197,6 +197,12 @@ export function VerifikationerTable() {
 
     return (
         <div className="flex flex-col space-y-6">
+            {/* Page Heading */}
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight">Verifikationer</h2>
+                <p className="text-muted-foreground">Se alla bokförda transaktioner och verifikationer.</p>
+            </div>
+
             {/* Stats Cards */}
             <StatCardGrid columns={4}>
                 <StatCard

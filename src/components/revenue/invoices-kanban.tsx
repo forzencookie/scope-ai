@@ -390,6 +390,12 @@ export function InvoicesKanban() {
 
     return (
         <div className="w-full space-y-6">
+            {/* Page Heading */}
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight">{text.invoices.title}</h2>
+                <p className="text-muted-foreground">Skapa och hantera fakturor till dina kunder.</p>
+            </div>
+
             {/* Stats Cards */}
             <StatCardGrid columns={4}>
                 <StatCard

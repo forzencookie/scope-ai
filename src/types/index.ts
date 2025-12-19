@@ -106,7 +106,6 @@ export interface NavSubItem {
 
 export interface NavigationData {
   navPlatform: NavItem[]
-  navEconomy: NavItem[]
   navSettings: NavItem[]
 }
 

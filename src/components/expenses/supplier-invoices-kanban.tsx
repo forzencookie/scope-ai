@@ -181,6 +181,12 @@ export const SupplierInvoicesKanban = forwardRef<SupplierInvoicesKanbanRef>(
 
         return (
             <div className="w-full space-y-6">
+                {/* Page Heading */}
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">{text.supplierInvoices.title}</h2>
+                    <p className="text-muted-foreground">Hantera fakturor från dina leverantörer.</p>
+                </div>
+
                 {/* Stats Cards */}
                 <StatCardGrid columns={4}>
                     <StatCard

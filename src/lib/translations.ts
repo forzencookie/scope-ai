@@ -226,6 +226,7 @@ export const translations = {
   // ============================================================================
   receipts: {
     title: { enkel: "Kvitton", avancerad: "Underlag" },
+    subtitle: { enkel: "Hantera dina kvitton och underlag.", avancerad: "Hantera kvitton, fakturor och andra underlag." },
     upload: { enkel: "Ladda upp kvitto", avancerad: "Ladda upp underlag" },
     scan: { enkel: "Fotografera kvitto", avancerad: "Skanna underlag" },
     match: { enkel: "Koppla till betalning", avancerad: "Matcha med transaktion" },

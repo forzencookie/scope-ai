@@ -7,22 +7,9 @@
  */
 
 import { NextResponse } from 'next/server'
-import { mockDB } from '@/data/mock-db'
+import { db } from '@/lib/server-db'
 import type { InboxItem } from '@/types'
 import { extractInvoiceDataWithGPT } from '@/services/invoice-ocr'
-
-// Keywords for detecting PAID items (receipts)
-const PAID_KEYWORDS = ['kvitto', 'betalad', 'kort', 'autogiro', 'dragits', 'betalt']
-
-function extractAmount(text: string): number {
-    const match = text.match(/(\d+[\d\s]*)(?:kr|SEK|\$|€)/i)
-    return match ? parseFloat(match[1].replace(/\s/g, '')) : 1250
-}
-
-function isPaidDocument(item: InboxItem): boolean {
-    const text = (item.title + ' ' + item.description).toLowerCase()
-    return PAID_KEYWORDS.some(keyword => text.includes(keyword))
-}
 
 async function processInboxItem(item: InboxItem): Promise<{ entityId: string, entityType: 'supplier-invoice' | 'receipt' } | null> {
     // Skip if already processed
@@ -50,37 +37,29 @@ async function processInboxItem(item: InboxItem): Promise<{ entityId: string, en
             id: receiptId,
             supplier: extractedData.supplier,
             date: extractedData.date,
-            amount: extractedData.amount.toString(),
+            amount: extractedData.amount,
             status: 'completed',
             category: extractedData.accountingCategory,
-            attachment: 'email.pdf',
-            sourceInboxId: item.id
+            attachmentUrl: 'email.pdf',
         }
-        mockDB.receipts = [receipt, ...mockDB.receipts]
-
-        item.category = 'faktura'
-        item.aiSuggestion = `✨ Kvitto - ${extractedData.note}`
+        await db.addReceipt(receipt)
 
         return { entityId: receiptId, entityType: 'receipt' }
     } else {
         // INVOICE - route to Leverantörsfakturor
         console.log(`[AI] Detected as INVOICE (needs payment)`)
         const invoiceId = `sinv-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
-        mockDB.supplierInvoices.set(invoiceId, {
+        await db.addSupplierInvoice({
             id: invoiceId,
             invoiceNumber: extractedData.invoiceNumber || `AUTO-${Date.now()}`,
             supplierName: extractedData.supplier,
             amount: extractedData.amount,
-            issueDate: extractedData.date,
+            totalAmount: extractedData.amount,
+            invoiceDate: extractedData.date,
             dueDate: extractedData.dueDate || extractedData.date,
-            description: `${item.title} - ${extractedData.note}`,
-            ocrNumber: extractedData.ocrNumber || `OCR-${Math.floor(Math.random() * 999999999)}`,
-            accountingCode: extractedData.accountingCode,
-            category: extractedData.accountingCategory,
-        } as any)
-
-        item.category = 'faktura'
-        item.aiSuggestion = `✨ Faktura - ${extractedData.note}`
+            ocr: extractedData.ocrNumber || `OCR-${Math.floor(Math.random() * 999999999)}`,
+            status: 'pending',
+        })
 
         return { entityId: invoiceId, entityType: 'supplier-invoice' }
     }
@@ -88,13 +67,16 @@ async function processInboxItem(item: InboxItem): Promise<{ entityId: string, en
 
 export async function POST() {
     try {
-        console.log('[AI] Starting processing, inbox items:', mockDB.inboxItems.length)
+        // Get all inbox items from Supabase
+        const allItems = await db.getInboxItems()
+        console.log('[AI] Starting processing, inbox items:', allItems.length)
+
         const results: { itemId: string, entityId: string, entityType: string }[] = []
         const errors: { itemId: string, error: string }[] = []
 
         // Find all pending items
-        const pendingItems = mockDB.inboxItems.filter(
-            item => item.aiStatus === 'pending' || !item.aiStatus
+        const pendingItems = allItems.filter(
+            (item: InboxItem) => item.aiStatus === 'pending' || !item.aiStatus
         )
 
         console.log(`[AI] Found ${pendingItems.length} pending items to process`)
@@ -108,66 +90,50 @@ export async function POST() {
             })
         }
 
-        // Batch process with concurrency limit (5 at a time)
-        const BATCH_SIZE = 5
-        const batches: InboxItem[][] = []
+        // Process items sequentially for Supabase (to avoid race conditions)
+        for (const item of pendingItems) {
+            try {
+                console.log(`[AI] Item ${item.id}: status=${item.aiStatus}, category=${item.category}`)
 
-        for (let i = 0; i < pendingItems.length; i += BATCH_SIZE) {
-            batches.push(pendingItems.slice(i, i + BATCH_SIZE))
-        }
+                // Update status to processing
+                await db.updateInboxItem(item.id, { aiStatus: 'processing' })
 
-        console.log(`[AI] Processing ${pendingItems.length} items in ${batches.length} batches of ${BATCH_SIZE}`)
+                const result = await processInboxItem(item)
 
-        // Process each batch in parallel
-        for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
-            const batch = batches[batchIndex]
-            console.log(`[AI] Processing batch ${batchIndex + 1}/${batches.length} (${batch.length} items)`)
-
-            // Process all items in this batch simultaneously
-            const batchPromises = batch.map(async (item) => {
-                try {
-                    console.log(`[AI] Item ${item.id}: status=${item.aiStatus}, category=${item.category}, hasDocData=${!!item.documentData}`)
-
-                    item.aiStatus = 'processing'
-                    const result = await processInboxItem(item)
-
-                    if (result) {
-                        item.aiStatus = 'processed'
-                        item.linkedEntityId = result.entityId
-                        item.linkedEntityType = result.entityType
-                        item.aiSuggestion = result.entityType === 'receipt'
+                if (result) {
+                    // Update item with result
+                    await db.updateInboxItem(item.id, {
+                        aiStatus: 'processed',
+                        linkedEntityId: result.entityId,
+                        linkedEntityType: result.entityType,
+                        aiSuggestion: result.entityType === 'receipt'
                             ? '✨ Auto-registerad som kvitto'
-                            : '✨ Auto-registerad som leverantörsfaktura'
+                            : '✨ Auto-registerad som leverantörsfaktura',
+                        category: 'faktura',
+                    })
 
-                        results.push({
-                            itemId: item.id,
-                            entityId: result.entityId,
-                            entityType: result.entityType
-                        })
+                    results.push({
+                        itemId: item.id,
+                        entityId: result.entityId,
+                        entityType: result.entityType
+                    })
 
-                        console.log(`[AI] ✓ Successfully processed ${item.id}`)
-                    } else if (item.category !== 'faktura') {
-                        // Non-invoice items are "processed" but don't create entities
-                        item.aiStatus = 'processed'
-                        console.log(`[AI] ⊘ Skipped non-invoice item ${item.id}`)
-                    }
-                } catch (error) {
-                    // Mark as error but don't stop processing other items
-                    item.aiStatus = 'error'
-                    const errorMsg = error instanceof Error ? error.message : 'Unknown error'
-                    errors.push({ itemId: item.id, error: errorMsg })
-                    console.error(`[AI] ✗ Error processing ${item.id}:`, errorMsg)
+                    console.log(`[AI] ✓ Successfully processed ${item.id}`)
+                } else {
+                    // Non-invoice items are "processed" but don't create entities
+                    await db.updateInboxItem(item.id, { aiStatus: 'processed' })
+                    console.log(`[AI] ⊘ Skipped non-invoice item ${item.id}`)
                 }
-            })
-
-            // Wait for all items in this batch to complete
-            await Promise.all(batchPromises)
-
-            console.log(`[AI] Batch ${batchIndex + 1}/${batches.length} complete`)
+            } catch (error) {
+                // Mark as error but don't stop processing other items
+                await db.updateInboxItem(item.id, { aiStatus: 'error' })
+                const errorMsg = error instanceof Error ? error.message : 'Unknown error'
+                errors.push({ itemId: item.id, error: errorMsg })
+                console.error(`[AI] ✗ Error processing ${item.id}:`, errorMsg)
+            }
         }
 
-        console.log('[AI] All batches completed. Processed:', results.length, 'Errors:', errors.length)
-        console.log('[AI] Supplier invoices count:', mockDB.supplierInvoices.size)
+        console.log('[AI] All items completed. Processed:', results.length, 'Errors:', errors.length)
 
         return NextResponse.json({
             success: true,
@@ -175,7 +141,6 @@ export async function POST() {
             results,
             errors: errors.length > 0 ? errors : undefined,
             totalPending: pendingItems.length,
-            batchesProcessed: batches.length
         })
     } catch (error) {
         console.error('AI Processing Error:', error)
@@ -184,13 +149,16 @@ export async function POST() {
 }
 
 export async function GET() {
-    // Return status of all inbox items
+    // Return status of all inbox items from Supabase
+    const allItems = await db.getInboxItems()
+    const dbData = await db.get()
+
     const stats = {
-        total: mockDB.inboxItems.length,
-        pending: mockDB.inboxItems.filter(i => i.aiStatus === 'pending' || !i.aiStatus).length,
-        processed: mockDB.inboxItems.filter(i => i.aiStatus === 'processed').length,
-        invoicesCreated: mockDB.supplierInvoices.size,
-        receiptsCreated: mockDB.receipts.length
+        total: allItems.length,
+        pending: allItems.filter((i: InboxItem) => i.aiStatus === 'pending' || !i.aiStatus).length,
+        processed: allItems.filter((i: InboxItem) => i.aiStatus === 'processed').length,
+        invoicesCreated: dbData.supplierInvoices?.length || 0,
+        receiptsCreated: dbData.receipts?.length || 0
     }
     return NextResponse.json(stats)
 }

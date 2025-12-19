@@ -60,7 +60,7 @@ export default function InboxPage() {
 
     const fetchItems = async () => {
         try {
-            const response = await fetch('/api/inbox')
+            const response = await fetch('/api/receive')
             const data = await response.json()
             if (data.items) {
                 setItems(data.items)
@@ -70,7 +70,7 @@ export default function InboxPage() {
                 if (hasPending) {
                     await fetch('/api/ai/process-inbox', { method: 'POST' })
                     // Refetch to get updated statuses
-                    const updated = await fetch('/api/inbox')
+                    const updated = await fetch('/api/receive')
                     const updatedData = await updated.json()
                     if (updatedData.items) {
                         setItems(updatedData.items)
@@ -313,7 +313,7 @@ export default function InboxPage() {
                                             e.stopPropagation()
                                             try {
                                                 // Reset to pending
-                                                await fetch('/api/inbox', {
+                                                await fetch('/api/receive', {
                                                     method: 'PATCH',
                                                     headers: { 'Content-Type': 'application/json' },
                                                     body: JSON.stringify({ id: item.id, aiStatus: 'pending' })

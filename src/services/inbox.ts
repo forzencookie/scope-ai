@@ -19,7 +19,7 @@ export async function getInboxItems(filter?: InboxFilter): Promise<ApiResponse<I
   await delay(MOCK_DELAY)
 
   // TODO: Replace with actual API call
-  // const response = await fetch(`/api/inbox?filter=${filter}`)
+  // const response = await fetch(`/api/receive?filter=${filter}`)
   // return response.json()
 
   let filteredItems = inboxState
@@ -86,7 +86,7 @@ export async function markAsRead(id: string): Promise<ApiResponse<InboxItem>> {
   await delay(MOCK_DELAY)
 
   // TODO: Replace with actual API call
-  // const response = await fetch(`/api/inbox/${id}/read`, { method: 'POST' })
+  // const response = await fetch(`/api/receive/${id}/read`, { method: 'POST' })
   // return response.json()
 
   const itemIndex = inboxState.findIndex(i => i.id === id)
@@ -134,7 +134,7 @@ export async function toggleStar(id: string): Promise<ApiResponse<InboxItem>> {
   await delay(MOCK_DELAY)
 
   // TODO: Replace with actual API call
-  // const response = await fetch(`/api/inbox/${id}/star`, { method: 'POST' })
+  // const response = await fetch(`/api/receive/${id}/star`, { method: 'POST' })
   // return response.json()
 
   const itemIndex = inboxState.findIndex(i => i.id === id)
@@ -163,7 +163,7 @@ export async function archiveItem(id: string): Promise<ApiResponse<boolean>> {
   await delay(MOCK_DELAY)
 
   // TODO: Replace with actual API call
-  // const response = await fetch(`/api/inbox/${id}/archive`, { method: 'POST' })
+  // const response = await fetch(`/api/receive/${id}/archive`, { method: 'POST' })
   // return response.json()
 
   const itemIndex = inboxState.findIndex(i => i.id === id)

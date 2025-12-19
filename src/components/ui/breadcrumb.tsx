@@ -3,10 +3,9 @@
 import * as React from "react"
 import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
-import { useRouter, usePathname } from "next/navigation"
 
 import { cn } from "@/lib/utils"
-import { Button, AIButton } from "@/components/ui/button"
+import { AIButton } from "@/components/ui/button"
 import { useAIChat } from "@/providers/ai-chat-provider"
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
@@ -104,24 +103,12 @@ function BreadcrumbEllipsis({
 }
 
 function BreadcrumbAIBadge({ className, ...props }: React.ComponentProps<"div">) {
-  const router = useRouter()
-  const pathname = usePathname()
   const { openChat } = useAIChat()
-  
-  const isInAIWorkspace = pathname === "/ai-workspace"
-  
-  const handleSwitch = () => {
-    if (isInAIWorkspace) {
-      router.push("/dashboard/inbox")
-    } else {
-      router.push("/ai-workspace")
-    }
-  }
-  
+
   const handleOpenChat = () => {
     openChat()
   }
-  
+
   return (
     <div
       data-slot="breadcrumb-ai-badge"
@@ -133,17 +120,6 @@ function BreadcrumbAIBadge({ className, ...props }: React.ComponentProps<"div">)
     >
       {/* AI button - opens chat dialog */}
       <AIButton onClick={handleOpenChat} />
-      
-      {/* Mode switch button */}
-      <Button
-        type="button"
-        variant="default"
-        size="sm"
-        className="h-7 px-2.5 text-xs"
-        onClick={handleSwitch}
-      >
-        {isInAIWorkspace ? "Byt till normalläge" : "Byt till AI-läge"}
-      </Button>
     </div>
   )
 }

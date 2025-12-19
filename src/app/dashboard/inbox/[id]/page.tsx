@@ -37,8 +37,8 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
         const fetchItem = async () => {
             try {
                 // Fetch all items from the API to find the specific one
-                // Ideally this should be a dedicated endpoint /api/inbox/[id]
-                const response = await fetch('/api/inbox')
+                // Ideally this should be a dedicated endpoint /api/receive/[id]
+                const response = await fetch('/api/receive')
                 const data = await response.json()
                 if (data.items) {
                     const foundItem = data.items.find((i: InboxItem) => i.id === id)

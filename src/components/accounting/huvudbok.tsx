@@ -176,6 +176,12 @@ export function Huvudbok() {
 
     return (
         <div className="space-y-6">
+            {/* Page Heading */}
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight">Huvudbok</h2>
+                <p className="text-muted-foreground">Översikt över alla bokföringskonton och saldon.</p>
+            </div>
+
             {/* Stats Cards */}
             <StatCardGrid columns={4}>
                 <StatCard

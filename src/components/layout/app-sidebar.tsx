@@ -25,7 +25,6 @@ import {
   mockUser,
   mockTeams,
   navPlatform,
-  navEconomy,
   navSettings
 } from "@/data/navigation"
 
@@ -114,10 +113,9 @@ export function AppSidebar({
         </SidebarHeader>
         <SidebarContent>
           <NavMain items={navPlatform} />
-          <AdaptiveNavMain items={navEconomy} label="Ekonomi" />
-          <NavSettings items={navSettings} onSettingsClick={() => setSettingsOpen(true)} />
         </SidebarContent>
         <SidebarFooter>
+          <NavSettings items={navSettings} onSettingsClick={() => setSettingsOpen(true)} />
           <NavUser user={mockUser} />
         </SidebarFooter>
         <SidebarRail />

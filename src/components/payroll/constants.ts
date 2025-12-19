@@ -9,6 +9,7 @@ import {
     Percent,
     Users,
     Car,
+    Gift,
     type LucideIcon
 } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
@@ -36,7 +37,7 @@ export interface PayrollTabConfig {
 
 export const allTabs: PayrollTabConfig[] = [
     { id: "lonebesked", label: "Lönekörning", icon: FileText, feature: 'lonebesked' },
-    { id: "resor", label: "Resor & Körjournal", icon: Car, feature: null },
+    { id: "benefits", label: "Förmåner", icon: Gift, feature: 'lonebesked' }, // Grouped with payroll/lonebesked feature for now
     { id: "team", label: "Team & Rapportering", icon: Users, feature: null }, // Team tab
     { id: "agi", label: "AGI", icon: Send, feature: 'agi' },
     { id: "utdelning", label: "Utdelning", icon: DollarSign, feature: 'utdelning' },

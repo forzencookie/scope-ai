@@ -2,12 +2,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/server-db";
 
+/**
+ * Customer Invoices API
+ * 
+ * GET: Fetches invoices from Supabase
+ * POST: Creates invoice from dashboard UI
+ */
+
 export async function GET() {
     try {
         const data = await db.get();
-        // Return format compatible with invoices-table expectations if possible, 
-        // or we update frontend. 
-        // existing mock API (api/invoices/processed) returns: { invoices: [...] }
         return NextResponse.json({
             invoices: data.invoices || []
         });
@@ -21,7 +25,6 @@ export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
 
-        // Basic validation
         if (!body.customer || !body.amount) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
@@ -29,13 +32,12 @@ export async function POST(req: NextRequest) {
         const newInvoice = {
             ...body,
             id: body.id || `FAK-${Date.now()}`,
-            status: body.status || 'Utkast', // Default to Draft
+            status: body.status || 'Utkast',
             createdAt: new Date().toISOString()
         };
 
-        // TODO: Implement addInvoice in db when customer invoices are migrated
-        // For now, just return success with the invoice
-        // const savedInvoice = db.addInvoice(newInvoice);
+        // TODO: Add db.addInvoice when customer invoices table is created in Supabase
+        // await db.addInvoice(newInvoice);
 
         return NextResponse.json({
             success: true,

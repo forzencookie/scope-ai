@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { mockDB } from '@/data/mock-db'
+import { db } from '@/lib/server-db'
 import type { InboxItem } from '@/types'
 
 const openai = new OpenAI({
@@ -93,7 +93,7 @@ Format it as a readable email body.`
             aiStatus: 'pending', // Will be processed by AI
         }
 
-        mockDB.inboxItems = [newItem, ...mockDB.inboxItems]
+        await db.addInboxItem(newItem)
 
         console.log('[Upload] Created inbox item:', newItem.id)
 

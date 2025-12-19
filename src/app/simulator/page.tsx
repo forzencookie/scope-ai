@@ -345,40 +345,83 @@ export default function SimulatorPage() {
     }
   }
 
+  // Generate receipt data based on type
+  const generateReceiptData = (type: ReceiptType) => {
+    const merchants: Record<ReceiptType, string[]> = {
+      restaurant: ['Espresso House', 'MAX Burgers', 'Bastard Burgers', 'Vapiano'],
+      travel: ['SL', 'Uber', 'Bolt', 'Circle K', 'SAS', 'SJ'],
+      office: ['Clas Ohlson', 'IKEA', 'Staples', 'Dustin'],
+      subscription: ['Spotify', 'Adobe', 'Microsoft 365', 'Notion'],
+      utility: ['Vattenfall', 'Telia', 'Telenor', 'Fortum'],
+    }
+    const categories: Record<ReceiptType, string> = {
+      restaurant: 'Mat & Fika',
+      travel: 'Transport',
+      office: 'Kontorsmaterial',
+      subscription: 'Prenumeration',
+      utility: 'Förbrukning',
+    }
+    const ranges: Record<ReceiptType, { min: number; max: number }> = {
+      restaurant: { min: 50, max: 500 },
+      travel: { min: 30, max: 800 },
+      office: { min: 100, max: 3000 },
+      subscription: { min: 89, max: 599 },
+      utility: { min: 200, max: 2000 },
+    }
+
+    const merchantList = merchants[type]
+    const range = ranges[type]
+    const vendor = merchantList[Math.floor(Math.random() * merchantList.length)]
+    const amount = Math.round(range.min + Math.random() * (range.max - range.min))
+
+    return {
+      id: `rcpt-${Date.now()}`,
+      vendor,
+      amount: `-${amount} kr`,
+      date: new Date().toISOString().split('T')[0],
+      category: categories[type],
+      status: 'Att bokföra',
+    }
+  }
+
   const generateTransaction = async (type: TransactionType) => {
     setLoading(type)
     setMessage(null)
 
     try {
       const data = getTransactionData(type)
+      const id = `txn-${Date.now()}`
+      const date = new Date().toISOString().split('T')[0]
 
-      // Send via External Bank API → Webhook → Internal API (production-ready flow)
-      const response = await fetch('/api/external/bank', {
+      // Send via unified /api/receive POST endpoint
+      const response = await fetch('/api/receive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          action: 'transaction',
-          type: type,
-          amount: Math.abs(data.amount),
-          description: data.description,
+          dataType: 'transaction',
+          data: {
+            id,
+            name: data.description,
+            amount: data.amount,
+            date,
+            account: 'Företagskonto',
+          },
         }),
       })
 
       const result = await response.json()
 
-      if (result.success && result.transaction) {
-        // Update local state from response
+      if (result.success) {
         const displayTx: DisplayTransaction = {
-          id: result.transaction.id,
-          name: result.transaction.description,
-          amount: result.transaction.amount,
-          date: result.transaction.date,
-          account: result.transaction.account,
-          reference: result.transaction.reference,
+          id,
+          name: data.description,
+          amount: data.amount,
+          date,
+          account: 'Företagskonto',
         }
 
         setRecentTransactions(prev => [displayTx, ...prev].slice(0, 10))
-        setMessage({ type: 'success', text: `✓ ${data.description} → External API → Webhook → Bank` })
+        setMessage({ type: 'success', text: `✓ ${data.description} → Inbox` })
       } else {
         throw new Error(result.error || 'Unknown error')
       }
@@ -394,24 +437,29 @@ export default function SimulatorPage() {
     setMessage(null)
 
     try {
-      // Use External Bank API batch mode → Webhook → Internal API
-      const response = await fetch('/api/external/bank', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'batch',
-          count: batchCount,
-        }),
-      })
+      // Generate multiple transactions via unified inbox
+      const types: TransactionType[] = ['income', 'subscription', 'office', 'fika', 'travel']
+      const results = []
 
-      const result = await response.json()
+      for (let i = 0; i < batchCount; i++) {
+        const type = types[Math.floor(Math.random() * types.length)]
+        const data = getTransactionData(type)
+        const id = `txn-${Date.now()}-${i}`
+        const date = new Date().toISOString().split('T')[0]
 
-      // Refresh data from bank
+        await fetch('/api/receive', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            dataType: 'transaction',
+            data: { id, name: data.description, amount: data.amount, date, account: 'Företagskonto' },
+          }),
+        })
+        results.push(data.description)
+      }
+
       await fetchRecentData()
-      setMessage({
-        type: 'success',
-        text: `✓ ${result.count || batchCount} transaktioner → External API → Webhook → Bank`
-      })
+      setMessage({ type: 'success', text: `✓ ${batchCount} transaktioner skapade` })
     } catch (error) {
       setMessage({ type: 'error', text: 'Kunde inte generera transaktioner' })
     } finally {
@@ -431,7 +479,7 @@ export default function SimulatorPage() {
       await fetch('/api/mock/receipts', { method: 'DELETE' })
 
       // Clear inbox 
-      await fetch('/api/inbox', {
+      await fetch('/api/receive', {
         method: 'POST',
         body: JSON.stringify({ action: 'clear' })
       })
@@ -452,17 +500,24 @@ export default function SimulatorPage() {
     setMessage(null)
 
     try {
-      const response = await fetch('/api/mock/receipts', {
+      // Generate receipt data locally
+      const receiptData = generateReceiptData(type)
+
+      // Send via unified /api/receive POST endpoint
+      const response = await fetch('/api/receive', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type }),
+        body: JSON.stringify({
+          dataType: 'receipt',
+          data: receiptData,
+        }),
       })
 
       const result = await response.json()
 
-      if (result.receipt) {
-        setRecentReceipts(prev => [result.receipt, ...prev].slice(0, 10))
-        setMessage({ type: 'success', text: `✓ Kvitto skapat: ${result.receipt.vendor}` })
+      if (result.success) {
+        setRecentReceipts(prev => [receiptData as GeneratedReceipt, ...prev].slice(0, 10))
+        setMessage({ type: 'success', text: `✓ Kvitto skapat: ${receiptData.vendor}` })
       } else {
         setMessage({ type: 'error', text: result.error || 'Kunde inte skapa kvitto' })
       }
@@ -478,59 +533,19 @@ export default function SimulatorPage() {
     setMessage(null)
 
     try {
-      let response;
-      let itemTitle = type;
+      // Use unified /api/receive for all inbox items
+      const response = await fetch('/api/receive', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'create', type }),
+      })
+      const result = await response.json()
 
-      // Route through appropriate external API based on type
-      if (type.startsWith('skatteverket') || type === 'slutlig-skatt' || type === 'moms-paminnelse') {
-        // Use External Skatteverket API → Webhook → Internal API
-        const skatteverketType = type.replace('skatteverket-', '');
-        response = await fetch('/api/external/skatteverket', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ type: skatteverketType === 'skatt' ? 'slutlig-skatt' : skatteverketType }),
-        })
-        const result = await response.json()
-        itemTitle = result.document?.title || type
-
-        if (result.success) {
-          setLastInboxItem({ title: itemTitle, type })
-          setMessage({ type: 'success', text: `✓ ${itemTitle} → External API → Webhook → Inbox` })
-        } else {
-          throw new Error(result.error)
-        }
-      } else if (type.includes('gmail') || type.includes('outlook') || type.includes('yahoo')) {
-        // Use External Email API → Webhook → Internal API
-        const provider = type.split('-')[0]
-        response = await fetch('/api/external/email', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ provider, type: 'invoice' }),
-        })
-        const result = await response.json()
-        itemTitle = result.email?.subject || type
-
-        if (result.success) {
-          setLastInboxItem({ title: itemTitle, type })
-          setMessage({ type: 'success', text: `✓ ${itemTitle} → External API → Webhook → Inbox` })
-        } else {
-          throw new Error(result.error)
-        }
+      if (result.success && result.item) {
+        setLastInboxItem(result.item)
+        setMessage({ type: 'success', text: `✓ Post mottagen: ${result.item.title}` })
       } else {
-        // Fallback: use direct inbox API for other types
-        response = await fetch('/api/inbox', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ action: 'create', type }),
-        })
-        const result = await response.json()
-
-        if (result.success && result.item) {
-          setLastInboxItem(result.item)
-          setMessage({ type: 'success', text: `✓ Post mottagen: ${result.item.title}` })
-        } else {
-          throw new Error(result.error)
-        }
+        throw new Error(result.error)
       }
     } catch (error) {
       setMessage({ type: 'error', text: 'Nätverksfel - kunde inte nå API' })

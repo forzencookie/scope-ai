@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/server-db"
-import { BankTransaction } from "../bank/route"
+
+// Transaction type (simplified after bank API removal)
+interface BankTransaction {
+    id: string
+    description: string
+    amount: number
+    date: string
+    timestamp: string
+}
 
 // Helper to map BankTransaction to our App's Transaction type
 function mapToAppTransaction(bankTx: BankTransaction, metadata: any = {}) {

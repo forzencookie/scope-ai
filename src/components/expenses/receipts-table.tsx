@@ -317,6 +317,12 @@ export function ReceiptsTable() {
 
     return (
         <div className="w-full space-y-6">
+            {/* Page Heading */}
+            <div>
+                <h2 className="text-2xl font-bold tracking-tight">{text.receipts.title}</h2>
+                <p className="text-muted-foreground">{text.receipts.subtitle}</p>
+            </div>
+
             {/* Stats Cards */}
             <StatCardGrid columns={4}>
                 <StatCard
