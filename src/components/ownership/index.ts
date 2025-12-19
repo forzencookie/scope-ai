@@ -1,5 +1,6 @@
-// Ownership Components (Ägande)
-export { Aktiebok } from "./aktiebok"
-export { Delagare } from "./delagare"
-export { DelagaruttagManager } from "./delagaruttag"
-export { EgenavgifterCalculator } from "./egenavgifter"
+// ============================================
+// Ownership Components - Now in @/components/parter
+// Re-export for backward compatibility
+// ============================================
+
+export { Aktiebok, Delagare, Delagaruttag, Egenavgifter } from '@/components/parter'

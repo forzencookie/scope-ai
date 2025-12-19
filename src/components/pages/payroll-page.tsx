@@ -35,7 +35,7 @@ import {
 } from "@/components/shared"
 
 // External components for EF/HB/KB tabs
-import { EgenavgifterCalculator, DelagaruttagManager } from "@/components/ownership"
+import { Egenavgifter as EgenavgifterCalculator, Delagaruttag as DelagaruttagManager } from "@/components/parter"
 import { TeamTab } from "@/components/payroll/team-tab"
 import { BenefitsTab } from "@/components/payroll/benefits-tab"
 

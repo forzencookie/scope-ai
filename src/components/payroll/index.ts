@@ -16,7 +16,7 @@ export {
 
 // Tab content components
 export { LonesbeskContent } from "./lonebesked-content"
-export { AGIContent } from "./agi-content"
+export { AGIContent } from "@/components/skatt/agi-content"
 export { UtdelningContent } from "./utdelning-content"
 
 // Dialog components

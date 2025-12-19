@@ -34,7 +34,7 @@ import {
     InkomstdeklarationContent,
     ArsredovisningContent,
     ArsbokslutContent,
-} from "@/components/reports"
+} from "@/components/skatt"
 
 // Tab configuration with feature keys for filtering
 const tabs: Array<{ id: string; label: string; icon: typeof Calculator; feature: FeatureKey }> = [

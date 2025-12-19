@@ -207,7 +207,7 @@ export const LazyOnboardingWizard = createLazyComponent(
 // Momsdeklaration tab
 export const LazyMomsdeklarationContent = createLazyComponent(
     async () => {
-        const { MomsdeklarationContent } = await import('@/components/reports/momsdeklaration-content');
+        const { MomsdeklarationContent } = await import('@/components/skatt/momsdeklaration-content');
         return { default: MomsdeklarationContent };
     },
     'table'
@@ -216,7 +216,7 @@ export const LazyMomsdeklarationContent = createLazyComponent(
 // Inkomstdeklaration tab
 export const LazyInkomstdeklarationContent = createLazyComponent(
     async () => {
-        const { InkomstdeklarationContent } = await import('@/components/reports/inkomstdeklaration-content');
+        const { InkomstdeklarationContent } = await import('@/components/skatt/inkomstdeklaration-content');
         return { default: InkomstdeklarationContent };
     },
     'table'
@@ -225,7 +225,7 @@ export const LazyInkomstdeklarationContent = createLazyComponent(
 // Årsredovisning tab
 export const LazyArsredovisningContent = createLazyComponent(
     async () => {
-        const { ArsredovisningContent } = await import('@/components/reports/arsredovisning-content');
+        const { ArsredovisningContent } = await import('@/components/skatt/arsredovisning-content');
         return { default: ArsredovisningContent };
     },
     'table'
@@ -285,9 +285,9 @@ export const dashboardModulePreloaders = {
  * Reports modules to preload when user hovers over reports nav
  */
 export const reportsModulePreloaders = {
-    momsdeklaration: () => import('@/components/reports/momsdeklaration-content'),
-    inkomstdeklaration: () => import('@/components/reports/inkomstdeklaration-content'),
-    arsredovisning: () => import('@/components/reports/arsredovisning-content'),
+    momsdeklaration: () => import('@/components/skatt/momsdeklaration-content'),
+    inkomstdeklaration: () => import('@/components/skatt/inkomstdeklaration-content'),
+    arsredovisning: () => import('@/components/skatt/arsredovisning-content'),
     financialStatements: () => import('@/components/reports/financial-statements'),
     foretagsstatistik: () => import('@/components/reports/foretagsstatistik-content'),
 } as const
@@ -327,7 +327,7 @@ export const LazyLonesbeskContent = createLazyComponent(
 // AGI tab
 export const LazyAGIContent = createLazyComponent(
     async () => {
-        const { AGIContent } = await import('@/components/payroll/agi-content');
+        const { AGIContent } = await import('@/components/skatt/agi-content');
         return { default: AGIContent };
     },
     'payroll'
@@ -347,10 +347,10 @@ export const LazyUtdelningContent = createLazyComponent(
  */
 export const payrollModulePreloaders = {
     lonebesked: () => import('@/components/payroll/lonebesked-content'),
-    agi: () => import('@/components/payroll/agi-content'),
+    agi: () => import('@/components/skatt/agi-content'),
     utdelning: () => import('@/components/payroll/utdelning-content'),
-    egenavgifter: () => import('../ownership/egenavgifter'),
-    delagaruttag: () => import('../ownership/delagaruttag'),
+    egenavgifter: () => import('@/components/parter/egenavgifter'),
+    delagaruttag: () => import('@/components/parter/delagaruttag'),
 } as const
 
 /**

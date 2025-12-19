@@ -44,7 +44,8 @@ import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, type BulkAction } from "../shared/bulk-action-toolbar"
 
 
-import { termExplanations, agiReports as initialAgiReports } from "./constants"
+import { termExplanations } from "./constants"
+import { agiReports as initialAgiReports } from "@/components/payroll/constants"
 import { submitToSkatteverket, type SkatteverketResponse } from "@/services/myndigheter-client"
 
 type AGIReport = typeof initialAgiReports[0]

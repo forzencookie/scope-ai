@@ -1,33 +1,23 @@
 // ============================================
 // Reports Components - Central Export
+// Re-exports from @/components/skatt for backward compatibility
 // ============================================
 
-// Constants and data
+// Constants and data (still in reports/)
 export * from "./constants"
 
-// AI Wizard Dialog
+// Re-export from skatt (moved components)
 export {
-    AIWizardDialog,
-    MomsWizardDialog,
     InkomstWizardDialog,
     ArsredovisningWizardDialog,
-} from "./ai-wizard-dialog"
+    MomsdeklarationContent,
+    InkomstdeklarationContent,
+    ArsredovisningContent,
+    ArsbokslutContent,
+    MomsDetailDialog,
+    MomsPreview,
+} from "@/components/skatt"
 
-export type {
-    AIWizardStep1Config,
-    AIWizardStep2Config,
-    AIWizardStep3Config,
-    AIWizardDialogProps,
-} from "./ai-wizard-dialog"
-
-// Tab Content Components
-export { MomsdeklarationContent } from "./momsdeklaration-content"
-export { InkomstdeklarationContent } from "./inkomstdeklaration-content"
-export { ArsredovisningContent } from "./arsredovisning-content"
-export { ArsbokslutContent } from "./arsbokslut-content"
+// Still in reports/
 export { ForetagsstatistikContent } from "./foretagsstatistik-content"
 export { ResultatrakningContent, BalansrakningContent } from "./financial-statements"
-
-// VAT Declaration Components
-export { MomsDetailDialog } from "./moms-detail-dialog"
-export { MomsPreview } from "./moms-preview"

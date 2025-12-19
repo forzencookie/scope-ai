@@ -12,8 +12,7 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card';
 import { useCompany } from '@/providers/company-provider';
-import { Aktiebok, Delagare } from '@/components/ownership';
-import { Medlemsregister, Styrelseprotokoll, Bolagsstamma, Arsmote } from '@/components/corporate';
+import { Aktiebok, Delagare, Medlemsregister, Styrelseprotokoll, Bolagsstamma, Arsmote } from '@/components/parter';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
     Users,
