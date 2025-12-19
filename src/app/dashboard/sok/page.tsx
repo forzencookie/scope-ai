@@ -17,7 +17,8 @@ import {
     Gift,
     Car,
     Users,
-    Landmark
+    Landmark,
+    Activity,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
@@ -76,12 +77,15 @@ const searchItems: SearchItem[] = [
     { id: "14", title: "Delägare", titleEnkel: "Ägare", description: "Hantera delägare", icon: <Users className="h-4 w-4" />, href: "/dashboard/sok/parter?tab=delagare", category: "Parter", feature: "delagare", colorClass: categoryColors["Parter"] },
     { id: "15", title: "Styrelseprotokoll", titleEnkel: "Styrelseanteckningar", description: "Protokoll från styrelsemöten", icon: <FileText className="h-4 w-4" />, href: "/dashboard/sok/parter?tab=styrelseprotokoll", category: "Parter", feature: "styrelseprotokoll", colorClass: categoryColors["Parter"] },
     { id: "16", title: "Bolagsstämma", titleEnkel: "Årsmöte (AB)", description: "Protokoll från bolagsstämma", icon: <Landmark className="h-4 w-4" />, href: "/dashboard/sok/parter?tab=bolagsstamma", category: "Parter", feature: "bolagsstamma", colorClass: categoryColors["Parter"] },
+
+    // Händelser (Sky) - Universal for all company forms
+    { id: "17", title: "Händelser", titleEnkel: "Aktivitet", description: "Vad har hänt i företaget? AI-åtgärder och historik.", icon: <Activity className="h-4 w-4" />, href: "/dashboard/sok/handelser", category: "Händelser", colorClass: categoryColors["Händelser"] },
 ]
 
 import { useTextMode } from "@/providers/text-mode-provider"
 
 // Filter categories (new pillar structure)
-const filterCategories = ["Bokföring", "Rapporter", "Skatt", "Parter", "Löner"] as const
+const filterCategories = ["Bokföring", "Rapporter", "Skatt", "Händelser", "Parter", "Löner"] as const
 type FilterCategory = typeof filterCategories[number] | null
 
 export default function SokPage() {
@@ -118,6 +122,7 @@ export default function SokPage() {
             !(activeFilter === "Bokföring" && ["Bokföring"].includes(item.category)) &&
             !(activeFilter === "Rapporter" && ["Rapporter"].includes(item.category)) &&
             !(activeFilter === "Skatt" && ["Skatt"].includes(item.category)) &&
+            !(activeFilter === "Händelser" && ["Händelser"].includes(item.category)) &&
             !(activeFilter === "Parter" && ["Parter"].includes(item.category)) &&
             !(activeFilter === "Löner" && ["Löner"].includes(item.category))
         ) {
