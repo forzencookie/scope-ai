@@ -14,62 +14,81 @@ export function useCompanyStatistics() {
 
     // 1. Financial KPIs
     const financialHealth = useMemo(() => {
-        // Safe defaults
-        const assets = totals.assets || 1 // Avoid div by zero
+        // Get raw values
+        const assets = totals.assets || 0
         const liabilities = Math.abs(totals.liabilities) || 0
         const equity = totals.equity || 0
-        const revenue = Math.abs(totals.revenue) || 1
+        const revenue = Math.abs(totals.revenue) || 0
         const netIncome = totals.netIncome || 0
 
-        // Soliditet (Equity / Assets)
-        const solidity = (equity / assets) * 100
+        // Check which account classes have data
+        const hasAssets = accountBalances.some(a => a.accountNumber.startsWith('1') && a.balance !== 0)
+        const hasEquity = accountBalances.some(a => a.accountNumber.startsWith('20') && a.balance !== 0)
+        const hasLiabilities = accountBalances.some(a =>
+            a.accountNumber.startsWith('2') &&
+            !a.accountNumber.startsWith('20') &&
+            a.balance !== 0
+        )
+        const hasCash = accountBalances.some(a => a.accountNumber.startsWith('19') && a.balance !== 0)
+        const hasReceivables = accountBalances.some(a => a.accountNumber.startsWith('15') && a.balance !== 0)
+        const hasRevenue = accountBalances.some(a => a.accountNumber.startsWith('3') && a.balance !== 0)
+        const hasExpenses = accountBalances.some(a =>
+            ['4', '5', '6', '7', '8'].some(prefix => a.accountNumber.startsWith(prefix)) &&
+            a.balance !== 0
+        )
+
+        // Calculate values only if we have required data
+        // Soliditet (Equity / Assets) - needs both equity and assets
+        const canCalcSolidity = hasAssets && hasEquity
+        const solidity = canCalcSolidity && assets > 0 ? (equity / assets) * 100 : null
 
         // Kassalikviditet (Current Assets / Current Liabilities)
-        // Approx: Cash (19xx) + Receivables (15xx) / Liabilities
-        // We can get Cash from balances
         const cashAccounts = accountBalances.filter(a => a.accountNumber.startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
         const receivableAccounts = accountBalances.filter(a => a.accountNumber.startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
         const currentAssets = cashAccounts + receivableAccounts
-        const liquidity = liabilities > 0 ? (currentAssets / liabilities) * 100 : 0 // If no liabilities, liquidity is infinite/undefined, show 0 or handle
+        const canCalcLiquidity = (hasCash || hasReceivables) && hasLiabilities
+        const liquidity = canCalcLiquidity && liabilities > 0 ? (currentAssets / liabilities) * 100 : null
 
         // Skuldsättningsgrad (Liabilities / Equity)
-        const debtEquityRatio = equity !== 0 ? liabilities / equity : 0
+        const canCalcDebtEquity = hasLiabilities && hasEquity
+        const debtEquityRatio = canCalcDebtEquity && equity !== 0 ? liabilities / equity : null
 
         // Vinstmarginal (Net Income / Revenue)
-        const profitMargin = (revenue > 0) ? (netIncome / revenue) * 100 : 0
+        const canCalcMargin = hasRevenue && hasExpenses
+        const profitMargin = canCalcMargin && revenue > 0 ? (netIncome / revenue) * 100 : null
 
         return [
             {
                 label: "Soliditet",
-                value: `${Math.round(solidity)}%`,
-                change: "+0%", // Needs history for real change
-                positive: true,
+                value: solidity !== null ? `${Math.round(solidity)}%` : "-",
+                change: solidity !== null ? "+0%" : null,
+                positive: solidity !== null ? true : null,
                 icon: Shield,
-                subtitle: "vs förra året"
+                subtitle: solidity !== null ? "vs förra året" : "Saknar data"
             },
             {
                 label: "Kassalikviditet",
-                value: `${Math.round(liquidity)}%`,
-                change: "+0%",
-                positive: liquidity > 100,
+                value: liquidity !== null ? `${Math.round(liquidity)}%` : "-",
+                change: liquidity !== null ? "+0%" : null,
+                positive: liquidity !== null ? liquidity > 100 : null,
                 icon: Droplets,
-                subtitle: "vs förra året"
+                subtitle: liquidity !== null ? "vs förra året" : "Saknar data"
             },
             {
                 label: "Skuldsättningsgrad",
-                value: debtEquityRatio.toFixed(1),
-                change: "0.0",
-                positive: true,
+                value: debtEquityRatio !== null ? debtEquityRatio.toFixed(1) : "-",
+                change: debtEquityRatio !== null ? "0.0" : null,
+                positive: debtEquityRatio !== null ? true : null,
                 icon: Scale,
-                subtitle: "vs förra året"
+                subtitle: debtEquityRatio !== null ? "vs förra året" : "Saknar data"
             },
             {
                 label: "Vinstmarginal",
-                value: `${profitMargin.toFixed(1)}%`,
-                change: "+0%",
-                positive: profitMargin > 0,
+                value: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : "-",
+                change: profitMargin !== null ? "+0%" : null,
+                positive: profitMargin !== null ? profitMargin > 0 : null,
                 icon: Percent,
-                subtitle: "vs förra året"
+                subtitle: profitMargin !== null ? "vs förra året" : "Saknar data"
             },
         ]
     }, [totals, accountBalances])

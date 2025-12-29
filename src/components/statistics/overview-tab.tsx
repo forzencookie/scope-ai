@@ -108,8 +108,8 @@ export function OverviewTab() {
                             value={kpi.value}
                             headerIcon={kpi.icon}
                             tooltip={termExplanations[kpi.label]}
-                            change={kpi.change}
-                            changeType={kpi.positive ? "positive" : "negative"}
+                            change={kpi.change ?? undefined}
+                            changeType={kpi.positive === null ? undefined : kpi.positive ? "positive" : "negative"}
                             subtitle={kpi.subtitle}
                         />
                     ))}
