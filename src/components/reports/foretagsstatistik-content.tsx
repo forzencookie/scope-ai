@@ -88,7 +88,7 @@ export function ForetagsstatistikContent() {
                             value={kpi.value}
                             change={`${kpi.change} vs förra året`}
                             changeType={kpi.positive ? "positive" : "negative"}
-                            icon={kpi.icon}
+                            headerIcon={kpi.icon}
                             variant="filled"
                         />
                     ))}

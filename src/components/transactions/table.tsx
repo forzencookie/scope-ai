@@ -183,24 +183,24 @@ export function TransactionsTable({
                     label={text.stats.totalTransactions}
                     value={stats.total}
                     subtitle={text.stats.thisPeriod}
-                    icon={ArrowRightLeft}
+                    headerIcon={ArrowRightLeft}
                 />
                 <StatCard
                     label={text.stats.income}
                     value={formatCurrency(stats.income)}
-                    icon={TrendingUp}
+                    headerIcon={TrendingUp}
                     changeType="positive"
                 />
                 <StatCard
                     label={text.stats.expenses}
                     value={formatCurrency(stats.expenses)}
-                    icon={TrendingDown}
+                    headerIcon={TrendingDown}
                     changeType="negative"
                 />
                 <StatCard
                     label={text.stats.pendingReview}
                     value={stats.pending}
-                    icon={Clock}
+                    headerIcon={Clock}
                 />
             </StatCardGrid>
 

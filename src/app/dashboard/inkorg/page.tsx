@@ -260,6 +260,15 @@ export default function InboxPage() {
                             {/* Date */}
                             <div className="flex flex-col items-end gap-1 text-xs text-muted-foreground">
                                 <span>{item.date}</span>
+                                {/* AI Match Indicator (Purple Dot) */}
+                                {item.aiSuggestion && !item.linkedEntityId && (
+                                    <div className="flex items-center gap-1 mt-1 bg-purple-100 dark:bg-purple-950/40 px-2 py-0.5 rounded-full border border-purple-200 dark:border-purple-800">
+                                        <div className="w-1.5 h-1.5 rounded-full bg-purple-600 dark:bg-purple-400 animate-pulse" />
+                                        <span className="text-[10px] font-medium text-purple-700 dark:text-purple-300">
+                                            AI-förslag
+                                        </span>
+                                    </div>
+                                )}
                             </div>
 
                             {/* Actions */}

@@ -106,7 +106,7 @@ import { useTextMode } from "@/providers/text-mode-provider"
 const filterCategories = ["Bokföring", "Rapporter", "Skatt", "Händelser", "Parter", "Löner"] as const
 type FilterCategory = typeof filterCategories[number] | null
 
-export default function SokPage() {
+export default function ApparPage() {
     const [query, setQuery] = useState("")
     const [selectedIndex, setSelectedIndex] = useState(-1)
     const [activeFilter, setActiveFilter] = useState<FilterCategory>(null)

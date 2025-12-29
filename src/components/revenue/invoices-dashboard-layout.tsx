@@ -350,25 +350,25 @@ export function InvoicesDashboardLayout() {
                     label={text.stats.totalInvoices}
                     value={stats.total}
                     subtitle={text.invoices.allInvoices}
-                    icon={FileText}
+                    headerIcon={FileText}
                 />
                 <StatCard
                     label={text.stats.outstanding}
                     value={formatCurrency(stats.outstandingAmount)}
                     subtitle={`${stats.outstandingCount} ${text.invoices.invoices}`}
-                    icon={Clock}
+                    headerIcon={Clock}
                 />
                 <StatCard
                     label={text.stats.overdue}
                     value={formatCurrency(stats.overdueAmount)}
                     subtitle={`${stats.overdueCount} ${text.invoices.invoices}`}
-                    icon={AlertTriangle}
+                    headerIcon={AlertTriangle}
                     changeType="negative"
                 />
                 <StatCard
                     label={text.stats.paid}
                     value={formatCurrency(stats.paidAmount)}
-                    icon={TrendingUp}
+                    headerIcon={TrendingUp}
                     changeType="positive"
                 />
             </StatCardGrid>

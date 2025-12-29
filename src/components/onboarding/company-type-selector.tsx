@@ -41,8 +41,8 @@ interface CompanyTypeSelectorProps {
   columns?: 1 | 2
 }
 
-export function CompanyTypeSelector({ 
-  onSelect, 
+export function CompanyTypeSelector({
+  onSelect,
   showDescription = true,
   compact = false,
   columns = 1,
@@ -68,7 +68,7 @@ export function CompanyTypeSelector({
               onClick={() => handleSelect(type)}
               className={cn(
                 "flex flex-col items-center gap-1 p-3 rounded-lg border-2 transition-all",
-                isSelected 
+                isSelected
                   ? companyTypeColors[type] + " border-current"
                   : "border-transparent hover:border-muted-foreground/20 hover:bg-muted/50"
               )}
@@ -96,21 +96,16 @@ export function CompanyTypeSelector({
             key={type}
             onClick={() => handleSelect(type)}
             className={cn(
-              "w-full flex items-start gap-4 p-4 rounded-lg border-2 transition-all text-left",
-              isSelected 
+              "w-full flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left",
+              isSelected
                 ? companyTypeColors[type] + " border-current"
                 : "border-muted hover:border-muted-foreground/20 hover:bg-muted/50"
             )}
           >
-            <div className={cn(
-              "flex-shrink-0 h-10 w-10 rounded-lg flex items-center justify-center",
-              isSelected ? "bg-current/10" : "bg-muted"
-            )}>
-              <Icon className={cn("h-5 w-5", isSelected && "text-current")} />
-            </div>
             <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2">
+              <div className="flex items-center">
                 <span className="font-semibold">{info.fullName}</span>
+                <Icon className={cn("ml-2 h-4 w-4", isSelected ? "text-current" : "text-muted-foreground")} />
                 {isSelected && (
                   <Check className="h-4 w-4 ml-auto text-current" />
                 )}

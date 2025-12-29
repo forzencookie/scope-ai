@@ -186,6 +186,28 @@ create table if not exists crypto_transactions (
   created_at timestamptz default now()
 );
 
+-- =============================================================================
+-- AI CHAT PERSISTENCE
+-- =============================================================================
+
+create table if not exists conversations (
+  id uuid primary key default uuid_generate_v4(),
+  user_id text, -- link to auth user eventually
+  title text,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists messages (
+  id uuid primary key default uuid_generate_v4(),
+  conversation_id uuid references conversations(id) on delete cascade,
+  role text not null, -- 'user', 'assistant', 'system', 'data'
+  content text,
+  tool_calls jsonb, -- Store tool calls if any
+  tool_results jsonb, -- Store tool results if any
+  created_at timestamptz default now()
+);
+
 -- Enable RLS (Row Level Security) - Basic Setup
 alter table companies enable row level security;
 alter table transactions enable row level security;
@@ -199,6 +221,8 @@ alter table properties enable row level security;
 alter table share_holdings enable row level security;
 alter table crypto_holdings enable row level security;
 alter table crypto_transactions enable row level security;
+alter table conversations enable row level security;
+alter table messages enable row level security;
 
 -- Create policies (Allow all for anon for now purely for migration/demo dev speed)
 -- IN PRODUCTION: Only authenticated users should access.
@@ -214,3 +238,5 @@ create policy "Allow public access" on properties for all using (true);
 create policy "Allow public access" on share_holdings for all using (true);
 create policy "Allow public access" on crypto_holdings for all using (true);
 create policy "Allow public access" on crypto_transactions for all using (true);
+create policy "Allow public access" on conversations for all using (true);
+create policy "Allow public access" on messages for all using (true);

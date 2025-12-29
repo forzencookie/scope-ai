@@ -260,22 +260,22 @@ export function Aktiebok() {
         <StatCard
           label={text.owners.totalShares}
           value={stats.totalShares.toLocaleString('sv-SE')}
-          icon={FileText}
+          headerIcon={FileText}
         />
         <StatCard
           label={text.owners.shareholderCount}
           value={stats.shareholderCount.toString()}
-          icon={Users}
+          headerIcon={Users}
         />
         <StatCard
           label={text.owners.totalVotes}
           value={stats.totalVotes.toLocaleString('sv-SE')}
-          icon={Vote}
+          headerIcon={Vote}
         />
         <StatCard
           label={text.owners.shareValue}
           value={formatCurrency(stats.totalValue)}
-          icon={TrendingUp}
+          headerIcon={TrendingUp}
         />
       </StatCardGrid>
 

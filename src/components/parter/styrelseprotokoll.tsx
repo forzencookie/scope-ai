@@ -236,25 +236,25 @@ export function Styrelseprotokoll() {
           label="Totalt protokoll"
           value={meetings.length.toString()}
           subtitle="registrerade möten"
-          icon={FileText}
+          headerIcon={FileText}
         />
         <StatCard
           label="Signerade"
           value={stats.signed.toString()}
           subtitle={`av ${meetings.length} protokoll`}
-          icon={CheckCircle}
+          headerIcon={CheckCircle}
         />
         <StatCard
           label="Planerade"
           value={stats.planned.toString()}
           subtitle="kommande möten"
-          icon={Clock}
+          headerIcon={Clock}
         />
         <StatCard
           label="Beslut"
           value={stats.totalDecisions.toString()}
           subtitle="dokumenterade beslut"
-          icon={FileCheck}
+          headerIcon={FileCheck}
         />
       </StatCardGrid>
 

@@ -37,7 +37,20 @@ export function TransactionsTab() {
     const { transactionStats, invoiceStats, monthlyRevenueData, isLoading } = useCompanyStatistics()
 
     if (isLoading) {
-        return <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+        return (
+            <div className="space-y-6 animate-pulse">
+                {/* Pie charts skeleton */}
+                <div className="grid grid-cols-2 gap-6">
+                    <div className="h-[360px] rounded-lg bg-muted" />
+                    <div className="h-[360px] rounded-lg bg-muted" />
+                </div>
+                {/* Bar chart skeleton */}
+                <div className="pt-6 border-t-2 border-border/60">
+                    <div className="h-6 w-48 rounded bg-muted mb-4" />
+                    <div className="h-[240px] rounded-lg bg-muted" />
+                </div>
+            </div>
+        )
     }
 
     const transactionPieData = [

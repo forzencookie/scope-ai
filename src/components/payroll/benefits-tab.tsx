@@ -122,10 +122,10 @@ export function BenefitsTab() {
 
             {/* KPI Cards */}
             <StatCardGrid columns={4}>
-                <StatCard label={BENEFIT_STATUS_LABELS.TAX_FREE} value={taxFreeCount} icon={Heart} />
-                <StatCard label={BENEFIT_STATUS_LABELS.TAXABLE} value={taxableCount} icon={Car} />
-                <StatCard label="Aktiva" value={activeCount} icon={Check} />
-                <StatCard label="Förslag" value={suggestions.length} icon={Gift} />
+                <StatCard label={BENEFIT_STATUS_LABELS.TAX_FREE} value={taxFreeCount} headerIcon={Heart} />
+                <StatCard label={BENEFIT_STATUS_LABELS.TAXABLE} value={taxableCount} headerIcon={Car} />
+                <StatCard label="Aktiva" value={activeCount} headerIcon={Check} />
+                <StatCard label="Förslag" value={suggestions.length} headerIcon={Gift} />
             </StatCardGrid>
 
             {/* Main Content Table */}

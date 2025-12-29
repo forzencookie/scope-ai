@@ -48,7 +48,7 @@ export function AIChatDialog({
   const [isLoading, setIsLoading] = useState(false)
   const [isMinimized, setIsMinimized] = useState(false)
   const [isMaximized, setIsMaximized] = useState(false)
-  
+
   // Position and size state - initialized in useEffect to avoid SSR issues
   const [position, setPosition] = useState<Position>(
     defaultPosition || { x: 0, y: 80 }
@@ -58,7 +58,7 @@ export function AIChatDialog({
   )
   const [isInitialized, setIsInitialized] = useState(false)
   const [preMaximizeState, setPreMaximizeState] = useState<{ position: Position; size: Size } | null>(null)
-  
+
   // Refs
   const dialogRef = useRef<HTMLDivElement>(null)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
@@ -174,6 +174,8 @@ export function AIChatDialog({
     }
   }
 
+  const [conversationId, setConversationId] = useState<string | null>(null)
+
   // Send message
   const sendMessage = useCallback(async () => {
     const content = inputValue.trim()
@@ -205,30 +207,27 @@ export function AIChatDialog({
             role: m.role,
             content: m.content,
           })),
+          conversationId // Send existing ID if we have one
         }),
       })
 
       if (!response.ok) throw new Error("Failed to get response")
 
-      const reader = response.body?.getReader()
-      const decoder = new TextDecoder()
+      const data = await response.json()
 
-      if (reader) {
-        let fullContent = ""
-        while (true) {
-          const { done, value } = await reader.read()
-          if (done) break
-
-          const text = decoder.decode(value, { stream: true })
-          fullContent += text
-
-          setMessages((prev) =>
-            prev.map((msg) =>
-              msg.id === assistantMessageId ? { ...msg, content: fullContent } : msg
-            )
-          )
-        }
+      // Update conversation ID if provided
+      if (data.conversationId) {
+        setConversationId(data.conversationId)
       }
+
+      setMessages((prev) =>
+        prev.map((msg) =>
+          msg.id === assistantMessageId
+            ? { ...msg, content: data.content }
+            : msg
+        )
+      )
+
     } catch {
       setMessages((prev) =>
         prev.map((msg) =>
@@ -240,7 +239,7 @@ export function AIChatDialog({
     } finally {
       setIsLoading(false)
     }
-  }, [inputValue, isLoading, messages])
+  }, [inputValue, isLoading, messages, conversationId])
 
   // Handle key down
   const handleKeyDown = (e: React.KeyboardEvent) => {

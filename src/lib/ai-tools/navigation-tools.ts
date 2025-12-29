@@ -17,23 +17,23 @@ const ROUTES = {
         label: 'Startsidan',
     },
     transactions: {
-        path: '/dashboard/accounting/verifikationer',
+        path: '/dashboard/appar/bokforing?tab=transaktioner',
         label: 'Transaktioner',
     },
     bookkeeping: {
-        path: '/dashboard/accounting',
+        path: '/dashboard/appar/bokforing',
         label: 'Bokföring',
     },
     payroll: {
-        path: '/dashboard/payroll',
+        path: '/dashboard/appar/loner',
         label: 'Löner',
     },
     reports: {
-        path: '/dashboard/reports',
+        path: '/dashboard/appar/rapporter',
         label: 'Rapporter',
     },
     vat: {
-        path: '/dashboard/myndigheter/momsdeklaration',
+        path: '/dashboard/appar/skatt?tab=momsdeklaration',
         label: 'Momsdeklaration',
     },
     inbox: {
@@ -151,12 +151,12 @@ export const showPreviewTool = defineTool<ShowPreviewParams, null>({
         // This tool delegates to the appropriate read tool
         // The AI workspace will handle the display component
         const componentMap: Record<ShowPreviewParams['type'], { component: string; route: string }> = {
-            transactions: { component: 'TransactionsTable', route: '/dashboard/accounting/verifikationer' },
-            payslips: { component: 'PayslipsTable', route: '/dashboard/payroll' },
-            vat: { component: 'VatSummary', route: '/dashboard/myndigheter/momsdeklaration' },
-            income_statement: { component: 'IncomeStatement', route: '/dashboard/reports' },
-            balance_sheet: { component: 'BalanceSheet', route: '/dashboard/reports' },
-            employees: { component: 'EmployeeList', route: '/dashboard/payroll' },
+            transactions: { component: 'TransactionsTable', route: '/dashboard/appar/bokforing?tab=transaktioner' },
+            payslips: { component: 'PayslipsTable', route: '/dashboard/appar/loner?tab=lonebesked' },
+            vat: { component: 'VatSummary', route: '/dashboard/appar/skatt?tab=momsdeklaration' },
+            income_statement: { component: 'IncomeStatement', route: '/dashboard/appar/rapporter/resultat' },
+            balance_sheet: { component: 'BalanceSheet', route: '/dashboard/appar/rapporter/balans' },
+            employees: { component: 'EmployeeList', route: '/dashboard/appar/loner?tab=lonebesked' },
         }
 
         const config = componentMap[params.type]
@@ -210,7 +210,7 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
                 component: 'DeadlinesList',
                 props: { deadlines },
                 title: 'Kommande deadlines',
-                fullViewRoute: '/dashboard/myndigheter',
+                fullViewRoute: '/dashboard/appar/skatt',
             },
         }
     },

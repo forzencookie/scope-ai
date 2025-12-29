@@ -198,23 +198,23 @@ export function InventarierTable() {
                 <StatCard
                     label="Totalt Bokfört Värde"
                     value={formatCurrency(totalValue)}
-                    icon={Monitor}
+                    headerIcon={Monitor}
                 />
                 <StatCard
                     label="Anskaffningsvärde"
                     value={formatCurrency(totalPurchase)}
-                    icon={Package}
+                    headerIcon={Package}
                 />
                 <StatCard
                     label="Antal Tillgångar"
                     value={assets.length}
                     subtitle="inventarier"
-                    icon={PenTool}
+                    headerIcon={PenTool}
                 />
                 <StatCard
                     label="Ackumulerade Avskrivningar"
                     value={formatCurrency(totalPurchase - totalValue)}
-                    icon={TrendingDown}
+                    headerIcon={TrendingDown}
                 />
             </StatCardGrid>
 

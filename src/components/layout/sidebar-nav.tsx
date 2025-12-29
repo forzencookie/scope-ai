@@ -25,18 +25,19 @@ const iconColors: Record<string, { bg: string; icon: string }> = {
 }
 
 // Helper component for styled icons
-function IconWrapper({ title, Icon }: { title: string; Icon: LucideIcon }) {
+function IconWrapper({ title, Icon, className }: { title: string; Icon: LucideIcon; className?: string }) {
   const colors = iconColors[title]
   if (!colors) {
     // No color config - render plain icon
     return <Icon className="size-4" />
   }
   return (
-    <span className={cn("flex items-center justify-center size-6 rounded", colors.bg)}>
+    <span className={cn("flex items-center justify-center size-6 rounded", colors.bg, className)}>
       <Icon className={cn("size-4", colors.icon)} />
     </span>
   )
 }
+
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar"
@@ -188,21 +189,21 @@ export function NavSettings({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>{isEnkel ? "Övrigt" : "Mer"}</SidebarGroupLabel>
+      <SidebarGroupLabel className="-ml-2">{isEnkel ? "Övrigt" : "Mer"}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const displayTitle = getTitle(item)
           return (
             <SidebarMenuItem key={item.title}>
               {item.title === "Inställningar" && onSettingsClick ? (
-                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle}>
-                  {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
+                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle} className="-ml-2">
+                  {item.icon && <item.icon className="size-4" />}
                   <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton asChild tooltip={displayTitle}>
+                <SidebarMenuButton asChild tooltip={displayTitle} className="-ml-2">
                   <Link href={item.url}>
-                    {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
+                    {item.icon && <item.icon className="size-4" />}
                     <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                   </Link>
                 </SidebarMenuButton>

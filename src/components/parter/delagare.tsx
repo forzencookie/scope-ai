@@ -289,19 +289,19 @@ export function Delagare() {
             ? `${komplementarer.length} komplementärer, ${kommanditdelägare.length} kommanditdelägare`
             : 'Aktiva delägare'
           }
-          icon={Users}
+          headerIcon={Users}
         />
         <StatCard
           label="Totalt kapital"
           value={formatCurrency(totalCapital)}
           subtitle="Registrerat eget kapital"
-          icon={Wallet}
+          headerIcon={Wallet}
         />
         <StatCard
           label="Uttag i år"
           value={formatCurrency(totalWithdrawals)}
           subtitle={`${withdrawals.length} transaktioner`}
-          icon={TrendingDown}
+          headerIcon={TrendingDown}
         />
       </StatCardGrid>
 

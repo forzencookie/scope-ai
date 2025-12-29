@@ -279,25 +279,25 @@ export function Arsmote() {
           label="Nästa årsmöte"
           value={stats.nextMeeting ? formatDateLong(stats.nextMeeting.date) : 'Ej planerad'}
           subtitle={stats.daysUntilNext ? `${stats.daysUntilNext} dagar kvar` : 'Inget årsmöte planerat'}
-          icon={Calendar}
+          headerIcon={Calendar}
         />
         <StatCard
           label="Röstberättigade"
           value={stats.votingMembersCount.toString()}
           subtitle="medlemmar med betald avgift"
-          icon={UserCheck}
+          headerIcon={UserCheck}
         />
         <StatCard
           label="Inkomna motioner"
           value={(stats.nextMeeting?.motions.length || 0).toString()}
           subtitle={`${stats.pendingMotions} inväntar styrelsens svar`}
-          icon={MessageSquare}
+          headerIcon={MessageSquare}
         />
         <StatCard
           label="Genomförda"
           value={stats.completed.toString()}
           subtitle="årsmöten med signerat protokoll"
-          icon={CheckCircle}
+          headerIcon={CheckCircle}
         />
       </StatCardGrid>
 

@@ -488,7 +488,7 @@ function AIRobotPageContent() {
             {/* Navigation links below chatbar */}
             <div className="flex items-center gap-4 mt-2 px-1">
                 <Link
-                    href="/dashboard/sok"
+                    href="/dashboard/appar"
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <LayoutGrid className="h-3.5 w-3.5" />

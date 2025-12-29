@@ -361,19 +361,19 @@ export const LeverantorsfakturorTable = forwardRef<LeverantorsfakturorTableRef>(
         <StatCard
           label={text.supplierInvoices.unpaid}
           value={formatCurrency(stats.totalUnpaid)}
-          icon={FileText}
+          headerIcon={FileText}
         />
         <StatCard
           label={text.supplierInvoices.overdueAmount}
           value={formatCurrency(stats.overdueAmount)}
           subtitle={`${stats.overdueCount} ${text.supplierInvoices.invoices}`}
-          icon={AlertTriangle}
+          headerIcon={AlertTriangle}
         />
         <StatCard
           label={text.supplierInvoices.toApprove}
           value={stats.toApproveCount.toString()}
           subtitle={text.supplierInvoices.invoices}
-          icon={Clock}
+          headerIcon={Clock}
         />
       </StatCardGrid>
 

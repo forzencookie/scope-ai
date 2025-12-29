@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Check } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
-import { LogOut, Laptop, Smartphone } from "lucide-react"
+import { LogOut, Laptop, Smartphone, CreditCard, Download, Eye } from "lucide-react"
 
 /**
  * SettingsPageHeader - Page header with title and description
@@ -191,8 +191,8 @@ export function IntegrationCard({
                 <p className="text-xs text-muted-foreground">{description}</p>
             </div>
             {comingSoon ? (
-                <span className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground">
-                    Kommer snart
+                <span className="text-xs text-muted-foreground text-left whitespace-nowrap">
+                    Kommer<br />snart
                 </span>
             ) : (
                 <Button
@@ -212,26 +212,54 @@ export function IntegrationCard({
  */
 export interface BillingHistoryRowProps {
     date: string
+    id: string
+    paymentMethod: string
+    cardLastFour?: string
     amount: string
     status: "Betald" | "Obetald" | "Väntande"
+    onDownloadReceipt?: () => void
+    onViewInvoice?: () => void
 }
 
 export function BillingHistoryRow({
     date,
+    id,
+    paymentMethod,
+    cardLastFour,
     amount,
     status,
+    onDownloadReceipt,
+    onViewInvoice,
 }: BillingHistoryRowProps) {
     const statusColors = {
-        "Betald": "text-green-600 dark:text-green-400",
-        "Obetald": "text-red-600 dark:text-red-400",
-        "Väntande": "text-yellow-600 dark:text-yellow-400",
+        "Betald": "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400",
+        "Obetald": "bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400",
+        "Väntande": "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400",
     }
 
     return (
-        <div className="flex items-center justify-between text-sm py-2 border-b last:border-0">
-            <span className="text-muted-foreground">{date}</span>
-            <span>{amount}</span>
-            <span className={statusColors[status]}>{status}</span>
+        <div className="grid grid-cols-[80px_1fr_80px_70px_50px] gap-2 items-center text-sm py-2 border-b last:border-0">
+            <span className="text-muted-foreground text-xs">{date}</span>
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <CreditCard className="h-3 w-3 shrink-0" />
+                <span className="truncate">{paymentMethod}{cardLastFour && ` ·${cardLastFour}`}</span>
+            </span>
+            <span className="text-right text-xs font-medium">{amount}</span>
+            <span className={cn("text-xs px-1.5 py-0.5 rounded text-center", statusColors[status])}>
+                {status}
+            </span>
+            <div className="flex items-center justify-end gap-0.5">
+                {onDownloadReceipt && (
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onDownloadReceipt}>
+                        <Download className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                )}
+                {onViewInvoice && (
+                    <Button variant="ghost" size="sm" className="h-6 w-6 p-0" onClick={onViewInvoice}>
+                        <Eye className="h-3 w-3 text-muted-foreground" />
+                    </Button>
+                )}
+            </div>
         </div>
     )
 }
@@ -450,3 +478,144 @@ export function PropertyRow({
         </div>
     )
 }
+
+/**
+ * SettingsActionCard - Card for critical actions (Export/Delete) with consistent styling
+ */
+export interface SettingsActionCardProps {
+    title: string
+    description: string
+    actionLabel: string
+    onAction: () => void
+    variant?: "info" | "destructive"
+    icon: LucideIcon
+}
+
+export function SettingsActionCard({
+    title,
+    description,
+    actionLabel,
+    onAction,
+    variant = "info",
+    icon: Icon,
+}: SettingsActionCardProps) {
+    const isDestructive = variant === "destructive"
+
+    const containerClass = isDestructive
+        ? "bg-red-50 dark:bg-red-900/10"
+        : "bg-blue-50 dark:bg-blue-900/10"
+
+    const titleClass = isDestructive
+        ? "text-red-900 dark:text-red-100"
+        : "text-blue-900 dark:text-blue-100"
+
+    const descClass = isDestructive
+        ? "text-red-700/80 dark:text-red-200/70"
+        : "text-blue-700/80 dark:text-blue-200/70"
+
+    const buttonClass = isDestructive
+        ? "text-red-600 hover:bg-red-600/20 hover:text-red-700 dark:text-red-400 dark:hover:bg-red-400/20"
+        : "text-blue-600 hover:bg-blue-600/20 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-400/20"
+
+    return (
+        <div className={cn("flex items-center justify-between rounded-lg p-4", containerClass)}>
+            <div>
+                <p className={cn("font-medium", titleClass)}>{title}</p>
+                <p className={cn("text-sm", descClass)}>{description}</p>
+            </div>
+            <Button
+                variant="ghost"
+                size="sm"
+                className={buttonClass}
+                onClick={onAction}
+            >
+                {actionLabel}
+                <Icon className="ml-2 h-4 w-4" />
+            </Button>
+        </div>
+    )
+}
+
+/**
+ * SettingsSelectField - A select dropdown with label for settings pages
+ */
+export interface SettingsSelectFieldProps {
+    label: string
+    placeholder?: string
+    defaultValue?: string
+    value?: string
+    onValueChange?: (value: string) => void
+    options: { value: string; label: string }[]
+    className?: string
+}
+
+export function SettingsSelectField({
+    label,
+    placeholder,
+    defaultValue,
+    value,
+    onValueChange,
+    options,
+    className,
+}: SettingsSelectFieldProps) {
+    // Need to import Select components - they should be passed or we need to handle this
+    // For now, we'll return a simple structure that can be composed
+    return (
+        <div className={cn("grid gap-2", className)}>
+            <Label>{label}</Label>
+            <select
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                defaultValue={defaultValue}
+                value={value}
+                onChange={(e) => onValueChange?.(e.target.value)}
+            >
+                {placeholder && <option value="">{placeholder}</option>}
+                {options.map((opt) => (
+                    <option key={opt.value} value={opt.value}>
+                        {opt.label}
+                    </option>
+                ))}
+            </select>
+        </div>
+    )
+}
+
+/**
+ * SettingsListCard - Generic card for list items with icon, content, and action
+ */
+export interface SettingsListCardProps {
+    icon?: LucideIcon
+    iconClassName?: string
+    title: string
+    description?: string
+    badge?: React.ReactNode
+    action?: React.ReactNode
+    className?: string
+}
+
+export function SettingsListCard({
+    icon: Icon,
+    iconClassName,
+    title,
+    description,
+    badge,
+    action,
+    className,
+}: SettingsListCardProps) {
+    return (
+        <div className={cn("flex items-center justify-between rounded-lg border-2 border-border/60 p-4", className)}>
+            <div className="flex items-center gap-3">
+                {Icon && <Icon className={cn("h-5 w-5 text-muted-foreground", iconClassName)} />}
+                <div>
+                    <p className="text-sm font-medium">{title}</p>
+                    {description && <p className="text-xs text-muted-foreground">{description}</p>}
+                </div>
+            </div>
+            <div className="flex items-center gap-2">
+                {badge}
+                {action}
+            </div>
+        </div>
+    )
+}
+

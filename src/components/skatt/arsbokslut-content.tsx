@@ -134,19 +134,19 @@ export function ArsbokslutContent() {
                         label={text.reports.fiscalYear}
                         value="2024"
                         subtitle="2024-01-01 – 2024-12-31"
-                        icon={Calendar}
+                        headerIcon={Calendar}
                     />
                     <StatCard
                         label={text.reports.companyType}
                         value={companyTypeName}
                         subtitle={text.reports.simplified}
-                        icon={Building2}
+                        headerIcon={Building2}
                     />
                     <StatCard
                         label={text.reports.reportStatus}
                         value={text.reports.workInProgress}
                         subtitle={`${text.reports.deadline}: 2 maj 2025`}
-                        icon={Clock}
+                        headerIcon={Clock}
                     />
                 </StatCardGrid>
 

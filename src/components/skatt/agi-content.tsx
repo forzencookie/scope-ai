@@ -318,21 +318,21 @@ export function AGIContent() {
                         label="Nästa AGI"
                         value={stats.nextPeriod}
                         subtitle={stats.deadline}
-                        icon={Calendar}
+                        headerIcon={Calendar}
                         tooltip={termExplanations["AGI"]}
                     />
                     <StatCard
                         label="Skatteavdrag"
                         value={formatCurrency(stats.tax)}
                         subtitle="Preliminärskatt"
-                        icon={Wallet}
+                        headerIcon={Wallet}
                         tooltip={termExplanations["Preliminärskatt"]}
                     />
                     <StatCard
                         label="Arbetsgivaravgifter"
                         value={formatCurrency(stats.contributions)}
                         subtitle={`31,42% av ${formatCurrency(stats.totalSalary)}`}
-                        icon={Calculator}
+                        headerIcon={Calculator}
                         tooltip={termExplanations["Arbetsgivaravgifter"]}
                     />
                 </StatCardGrid>

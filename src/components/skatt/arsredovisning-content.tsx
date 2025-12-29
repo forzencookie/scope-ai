@@ -101,19 +101,19 @@ export function ArsredovisningContent() {
                         label="Räkenskapsår"
                         value="2024"
                         subtitle="2024-01-01 – 2024-12-31"
-                        icon={Calendar}
+                        headerIcon={Calendar}
                     />
                     <StatCard
                         label="Bolagsform"
                         value={companyTypeFullName || "Aktiebolag"}
                         subtitle="K2-regelverk"
-                        icon={Building2}
+                        headerIcon={Building2}
                     />
                     <StatCard
                         label="Status"
                         value="Under arbete"
                         subtitle="Deadline: 30 jun 2025"
-                        icon={Clock}
+                        headerIcon={Clock}
                     />
                 </StatCardGrid>
 

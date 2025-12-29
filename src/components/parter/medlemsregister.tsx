@@ -222,25 +222,25 @@ export function Medlemsregister() {
           label="Totalt medlemmar"
           value={stats.totalMembers.toString()}
           subtitle={`${stats.boardMembers} med styrelseuppdrag`}
-          icon={Users}
+          headerIcon={Users}
         />
         <StatCard
           label="Aktiva medlemmar"
           value={stats.activeMembers.toString()}
           subtitle={`${stats.pendingMembers} vilande`}
-          icon={UserCheck}
+          headerIcon={UserCheck}
         />
         <StatCard
           label="Förväntade avgifter"
           value={formatCurrency(stats.totalFees)}
           subtitle="innevarande år"
-          icon={CreditCard}
+          headerIcon={CreditCard}
         />
         <StatCard
           label="Obetalda avgifter"
           value={formatCurrency(stats.unpaidFees)}
           subtitle={`${stats.unpaidCount} medlemmar`}
-          icon={Clock}
+          headerIcon={Clock}
         />
       </StatCardGrid>
 

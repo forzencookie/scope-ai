@@ -1,0 +1,11 @@
+// Re-export all tab components for easy importing
+export { AccountTab, type SettingsFormData } from "./account-tab"
+export { CompanyTab } from "./company-tab"
+export { IntegrationsTab } from "./integrations-tab"
+export { BillingTab } from "./billing-tab"
+export { NotificationsTab } from "./notifications-tab"
+export { AppearanceTab } from "./appearance-tab"
+export { LanguageTab } from "./language-tab"
+export { EmailTab } from "./email-tab"
+export { AccessibilityTab } from "./accessibility-tab"
+export { SecurityTab } from "./security-tab"

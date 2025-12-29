@@ -26,7 +26,20 @@ export function ExpensesTab() {
     const totalExpenses = expenseCategories.reduce((sum, cat) => sum + cat.amount, 0)
 
     if (isLoading) {
-        return <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+        return (
+            <div className="space-y-6 animate-pulse">
+                <div className="grid grid-cols-3 gap-6">
+                    {/* Pie chart skeleton */}
+                    <div className="h-[360px] rounded-lg bg-muted" />
+                    {/* Category cards skeleton */}
+                    <div className="col-span-2 space-y-3">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="h-24 rounded-lg bg-muted" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     // Sort categories largest first for better visualization

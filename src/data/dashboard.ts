@@ -34,7 +34,7 @@ export const quickStats: QuickStat[] = [
     value: "12",
     change: "transaktioner",
     positive: null,
-    href: "/accounting"
+    href: "/dashboard/appar/bokforing"
   },
   {
     id: "stat-4",
@@ -42,7 +42,7 @@ export const quickStats: QuickStat[] = [
     value: "245 tkr",
     change: "-3%",
     positive: false,
-    href: "/accounting"
+    href: "/dashboard/appar/bokforing"
   },
 ]
 
@@ -54,26 +54,26 @@ export const pendingTasks: PendingTask[] = [
   {
     id: "task-1",
     title: "5 transaktioner väntar på bokföring",
-    href: "/accounting?tab=transaktioner",
+    href: "/dashboard/appar/bokforing?tab=transaktioner",
     priority: "high",
   },
   {
     id: "task-2",
     title: "Momsdeklaration förfaller 12 jan",
-    href: "/reports",
+    href: "/dashboard/appar/skatt?tab=momsdeklaration",
     priority: "high",
     dueDate: "2025-01-12",
   },
   {
     id: "task-3",
     title: "3 fakturor att skicka",
-    href: "/accounting?tab=fakturor",
+    href: "/dashboard/appar/bokforing?tab=fakturor",
     priority: "medium",
   },
   {
     id: "task-4",
     title: "2 kvitton saknar kategori",
-    href: "/accounting?tab=underlag",
+    href: "/dashboard/appar/bokforing?tab=underlag",
     priority: "low",
   },
 ]
@@ -128,17 +128,17 @@ export const quickLinks: QuickLink[] = [
   {
     id: "link-1",
     label: "Ladda upp kvitto",
-    href: "/accounting?tab=underlag"
+    href: "/dashboard/appar/bokforing?tab=underlag"
   },
   {
     id: "link-2",
     label: "Ny faktura",
-    href: "/accounting?tab=fakturor"
+    href: "/dashboard/appar/bokforing?tab=fakturor"
   },
   {
     id: "link-3",
     label: "Momsrapport",
-    href: "/reports"
+    href: "/dashboard/appar/skatt?tab=momsdeklaration"
   },
 ]
 

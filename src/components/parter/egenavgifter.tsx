@@ -109,7 +109,7 @@ export function EgenavgifterCalculator() {
   const monthlyData: MonthlyData[] = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
     const monthlyProfit = annualProfit / 12
-    
+
     return months.map((month, i) => {
       // Add some variation
       const variation = 0.8 + Math.random() * 0.4
@@ -137,24 +137,24 @@ export function EgenavgifterCalculator() {
             label="Beräknad vinst"
             value={formatCurrency(annualProfit)}
             subtitle="Förväntat resultat 2024"
-            icon={TrendingUp}
+            headerIcon={TrendingUp}
           />
           <StatCard
             label="Egenavgifter"
             value={formatCurrency(calculation.avgifter)}
             subtitle={formatPercent(calculation.rate)}
-            icon={Calculator}
+            headerIcon={Calculator}
           />
           <StatCard
             label="Netto efter avgifter"
             value={formatCurrency(calculation.nettoEfterAvgifter)}
-            icon={Percent}
+            headerIcon={Percent}
           />
           <StatCard
             label="Månadsvis netto"
             value={formatCurrency(calculation.monthlyNet)}
             subtitle="genomsnitt"
-            icon={Calendar}
+            headerIcon={Calendar}
           />
         </StatCardGrid>
 
@@ -210,7 +210,7 @@ export function EgenavgifterCalculator() {
                           </TooltipTrigger>
                           <TooltipContent>
                             <p className="max-w-xs">
-                              Om du väljer längre karenstid (7 dagar istället för 1) 
+                              Om du väljer längre karenstid (7 dagar istället för 1)
                               får du 0,76% lägre egenavgifter.
                             </p>
                           </TooltipContent>
@@ -289,9 +289,9 @@ export function EgenavgifterCalculator() {
                   Preliminärskatt
                 </h4>
                 <p className="text-sm text-muted-foreground">
-                  Baserat på din beräknade vinst på {formatCurrency(annualProfit)}, 
-                  bör din preliminärskatt ligga på cirka {formatCurrency(Math.round(annualProfit * 0.30))} 
-                  per år (exkl. egenavgifter). Överväg att sätta av {formatCurrency(Math.round(annualProfit * 0.59 / 12))} 
+                  Baserat på din beräknade vinst på {formatCurrency(annualProfit)},
+                  bör din preliminärskatt ligga på cirka {formatCurrency(Math.round(annualProfit * 0.30))}
+                  per år (exkl. egenavgifter). Överväg att sätta av {formatCurrency(Math.round(annualProfit * 0.59 / 12))}
                   per månad för skatt + avgifter.
                 </p>
               </div>

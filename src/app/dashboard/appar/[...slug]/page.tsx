@@ -33,7 +33,7 @@ const pageMap: Record<string, { component: React.ComponentType; label: string }>
     loner: { component: PayrollPage, label: "Löner" },
 }
 
-function SokBreadcrumb({ section }: { section: string }) {
+function ApparBreadcrumb({ section }: { section: string }) {
     const pageInfo = pageMap[section]
 
     return (
@@ -67,7 +67,7 @@ function SokBreadcrumb({ section }: { section: string }) {
     )
 }
 
-function SokPageContent({ params }: { params: Promise<{ slug: string[] }> }) {
+function ApparPageContent({ params }: { params: Promise<{ slug: string[] }> }) {
     const { slug } = use(params)
     const section = slug[0]
     const pageInfo = pageMap[section]
@@ -75,7 +75,7 @@ function SokPageContent({ params }: { params: Promise<{ slug: string[] }> }) {
     if (!pageInfo) {
         return (
             <div className="flex flex-col">
-                <SokBreadcrumb section={section} />
+                <ApparBreadcrumb section={section} />
                 <div className="p-6">
                     <p className="text-muted-foreground">Sidan hittades inte</p>
                 </div>
@@ -88,7 +88,7 @@ function SokPageContent({ params }: { params: Promise<{ slug: string[] }> }) {
     // Render the page without its own header (we provide the breadcrumb)
     return (
         <div className="flex flex-col min-h-screen">
-            <SokBreadcrumb section={section} />
+            <ApparBreadcrumb section={section} />
             <div className="flex-1 [&>*:first-child>header]:hidden">
                 <PageComponent />
             </div>
@@ -96,10 +96,10 @@ function SokPageContent({ params }: { params: Promise<{ slug: string[] }> }) {
     )
 }
 
-export default function SokCatchAllPage({ params }: { params: Promise<{ slug: string[] }> }) {
+export default function ApparCatchAllPage({ params }: { params: Promise<{ slug: string[] }> }) {
     return (
         <Suspense fallback={<div className="p-6">Laddar...</div>}>
-            <SokPageContent params={params} />
+            <ApparPageContent params={params} />
         </Suspense>
     )
 }

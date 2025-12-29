@@ -71,7 +71,29 @@ export function OverviewTab() {
     }, [filteredRevenueData])
 
     if (isLoading) {
-        return <div className="h-96 flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin text-muted-foreground" /></div>
+        return (
+            <div className="space-y-6 animate-pulse">
+                {/* Stat cards skeleton */}
+                <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+                    {[1, 2, 3, 4].map((i) => (
+                        <div key={i} className="h-24 rounded-lg bg-muted" />
+                    ))}
+                </div>
+                {/* Chart skeleton */}
+                <div className="pt-6 border-t-2 border-border/60">
+                    <div className="h-6 w-48 rounded bg-muted mb-4" />
+                    <div className="h-[250px] rounded-lg bg-muted" />
+                </div>
+                {/* Account balances skeleton */}
+                <div className="pt-6 border-t-2 border-border/60">
+                    <div className="grid grid-cols-3 gap-4">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-20 rounded-lg bg-muted" />
+                        ))}
+                    </div>
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -84,7 +106,7 @@ export function OverviewTab() {
                             key={kpi.label}
                             label={kpi.label}
                             value={kpi.value}
-                            icon={kpi.icon}
+                            headerIcon={kpi.icon}
                             tooltip={termExplanations[kpi.label]}
                             change={kpi.change}
                             changeType={kpi.positive ? "positive" : "negative"}

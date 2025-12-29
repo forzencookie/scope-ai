@@ -152,8 +152,24 @@ function PayrollPageContent() {
 
 function PayrollPageLoading() {
     return (
-        <div className="flex items-center justify-center h-svh">
-            <div className="animate-pulse text-muted-foreground">Laddar...</div>
+        <div className="flex flex-col min-h-svh">
+            <div className="px-4 pt-4">
+                <div className="w-full space-y-6 animate-pulse">
+                    {/* Stats cards */}
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="h-24 rounded-lg bg-muted" />
+                        ))}
+                    </div>
+                    {/* Info banner */}
+                    <div className="h-20 rounded-lg bg-muted" />
+                    {/* Two column layout */}
+                    <div className="grid grid-cols-2 gap-6">
+                        <div className="h-48 rounded-lg bg-muted" />
+                        <div className="h-48 rounded-lg bg-muted" />
+                    </div>
+                </div>
+            </div>
         </div>
     )
 }

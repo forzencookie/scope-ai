@@ -226,25 +226,25 @@ export function Bolagsstamma() {
           label="Nästa stämma"
           value={stats.nextMeeting ? formatDateLong(stats.nextMeeting.date) : 'Ej planerad'}
           subtitle={stats.daysUntilNext ? `${stats.daysUntilNext} dagar kvar` : 'Ingen stämma planerad'}
-          icon={Calendar}
+          headerIcon={Calendar}
         />
         <StatCard
           label="Aktieägare"
           value={mockShareholders.length.toString()}
           subtitle="att kalla till stämman"
-          icon={Users}
+          headerIcon={Users}
         />
         <StatCard
           label="Genomförda"
           value={stats.completed.toString()}
           subtitle="stämmor med signerat protokoll"
-          icon={CheckCircle}
+          headerIcon={CheckCircle}
         />
         <StatCard
           label="Stämmobeslut"
           value={stats.totalDecisions.toString()}
           subtitle="dokumenterade beslut"
-          icon={Gavel}
+          headerIcon={Gavel}
         />
       </StatCardGrid>
 

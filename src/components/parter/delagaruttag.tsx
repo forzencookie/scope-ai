@@ -272,25 +272,25 @@ export function DelagaruttagManager() {
           label="Totala uttag"
           value={formatCurrency(overallStats.totalUttag)}
           subtitle="i år"
-          icon={ArrowUpRight}
+          headerIcon={ArrowUpRight}
         />
         <StatCard
           label="Totala insättningar"
           value={formatCurrency(overallStats.totalInsattning)}
           subtitle="i år"
-          icon={ArrowDownRight}
+          headerIcon={ArrowDownRight}
         />
         <StatCard
           label="Utbetalda löner"
           value={formatCurrency(overallStats.totalLon)}
           subtitle="i år"
-          icon={Wallet}
+          headerIcon={Wallet}
         />
         <StatCard
           label="Att godkänna"
           value={overallStats.pendingCount.toString()}
           subtitle={overallStats.pendingCount > 0 ? "Väntar på godkännande" : "transaktioner"}
-          icon={FileText}
+          headerIcon={FileText}
         />
       </StatCardGrid>
 

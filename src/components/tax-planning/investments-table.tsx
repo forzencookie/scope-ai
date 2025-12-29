@@ -141,22 +141,22 @@ export function InvestmentsTable() {
                 <StatCard
                     label={text.investments.properties}
                     value={formatCurrency(summary?.properties.totalValue || 0)}
-                    icon={Building}
+                    headerIcon={Building}
                 />
                 <StatCard
                     label={text.investments.shares}
                     value={formatCurrency(summary?.shares.totalValue || 0)}
-                    icon={Briefcase}
+                    headerIcon={Briefcase}
                 />
                 <StatCard
                     label={text.investments.crypto}
                     value={formatCurrency(summary?.crypto.totalValue || 0)}
-                    icon={Bitcoin}
+                    headerIcon={Bitcoin}
                 />
                 <StatCard
                     label={text.investments.totalPortfolio}
                     value={formatCurrency(summary?.totalValue || 0)}
-                    icon={TrendingUp}
+                    headerIcon={TrendingUp}
                 />
             </StatCardGrid>
 

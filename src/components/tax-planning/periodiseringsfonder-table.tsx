@@ -123,22 +123,22 @@ export function PeriodiseringsfondsTable() {
                 <StatCard
                     label={text.periodiseringsfonder.activeFonder}
                     value={fonder.filter(f => f.status !== 'dissolved').length}
-                    icon={Banknote}
+                    headerIcon={Banknote}
                 />
                 <StatCard
                     label={text.periodiseringsfonder.totalReserved}
                     value={formatCurrency(totalActive)}
-                    icon={TrendingDown}
+                    headerIcon={TrendingDown}
                 />
                 <StatCard
                     label={text.periodiseringsfonder.deferredTax}
                     value={formatCurrency(taxSavings.taxSaved)}
-                    icon={Calendar}
+                    headerIcon={Calendar}
                 />
                 <StatCard
                     label={text.periodiseringsfonder.expiresWithin}
                     value={expiringFonder.length}
-                    icon={AlertTriangle}
+                    headerIcon={AlertTriangle}
                 />
             </StatCardGrid>
 

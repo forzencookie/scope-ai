@@ -228,21 +228,21 @@ export function MomsdeklarationContent() {
                         label={text.reports.nextDeclaration}
                         value={stats.nextPeriod}
                         subtitle={stats.deadline}
-                        icon={Calendar}
+                        headerIcon={Calendar}
                         tooltip={termExplanations["Momsdeklaration"]}
                     />
                     <StatCard
                         label={text.reports.vatToPay}
                         value={formatCurrency(stats.netVat)}
                         subtitle={`${text.reports.salesVat}: ${formatCurrency(stats.salesVat)}`}
-                        icon={Wallet}
+                        headerIcon={Wallet}
                         tooltip={termExplanations["Moms att betala"]}
                     />
                     <StatCard
                         label={text.reports.inputVat}
                         value={formatCurrency(stats.inputVat)}
                         subtitle={text.reports.deductible}
-                        icon={TrendingUp}
+                        headerIcon={TrendingUp}
                         tooltip={termExplanations["Ingående moms"]}
                     />
                 </StatCardGrid>

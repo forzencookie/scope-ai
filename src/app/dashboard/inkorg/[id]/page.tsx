@@ -15,6 +15,7 @@ import {
     Calendar,
     Tag,
     ArrowRight,
+    Receipt,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -147,52 +148,63 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                 </div>
             </div>
 
-            {/* AI Suggestion */}
-            {item.aiSuggestion && (
-                <div className={cn(
-                    "flex items-start gap-3 p-4 rounded-lg border",
-                    item.aiSuggestion.includes("✨")
-                        ? "bg-emerald-50 dark:bg-emerald-950/20 border-emerald-200 dark:border-emerald-800/30"
-                        : "bg-purple-50 dark:bg-purple-950/20 border-purple-200 dark:border-purple-800/30"
-                )}>
-                    <Sparkles className={cn(
-                        "h-5 w-5 mt-0.5",
-                        item.aiSuggestion.includes("✨") ? "text-emerald-600 dark:text-emerald-400" : "text-purple-600 dark:text-purple-400"
-                    )} />
-                    <div className="flex-1">
-                        <p className={cn(
-                            "text-sm font-medium",
-                            item.aiSuggestion.includes("✨") ? "text-emerald-900 dark:text-emerald-100" : "text-purple-900 dark:text-purple-100"
-                        )}>
-                            AI-förslag
-                        </p>
-                        <p className={cn(
-                            "text-sm mt-1",
-                            item.aiSuggestion.includes("✨") ? "text-emerald-700 dark:text-emerald-300" : "text-purple-700 dark:text-purple-300"
-                        )}>
-                            {item.aiSuggestion}
-                        </p>
+            {/* AI Suggestion / Proposal */}
+            {item.aiSuggestion && !item.linkedEntityId && (
+                <div className="flex items-start gap-4 p-5 rounded-xl border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800/50 shadow-sm">
+                    <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-full shrink-0">
+                        <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
+                    </div>
 
-                        {item.aiSuggestion.includes("✨") ? (
+                    <div className="flex-1 space-y-3">
+                        <div>
+                            <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100">
+                                AI-analys
+                            </h3>
+                            <p className="text-sm text-purple-700 dark:text-purple-300 mt-1 leading-relaxed">
+                                {item.aiSuggestion}
+                            </p>
+                        </div>
+
+                        <div className="flex items-center gap-3 pt-1">
+                            {item.aiSuggestion.toLowerCase().includes('kvitto') ? (
+                                <Button
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all"
+                                    onClick={() => {
+                                        toast.success("Kvitto registrerat", "Dokumentet har flyttats till kvitton och väntar på bokföring.")
+                                        // Simulera flytt - i verkligheten ett API-anrop
+                                        setTimeout(() => router.push('/dashboard/appar/bokforing?tab=kvitton'), 1000)
+                                    }}
+                                >
+                                    <Receipt className="mr-2 h-4 w-4" />
+                                    Registrera som kvitto
+                                </Button>
+                            ) : (
+                                <Button
+                                    size="sm"
+                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all"
+                                    onClick={() => {
+                                        toast.success("Faktura registrerad", "Dokumentet har flyttats till leverantörsfakturor.")
+                                        // Simulera flytt
+                                        setTimeout(() => router.push('/dashboard/appar/bokforing?tab=leverantorsfakturor'), 1000)
+                                    }}
+                                >
+                                    <FileText className="mr-2 h-4 w-4" />
+                                    Registrera som leverantörsfaktura
+                                </Button>
+                            )}
+
                             <Button
+                                variant="ghost"
                                 size="sm"
-                                className="mt-3 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                className="text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40"
                                 onClick={() => {
-                                    if (item.aiSuggestion && item.aiSuggestion.includes("kvitto")) {
-                                        router.push('/dashboard/accounting?tab=receipts')
-                                    } else {
-                                        router.push('/dashboard/accounting?tab=leverantorsfakturor')
-                                    }
+                                    toast.info("Förslaget avfärdat")
                                 }}
                             >
-                                {item.aiSuggestion.includes("kvitto") ? "Visa kvitto / underlag" : "Visa leverantörsfaktura"}
-                                <ArrowRight className="ml-2 h-4 w-4" />
+                                Avfärda
                             </Button>
-                        ) : (
-                            <Button size="sm" className="mt-3 bg-purple-600 hover:bg-purple-700 text-white" onClick={handleAiAction}>
-                                Utför åtgärd
-                            </Button>
-                        )}
+                        </div>
                     </div>
                 </div>
             )}

@@ -15,17 +15,17 @@ const mobileNavItems = [
   },
   {
     title: "Inkorg",
-    href: "/inbox",
+    href: "/dashboard/inkorg",
     icon: Inbox,
   },
   {
     title: "Bokföring",
-    href: "/accounting",
+    href: "/dashboard/appar/bokforing",
     icon: BookOpen,
   },
   {
     title: "Rapporter",
-    href: "/reports",
+    href: "/dashboard/appar/rapporter",
     icon: PieChart,
   },
 ]

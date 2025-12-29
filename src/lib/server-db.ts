@@ -423,6 +423,75 @@ export const db = {
         if (error) console.error("Supabase Error (updateShareholder):", error);
         return data || { id, ...updates };
     },
+
+    // ============================================================================
+    // Chat Persistence
+    // ============================================================================
+
+    createConversation: async (title: string, userId?: string) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('conversations').insert({
+            title,
+            user_id: userId
+        }).select().single();
+        if (error) console.error("Supabase Error (createConversation):", error);
+        return data;
+    },
+
+    getConversations: async (userId?: string) => {
+        const supabase = getSupabaseAdmin();
+        let query = supabase.from('conversations').select('*').order('updated_at', { ascending: false });
+        if (userId) query = query.eq('user_id', userId);
+        const { data, error } = await query;
+        if (error) console.error("Supabase Error (getConversations):", error);
+        return data || [];
+    },
+
+    getConversation: async (id: string) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('conversations').select('*').eq('id', id).single();
+        if (error) console.error("Supabase Error (getConversation):", error);
+        return data;
+    },
+
+    addMessage: async (message: {
+        conversation_id: string,
+        role: 'user' | 'assistant' | 'system' | 'data',
+        content: string,
+        tool_calls?: any,
+        tool_results?: any
+    }) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('messages').insert({
+            conversation_id: message.conversation_id,
+            role: message.role,
+            content: message.content,
+            tool_calls: message.tool_calls,
+            tool_results: message.tool_results
+        }).select().single();
+
+        // Update conversation timestamp
+        if (!error && message.conversation_id) {
+            await supabase.from('conversations')
+                .update({ updated_at: new Date().toISOString() })
+                .eq('id', message.conversation_id);
+        }
+
+        if (error) console.error("Supabase Error (addMessage):", error);
+        return data;
+    },
+
+    getMessages: async (conversationId: string) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: true });
+
+        if (error) console.error("Supabase Error (getMessages):", error);
+        return data || [];
+    }
 };
 
 // Keep readDB for the migration script ONLY (reads the JSON file one last time)

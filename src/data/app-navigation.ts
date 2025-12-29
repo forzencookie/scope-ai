@@ -21,7 +21,6 @@ import {
     FileText,
     PiggyBank,
     Captions,
-    Search,
     LayoutGrid,
 } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
@@ -96,7 +95,7 @@ export const navPlatform: NavItem[] = [
 // Economy Navigation (REMOVED - accessed via Sök page now)
 // ============================================
 
-// navEconomy has been removed - all economy pages are accessed via /dashboard/sok/
+// navEconomy has been removed - all economy pages are accessed via /dashboard/appar/
 
 // ============================================
 // Settings Navigation

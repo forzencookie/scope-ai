@@ -168,19 +168,19 @@ export function InkomstdeklarationContent() {
                         label="Beskattningsår"
                         value="2024"
                         subtitle="Inkomstdeklaration 2"
-                        icon={Calendar}
+                        headerIcon={Calendar}
                     />
                     <StatCard
                         label="Bokfört resultat"
                         value={`${stats.result.toLocaleString('sv-SE')} kr`}
                         subtitle="Före skattemässiga justeringar"
-                        icon={TrendingUp}
+                        headerIcon={TrendingUp}
                     />
                     <StatCard
                         label="Status"
                         value={INVOICE_STATUS_LABELS.DRAFT}
                         subtitle="Deadline: 1 jul 2025"
-                        icon={Clock}
+                        headerIcon={Clock}
                     />
                 </StatCardGrid>
 

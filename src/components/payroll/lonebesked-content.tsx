@@ -213,19 +213,19 @@ export function LonesbeskContent() {
                         label="Aktuell period"
                         value={stats.currentPeriod}
                         subtitle={`${stats.employeeCount} anställda`}
-                        icon={Calendar}
+                        headerIcon={Calendar}
                     />
                     <StatCard
                         label="Total bruttolön"
                         value={formatCurrency(stats.totalGross)}
                         subtitle="Denna månad"
-                        icon={Banknote}
+                        headerIcon={Banknote}
                     />
                     <StatCard
                         label="Skatt att betala"
                         value={formatCurrency(stats.totalTax)}
                         subtitle={`Deadline: ${stats.deadline}`}
-                        icon={Wallet}
+                        headerIcon={Wallet}
                     />
                 </StatCardGrid>
 

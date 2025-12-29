@@ -113,8 +113,21 @@ function SkattPageContent() {
 
 function SkattPageLoading() {
     return (
-        <div className="flex items-center justify-center h-svh">
-            <div className="animate-pulse text-muted-foreground">Laddar...</div>
+        <div className="flex flex-col min-h-svh">
+            <div className="px-4 pt-4">
+                <div className="w-full space-y-6 animate-pulse">
+                    {/* Stats cards */}
+                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+                        {[1, 2, 3, 4].map((i) => (
+                            <div key={i} className="h-24 rounded-lg bg-muted" />
+                        ))}
+                    </div>
+                    {/* Separator */}
+                    <div className="border-b-2 border-border/60" />
+                    {/* Table */}
+                    <div className="h-96 rounded-lg bg-muted" />
+                </div>
+            </div>
         </div>
     )
 }

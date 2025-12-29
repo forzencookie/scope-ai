@@ -284,21 +284,21 @@ export function UtdelningContent() {
                         label="Gränsbelopp 2024"
                         value="195 250 kr"
                         subtitle="Schablonmetoden (2,75 IBB)"
-                        icon={TrendingUp}
+                        headerIcon={TrendingUp}
                         tooltip={termExplanations["Gränsbelopp"]}
                     />
                     <StatCard
                         label="Planerad utdelning"
                         value="150 000 kr"
                         subtitle="Inom gränsbeloppet"
-                        icon={DollarSign}
+                        headerIcon={DollarSign}
                         tooltip={termExplanations["Utdelning"]}
                     />
                     <StatCard
                         label="Skatt på utdelning"
                         value="30 000 kr"
                         subtitle="20% kapitalskatt"
-                        icon={Calculator}
+                        headerIcon={Calculator}
                     />
                 </StatCardGrid>
 

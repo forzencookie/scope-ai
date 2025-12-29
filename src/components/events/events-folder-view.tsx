@@ -1,7 +1,7 @@
 "use client"
 
 import { Card } from "@/components/ui/card"
-import { FolderOpen, FileText } from "lucide-react"
+import { FolderOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Quarter definitions
@@ -43,11 +43,6 @@ export function EventsFolderView({
                         {/* Folder icon */}
                         <div className="relative mb-3">
                             <FolderOpen className="h-12 w-12 text-muted-foreground/50 group-hover:text-primary/70 transition-colors" />
-                            {hasEvents && (
-                                <div className="absolute -top-1 -right-1 flex items-center justify-center">
-                                    <FileText className="h-4 w-4 text-primary" />
-                                </div>
-                            )}
                         </div>
 
                         {/* Quarter label */}
