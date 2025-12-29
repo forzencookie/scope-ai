@@ -77,7 +77,7 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
         return (
             <div className="flex flex-col items-center justify-center min-h-[50vh] gap-4">
                 <p className="text-muted-foreground">Meddelandet hittades inte</p>
-                <Button variant="outline" onClick={() => router.push("/dashboard/inbox")}>
+                <Button variant="outline" onClick={() => router.push("/dashboard/inkorg")}>
                     <ArrowLeft className="h-4 w-4 mr-2" />
                     Tillbaka till inkorgen
                 </Button>
@@ -92,7 +92,7 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                 variant="ghost"
                 size="sm"
                 className="w-fit -ml-2"
-                onClick={() => router.push("/dashboard/inbox")}
+                onClick={() => router.push("/dashboard/inkorg")}
             >
                 <ArrowLeft className="h-4 w-4 mr-2" />
                 Tillbaka till inkorgen

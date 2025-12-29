@@ -30,7 +30,8 @@ export interface SearchResultGroup {
     category: string
     colorClass: string
     results: SearchResult[]
-    viewAllHref: string
+    viewAllHref?: string
+
 }
 
 // ============================================
@@ -74,7 +75,7 @@ async function searchTransactions(query: string): Promise<SearchResult[]> {
                 type: 'transaction' as SearchResultType,
                 title: txn.name,
                 subtitle: txn.category,
-                href: `/dashboard/sok/bokforing?tab=transaktioner&search=${encodeURIComponent(txn.name)}`,
+                href: `/dashboard/appar/bokforing?tab=transaktioner&search=${encodeURIComponent(txn.name)}`,
                 category: "Transaktioner",
                 colorClass: searchColors["Transaktioner"],
                 matchedField: txn.name.toLowerCase().includes(lowerQuery) ? 'name' : 'category',
@@ -108,7 +109,7 @@ async function searchReceipts(query: string): Promise<SearchResult[]> {
                 type: 'receipt' as SearchResultType,
                 title: receipt.supplier,
                 subtitle: receipt.category,
-                href: `/dashboard/sok/bokforing?tab=kvitton&search=${encodeURIComponent(receipt.supplier)}`,
+                href: `/dashboard/appar/bokforing?tab=kvitton&search=${encodeURIComponent(receipt.supplier)}`,
                 category: "Kvitton",
                 colorClass: searchColors["Kvitton"],
                 matchedField: receipt.supplier.toLowerCase().includes(lowerQuery) ? 'supplier' : 'category',
@@ -131,6 +132,145 @@ export interface GlobalSearchOptions {
     includePages?: boolean // Include page navigation results
 }
 
+// ============================================
+// New Search Functions (Mock Data)
+// ============================================
+
+import { mockSupplierInvoices, mockShareholders, mockPartners, mockMembers, mockGeneralMeetings } from "@/data/ownership"
+import { INVOICE_STATUSES } from "@/data/invoices"
+
+async function searchInvoices(query: string): Promise<SearchResult[]> {
+    const lowerQuery = query.toLowerCase()
+
+    // Filter mock invoices
+    const matchedInvoices = mockSupplierInvoices.filter(inv =>
+        inv.invoiceNumber.toLowerCase().includes(lowerQuery) ||
+        inv.supplierName.toLowerCase().includes(lowerQuery) ||
+        inv.category?.toLowerCase().includes(lowerQuery) ||
+        inv.amount.toString().includes(query)
+    )
+
+    return matchedInvoices.slice(0, 6).map(inv => ({
+        id: inv.id,
+        type: 'invoice' as SearchResultType,
+        title: inv.supplierName,
+        subtitle: `Faktura ${inv.invoiceNumber} · ${inv.category || 'Okategoriserad'}`,
+        href: `/dashboard/appar/bokforing?tab=kvitton&id=${inv.id}`, // Linking to receipts/invoices tab
+        category: "Fakturor",
+        colorClass: searchColors["Fakturor"],
+        matchedField: inv.supplierName.toLowerCase().includes(lowerQuery) ? 'supplier' : 'number',
+        amount: `${inv.totalAmount.toLocaleString('sv-SE')} kr`,
+        date: inv.invoiceDate,
+        status: inv.status
+    }))
+}
+
+async function searchEmployees(query: string): Promise<SearchResult[]> {
+    const lowerQuery = query.toLowerCase()
+    const results: SearchResult[] = []
+
+    // 1. Shareholders
+    const shareholders = mockShareholders.filter(s => s.name.toLowerCase().includes(lowerQuery))
+    results.push(...shareholders.map(s => ({
+        id: s.id,
+        type: 'employee' as SearchResultType,
+        title: s.name,
+        subtitle: `Aktieägare · ${s.ownershipPercentage}% ägande`,
+        href: `/dashboard/appar/parter?tab=aktiebok&id=${s.id}`,
+        category: "Parter",
+        colorClass: searchColors["Parter"],
+        matchedField: 'name'
+    })))
+
+    // 2. Partners
+    const partners = mockPartners.filter(p => p.name.toLowerCase().includes(lowerQuery))
+    results.push(...partners.map(p => ({
+        id: p.id,
+        type: 'employee' as SearchResultType,
+        title: p.name,
+        subtitle: `Delägare · ${p.type}`,
+        href: `/dashboard/appar/parter?tab=delagare&id=${p.id}`,
+        category: "Parter",
+        colorClass: searchColors["Parter"],
+        matchedField: 'name'
+    })))
+
+    // 3. Members
+    const members = mockMembers.filter(m => m.name.toLowerCase().includes(lowerQuery))
+    results.push(...members.map(m => ({
+        id: m.id,
+        type: 'employee' as SearchResultType,
+        title: m.name,
+        subtitle: `Medlem · ${m.roles.join(', ') || 'Medlem'}`,
+        href: `/dashboard/appar/parter?tab=delagare&id=${m.id}`,
+        category: "Parter",
+        colorClass: searchColors["Parter"],
+        matchedField: 'name'
+    })))
+
+    return results.slice(0, 6)
+}
+
+async function searchTaxReports(query: string): Promise<SearchResult[]> {
+    const lowerQuery = query.toLowerCase()
+    const results: SearchResult[] = []
+
+    // Mock Tax Reports logic
+    // We'll generate dynamic matches based on common terms like "Moms", "Q3", "2024", etc.
+
+    if (lowerQuery.includes('moms') || lowerQuery.includes('skatt') || lowerQuery.includes('deklaration') || lowerQuery.match(/q[1-4]/)) {
+        // Mock findings
+        const reports = [
+            { id: 'tax-1', title: 'Momsdeklaration Q3 2024', type: 'Moms', date: '2024-11-12', status: 'Inskickad' },
+            { id: 'tax-2', title: 'Momsdeklaration Q2 2024', type: 'Moms', date: '2024-08-12', status: 'Godkänd' },
+            { id: 'tax-3', title: 'Arbetsgivardeklaration Okt', type: 'Skatt', date: '2024-11-12', status: 'Utkast' },
+        ]
+
+        const matched = reports.filter(r => r.title.toLowerCase().includes(lowerQuery))
+
+        results.push(...matched.map(r => ({
+            id: r.id,
+            type: 'page' as SearchResultType,
+            title: r.title,
+            subtitle: `${r.type} · ${r.status}`,
+            href: `/dashboard/appar/skatt?tab=momsdeklaration&id=${r.id}`,
+            category: "Skatt",
+            colorClass: searchColors["Verifikationer"], // Use verification color (emerald) or Skatt (purple)? Sök page uses purple for Skatt.
+            matchedField: 'title',
+            date: r.date
+        })))
+    }
+
+    // Also matches for "Resultat" or "Balans"
+    if (lowerQuery.includes('resultat')) {
+        results.push({
+            id: 'rep-res',
+            type: 'page' as SearchResultType,
+            title: 'Resultaträkning 2024',
+            subtitle: 'Rapport · Hittills i år',
+            href: `/dashboard/appar/rapporter/resultat`,
+            category: "Rapporter",
+            colorClass: searchColors["Fakturor"], // Orange matches Rapporter in Sök page
+            matchedField: 'title'
+        })
+    }
+
+    if (lowerQuery.includes('balans')) {
+        results.push({
+            id: 'rep-bal',
+            type: 'page' as SearchResultType,
+            title: 'Balansräkning 2024',
+            subtitle: 'Rapport · Nuvarande ställning',
+            href: `/dashboard/appar/rapporter/balans`,
+            category: "Rapporter",
+            colorClass: searchColors["Fakturor"],
+            matchedField: 'title'
+        })
+    }
+
+    return results
+}
+
 export async function globalSearch(
     query: string,
     options: GlobalSearchOptions = {}
@@ -141,20 +281,36 @@ export async function globalSearch(
 
     const { filters = [] } = options
     const results: SearchResult[] = []
+    const lowerQuery = query.toLowerCase()
 
-    // Determine which data sources to search based on filters
-    const searchBokforing = filters.length === 0 || filters.includes("Bokföring")
-
-    // Search transactions
-    if (searchBokforing) {
+    // 1. Transactions
+    if (filters.length === 0 || filters.includes("Bokföring")) {
         const txnResults = await searchTransactions(query)
         results.push(...txnResults)
     }
 
-    // Search receipts
-    if (searchBokforing) {
+    // 2. Receipts
+    if (filters.length === 0 || filters.includes("Bokföring") || filters.includes("Kvitton")) {
         const receiptResults = await searchReceipts(query)
         results.push(...receiptResults)
+    }
+
+    // 3. New Sources: Invoices
+    if (filters.length === 0 || filters.includes("Bokföring") || filters.includes("Fakturor")) {
+        const invoiceResults = await searchInvoices(query)
+        results.push(...invoiceResults)
+    }
+
+    // 4. New Sources: Employees/Partners
+    if (filters.length === 0 || filters.includes("Parter") || filters.includes("Löner")) {
+        const empResults = await searchEmployees(query)
+        results.push(...empResults)
+    }
+
+    // 5. New Sources: Tax/Reports
+    if (filters.length === 0 || filters.includes("Skatt") || filters.includes("Rapporter")) {
+        const taxResults = await searchTaxReports(query)
+        results.push(...taxResults)
     }
 
     return results
@@ -164,7 +320,7 @@ export async function globalSearch(
 // Group Results by Category
 // ============================================
 
-export function groupSearchResults(results: SearchResult[]): SearchResultGroup[] {
+export function groupSearchResults(results: SearchResult[], query?: string): SearchResultGroup[] {
     const grouped: Record<string, SearchResult[]> = {}
 
     for (const result of results) {
@@ -176,19 +332,33 @@ export function groupSearchResults(results: SearchResult[]): SearchResultGroup[]
 
     // Convert to array with metadata
     const viewAllHrefs: Record<string, string> = {
-        "Transaktioner": "/dashboard/sok/bokforing?tab=transaktioner",
-        "Kvitton": "/dashboard/sok/bokforing?tab=kvitton",
-        "Verifikationer": "/dashboard/sok/bokforing?tab=verifikationer",
-        "Anställda": "/dashboard/sok/loner?tab=lonebesked",
-        "Fakturor": "/dashboard/sok/bokforing?tab=kvitton",
-        "Händelser": "/dashboard/sok/handelser",
-        "Bolagsåtgärder": "/dashboard/sok/handelser?filter=action",
+        "Transaktioner": "/dashboard/appar/bokforing?tab=transaktioner",
+        "Kvitton": "/dashboard/appar/bokforing?tab=kvitton",
+        "Verifikationer": "/dashboard/appar/bokforing?tab=verifikationer",
+        "Anställda": "/dashboard/appar/loner?tab=lonebesked",
+        "Fakturor": "/dashboard/appar/bokforing?tab=kvitton",
+        "Händelser": "/dashboard/appar/handelser",
+        "Bolagsåtgärder": "/dashboard/appar/handelser?filter=action",
     }
 
-    return Object.entries(grouped).map(([category, results]) => ({
-        category,
-        colorClass: searchColors[category] || searchColors["Sidor"],
-        results,
-        viewAllHref: viewAllHrefs[category] || "/dashboard/sok",
-    }))
+    return Object.entries(grouped).map(([category, results]) => {
+        const hasMore = results.length > 5
+        const displayResults = results.slice(0, 5)
+
+        let viewAllHref: string | undefined = undefined
+        if (hasMore && viewAllHrefs[category]) {
+            viewAllHref = viewAllHrefs[category]
+            if (query) {
+                const separator = viewAllHref.includes('?') ? '&' : '?'
+                viewAllHref += `${separator}search=${encodeURIComponent(query)}`
+            }
+        }
+
+        return {
+            category,
+            colorClass: searchColors[category] || searchColors["Sidor"],
+            results: displayResults,
+            viewAllHref,
+        }
+    })
 }

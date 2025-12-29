@@ -132,6 +132,8 @@ function AIRobotPageContent() {
     useEffect(() => {
         if (conversations.length > 0) {
             localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations))
+            // Dispatch event for sidebar to update
+            window.dispatchEvent(new Event('ai-conversations-updated'))
         }
     }, [conversations])
 
@@ -235,13 +237,49 @@ function AIRobotPageContent() {
             }
             setConversations(prev => [newConversation, ...prev])
             setCurrentConversationId(conversationId)
+
+            // Generate AI title asynchronously
+            fetch('/api/chat/title', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ messages: updatedMessages })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.title) {
+                        setConversations(prev => prev.map(c =>
+                            c.id === conversationId ? { ...c, title: data.title } : c
+                        ))
+                    }
+                })
+                .catch(err => console.error('Failed to generate title:', err))
         } else {
             // Update existing conversation
+            const currentTitle = conversations.find(c => c.id === conversationId)?.title
+
             setConversations(prev => prev.map(c =>
                 c.id === conversationId
-                    ? { ...c, messages: updatedMessages, updatedAt: Date.now(), title: generateTitle(updatedMessages) }
+                    ? { ...c, messages: updatedMessages, updatedAt: Date.now() }
                     : c
             ))
+
+            // If title is still generic, try to generate a better one
+            if (currentTitle === 'Ny konversation' || currentTitle === 'New conversation') {
+                fetch('/api/chat/title', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ messages: updatedMessages })
+                })
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.title && data.title !== 'Ny konversation') {
+                            setConversations(prev => prev.map(c =>
+                                c.id === conversationId ? { ...c, title: data.title } : c
+                            ))
+                        }
+                    })
+                    .catch(err => console.error('Failed to regenerate title:', err))
+            }
         }
 
         setTextareaValue("")
@@ -360,16 +398,16 @@ function AIRobotPageContent() {
     const chatInputJSX = (
         <div className="w-full max-w-2xl mx-auto">
             {/* Input container - stacked layout: textarea top, buttons bottom */}
-            <div className="bg-muted/40 dark:bg-muted/30 border border-border/50 rounded-xl">
+            <div className="bg-muted/40 dark:bg-muted/30 border-2 border-border/50 rounded-xl overflow-hidden">
                 {/* Top row - Textarea */}
-                <div className="px-3 pt-3 pb-2">
+                <div className="w-full">
                     <Textarea
                         ref={textareaRef}
                         value={textareaValue}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
                         placeholder="Skriv ett meddelande..."
-                        className="resize-none border-0 bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full min-h-[24px] max-h-[120px] text-sm"
+                        className="resize-none border-0 bg-transparent px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full min-h-[40px] max-h-[200px] text-sm leading-relaxed"
                         rows={1}
                     />
                 </div>

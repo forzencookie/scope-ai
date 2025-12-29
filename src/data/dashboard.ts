@@ -18,7 +18,7 @@ export const quickStats: QuickStat[] = [
     value: "1,85 mkr",
     change: "+12%",
     positive: true,
-    href: "/company-statistics"
+    href: "/dashboard/foretagsstatistik"
   },
   {
     id: "stat-2",
@@ -26,7 +26,7 @@ export const quickStats: QuickStat[] = [
     value: "379 tkr",
     change: "+8%",
     positive: true,
-    href: "/company-statistics"
+    href: "/dashboard/foretagsstatistik"
   },
   {
     id: "stat-3",

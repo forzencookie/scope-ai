@@ -50,6 +50,7 @@ export default function KonversationerPage() {
         const updated = conversations.filter(c => c.id !== conversationId)
         setConversations(updated)
         localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+        window.dispatchEvent(new Event('ai-conversations-updated'))
     }
 
     // Filter conversations by search

@@ -28,7 +28,7 @@ import {
     TooltipProvider
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
-import { mockUser } from "@/data/navigation"
+import { mockUser } from "@/data/app-navigation"
 import { LazyJournalCalendar } from "@/components/shared"
 
 // ============================================

@@ -2,7 +2,7 @@
 
 import { Suspense, use } from "react"
 import Link from "next/link"
-import { ChevronRight, Search } from "lucide-react"
+import { ChevronRight } from "lucide-react"
 import {
     Breadcrumb,
     BreadcrumbItem,
@@ -48,9 +48,8 @@ function SokBreadcrumb({ section }: { section: string }) {
                     <BreadcrumbList>
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
-                                <Link href="/dashboard/sok" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                    <Search className="h-3.5 w-3.5" />
-                                    Sök
+                                <Link href="/dashboard/appar" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
+                                    Appar
                                 </Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>

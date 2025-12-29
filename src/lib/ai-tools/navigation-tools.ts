@@ -37,15 +37,15 @@ const ROUTES = {
         label: 'Momsdeklaration',
     },
     inbox: {
-        path: '/dashboard/inbox',
+        path: '/dashboard/inkorg',
         label: 'Inkorg',
     },
     statistics: {
-        path: '/dashboard/company-statistics',
+        path: '/dashboard/foretagsstatistik',
         label: 'Statistik',
     },
     settings: {
-        path: '/dashboard/settings',
+        path: '/dashboard/installningar',
         label: 'Inställningar',
     },
 } as const

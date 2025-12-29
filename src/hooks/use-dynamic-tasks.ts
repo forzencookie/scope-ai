@@ -41,7 +41,7 @@ export function useDynamicTasks() {
                 id: 'bok-1',
                 title: `${pendingTransactions} transaktioner väntar på bokföring`,
                 completed: false,
-                href: '/dashboard/sok/bokforing?tab=transaktioner',
+                href: '/dashboard/appar/bokforing?tab=transaktioner',
                 category: 'bokforing'
             })
         } else {
@@ -49,7 +49,7 @@ export function useDynamicTasks() {
                 id: 'bok-1-done',
                 title: `Alla transaktioner är bokförda`,
                 completed: true,
-                href: '/dashboard/sok/bokforing?tab=transaktioner',
+                href: '/dashboard/appar/bokforing?tab=transaktioner',
                 category: 'bokforing'
             })
         }
@@ -59,7 +59,7 @@ export function useDynamicTasks() {
                 id: 'bok-2',
                 title: `${draftInvoices} kundfakturor att skicka`,
                 completed: false,
-                href: '/dashboard/sok/bokforing?tab=kundfakturor',
+                href: '/dashboard/appar/bokforing?tab=kundfakturor',
                 category: 'bokforing'
             })
         }
@@ -69,7 +69,7 @@ export function useDynamicTasks() {
                 id: 'bok-3',
                 title: `${overdueInvoices} förfallna fakturor att följa upp`,
                 completed: false,
-                href: '/dashboard/sok/bokforing?tab=kundfakturor',
+                href: '/dashboard/appar/bokforing?tab=kundfakturor',
                 category: 'bokforing'
             })
         }
@@ -121,14 +121,14 @@ export function useDynamicTasks() {
                     id: 'rap-1',
                     title: 'Kontrollera momssaldo',
                     completed: false,
-                    href: '/dashboard/sok/rapporter?tab=momsdeklaration',
+                    href: '/dashboard/appar/skatt?tab=momsdeklaration',
                     category: 'rapporter'
                 },
                 {
                     id: 'rap-2',
                     title: 'Granska avdragsposter',
                     completed: false,
-                    href: '/dashboard/sok/rapporter?tab=momsdeklaration',
+                    href: '/dashboard/appar/skatt?tab=momsdeklaration',
                     category: 'rapporter'
                 }
             ]
@@ -145,7 +145,7 @@ export function useDynamicTasks() {
                 id: 'lon-1',
                 title: `Godkänn ${pendingPayslips} lönebesked`,
                 completed: false,
-                href: '/dashboard/sok/loner?tab=lonebesked',
+                href: '/dashboard/appar/loner?tab=lonebesked',
                 category: 'loner'
             })
         } else {
@@ -153,7 +153,7 @@ export function useDynamicTasks() {
                 id: 'lon-1-done',
                 title: `Alla löner är hanterade`,
                 completed: true,
-                href: '/dashboard/sok/loner?tab=lonebesked',
+                href: '/dashboard/appar/loner?tab=lonebesked',
                 category: 'loner'
             })
         }
@@ -163,7 +163,7 @@ export function useDynamicTasks() {
                 id: 'lon-2',
                 title: `AGI-rapport att skicka in`,
                 completed: false,
-                href: '/dashboard/sok/loner?tab=agi',
+                href: '/dashboard/appar/loner?tab=agi',
                 category: 'loner'
             })
         }

@@ -12,6 +12,7 @@ interface SearchBarProps {
   className?: string
   showClear?: boolean
   size?: 'default' | 'lg'
+  onSearch?: () => void
 }
 
 export function SearchBar({
@@ -21,6 +22,7 @@ export function SearchBar({
   className,
   showClear = true,
   size = 'default',
+  onSearch,
 }: SearchBarProps) {
   const isLarge = size === 'lg'
 
@@ -34,6 +36,12 @@ export function SearchBar({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' && onSearch) {
+            e.preventDefault()
+            onSearch()
+          }
+        }}
         className={cn(
           "border-2 border-border/60",
           isLarge ? "pl-12 h-12 text-base rounded-xl" : "pl-9 h-8",

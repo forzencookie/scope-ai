@@ -61,7 +61,7 @@ function PayrollPageContent() {
     }, [searchParams, tabs])
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/sok/loner?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/appar/loner?tab=${tab}`, { scroll: false })
     }, [router])
 
     return (

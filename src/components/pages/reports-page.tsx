@@ -54,7 +54,7 @@ function ReportsPageContent() {
     const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "arsredovisning"
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/sok/rapporter?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/appar/rapporter?tab=${tab}`, { scroll: false })
     }, [router])
 
     return (

@@ -45,7 +45,7 @@ function SkattPageContent() {
     const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "momsdeklaration"
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/sok/skatt?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/appar/skatt?tab=${tab}`, { scroll: false })
     }, [router])
 
     return (

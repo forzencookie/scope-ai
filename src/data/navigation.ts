@@ -22,6 +22,7 @@ import {
   PiggyBank,
   Captions,
   Search,
+  LayoutGrid,
 } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
@@ -63,15 +64,15 @@ export const mockTeams: Team[] = [
 
 export const navPlatform: NavItem[] = [
   {
-    title: "Sök",
-    titleEnkel: "Sök",
+    title: "Appar",
+    titleEnkel: "Appar",
     url: "/dashboard/sok",
-    icon: Search,
+    icon: LayoutGrid,
   },
   {
     title: "Inkorg",
     titleEnkel: "Inkorg",
-    url: "/dashboard/inbox",
+    url: "/dashboard/inkorg",
     icon: Mail,
     isActive: true,
     muted: true,
@@ -105,13 +106,13 @@ export const navSettings: NavItem[] = [
   {
     title: "Inställningar",
     titleEnkel: "Inställningar",
-    url: "/dashboard/settings",
+    url: "/dashboard/installningar",
     icon: Settings,
   },
   {
     title: "Företagsstatistik",
     titleEnkel: "Statistik",
-    url: "/dashboard/company-statistics",
+    url: "/dashboard/foretagsstatistik",
     icon: Captions,
   },
 ]

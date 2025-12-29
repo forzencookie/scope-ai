@@ -232,7 +232,9 @@ interface AIConversation {
 
 export function NavAIConversations() {
   const [conversations, setConversations] = React.useState<AIConversation[]>([])
+  const [totalCount, setTotalCount] = React.useState(0)
   const [isOpen, setIsOpen] = React.useState(true)
+  const [isLoading, setIsLoading] = React.useState(true)
 
   // Load conversations from localStorage
   React.useEffect(() => {
@@ -240,14 +242,16 @@ export function NavAIConversations() {
     if (stored) {
       try {
         const parsed = JSON.parse(stored) as AIConversation[]
-        setConversations(parsed.slice(0, 4)) // Only show first 4
+        setConversations(parsed.slice(0, 4)) // Show show 4
+        setTotalCount(parsed.length)
       } catch {
         console.error('Failed to parse AI conversations')
       }
     }
+    setIsLoading(false)
   }, [])
 
-  // Listen for storage changes (when conversations are updated)
+  // Listen for storage changes and custom update event
   React.useEffect(() => {
     const handleStorageChange = () => {
       const stored = localStorage.getItem(AI_STORAGE_KEY)
@@ -255,28 +259,23 @@ export function NavAIConversations() {
         try {
           const parsed = JSON.parse(stored) as AIConversation[]
           setConversations(parsed.slice(0, 4))
+          setTotalCount(parsed.length)
         } catch {
           // Silent fail
         }
       }
     }
+
     window.addEventListener('storage', handleStorageChange)
-    return () => window.removeEventListener('storage', handleStorageChange)
+    window.addEventListener('ai-conversations-updated', handleStorageChange)
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange)
+      window.removeEventListener('ai-conversations-updated', handleStorageChange)
+    }
   }, [])
 
-  const totalCount = React.useMemo(() => {
-    const stored = localStorage.getItem(AI_STORAGE_KEY)
-    if (stored) {
-      try {
-        return JSON.parse(stored).length
-      } catch {
-        return 0
-      }
-    }
-    return 0
-  }, [conversations])
-
-  if (conversations.length === 0) return null
+  if (conversations.length === 0 && !isLoading) return null
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
@@ -298,19 +297,30 @@ export function NavAIConversations() {
         </div>
         <CollapsibleContent>
           <SidebarMenu>
-            {conversations.map((conv) => (
-              <SidebarMenuItem key={conv.id}>
-                <SidebarMenuButton asChild>
-                  <Link href={`/dashboard/ai-robot?conversation=${conv.id}`}>
-                    <span className="truncate">{conv.title}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {isLoading ? (
+              // Skeleton loading state
+              Array.from({ length: 3 }).map((_, i) => (
+                <SidebarMenuItem key={i}>
+                  <div className="flex h-8 w-full items-center px-2 gap-2">
+                    <div className="h-4 w-full rounded bg-sidebar-accent/50 animate-pulse" />
+                  </div>
+                </SidebarMenuItem>
+              ))
+            ) : (
+              conversations.map((conv) => (
+                <SidebarMenuItem key={conv.id}>
+                  <SidebarMenuButton asChild>
+                    <Link href={`/dashboard/ai-robot?conversation=${conv.id}`}>
+                      <span className="truncate">{conv.title}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))
+            )}
             {totalCount > 4 && (
               <SidebarMenuItem>
                 <SidebarMenuButton asChild className="text-muted-foreground">
-                  <Link href="/dashboard/ai-robot">
+                  <Link href="/dashboard/konversationer">
                     <span>Visa alla ({totalCount})</span>
                   </Link>
                 </SidebarMenuButton>

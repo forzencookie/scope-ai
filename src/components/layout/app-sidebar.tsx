@@ -26,7 +26,7 @@ import {
   mockTeams,
   navPlatform,
   navSettings
-} from "@/data/navigation"
+} from "../../data/app-navigation"
 
 interface AppSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, "variant"> {
   /** 'default' shows full navigation, 'minimal' shows empty sidebar with custom header */

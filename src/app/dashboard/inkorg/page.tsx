@@ -170,47 +170,7 @@ export default function InboxPage() {
                         </p>
                     </div>
 
-                    {/* Upload Invoice Button */}
-                    <div>
-                        <input
-                            type="file"
-                            id="invoice-upload"
-                            accept=".pdf,.png,.jpg,.jpeg"
-                            className="hidden"
-                            onChange={async (e) => {
-                                const file = e.target.files?.[0]
-                                if (!file) return
-
-                                // Upload and process
-                                const formData = new FormData()
-                                formData.append('file', file)
-
-                                try {
-                                    const response = await fetch('/api/upload-invoice', {
-                                        method: 'POST',
-                                        body: formData
-                                    })
-
-                                    if (response.ok) {
-                                        // Refresh inbox
-                                        fetchItems()
-                                    }
-                                } catch (error) {
-                                    console.error('Upload failed:', error)
-                                }
-
-                                // Reset input
-                                e.target.value = ''
-                            }}
-                        />
-                        <Button
-                            onClick={() => document.getElementById('invoice-upload')?.click()}
-                            className="gap-2"
-                        >
-                            <Upload className="h-4 w-4" />
-                            Ladda upp faktura
-                        </Button>
-                    </div>
+                    {/* Upload Invoice Button Removed */}
 
                 </div>
 
@@ -244,7 +204,7 @@ export default function InboxPage() {
                             key={item.id}
                             onClick={() => {
                                 handleMarkRead(item.id)
-                                router.push(`/dashboard/inbox/${item.id}`)
+                                router.push(`/dashboard/inkorg/${item.id}`)
                             }}
                             className={`flex items-center gap-3 p-4 rounded-lg border-2 transition-colors group cursor-pointer ${item.aiStatus === 'error'
                                 ? 'border-red-500 bg-red-50 dark:bg-red-950/20 hover:bg-red-100 dark:hover:bg-red-950/30'

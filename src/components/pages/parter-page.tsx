@@ -69,7 +69,7 @@ function ParterPageContent() {
     }, [searchParams, tabs]);
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/sok/parter?tab=${tab}`, { scroll: false });
+        router.push(`/dashboard/appar/parter?tab=${tab}`, { scroll: false });
     }, [router]);
 
     // If EF, show simple owner info

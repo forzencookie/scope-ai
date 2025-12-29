@@ -228,7 +228,7 @@ function AccountingPageContent() {
     }
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/sok/bokforing?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/appar/bokforing?tab=${tab}`, { scroll: false })
     }, [router])
 
     // Get current tab label for breadcrumb
@@ -248,7 +248,7 @@ function AccountingPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/dashboard/sok/bokforing">{isEnkel ? "Min bokföring" : "Bokföring"}</BreadcrumbLink>
+                                    <BreadcrumbLink href="/dashboard/appar/bokforing">{isEnkel ? "Min bokföring" : "Bokföring"}</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
