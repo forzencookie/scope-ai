@@ -69,42 +69,6 @@ export interface BolagsverketResponse {
 }
 
 // ============================================
-// Submission Storage (for viewing in simulator)
-// ============================================
-
-const SUBMISSIONS_KEY = 'myndigheter_submissions'
-
-export interface StoredSubmission {
-  id: string
-  agency: 'skatteverket' | 'bolagsverket'
-  documentType: string
-  submittedAt: string
-  data: Record<string, unknown>
-  response: SkatteverketResponse | BolagsverketResponse
-}
-
-function storeSubmission(submission: StoredSubmission): void {
-  if (typeof window === 'undefined') return
-
-  const stored = localStorage.getItem(SUBMISSIONS_KEY)
-  const submissions: StoredSubmission[] = stored ? JSON.parse(stored) : []
-  submissions.unshift(submission)
-  // Keep only last 50 submissions
-  localStorage.setItem(SUBMISSIONS_KEY, JSON.stringify(submissions.slice(0, 50)))
-}
-
-export function getStoredSubmissions(): StoredSubmission[] {
-  if (typeof window === 'undefined') return []
-  const stored = localStorage.getItem(SUBMISSIONS_KEY)
-  return stored ? JSON.parse(stored) : []
-}
-
-export function clearStoredSubmissions(): void {
-  if (typeof window === 'undefined') return
-  localStorage.removeItem(SUBMISSIONS_KEY)
-}
-
-// ============================================
 // API Functions
 // ============================================
 
@@ -135,19 +99,7 @@ export async function submitToSkatteverket(
       body: JSON.stringify({ documentType, data }),
     })
 
-    const result: SkatteverketResponse = await response.json()
-
-    // Store for viewing in simulator
-    storeSubmission({
-      id: result.submissionId || `temp_${Date.now()}`,
-      agency: 'skatteverket',
-      documentType,
-      submittedAt: new Date().toISOString(),
-      data,
-      response: result,
-    })
-
-    return result
+    return await response.json()
   } catch (error) {
     console.error('Error submitting to Skatteverket:', error)
     return {
@@ -200,19 +152,7 @@ export async function submitToBolagsverket(
       body: JSON.stringify({ documentType, data }),
     })
 
-    const result: BolagsverketResponse = await response.json()
-
-    // Store for viewing in simulator
-    storeSubmission({
-      id: result.submissionId || `temp_${Date.now()}`,
-      agency: 'bolagsverket',
-      documentType,
-      submittedAt: new Date().toISOString(),
-      data,
-      response: result,
-    })
-
-    return result
+    return await response.json()
   } catch (error) {
     console.error('Error submitting to Bolagsverket:', error)
     return {
