@@ -281,10 +281,17 @@ export function NavAIConversations() {
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
       <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="flex items-center">
-          <SidebarGroupLabel className="flex-1">AI Konversationer</SidebarGroupLabel>
+        <div className="flex items-center group/label">
+          <SidebarGroupLabel className="flex-1 p-0">
+            <Link
+              href="/dashboard/konversationer"
+              className="flex h-8 w-full items-center px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
+            >
+              AI Konversationer
+            </Link>
+          </SidebarGroupLabel>
           <CollapsibleTrigger asChild>
-            <button className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground">
+            <button className="h-6 w-6 flex items-center justify-center rounded hover:bg-sidebar-accent text-sidebar-foreground/70 transition-colors ml-1">
               <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90")} />
             </button>
           </CollapsibleTrigger>

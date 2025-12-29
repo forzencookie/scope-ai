@@ -457,7 +457,7 @@ function AIRobotPageContent() {
                     <span>Öppna Appar</span>
                 </Link>
                 <Link
-                    href="/dashboard/ai-robot/konversationer"
+                    href="/dashboard/konversationer"
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <Inbox className="h-3.5 w-3.5" />
