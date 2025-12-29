@@ -86,9 +86,9 @@ function PayrollPageContent() {
                 </header>
 
                 {/* Tabs with preload on hover */}
-                <div className="px-6 pt-4">
-                    <div className="max-w-6xl w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
+                <div className="px-4 pt-4">
+                    <div className="w-full">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
                             {tabs.map((tab) => {
                                 const isActive = currentTab === tab.id
                                 const Icon = tab.icon
@@ -135,12 +135,12 @@ function PayrollPageContent() {
                     {currentTab === "agi" && <LazyAGIContent />}
                     {currentTab === "utdelning" && <LazyUtdelningContent />}
                     {currentTab === "egenavgifter" && (
-                        <div className="px-6 pb-6 max-w-6xl">
+                        <div className="px-4 pb-4 w-full">
                             <EgenavgifterCalculator />
                         </div>
                     )}
                     {currentTab === "delagaruttag" && (
-                        <div className="px-6 pb-6 max-w-6xl">
+                        <div className="px-4 pb-4 w-full">
                             <DelagaruttagManager />
                         </div>
                     )}

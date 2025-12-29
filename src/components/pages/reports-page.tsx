@@ -37,9 +37,7 @@ import {
 } from "@/components/skatt"
 
 // Tab configuration with feature keys for filtering
-const tabs: Array<{ id: string; label: string; icon: typeof Calculator; feature: FeatureKey }> = [
-    { id: "momsdeklaration", label: "Momsdeklaration", icon: Calculator, feature: "momsdeklaration" },
-    { id: "inkomstdeklaration", label: "Inkomstdeklaration", icon: Send, feature: "inkomstdeklaration" },
+const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send; feature: FeatureKey }> = [
     { id: "arsredovisning", label: "Årsredovisning", icon: FileBarChart, feature: "arsredovisning" },
     { id: "arsbokslut", label: "Årsbokslut", icon: FileText, feature: "arsbokslut" },
 ]
@@ -53,7 +51,7 @@ function ReportsPageContent() {
     // Filter tabs based on company type features
     const availableTabs = tabs.filter(tab => hasFeature(tab.feature))
 
-    const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "momsdeklaration"
+    const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "arsredovisning"
 
     const setCurrentTab = useCallback((tab: string) => {
         router.push(`/dashboard/sok/rapporter?tab=${tab}`, { scroll: false })
@@ -81,9 +79,9 @@ function ReportsPageContent() {
                 </header>
 
                 {/* Tabs */}
-                <div className="px-6 pt-4">
-                    <div className="max-w-6xl w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
+                <div className="px-4 pt-4">
+                    <div className="w-full">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
                                 const Icon = tab.icon

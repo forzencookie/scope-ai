@@ -18,6 +18,7 @@ import {
     MEMBERSHIP_STATUS_LABELS,
     MEMBERSHIP_CHANGE_TYPE_LABELS,
     MEETING_STATUS_LABELS,
+    BENEFIT_STATUS_LABELS,
 } from "./localization"
 
 // =============================================================================
@@ -191,6 +192,20 @@ export const MEETING_STATUS_VARIANT: Record<MeetingStatus, StatusVariant> = {
 }
 
 // =============================================================================
+// Benefit Status (Förmåner)
+// =============================================================================
+
+export const BENEFIT_STATUSES = BENEFIT_STATUS_LABELS
+
+export type BenefitStatus = (typeof BENEFIT_STATUSES)[keyof typeof BENEFIT_STATUSES]
+
+export const BENEFIT_STATUS_VARIANT: Record<BenefitStatus, StatusVariant> = {
+    "Skattefri": "success",
+    "Skattepliktig": "warning",
+    "Löneväxling": "info",
+}
+
+// =============================================================================
 // Combined Status Type (for StatusBadge component)
 // =============================================================================
 
@@ -204,6 +219,7 @@ export type AppStatus =
     | MembershipStatus
     | MembershipChangeType
     | MeetingStatus
+    | BenefitStatus
 
 export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...TRANSACTION_STATUS_VARIANT,
@@ -215,6 +231,7 @@ export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...MEMBERSHIP_STATUS_VARIANT,
     ...MEMBERSHIP_CHANGE_TYPE_VARIANT,
     ...MEETING_STATUS_VARIANT,
+    ...BENEFIT_STATUS_VARIANT,
 }
 
 // =============================================================================

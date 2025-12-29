@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check } from "lucide-react"
+import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Plus } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -217,6 +217,104 @@ export function NavSettings({
 
 // Export IconWrapper and iconColors for use in other components
 export { IconWrapper, iconColors }
+
+// ============================================================================
+// NavAIConversations - Quick access to recent AI conversations in sidebar
+// ============================================================================
+
+const AI_STORAGE_KEY = 'ai-robot-conversations'
+
+interface AIConversation {
+  id: string
+  title: string
+  updatedAt: number
+}
+
+export function NavAIConversations() {
+  const [conversations, setConversations] = React.useState<AIConversation[]>([])
+  const [isOpen, setIsOpen] = React.useState(true)
+
+  // Load conversations from localStorage
+  React.useEffect(() => {
+    const stored = localStorage.getItem(AI_STORAGE_KEY)
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored) as AIConversation[]
+        setConversations(parsed.slice(0, 4)) // Only show first 4
+      } catch {
+        console.error('Failed to parse AI conversations')
+      }
+    }
+  }, [])
+
+  // Listen for storage changes (when conversations are updated)
+  React.useEffect(() => {
+    const handleStorageChange = () => {
+      const stored = localStorage.getItem(AI_STORAGE_KEY)
+      if (stored) {
+        try {
+          const parsed = JSON.parse(stored) as AIConversation[]
+          setConversations(parsed.slice(0, 4))
+        } catch {
+          // Silent fail
+        }
+      }
+    }
+    window.addEventListener('storage', handleStorageChange)
+    return () => window.removeEventListener('storage', handleStorageChange)
+  }, [])
+
+  const totalCount = React.useMemo(() => {
+    const stored = localStorage.getItem(AI_STORAGE_KEY)
+    if (stored) {
+      try {
+        return JSON.parse(stored).length
+      } catch {
+        return 0
+      }
+    }
+    return 0
+  }, [conversations])
+
+  if (conversations.length === 0) return null
+
+  return (
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+        <div className="flex items-center">
+          <SidebarGroupLabel className="flex-1">AI Konversationer</SidebarGroupLabel>
+          <CollapsibleTrigger asChild>
+            <button className="h-5 w-5 flex items-center justify-center rounded hover:bg-muted text-muted-foreground">
+              <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90")} />
+            </button>
+          </CollapsibleTrigger>
+        </div>
+        <CollapsibleContent>
+          <SidebarMenu>
+            {conversations.map((conv) => (
+              <SidebarMenuItem key={conv.id}>
+                <SidebarMenuButton asChild>
+                  <Link href={`/dashboard/ai-robot?conversation=${conv.id}`}>
+                    <span className="truncate">{conv.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+            {totalCount > 4 && (
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild className="text-muted-foreground">
+                  <Link href="/dashboard/ai-robot">
+                    <span>Visa alla ({totalCount})</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            )}
+          </SidebarMenu>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarGroup>
+  )
+}
 
 // ============================================================================
 // NavUser - User profile dropdown in sidebar

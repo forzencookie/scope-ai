@@ -1,10 +1,9 @@
 // ============================================
 // Global Search Service
 // Unified search across all data sources
+// PRODUCTION: Uses API endpoints, no mock data
 // ============================================
 
-import { mockTransactions } from "@/data/transactions"
-import { mockReceipts } from "@/data/receipts"
 import type { Transaction, Receipt } from "@/types"
 
 // ============================================
@@ -50,54 +49,76 @@ const searchColors: Record<string, string> = {
 }
 
 // ============================================
-// Search Functions
+// Search Functions (API-based)
 // ============================================
 
-function searchTransactions(query: string): SearchResult[] {
+async function searchTransactions(query: string): Promise<SearchResult[]> {
     const lowerQuery = query.toLowerCase()
 
-    return mockTransactions
-        .filter(txn =>
-            txn.name.toLowerCase().includes(lowerQuery) ||
-            txn.category.toLowerCase().includes(lowerQuery) ||
-            txn.account.toLowerCase().includes(lowerQuery)
-        )
-        .slice(0, 5) // Limit results
-        .map(txn => ({
-            id: txn.id,
-            type: 'transaction' as SearchResultType,
-            title: txn.name,
-            subtitle: txn.category,
-            href: `/dashboard/sok/bokforing?tab=transaktioner&search=${encodeURIComponent(txn.name)}`,
-            category: "Transaktioner",
-            colorClass: searchColors["Transaktioner"],
-            matchedField: txn.name.toLowerCase().includes(lowerQuery) ? 'name' : 'category',
-            amount: txn.amount,
-            date: txn.date,
-        }))
+    try {
+        const response = await fetch('/api/transactions', { cache: 'no-store' })
+        if (!response.ok) return []
+
+        const data = await response.json()
+        const transactions: Transaction[] = data.transactions || []
+
+        return transactions
+            .filter(txn =>
+                txn.name.toLowerCase().includes(lowerQuery) ||
+                txn.category.toLowerCase().includes(lowerQuery) ||
+                txn.account.toLowerCase().includes(lowerQuery)
+            )
+            .slice(0, 5)
+            .map(txn => ({
+                id: txn.id,
+                type: 'transaction' as SearchResultType,
+                title: txn.name,
+                subtitle: txn.category,
+                href: `/dashboard/sok/bokforing?tab=transaktioner&search=${encodeURIComponent(txn.name)}`,
+                category: "Transaktioner",
+                colorClass: searchColors["Transaktioner"],
+                matchedField: txn.name.toLowerCase().includes(lowerQuery) ? 'name' : 'category',
+                amount: txn.amount,
+                date: txn.date,
+            }))
+    } catch (error) {
+        console.error('Search transactions error:', error)
+        return []
+    }
 }
 
-function searchReceipts(query: string): SearchResult[] {
+async function searchReceipts(query: string): Promise<SearchResult[]> {
     const lowerQuery = query.toLowerCase()
 
-    return mockReceipts
-        .filter(receipt =>
-            receipt.supplier.toLowerCase().includes(lowerQuery) ||
-            receipt.category.toLowerCase().includes(lowerQuery)
-        )
-        .slice(0, 5)
-        .map(receipt => ({
-            id: receipt.id,
-            type: 'receipt' as SearchResultType,
-            title: receipt.supplier,
-            subtitle: receipt.category,
-            href: `/dashboard/sok/bokforing?tab=kvitton&search=${encodeURIComponent(receipt.supplier)}`,
-            category: "Kvitton",
-            colorClass: searchColors["Kvitton"],
-            matchedField: receipt.supplier.toLowerCase().includes(lowerQuery) ? 'supplier' : 'category',
-            amount: receipt.amount,
-            date: receipt.date,
-        }))
+    try {
+        const response = await fetch('/api/receipts/processed', { cache: 'no-store' })
+        if (!response.ok) return []
+
+        const data = await response.json()
+        const receipts: Receipt[] = data.receipts || []
+
+        return receipts
+            .filter(receipt =>
+                receipt.supplier.toLowerCase().includes(lowerQuery) ||
+                receipt.category.toLowerCase().includes(lowerQuery)
+            )
+            .slice(0, 5)
+            .map(receipt => ({
+                id: receipt.id,
+                type: 'receipt' as SearchResultType,
+                title: receipt.supplier,
+                subtitle: receipt.category,
+                href: `/dashboard/sok/bokforing?tab=kvitton&search=${encodeURIComponent(receipt.supplier)}`,
+                category: "Kvitton",
+                colorClass: searchColors["Kvitton"],
+                matchedField: receipt.supplier.toLowerCase().includes(lowerQuery) ? 'supplier' : 'category',
+                amount: receipt.amount,
+                date: receipt.date,
+            }))
+    } catch (error) {
+        console.error('Search receipts error:', error)
+        return []
+    }
 }
 
 // ============================================
@@ -118,28 +139,23 @@ export async function globalSearch(
         return []
     }
 
-    const { filters = [], limit = 5 } = options
+    const { filters = [] } = options
     const results: SearchResult[] = []
 
     // Determine which data sources to search based on filters
     const searchBokforing = filters.length === 0 || filters.includes("Bokföring")
-    const searchLoner = filters.length === 0 || filters.includes("Löner")
-    const searchRapporter = filters.length === 0 || filters.includes("Rapporter")
 
     // Search transactions
     if (searchBokforing) {
-        results.push(...searchTransactions(query))
+        const txnResults = await searchTransactions(query)
+        results.push(...txnResults)
     }
 
     // Search receipts
     if (searchBokforing) {
-        results.push(...searchReceipts(query))
+        const receiptResults = await searchReceipts(query)
+        results.push(...receiptResults)
     }
-
-    // TODO: Add more data sources as needed:
-    // - searchEmployees(query) for Löner
-    // - searchInvoices(query) for Fakturor
-    // - searchVerifikationer(query) for Verifikationer
 
     return results
 }

@@ -28,11 +28,9 @@ import {
 } from "@/components/skatt"
 
 // Tab configuration with feature keys for filtering
-const tabs: Array<{ id: string; label: string; icon: typeof Calculator; feature: FeatureKey }> = [
+const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send; feature: FeatureKey }> = [
     { id: "momsdeklaration", label: "Momsdeklaration", icon: Calculator, feature: "momsdeklaration" },
     { id: "inkomstdeklaration", label: "Inkomstdeklaration", icon: Send, feature: "inkomstdeklaration" },
-    { id: "arsredovisning", label: "Årsredovisning", icon: FileBarChart, feature: "arsredovisning" },
-    { id: "arsbokslut", label: "Årsbokslut", icon: FileText, feature: "arsbokslut" },
 ]
 
 function SkattPageContent() {
@@ -54,17 +52,17 @@ function SkattPageContent() {
         <TooltipProvider delayDuration={400}>
             <div className="flex flex-col min-h-svh">
                 {/* Page Heading */}
-                <div className="px-6 pt-6">
-                    <div className="max-w-6xl w-full">
+                <div className="px-4 pt-4">
+                    <div className="w-full">
                         <h2 className="text-xl font-semibold">Skatt & Deklarationer</h2>
                         <p className="text-sm text-muted-foreground">Hantera momsdeklarationer, inkomstdeklaration och bokslut.</p>
                     </div>
                 </div>
 
                 {/* Tabs */}
-                <div className="px-6 pt-4">
-                    <div className="max-w-6xl w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
+                <div className="px-4 pt-4">
+                    <div className="w-full">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
                                 const Icon = tab.icon

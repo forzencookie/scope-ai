@@ -14,6 +14,7 @@ import {
     TrendingDown,
     Clock,
     BookOpen,
+    SlidersHorizontal,
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -203,103 +204,100 @@ export function TransactionsTable({
                 />
             </StatCardGrid>
 
-            {/* Section Separator */}
-            <div className="border-b-2 border-border/60" />
-
             <NewTransactionDialog
                 open={newTransactionDialogOpen}
                 onOpenChange={setNewTransactionDialogOpen}
             />
 
-            <DataTable
-                title={title || text.transactions.allTransactions}
-                headerActions={
-                    <div className="flex items-center gap-2">
-                        <SearchBar
-                            placeholder={text.transactions.search}
-                            value={filter.searchQuery}
-                            onChange={filter.setSearchQuery}
-                        />
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <FilterButton
-                                    label={text.actions.filter}
-                                    isActive={filter.statusFilter.length > 0}
-                                    activeCount={filter.statusFilter.length}
-                                />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-56">
-                                <DropdownMenuLabel>{text.labels.filterByStatus}</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {Object.values(TRANSACTION_STATUSES).map((status) => (
-                                    <DropdownMenuCheckboxItem
-                                        key={status}
-                                        checked={filter.statusFilter.includes(status)}
-                                        onCheckedChange={() => filter.toggleStatusFilter(status)}
+            {/* Table with Add Row */}
+            <div>
+                <DataTable
+                    title={title || text.transactions.allTransactions}
+                    headerActions={
+                        <div className="flex items-center gap-2">
+                            <SearchBar
+                                placeholder={text.transactions.search}
+                                value={filter.searchQuery}
+                                onChange={filter.setSearchQuery}
+                            />
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className={cn("h-9 gap-1", filter.statusFilter.length > 0 && "border-primary text-primary")}
                                     >
-                                        {status}
-                                    </DropdownMenuCheckboxItem>
-                                ))}
-                                {filter.statusFilter.length > 0 && (
-                                    <>
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem onClick={() => filter.setStatusFilter([])}>
-                                            <X className="h-3.5 w-3.5 mr-2" />
-                                            {text.actions.clearFilter}
-                                        </DropdownMenuItem>
-                                    </>
-                                )}
-                                <DropdownMenuSeparator />
-                                <DropdownMenuLabel>{text.labels.sortBy}</DropdownMenuLabel>
-                                <DropdownMenuItem onClick={() => handleSortChange("date")}>
-                                    {text.labels.date} {sort.sortBy === "date" && (sort.sortOrder === "asc" ? "↑" : "↓")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleSortChange("amount")}>
-                                    {text.labels.amount} {sort.sortBy === "amount" && (sort.sortOrder === "asc" ? "↑" : "↓")}
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => handleSortChange("name")}>
-                                    {text.labels.name} {sort.sortBy === "name" && (sort.sortOrder === "asc" ? "↑" : "↓")}
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                }
-            >
-                <DataTableHeader>
-                    <DataTableHeaderCell className="w-10">
-                        <Checkbox
-                            checked={selection.allSelected && filteredTransactions.length > 0}
-                            onCheckedChange={selection.toggleAll}
-                        />
-                    </DataTableHeaderCell>
-                    <DataTableHeaderCell icon={Building2} label={text.labels.supplier} />
-                    <DataTableHeaderCell icon={Calendar} label={text.labels.date} />
-                    <DataTableHeaderCell icon={Banknote} label={text.labels.amount} />
-                    <DataTableHeaderCell icon={CheckCircle2} label={text.labels.status} />
-                    <DataTableHeaderCell icon={CreditCard} label={text.labels.account} />
-                </DataTableHeader>
-                <DataTableBody>
-                    {filteredTransactions.map((transaction) => (
-                        <TransactionRow
-                            key={transaction.id}
-                            transaction={transaction}
-                            onClick={() => handleTransactionClick(transaction)}
-                            selected={selection.isSelected(transaction.id)}
-                            onToggleSelection={() => selection.toggleItem(transaction.id)}
-                        />
-                    ))}
-                    {filteredTransactions.length === 0 && (
-                        <TransactionsEmptyState
-                            hasFilters={filter.hasActiveFilters}
-                            onAddTransaction={() => setNewTransactionDialogOpen(true)}
-                        />
-                    )}
-                </DataTableBody>
-            </DataTable>
-            <DataTableAddRow
-                label={text.transactions.newTransaction}
-                onClick={() => setNewTransactionDialogOpen(true)}
-            />
+                                        <SlidersHorizontal className="h-3.5 w-3.5" />
+                                        {text.actions.filter}
+                                        {filter.statusFilter.length > 0 && (
+                                            <span className="ml-1 rounded-full bg-primary/10 px-1.5 text-xs">
+                                                {filter.statusFilter.length}
+                                            </span>
+                                        )}
+                                    </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-56">
+                                    <DropdownMenuLabel>{text.labels.filterByStatus}</DropdownMenuLabel>
+                                    <DropdownMenuSeparator />
+                                    {Object.values(TRANSACTION_STATUSES).map((status) => (
+                                        <DropdownMenuCheckboxItem
+                                            key={status}
+                                            checked={filter.statusFilter.includes(status)}
+                                            onCheckedChange={() => filter.toggleStatusFilter(status)}
+                                        >
+                                            {status}
+                                        </DropdownMenuCheckboxItem>
+                                    ))}
+                                    {filter.statusFilter.length > 0 && (
+                                        <>
+                                            <DropdownMenuSeparator />
+                                            <DropdownMenuItem onClick={() => filter.setStatusFilter([])}>
+                                                <X className="h-3.5 w-3.5 mr-2" />
+                                                {text.actions.clearFilter}
+                                            </DropdownMenuItem>
+                                        </>
+                                    )}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
+                    }
+                >
+                    <DataTableHeader>
+                        <DataTableHeaderCell icon={Building2} label={text.labels.supplier} />
+                        <DataTableHeaderCell icon={Calendar} label={text.labels.date} />
+                        <DataTableHeaderCell icon={Banknote} label={text.labels.amount} />
+                        <DataTableHeaderCell icon={CheckCircle2} label={text.labels.status} />
+                        <DataTableHeaderCell icon={CreditCard} label={text.labels.account} />
+                        <DataTableHeaderCell className="w-10">
+                            <Checkbox
+                                checked={selection.allSelected && filteredTransactions.length > 0}
+                                onCheckedChange={selection.toggleAll}
+                            />
+                        </DataTableHeaderCell>
+                    </DataTableHeader>
+                    <DataTableBody>
+                        {filteredTransactions.map((transaction) => (
+                            <TransactionRow
+                                key={transaction.id}
+                                transaction={transaction}
+                                onClick={() => handleTransactionClick(transaction)}
+                                selected={selection.isSelected(transaction.id)}
+                                onToggleSelection={() => selection.toggleItem(transaction.id)}
+                            />
+                        ))}
+                        {filteredTransactions.length === 0 && (
+                            <TransactionsEmptyState
+                                hasFilters={filter.hasActiveFilters}
+                                onAddTransaction={() => setNewTransactionDialogOpen(true)}
+                            />
+                        )}
+                    </DataTableBody>
+                </DataTable>
+                <DataTableAddRow
+                    label={text.transactions.newTransaction}
+                    onClick={() => setNewTransactionDialogOpen(true)}
+                />
+            </div>
 
             {/* Bulk Action Toolbar - appears when items are selected */}
             <BulkActionToolbar

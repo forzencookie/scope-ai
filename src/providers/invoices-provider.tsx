@@ -1,7 +1,10 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
-import { type Invoice, mockInvoices as defaultInvoices } from "@/data/invoices"
+import type { Invoice } from "@/types"
+
+// PRODUCTION: No mock data
+const defaultInvoices: Invoice[] = []
 
 // ============================================================================
 // Invoices Provider Context

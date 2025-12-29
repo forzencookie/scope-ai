@@ -37,7 +37,7 @@ import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, type BulkAction } from "../shared/bulk-action-toolbar"
 import { AmountText } from "@/components/table/table-shell"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { payslips } from "./constants"
+// import { payslips } from "./constants"
 import { PayslipDetailsDialog } from "./payslip-details-dialog"
 import { PayslipCreateDialog } from "./payslip-create-dialog"
 import { generatePayslipPDF } from "@/lib/pdf-generator"
@@ -55,13 +55,44 @@ type Payslip = {
 
 export function LonesbeskContent() {
     const toast = useToast()
-    const [allPayslips, setAllPayslips] = useState<Payslip[]>(payslips)
+    const [allPayslips, setAllPayslips] = useState<Payslip[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [showAIDialog, setShowAIDialog] = useState(false)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string[]>([])
     const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
     const [viewDialogOpen, setViewDialogOpen] = useState(false)
+
+    // Fetch real payslips
+    const fetchPayslips = async () => {
+        setIsLoading(true)
+        try {
+            const res = await fetch('/api/payroll/payslips')
+            const data = await res.json()
+            if (data.payslips) {
+                // Map DB format to UI format
+                setAllPayslips(data.payslips.map((p: any) => ({
+                    id: p.id,
+                    employee: p.employees?.name || 'Okänd anställd',
+                    period: p.period,
+                    grossSalary: Number(p.gross_salary),
+                    netSalary: Number(p.net_salary),
+                    tax: Number(p.tax_deduction),
+                    status: p.status,
+                    paymentDate: p.payment_date
+                })))
+            }
+        } catch (err) {
+            console.error("Failed to fetch payslips:", err)
+        } finally {
+            setIsLoading(false)
+        }
+    }
+
+    useMemo(() => {
+        fetchPayslips()
+    }, [])
 
     // Handle row click to open details
     const handleRowClick = (slip: Payslip) => {
@@ -140,7 +171,7 @@ export function LonesbeskContent() {
     }
 
     const handlePayslipCreated = (newPayslip: Payslip) => {
-        setAllPayslips(prev => [newPayslip, ...prev])
+        fetchPayslips()
     }
 
     const bulkActions: BulkAction[] = [
@@ -280,18 +311,18 @@ export function LonesbeskContent() {
                     }
                 >
                     <DataTableHeader>
-                        <DataTableHeaderCell className="w-10">
-                            <Checkbox
-                                checked={selectedIds.size === filteredPayslips.length && filteredPayslips.length > 0}
-                                onCheckedChange={toggleAll}
-                            />
-                        </DataTableHeaderCell>
                         <DataTableHeaderCell label="Anställd" icon={User} />
                         <DataTableHeaderCell label="Period" icon={Calendar} />
                         <DataTableHeaderCell label="Bruttolön" icon={Banknote} />
                         <DataTableHeaderCell label="Skatt" icon={Banknote} />
                         <DataTableHeaderCell label="Nettolön" icon={Wallet} />
                         <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                        <DataTableHeaderCell className="w-10">
+                            <Checkbox
+                                checked={selectedIds.size === filteredPayslips.length && filteredPayslips.length > 0}
+                                onCheckedChange={toggleAll}
+                            />
+                        </DataTableHeaderCell>
 
                     </DataTableHeader>
                     <DataTableBody>
@@ -302,13 +333,7 @@ export function LonesbeskContent() {
                                 onClick={() => handleRowClick(slip)}
                                 className="cursor-pointer"
                             >
-                                <DataTableCell className="w-10">
-                                    <Checkbox
-                                        checked={selectedIds.has(String(slip.id))}
-                                        onCheckedChange={() => toggleSelection(String(slip.id))}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </DataTableCell>
+
                                 <DataTableCell bold>{slip.employee}</DataTableCell>
                                 <DataTableCell muted>{slip.period}</DataTableCell>
                                 <DataTableCell><AmountText value={slip.grossSalary} /></DataTableCell>
@@ -319,6 +344,15 @@ export function LonesbeskContent() {
                                         status={slip.status === "pending" ? "Väntar" : "Skickad"}
                                         size="sm"
                                     />
+                                </DataTableCell>
+                                <DataTableCell className="w-10 text-right">
+                                    <div className="flex justify-end pr-2">
+                                        <Checkbox
+                                            checked={selectedIds.has(String(slip.id))}
+                                            onCheckedChange={() => toggleSelection(String(slip.id))}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
                                 </DataTableCell>
 
                             </DataTableRow>

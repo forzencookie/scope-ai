@@ -92,8 +92,9 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
         }
 
         // If this is an actual execution (after confirmation), create the invoice
-        const invoice: CreatedInvoice = {
+        const invoiceData = {
             id: `INV-${Date.now()}`,
+            invoiceNumber: `INV-${Date.now()}`,
             customerName: params.customerName,
             amount: params.amount,
             vatAmount,
@@ -101,16 +102,41 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
             description: params.description,
             dueDate,
             status: 'draft',
+            source: 'user_reported',
+            createdBy: 'ai_assistant'
+        }
+
+        // Actually save to database via API
+        try {
+            const response = await fetch('/api/receive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    dataType: 'invoice',
+                    data: invoiceData
+                })
+            })
+
+            if (!response.ok) {
+                throw new Error('Failed to save invoice')
+            }
+        } catch (error) {
+            console.error('Failed to save invoice:', error)
+            return {
+                success: false,
+                error: 'Kunde inte spara fakturan. Försök igen.',
+                message: 'Ett fel uppstod vid sparande av faktura.',
+            }
         }
 
         return {
             success: true,
-            data: invoice,
+            data: invoiceData as any,
             message: `Faktura skapad: ${totalAmount.toLocaleString('sv-SE')} kr till ${params.customerName}. Förfallodatum: ${dueDate}.`,
             confirmationRequired: confirmationRequest,
             display: {
                 component: 'InvoicePreview',
-                props: { invoice },
+                props: { invoice: invoiceData },
                 title: 'Skapad faktura',
                 fullViewRoute: '/dashboard/invoices',
             },
@@ -363,13 +389,401 @@ export const submitAGITool = defineTool<SubmitAGIParams, { submitted: boolean; r
 })
 
 // =============================================================================
+// Receipt Creation Tool (AI-First Data Entry)
+// =============================================================================
+
+export interface CreateReceiptParams {
+    supplier: string
+    amount: number
+    date?: string
+    category?: string
+    description?: string
+    vatRate?: number
+}
+
+export interface CreatedReceipt {
+    id: string
+    supplier: string
+    amount: string
+    date: string
+    category: string
+    status: 'pending'
+    source: 'user_reported'
+    createdBy: 'ai_assistant'
+    originalUserMessage?: string
+}
+
+export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>({
+    name: 'create_receipt',
+    description: 'Registrera ett nytt kvitto rapporterat av användaren. Kräver bekräftelse.',
+    category: 'write',
+    requiresConfirmation: true,
+    parameters: {
+        type: 'object',
+        properties: {
+            supplier: {
+                type: 'string',
+                description: 'Leverantör/butik (t.ex. "Staples", "Amazon")',
+            },
+            amount: {
+                type: 'number',
+                description: 'Belopp i kronor (positivt tal, blir negativt i bokföringen)',
+            },
+            date: {
+                type: 'string',
+                description: 'Datum (YYYY-MM-DD). Standard: dagens datum',
+            },
+            category: {
+                type: 'string',
+                description: 'Kategori (t.ex. "Kontorsmaterial", "Resa", "Programvara")',
+            },
+            description: {
+                type: 'string',
+                description: 'Beskrivning av inköpet',
+            },
+            vatRate: {
+                type: 'number',
+                description: 'Momssats (standard: 0.25 = 25%)',
+            },
+        },
+        required: ['supplier', 'amount'],
+    },
+    execute: async (params) => {
+        const date = params.date || new Date().toISOString().split('T')[0]
+        const category = params.category || 'Övrigt'
+        const vatRate = params.vatRate ?? 0.25
+        const vatAmount = params.amount * vatRate
+
+        const confirmationRequest: AIConfirmationRequest = {
+            title: 'Registrera kvitto',
+            description: `Skapa kvitto från ${params.supplier}`,
+            summary: [
+                { label: 'Leverantör', value: params.supplier },
+                { label: 'Belopp', value: `-${params.amount.toLocaleString('sv-SE')} kr` },
+                { label: 'Moms', value: `${vatAmount.toLocaleString('sv-SE')} kr (${vatRate * 100}%)` },
+                { label: 'Datum', value: date },
+                { label: 'Kategori', value: category },
+                ...(params.description ? [{ label: 'Beskrivning', value: params.description }] : []),
+            ],
+            warnings: [
+                'Detta kvitto markeras som "rapporterat av användare"',
+                'Ladda upp kvittobild för verifikation',
+            ],
+            action: {
+                toolName: 'create_receipt',
+                params,
+            },
+            requireCheckbox: false,
+        }
+
+        // Prepare receipt data
+        const receiptData = {
+            supplier: params.supplier,
+            amount: `-${params.amount} kr`,
+            date,
+            category,
+            source: 'user_reported',
+            createdBy: 'ai_assistant',
+        }
+
+        // Actually save to database via API
+        let savedReceipt: CreatedReceipt
+        try {
+            const response = await fetch('/api/receive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    dataType: 'receipt',
+                    data: {
+                        merchant: params.supplier,
+                        amount: -params.amount,
+                        date,
+                        category,
+                        source: 'user_reported',
+                        createdBy: 'ai_assistant'
+                    }
+                })
+            })
+
+            if (response.ok) {
+                const result = await response.json()
+                savedReceipt = {
+                    id: result.item?.id || `REC-${Date.now()}`,
+                    supplier: params.supplier,
+                    amount: `-${params.amount.toLocaleString('sv-SE')} kr`,
+                    date,
+                    category,
+                    status: 'pending',
+                    source: 'user_reported',
+                    createdBy: 'ai_assistant',
+                }
+            } else {
+                throw new Error('Failed to save receipt')
+            }
+        } catch (error) {
+            console.error('Failed to save receipt:', error)
+            // Return error if save fails
+            return {
+                success: false,
+                error: 'Kunde inte spara kvittot. Försök igen.',
+                message: 'Ett fel uppstod vid sparande av kvitto.',
+            }
+        }
+
+        return {
+            success: true,
+            data: savedReceipt,
+            message: `Kvitto registrerat: ${params.supplier}, ${params.amount.toLocaleString('sv-SE')} kr.`,
+            confirmationRequired: confirmationRequest,
+            display: {
+                component: 'ReceiptCard',
+                props: { receipt: savedReceipt },
+                title: 'Registrerat kvitto',
+                fullViewRoute: '/dashboard/sok/bokforing?tab=kvitton',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Transaction Creation Tool (AI-First Data Entry)
+// =============================================================================
+
+export interface CreateTransactionParams {
+    name: string
+    amount: number
+    date?: string
+    category?: string
+    account?: string
+    vatRate?: number
+    type?: 'expense' | 'income'
+}
+
+export interface CreatedTransaction {
+    id: string
+    name: string
+    amount: string
+    amountValue: number
+    date: string
+    status: 'pending'
+    category: string
+    account: string
+    source: 'user_reported'
+    createdBy: 'ai_assistant'
+}
+
+export const createTransactionTool = defineTool<CreateTransactionParams, CreatedTransaction>({
+    name: 'create_transaction',
+    description: 'Registrera en ny transaktion rapporterad av användaren. Kräver bekräftelse.',
+    category: 'write',
+    requiresConfirmation: true,
+    parameters: {
+        type: 'object',
+        properties: {
+            name: {
+                type: 'string',
+                description: 'Namn/beskrivning av transaktionen',
+            },
+            amount: {
+                type: 'number',
+                description: 'Belopp i kronor (positivt tal)',
+            },
+            type: {
+                type: 'string',
+                enum: ['expense', 'income'],
+                description: 'Typ: expense (utgift) eller income (intäkt). Standard: expense',
+            },
+            date: {
+                type: 'string',
+                description: 'Datum (YYYY-MM-DD). Standard: dagens datum',
+            },
+            category: {
+                type: 'string',
+                description: 'Kategori (t.ex. "Kontorsmaterial", "Intäkter")',
+            },
+            account: {
+                type: 'string',
+                description: 'Konto/betalningssätt (t.ex. "Företagskonto", "Företagskort")',
+            },
+            vatRate: {
+                type: 'number',
+                description: 'Momssats (standard: 0.25 = 25%)',
+            },
+        },
+        required: ['name', 'amount'],
+    },
+    execute: async (params) => {
+        const date = params.date || new Date().toISOString().split('T')[0]
+        const category = params.category || 'Övrigt'
+        const account = params.account || 'Företagskonto'
+        const isIncome = params.type === 'income'
+        const amountValue = isIncome ? params.amount : -params.amount
+        const amountStr = isIncome
+            ? `+${params.amount.toLocaleString('sv-SE')} kr`
+            : `-${params.amount.toLocaleString('sv-SE')} kr`
+
+        const confirmationRequest: AIConfirmationRequest = {
+            title: isIncome ? 'Registrera intäkt' : 'Registrera utgift',
+            description: `Skapa transaktion: ${params.name}`,
+            summary: [
+                { label: 'Beskrivning', value: params.name },
+                { label: 'Belopp', value: amountStr },
+                { label: 'Typ', value: isIncome ? 'Intäkt' : 'Utgift' },
+                { label: 'Datum', value: date },
+                { label: 'Kategori', value: category },
+                { label: 'Konto', value: account },
+            ],
+            warnings: [
+                'Denna transaktion markeras som "rapporterad av användare"',
+                'Underlag kan laddas upp separat',
+            ],
+            action: {
+                toolName: 'create_transaction',
+                params,
+            },
+            requireCheckbox: false,
+        }
+
+        // Actually save to database via API
+        let savedTransaction: CreatedTransaction
+        try {
+            const response = await fetch('/api/receive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    dataType: 'transaction',
+                    data: {
+                        name: params.name,
+                        description: params.name,
+                        amount: amountValue,
+                        date,
+                        account,
+                        category,
+                        source: 'user_reported',
+                        createdBy: 'ai_assistant'
+                    }
+                })
+            })
+
+            if (response.ok) {
+                const result = await response.json()
+                savedTransaction = {
+                    id: result.item?.id || `TXN-${Date.now()}`,
+                    name: params.name,
+                    amount: amountStr,
+                    amountValue,
+                    date,
+                    status: 'pending',
+                    category,
+                    account,
+                    source: 'user_reported',
+                    createdBy: 'ai_assistant',
+                }
+            } else {
+                throw new Error('Failed to save transaction')
+            }
+        } catch (error) {
+            console.error('Failed to save transaction:', error)
+            return {
+                success: false,
+                error: 'Kunde inte spara transaktionen. Försök igen.',
+                message: 'Ett fel uppstod vid sparande av transaktion.',
+            }
+        }
+
+        return {
+            success: true,
+            data: savedTransaction,
+            message: `Transaktion registrerad: ${params.name}, ${amountStr}.`,
+            confirmationRequired: confirmationRequest,
+            display: {
+                component: 'TransactionCard',
+                props: { transaction: savedTransaction },
+                title: 'Registrerad transaktion',
+                fullViewRoute: '/dashboard/sok/bokforing?tab=transaktioner',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Benefit Assignment Tool
+// =============================================================================
+
+export interface AssignBenefitParams {
+    employeeName: string
+    benefitId: string
+    amount: number
+    year?: number
+}
+
+export const assignBenefitTool = defineTool<AssignBenefitParams, any>({
+    name: 'assign_benefit',
+    description: 'Tilldela en förmån till en anställd. Kräver bekräftelse.',
+    category: 'write',
+    requiresConfirmation: true,
+    parameters: {
+        type: 'object',
+        properties: {
+            employeeName: {
+                type: 'string',
+                description: 'Namn på den anställda',
+            },
+            benefitId: {
+                type: 'string',
+                description: 'ID för förmånen (t.ex. "friskvard")',
+            },
+            amount: {
+                type: 'number',
+                description: 'Belopp i kronor',
+            },
+            year: {
+                type: 'number',
+                description: 'År (standard: nuvarande år)',
+            },
+        },
+        required: ['employeeName', 'benefitId', 'amount'],
+    },
+    execute: async (params) => {
+        const year = params.year || new Date().getFullYear()
+
+        const confirmationRequest: AIConfirmationRequest = {
+            title: 'Tilldela förmån',
+            description: `Tilldela ${params.benefitId} till ${params.employeeName}`,
+            summary: [
+                { label: 'Anställd', value: params.employeeName },
+                { label: 'Förmån', value: params.benefitId },
+                { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
+                { label: 'År', value: String(year) },
+            ],
+            action: {
+                toolName: 'assign_benefit',
+                params,
+            },
+            requireCheckbox: false,
+        }
+
+        return {
+            success: true,
+            data: { success: true },
+            message: `Förmån ${params.benefitId} förberedd för ${params.employeeName}. Belopp: ${params.amount} kr.`,
+            confirmationRequired: confirmationRequest,
+        }
+    }
+})
+
+// =============================================================================
 // Export all write tools
 // =============================================================================
 
 export const writeTools = [
     createInvoiceTool,
+    createReceiptTool,
+    createTransactionTool,
     categorizeTransactionTool,
     runPayrollTool,
     submitVatTool,
     submitAGITool,
+    assignBenefitTool,
 ]
+

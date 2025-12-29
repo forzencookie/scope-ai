@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
     Users,
     Clock,
@@ -19,17 +19,38 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
-import { employees } from "./constants"
+// import { employees } from "./constants"
 
 export function TeamTab() {
-    const { success: toastSuccess } = useToast()
+    const { success } = useToast()
+    const [employees, setEmployees] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [reportDialogOpen, setReportDialogOpen] = useState(false)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
     const [reportType, setReportType] = useState<'time' | 'expense' | 'mileage'>('time')
 
+    // Fetch real employees
+    useMemo(() => {
+        const fetchEmployees = async () => {
+            setIsLoading(true)
+            try {
+                const res = await fetch('/api/employees')
+                const data = await res.json()
+                if (data.employees) {
+                    setEmployees(data.employees)
+                }
+            } catch (err) {
+                console.error("Failed to fetch employees:", err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchEmployees()
+    }, [])
+
     // Mock reporting
     const handleReport = () => {
-        toastSuccess("Rapport sparad", "Tid och utlägg har registrerats för lönekörningen.")
+        success("Rapport sparad", "Tid och utlägg har registrerats för lönekörningen.")
         setReportDialogOpen(false)
     }
 
@@ -52,7 +73,7 @@ export function TeamTab() {
                         <CardHeader className="flex flex-row items-center gap-4 bg-muted/20 pb-4">
                             <Avatar className="h-12 w-12">
                                 <AvatarImage src={`/avatars/${emp.id}.png`} />
-                                <AvatarFallback>{emp.name.split(' ').map(n => n[0]).join('')}</AvatarFallback>
+                                <AvatarFallback>{emp.name.split(' ').map((n: string) => n[0]).join('')}</AvatarFallback>
                             </Avatar>
                             <div className="grid gap-1">
                                 <CardTitle className="text-base">{emp.name}</CardTitle>

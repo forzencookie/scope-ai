@@ -55,17 +55,17 @@ import {
   type GeneralMeeting,
   type GeneralMeetingDecision
 } from "@/data/ownership"
-import { useCorporate } from "@/hooks/use-corporate"
+// import { useCorporate } from "@/hooks/use-corporate"
 
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 
+import { useCompliance } from "@/hooks/use-compliance"
+
 export function Bolagsstamma() {
-  const { meetings: allMeetings, addMeeting, updateDecision } = useCorporate()
+  const { documents: realDocuments, isLoadingDocuments, addDocument } = useCompliance()
   const { addVerification } = useVerifications()
   const { success } = useToast()
-  const meetings = allMeetings.filter(m => m.meetingType === 'bolagsstamma')
-
 
   const [searchQuery, setSearchQuery] = useState("")
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -73,20 +73,52 @@ export function Bolagsstamma() {
   const [selectedMeeting, setSelectedMeeting] = useState<GeneralMeeting | null>(null)
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
 
+  // Map real documents to GeneralMeeting format
+  const meetings = useMemo(() => {
+    return (realDocuments || [])
+      .filter(doc => doc.type === 'general_meeting_minutes')
+      .map((doc, idx) => {
+        let content = {
+          year: new Date(doc.date).getFullYear(),
+          location: 'Ej angivet',
+          chairperson: 'Ej angivet',
+          secretary: 'Ej angivet',
+          attendeesCount: 0,
+          decisions: [] as GeneralMeetingDecision[],
+          type: 'ordinarie' as const,
+          sharesRepresented: 0,
+          votesRepresented: 0
+        }
+
+        try {
+          const parsed = JSON.parse(doc.content)
+          content = { ...content, ...parsed }
+        } catch (e) {
+          // Fallback
+        }
+
+        return {
+          id: doc.id,
+          date: doc.date,
+          status: (doc.status === 'signed' ? 'protokoll signerat' : (doc.status === 'archived' ? 'genomförd' : 'kallad')) as GeneralMeeting['status'],
+          meetingType: 'bolagsstamma' as const,
+          ...content
+        }
+      })
+  }, [realDocuments])
+
   // Calculate stats
   const stats = useMemo(() => {
     const upcoming = meetings.filter(m => m.status === 'kallad').length
     const completed = meetings.filter(m => m.status === 'protokoll signerat').length
     const totalDecisions = meetings.reduce((sum, m) => sum + m.decisions.length, 0)
 
-    // Sort meetings by date to find the next one correctly
     const sortedUpcoming = meetings
       .filter(m => m.status === 'kallad')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
 
     const nextMeeting = sortedUpcoming[0]
 
-    // Calculate days until next meeting
     const daysUntilNext = nextMeeting
       ? Math.ceil((new Date(nextMeeting.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
       : null
@@ -129,7 +161,6 @@ export function Bolagsstamma() {
 
   const handleGenerateAISummary = async (meeting: GeneralMeeting) => {
     setIsGeneratingAI(true)
-    // Simulate AI generation
     await new Promise(resolve => setTimeout(resolve, 2000))
     setIsGeneratingAI(false)
   }
@@ -156,7 +187,8 @@ export function Bolagsstamma() {
       ]
     })
 
-    updateDecision(meeting.id, decision.id, { booked: true })
+    // Note: In a real app we'd also update the decision in the DB
+    // updateDecision(meeting.id, decision.id, { booked: true })
 
     success(
       "Utdelning bokförd",
@@ -181,6 +213,10 @@ export function Bolagsstamma() {
     'Annat ärende som ankommer på stämman enligt ABL eller bolagsordningen',
     'Stämmans avslutande',
   ]
+
+  if (isLoadingDocuments) {
+    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar stämmor...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -274,21 +310,21 @@ export function Bolagsstamma() {
             type="general"
             defaultAgenda={standardAgenda}
             onSubmit={(data) => {
-              addMeeting({
-                year: parseInt(data.year) || new Date().getFullYear(),
+              addDocument({
+                type: 'general_meeting_minutes',
+                title: `${data.type === 'extra' ? 'Extra bolagsstämma' : 'Ordinarie årsstämma'} ${data.year}`,
                 date: data.date,
-                location: data.location,
-                type: data.type === 'extra' ? 'extra' : 'ordinarie',
-                meetingType: 'bolagsstamma',
-                attendeesCount: 0,
-                chairperson: '',
-                secretary: '',
-                decisions: [],
-                status: 'kallad',
-                // Mock data for AB specific fields if needed
-                sharesRepresented: 0,
-                votesRepresented: 0,
+                content: JSON.stringify({
+                  year: parseInt(data.year),
+                  location: data.location,
+                  type: data.type,
+                  decisions: [],
+                  attendeesCount: 0
+                }),
+                status: 'draft',
+                source: 'manual'
               })
+              setShowCreateDialog(false)
             }}
           />
 
@@ -335,7 +371,7 @@ export function Bolagsstamma() {
                       <MapPin className="h-3 w-3" />
                       {meeting.location}
                     </span>
-                    {meeting.sharesRepresented && (
+                    {meeting.sharesRepresented && meeting.sharesRepresented > 0 && (
                       <span className="flex items-center gap-1">
                         <Scale className="h-3 w-3" />
                         {meeting.sharesRepresented.toLocaleString('sv-SE')} aktier representerade

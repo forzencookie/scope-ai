@@ -331,18 +331,18 @@ export function Delagare() {
         <CardContent className="p-0">
           <DataTable>
             <DataTableHeader>
-              <DataTableHeaderCell className="w-10">
-                <Checkbox
-                  checked={partnerSelection.allSelected}
-                  onCheckedChange={partnerSelection.toggleAll}
-                />
-              </DataTableHeaderCell>
               <DataTableHeaderCell label="Namn" icon={User} />
               <DataTableHeaderCell label="Personnummer" />
               {showKommanditdelägare && <DataTableHeaderCell label="Typ" />}
               <DataTableHeaderCell label="Ägarandel" icon={Percent} align="right" />
               <DataTableHeaderCell label="Insatskapital" icon={Banknote} align="right" />
               <DataTableHeaderCell label="Kapitalsaldo" icon={Wallet} align="right" />
+              <DataTableHeaderCell className="w-10">
+                <Checkbox
+                  checked={partnerSelection.allSelected}
+                  onCheckedChange={partnerSelection.toggleAll}
+                />
+              </DataTableHeaderCell>
             </DataTableHeader>
             <DataTableBody>
               {filteredPartners.map((partner) => (
@@ -350,13 +350,7 @@ export function Delagare() {
                   key={partner.id}
                   selected={partnerSelection.isSelected(partner.id)}
                 >
-                  <DataTableCell className="w-10">
-                    <Checkbox
-                      checked={partnerSelection.isSelected(partner.id)}
-                      onCheckedChange={() => partnerSelection.toggleItem(partner.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </DataTableCell>
+
                   <DataTableCell bold>{partner.name}</DataTableCell>
                   <DataTableCell mono muted>
                     {formatPersonalNumber(partner.personalNumber)}
@@ -376,6 +370,15 @@ export function Delagare() {
                     <span className={partner.currentCapitalBalance < partner.capitalContribution ? 'text-amber-600' : 'text-green-600 dark:text-green-500/70'}>
                       {formatCurrency(partner.currentCapitalBalance)}
                     </span>
+                  </DataTableCell>
+                  <DataTableCell className="w-10 text-right">
+                    <div className="flex justify-end pr-2">
+                      <Checkbox
+                        checked={partnerSelection.isSelected(partner.id)}
+                        onCheckedChange={() => partnerSelection.toggleItem(partner.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
                   </DataTableCell>
                 </DataTableRow>
               ))}
@@ -408,17 +411,17 @@ export function Delagare() {
         <CardContent className="p-0">
           <DataTable>
             <DataTableHeader>
+              <DataTableHeaderCell label="Datum" icon={Calendar} />
+              <DataTableHeaderCell label="Delägare" icon={User} />
+              <DataTableHeaderCell label="Typ" />
+              <DataTableHeaderCell label="Beskrivning" />
+              <DataTableHeaderCell label="Belopp" icon={Banknote} align="right" />
               <DataTableHeaderCell className="w-10">
                 <Checkbox
                   checked={withdrawalSelection.allSelected}
                   onCheckedChange={withdrawalSelection.toggleAll}
                 />
               </DataTableHeaderCell>
-              <DataTableHeaderCell label="Datum" icon={Calendar} />
-              <DataTableHeaderCell label="Delägare" icon={User} />
-              <DataTableHeaderCell label="Typ" />
-              <DataTableHeaderCell label="Beskrivning" />
-              <DataTableHeaderCell label="Belopp" icon={Banknote} align="right" />
             </DataTableHeader>
             <DataTableBody>
               {filteredWithdrawals.map((withdrawal) => (
@@ -426,13 +429,7 @@ export function Delagare() {
                   key={withdrawal.id}
                   selected={withdrawalSelection.isSelected(withdrawal.id)}
                 >
-                  <DataTableCell className="w-10">
-                    <Checkbox
-                      checked={withdrawalSelection.isSelected(withdrawal.id)}
-                      onCheckedChange={() => withdrawalSelection.toggleItem(withdrawal.id)}
-                      onClick={(e) => e.stopPropagation()}
-                    />
-                  </DataTableCell>
+
                   <DataTableCell muted>{withdrawal.date}</DataTableCell>
                   <DataTableCell bold>{withdrawal.partnerName}</DataTableCell>
                   <DataTableCell>
@@ -447,6 +444,15 @@ export function Delagare() {
                     <span className={withdrawal.type === 'uttag' ? 'text-red-600 dark:text-red-500/70' : 'text-green-600 dark:text-green-500/70'}>
                       {withdrawal.type === 'uttag' ? '-' : '+'}{formatCurrency(withdrawal.amount)}
                     </span>
+                  </DataTableCell>
+                  <DataTableCell className="w-10 text-right">
+                    <div className="flex justify-end pr-2">
+                      <Checkbox
+                        checked={withdrawalSelection.isSelected(withdrawal.id)}
+                        onCheckedChange={() => withdrawalSelection.toggleItem(withdrawal.id)}
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
                   </DataTableCell>
                 </DataTableRow>
               ))}

@@ -219,9 +219,6 @@ export function VerifikationerTable() {
                 />
             </StatCardGrid>
 
-            {/* Section Separator */}
-            <div className="border-b-2 border-border/60" />
-
             {/* Create Dialog */}
             <VerifikationDialog
                 open={createDialogOpen}
@@ -357,17 +354,17 @@ export function VerifikationerTable() {
                 }
             >
                 <DataTableHeader>
+                    <DataTableHeaderCell icon={Hash} label="Nr" />
+                    <DataTableHeaderCell icon={Calendar} label="Datum" />
+                    <DataTableHeaderCell icon={FolderTree} label="Konto" />
+                    <DataTableHeaderCell icon={Tag} label="Kategori" />
+                    <DataTableHeaderCell icon={Banknote} label="Belopp" align="right" />
                     <DataTableHeaderCell className="w-10">
                         <Checkbox
                             checked={selection.allSelected && filteredVerifikationer.length > 0}
                             onCheckedChange={selection.toggleAll}
                         />
                     </DataTableHeaderCell>
-                    <DataTableHeaderCell icon={Hash} label="Nr" />
-                    <DataTableHeaderCell icon={Calendar} label="Datum" />
-                    <DataTableHeaderCell icon={FolderTree} label="Konto" />
-                    <DataTableHeaderCell icon={Tag} label="Kategori" />
-                    <DataTableHeaderCell icon={Banknote} label="Belopp" align="right" />
                 </DataTableHeader>
                 <DataTableBody>
                     {filteredVerifikationer.map((v) => (
@@ -377,13 +374,7 @@ export function VerifikationerTable() {
                             onClick={() => handleViewDetails(v)}
                             selected={selection.isSelected(String(v.id))}
                         >
-                            <DataTableCell className="w-10">
-                                <Checkbox
-                                    checked={selection.isSelected(String(v.id))}
-                                    onCheckedChange={() => selection.toggleItem(String(v.id))}
-                                    onClick={(e) => e.stopPropagation()}
-                                />
-                            </DataTableCell>
+
                             <DataTableCell mono muted>{v.id}</DataTableCell>
                             <DataTableCell muted>{v.date}</DataTableCell>
                             <DataTableCell mono muted>{v.konto}</DataTableCell>
@@ -392,6 +383,15 @@ export function VerifikationerTable() {
                             </DataTableCell>
                             <DataTableCell align="right" bold>
                                 <AmountText value={v.amount} />
+                            </DataTableCell>
+                            <DataTableCell className="w-10 text-right">
+                                <div className="flex justify-end pr-2">
+                                    <Checkbox
+                                        checked={selection.isSelected(String(v.id))}
+                                        onCheckedChange={() => selection.toggleItem(String(v.id))}
+                                        onClick={(e) => e.stopPropagation()}
+                                    />
+                                </div>
                             </DataTableCell>
                         </DataTableRow>
                     ))}

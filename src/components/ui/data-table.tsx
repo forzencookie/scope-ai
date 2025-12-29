@@ -15,6 +15,8 @@ export interface DataTableProps {
     children: React.ReactNode
     /** Additional className for the container */
     className?: string
+    /** Variant for header thickness: default (normal tables) or compact (reports) */
+    variant?: "default" | "compact"
 }
 
 export function DataTable({
@@ -22,11 +24,15 @@ export function DataTable({
     headerActions,
     children,
     className,
+    variant = "default",
 }: DataTableProps) {
     return (
-        <div className={cn("bg-card overflow-hidden", className)}>
+        <div className={cn("bg-card border-t-2 border-border/60 overflow-hidden", className)}>
             {(title || headerActions) && (
-                <div className="px-4 py-3 border-t-2 border-b-2 border-border/60 flex items-center justify-between">
+                <div className={cn(
+                    "px-4 border-b-2 border-border/60 flex items-center justify-between",
+                    variant === "compact" ? "py-2" : "py-3"
+                )}>
                     {title && <h2 className="font-medium">{title}</h2>}
                     {headerActions && (
                         <div className="flex items-center gap-2">{headerActions}</div>
@@ -34,7 +40,7 @@ export function DataTable({
                 </div>
             )}
             <div className="w-full overflow-auto">
-                <table className="w-full text-sm">{children}</table>
+                <table className="w-full text-sm border-collapse">{children}</table>
             </div>
         </div>
     )
@@ -134,7 +140,7 @@ export function DataTableRow({ children, className, onClick, selected }: DataTab
     return (
         <tr
             className={cn(
-                "border-b border-border/40 hover:bg-muted/30 transition-colors",
+                "group/row border-b border-border/40 transition-colors last:border-0",
                 onClick && "cursor-pointer",
                 selected && "bg-primary/5",
                 className
@@ -177,7 +183,14 @@ export function DataTableCell({
     return (
         <td
             className={cn(
-                "px-4 py-3",
+                "px-4 py-4 relative group/cell transition-colors",
+                // The rounded hover pill highlight using pseudo-elements
+                // Standard Tailwind before: is used to create the gap and rounded edges
+                "before:absolute before:inset-y-1.5 before:inset-x-0 before:bg-transparent before:transition-colors before:z-0",
+                "group-hover/row:before:bg-muted/40",
+                "first:before:rounded-l-xl",
+                "last:before:rounded-r-xl",
+
                 align === "right" && "text-right",
                 align === "center" && "text-center",
                 mono && "tabular-nums",
@@ -188,7 +201,9 @@ export function DataTableCell({
             colSpan={colSpan}
             onClick={onClick}
         >
-            {children}
+            <div className="relative z-10">
+                {children}
+            </div>
         </td>
     )
 }
@@ -202,8 +217,8 @@ export interface DataTableEmptyProps {
 
 export function DataTableEmpty({ message = "Inga resultat", colSpan }: DataTableEmptyProps) {
     return (
-        <tr>
-            <td colSpan={colSpan} className="px-4 py-8 text-center text-muted-foreground">
+        <tr className="border-0">
+            <td colSpan={colSpan} className="px-4 py-12 text-center text-muted-foreground border-0">
                 {message}
             </td>
         </tr>
@@ -244,7 +259,7 @@ export function DataTableAddRow({
     return (
         <div
             className={cn(
-                "border-t border-border/40 p-2 text-sm text-muted-foreground hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-2",
+                "p-2 text-sm text-muted-foreground hover:bg-muted/50 cursor-pointer transition-colors flex items-center gap-2",
                 className
             )}
             onClick={onClick}
@@ -275,7 +290,7 @@ export function DataTableRaw({
     footer,
 }: DataTableRawProps) {
     return (
-        <div className={cn("bg-card border-y-2 border-border/60 overflow-hidden", className)}>
+        <div className={cn("bg-card border-y border-border/40 overflow-hidden", className)}>
             <div className="w-full overflow-auto">
                 {children}
             </div>

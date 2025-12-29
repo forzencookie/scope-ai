@@ -60,11 +60,14 @@ import { mockBoardMeetings, type BoardMeeting, type AgendaItem } from "@/data/ow
 import { useCompany } from "@/providers/company-provider"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 
+import { useCompliance } from "@/hooks/use-compliance"
+
 type StatusFilter = 'all' | 'planerad' | 'genomförd' | 'protokoll signerat'
 
 export function Styrelseprotokoll() {
   const { companyType } = useCompany()
-  const [meetings] = useState<BoardMeeting[]>(mockBoardMeetings)
+  const { documents: realDocuments, isLoadingDocuments, addDocument } = useCompliance()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all')
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -72,32 +75,72 @@ export function Styrelseprotokoll() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
 
+  // Map real documents to BoardMeeting format
+  const meetings = useMemo(() => {
+    return (realDocuments || [])
+      .filter(doc => doc.type === 'board_meeting_minutes')
+      .map((doc, idx) => {
+        let content = {
+          meetingNumber: idx + 1,
+          location: 'Ej angivet',
+          chairperson: 'Ej angivet',
+          secretary: 'Ej angivet',
+          attendees: [] as string[],
+          agendaItems: [] as AgendaItem[],
+          type: 'ordinarie' as const,
+          absentees: [] as string[]
+        }
+
+        try {
+          // Re-serialize content if it's JSON
+          const parsed = JSON.parse(doc.content)
+          content = { ...content, ...parsed }
+        } catch (e) {
+          // Fallback or handle raw content
+        }
+
+        return {
+          id: doc.id,
+          date: doc.date,
+          status: (doc.status === 'signed' ? 'protokoll signerat' : (doc.status === 'archived' ? 'genomförd' : 'planerad')) as BoardMeeting['status'],
+          absentees: content.absentees || [],
+          type: content.type,
+          meetingNumber: content.meetingNumber,
+          location: content.location,
+          chairperson: content.chairperson,
+          secretary: content.secretary,
+          attendees: content.attendees,
+          agendaItems: content.agendaItems
+        }
+      })
+  }, [realDocuments])
+
   // Calculate stats
   const stats = useMemo(() => {
     const signed = meetings.filter(m => m.status === 'protokoll signerat').length
     const completed = meetings.filter(m => m.status === 'genomförd').length
     const planned = meetings.filter(m => m.status === 'planerad').length
-    const totalDecisions = meetings.reduce((sum, m) => 
+    const totalDecisions = meetings.reduce((sum, m) =>
       sum + m.agendaItems.filter(a => a.decision).length, 0
     )
-    
+
     return { signed, completed, planned, totalDecisions }
   }, [meetings])
 
   // Filter meetings by search and status
   const filteredMeetings = useMemo(() => {
     let result = meetings
-    
+
     // Status filter
     if (statusFilter !== 'all') {
       result = result.filter(m => m.status === statusFilter)
     }
-    
+
     // Search filter
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
-      result = result.filter(m => 
-        m.agendaItems.some(a => 
+      result = result.filter(m =>
+        m.agendaItems.some(a =>
           a.title.toLowerCase().includes(query) ||
           a.decision?.toLowerCase().includes(query)
         ) ||
@@ -106,14 +149,14 @@ export function Styrelseprotokoll() {
         `#${m.meetingNumber}`.includes(query)
       )
     }
-    
+
     return result
   }, [meetings, searchQuery, statusFilter])
 
   // Group meetings by year
   const meetingsByYear = useMemo(() => {
     const grouped: Record<number, BoardMeeting[]> = {}
-    
+
     filteredMeetings.forEach(meeting => {
       const year = new Date(meeting.date).getFullYear()
       if (!grouped[year]) {
@@ -121,14 +164,14 @@ export function Styrelseprotokoll() {
       }
       grouped[year].push(meeting)
     })
-    
+
     // Sort meetings within each year by date (newest first)
     Object.keys(grouped).forEach(year => {
-      grouped[parseInt(year)].sort((a, b) => 
+      grouped[parseInt(year)].sort((a, b) =>
         new Date(b.date).getTime() - new Date(a.date).getTime()
       )
     })
-    
+
     return grouped
   }, [filteredMeetings])
 
@@ -180,6 +223,10 @@ export function Styrelseprotokoll() {
     { value: 'genomförd', label: 'Genomförda', count: stats.completed },
     { value: 'protokoll signerat', label: 'Signerade', count: stats.signed },
   ]
+
+  if (isLoadingDocuments) {
+    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar protokoll...</div>
+  }
 
   return (
     <div className="space-y-6">
@@ -301,176 +348,176 @@ export function Styrelseprotokoll() {
       {/* Meetings List - Grouped by Year */}
       <div className="space-y-4">
         {sortedYears.map((year) => {
-            const yearMeetings = meetingsByYear[year] || []
-            const isCollapsed = collapsedYears.has(year)
-            const isExpanded = !isCollapsed
-            return (
-              <Collapsible key={year} open={isExpanded} onOpenChange={() => toggleYearCollapsed(year)}>
-                <CollapsibleTrigger asChild>
-                  <button className="flex items-center gap-3 w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left">
-                    {isExpanded ? (
-                      <ChevronDown className="h-5 w-5 text-muted-foreground" />
-                    ) : (
-                      <ChevronRight className="h-5 w-5 text-muted-foreground" />
-                    )}
-                    <span className="font-semibold text-lg">{year}</span>
-                    <Badge variant="secondary" className="ml-2">
-                      {yearMeetings.length} {yearMeetings.length === 1 ? 'möte' : 'möten'}
+          const yearMeetings = meetingsByYear[year] || []
+          const isCollapsed = collapsedYears.has(year)
+          const isExpanded = !isCollapsed
+          return (
+            <Collapsible key={year} open={isExpanded} onOpenChange={() => toggleYearCollapsed(year)}>
+              <CollapsibleTrigger asChild>
+                <button className="flex items-center gap-3 w-full p-3 rounded-lg bg-muted/50 hover:bg-muted transition-colors text-left">
+                  {isExpanded ? (
+                    <ChevronDown className="h-5 w-5 text-muted-foreground" />
+                  ) : (
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  )}
+                  <span className="font-semibold text-lg">{year}</span>
+                  <Badge variant="secondary" className="ml-2">
+                    {yearMeetings.length} {yearMeetings.length === 1 ? 'möte' : 'möten'}
+                  </Badge>
+                  <div className="ml-auto flex gap-2">
+                    <Badge variant="outline" className="text-xs">
+                      {yearMeetings.filter(m => m.status === 'protokoll signerat').length} signerade
                     </Badge>
-                    <div className="ml-auto flex gap-2">
-                      <Badge variant="outline" className="text-xs">
-                        {yearMeetings.filter(m => m.status === 'protokoll signerat').length} signerade
-                      </Badge>
-                    </div>
-                  </button>
-                </CollapsibleTrigger>
-                <CollapsibleContent className="pt-3 space-y-3">
-                  {yearMeetings.map((meeting) => (
-                    <Card 
-                      key={meeting.id} 
-                      className={cn(
-                        "cursor-pointer transition-all hover:shadow-md ml-6",
-                        selectedMeeting?.id === meeting.id && "ring-2 ring-primary"
-                      )}
-                      onClick={() => setSelectedMeeting(selectedMeeting?.id === meeting.id ? null : meeting)}
-                    >
-                      <CardHeader className="pb-3">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <CardTitle className="text-lg flex items-center gap-2">
-                              Styrelsemöte #{meeting.meetingNumber}
-                              <Badge variant="outline">{getMeetingTypeLabel(meeting.type)}</Badge>
-                            </CardTitle>
-                            <CardDescription className="flex items-center gap-4">
-                              <span className="flex items-center gap-1">
-                                <Calendar className="h-3 w-3" />
-                                {formatDateLong(meeting.date)}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <MapPin className="h-3 w-3" />
-                                {meeting.location}
-                              </span>
-                              <span className="flex items-center gap-1">
-                                <Users className="h-3 w-3" />
-                                {meeting.attendees.length} deltagare
-                              </span>
-                            </CardDescription>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <AppStatusBadge status={getMeetingStatusLabel(meeting.status)} showIcon />
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8">
-                                  <MoreHorizontal className="h-4 w-4" />
-                                </Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end">
-                                <DropdownMenuItem>Visa protokoll</DropdownMenuItem>
-                                <DropdownMenuItem>Redigera</DropdownMenuItem>
-                                <DropdownMenuItem>
-                                  <Download className="h-4 w-4 mr-2" />
-                                  Ladda ned PDF
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                {meeting.status === 'genomförd' && (
-                                  <DropdownMenuItem>
-                                    <CheckCircle className="h-4 w-4 mr-2" />
-                                    Markera som signerat
-                                  </DropdownMenuItem>
-                                )}
-                                <DropdownMenuItem onClick={() => handleGenerateAISummary(meeting)}>
-                                  <Sparkles className="h-4 w-4 mr-2" />
-                                  Generera AI-sammanfattning
-                                </DropdownMenuItem>
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
+                  </div>
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 space-y-3">
+                {yearMeetings.map((meeting) => (
+                  <Card
+                    key={meeting.id}
+                    className={cn(
+                      "cursor-pointer transition-all hover:shadow-md ml-6",
+                      selectedMeeting?.id === meeting.id && "ring-2 ring-primary"
+                    )}
+                    onClick={() => setSelectedMeeting(selectedMeeting?.id === meeting.id ? null : meeting)}
+                  >
+                    <CardHeader className="pb-3">
+                      <div className="flex items-start justify-between">
+                        <div className="space-y-1">
+                          <CardTitle className="text-lg flex items-center gap-2">
+                            Styrelsemöte #{meeting.meetingNumber}
+                            <Badge variant="outline">{getMeetingTypeLabel(meeting.type)}</Badge>
+                          </CardTitle>
+                          <CardDescription className="flex items-center gap-4">
+                            <span className="flex items-center gap-1">
+                              <Calendar className="h-3 w-3" />
+                              {formatDateLong(meeting.date)}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <MapPin className="h-3 w-3" />
+                              {meeting.location}
+                            </span>
+                            <span className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              {meeting.attendees.length} deltagare
+                            </span>
+                          </CardDescription>
                         </div>
-                      </CardHeader>
-
-                      {/* Expanded content */}
-                      {selectedMeeting?.id === meeting.id && (
-                        <CardContent className="pt-0">
-                          <div className="border-t pt-4 space-y-4">
-                            {/* Meeting details */}
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">Ordförande:</span>
-                                <span className="font-medium">{meeting.chairperson}</span>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                <User className="h-4 w-4 text-muted-foreground" />
-                                <span className="text-muted-foreground">Sekreterare:</span>
-                                <span className="font-medium">{meeting.secretary}</span>
-                              </div>
-                            </div>
-
-                            {/* Attendees */}
-                            <div className="text-sm">
-                              <p className="text-muted-foreground mb-2">Närvarande:</p>
-                              <div className="flex flex-wrap gap-2">
-                                {meeting.attendees.map((attendee, idx) => (
-                                  <Badge key={idx} variant="secondary">{attendee}</Badge>
-                                ))}
-                                {meeting.attendees.length === 0 && (
-                                  <span className="text-muted-foreground italic">Ej registrerat</span>
-                                )}
-                              </div>
-                            </div>
-
-                            {/* Agenda & Decisions */}
-                            <div className="text-sm">
-                              <p className="text-muted-foreground mb-2">Dagordning & beslut:</p>
-                              <div className="space-y-2">
-                                {meeting.agendaItems.map((item) => (
-                                  <div key={item.id} className="p-3 rounded-lg bg-muted/50">
-                                    <div className="flex items-start gap-2">
-                                      <span className="font-mono text-xs bg-background px-1.5 py-0.5 rounded border">
-                                        §{item.number}
-                                      </span>
-                                      <div className="flex-1">
-                                        <p className="font-medium">{item.title}</p>
-                                        {item.description && (
-                                          <p className="text-muted-foreground text-xs mt-1">{item.description}</p>
-                                        )}
-                                        {item.decision && (
-                                          <p className="text-green-700 dark:text-green-400 text-xs mt-1">
-                                            <span className="font-medium">Beslut:</span> {item.decision}
-                                          </p>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </div>
-                                ))}
-                              </div>
-                            </div>
-
-                            {/* AI Generation */}
-                            <div className="flex gap-2 pt-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleGenerateAISummary(meeting)}
-                                disabled={isGeneratingAI}
-                              >
-                                <Sparkles className="h-4 w-4 mr-2" />
-                                {isGeneratingAI ? 'Genererar...' : 'AI-sammanfattning'}
+                        <div className="flex items-center gap-2">
+                          <AppStatusBadge status={getMeetingStatusLabel(meeting.status)} showIcon />
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreHorizontal className="h-4 w-4" />
                               </Button>
-                              <Button variant="outline" size="sm">
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                              <DropdownMenuItem>Visa protokoll</DropdownMenuItem>
+                              <DropdownMenuItem>Redigera</DropdownMenuItem>
+                              <DropdownMenuItem>
                                 <Download className="h-4 w-4 mr-2" />
                                 Ladda ned PDF
-                              </Button>
+                              </DropdownMenuItem>
+                              <DropdownMenuSeparator />
+                              {meeting.status === 'genomförd' && (
+                                <DropdownMenuItem>
+                                  <CheckCircle className="h-4 w-4 mr-2" />
+                                  Markera som signerat
+                                </DropdownMenuItem>
+                              )}
+                              <DropdownMenuItem onClick={() => handleGenerateAISummary(meeting)}>
+                                <Sparkles className="h-4 w-4 mr-2" />
+                                Generera AI-sammanfattning
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </div>
+                      </div>
+                    </CardHeader>
+
+                    {/* Expanded content */}
+                    {selectedMeeting?.id === meeting.id && (
+                      <CardContent className="pt-0">
+                        <div className="border-t pt-4 space-y-4">
+                          {/* Meeting details */}
+                          <div className="grid grid-cols-2 gap-4 text-sm">
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Ordförande:</span>
+                              <span className="font-medium">{meeting.chairperson}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <User className="h-4 w-4 text-muted-foreground" />
+                              <span className="text-muted-foreground">Sekreterare:</span>
+                              <span className="font-medium">{meeting.secretary}</span>
                             </div>
                           </div>
-                        </CardContent>
-                      )}
-                    </Card>
-                  ))}
-                </CollapsibleContent>
-              </Collapsible>
-            )
-          })}
+
+                          {/* Attendees */}
+                          <div className="text-sm">
+                            <p className="text-muted-foreground mb-2">Närvarande:</p>
+                            <div className="flex flex-wrap gap-2">
+                              {meeting.attendees.map((attendee, idx) => (
+                                <Badge key={idx} variant="secondary">{attendee}</Badge>
+                              ))}
+                              {meeting.attendees.length === 0 && (
+                                <span className="text-muted-foreground italic">Ej registrerat</span>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Agenda & Decisions */}
+                          <div className="text-sm">
+                            <p className="text-muted-foreground mb-2">Dagordning & beslut:</p>
+                            <div className="space-y-2">
+                              {meeting.agendaItems.map((item) => (
+                                <div key={item.id} className="p-3 rounded-lg bg-muted/50">
+                                  <div className="flex items-start gap-2">
+                                    <span className="font-mono text-xs bg-background px-1.5 py-0.5 rounded border">
+                                      §{item.number}
+                                    </span>
+                                    <div className="flex-1">
+                                      <p className="font-medium">{item.title}</p>
+                                      {item.description && (
+                                        <p className="text-muted-foreground text-xs mt-1">{item.description}</p>
+                                      )}
+                                      {item.decision && (
+                                        <p className="text-green-700 dark:text-green-400 text-xs mt-1">
+                                          <span className="font-medium">Beslut:</span> {item.decision}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+
+                          {/* AI Generation */}
+                          <div className="flex gap-2 pt-2">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleGenerateAISummary(meeting)}
+                              disabled={isGeneratingAI}
+                            >
+                              <Sparkles className="h-4 w-4 mr-2" />
+                              {isGeneratingAI ? 'Genererar...' : 'AI-sammanfattning'}
+                            </Button>
+                            <Button variant="outline" size="sm">
+                              <Download className="h-4 w-4 mr-2" />
+                              Ladda ned PDF
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    )}
+                  </Card>
+                ))}
+              </CollapsibleContent>
+            </Collapsible>
+          )
+        })}
       </div>
 
       {filteredMeetings.length === 0 && (

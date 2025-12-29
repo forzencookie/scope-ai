@@ -20,20 +20,18 @@ import {
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
-import {
-    DataTable,
-    DataTableBody,
-    DataTableRow,
-    DataTableCell
-} from "@/components/ui/data-table"
-import { SectionCard } from "@/components/ui/section-card"
+import { SectionCard, ListCard, ListCardItem } from "@/components/ui/section-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { ArsredovisningWizardDialog } from "./ai-wizard-dialog"
+import {
+    ReportContainer,
+    ReportHeader
+} from "./report-ui"
 import { reportSections } from "./constants"
 import { useVerifications } from "@/hooks/use-verifications"
 import { AnnualReportProcessor } from "@/lib/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./report-preview-dialog"
-import { Eye } from "lucide-react"
+
 import { useCompany } from "@/providers/company-provider"
 
 export function ArsredovisningContent() {
@@ -130,6 +128,9 @@ export function ArsredovisningContent() {
                     onAction={() => setShowAIDialog(true)}
                 />
 
+                {/* Section Separator */}
+                <div className="border-b-2 border-border/60" />
+
                 <ArsredovisningWizardDialog
                     open={showAIDialog}
                     onOpenChange={setShowAIDialog}
@@ -149,51 +150,46 @@ export function ArsredovisningContent() {
                     sections={previewSections}
                 />
 
-                <DataTable
-                    title="Delar av årsredovisningen"
-                    headerActions={
+                <div className="space-y-4">
+                    <ReportHeader
+                        title="Delar av årsredovisningen"
+                    >
                         <div className="flex items-center gap-2">
                             <IconButton icon={Download} label="Ladda ner PDF" showLabel />
                             <button
                                 onClick={() => setShowBankIdDialog(true)}
-                                className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm"
+                                className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm h-9"
                             >
                                 <Send className="h-4 w-4" />
                                 Skicka till Bolagsverket
                             </button>
                         </div>
-                    }
-                >
-                    <DataTableBody>
+                    </ReportHeader>
+
+                    <ListCard variant="minimal">
                         {reportSections.map((section) => (
-                            <DataTableRow key={section.name} onClick={() => handleViewReport(section.name)} className="cursor-pointer">
-                                <DataTableCell>
+                            <ListCardItem
+                                key={section.name}
+                                onClick={() => handleViewReport(section.name)}
+                                className="transition-colors"
+                                icon={<FileText className="h-6 w-6 text-muted-foreground" />}
+                                trailing={
                                     <div className="flex items-center gap-3">
-                                        <FileText className="h-5 w-5 text-muted-foreground" />
-                                        <div>
-                                            <p className="text-sm font-medium">{section.name}</p>
-                                            <p className="text-sm text-muted-foreground">{section.description}</p>
-                                        </div>
-                                    </div>
-                                </DataTableCell>
-                                <DataTableCell align="right">
-                                    <div className="flex items-center justify-end gap-2">
                                         <AppStatusBadge
                                             status={section.status === "complete" ? "Klar" : section.status === "incomplete" ? "Ofullständig" : "Väntar"}
                                             size="md"
                                         />
-                                        <Button variant="ghost" size="icon" onClick={(e) => {
-                                            e.stopPropagation()
-                                            handleViewReport(section.name)
-                                        }}>
-                                            <Eye className="h-4 w-4 text-muted-foreground" />
-                                        </Button>
                                     </div>
-                                </DataTableCell>
-                            </DataTableRow>
+                                }
+                            >
+                                <div className="space-y-1">
+                                    <p className="text-base font-semibold tracking-tight">{section.name}</p>
+                                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                                </div>
+                            </ListCardItem>
                         ))}
-                    </DataTableBody>
-                </DataTable>
+                    </ListCard>
+                </div>
 
                 {/* BankID Signing Dialog */}
                 <Dialog open={showBankIdDialog} onOpenChange={setShowBankIdDialog}>

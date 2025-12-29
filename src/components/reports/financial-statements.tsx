@@ -2,13 +2,13 @@
 
 import { cn } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
-import { 
-    DataTable, 
-    DataTableHeader, 
-    DataTableHeaderCell, 
-    DataTableBody, 
-    DataTableRow, 
-    DataTableCell 
+import {
+    DataTable,
+    DataTableHeader,
+    DataTableHeaderCell,
+    DataTableBody,
+    DataTableRow,
+    DataTableCell
 } from "@/components/ui/data-table"
 import { SectionCard } from "@/components/ui/section-card"
 import { declarationItems, balanceItems } from "./constants"
@@ -16,13 +16,13 @@ import { declarationItems, balanceItems } from "./constants"
 // Simple Resultaträkning (Income Statement) content
 export function ResultatrakningContent() {
     const { companyType } = useCompany()
-    
+
     return (
         <SectionCard
             title="Resultaträkning"
             description={`Räkenskapsår 2024 • ${companyType.toUpperCase()}`}
         >
-            <DataTable>
+            <DataTable variant="compact">
                 <DataTableHeader>
                     <DataTableHeaderCell label="Post" />
                     <DataTableHeaderCell label="Belopp (kr)" className="text-right" />
@@ -30,13 +30,13 @@ export function ResultatrakningContent() {
                 <DataTableBody>
                     {declarationItems.map((item, i) => (
                         <DataTableRow key={i}>
-                            <DataTableCell 
-                                bold={item.highlight} 
+                            <DataTableCell
+                                bold={item.highlight}
                                 className={item.highlight ? "bg-muted/30" : ""}
                             >
                                 {item.label}
                             </DataTableCell>
-                            <DataTableCell 
+                            <DataTableCell
                                 className={cn(
                                     "text-right tabular-nums",
                                     item.highlight && "bg-muted/30 font-semibold",
@@ -56,13 +56,13 @@ export function ResultatrakningContent() {
 // Simple Balansräkning (Balance Sheet) content
 export function BalansrakningContent() {
     const { companyType } = useCompany()
-    
+
     return (
         <SectionCard
             title="Balansräkning"
             description={`Per 2024-12-31 • ${companyType.toUpperCase()}`}
         >
-            <DataTable>
+            <DataTable variant="compact">
                 <DataTableHeader>
                     <DataTableHeaderCell label="Post" />
                     <DataTableHeaderCell label="Belopp (kr)" className="text-right" />
@@ -70,8 +70,8 @@ export function BalansrakningContent() {
                 <DataTableBody>
                     {balanceItems.map((item, i) => (
                         <DataTableRow key={i}>
-                            <DataTableCell 
-                                bold={item.highlight || item.isHeader} 
+                            <DataTableCell
+                                bold={item.highlight || item.isHeader}
                                 className={cn(
                                     item.highlight && "bg-muted/30",
                                     item.isHeader && "text-muted-foreground uppercase text-xs tracking-wider pt-4"
@@ -79,7 +79,7 @@ export function BalansrakningContent() {
                             >
                                 {item.label}
                             </DataTableCell>
-                            <DataTableCell 
+                            <DataTableCell
                                 className={cn(
                                     "text-right tabular-nums",
                                     item.highlight && "bg-muted/30 font-semibold",

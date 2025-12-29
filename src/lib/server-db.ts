@@ -64,7 +64,13 @@ export const db = {
             verifications: ver.data || [],
             inbox: [],
             balances: defaultState.balances, // Still mocked for now
-            transactionMetadata: {}
+            transactionMetadata: {},
+            invoices: [],
+            aiAuditLogs: [],
+            financialPeriods: [],
+            taxReports: [],
+            employees: [],
+            payslips: []
         };
     },
 
@@ -83,6 +89,8 @@ export const db = {
             amount: tx.amount,
             status: tx.status,
             category: tx.category,
+            source: tx.source || 'manual',
+            created_by: tx.createdBy || tx.created_by,
             metadata: tx
         }).select().single();
         if (error) console.error("Supabase Error:", error);
@@ -113,9 +121,33 @@ export const db = {
             amount: receipt.amount,
             category: receipt.category,
             status: receipt.status,
+            source: receipt.source || 'manual',
+            created_by: receipt.createdBy || receipt.created_by,
             image_url: receipt.attachmentUrl
         }).select().single();
+        if (error) { console.error("Supabase Error (addReceipt):", error); throw error; }
         return data ? { ...data, attachmentUrl: data.image_url } : receipt;
+    },
+
+    // Invoices
+    addInvoice: async (invoice: any) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('invoices').insert({
+            id: invoice.id,
+            invoice_number: invoice.invoiceNumber,
+            customer_name: invoice.customerName,
+            amount: invoice.amount,
+            vat_amount: invoice.vatAmount,
+            total_amount: invoice.totalAmount,
+            issue_date: invoice.issueDate || invoice.date,
+            due_date: invoice.dueDate,
+            status: invoice.status || 'draft',
+            source: invoice.source || 'manual',
+            created_by: invoice.createdBy || invoice.created_by,
+            metadata: invoice
+        }).select().single();
+        if (error) console.error("Supabase Error (addInvoice):", error);
+        return data || invoice;
     },
 
     // Supplier Invoices
@@ -252,6 +284,144 @@ export const db = {
         const { error } = await supabase.from('inbox').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error) console.error('clearInbox error:', error);
         return { success: !error };
+    },
+
+    // AI Audit Logs
+    logAIToolExecution: async (log: {
+        toolName: string,
+        parameters: any,
+        result?: any,
+        status: 'success' | 'error' | 'pending',
+        executionTimeMs?: number,
+        errorMessage?: string,
+        userId?: string
+    }) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('ai_audit_log').insert({
+            tool_name: log.toolName,
+            parameters: log.parameters,
+            result: log.result,
+            status: log.status,
+            execution_time_ms: log.executionTimeMs,
+            error_message: log.errorMessage,
+            user_id: log.userId
+        }).select().single();
+        if (error) console.error("Supabase Error (logAIToolExecution):", error);
+        return data;
+    },
+
+    // Financial Periods
+    getFinancialPeriods: async () => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('financial_periods').select('*').order('start_date', { ascending: false });
+        if (error) console.error("Supabase Error (getFinancialPeriods):", error);
+        return data || [];
+    },
+
+    updateFinancialPeriodStatus: async (id: string, status: string) => {
+        const supabase = getSupabaseAdmin();
+        const { error } = await supabase.from('financial_periods').update({ status }).eq('id', id);
+        if (error) console.error("Supabase Error (updateFinancialPeriodStatus):", error);
+        return { success: !error };
+    },
+
+    // Tax Reports (VAT etc)
+    getTaxReports: async (type?: string) => {
+        const supabase = getSupabaseAdmin();
+        let query = supabase.from('tax_reports').select('*').order('generated_at', { ascending: false });
+        if (type) query = query.eq('report_type', type);
+        const { data, error } = await query;
+        if (error) console.error("Supabase Error (getTaxReports):", error);
+        return data || [];
+    },
+
+    upsertTaxReport: async (report: any) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('tax_reports').upsert({
+            id: report.id || undefined,
+            user_id: report.user_id,
+            period_id: report.period_id,
+            report_type: report.report_type || 'vat',
+            data: report.data,
+            status: report.status || 'draft',
+            period_start: report.period_start,
+            period_end: report.period_end,
+            generated_at: new Date().toISOString()
+        }).select().single();
+        if (error) console.error("Supabase Error (upsertTaxReport):", error);
+        return data || report;
+    },
+
+    // Employees
+    getEmployees: async () => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('employees').select('*').order('name');
+        if (error) console.error("Supabase Error (getEmployees):", error);
+        return data || [];
+    },
+
+    // Payslips
+    getPayslips: async () => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('payslips').select('*, employees(*)').order('created_at', { ascending: false });
+        if (error) console.error("Supabase Error (getPayslips):", error);
+        return data || [];
+    },
+
+    addPayslip: async (payslip: any) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('payslips').insert({
+            id: payslip.id,
+            employee_id: payslip.employee_id,
+            period: payslip.period,
+            gross_salary: payslip.gross_salary,
+            tax_deduction: payslip.tax_deduction,
+            net_salary: payslip.net_salary,
+            bonuses: payslip.bonuses || 0,
+            deductions: payslip.deductions || 0,
+            status: payslip.status || 'draft',
+            payment_date: payslip.payment_date,
+            user_id: payslip.user_id,
+        }).select().single();
+        if (error) console.error("Supabase Error (addPayslip):", error);
+        return data || payslip;
+    },
+
+    // Corporate Compliance
+    getCorporateDocuments: async () => {
+        const supabase = getSupabaseAdmin();
+        const { data } = await supabase.from('corporate_documents').select('*').order('date', { ascending: false });
+        return data || [];
+    },
+
+    addCorporateDocument: async (doc: any) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('corporate_documents').insert({
+            id: doc.id || undefined,
+            type: doc.type,
+            title: doc.title,
+            date: doc.date,
+            content: doc.content,
+            status: doc.status || 'draft',
+            source: doc.source || 'manual',
+            created_by: doc.createdBy || doc.created_by,
+            metadata: doc.metadata || {}
+        }).select().single();
+        if (error) console.error("Supabase Error (addCorporateDocument):", error);
+        return data || doc;
+    },
+
+    getShareholders: async () => {
+        const supabase = getSupabaseAdmin();
+        const { data } = await supabase.from('shareholders').select('*').order('shares_count', { ascending: false });
+        return data || [];
+    },
+
+    updateShareholder: async (id: string, updates: any) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('shareholders').update(updates).eq('id', id).select().single();
+        if (error) console.error("Supabase Error (updateShareholder):", error);
+        return data || { id, ...updates };
     },
 };
 

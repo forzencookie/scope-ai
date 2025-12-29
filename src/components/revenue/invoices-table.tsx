@@ -446,13 +446,6 @@ export function InvoicesTable() {
                 }
             >
                 <DataTableHeader>
-                    <DataTableHeaderCell className="w-10">
-                        <Checkbox
-                            checked={bulkSelection.allSelected}
-                            onCheckedChange={bulkSelection.toggleAll}
-                            aria-label={text.actions.selectAll}
-                        />
-                    </DataTableHeaderCell>
                     <DataTableHeaderCell>
                         {text.invoices.invoiceNumber}
                     </DataTableHeaderCell>
@@ -468,6 +461,13 @@ export function InvoicesTable() {
                     </DataTableHeaderCell>
                     <DataTableHeaderCell>{text.labels.status}</DataTableHeaderCell>
                     <DataTableHeaderCell className="w-10" />
+                    <DataTableHeaderCell className="w-10">
+                        <Checkbox
+                            checked={bulkSelection.allSelected}
+                            onCheckedChange={bulkSelection.toggleAll}
+                            aria-label={text.actions.selectAll}
+                        />
+                    </DataTableHeaderCell>
                 </DataTableHeader>
                 <DataTableBody>
                     {filteredInvoices.map((invoice) => (
@@ -478,13 +478,7 @@ export function InvoicesTable() {
                                 bulkSelection.isSelected(invoice.id) && "bg-muted/50"
                             )}
                         >
-                            <DataTableCell>
-                                <Checkbox
-                                    checked={bulkSelection.isSelected(invoice.id)}
-                                    onCheckedChange={() => bulkSelection.toggleItem(invoice.id)}
-                                    aria-label={`Select invoice ${invoice.id}`}
-                                />
-                            </DataTableCell>
+
                             <DataTableCell className="font-mono text-sm">
                                 {invoice.id}
                             </DataTableCell>
@@ -541,6 +535,15 @@ export function InvoicesTable() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                            </DataTableCell>
+                            <DataTableCell className="w-10 text-right">
+                                <div className="flex justify-end pr-2">
+                                    <Checkbox
+                                        checked={bulkSelection.isSelected(invoice.id)}
+                                        onCheckedChange={() => bulkSelection.toggleItem(invoice.id)}
+                                        aria-label={`Select invoice ${invoice.id}`}
+                                    />
+                                </div>
                             </DataTableCell>
                         </DataTableRow>
                     ))}

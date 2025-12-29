@@ -9,12 +9,8 @@ import * as transactionService from "@/services/transactions"
 import { useAsync, useAsyncMutation } from "./use-async"
 import { useAuth } from "./use-auth"
 import {
-  getStoredTransactions,
-  setStoredTransactions,
-  updateStoredTransaction,
   deleteStoredTransaction,
 } from "@/lib/demo-storage"
-import { mockTransactionsWithAI } from "@/data/transactions"
 
 // ============================================
 // Service Selection Helper
@@ -39,13 +35,13 @@ function useTransactionService() {
 
 export function useTransactions() {
   const { userId, isAuthenticated } = useTransactionService()
-  
-  const { 
-    data: transactions, 
-    isLoading, 
-    error, 
+
+  const {
+    data: transactions,
+    isLoading,
+    error,
     refetch,
-    setData: setTransactions 
+    setData: setTransactions
   } = useAsync(
     async () => {
       if (isAuthenticated && userId) {
@@ -53,12 +49,8 @@ export function useTransactions() {
         if (!response.success) throw new Error(response.error || "Failed to fetch transactions")
         return response.data
       } else {
-        // Fallback to localStorage for unauthenticated users (demo mode)
-        const stored = getStoredTransactions()
-        if (stored && stored.length > 0) return stored
-        // Initialize with mock data if empty
-        setStoredTransactions(mockTransactionsWithAI)
-        return mockTransactionsWithAI
+        // Return empty array for unauthenticated users (Phase 1 Cleanup requirement)
+        return [] as TransactionWithAI[]
       }
     },
     [] as TransactionWithAI[],
@@ -71,7 +63,7 @@ export function useTransactions() {
         const response = await transactionService.updateTransactionStatus(id, userId, status)
         if (!response.success) throw new Error(response.error || "Failed to update status")
       } else {
-        updateStoredTransaction(id, { status })
+        // updateStoredTransaction(id, { status })
       }
       return { id, status }
     }
@@ -92,10 +84,10 @@ export function useTransactions() {
   const updateStatus = useCallback(async (id: string, status: TransactionStatus) => {
     // Store previous state for potential rollback
     const previousTransactions = transactions
-    
+
     // Optimistic update
     setTransactions(prev => prev.map(t => t.id === id ? { ...t, status } : t))
-    
+
     try {
       await updateStatusMutation.execute({ id, status })
     } catch {
@@ -107,10 +99,10 @@ export function useTransactions() {
   const deleteTransaction = useCallback(async (id: string) => {
     // Store previous state for potential rollback
     const previousTransactions = transactions
-    
+
     // Optimistic update
     setTransactions(prev => prev.filter(t => t.id !== id))
-    
+
     try {
       await deleteMutation.execute(id)
     } catch {
@@ -151,14 +143,10 @@ export function useTransactionsPaginated(initialPageSize: number = 20) {
         setHasMore(response.hasMore)
         return response.data
       } else {
-        // Use demo storage for unauthenticated users
-        const stored = getStoredTransactions() ?? mockTransactionsWithAI
-        const start = (page - 1) * initialPageSize
-        const end = start + initialPageSize
-        const paginated = stored.slice(start, end)
-        setTotal(stored.length)
-        setHasMore(end < stored.length)
-        return paginated
+        // Return empty for unauthenticated
+        setTotal(0)
+        setHasMore(false)
+        return []
       }
     },
     [] as TransactionWithAI[],
@@ -196,7 +184,7 @@ export function useTransactionsPaginated(initialPageSize: number = 20) {
 
 export function useTransactionsByStatus(status: TransactionStatus) {
   const { userId, isAuthenticated } = useTransactionService()
-  
+
   const { data: transactions, isLoading, error, refetch } = useAsync(
     async () => {
       if (isAuthenticated && userId) {
@@ -204,9 +192,7 @@ export function useTransactionsByStatus(status: TransactionStatus) {
         if (!response.success) throw new Error(response.error || "Failed to fetch transactions")
         return response.data
       } else {
-        // Use demo storage for unauthenticated users
-        const stored = getStoredTransactions() ?? mockTransactionsWithAI
-        return stored.filter(t => t.status === status)
+        return []
       }
     },
     [] as TransactionWithAI[],
@@ -222,56 +208,31 @@ export function useTransactionsByStatus(status: TransactionStatus) {
 // ============================================
 
 export function useTransactionAI(onUpdate?: (transaction: TransactionWithAI) => void) {
+  const { userId, isAuthenticated } = useTransactionService()
   const approveMutation = useAsyncMutation(
     async (transactionId: string) => {
-      const stored = getStoredTransactions() ?? mockTransactionsWithAI
-      const transaction = stored.find(t => t.id === transactionId)
-      if (!transaction?.aiSuggestion) throw new Error("Transaction or AI suggestion not found")
-      
-      const updated: TransactionWithAI = {
-        ...transaction,
-        category: transaction.aiSuggestion.category,
-        isAIApproved: true
-      }
-      updateStoredTransaction(transactionId, updated)
-      return updated
+      if (!isAuthenticated || !userId) throw new Error("Unauthorized")
+      const response = await transactionService.approveAISuggestion(transactionId)
+      if (!response.success || !response.data) throw new Error(response.error || "Failed to approve")
+      return response.data
     }
   )
 
   const rejectMutation = useAsyncMutation(
     async (transactionId: string) => {
-      const stored = getStoredTransactions() ?? mockTransactionsWithAI
-      const transaction = stored.find(t => t.id === transactionId)
-      if (!transaction?.aiSuggestion) throw new Error("Transaction or AI suggestion not found")
-      
-      const updated: TransactionWithAI = {
-        ...transaction,
-        aiSuggestion: undefined,
-        isAIApproved: false
-      }
-      updateStoredTransaction(transactionId, updated)
-      return updated
+      if (!isAuthenticated || !userId) throw new Error("Unauthorized")
+      const response = await transactionService.rejectAISuggestion(transactionId)
+      if (!response.success || !response.data) throw new Error(response.error || "Failed to reject")
+      return response.data
     }
   )
 
   const bulkApproveMutation = useAsyncMutation(
     async (transactionIds: string[]) => {
-      const stored = getStoredTransactions() ?? mockTransactionsWithAI
-      const results: TransactionWithAI[] = []
-      
-      for (const id of transactionIds) {
-        const transaction = stored.find(t => t.id === id)
-        if (transaction?.aiSuggestion) {
-          const updated: TransactionWithAI = {
-            ...transaction,
-            category: transaction.aiSuggestion.category,
-            isAIApproved: true
-          }
-          updateStoredTransaction(id, updated)
-          results.push(updated)
-        }
-      }
-      return results
+      if (!isAuthenticated || !userId) throw new Error("Unauthorized")
+      const response = await transactionService.bulkApproveAISuggestions(transactionIds)
+      if (!response.success || !response.data) throw new Error(response.error || "Failed to bulk approve")
+      return response.data
     }
   )
 
@@ -305,7 +266,7 @@ export function useTransactionAI(onUpdate?: (transaction: TransactionWithAI) => 
 
 export function useTransactionStats() {
   const { userId, isAuthenticated } = useTransactionService()
-  
+
   const { data: stats, isLoading, error, refetch } = useAsync(
     async () => {
       if (isAuthenticated && userId) {
@@ -313,13 +274,7 @@ export function useTransactionStats() {
         if (!response.success) throw new Error(response.error || "Failed to fetch stats")
         return response.data
       } else {
-        // Calculate stats from demo storage
-        const stored = getStoredTransactions() ?? mockTransactionsWithAI
-        const pending = stored.filter(t => t.status === 'Att bokföra').length
-        const booked = stored.filter(t => t.status === 'Bokförd').length
-        const missingDocs = stored.filter(t => t.status === 'Saknar underlag').length
-        const ignored = stored.filter(t => t.status === 'Ignorerad').length
-        return { total: stored.length, pending, booked, missingDocs, ignored }
+        return { total: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0 }
       }
     },
     null as { total: number; pending: number; booked: number; missingDocs: number; ignored: number } | null,
@@ -352,10 +307,10 @@ export function useTransactionSelection() {
 
   const clearSelection = useCallback(() => setSelectedIds(new Set()), [])
 
-  const isAllSelected = useMemo(() => 
+  const isAllSelected = useMemo(() =>
     allIds.length > 0 && selectedIds.size === allIds.length, [selectedIds, allIds])
 
-  const isSomeSelected = useMemo(() => 
+  const isSomeSelected = useMemo(() =>
     selectedIds.size > 0 && selectedIds.size < allIds.length, [selectedIds, allIds])
 
   return {

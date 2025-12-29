@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import {
     Bot,
     User,
@@ -15,7 +15,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { employees } from "./constants"
+// import { employees } from "./constants"
 import { useToast } from "@/components/ui/toast"
 import { useVerifications } from "@/hooks/use-verifications"
 
@@ -56,6 +56,8 @@ export function PayslipCreateDialog({
     const toast = useToast()
     const { addVerification } = useVerifications()
 
+    const [employees, setEmployees] = useState<any[]>([])
+    const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
     const [step, setStep] = useState(1)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
     const [chatInput, setChatInput] = useState("")
@@ -64,6 +66,31 @@ export function PayslipCreateDialog({
     const [customSalary, setCustomSalary] = useState("")
     const [aiDeductions, setAiDeductions] = useState<AiDeduction[]>([])
     const [isCreating, setIsCreating] = useState(false)
+
+    // Fetch real employees
+    useEffect(() => {
+        const fetchEmployees = async () => {
+            setIsLoadingEmployees(true)
+            try {
+                const res = await fetch('/api/employees')
+                const data = await res.json()
+                if (data.employees) {
+                    setEmployees(data.employees.map((e: any) => ({
+                        id: e.id,
+                        name: e.name,
+                        role: e.role,
+                        lastSalary: Number(e.monthly_salary),
+                        taxRate: Number(e.tax_rate)
+                    })))
+                }
+            } catch (err) {
+                console.error("Failed to fetch employees:", err)
+            } finally {
+                setIsLoadingEmployees(false)
+            }
+        }
+        if (open) fetchEmployees()
+    }, [open])
 
     const selectedEmp = employees.find(e => e.id === selectedEmployee)
     const totalDeductions = aiDeductions.reduce((sum, d) => sum + d.amount, 0)
@@ -88,22 +115,30 @@ export function PayslipCreateDialog({
         setIsCreating(true)
 
         try {
-            // Simulate API call
-            await new Promise(resolve => setTimeout(resolve, 500))
+            const payslipId = `LB-${Date.now()}`
+            const response = await fetch('/api/payroll/payslips', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    id: payslipId,
+                    employee_id: selectedEmp.id,
+                    period: currentPeriod,
+                    gross_salary: finalSalary,
+                    tax_deduction: tax,
+                    net_salary: netSalary,
+                    bonuses: aiDeductions.filter(d => d.amount < 0).reduce((sum, d) => sum + Math.abs(d.amount), 0),
+                    deductions: aiDeductions.filter(d => d.amount > 0).reduce((sum, d) => sum + d.amount, 0),
+                    status: "draft",
+                    payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                })
+            })
 
-            const newPayslip: Payslip = {
-                id: `LB-${Date.now()}`,
-                employee: selectedEmp.name,
-                period: currentPeriod,
-                grossSalary: finalSalary,
-                netSalary: netSalary,
-                tax: tax,
-                status: "draft",
-                paymentDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            }
+            if (!response.ok) throw new Error("Failed to save payslip")
 
-            // Create verification
-            addVerification({
+            const saved = await response.json()
+
+            // Create verification (ledger entries)
+            await addVerification({
                 description: `Lön ${selectedEmp.name} ${currentPeriod}`,
                 date: new Date().toISOString().split('T')[0],
                 rows: [
@@ -114,7 +149,7 @@ export function PayslipCreateDialog({
             })
 
             toast.success("Lönebesked skapat!", `${selectedEmp.name}s lön för ${currentPeriod} har registrerats`)
-            onPayslipCreated(newPayslip)
+            onPayslipCreated(saved.payslip)
             onOpenChange(false)
             resetDialog()
         } catch (error) {

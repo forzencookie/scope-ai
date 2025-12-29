@@ -135,8 +135,11 @@ const mockForeningMeetings: ForeningMeeting[] = [
   },
 ]
 
+import { useCompliance } from "@/hooks/use-compliance"
+
 export function Arsmote() {
-  const [meetings] = useState<ForeningMeeting[]>(mockForeningMeetings)
+  const { documents: realDocuments, isLoadingDocuments, addDocument } = useCompliance()
+
   const [searchQuery, setSearchQuery] = useState("")
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showMotionDialog, setShowMotionDialog] = useState(false)
@@ -149,14 +152,46 @@ export function Arsmote() {
     return mockMembers.filter(m => m.status === 'aktiv' && m.currentYearFeePaid)
   }, [])
 
+  // Map real documents to ForeningMeeting format
+  const meetings = useMemo(() => {
+    return (realDocuments || [])
+      .filter(doc => doc.type === 'general_meeting_minutes')
+      .map((doc, idx) => {
+        let content = {
+          year: new Date(doc.date).getFullYear(),
+          location: 'Ej angivet',
+          chairperson: 'Ej angivet',
+          secretary: 'Ej angivet',
+          attendeesCount: 0,
+          votingMembersCount: 0,
+          decisions: [] as ForeningDecision[],
+          motions: [] as Motion[],
+          type: 'ordinarie' as const
+        }
+
+        try {
+          const parsed = JSON.parse(doc.content)
+          content = { ...content, ...parsed }
+        } catch (e) {
+          // Fallback
+        }
+
+        return {
+          id: doc.id,
+          date: doc.date,
+          status: (doc.status === 'signed' ? 'protokoll signerat' : (doc.status === 'archived' ? 'genomförd' : 'kallad')) as ForeningMeeting['status'],
+          ...content
+        }
+      })
+  }, [realDocuments])
+
   // Calculate stats
   const stats = useMemo(() => {
     const upcoming = meetings.filter(m => m.status === 'kallad').length
     const completed = meetings.filter(m => m.status === 'protokoll signerat').length
     const nextMeeting = meetings.find(m => m.status === 'kallad')
-    const pendingMotions = nextMeeting?.motions.filter(m => m.status === 'mottagen').length || 0
+    const pendingMotions = nextMeeting?.motions.filter((m: any) => m.status === 'mottagen').length || 0
 
-    // Calculate days until next meeting
     const daysUntilNext = nextMeeting
       ? Math.ceil((new Date(nextMeeting.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
       : null
@@ -169,11 +204,11 @@ export function Arsmote() {
     if (!searchQuery) return meetings
     const query = searchQuery.toLowerCase()
     return meetings.filter(m =>
-      m.decisions.some(d =>
+      m.decisions.some((d: any) =>
         d.title.toLowerCase().includes(query) ||
         d.decision.toLowerCase().includes(query)
       ) ||
-      m.motions.some(mo =>
+      m.motions.some((mo: any) =>
         mo.title.toLowerCase().includes(query) ||
         mo.description.toLowerCase().includes(query)
       ) ||
@@ -232,13 +267,17 @@ export function Arsmote() {
     setShowSendNoticeDialog(true)
   }
 
+  if (isLoadingDocuments) {
+    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar stämmor...</div>
+  }
+
   return (
     <div className="space-y-6">
       {/* Stats Overview */}
       <StatCardGrid columns={4}>
         <StatCard
           label="Nästa årsmöte"
-          value={stats.nextMeeting ? formatDateLong(stats.nextMeeting.date) : 'Ej planerat'}
+          value={stats.nextMeeting ? formatDateLong(stats.nextMeeting.date) : 'Ej planerad'}
           subtitle={stats.daysUntilNext ? `${stats.daysUntilNext} dagar kvar` : 'Inget årsmöte planerat'}
           icon={Calendar}
         />
@@ -351,7 +390,23 @@ export function Arsmote() {
             type="annual"
             defaultAgenda={standardAgenda}
             onSubmit={(data) => {
-              console.log("Meeting planned", data)
+              addDocument({
+                type: 'general_meeting_minutes',
+                title: `${data.type === 'extra' ? 'Extra årsmöte' : 'Ordinarie årsmöte'} ${data.year}`,
+                date: data.date,
+                content: JSON.stringify({
+                  year: parseInt(data.year),
+                  location: data.location,
+                  type: data.type,
+                  decisions: [],
+                  motions: [],
+                  attendeesCount: 0,
+                  votingMembersCount: 0
+                }),
+                status: 'draft',
+                source: 'manual'
+              })
+              setShowCreateDialog(false)
             }}
           />
 
@@ -481,7 +536,7 @@ export function Arsmote() {
                         Motioner ({meeting.motions.length} st)
                       </h4>
                       <div className="space-y-2">
-                        {meeting.motions.map((motion) => (
+                        {meeting.motions.map((motion: any) => (
                           <div
                             key={motion.id}
                             className="p-3 bg-muted rounded-lg space-y-2"
@@ -516,7 +571,7 @@ export function Arsmote() {
                         Beslut ({meeting.decisions.length} st)
                       </h4>
                       <div className="space-y-2">
-                        {meeting.decisions.map((decision, index) => (
+                        {meeting.decisions.map((decision: any, index: number) => (
                           <div
                             key={decision.id}
                             className="flex items-start gap-3 p-3 bg-muted rounded-lg"

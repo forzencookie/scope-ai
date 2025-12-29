@@ -35,6 +35,8 @@ export async function POST(request: Request) {
                         date: data.date || timestamp.toISOString().split('T')[0],
                         account: data.account || 'foretagskonto',
                         status: 'pending',
+                        source: data.source || 'user_reported',
+                        createdBy: data.createdBy || 'ai_assistant'
                     }
                     await db.addTransaction(transaction)
                     return NextResponse.json({ success: true, dataType, item: transaction })
@@ -47,13 +49,28 @@ export async function POST(request: Request) {
                         date: data.date || timestamp.toISOString().split('T')[0],
                         category: data.category || 'Övrigt',
                         status: 'pending',
+                        source: data.source || 'user_reported',
+                        createdBy: data.createdBy || 'ai_assistant'
                     }
                     await db.addReceipt(receipt)
                     return NextResponse.json({ success: true, dataType, item: receipt })
 
                 case 'invoice':
-                    // Customer invoices - not yet in Supabase, skip for now
-                    return NextResponse.json({ success: true, dataType, item: { id, ...data } })
+                    const invoice = {
+                        id,
+                        invoiceNumber: data.invoiceNumber,
+                        customerName: data.customerName,
+                        amount: data.amount,
+                        vatAmount: data.vatAmount,
+                        totalAmount: data.totalAmount,
+                        issueDate: data.issueDate || data.date,
+                        dueDate: data.dueDate,
+                        status: data.status || 'draft',
+                        source: data.source || 'user_reported',
+                        createdBy: data.createdBy || 'ai_assistant'
+                    }
+                    await db.addInvoice(invoice)
+                    return NextResponse.json({ success: true, dataType, item: invoice })
 
                 case 'supplier-invoice':
                     const supplierInvoice = {

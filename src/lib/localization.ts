@@ -168,6 +168,16 @@ export const MEETING_STATUS_LABELS = {
 } as const
 
 // =============================================================================
+// Benefit Statuses (Förmåner)
+// =============================================================================
+
+export const BENEFIT_STATUS_LABELS = {
+    TAX_FREE: "Skattefri",
+    TAXABLE: "Skattepliktig",
+    DEDUCTION: "Löneväxling",
+} as const
+
+// =============================================================================
 // Table Headers & Labels
 // =============================================================================
 

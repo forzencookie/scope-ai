@@ -36,7 +36,6 @@ import {
 import { IconButton, IconButtonGroup } from "@/components/ui/icon-button"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { termExplanations, dividendHistory, k10Declarations } from "./constants"
-import { useCorporate } from "@/hooks/use-corporate"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useTextMode } from "@/providers/text-mode-provider"
@@ -105,10 +104,12 @@ function DividendTable({ data, className }: DividendTableProps) {
     )
 }
 
+import { useCompliance } from "@/hooks/use-compliance"
+
 export function UtdelningContent() {
-    const { meetings, addMeeting, addDecision, updateDecision } = useCorporate()
+    const { documents: realDocuments, isLoadingDocuments, addDocument } = useCompliance()
     const { addVerification } = useVerifications()
-    const { success } = useToast()
+    const toast = useToast()
     const { text } = useTextMode()
 
     const [showAIDialog, setShowAIDialog] = useState(false)
@@ -124,30 +125,38 @@ export function UtdelningContent() {
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-    // Derive dividend history from real meetings
+    // Derive dividend history from real documents
     const realDividendHistory = useMemo(() => {
         const history: typeof dividendHistory = []
 
+        const meetings = (realDocuments || [])
+            .filter(doc => doc.type === 'general_meeting_minutes')
+            .map(doc => {
+                let content = { year: new Date(doc.date).getFullYear(), decisions: [] }
+                try { content = JSON.parse(doc.content) } catch (e) { }
+                return { ...content, date: doc.date, status: doc.status }
+            })
+
         meetings.forEach(meeting => {
-            meeting.decisions
-                .filter(d => d.type === 'dividend' && d.amount)
-                .forEach(d => {
+            (meeting.decisions || [])
+                .filter((d: any) => d.type === 'dividend' && d.amount)
+                .forEach((d: any) => {
                     const amount = d.amount || 0
                     const tax = amount * 0.2 // Simplified 20% tax rule for demo
                     history.push({
-                        year: meeting.year.toString(),
+                        year: (meeting.year || new Date(meeting.date).getFullYear()).toString(),
                         amount: amount,
                         taxRate: '20%',
                         tax: tax,
                         netAmount: amount - tax,
-                        status: d.booked ? 'paid' : 'planned'
+                        status: d.booked || meeting.status === 'signed' ? 'paid' : 'planned'
                     })
                 })
         })
 
         // Sort by year descending
         return history.sort((a, b) => Number(b.year) - Number(a.year))
-    }, [meetings])
+    }, [realDocuments])
 
     // Use mock history if no real data yet (for smooth transition)
     const displayHistory = realDividendHistory.length > 0 ? realDividendHistory : dividendHistory
@@ -158,43 +167,29 @@ export function UtdelningContent() {
 
         if (!amount || !year) return
 
-        // 1. Create General Meeting (The "Paper Trail")
         const meetingDate = new Date().toISOString().split('T')[0]
-        // Use a temporary ID for the decision linking, actual ID is generated in store but we can't get it back easily in this mock setup.
-        // So we just fire and forget the sequence.
-        // Ideally `addMeeting` returns the ID. For now we assume the latest logic or just add separately.
 
-        // Strategy: We can't easily link the decision to the meeting immediately if `addMeeting` is void.
-        // Workaround: We'll modify `addMeeting` to return ID in a real app.
-        // Here, we'll manually construct the meeting with decision included!
-
-        const newMeetingId = `gm-${Math.random().toString(36).substr(2, 9)}`
-        const newDecisionId = `gmd-${Math.random().toString(36).substr(2, 9)}`
-
-        // We can't pass ID to addMeeting based on current context interface (Omit<..., "id">).
-        // So we will add meeting, then find it? No, unsafe.
-        // Robust way: Add meeting WITH decision in one go if possible?
-        // Context `addMeeting` takes Omit<GeneralMeeting, "id">.
-        // GeneralMeeting has `decisions`.
-
-        addMeeting({
-            year: year,
+        // 1. Create General Meeting Document
+        await addDocument({
+            type: 'general_meeting_minutes',
+            title: `Extra bolagsstämma - Utdelning ${year}`,
             date: meetingDate,
-            location: 'Digitalt beslut',
-            type: 'extra', // Extra bolagsstämma for ad-hoc dividend
-            meetingType: 'bolagsstamma',
-            attendeesCount: 1,
-            chairperson: 'Ägaren',
-            secretary: 'Ägaren',
-            status: 'protokoll signerat', // Auto-signed
-            decisions: [{
-                id: newDecisionId,
-                title: 'Beslut om vinstutdelning',
-                decision: `Stämman beslutade att dela ut ${amount} kr till aktieägarna.`,
-                type: 'dividend',
-                amount: amount,
-                booked: true // Auto-book
-            }]
+            content: JSON.stringify({
+                year: year,
+                location: 'Digitalt beslut',
+                type: 'extra',
+                decisions: [{
+                    id: `gmd-${Math.random().toString(36).substr(2, 9)}`,
+                    title: 'Beslut om vinstutdelning',
+                    decision: `Stämman beslutade att dela ut ${amount} kr till aktieägarna.`,
+                    type: 'dividend',
+                    amount: amount,
+                    booked: true
+                }],
+                attendeesCount: 1
+            }),
+            status: 'signed',
+            source: 'manual'
         })
 
         // 2. Book Verification (The Money)
@@ -217,7 +212,7 @@ export function UtdelningContent() {
             ]
         })
 
-        success(
+        toast.success(
             "Utdelning registrerad",
             `Beslut protokollfört och ${amount.toLocaleString('sv-SE')} kr utbetalt.`
         )
@@ -311,7 +306,7 @@ export function UtdelningContent() {
                     icon={AlertTriangle}
                     title="3:12-reglerna"
                     description="Som fåmansföretagare gäller särskilda regler för utdelning. Utdelning inom gränsbeloppet beskattas med 20% kapitalskatt. Utdelning över gränsbeloppet beskattas som tjänst."
-                    variant="ai"
+                    variant="warning"
                 />
 
                 <div className="grid grid-cols-2 gap-6">

@@ -49,7 +49,6 @@ export const ICON_MAP: Record<string, LucideIcon> = {
 
 export interface TransactionRowProps {
     transaction?: Transaction
-    isEmpty?: boolean
     onClick?: () => void
     selected?: boolean
     onToggleSelection?: () => void
@@ -57,13 +56,13 @@ export interface TransactionRowProps {
 
 export const TransactionRow = memo(function TransactionRow({
     transaction,
-    isEmpty = false,
     onClick,
     selected,
     onToggleSelection,
 }: TransactionRowProps) {
-    const shouldRenderEmpty = isEmpty || !transaction
-    const Icon = !shouldRenderEmpty && transaction?.iconName
+    if (!transaction) return null
+
+    const Icon = transaction.iconName
         ? (ICON_MAP[transaction.iconName] || Tag)
         : Tag
 
@@ -76,46 +75,36 @@ export const TransactionRow = memo(function TransactionRow({
             )}
             onClick={onClick}
         >
-            {!shouldRenderEmpty && transaction ? (
-                <>
-                    {onToggleSelection && (
-                        <td className="w-10 pl-4 py-3 whitespace-nowrap">
-                            <Checkbox
-                                checked={selected}
-                                onCheckedChange={onToggleSelection}
-                                onClick={(e) => e.stopPropagation()}
-                            />
-                        </td>
-                    )}
-                    <td className="px-4 py-3 whitespace-nowrap">
-                        <span className="font-medium">{transaction.name}</span>
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{transaction.date}</td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                        <div>
-                            <div className={cn("font-medium tabular-nums", transaction.amount.startsWith("+") ? "text-green-600 dark:text-green-500/70" : "text-foreground")}>
-                                {transaction.amount}
-                            </div>
-                            {transaction.vatAmount !== undefined && (
-                                <div className="text-xs text-muted-foreground">
-                                    Moms {Math.abs(transaction.vatAmount).toLocaleString("sv-SE")} kr
-                                </div>
-                            )}
+            <td className="px-4 py-3 whitespace-nowrap">
+                <span className="font-medium">{transaction.name}</span>
+            </td>
+            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{transaction.date}</td>
+            <td className="px-4 py-3 whitespace-nowrap">
+                <div>
+                    <div className={cn("font-medium tabular-nums", transaction.amount.startsWith("+") ? "text-green-600 dark:text-green-500/70" : "text-foreground")}>
+                        {transaction.amount}
+                    </div>
+                    {transaction.vatAmount !== undefined && (
+                        <div className="text-xs text-muted-foreground">
+                            Moms {Math.abs(transaction.vatAmount).toLocaleString("sv-SE")} kr
                         </div>
-                    </td>
-                    <td className="px-4 py-3 whitespace-nowrap">
-                        <AppStatusBadge status={transaction.status} size="sm" />
-                    </td>
-                    <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{transaction.account}</td>
-                </>
-            ) : (
-                <>
-                    <td className="px-4 py-3">&nbsp;</td>
-                    <td className="px-4 py-3">&nbsp;</td>
-                    <td className="px-4 py-3">&nbsp;</td>
-                    <td className="px-4 py-3">&nbsp;</td>
-                    <td className="px-4 py-3">&nbsp;</td>
-                </>
+                    )}
+                </div>
+            </td>
+            <td className="px-4 py-3 whitespace-nowrap">
+                <AppStatusBadge status={transaction.status} size="sm" />
+            </td>
+            <td className="px-4 py-3 text-muted-foreground whitespace-nowrap">{transaction.account}</td>
+            {onToggleSelection && (
+                <td className="w-10 px-4 py-3 whitespace-nowrap text-right">
+                    <div className="flex justify-end pr-2">
+                        <Checkbox
+                            checked={selected}
+                            onCheckedChange={onToggleSelection}
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                    </div>
+                </td>
             )}
         </tr>
     )

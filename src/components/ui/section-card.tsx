@@ -23,7 +23,7 @@ export interface SectionCardProps {
     /** Additional className */
     className?: string
     /** Card variant */
-    variant?: "default" | "highlight" | "info" | "ai"
+    variant?: "default" | "highlight" | "info" | "ai" | "warning" | "success"
 }
 
 export function SectionCard({
@@ -45,10 +45,12 @@ export function SectionCard({
         <div
             className={cn(
                 "rounded-lg p-4",
-                variant === "default" && "border-2 border-border/60",
-                variant === "highlight" && "border-2 border-primary/30 bg-primary/5",
-                variant === "info" && "border-2 border-border/60 bg-muted/30",
+                variant === "default" && "border border-border/40",
+                variant === "highlight" && "border border-primary/30 bg-primary/5",
+                variant === "info" && "border border-border/40 bg-muted/30",
                 variant === "ai" && "bg-[oklch(0.98_0.01_290)] dark:bg-[oklch(0.18_0.02_290)] border-0",
+                variant === "warning" && "bg-amber-50/50 dark:bg-amber-950/20 border-0",
+                variant === "success" && "bg-emerald-50/50 dark:bg-emerald-950/20 border-0",
                 className
             )}
         >
@@ -58,7 +60,9 @@ export function SectionCard({
                         "h-5 w-5 mt-0.5 shrink-0",
                         variant === "highlight" && "text-primary",
                         variant === "ai" && "text-purple-600 dark:text-purple-500",
-                        variant !== "highlight" && variant !== "ai" && "text-muted-foreground"
+                        variant === "warning" && "text-amber-600 dark:text-amber-500",
+                        variant === "success" && "text-emerald-600 dark:text-emerald-500",
+                        variant !== "highlight" && variant !== "ai" && variant !== "warning" && variant !== "success" && "text-muted-foreground"
                     )} />
                 )}
                 <div className="flex-1 min-w-0">
@@ -89,6 +93,8 @@ export interface ListCardProps {
     dividers?: boolean
     /** Additional className */
     className?: string
+    /** Minimal variant - borders only top and bottom, no sides */
+    variant?: "default" | "minimal"
 }
 
 export function ListCard({
@@ -97,16 +103,24 @@ export function ListCard({
     children,
     dividers = true,
     className,
+    variant = "default",
 }: ListCardProps) {
+    const isMinimal = variant === "minimal"
     return (
-        <div className={cn("border-2 border-border/60 rounded-lg", className)}>
+        <div className={cn(
+            isMinimal ? "border-y border-border/40" : "border border-border/40 rounded-lg",
+            className
+        )}>
             {(title || headerActions) && (
-                <div className="px-4 py-3 border-b-2 border-border/60 flex items-center justify-between">
+                <div className={cn(
+                    "px-4 py-3 flex items-center justify-between",
+                    !isMinimal && "border-b border-border/40"
+                )}>
                     {title && <h2 className="font-medium">{title}</h2>}
                     {headerActions}
                 </div>
             )}
-            <div className={cn(dividers && "divide-y-2 divide-border/60")}>
+            <div className={cn(dividers && "divide-y divide-border/40")}>
                 {children}
             </div>
         </div>
@@ -136,17 +150,22 @@ export function ListCardItem({
     return (
         <div
             className={cn(
-                "px-4 py-3 flex items-center justify-between gap-3",
-                onClick && "hover:bg-muted/30 cursor-pointer transition-colors",
+                "px-4 py-4 flex items-center justify-between gap-4 relative group",
+                onClick && "cursor-pointer",
                 className
             )}
             onClick={onClick}
         >
-            <div className="flex items-center gap-3 min-w-0 flex-1">
+            {/* Rounded hover pill highlight that doesn't touch the lines */}
+            {onClick && (
+                <div className="absolute inset-x-0 inset-y-1 rounded-xl bg-transparent group-hover:bg-muted/40 transition-colors z-0" />
+            )}
+
+            <div className="flex items-center gap-4 min-w-0 flex-1 relative z-10">
                 {icon}
                 <div className="min-w-0 flex-1">{children}</div>
             </div>
-            {trailing}
+            {trailing && <div className="relative z-10">{trailing}</div>}
         </div>
     )
 }

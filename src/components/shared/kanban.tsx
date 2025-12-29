@@ -44,7 +44,7 @@ export function KanbanCard({
     children,
 }: KanbanCardProps) {
     return (
-        <div className="bg-background rounded-lg border-2 border-dashed border-border/60 p-4 hover:shadow-md transition-all cursor-pointer group">
+        <div className="bg-background rounded-lg p-4 border-2 border-transparent hover:border-border transition-colors cursor-pointer group">
             {/* Subtitle/Client Label */}
             {subtitle && (
                 <div className="text-xs text-muted-foreground mb-2">

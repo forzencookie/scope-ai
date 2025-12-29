@@ -1,7 +1,10 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
-import { type Receipt, mockReceipts as defaultReceipts } from "@/data/receipts"
+import type { Receipt } from "@/types"
+
+// PRODUCTION: No mock data
+const defaultReceipts: Receipt[] = []
 
 // ============================================================================
 // Receipts Provider Context

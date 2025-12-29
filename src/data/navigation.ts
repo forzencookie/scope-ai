@@ -35,7 +35,7 @@ export const mockUser: User = {
   name: "Rice",
   email: "rice@scopeai.se",
   avatar: "",
-  plan: "Free",
+  plan: "Pro",
 }
 
 // ============================================

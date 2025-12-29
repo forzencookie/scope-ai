@@ -21,7 +21,7 @@ import {
     type ProcessedVATPeriod,
     type ProcessedFinancialItem,
 } from '@/services/reports-processor'
-import { mockTransactions, type Transaction } from '@/data/transactions'
+import type { Transaction } from '@/types'
 
 // =============================================================================
 // Transaction Tools
@@ -72,17 +72,34 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
         },
     },
     execute: async (params) => {
-        // Use mock transactions directly
-        let filtered = [...mockTransactions]
+        // Fetch transactions from API (which reads from Supabase)
+        let transactions: Transaction[] = []
+
+        try {
+            const response = await fetch('/api/transactions', { cache: 'no-store' })
+            if (response.ok) {
+                const data = await response.json()
+                transactions = data.transactions || []
+            }
+        } catch (error) {
+            console.error('Failed to fetch transactions:', error)
+        }
 
         // Apply filters
+        let filtered = [...transactions]
+
         if (params.minAmount !== undefined) {
-            filtered = filtered.filter(t => Math.abs(t.amountValue) >= params.minAmount!)
+            filtered = filtered.filter(t => {
+                const amount = typeof t.amountValue === 'number' ? t.amountValue : 0
+                return Math.abs(amount) >= params.minAmount!
+            })
         }
         if (params.maxAmount !== undefined) {
-            filtered = filtered.filter(t => Math.abs(t.amountValue) <= params.maxAmount!)
+            filtered = filtered.filter(t => {
+                const amount = typeof t.amountValue === 'number' ? t.amountValue : 0
+                return Math.abs(amount) <= params.maxAmount!
+            })
         }
-        // Status filter removed - mock data uses different status types
 
         // Apply limit
         const limit = params.limit || 10
@@ -91,7 +108,9 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
         return {
             success: true,
             data,
-            message: `Hittade ${filtered.length} transaktioner, visar ${data.length}.`,
+            message: filtered.length > 0
+                ? `Hittade ${filtered.length} transaktioner, visar ${data.length}.`
+                : 'Inga transaktioner hittades. Data rapporteras via AI-assistenten.',
             display: {
                 component: 'TransactionsTable',
                 props: { transactions: data },
@@ -391,11 +410,161 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
 })
 
 // =============================================================================
+// Receipts Tools
+// =============================================================================
+
+export interface GetReceiptsParams {
+    limit?: number
+    supplier?: string
+    status?: string
+    minAmount?: number
+    maxAmount?: number
+}
+
+interface Receipt {
+    id: string
+    supplier: string
+    date: string
+    amount: string
+    category: string
+    status: string
+    attachment?: string
+    attachmentUrl?: string
+}
+
+export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
+    name: 'get_receipts',
+    description: 'Hämta kvitton från bokföringen. Kan filtreras på leverantör, status eller belopp.',
+    category: 'read',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            limit: {
+                type: 'number',
+                description: 'Max antal kvitton att hämta (standard: 10)',
+            },
+            supplier: {
+                type: 'string',
+                description: 'Filtrera på leverantör/butik',
+            },
+            status: {
+                type: 'string',
+                description: 'Filtrera på status (pending, verified, recorded)',
+            },
+            minAmount: {
+                type: 'number',
+                description: 'Minsta belopp',
+            },
+            maxAmount: {
+                type: 'number',
+                description: 'Högsta belopp',
+            },
+        },
+    },
+    execute: async (params) => {
+        // Fetch receipts from API (which reads from Supabase)
+        let receipts: Receipt[] = []
+
+        try {
+            const response = await fetch('/api/receipts/processed', { cache: 'no-store' })
+            if (response.ok) {
+                const data = await response.json()
+                receipts = data.receipts || []
+            }
+        } catch (error) {
+            console.error('Failed to fetch receipts:', error)
+        }
+
+        // Apply filters
+        let filtered = [...receipts]
+
+        if (params.supplier) {
+            const query = params.supplier.toLowerCase()
+            filtered = filtered.filter(r =>
+                r.supplier?.toLowerCase().includes(query)
+            )
+        }
+
+        if (params.status) {
+            filtered = filtered.filter(r =>
+                r.status?.toLowerCase() === params.status!.toLowerCase()
+            )
+        }
+
+        // Apply limit
+        const limit = params.limit || 10
+        const data = filtered.slice(0, limit)
+
+        return {
+            success: true,
+            data,
+            message: filtered.length > 0
+                ? `Hittade ${filtered.length} kvitton, visar ${data.length}.`
+                : 'Inga kvitton hittades. Rapportera kvitton via AI-assistenten.',
+            display: {
+                component: 'ReceiptsTable',
+                props: { receipts: data },
+                title: 'Kvitton',
+                fullViewRoute: '/dashboard/sok/bokforing?tab=kvitton',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Benefits Tools
+// =============================================================================
+
+export interface GetBenefitsParams {
+    category?: 'tax_free' | 'taxable' | 'deduction'
+}
+
+export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
+    name: 'get_available_benefits',
+    description: 'Hämta tillgängliga personalförmåner (t.ex. friskvård, bilförmån).',
+    category: 'read',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            category: {
+                type: 'string',
+                enum: ['tax_free', 'taxable', 'deduction'],
+                description: 'Filtrera på kategori',
+            },
+        },
+    },
+    execute: async (params) => {
+        const { listAvailableBenefits } = await import('@/lib/formaner')
+        const benefits = await listAvailableBenefits('AB')
+
+        let filtered = benefits
+        if (params.category) {
+            filtered = benefits.filter(b => b.category === params.category)
+        }
+
+        return {
+            success: true,
+            data: filtered,
+            message: `Hittade ${filtered.length} tillgängliga förmåner.`,
+            display: {
+                component: 'BenefitsTable' as any, // We'll add this mapping if needed
+                props: { benefits: filtered },
+                title: 'Tillgängliga Förmåner',
+                fullViewRoute: '/dashboard/payroll?tab=formaner',
+            },
+        }
+    }
+})
+
+// =============================================================================
 // Export all read tools
 // =============================================================================
 
 export const readTools = [
     getTransactionsTool,
+    getReceiptsTool,
     getPayslipsTool,
     getEmployeesTool,
     getAGIReportsTool,
@@ -403,4 +572,6 @@ export const readTools = [
     getIncomeStatementTool,
     getBalanceSheetTool,
     getCompanyStatsTool,
+    getAvailableBenefitsTool,
 ]
+

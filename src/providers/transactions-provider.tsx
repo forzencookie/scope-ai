@@ -2,7 +2,9 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
 import type { Transaction, TransactionWithAI } from "@/types"
-import { mockTransactions as defaultTransactions } from "@/data/transactions"
+
+// PRODUCTION: No mock data
+const defaultTransactions: TransactionWithAI[] = []
 
 // ============================================================================
 // Transactions Provider Context

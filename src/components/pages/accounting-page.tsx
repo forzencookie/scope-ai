@@ -47,7 +47,7 @@ import { useFeature } from "@/providers/company-provider"
 import { SupplierInvoicesKanban, type SupplierInvoicesKanbanRef } from "@/components/expenses"
 import { Huvudbok } from "@/components/accounting"
 import { InventarierTable } from "@/components/assets"
-import { InvoicesKanban } from "@/components/revenue"
+import { InvoicesDashboardLayout } from "@/components/revenue/invoices-dashboard-layout"
 import { useTextMode } from "@/providers/text-mode-provider"
 
 // Tab configuration with feature requirements and translations
@@ -261,10 +261,10 @@ function AccountingPageContent() {
                 </header>
 
                 {/* Tab Content */}
-                <div className="bg-background p-6">
-                    <div className="max-w-6xl w-full">
+                <div className="bg-background px-4 py-4">
+                    <div className="w-full">
                         {/* Tabs - Show max 3 visible, rest in overflow */}
-                        <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60">
+                        <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60 -ml-1">
                             {tabs.slice(0, 3).map((tab) => {
                                 const isActive = currentTab === tab.id
                                 const Icon = tab.icon
@@ -387,7 +387,7 @@ function AccountingPageContent() {
                             />
                         )}
                         {currentTab === "kundfakturor" && (
-                            <InvoicesKanban />
+                            <InvoicesDashboardLayout />
                         )}
                         {currentTab === "leverantorsfakturor" && (
                             <SupplierInvoicesKanban ref={supplierInvoicesRef} />

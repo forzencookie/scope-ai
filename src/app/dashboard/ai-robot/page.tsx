@@ -18,17 +18,41 @@ import {
     SheetTitle,
     SheetTrigger,
 } from "@/components/ui/sheet"
-import { Plus, Send, Loader2, History, RefreshCw, AlertCircle, MessageSquare, Trash2 } from "lucide-react"
+import { Plus, Send, Loader2, History, RefreshCw, AlertCircle, MessageSquare, Trash2, Paperclip, Mic, ArrowRight, Inbox, LayoutGrid, AtSign } from "lucide-react"
 import { useRef, useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
+import Link from "next/link"
 import ReactMarkdown from "react-markdown"
 import { cn } from "@/lib/utils"
+import {
+    ConfirmationCard,
+    ReceiptCard,
+    TransactionCard,
+    TaskChecklist
+} from "@/components/ai"
+import { MentionPopover, MentionBadge, type MentionItem } from "@/components/ai/mention-popover"
+import type { AIDisplayInstruction, AIConfirmationRequest } from "@/lib/ai-tools"
 
 interface Message {
     id: string
     role: 'user' | 'assistant'
     content: string
     error?: boolean
+    // Structured data for AI cards
+    display?: {
+        type: 'ReceiptCard' | 'TransactionCard' | 'TaskChecklist' | 'ReceiptsTable'
+        data: any
+    }
+    confirmationRequired?: {
+        id: string
+        type: string
+        data: any
+        action: string
+    }
+    toolResults?: Array<{
+        toolName: string
+        result: any
+    }>
 }
 
 interface Conversation {
@@ -69,8 +93,11 @@ function AIRobotPageContent() {
     const [isHistoryOpen, setIsHistoryOpen] = useState(false)
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const messagesEndRef = useRef<HTMLDivElement>(null)
+    const mentionAnchorRef = useRef<HTMLSpanElement>(null)
     const [isExpanded, setIsExpanded] = useState(false)
     const [hasAppliedInitialPrompt, setHasAppliedInitialPrompt] = useState(false)
+    const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
+    const [isMentionOpen, setIsMentionOpen] = useState(false)
 
     // Get current conversation
     const currentConversation = conversations.find(c => c.id === currentConversationId)
@@ -163,9 +190,9 @@ function AIRobotPageContent() {
     }, [currentConversationId])
 
     // Send message
-    const sendMessage = useCallback(async (retryMessageId?: string) => {
+    const sendMessage = useCallback(async (retryMessageId?: string, confirmationId?: string) => {
         const messageContent = textareaValue.trim()
-        if (!messageContent && !retryMessageId) return
+        if (!messageContent && !retryMessageId && !confirmationId) return
         if (isLoading) return
 
         let conversationId = currentConversationId
@@ -231,8 +258,9 @@ function AIRobotPageContent() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     messages: updatedMessages
-                        .filter(m => m.role === 'user' || (m.role === 'assistant' && m.content))
-                        .map(m => ({ role: m.role, content: m.content }))
+                        .filter(m => m.role === 'user' || (m.role === 'assistant' && (m.content || m.display || m.confirmationRequired)))
+                        .map(m => ({ role: m.role, content: m.content })),
+                    confirmationId
                 })
             })
 
@@ -240,6 +268,34 @@ function AIRobotPageContent() {
                 throw new Error('Failed to get response')
             }
 
+            const contentType = response.headers.get('content-type')
+
+            // Handle Structured JSON Response (Tool Results / Cards)
+            if (contentType?.includes('application/json')) {
+                const data = await response.json()
+
+                setConversations(prev => prev.map(c =>
+                    c.id === conversationId
+                        ? {
+                            ...c,
+                            messages: c.messages.map(msg =>
+                                msg.id === assistantMessageId
+                                    ? {
+                                        ...msg,
+                                        content: data.content,
+                                        display: data.display,
+                                        confirmationRequired: data.confirmationRequired,
+                                        toolResults: data.toolResults
+                                    }
+                                    : msg
+                            )
+                        }
+                        : c
+                ))
+                return
+            }
+
+            // Handle Streaming Text Response
             const reader = response.body?.getReader()
             const decoder = new TextDecoder()
 
@@ -266,7 +322,8 @@ function AIRobotPageContent() {
                     ))
                 }
             }
-        } catch {
+        } catch (error) {
+            console.error('SendMessage error:', error)
             setConversations(prev => prev.map(c =>
                 c.id === conversationId
                     ? {
@@ -299,77 +356,118 @@ function AIRobotPageContent() {
         }
     }
 
-    // Chat input component
+    // Chat input component - Compact Cursor-style layout
     const chatInputJSX = (
         <div className="w-full max-w-2xl mx-auto">
-            <div
-                className={cn(
-                    "bg-muted/50 dark:bg-muted/30 border-2 border-border/60 p-2 w-full rounded-2xl transition-all duration-300 ease-in-out",
-                    isExpanded ? "flex flex-col gap-2" : "flex items-end gap-2"
-                )}
-            >
-                {!isExpanded && (
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="shrink-0 h-8 w-8 rounded-full hover:bg-muted"
-                        aria-label="Lägg till bilaga"
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                )}
-
-                <div className={isExpanded ? "w-full" : "flex-1"}>
+            {/* Input container - stacked layout: textarea top, buttons bottom */}
+            <div className="bg-muted/40 dark:bg-muted/30 border border-border/50 rounded-xl">
+                {/* Top row - Textarea */}
+                <div className="px-3 pt-3 pb-2">
                     <Textarea
                         ref={textareaRef}
                         value={textareaValue}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
-                        placeholder="Skriv ett meddelande…"
-                        className={cn(
-                            "resize-none border-0 bg-transparent rounded-xl px-3 py-2 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full transition-all duration-300 ease-in-out",
-                            isExpanded
-                                ? "min-h-[60px] max-h-[300px] text-base overflow-y-auto"
-                                : "min-h-[36px] max-h-[36px] overflow-hidden"
-                        )}
-                        rows={isExpanded ? undefined : 1}
+                        placeholder="Skriv ett meddelande..."
+                        className="resize-none border-0 bg-transparent p-0 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full min-h-[24px] max-h-[120px] text-sm"
+                        rows={1}
                     />
                 </div>
 
-                {isExpanded ? (
-                    <div className="flex items-center justify-between w-full px-2">
+                {/* Bottom row - Buttons */}
+                <div className="flex items-center justify-between px-2 pb-2">
+                    {/* Left - attachment and mention buttons */}
+                    <div className="flex items-center gap-0.5">
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="shrink-0 h-8 w-8 rounded-full hover:bg-muted"
+                            className="h-7 w-7 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground"
                             aria-label="Lägg till bilaga"
                         >
-                            <Plus className="h-4 w-4" />
+                            <Paperclip className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "h-7 w-7 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground",
+                                isMentionOpen && "bg-muted/60 text-foreground"
+                            )}
+                            aria-label="Nämn data"
+                            onClick={() => setIsMentionOpen(!isMentionOpen)}
+                        >
+                            <AtSign className="h-4 w-4" />
+                        </Button>
+                        <span ref={mentionAnchorRef} className="hidden" />
+                    </div>
+
+                    {/* Right - mic and send */}
+                    <div className="flex items-center gap-0.5">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground"
+                            aria-label="Röstinmatning"
+                        >
+                            <Mic className="h-4 w-4" />
                         </Button>
                         <Button
                             size="icon"
-                            className="shrink-0 h-8 w-8 rounded-xl disabled:opacity-50"
+                            className="h-7 w-7 rounded-md disabled:opacity-50"
                             aria-label="Skicka meddelande"
                             onClick={() => sendMessage()}
                             disabled={isLoading || !textareaValue.trim()}
                         >
-                            {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
+                            {isLoading ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <ArrowRight className="h-4 w-4" />
+                            )}
                         </Button>
                     </div>
-                ) : (
-                    <Button
-                        size="icon"
-                        className="shrink-0 h-8 w-8 rounded-xl disabled:opacity-50"
-                        aria-label="Skicka meddelande"
-                        onClick={() => sendMessage()}
-                        disabled={isLoading || !textareaValue.trim()}
-                    >
-                        {isLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
-                    </Button>
-                )}
+                </div>
+
+                {/* Mention popover */}
+                <MentionPopover
+                    open={isMentionOpen}
+                    onOpenChange={setIsMentionOpen}
+                    onSelect={(item) => {
+                        setTextareaValue(prev => prev + `@${item.label} `)
+                        setMentionItems(prev => [...prev, item])
+                        setIsMentionOpen(false)
+                        textareaRef.current?.focus()
+                    }}
+                    searchQuery=""
+                    items={[
+                        { id: "cat-faktura", type: "faktura", label: "Faktura", sublabel: "Nämn en faktura" },
+                        { id: "cat-kvitto", type: "kvitto", label: "Kvitto", sublabel: "Nämn ett kvitto" },
+                        { id: "cat-transaktion", type: "transaktion", label: "Transaktion", sublabel: "Nämn en transaktion" },
+                    ]}
+                    anchorRef={mentionAnchorRef}
+                />
+            </div>
+
+            {/* Navigation links below chatbar */}
+            <div className="flex items-center gap-4 mt-2 px-1">
+                <Link
+                    href="/dashboard/sok"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                    <span>Öppna Appar</span>
+                </Link>
+                <Link
+                    href="/dashboard/ai-robot/konversationer"
+                    className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <Inbox className="h-3.5 w-3.5" />
+                    <span>Visa konversationer</span>
+                </Link>
             </div>
         </div>
     )
+
+
 
     // Typing indicator
     const typingIndicator = (
@@ -381,6 +479,91 @@ function AIRobotPageContent() {
             </div>
         </div>
     )
+
+    // Assistant message content renderer
+    const AIMessageContent = ({ message, isLast }: { message: Message; isLast: boolean }) => {
+        if (message.error) {
+            return (
+                <div className="flex items-center gap-2 text-destructive">
+                    <AlertCircle className="h-4 w-4" />
+                    <span className="text-sm">{message.content}</span>
+                    <Button
+                        variant="ghost"
+                        size="sm"
+                        className="h-7 gap-1 text-xs"
+                        onClick={() => sendMessage(message.id)}
+                    >
+                        <RefreshCw className="h-3 w-3" />
+                        Försök igen
+                    </Button>
+                </div>
+            )
+        }
+
+        return (
+            <div className="space-y-4 w-full">
+                {/* Markdown Text */}
+                {message.content && (
+                    <div className="prose prose-sm max-w-none dark:prose-invert">
+                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                )}
+
+                {/* Confirmation Card */}
+                {message.confirmationRequired && (
+                    <ConfirmationCard
+                        confirmation={message.confirmationRequired as any}
+                        isLoading={isLoading && isLast}
+                        onConfirm={() => sendMessage(undefined, message.confirmationRequired?.id)}
+                        onCancel={() => {
+                            // Optionally send a "cancel" message to the AI
+                            setConversations(prev => prev.map(c =>
+                                c.id === currentConversationId
+                                    ? { ...c, messages: c.messages.filter(m => m.id !== message.id) }
+                                    : c
+                            ))
+                        }}
+                    />
+                )}
+
+                {/* Display Cards */}
+                {message.display && (
+                    <div className="my-2">
+                        {message.display.type === 'ReceiptCard' && (
+                            <ReceiptCard receipt={message.display.data.receipt || message.display.data} />
+                        )}
+                        {message.display.type === 'TransactionCard' && (
+                            <TransactionCard transaction={message.display.data.transaction || message.display.data} />
+                        )}
+                        {message.display.type === 'TaskChecklist' && (
+                            <TaskChecklist
+                                title={message.display.data.title || "Uppgifter"}
+                                tasks={message.display.data.tasks || []}
+                            />
+                        )}
+                        {message.display.type === ('BenefitsTable' as any) && (
+                            <div className="rounded-lg border border-border p-4 bg-muted/30">
+                                <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
+                                <ul className="space-y-2">
+                                    {(message.display.data.benefits || []).map((b: any) => (
+                                        <li key={b.id} className="text-xs flex justify-between items-center">
+                                            <span>{b.name}</span>
+                                            <span className="text-muted-foreground">{b.category}</span>
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* Typing Indicator */}
+                {isLoading && isLast && !message.content && !message.display && !message.confirmationRequired && (
+                    typingIndicator
+                )}
+            </div>
+        )
+    }
 
     return (
         <div className="flex flex-col h-svh">
@@ -417,7 +600,7 @@ function AIRobotPageContent() {
                                 variant="ghost"
                                 size="icon"
                                 className="h-9 w-9 rounded-full hover:bg-muted"
-                                aria-label="Chatthistorik"
+                                aria-label="Historik"
                             >
                                 <History className="h-4 w-4" />
                             </Button>
@@ -494,28 +677,11 @@ function AIRobotPageContent() {
                                             <p className="text-sm whitespace-pre-wrap">{message.content}</p>
                                         </div>
                                     ) : (
-                                        <div className="max-w-[85%]">
-                                            {message.error ? (
-                                                <div className="flex items-center gap-2 text-destructive">
-                                                    <AlertCircle className="h-4 w-4" />
-                                                    <span className="text-sm">{message.content}</span>
-                                                    <Button
-                                                        variant="ghost"
-                                                        size="sm"
-                                                        className="h-7 gap-1 text-xs"
-                                                        onClick={() => sendMessage(message.id)}
-                                                    >
-                                                        <RefreshCw className="h-3 w-3" />
-                                                        Försök igen
-                                                    </Button>
-                                                </div>
-                                            ) : message.content ? (
-                                                <div className="prose prose-sm max-w-none dark:prose-invert">
-                                                    <ReactMarkdown>{message.content}</ReactMarkdown>
-                                                </div>
-                                            ) : isLoading && index === messages.length - 1 ? (
-                                                typingIndicator
-                                            ) : null}
+                                        <div className="w-full max-w-[85%]">
+                                            <AIMessageContent
+                                                message={message}
+                                                isLast={index === messages.length - 1}
+                                            />
                                         </div>
                                     )}
                                     {/* Regenerate button for last assistant message */}

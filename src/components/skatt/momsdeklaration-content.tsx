@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     Calendar,
     Wallet,
@@ -13,10 +13,7 @@ import {
     ArrowUpRight,
     ArrowDownRight,
     Plus,
-    MoreHorizontal,
     Trash2,
-    Eye,
-    Edit,
 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
@@ -58,20 +55,56 @@ export function MomsdeklarationContent() {
     const { verifications } = useVerifications()
     const { company } = useCompany()
 
-    // Calculate periods dynamically based on real verifications
+    const [periods, setPeriods] = useState<any[]>([])
+    const [savedReports, setSavedReports] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Fetch periods and saved reports
+    useEffect(() => {
+        const fetchData = async () => {
+            setIsLoading(true)
+            try {
+                const [pRes, rRes] = await Promise.all([
+                    fetch('/api/financial-periods'),
+                    fetch('/api/reports/vat')
+                ])
+                const pData = await pRes.json()
+                const rData = await rRes.json()
+                setPeriods(pData.periods || [])
+                setSavedReports(rData.reports || [])
+            } catch (err) {
+                console.error("Failed to fetch reports data:", err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchData()
+    }, [])
+
+    // Calculate periods dynamically by merging DB status with live ledger calculations
     const vatPeriodsState = useMemo(() => {
-        const periods = ["Q4 2024", "Q3 2024", "Q2 2024", "Q1 2024"]
+        if (isLoading && periods.length === 0) return []
+
         return periods.map(p => {
-            const report = VatProcessor.calculateReportFromRealVerifications(verifications, p)
+            // Find if there's a saved report for this period
+            const saved = savedReports.find(r => r.period_id === p.id)
 
-            // Simulation: Q1-Q3 are simulated as submitted if we assume past is done
-            // In a real app, we would fetch report status from DB too.
-            // For now, keep the visual simulation for older quarters.
-            if (p !== "Q4 2024") report.status = "submitted"
+            if (saved && saved.status === 'submitted') {
+                // If submitted, use the saved data (immutability for accounting)
+                const report = saved.data as VatReport
+                report.status = 'submitted'
+                return report
+            }
 
-            return report
+            // Otherwise, calculate LIVE draft from verifications
+            const report = VatProcessor.calculateReportFromRealVerifications(verifications, p.name)
+
+            // Set properties from DB record
+            report.status = p.status === 'submitted' ? 'submitted' : 'upcoming'
+            // We use the ID from the period as a key
+            return { ...report, periodId: p.id }
         })
-    }, [verifications])
+    }, [verifications, periods, savedReports, isLoading])
 
     const [showAIDialog, setShowAIDialog] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
@@ -105,6 +138,7 @@ export function MomsdeklarationContent() {
             salesVat: upcomingPeriod.salesVat,
             inputVat: upcomingPeriod.inputVat,
             netVat: upcomingPeriod.netVat,
+            fullReport: upcomingPeriod
         }
     }, [vatPeriodsState])
 
@@ -145,11 +179,7 @@ export function MomsdeklarationContent() {
             label: "Skicka till Skatteverket",
             icon: Send,
             onClick: (ids) => {
-                setVatPeriods(prev => prev.map(p =>
-                    ids.includes(p.period) ? { ...p, status: "submitted" as const } : p
-                ))
-                toast.success("Rapporter skickade", `${ids.length} momsdeklaration(er) skickades till Skatteverket`)
-                selection.clearSelection()
+                toast.info("Kommer snart", "Inlämning direkt till Skatteverket via API är under utveckling. Du kan ladda ner XML-filen för manuell inlämning.")
             },
         },
         {
@@ -231,6 +261,26 @@ export function MomsdeklarationContent() {
                 <MomsWizardDialog
                     open={showAIDialog}
                     onOpenChange={setShowAIDialog}
+                    initialData={stats.fullReport}
+                    onConfirm={async () => {
+                        // Refresh data
+                        setIsLoading(true)
+                        try {
+                            const [pRes, rRes] = await Promise.all([
+                                fetch('/api/financial-periods'),
+                                fetch('/api/reports/vat')
+                            ])
+                            const pData = await pRes.json()
+                            const rData = await rRes.json()
+                            setPeriods(pData.periods || [])
+                            setSavedReports(rData.reports || [])
+                            toast.success("Momsdeklaration skapad", "Din rapport har sparats och perioden har låsts.")
+                        } catch (err) {
+                            console.error("Failed to refresh data:", err)
+                        } finally {
+                            setIsLoading(false)
+                        }
+                    }}
                 />
 
                 <DataTable
@@ -272,19 +322,20 @@ export function MomsdeklarationContent() {
                     }
                 >
                     <DataTableHeader>
-                        <DataTableHeaderCell className="w-10">
-                            <Checkbox
-                                checked={selection.allSelected && filteredPeriods.length > 0}
-                                onCheckedChange={selection.toggleAll}
-                            />
-                        </DataTableHeaderCell>
+
                         <DataTableHeaderCell label="Period" icon={Calendar} />
                         <DataTableHeaderCell label="Deadline" icon={Clock} />
                         <DataTableHeaderCell label="Utgående moms" icon={ArrowUpRight} />
                         <DataTableHeaderCell label="Ingående moms" icon={ArrowDownRight} />
                         <DataTableHeaderCell label="Att betala" icon={Wallet} />
                         <DataTableHeaderCell label="Status" icon={CheckCircle2} />
-                        <DataTableHeaderCell label="" />
+                        <DataTableHeaderCell className="w-10">
+                            <Checkbox
+                                checked={selection.allSelected && filteredPeriods.length > 0}
+                                onCheckedChange={selection.toggleAll}
+                            />
+                        </DataTableHeaderCell>
+
                     </DataTableHeader>
                     <DataTableBody>
                         {filteredPeriods.map((item) => (
@@ -294,12 +345,7 @@ export function MomsdeklarationContent() {
                                 onClick={() => setSelectedReport(item)}
                                 className="cursor-pointer"
                             >
-                                <DataTableCell className="w-10" onClick={(e) => e?.stopPropagation()}>
-                                    <Checkbox
-                                        checked={selection.isSelected(item.period)}
-                                        onCheckedChange={() => selection.toggleItem(item.period)}
-                                    />
-                                </DataTableCell>
+
                                 <DataTableCell bold>{item.period}</DataTableCell>
                                 <DataTableCell muted>{item.dueDate}</DataTableCell>
                                 <DataTableCell>{item.salesVat.toLocaleString("sv-SE")} kr</DataTableCell>
@@ -310,37 +356,13 @@ export function MomsdeklarationContent() {
                                         status={item.status === "upcoming" ? "Kommande" : "Inskickad"}
                                     />
                                 </DataTableCell>
-                                <DataTableCell onClick={(e) => e?.stopPropagation()}>
-                                    <DropdownMenu>
-                                        <DropdownMenuTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8">
-                                                <MoreHorizontal className="h-4 w-4" />
-                                            </Button>
-                                        </DropdownMenuTrigger>
-                                        <DropdownMenuContent align="end" className="w-48">
-                                            <DropdownMenuItem onClick={() => setSelectedReport(item)}>
-                                                <Eye className="h-4 w-4 mr-2" />
-                                                Visa detaljer
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => setSelectedReport(item)}>
-                                                <Edit className="h-4 w-4 mr-2" />
-                                                Redigera
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem onClick={() => handleDownloadSingle(item)}>
-                                                <Download className="h-4 w-4 mr-2" />
-                                                Ladda ner XML
-                                            </DropdownMenuItem>
-                                            <DropdownMenuItem disabled={item.status !== "upcoming"}>
-                                                <Send className="h-4 w-4 mr-2" />
-                                                Skicka till Skatteverket
-                                            </DropdownMenuItem>
-                                            <DropdownMenuSeparator />
-                                            <DropdownMenuItem className="text-red-600">
-                                                <Trash2 className="h-4 w-4 mr-2" />
-                                                Ta bort
-                                            </DropdownMenuItem>
-                                        </DropdownMenuContent>
-                                    </DropdownMenu>
+                                <DataTableCell className="w-10 text-right" onClick={(e) => e?.stopPropagation()}>
+                                    <div className="flex justify-end pr-2">
+                                        <Checkbox
+                                            checked={selection.isSelected(item.period)}
+                                            onCheckedChange={() => selection.toggleItem(item.period)}
+                                        />
+                                    </div>
                                 </DataTableCell>
                             </DataTableRow>
                         ))}

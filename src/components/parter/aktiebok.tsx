@@ -76,14 +76,15 @@ import {
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useTextMode } from "@/providers/text-mode-provider"
+import { useCompliance } from "@/hooks/use-compliance"
 
 export function Aktiebok() {
   const { addVerification } = useVerifications()
   const toast = useToast()
   const { text } = useTextMode()
-  const [shareholders, setShareholders] = useState<Shareholder[]>(mockShareholders)
-  const [transactions, setTransactions] = useState<ShareTransaction[]>(mockShareTransactions)
+  const { shareholders: realShareholders, isLoadingShareholders, updateShareholder } = useCompliance()
 
+  // Local state for filtering/interaction
   const [searchQuery, setSearchQuery] = useState("")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [activeTab, setActiveTab] = useState<'owners' | 'transactions'>('owners')
@@ -91,12 +92,32 @@ export function Aktiebok() {
   const [selectedTransactions, setSelectedTransactions] = useState<Set<string>>(new Set())
 
   // Form State
-  const [txType, setTxType] = useState<ShareTransaction['type']>('nyemission')
+  const [txType, setTxType] = useState<StockTransactionType>('Nyemission')
   const [txDate, setTxDate] = useState(new Date().toISOString().split('T')[0])
   const [txShares, setTxShares] = useState("")
   const [txPrice, setTxPrice] = useState("")
   const [txTo, setTxTo] = useState("")
   const [txFrom, setTxFrom] = useState("")
+
+  // Map real shareholders to component format
+  const shareholders = useMemo(() => {
+    return (realShareholders || []).map(s => ({
+      id: s.id,
+      name: s.name,
+      personalNumber: s.ssn_org_nr,
+      type: 'person' as const, // Default for now
+      shares: s.shares_count,
+      shareClass: 'stamaktier' as const,
+      ownershipPercentage: s.shares_percentage,
+      acquisitionDate: '2024-01-01', // Mock for now
+      acquisitionPrice: s.shares_count * 100, // Mock for now
+      votes: s.shares_count,
+      votesPercentage: s.shares_percentage
+    }))
+  }, [realShareholders])
+
+  // Mock transactions for now until we have a real transactions table in DB
+  const [transactions, setTransactions] = useState<ShareTransaction[]>(mockShareTransactions)
 
   // Calculate stats
   const stats = useMemo(() => {
@@ -139,16 +160,12 @@ export function Aktiebok() {
     )
   }, [transactions, searchQuery])
 
-  const getTransactionTypeLabel = (type: ShareTransaction['type']): StockTransactionType => {
-    const labels: Record<ShareTransaction['type'], StockTransactionType> = {
-      nyemission: 'Nyemission',
-      köp: 'Köp',
-      försäljning: 'Försäljning',
-      gåva: 'Gåva',
-      arv: 'Arv',
-      split: 'Split',
-    }
-    return labels[type]
+  const getTransactionTypeLabel = (type: string): StockTransactionType => {
+    // Basic mapping
+    if (type === 'nyemission') return 'Nyemission'
+    if (type === 'köp') return 'Köp'
+    if (type === 'försäljning') return 'Försäljning'
+    return type as StockTransactionType
   }
 
   // Toggle shareholder selection
@@ -197,79 +214,43 @@ export function Aktiebok() {
     const price = parseFloat(txPrice)
     const total = shares * price
 
-    const newTx: ShareTransaction = {
-      id: `st-${Date.now()}`,
-      date: txDate,
-      type: txType,
-      fromShareholder: txType === 'nyemission' ? undefined : txFrom,
-      toShareholder: txTo,
-      shares: shares,
-      pricePerShare: price,
-      totalPrice: total,
-      shareClass: 'stamaktier'
+    // Real persistence:
+    // 1. Add document to corporate_documents? Not for individual share transfers maybe.
+    // 2. Update shareholders count.
+
+    // Simplified update for now:
+    const shareholder = realShareholders.find(s => s.name === txTo)
+    if (shareholder) {
+      await updateShareholder({
+        id: shareholder.id,
+        shares_count: shareholder.shares_count + shares
+      })
     }
 
-    // Update local state
-    setTransactions(prev => [newTx, ...prev])
-
-    // Logic to update shareholders based on transaction
-    // (Simplified: assuming new shareholder if not exists, or update existing)
-    if (txType === 'nyemission') {
-      // Add shares to 'toShareholder'
-      setShareholders(prev => {
-        const exists = prev.find(s => s.name === txTo)
-        if (exists) {
-          return prev.map(s => s.name === txTo ? { ...s, shares: s.shares + shares, votes: s.votes + shares, acquisitionPrice: s.acquisitionPrice + total } : s)
-        } else {
-          return [...prev, {
-            id: `sh-${Date.now()}`,
-            name: txTo,
-            type: 'person', // Default
-            shares: shares,
-            shareClass: 'stamaktier',
-            ownershipPercentage: 0, // Needs re-calc of all
-            acquisitionDate: txDate,
-            acquisitionPrice: total,
-            votes: shares,
-            votesPercentage: 0
-          }]
-        }
-      })
-
-      // Ledger Entry for Nyemission
+    // Ledger Entry for Nyemission
+    if (txType === 'Nyemission') {
       await addVerification({
         date: txDate,
         description: `Nyemission ${shares} aktier till ${txTo}`,
         sourceType: 'equity_issue',
         rows: [
           { account: "1930", description: `Inbetalning nyemission ${txTo}`, debit: total, credit: 0 },
-          { account: "2081", description: `Aktiekapital`, debit: 0, credit: total } // Simplified: All to share capital, usually split with premium reserve
+          { account: "2081", description: `Aktiekapital`, debit: 0, credit: total }
         ]
       })
-
-      toast.success("Nyemission registrerad", "Transaktionen och verifikatet har skapats.")
-
-    } else if (txType === 'köp' || txType === 'försäljning') {
-      // Transfer logic
-      setShareholders(prev => {
-        return prev.map(s => {
-          if (s.name === txFrom) {
-            return { ...s, shares: s.shares - shares, votes: s.votes - shares } // Simplified: assumes simple subtraction
-          }
-          if (s.name === txTo) {
-            return { ...s, shares: s.shares + shares, votes: s.votes + shares }
-          }
-          return s
-        })
-      })
-      toast.success("Överlåtelse registrerad", "Ägarförhållandena har uppdaterats.")
     }
+
+    toast.success("Transaktion registrerad", "Ägarförhållandena har uppdaterats.")
 
     setShowAddDialog(false)
     setTxTo("")
     setTxFrom("")
     setTxShares("")
     setTxPrice("")
+  }
+
+  if (isLoadingShareholders) {
+    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar aktiebok...</div>
   }
 
   return (
@@ -328,11 +309,11 @@ export function Aktiebok() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setTxType('nyemission'); setShowAddDialog(true); }}>
+                  <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Nyemission
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setTxType('köp'); setShowAddDialog(true); }}>
+                  <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
                     <ArrowRightLeft className="h-4 w-4 mr-2" />
                     Registrera överlåtelse
                   </DropdownMenuItem>
@@ -347,12 +328,6 @@ export function Aktiebok() {
           }
         >
           <DataTableHeader>
-            <DataTableHeaderCell className="w-10">
-              <Checkbox
-                checked={selectedShareholders.size === filteredShareholders.length && filteredShareholders.length > 0}
-                onCheckedChange={toggleAllShareholders}
-              />
-            </DataTableHeaderCell>
             <DataTableHeaderCell label="Aktieägare" icon={User} />
             <DataTableHeaderCell label="Typ" icon={Building2} />
             <DataTableHeaderCell label="Aktier" icon={Hash} />
@@ -360,6 +335,12 @@ export function Aktiebok() {
             <DataTableHeaderCell label="Röster" icon={Vote} />
             <DataTableHeaderCell label="Anskaffning" icon={Calendar} />
             <DataTableHeaderCell label="" />
+            <DataTableHeaderCell className="w-10">
+              <Checkbox
+                checked={selectedShareholders.size === filteredShareholders.length && filteredShareholders.length > 0}
+                onCheckedChange={toggleAllShareholders}
+              />
+            </DataTableHeaderCell>
           </DataTableHeader>
           <DataTableBody>
             {filteredShareholders.map((shareholder) => (
@@ -367,13 +348,7 @@ export function Aktiebok() {
                 key={shareholder.id}
                 selected={selectedShareholders.has(shareholder.id)}
               >
-                <DataTableCell className="w-10">
-                  <Checkbox
-                    checked={selectedShareholders.has(shareholder.id)}
-                    onCheckedChange={() => toggleShareholder(shareholder.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </DataTableCell>
+
                 <DataTableCell bold>
                   <div className="flex items-center gap-2">
                     {shareholder.type === 'person' ? (
@@ -384,7 +359,7 @@ export function Aktiebok() {
                     <div>
                       <div className="font-medium">{shareholder.name}</div>
                       <div className="text-xs text-muted-foreground">
-                        {shareholder.personalNumber || shareholder.orgNumber}
+                        {shareholder.personalNumber}
                       </div>
                     </div>
                   </div>
@@ -475,7 +450,7 @@ export function Aktiebok() {
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setTxType('nyemission'); setShowAddDialog(true); }}>
+                  <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
                     <Plus className="h-4 w-4 mr-2" />
                     Nyemission
                   </DropdownMenuItem>
@@ -490,12 +465,6 @@ export function Aktiebok() {
           }
         >
           <DataTableHeader>
-            <DataTableHeaderCell className="w-10">
-              <Checkbox
-                checked={selectedTransactions.size === filteredTransactions.length && filteredTransactions.length > 0}
-                onCheckedChange={toggleAllTransactions}
-              />
-            </DataTableHeaderCell>
             <DataTableHeaderCell label="Datum" icon={Calendar} />
             <DataTableHeaderCell label="Typ" icon={CheckCircle2} />
             <DataTableHeaderCell label="Från" icon={User} />
@@ -504,6 +473,12 @@ export function Aktiebok() {
             <DataTableHeaderCell label="Pris/aktie" icon={Banknote} />
             <DataTableHeaderCell label="Totalt" icon={Banknote} />
             <DataTableHeaderCell label="" />
+            <DataTableHeaderCell className="w-10">
+              <Checkbox
+                checked={selectedTransactions.size === filteredTransactions.length && filteredTransactions.length > 0}
+                onCheckedChange={toggleAllTransactions}
+              />
+            </DataTableHeaderCell>
           </DataTableHeader>
           <DataTableBody>
             {filteredTransactions.map((tx) => (
@@ -511,13 +486,7 @@ export function Aktiebok() {
                 key={tx.id}
                 selected={selectedTransactions.has(tx.id)}
               >
-                <DataTableCell className="w-10">
-                  <Checkbox
-                    checked={selectedTransactions.has(tx.id)}
-                    onCheckedChange={() => toggleTransaction(tx.id)}
-                    onClick={(e) => e.stopPropagation()}
-                  />
-                </DataTableCell>
+
                 <DataTableCell>
                   {formatDate(tx.date)}
                 </DataTableCell>
@@ -569,10 +538,10 @@ export function Aktiebok() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              Registrera {txType === 'nyemission' ? 'Nyemission' : 'Överlåtelse'}
+              Registrera {txType === 'Nyemission' ? 'Nyemission' : 'Överlåtelse'}
             </DialogTitle>
             <DialogDescription>
-              {txType === 'nyemission'
+              {txType === 'Nyemission'
                 ? 'Registrera nya aktier och betalning.'
                 : 'Registrera ägarbyte mellan aktieägare.'}
             </DialogDescription>
@@ -581,14 +550,14 @@ export function Aktiebok() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Transaktionstyp</Label>
-                <Select value={txType} onValueChange={(v: ShareTransaction['type']) => setTxType(v)}>
+                <Select value={txType} onValueChange={(v: StockTransactionType) => setTxType(v)}>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nyemission">Nyemission</SelectItem>
-                    <SelectItem value="köp">Köp/Försäljning</SelectItem>
-                    <SelectItem value="gåva">Gåva</SelectItem>
+                    <SelectItem value="Nyemission">Nyemission</SelectItem>
+                    <SelectItem value="Köp">Köp/Försäljning</SelectItem>
+                    <SelectItem value="Gåva">Gåva</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -598,7 +567,7 @@ export function Aktiebok() {
               </div>
             </div>
 
-            {txType !== 'nyemission' && (
+            {txType !== 'Nyemission' && (
               <div className="space-y-2">
                 <Label>Från (Säljare)</Label>
                 <Select value={txFrom} onValueChange={setTxFrom}>
@@ -615,8 +584,8 @@ export function Aktiebok() {
             )}
 
             <div className="space-y-2">
-              <Label>{txType === 'nyemission' ? 'Till (Tecknare)' : 'Till (Köpare)'}</Label>
-              {txType === 'nyemission' ? (
+              <Label>{txType === 'Nyemission' ? 'Till (Tecknare)' : 'Till (Köpare)'}</Label>
+              {txType === 'Nyemission' ? (
                 <Input value={txTo} onChange={e => setTxTo(e.target.value)} placeholder="Namn på ny ägare..." />
               ) : (
                 <Select value={txTo} onValueChange={setTxTo}>
@@ -627,7 +596,6 @@ export function Aktiebok() {
                     {shareholders.map(s => (
                       <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
                     ))}
-                    {/* In real app, allow adding new owner inline or assume existing */}
                   </SelectContent>
                 </Select>
               )}

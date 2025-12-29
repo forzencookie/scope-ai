@@ -1,17 +1,5 @@
 // ============================================
-// Transactions Service (In-Memory - Development Only)
-// ============================================
-//
-// ⚠️ WARNING: This service uses in-memory state which is NOT suitable for production!
-// Data is lost on every server restart and is not shared across serverless instances.
-//
-// For production, use the Supabase-backed service:
-// import { getTransactions, ... } from '@/services/transactions-supabase'
-//
-// The Supabase service provides:
-// - Persistent storage across restarts
-// - Shared state across serverless functions
-// - Proper user isolation with userId parameter
+// Transactions Service (API-backed)
 // ============================================
 
 import type {
@@ -23,42 +11,11 @@ import type {
 import type { TransactionStatus } from "@/lib/status-types"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
 import {
-  mockTransactions,
-  mockAISuggestions,
-  mockTransactionsWithAI,
   type Transaction,
   type TransactionWithAI,
   type AISuggestion,
 } from "@/data/transactions"
-import { delay } from "@/lib/utils"
 import { compareValuesWithDirection } from "@/lib/compare"
-
-// ============================================
-// Configuration
-// ============================================
-
-/** Simulated network delay for development (ms). Set to 0 for no delay. */
-const MOCK_DELAY = 0
-
-// ============================================
-// State Management (Development Only)
-// ============================================
-
-/**
- * @deprecated Use transactions-supabase.ts for production
- * 
- * ⚠️ CRITICAL: In-memory state - NOT suitable for production!
- * 
- * Problems with this approach:
- * - State is lost on server restart (every deployment)
- * - Not shared across serverless function instances
- * - Not thread-safe in multi-instance deployments
- * - No user isolation (all users share the same state)
- * 
- * For production, migrate to:
- * import { getTransactions, updateTransaction, ... } from '@/services/transactions-supabase'
- */
-let transactionState = [...mockTransactionsWithAI]
 
 /**
  * Create a successful API response
@@ -73,7 +30,6 @@ function successResponse<T>(data: T): ApiResponse<T> {
 
 /**
  * Create an error API response with null data
- * Use this for "not found" scenarios where returning empty object is unsafe
  */
 function errorResponseNull(error: string): ApiResponse<null> {
   return {
@@ -96,25 +52,11 @@ function errorResponse<T>(error: string, data: T): ApiResponse<T> {
   }
 }
 
-/**
- * Find transaction by ID, returns index and transaction or null
- */
-function findTransaction(id: string): { index: number; transaction: TransactionWithAI } | null {
-  const index = transactionState.findIndex(t => t.id === id)
-  if (index === -1) return null
-  return { index, transaction: transactionState[index] }
-}
-
-// ============================================
-// Transaction Fetching Service
-// ============================================
-
 // ============================================
 // Transaction Fetching Service (API-backed)
 // ============================================
 
 export async function getTransactions(_userId?: string): Promise<ApiResponse<Transaction[]>> {
-  // Delegate to the main AI-enriched fetcher
   const response = await getTransactionsWithAI(_userId);
   if (response.success) {
     return { ...response, data: response.data };
@@ -124,16 +66,14 @@ export async function getTransactions(_userId?: string): Promise<ApiResponse<Tra
 
 export async function getTransactionsWithAI(_userId?: string): Promise<ApiResponse<TransactionWithAI[]>> {
   try {
-    // In production/simulator mode, fetch from our API which acts as the Ledger
-    const res = await fetch('/api/transactions', { cache: 'no-store' });
+    const res = await fetch('/api/transactions/processed', { cache: 'no-store' });
     const json = await res.json();
 
     if (!res.ok) throw new Error(json.error || 'Failed to fetch');
 
-    return successResponse(json.data);
+    return successResponse(json.transactions || []);
   } catch (err) {
     console.error('Fetch transactions failed:', err);
-    // Fallback to empty or mock if API is unreachable (optional)
     return errorResponse('Failed to load transactions', []);
   }
 }
@@ -145,8 +85,6 @@ export async function getTransactionsPaginated(
   filters?: TransactionFilters,
   sort?: SortConfig<Transaction>
 ): Promise<PaginatedResponse<TransactionWithAI>> {
-  // Fetch ALL then paginate client/server side
-  // Ideally, the API should handle pagination. For Phase 1, we pull all and slice.
   const response = await getTransactionsWithAI(_userId);
   let filtered = response.data || [];
 
@@ -165,7 +103,7 @@ export async function getTransactionsPaginated(
       const query = filters.searchQuery.toLowerCase()
       filtered = filtered.filter(t =>
         t.name.toLowerCase().includes(query) ||
-        t.category.toLowerCase().includes(query)
+        (t.category && t.category.toLowerCase().includes(query))
       )
     }
     if (filters.dateRange) {
@@ -206,7 +144,6 @@ export async function getTransactionsPaginated(
 }
 
 export async function getTransaction(id: string, _userId?: string): Promise<ApiResponse<TransactionWithAI | null>> {
-  // Efficiency: Fetch all and find (since we don't have get-one endpoint yet)
   const response = await getTransactionsWithAI(_userId);
   const found = response.data?.find(t => t.id === id) || null;
 
@@ -242,9 +179,6 @@ export async function updateTransactionStatus(
 
     if (!res.ok) throw new Error(json.error);
 
-    // We might want to return the full updated object. 
-    // Current API returns just metadata. Let's re-fetch or reconstruct.
-    // Re-fetch is safest.
     return getTransaction(id, _userId);
 
   } catch (err) {
@@ -258,59 +192,62 @@ export async function updateTransactionStatus(
 // ============================================
 
 export async function getAISuggestion(transactionId: string): Promise<ApiResponse<AISuggestion | null>> {
-  await delay(MOCK_DELAY)
-
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/transactions/${transactionId}/ai-suggestion`)
-  // return response.json()
-
-  const suggestion = mockAISuggestions[transactionId] ?? null
-
-  return successResponse(suggestion)
+  // In a real app, this would be an API call
+  // For now, we fetch the transaction and return its aiSuggestion if it exists
+  const response = await getTransaction(transactionId);
+  if (response.success && response.data?.aiSuggestion) {
+    return successResponse(response.data.aiSuggestion);
+  }
+  return successResponse(null);
 }
 
 export async function approveAISuggestion(transactionId: string): Promise<ApiResponse<TransactionWithAI | null>> {
-  await delay(MOCK_DELAY)
-
-  // TODO: Replace with actual API call
-  // const response = await fetch(`/api/transactions/${transactionId}/ai-suggestion/approve`, {
-  //   method: 'POST',
-  // })
-  // return response.json()
-
-  const found = findTransaction(transactionId)
-  if (!found) {
-    return errorResponseNull("Transaction not found")
-  }
-
-  const suggestion = found.transaction.aiSuggestion
-  if (suggestion) {
-    transactionState[found.index] = {
-      ...transactionState[found.index],
-      category: suggestion.category,
-      isAIApproved: true,
-      status: TRANSACTION_STATUS_LABELS.RECORDED,
+  try {
+    // To approve, we update the status to RECORDED and set the category
+    const txResponse = await getTransaction(transactionId);
+    if (!txResponse.success || !txResponse.data?.aiSuggestion) {
+      return errorResponseNull("Transaction or AI suggestion not found");
     }
-  }
 
-  return successResponse(transactionState[found.index])
+    const { aiSuggestion } = txResponse.data;
+
+    const res = await fetch(`/api/transactions/${transactionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        status: TRANSACTION_STATUS_LABELS.RECORDED,
+        category: aiSuggestion.category,
+        isAIApproved: true
+      })
+    });
+
+    if (!res.ok) throw new Error('Failed to approve AI suggestion');
+
+    return getTransaction(transactionId);
+  } catch (err) {
+    console.error('Approve AI suggestion failed:', err);
+    return errorResponseNull('Failed to approve AI suggestion');
+  }
 }
 
 export async function rejectAISuggestion(transactionId: string): Promise<ApiResponse<TransactionWithAI | null>> {
-  await delay(MOCK_DELAY)
+  try {
+    const res = await fetch(`/api/transactions/${transactionId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        aiSuggestion: null,
+        isAIApproved: false
+      })
+    });
 
-  const found = findTransaction(transactionId)
-  if (!found) {
-    return errorResponseNull("Transaction not found")
+    if (!res.ok) throw new Error('Failed to reject AI suggestion');
+
+    return getTransaction(transactionId);
+  } catch (err) {
+    console.error('Reject AI suggestion failed:', err);
+    return errorResponseNull('Failed to reject AI suggestion');
   }
-
-  transactionState[found.index] = {
-    ...transactionState[found.index],
-    aiSuggestion: undefined,
-    isAIApproved: false,
-  }
-
-  return successResponse(transactionState[found.index])
 }
 
 // ============================================
@@ -339,16 +276,18 @@ export async function updateTransaction(
 }
 
 export async function deleteTransaction(id: string, _userId?: string): Promise<ApiResponse<boolean>> {
-  await delay(MOCK_DELAY)
+  try {
+    const res = await fetch(`/api/transactions/${id}`, {
+      method: 'DELETE',
+    });
 
-  const found = findTransaction(id)
-  if (!found) {
-    return errorResponse("Transaction not found", false)
+    if (!res.ok) throw new Error('Failed to delete');
+
+    return successResponse(true);
+  } catch (err) {
+    console.error('Delete transaction failed:', err);
+    return errorResponse('Failed to delete transaction', false);
   }
-
-  transactionState = transactionState.filter(t => t.id !== id)
-
-  return successResponse(true)
 }
 
 // ============================================
@@ -360,41 +299,30 @@ export async function bulkUpdateStatus(
   ids: string[],
   status: TransactionStatus
 ): Promise<ApiResponse<TransactionWithAI[]>> {
-  await delay(MOCK_DELAY)
+  const results: TransactionWithAI[] = [];
 
-  const updated: TransactionWithAI[] = []
-
+  // Sequential for simplicity in MVP, could be parallelized
   for (const id of ids) {
-    const found = findTransaction(id)
-    if (found) {
-      transactionState[found.index] = { ...transactionState[found.index], status }
-      updated.push(transactionState[found.index])
+    const res = await updateTransactionStatus(id, _userId, status);
+    if (res.success && res.data) {
+      results.push(res.data);
     }
   }
 
-  return successResponse(updated)
+  return successResponse(results);
 }
 
 export async function bulkApproveAISuggestions(ids: string[]): Promise<ApiResponse<TransactionWithAI[]>> {
-  await delay(MOCK_DELAY)
-
-  const updated: TransactionWithAI[] = []
+  const results: TransactionWithAI[] = [];
 
   for (const id of ids) {
-    const found = findTransaction(id)
-    if (found?.transaction.aiSuggestion) {
-      const suggestion = found.transaction.aiSuggestion
-      transactionState[found.index] = {
-        ...transactionState[found.index],
-        category: suggestion.category,
-        isAIApproved: true,
-        status: TRANSACTION_STATUS_LABELS.RECORDED,
-      }
-      updated.push(transactionState[found.index])
+    const res = await approveAISuggestion(id);
+    if (res.success && res.data) {
+      results.push(res.data);
     }
   }
 
-  return successResponse(updated)
+  return successResponse(results);
 }
 
 // ============================================
@@ -410,34 +338,34 @@ export interface TransactionStats {
 }
 
 export async function getTransactionStats(_userId?: string): Promise<ApiResponse<TransactionStats>> {
-  await delay(MOCK_DELAY)
+  try {
+    const response = await getTransactionsWithAI(_userId);
+    const transactions = response.data || [];
 
-  const stats: TransactionStats = {
-    total: transactionState.length,
-    pending: transactionState.filter(t => t.status === TRANSACTION_STATUS_LABELS.TO_RECORD).length,
-    booked: transactionState.filter(t => t.status === TRANSACTION_STATUS_LABELS.RECORDED).length,
-    missingDocs: transactionState.filter(t => t.status === TRANSACTION_STATUS_LABELS.MISSING_DOCUMENTATION).length,
-    ignored: transactionState.filter(t => t.status === TRANSACTION_STATUS_LABELS.IGNORED).length,
+    const stats: TransactionStats = {
+      total: transactions.length,
+      pending: transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.TO_RECORD).length,
+      booked: transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.RECORDED).length,
+      missingDocs: transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.MISSING_DOCUMENTATION).length,
+      ignored: transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.IGNORED).length,
+    }
+
+    return successResponse(stats);
+  } catch (err) {
+    return errorResponse('Failed to calculate stats', {
+      total: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0
+    });
   }
-
-  return successResponse(stats)
 }
 
 // ============================================
-// Testing Utilities
+// Testing Utilities (Stubbed)
 // ============================================
 
-/**
- * Reset transaction state to initial mock data
- * Only use for testing purposes
- */
 export function resetTransactionState(): void {
-  transactionState = [...mockTransactionsWithAI]
+  // No-op in API-backed mode
 }
 
-/**
- * Get current transaction state (for testing/debugging)
- */
 export function getTransactionState(): TransactionWithAI[] {
-  return [...transactionState]
+  return []; // No-op in API-backed mode
 }

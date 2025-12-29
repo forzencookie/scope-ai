@@ -1,9 +1,8 @@
 
 import { useMemo } from 'react'
 import { useTransactions } from '@/hooks/use-transactions'
-import { mockInvoices } from '@/data/invoices'
 import { payslips, agiReports } from '@/components/payroll/constants'
-import { INVOICE_STATUS_LABELS, TRANSACTION_STATUS_LABELS } from '@/lib/localization'
+import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
 
 export interface DynamicTask {
     id: string
@@ -31,11 +30,9 @@ export function useDynamicTasks() {
 
         // 1. Bokföring Goal
         const pendingTransactions = transactions ? transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.TO_RECORD).length : 0
-        const draftInvoices = mockInvoices.filter(i => i.status === INVOICE_STATUS_LABELS.DRAFT).length
-        const overdueInvoices = mockInvoices.filter(i => {
-            if (i.status === INVOICE_STATUS_LABELS.PAID) return false
-            return new Date(i.dueDate) < new Date()
-        }).length
+        // TODO: Fetch invoice counts from API in future
+        const draftInvoices = 0
+        const overdueInvoices = 0
 
         const bokforingTasks: DynamicTask[] = []
 

@@ -348,9 +348,6 @@ export function ReceiptsTable() {
                 />
             </StatCardGrid>
 
-            {/* Section Separator */}
-            <div className="border-b-2 border-border/60" />
-
             {/* Delete Confirmation Dialog */}
             <DeleteConfirmDialog
                 {...deleteConfirmation.dialogProps}
@@ -452,13 +449,6 @@ export function ReceiptsTable() {
                 }
             >
                 <DataTableHeader>
-                    <DataTableHeaderCell width="40px">
-                        <Checkbox
-                            checked={bulkSelection.allSelected}
-                            onCheckedChange={bulkSelection.toggleAll}
-                            aria-label={text.actions.selectAll}
-                        />
-                    </DataTableHeaderCell>
                     <DataTableHeaderCell label={text.receipts.supplier} icon={Building2} />
                     <DataTableHeaderCell label={text.labels.date} icon={Calendar} />
                     <DataTableHeaderCell label={text.receipts.category} icon={Tag} />
@@ -466,6 +456,13 @@ export function ReceiptsTable() {
                     <DataTableHeaderCell label={text.labels.status} icon={CheckCircle2} />
                     <DataTableHeaderCell label={text.receipts.hasAttachment} icon={Paperclip} />
                     <DataTableHeaderCell label="" align="right" />
+                    <DataTableHeaderCell width="40px">
+                        <Checkbox
+                            checked={bulkSelection.allSelected}
+                            onCheckedChange={bulkSelection.toggleAll}
+                            aria-label={text.actions.selectAll}
+                        />
+                    </DataTableHeaderCell>
                 </DataTableHeader>
                 <DataTableBody>
                     {filteredReceipts.map((receipt) => (
@@ -474,13 +471,7 @@ export function ReceiptsTable() {
                             selected={bulkSelection.isSelected(receipt.id)}
                             className="group"
                         >
-                            <DataTableCell>
-                                <Checkbox
-                                    checked={bulkSelection.isSelected(receipt.id)}
-                                    onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
-                                    aria-label={`${text.actions.select} ${receipt.supplier}`}
-                                />
-                            </DataTableCell>
+
                             <DataTableCell bold>{receipt.supplier}</DataTableCell>
                             <DataTableCell muted>{receipt.date}</DataTableCell>
                             <DataTableCell>
@@ -530,6 +521,15 @@ export function ReceiptsTable() {
                                         </DropdownMenuItem>
                                     </DropdownMenuContent>
                                 </DropdownMenu>
+                            </DataTableCell>
+                            <DataTableCell className="w-10 text-right">
+                                <div className="flex justify-end pr-2">
+                                    <Checkbox
+                                        checked={bulkSelection.isSelected(receipt.id)}
+                                        onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
+                                        aria-label={`${text.actions.select} ${receipt.supplier}`}
+                                    />
+                                </div>
                             </DataTableCell>
                         </DataTableRow>
                     ))}

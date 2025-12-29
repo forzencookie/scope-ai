@@ -3,7 +3,7 @@
 import * as React from "react"
 import { Sparkles, PanelLeft, type LucideIcon } from "lucide-react"
 
-import { NavMain, NavSettings, NavUser } from "./sidebar-nav"
+import { NavMain, NavSettings, NavUser, NavAIConversations } from "./sidebar-nav"
 import { AdaptiveNavMain } from "./adaptive-nav"
 import { TeamSwitcher } from "./team-switcher"
 import {
@@ -113,6 +113,7 @@ export function AppSidebar({
         </SidebarHeader>
         <SidebarContent>
           <NavMain items={navPlatform} />
+          <NavAIConversations />
         </SidebarContent>
         <SidebarFooter>
           <NavSettings items={navSettings} onSettingsClick={() => setSettingsOpen(true)} />

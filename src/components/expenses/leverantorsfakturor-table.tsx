@@ -484,12 +484,6 @@ export const LeverantorsfakturorTable = forwardRef<LeverantorsfakturorTableRef>(
         }
       >
         <DataTableHeader>
-          <th className="w-10 px-4 py-3">
-            <Checkbox
-              checked={selectedIds.size === filteredInvoices.length && filteredInvoices.length > 0}
-              onCheckedChange={toggleSelectAll}
-            />
-          </th>
           <DataTableHeaderCell
             label={text.supplierInvoices.supplier}
             icon={Building2}
@@ -505,6 +499,12 @@ export const LeverantorsfakturorTable = forwardRef<LeverantorsfakturorTableRef>(
           />
           <DataTableHeaderCell label={text.labels.status} icon={CheckCircle2} />
           <DataTableHeaderCell label="" />
+          <th className="w-10 px-4 py-3">
+            <Checkbox
+              checked={selectedIds.size === filteredInvoices.length && filteredInvoices.length > 0}
+              onCheckedChange={toggleSelectAll}
+            />
+          </th>
         </DataTableHeader>
         <DataTableBody>
           {filteredInvoices.map((invoice) => {
@@ -516,12 +516,7 @@ export const LeverantorsfakturorTable = forwardRef<LeverantorsfakturorTableRef>(
                 key={invoice.id}
                 selected={selectedIds.has(invoice.id)}
               >
-                <DataTableCell>
-                  <Checkbox
-                    checked={selectedIds.has(invoice.id)}
-                    onCheckedChange={() => toggleSelect(invoice.id)}
-                  />
-                </DataTableCell>
+
                 <DataTableCell bold>
                   <div>
                     <div className="font-medium">{invoice.supplierName}</div>
@@ -591,6 +586,14 @@ export const LeverantorsfakturorTable = forwardRef<LeverantorsfakturorTableRef>(
                       )}
                     </DropdownMenuContent>
                   </DropdownMenu>
+                </DataTableCell>
+                <DataTableCell className="w-10 text-right">
+                  <div className="flex justify-end pr-2">
+                    <Checkbox
+                      checked={selectedIds.has(invoice.id)}
+                      onCheckedChange={() => toggleSelect(invoice.id)}
+                    />
+                  </div>
                 </DataTableCell>
               </DataTableRow>
             )

@@ -78,15 +78,15 @@ function ParterPageContent() {
             <TooltipProvider>
                 <div className="flex flex-col min-h-svh">
                     {/* Page Heading */}
-                    <div className="px-6 pt-6">
-                        <div className="max-w-6xl w-full">
+                    <div className="px-4 pt-4">
+                        <div className="w-full">
                             <h2 className="text-xl font-semibold">Företagare</h2>
                             <p className="text-sm text-muted-foreground">Information om dig som enskild näringsidkare.</p>
                         </div>
                     </div>
 
-                    <div className="bg-background p-6">
-                        <div className="max-w-6xl w-full">
+                    <div className="bg-background px-4 py-4">
+                        <div className="w-full">
                             <EnskildFirmaOwnerInfo />
                         </div>
                     </div>
@@ -99,18 +99,18 @@ function ParterPageContent() {
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
                 {/* Page Heading */}
-                <div className="px-6 pt-6">
-                    <div className="max-w-6xl w-full">
+                <div className="px-4 pt-4">
+                    <div className="w-full">
                         <h2 className="text-xl font-semibold">Parter</h2>
                         <p className="text-sm text-muted-foreground">Ägare, styrelse, delägare och andra parter med roller i företaget.</p>
                     </div>
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-background p-6">
-                    <div className="max-w-6xl w-full">
+                <div className="bg-background px-4 py-4">
+                    <div className="w-full">
                         {/* Tabs */}
-                        <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60">
+                        <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60 -ml-1">
                             {tabs.map((tab) => {
                                 const isActive = currentTab === tab.id;
                                 const Icon = tab.icon;

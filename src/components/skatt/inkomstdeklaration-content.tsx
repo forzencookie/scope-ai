@@ -24,92 +24,20 @@ import {
     DropdownMenuLabel,
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
-import { SectionCard } from "@/components/ui/section-card"
-import { InkomstWizardDialog } from "./ai-wizard-dialog"
-import { SRUPreviewDialog } from "./sru-preview-dialog"
+import {
+    ReportContainer,
+    ReportHeader,
+    ReportSection,
+    type ReportItem
+} from "./report-ui"
 import { useVerifications } from "@/hooks/use-verifications"
 import { Ink2Processor, type Ink2FormField } from "@/lib/ink2-processor"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { cn } from "@/lib/utils"
 
-// =============================================================================
-// INK2 Form Section Component
-// =============================================================================
-
-interface FormSectionProps {
-    title: string
-    fields: Ink2FormField[]
-    defaultOpen?: boolean
-}
-
-function FormSection({ title, fields, defaultOpen = true }: FormSectionProps) {
-    const [isOpen, setIsOpen] = useState(defaultOpen)
-
-    // Calculate section total
-    const total = fields.reduce((sum, f) => sum + f.value, 0)
-
-    if (fields.length === 0) return null
-
-    return (
-        <div className="space-y-1">
-            {/* Section Header */}
-            <button
-                onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center gap-3 py-2 hover:bg-muted/30 rounded-sm px-2 -mx-2 transition-colors"
-            >
-                {isOpen ? (
-                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                ) : (
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
-                )}
-                <span className="font-medium text-sm">{title}</span>
-
-                <span className={cn(
-                    "font-medium text-sm tabular-nums px-2 py-0.5 rounded-sm",
-                    total > 0 && "text-green-600 dark:text-green-400 bg-green-100 dark:bg-green-950/50",
-                    total < 0 && "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/50",
-                    total === 0 && "text-muted-foreground bg-muted/50"
-                )}>
-                    {total > 0 && "+"}{total.toLocaleString('sv-SE')} kr
-                </span>
-
-            </button>
-
-
-            {/* Section Content */}
-            {isOpen && (
-                <div className="space-y-0.5 pl-6">
-                    {fields.map((field) => (
-                        <div
-                            key={field.field}
-                            className="flex items-start justify-between py-1.5"
-                        >
-                            <div className="flex items-start gap-3">
-                                <span className="font-mono text-xs text-muted-foreground w-10 shrink-0 pt-0.5">
-                                    {field.field}
-                                </span>
-                                <span className="text-sm">
-                                    {field.label}
-                                </span>
-                            </div>
-                            <span className={cn(
-                                "font-medium text-sm tabular-nums shrink-0 ml-4",
-                                field.value > 0 && "text-green-600 dark:text-green-400",
-                                field.value < 0 && "text-red-600 dark:text-red-400",
-                                field.value === 0 && "text-muted-foreground"
-                            )}>
-                                {field.value > 0 && "+"}{field.value.toLocaleString('sv-SE')} kr
-                            </span>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-
-        </div>
-    )
-}
-
+import { SectionCard } from "@/components/ui/section-card"
+import { InkomstWizardDialog } from "./ai-wizard-dialog"
+import { SRUPreviewDialog } from "./sru-preview-dialog"
 
 
 // =============================================================================
@@ -283,14 +211,16 @@ export function InkomstdeklarationContent() {
 
                 {/* Form Header with Actions */}
 
-                <div className="flex items-center justify-between">
-                    <h2 className="text-lg font-semibold">
-                        {activeFilter === "all" && "INK2 – Komplett"}
-                        {activeFilter === "incomeStatement" && "INK2 – Resultaträkning"}
-                        {activeFilter === "balanceSheet" && "INK2R – Balansräkning"}
-                        {activeFilter === "taxAdjustments" && "INK2S – Skattemässiga justeringar"}
-                    </h2>
-                    <div className="flex items-center gap-2">
+                <ReportContainer>
+                    {/* Form Header with Actions */}
+                    <ReportHeader
+                        title={
+                            activeFilter === "all" ? "INK2 – Komplett" :
+                                activeFilter === "incomeStatement" ? "INK2 – Resultaträkning" :
+                                    activeFilter === "balanceSheet" ? "INK2R – Balansräkning" :
+                                        "INK2S – Skattemässiga justeringar"
+                        }
+                    >
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <FilterButton
@@ -341,70 +271,70 @@ export function InkomstdeklarationContent() {
                             <Send className="h-4 w-4 mr-1.5" />
                             Skicka till Skatteverket
                         </Button>
+                    </ReportHeader>
+
+                    {/* Form Sections */}
+                    <div className="space-y-8">
+                        {/* Income Statement */}
+                        {(activeFilter === "all" || activeFilter === "incomeStatement") && (
+                            <div className="space-y-4">
+                                {activeFilter === "all" && (
+                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
+                                        Resultaträkning (3.x)
+                                    </h3>
+                                )}
+                                {incomeStatementSections.map((section, idx) => (
+                                    <ReportSection
+                                        key={section.title}
+                                        title={section.title}
+                                        items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
+                                        defaultOpen={activeFilter === "incomeStatement" || idx < 3}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Balance Sheet */}
+
+                        {(activeFilter === "all" || activeFilter === "balanceSheet") && (
+                            <div className="space-y-4">
+                                {activeFilter === "all" && (
+                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
+                                        Balansräkning (2.x)
+                                    </h3>
+                                )}
+                                {balanceSheetSections.map((section, idx) => (
+                                    <ReportSection
+                                        key={section.title}
+                                        title={section.title}
+                                        items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
+                                        defaultOpen={activeFilter === "balanceSheet" && idx < 3}
+                                    />
+                                ))}
+                            </div>
+                        )}
+
+                        {/* Tax Adjustments */}
+
+                        {(activeFilter === "all" || activeFilter === "taxAdjustments") && (
+                            <div className="space-y-4">
+                                {activeFilter === "all" && (
+                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
+                                        Skattemässiga justeringar (4.x)
+                                    </h3>
+                                )}
+                                {taxAdjustmentSections.map((section, idx) => (
+                                    <ReportSection
+                                        key={section.title}
+                                        title={section.title}
+                                        items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
+                                        defaultOpen={activeFilter === "taxAdjustments" && idx < 3}
+                                    />
+                                ))}
+                            </div>
+                        )}
                     </div>
-                </div>
-
-                {/* Form Sections */}
-                <div className="space-y-8">
-                    {/* Income Statement */}
-                    {(activeFilter === "all" || activeFilter === "incomeStatement") && (
-                        <div className="space-y-4">
-                            {activeFilter === "all" && (
-                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
-                                    Resultaträkning (3.x)
-                                </h3>
-                            )}
-                            {incomeStatementSections.map((section, idx) => (
-                                <FormSection
-                                    key={section.title}
-                                    title={section.title}
-                                    fields={section.fields}
-                                    defaultOpen={activeFilter === "incomeStatement" || idx < 3}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Balance Sheet */}
-
-                    {(activeFilter === "all" || activeFilter === "balanceSheet") && (
-                        <div className="space-y-4">
-                            {activeFilter === "all" && (
-                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
-                                    Balansräkning (2.x)
-                                </h3>
-                            )}
-                            {balanceSheetSections.map((section, idx) => (
-                                <FormSection
-                                    key={section.title}
-                                    title={section.title}
-                                    fields={section.fields}
-                                    defaultOpen={activeFilter === "balanceSheet" && idx < 3}
-                                />
-                            ))}
-                        </div>
-                    )}
-
-                    {/* Tax Adjustments */}
-
-                    {(activeFilter === "all" || activeFilter === "taxAdjustments") && (
-                        <div className="space-y-4">
-                            {activeFilter === "all" && (
-                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
-                                    Skattemässiga justeringar (4.x)
-                                </h3>
-                            )}
-                            {taxAdjustmentSections.map((section, idx) => (
-                                <FormSection
-                                    key={section.title}
-                                    title={section.title}
-                                    fields={section.fields}
-                                    defaultOpen={activeFilter === "taxAdjustments" && idx < 3}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </div>
+                </ReportContainer>
 
 
             </div>

@@ -6,6 +6,7 @@
  */
 
 import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, AIConfirmationRequest } from './types'
+import { db } from '../server-db'
 
 // Re-export types that tools may need
 export type { AIConfirmationRequest } from './types'
@@ -163,7 +164,7 @@ class AIToolRegistry {
     /**
      * Log an action for audit trail
      */
-    private logAction(entry: Omit<ActionAuditLog, 'id' | 'timestamp' | 'payloadHash'>): void {
+    private async logAction(entry: Omit<ActionAuditLog, 'id' | 'timestamp' | 'payloadHash'>): Promise<void> {
         const log: ActionAuditLog = {
             ...entry,
             id: crypto.randomUUID(),
@@ -172,7 +173,19 @@ class AIToolRegistry {
         }
         this.auditLog.push(log)
 
-        // In production, this would be persisted to a database
+        // Persist to database for accounting compliance
+        try {
+            await db.logAIToolExecution({
+                toolName: log.toolName,
+                parameters: log.params,
+                result: log.result,
+                status: (log.result as any)?.success === false ? 'error' : 'success',
+                userId: log.userId,
+            })
+        } catch (error) {
+            console.error('[AI Tool Audit] Failed to persist log:', error)
+        }
+
         console.log('[AI Tool Audit]', log)
     }
 

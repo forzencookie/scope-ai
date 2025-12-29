@@ -1,67 +1,48 @@
 "use client"
 
+import { useState, useMemo } from "react"
 import {
     Calendar,
     Building2,
     Clock,
     Bot,
+    ChevronDown,
+    ChevronRight,
+    Eye,
+    Send,
+    Download,
 } from "lucide-react"
+import { cn } from "@/lib/utils"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SectionCard } from "@/components/ui/section-card"
+import { Button } from "@/components/ui/button"
 import {
-    DataTable,
-    DataTableHeader,
-    DataTableHeaderCell,
-    DataTableBody,
-    DataTableRow,
-    DataTableCell
-} from "@/components/ui/data-table"
+    ReportContainer,
+    ReportHeader,
+    ReportSection,
+    type ReportItem
+} from "./report-ui"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
 
-// Simplified P&L data for sole proprietors
-const simplifiedPLItems = [
-    { label: "Försäljning och övriga intäkter", value: 485000, bold: true },
-    { label: "Varor, material och tjänster", value: -125000 },
-    { label: "Övriga externa kostnader", value: -85000 },
-    { label: "Personalkostnader", value: 0 },
-    { label: "Avskrivningar", value: -15000 },
-    { label: "Årets resultat", value: 260000, bold: true, separator: true },
-]
 
-// Simplified Balance Sheet data
-const simplifiedBalanceSheet = {
-    assets: [
-        { label: "Tillgångar", value: 385000, bold: true },
-        { label: "Inventarier", value: 45000, indent: true },
-        { label: "Kundfordringar", value: 62000, indent: true },
-        { label: "Kassa och bank", value: 278000, indent: true },
-    ],
-    liabilities: [
-        { label: "Eget kapital och skulder", value: 385000, bold: true, separator: true },
-        { label: "Eget kapital", value: 310000, indent: true },
-        { label: "Leverantörsskulder", value: 45000, indent: true },
-        { label: "Skatteskulder", value: 30000, indent: true },
-    ],
-}
-
+// =============================================================================
+// Main Component
+// =============================================================================
 export function ArsbokslutContent() {
     const { companyTypeName } = useCompany()
     const { text } = useTextMode()
     const { accountBalances, totals, isLoading } = useAccountBalances()
 
-    // Map Account Balances to Report Structure
-    // BAS 2024 Simplified Mapping
-
-    // P&L
+    // P&L Calculations
     const sales = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 3000 && parseInt(a.accountNumber) <= 3999)
-        .reduce((sum: number, a: AccountActivity) => sum + (a.balance * -1), 0) // Revenue is Credit (-), flip to positive
+        .reduce((sum: number, a: AccountActivity) => sum + (a.balance * -1), 0)
 
     const materials = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 4000 && parseInt(a.accountNumber) <= 4999)
-        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) // Cost is Debit (+)
+        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
 
     const externalExpenses = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 5000 && parseInt(a.accountNumber) <= 6999)
@@ -77,35 +58,21 @@ export function ArsbokslutContent() {
 
     const financialItems = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 8000 && parseInt(a.accountNumber) <= 8999)
-        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) // Net financial
+        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
 
-    // Resultat: Sales - Costs (Materials + External + Personnel + Depreciations + Financial)
-    // Note: Costs are positive numbers here (Debit balances).
-    // Sales is positive number (flipped from Credit).
-    // Result = Sales - Sum(Costs).
-
-    // However, financial items might be mixed (interest income vs expense).
-    // Use raw balance sum for financial: 
-    // If it's Debit (+), it's expense. If Credit (-), it's income.
-    // Let's stick to consistent sign logic:
-    // Expenses are usually Debit (+). Revenue Credit (-).
-    // Net Result = (Sum of all P&L accounts) * -1.
-    // If Result is negative (Credit heavy), flipping makes it positive Profit.
     const result = Math.round(totals.netIncome)
 
-    // Construct P&L Rows
-    const plRows = [
-        { label: "Försäljning och övriga intäkter", value: Math.round(sales), bold: true },
-        { label: "Varor, material och tjänster", value: Math.round(materials) * -1 }, // Display as negative for cost
+    // P&L Items
+    const plItems: ReportItem[] = useMemo(() => ([
+        { label: "Försäljning och övriga intäkter", value: Math.round(sales) },
+        { label: "Varor, material och tjänster", value: Math.round(materials) * -1 },
         { label: "Övriga externa kostnader", value: Math.round(externalExpenses) * -1 },
         { label: "Personalkostnader", value: Math.round(personnel) * -1 },
         { label: "Avskrivningar", value: Math.round(depreciations) * -1 },
         { label: "Finansiella poster", value: Math.round(financialItems) * -1 },
-        { label: "Årets resultat", value: result, bold: true, separator: true },
-    ]
+    ]), [sales, materials, externalExpenses, personnel, depreciations, financialItems]);
 
-    // Balance Sheet
-    // Assets (1xxx)
+    // Balance Sheet Calculations
     const fixedAssets = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 1000 && parseInt(a.accountNumber) <= 1399)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
@@ -120,15 +87,9 @@ export function ArsbokslutContent() {
 
     const totalAssets = Math.round(totals.assets)
 
-    // Equity & Liabilities (2xxx)
-    // Equity (20xx). Credit is negative.
     const equity = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2000 && parseInt(a.accountNumber) <= 2099)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
-
-    // Add current result to Equity presentation? Usually "Årets resultat" is a separate line or part of Equity.
-    // In simplified balance sheet: Equity + Result should equal Net Assets.
-    // Let's just list Equity as booked + Result.
 
     const payables = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2400 && parseInt(a.accountNumber) <= 2499)
@@ -142,25 +103,21 @@ export function ArsbokslutContent() {
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2700 && parseInt(a.accountNumber) <= 2999)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
 
-    // Calculate total Equity & Liabilities to ensure it matches Assets
-    // Current Equity (Booked) + Result + Liabilities
     const totalEqLiab = Math.round(equity + result + payables + taxes + otherLiabilities)
 
-    const balanceSheet = {
-        assets: [
-            { label: "Tillgångar", value: totalAssets, bold: true },
-            { label: "Anläggningstillgångar", value: Math.round(fixedAssets), indent: true },
-            { label: "Kundfordringar mm", value: Math.round(receivables), indent: true },
-            { label: "Kassa och bank", value: Math.round(cash), indent: true },
-        ],
-        liabilities: [
-            { label: "Eget kapital och skulder", value: totalEqLiab, bold: true, separator: true },
-            { label: "Eget kapital (inkl. årets resultat)", value: Math.round(equity + result), indent: true },
-            { label: "Leverantörsskulder", value: Math.round(payables), indent: true },
-            { label: "Skatteskulder", value: Math.round(taxes), indent: true },
-            { label: "Övriga skulder", value: Math.round(otherLiabilities), indent: true },
-        ],
-    }
+    // Balance Sheet Items
+    const assetItems: ReportItem[] = useMemo(() => ([
+        { label: "Anläggningstillgångar", value: Math.round(fixedAssets) },
+        { label: "Kundfordringar mm", value: Math.round(receivables) },
+        { label: "Kassa och bank", value: Math.round(cash) },
+    ]), [fixedAssets, receivables, cash]);
+
+    const liabilityItems: ReportItem[] = useMemo(() => ([
+        { label: "Eget kapital (inkl. årets resultat)", value: Math.round(equity + result) },
+        { label: "Leverantörsskulder", value: Math.round(payables) },
+        { label: "Skatteskulder", value: Math.round(taxes) },
+        { label: "Övriga skulder", value: Math.round(otherLiabilities) },
+    ]), [equity, result, payables, taxes, otherLiabilities]);
 
     if (isLoading) {
         return <div className="p-12 text-center text-muted-foreground">Läser in bokföring...</div>
@@ -169,6 +126,9 @@ export function ArsbokslutContent() {
     return (
         <main className="flex-1 flex flex-col px-6 pt-2 pb-6">
             <div className="max-w-6xl w-full space-y-6">
+
+
+
                 <StatCardGrid columns={3}>
                     <StatCard
                         label={text.reports.fiscalYear}
@@ -201,53 +161,68 @@ export function ArsbokslutContent() {
                     onAction={() => { }}
                 />
 
-                {/* Simplified P&L for sole proprietors */}
-                <DataTable title={text.reports.profitLossSimplified}>
-                    <DataTableHeader>
-                        <DataTableHeaderCell label={text.reports.tablePost} />
-                        <DataTableHeaderCell label={text.reports.tableAmount} align="right" />
-                    </DataTableHeader>
-                    <DataTableBody>
-                        {plRows.map((item) => (
-                            <DataTableRow key={item.label} className={item.separator ? "border-t-2" : ""}>
-                                <DataTableCell bold={item.bold}>{item.label}</DataTableCell>
-                                <DataTableCell align="right" bold={item.bold}>
-                                    {item.value.toLocaleString('sv-SE')} kr
-                                </DataTableCell>
-                            </DataTableRow>
-                        ))}
-                    </DataTableBody>
-                </DataTable>
+                {/* Section Separator */}
+                <div className="border-b-2 border-border/60" />
 
-                {/* Simplified Balance Sheet */}
-                <DataTable title={text.reports.balanceSheetSimplified}>
-                    <DataTableHeader>
-                        <DataTableHeaderCell label={text.reports.tablePost} />
-                        <DataTableHeaderCell label={text.reports.tableAmount} align="right" />
-                    </DataTableHeader>
-                    <DataTableBody>
-                        {balanceSheet.assets.map((item) => (
-                            <DataTableRow key={item.label}>
-                                <DataTableCell bold={item.bold} className={item.indent ? "pl-6" : ""}>
-                                    {item.label}
-                                </DataTableCell>
-                                <DataTableCell align="right" bold={item.bold}>
-                                    {item.value.toLocaleString('sv-SE')} kr
-                                </DataTableCell>
-                            </DataTableRow>
-                        ))}
-                        {balanceSheet.liabilities.map((item) => (
-                            <DataTableRow key={item.label} className={item.separator ? "border-t" : ""}>
-                                <DataTableCell bold={item.bold} className={item.indent ? "pl-6" : ""}>
-                                    {item.label}
-                                </DataTableCell>
-                                <DataTableCell align="right" bold={item.bold}>
-                                    {item.value.toLocaleString('sv-SE')} kr
-                                </DataTableCell>
-                            </DataTableRow>
-                        ))}
-                    </DataTableBody>
-                </DataTable>
+                {/* Header with Actions */}
+                <ReportHeader
+                    title="Årsbokslut 2024"
+                    subtitle="Räkenskapsår 2024-01-01 – 2024-12-31"
+                >
+                    <Button variant="outline" size="sm" className="h-9">
+                        <Eye className="mr-2 h-4 w-4" />
+                        Visa detaljer
+                    </Button>
+                    <Button variant="outline" size="sm" className="h-9">
+                        <Download className="mr-2 h-4 w-4" />
+                        Exportera PDF
+                    </Button>
+                    <Button size="sm" className="h-9">
+                        <Send className="mr-2 h-4 w-4" />
+                        Skicka till Bolagsverket
+                    </Button>
+                </ReportHeader>
+
+                {/* Simplified P&L - Form Style */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                        {text.reports.profitLossSimplified}
+                    </h2>
+
+                    <ReportContainer>
+                        <div className="space-y-4">
+                            <ReportSection
+                                title="Intäkter och kostnader"
+                                items={plItems}
+                                total={result}
+                            />
+                        </div>
+                    </ReportContainer>
+                </div>
+
+                {/* Section Separator */}
+                <div className="border-b-2 border-border/60" />
+
+                {/* Simplified Balance Sheet - Form Style */}
+                <div className="space-y-4">
+                    <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
+                        {text.reports.balanceSheetSimplified}
+                    </h2>
+                    <ReportContainer>
+                        <div className="space-y-2">
+                            <ReportSection
+                                title="Tillgångar"
+                                items={assetItems}
+                                total={totalAssets}
+                            />
+                            <ReportSection
+                                title="Eget kapital och skulder"
+                                items={liabilityItems}
+                                total={totalEqLiab}
+                            />
+                        </div>
+                    </ReportContainer>
+                </div>
             </div>
         </main>
     )

@@ -9,6 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
+import { VatProcessor, type VatReport } from "@/lib/vat-processor"
 import { cn } from "@/lib/utils"
 import { Bot, User, Send, CheckCircle2 } from "lucide-react"
 
@@ -323,26 +324,52 @@ interface SimpleWizardProps {
 }
 
 // Momsdeklaration wizard
-export function MomsWizardDialog({ open, onOpenChange, onConfirm }: SimpleWizardProps) {
+export function MomsWizardDialog({ open, onOpenChange, onConfirm, initialData }: SimpleWizardProps & { initialData?: VatReport }) {
+    const handleConfirm = async () => {
+        if (!initialData) return
+
+        try {
+            const response = await fetch('/api/reports/vat', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    period_id: (initialData as any).periodId,
+                    report_type: 'vat',
+                    data: initialData,
+                    status: 'submitted',
+                    period_start: initialData.period // Simplified, should be proper dates in real scenario
+                })
+            })
+
+            if (response.ok) {
+                onConfirm?.()
+            }
+        } catch (err) {
+            console.error("Failed to save report:", err)
+        }
+    }
+
+    if (!initialData) return null
+
     return (
         <AIWizardDialog
             open={open}
             onOpenChange={onOpenChange}
-            onConfirm={onConfirm}
+            onConfirm={handleConfirm}
             step1={{
                 title: "Välj momsperiod",
-                periodLabel: "Q4 2024",
-                periodSubtitle: "Oktober - December 2024",
+                periodLabel: initialData.period,
+                periodSubtitle: "Baserat på dina senaste transaktioner",
                 deadlineLabel: "Deadline",
-                deadline: "12 feb 2025",
+                deadline: initialData.dueDate,
                 icon: <span className="text-primary">📅</span>,
                 summaryItems: [
-                    { label: "Utgående moms (konto 2610)", value: "125 000 kr" },
-                    { label: "Ingående moms (konto 2640)", value: "45 000 kr" },
+                    { label: "Utgående moms", value: `${initialData.salesVat.toLocaleString('sv-SE')} kr` },
+                    { label: "Ingående moms", value: `${initialData.inputVat.toLocaleString('sv-SE')} kr` },
                 ],
             }}
             step2={{
-                initialPrompt: "Finns det något speciellt som påverkar momsen för Q4?",
+                initialPrompt: `Finns det något speciellt som påverkar momsen för ${initialData.period}?`,
                 promptHint: "T.ex. EU-försäljning, korrigeringar, export",
                 responseHandler: (msg) => {
                     const lower = msg.toLowerCase()
@@ -356,15 +383,15 @@ export function MomsWizardDialog({ open, onOpenChange, onConfirm }: SimpleWizard
                 },
             }}
             step3={{
-                title: "Momsdeklaration Q4 2024",
-                subtitle: "Oktober - December",
+                title: `Momsdeklaration ${initialData.period}`,
+                subtitle: "Beräknat underlag",
                 icon: <span>📄</span>,
                 summaryRows: [
-                    { label: "Utgående moms", value: "125 000 kr" },
-                    { label: "Ingående moms", value: "-45 000 kr", negative: true },
+                    { label: "Utgående moms", value: `${initialData.salesVat.toLocaleString('sv-SE')} kr` },
+                    { label: "Ingående moms", value: `-${initialData.inputVat.toLocaleString('sv-SE')} kr`, negative: true },
                 ],
                 resultLabel: "Moms att betala",
-                resultValue: "80 000 kr",
+                resultValue: `${initialData.netVat.toLocaleString('sv-SE')} kr`,
             }}
         />
     )

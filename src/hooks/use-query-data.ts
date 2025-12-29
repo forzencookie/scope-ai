@@ -21,7 +21,7 @@ import {
     updateStoredTransaction,
     deleteStoredTransaction,
 } from "@/lib/demo-storage"
-import { mockTransactionsWithAI } from "@/data/transactions"
+// PRODUCTION: No mock data fallback - unauthenticated users get empty state
 
 // ============================================================================
 // Query Keys - Centralized key management for cache invalidation
@@ -73,15 +73,10 @@ export function useTransactionsQuery(
                 if (!response.success) throw new Error(response.error || "Failed to fetch transactions")
                 return response.data
             } else {
-                // Try to get from localStorage first for persistence
+                // PRODUCTION: Return empty array for unauthenticated users
+                // They need to log in to see real data
                 const stored = getStoredTransactions()
-                if (stored && stored.length > 0) {
-                    return stored
-                }
-                
-                // Initialize with mock data for demo
-                setStoredTransactions(mockTransactionsWithAI)
-                return mockTransactionsWithAI
+                return stored || []
             }
         },
         // Keep data fresh for 30 seconds
@@ -114,8 +109,8 @@ export function useTransactionsPaginatedQuery(
                 )
                 return response
             } else {
-                // Use demo storage for unauthenticated users
-                const stored = getStoredTransactions() ?? mockTransactionsWithAI
+                // PRODUCTION: Return empty for unauthenticated users
+                const stored = getStoredTransactions() ?? []
                 const start = (page - 1) * pageSize
                 const end = start + pageSize
                 return {
@@ -259,8 +254,7 @@ export async function prefetchTransactions(queryClient: ReturnType<typeof useQue
                 return response.data
             } else {
                 const stored = getStoredTransactions()
-                if (stored && stored.length > 0) return stored
-                return mockTransactionsWithAI
+                return stored || []
             }
         },
         staleTime: 30 * 1000,

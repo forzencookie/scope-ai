@@ -100,6 +100,7 @@ export interface AIDisplayInstruction {
     /** Component type to render */
     component:
     | 'TransactionsTable'
+    | 'ReceiptsTable'
     | 'PayslipsTable'
     | 'VatSummary'
     | 'BalanceSheet'
@@ -108,6 +109,9 @@ export interface AIDisplayInstruction {
     | 'InvoicePreview'
     | 'DeadlinesList'
     | 'CompanyStats'
+    | 'ReceiptCard'
+    | 'TransactionCard'
+    | 'TaskChecklist'
 
     /** Props to pass to the component */
     props: Record<string, unknown>

@@ -1,9 +1,12 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
-import { type Transaction, allTransactions as defaultTransactions } from "@/lib/transaction-data"
-import { type Invoice, mockInvoices as defaultInvoices } from "@/data/invoices"
-import { type Receipt, mockReceipts as defaultReceipts } from "@/data/receipts"
+import type { Transaction, Invoice, Receipt } from "@/types"
+
+// PRODUCTION: No mock data - empty defaults
+const defaultTransactions: Transaction[] = []
+const defaultInvoices: Invoice[] = []
+const defaultReceipts: Receipt[] = []
 
 // Re-export types for convenience
 export type { Invoice, Receipt }
@@ -24,13 +27,13 @@ interface DataProviderActions {
     addTransaction: (transaction: Transaction) => void
     updateTransaction: (id: string, updates: Partial<Transaction>) => void
     deleteTransaction: (id: string) => void
-    
+
     // Invoice actions
     setInvoices: (invoices: Invoice[]) => void
     addInvoice: (invoice: Invoice) => void
     updateInvoice: (id: string, updates: Partial<Invoice>) => void
     deleteInvoice: (id: string) => void
-    
+
     // Receipt actions
     setReceipts: (receipts: Receipt[]) => void
     addReceipt: (receipt: Receipt) => void
@@ -38,7 +41,7 @@ interface DataProviderActions {
     deleteReceipt: (id: string) => void
 }
 
-interface DataProviderContextValue extends DataProviderState, DataProviderActions {}
+interface DataProviderContextValue extends DataProviderState, DataProviderActions { }
 
 const DataProviderContext = createContext<DataProviderContextValue | undefined>(undefined)
 

@@ -209,9 +209,6 @@ export function Huvudbok() {
                 />
             </StatCardGrid>
 
-            {/* Section Separator */}
-            <div className="border-b-2 border-border/60" />
-
             {/* Main Table */}
             <DataTable
                 title="Huvudbok"
