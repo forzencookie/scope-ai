@@ -11,12 +11,12 @@ import { db } from '@/lib/server-db'
 import type { InboxItem } from '@/types'
 import { extractInvoiceDataWithGPT } from '@/services/invoice-ocr'
 
-async function processInboxItem(item: InboxItem): Promise<{ entityId: string, entityType: 'supplier-invoice' | 'receipt' } | null> {
-    // Skip if already processed
-    if (item.aiStatus === 'processed') return null
+async function processInboxItem(item: InboxItem): Promise<{ suggestion: string, documentType: 'receipt' | 'invoice', extractedData: any } | null> {
+    // Skip if already processed or already has a suggestion
+    if (item.aiStatus === 'processed' || item.aiSuggestion) return null
 
     // AI reads the raw text content (simulating OCR)
-    console.log(`[AI] Processing email from ${item.sender}: "${item.title}"`)
+    console.log(`[AI] Analyzing email from ${item.sender}: "${item.title}"`)
 
     // Use GPT to extract ALL invoice information from text
     const extractedData = await extractInvoiceDataWithGPT(item)
@@ -29,39 +29,23 @@ async function processInboxItem(item: InboxItem): Promise<{ entityId: string, en
     console.log(`[AI] Extracted:`, extractedData)
 
     // Determine if already paid (receipt) or needs payment (invoice)
+    // But do NOT create anything yet - just suggest
     if (extractedData.isPaid) {
-        // RECEIPT - route to Kvitton
-        console.log(`[AI] Detected as RECEIPT (already paid)`)
-        const receiptId = `rcpt-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
-        const receipt = {
-            id: receiptId,
-            supplier: extractedData.supplier,
-            date: extractedData.date,
-            amount: extractedData.amount,
-            status: 'completed',
-            category: extractedData.accountingCategory,
-            attachmentUrl: 'email.pdf',
+        // RECEIPT suggestion
+        console.log(`[AI] Detected as RECEIPT (already paid) - suggesting`)
+        return {
+            suggestion: `Registrera som kvitto från ${extractedData.supplier} på ${extractedData.amount} kr`,
+            documentType: 'receipt',
+            extractedData
         }
-        await db.addReceipt(receipt)
-
-        return { entityId: receiptId, entityType: 'receipt' }
     } else {
-        // INVOICE - route to Leverantörsfakturor
-        console.log(`[AI] Detected as INVOICE (needs payment)`)
-        const invoiceId = `sinv-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`
-        await db.addSupplierInvoice({
-            id: invoiceId,
-            invoiceNumber: extractedData.invoiceNumber || `AUTO-${Date.now()}`,
-            supplierName: extractedData.supplier,
-            amount: extractedData.amount,
-            totalAmount: extractedData.amount,
-            invoiceDate: extractedData.date,
-            dueDate: extractedData.dueDate || extractedData.date,
-            ocr: extractedData.ocrNumber || `OCR-${Math.floor(Math.random() * 999999999)}`,
-            status: 'pending',
-        })
-
-        return { entityId: invoiceId, entityType: 'supplier-invoice' }
+        // INVOICE suggestion
+        console.log(`[AI] Detected as INVOICE (needs payment) - suggesting`)
+        return {
+            suggestion: `Registrera som leverantörsfaktura från ${extractedData.supplier} på ${extractedData.amount} kr`,
+            documentType: 'invoice',
+            extractedData
+        }
     }
 }
 
@@ -71,7 +55,7 @@ export async function POST() {
         const allItems = await db.getInboxItems()
         console.log('[AI] Starting processing, inbox items:', allItems.length)
 
-        const results: { itemId: string, entityId: string, entityType: string }[] = []
+        const results: { itemId: string, suggestion: string, documentType: string }[] = []
         const errors: { itemId: string, error: string }[] = []
 
         // Find all pending items
@@ -101,26 +85,28 @@ export async function POST() {
                 const result = await processInboxItem(item)
 
                 if (result) {
-                    // Update item with result
+                    // Update item with AI suggestion (NOT creating record yet)
                     await db.updateInboxItem(item.id, {
-                        aiStatus: 'processed',
-                        linkedEntityId: result.entityId,
-                        linkedEntityType: result.entityType,
-                        aiSuggestion: result.entityType === 'receipt'
-                            ? '✨ Auto-registerad som kvitto'
-                            : '✨ Auto-registerad som leverantörsfaktura',
+                        aiStatus: 'pending', // Keep pending until user confirms
+                        aiSuggestion: result.suggestion,
+                        // Store extracted data for later use by api/inbox/process
+                        documentData: {
+                            ...item.documentData,
+                            extractedData: result.extractedData,
+                            suggestedType: result.documentType
+                        },
                         category: 'faktura',
                     })
 
                     results.push({
                         itemId: item.id,
-                        entityId: result.entityId,
-                        entityType: result.entityType
+                        suggestion: result.suggestion,
+                        documentType: result.documentType
                     })
 
-                    console.log(`[AI] ✓ Successfully processed ${item.id}`)
+                    console.log(`[AI] ✓ Suggested for ${item.id}: ${result.suggestion}`)
                 } else {
-                    // Non-invoice items are "processed" but don't create entities
+                    // Non-invoice items - no suggestion
                     await db.updateInboxItem(item.id, { aiStatus: 'processed' })
                     console.log(`[AI] ⊘ Skipped non-invoice item ${item.id}`)
                 }
