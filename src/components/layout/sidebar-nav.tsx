@@ -237,42 +237,45 @@ export function NavAIConversations() {
   const [isOpen, setIsOpen] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Load conversations from localStorage
+  // Load conversations from Supabase via API
   React.useEffect(() => {
-    const stored = localStorage.getItem(AI_STORAGE_KEY)
-    if (stored) {
+    async function fetchConversations() {
       try {
-        const parsed = JSON.parse(stored) as AIConversation[]
-        setConversations(parsed.slice(0, 4)) // Show show 4
-        setTotalCount(parsed.length)
-      } catch {
-        console.error('Failed to parse AI conversations')
+        const res = await fetch('/api/chat/history')
+        if (res.ok) {
+          const data = await res.json()
+          setConversations(data.slice(0, 4)) // Show first 4
+          setTotalCount(data.length)
+        }
+      } catch (error) {
+        console.error('Failed to fetch AI conversations:', error)
+      } finally {
+        setIsLoading(false)
       }
     }
-    setIsLoading(false)
+
+    fetchConversations()
   }, [])
 
-  // Listen for storage changes and custom update event
+  // Listen for update events to refresh the list
   React.useEffect(() => {
-    const handleStorageChange = () => {
-      const stored = localStorage.getItem(AI_STORAGE_KEY)
-      if (stored) {
-        try {
-          const parsed = JSON.parse(stored) as AIConversation[]
-          setConversations(parsed.slice(0, 4))
-          setTotalCount(parsed.length)
-        } catch {
-          // Silent fail
+    const handleUpdate = async () => {
+      try {
+        const res = await fetch('/api/chat/history')
+        if (res.ok) {
+          const data = await res.json()
+          setConversations(data.slice(0, 4))
+          setTotalCount(data.length)
         }
+      } catch {
+        // Silent fail
       }
     }
 
-    window.addEventListener('storage', handleStorageChange)
-    window.addEventListener('ai-conversations-updated', handleStorageChange)
+    window.addEventListener('ai-conversations-updated', handleUpdate)
 
     return () => {
-      window.removeEventListener('storage', handleStorageChange)
-      window.removeEventListener('ai-conversations-updated', handleStorageChange)
+      window.removeEventListener('ai-conversations-updated', handleUpdate)
     }
   }, [])
 
