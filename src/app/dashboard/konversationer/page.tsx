@@ -131,12 +131,20 @@ export default function KonversationerPage() {
                     ) : (
                         <div className="flex flex-col gap-2">
                             {filteredConversations.map((conv) => (
-                                <button
+                                <div
                                     key={conv.id}
+                                    role="button"
+                                    tabIndex={0}
                                     onClick={() => router.push(`/dashboard/ai-robot?conversation=${conv.id}`)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter' || e.key === ' ') {
+                                            e.preventDefault()
+                                            router.push(`/dashboard/ai-robot?conversation=${conv.id}`)
+                                        }
+                                    }}
                                     className={cn(
-                                        "flex items-center gap-3 p-4 rounded-xl border border-border/50 text-left transition-colors group",
-                                        "bg-card hover:bg-muted/50"
+                                        "flex items-center gap-3 p-4 rounded-xl border border-border/50 text-left transition-colors group cursor-pointer",
+                                        "bg-card hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/20"
                                     )}
                                 >
                                     <MessageSquare className="h-5 w-5 shrink-0 text-muted-foreground" />
@@ -154,7 +162,7 @@ export default function KonversationerPage() {
                                     >
                                         <Trash2 className="h-4 w-4" />
                                     </Button>
-                                </button>
+                                </div>
                             ))}
                         </div>
                     )}
