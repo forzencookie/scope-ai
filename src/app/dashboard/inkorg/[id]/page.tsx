@@ -170,10 +170,23 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                                 <Button
                                     size="sm"
                                     className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all"
-                                    onClick={() => {
-                                        toast.success("Kvitto registrerat", "Dokumentet har flyttats till kvitton och väntar på bokföring.")
-                                        // Simulera flytt - i verkligheten ett API-anrop
-                                        setTimeout(() => router.push('/dashboard/appar/bokforing?tab=kvitton'), 1000)
+                                    onClick={async () => {
+                                        toast.info("Bearbetar...", "Skapar kvitto från dokument")
+                                        try {
+                                            const res = await fetch('/api/inbox/process', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ inboxId: item.id, targetType: 'receipt' })
+                                            })
+                                            if (res.ok) {
+                                                toast.success("Kvitto registrerat", "Dokumentet har flyttats till kvitton.")
+                                                router.push('/dashboard/appar/bokforing?tab=kvitton')
+                                            } else {
+                                                toast.error("Fel", "Kunde inte skapa kvitto.")
+                                            }
+                                        } catch (err) {
+                                            toast.error("Nätverksfel", "Försök igen.")
+                                        }
                                     }}
                                 >
                                     <Receipt className="mr-2 h-4 w-4" />
@@ -183,10 +196,23 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                                 <Button
                                     size="sm"
                                     className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all"
-                                    onClick={() => {
-                                        toast.success("Faktura registrerad", "Dokumentet har flyttats till leverantörsfakturor.")
-                                        // Simulera flytt
-                                        setTimeout(() => router.push('/dashboard/appar/bokforing?tab=leverantorsfakturor'), 1000)
+                                    onClick={async () => {
+                                        toast.info("Bearbetar...", "Skapar leverantörsfaktura från dokument")
+                                        try {
+                                            const res = await fetch('/api/inbox/process', {
+                                                method: 'POST',
+                                                headers: { 'Content-Type': 'application/json' },
+                                                body: JSON.stringify({ inboxId: item.id, targetType: 'invoice' })
+                                            })
+                                            if (res.ok) {
+                                                toast.success("Faktura registrerad", "Dokumentet har flyttats till leverantörsfakturor.")
+                                                router.push('/dashboard/appar/bokforing?tab=leverantorsfakturor')
+                                            } else {
+                                                toast.error("Fel", "Kunde inte skapa faktura.")
+                                            }
+                                        } catch (err) {
+                                            toast.error("Nätverksfel", "Försök igen.")
+                                        }
                                     }}
                                 >
                                     <FileText className="mr-2 h-4 w-4" />

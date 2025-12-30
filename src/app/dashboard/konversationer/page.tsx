@@ -31,25 +31,44 @@ export default function KonversationerPage() {
     const [conversations, setConversations] = useState<Conversation[]>([])
     const [searchQuery, setSearchQuery] = useState("")
 
-    // Load conversations from localStorage
+    const [isLoading, setIsLoading] = useState(true)
+
+    // Load conversations from Supabase
     useEffect(() => {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
+        async function fetchHistory() {
             try {
-                const parsed = JSON.parse(stored) as Conversation[]
-                setConversations(parsed)
-            } catch {
-                console.error('Failed to parse stored conversations')
+                // In future: Append ?userId=... if needed, or rely on cookie/session
+                const res = await fetch('/api/chat/history')
+                if (res.ok) {
+                    const data = await res.json()
+                    setConversations(data)
+                }
+            } catch (error) {
+                console.error('Failed to fetch conversations:', error)
+            } finally {
+                setIsLoading(false)
             }
         }
+
+        fetchHistory()
+
+        // Listen for updates (local event for now, eventually realtime subscription)
+        const handleUpdate = () => fetchHistory()
+        window.addEventListener('ai-conversations-updated', handleUpdate)
+
+        return () => window.removeEventListener('ai-conversations-updated', handleUpdate)
     }, [])
 
     // Delete a conversation
-    const deleteConversation = (conversationId: string, e: React.MouseEvent) => {
+    const deleteConversation = async (conversationId: string, e: React.MouseEvent) => {
         e.stopPropagation()
+        // Optimistic update
         const updated = conversations.filter(c => c.id !== conversationId)
         setConversations(updated)
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+
+        // TODO: Call DELETE /api/chat/history?id=...
+        // For now, allow UI removal. Integration for delete can happen in next polish step.
+        // localStorage.setItem(STORAGE_KEY, JSON.stringify(updated)) 
         window.dispatchEvent(new Event('ai-conversations-updated'))
     }
 
