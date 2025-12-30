@@ -189,155 +189,162 @@ export function VerifikationerTable() {
                 <h2 className="text-2xl font-bold tracking-tight">Verifikationer</h2>
                 <p className="text-muted-foreground">Se alla bokförda transaktioner och verifikationer.</p>
             </div>
+            <div className="flex items-center gap-2">
+                <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                    <Plus className="h-3.5 w-3.5" />
+                    Ny verifikation
+                </Button>
+            </div>
+        </div>
 
-            {/* Stats Cards */}
-            <StatCardGrid columns={4}>
-                <StatCard
-                    label="Totalt verifikationer"
-                    value={stats.total}
-                    subtitle="Denna period"
-                    icon={FileCheck}
-                />
-                <StatCard
-                    label="Med transaktion"
-                    value={stats.withTransaction}
-                    subtitle="Kopplade"
-                    icon={Link2}
-                    changeType="positive"
-                />
-                <StatCard
-                    label="Saknar underlag"
-                    value={stats.missingUnderlag}
-                    subtitle="Behöver åtgärdas"
-                    icon={AlertTriangle}
-                    changeType={stats.missingUnderlag > 0 ? "negative" : "neutral"}
-                />
-                <StatCard
-                    label="Totalt belopp"
-                    value={formatCurrency(stats.totalAmount)}
-                    icon={Banknote}
-                />
-            </StatCardGrid>
+            {/* Stats Cards */ }
+    <StatCardGrid columns={4}>
+        <StatCard
+            label="Totalt verifikationer"
+            value={stats.total}
+            subtitle="Denna period"
+            icon={FileCheck}
+        />
+        <StatCard
+            label="Med transaktion"
+            value={stats.withTransaction}
+            subtitle="Kopplade"
+            icon={Link2}
+            changeType="positive"
+        />
+        <StatCard
+            label="Saknar underlag"
+            value={stats.missingUnderlag}
+            subtitle="Behöver åtgärdas"
+            icon={AlertTriangle}
+            changeType={stats.missingUnderlag > 0 ? "negative" : "neutral"}
+        />
+        <StatCard
+            label="Totalt belopp"
+            value={formatCurrency(stats.totalAmount)}
+            icon={Banknote}
+        />
+    </StatCardGrid>
 
-            {/* Create Dialog */}
-            <VerifikationDialog
-                open={createDialogOpen}
-                onOpenChange={setCreateDialogOpen}
-                onVerifikationCreated={(transactionId, underlagId, type) => {
-                    toast.success("Verifikation skapad", "Kopplingen har sparats och status har uppdaterats till Bokförd.")
-                }}
-            />
+    {/* Create Dialog */ }
+    <VerifikationDialog
+        open={createDialogOpen}
+        onOpenChange={setCreateDialogOpen}
+        onVerifikationCreated={(transactionId, underlagId, type) => {
+            toast.success("Verifikation skapad", "Kopplingen har sparats och status har uppdaterats till Bokförd.")
+        }}
+    />
 
-            {/* Details Dialog */}
-            <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
-                <DialogContent>
-                    <DialogHeader>
-                        <DialogTitle>Verifikation #{selectedVerifikation?.id}</DialogTitle>
-                    </DialogHeader>
-                    {selectedVerifikation && (
-                        <div className="space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Datum</p>
-                                    <p className="font-medium">{selectedVerifikation.date}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Konto</p>
-                                    <p className="font-medium">{selectedVerifikation.konto} - {selectedVerifikation.kontoName}</p>
-                                </div>
-                                <div className="col-span-2">
-                                    <p className="text-sm text-muted-foreground">Beskrivning</p>
-                                    <p className="font-medium">{selectedVerifikation.description}</p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Belopp</p>
-                                    <p className={`font-medium ${selectedVerifikation.amount >= 0 ? "text-green-600 dark:text-green-500/70" : ""}`}>
-                                        {selectedVerifikation.amount.toLocaleString('sv-SE')} kr
-                                    </p>
-                                </div>
-                                <div>
-                                    <p className="text-sm text-muted-foreground">Status</p>
-                                    <div className="flex gap-2 mt-1">
-                                        <AppStatusBadge
-                                            status={selectedVerifikation.hasTransaction ? "Transaktion kopplad" : "Transaktion saknas"}
-                                            size="sm"
-                                        />
-                                        <AppStatusBadge
-                                            status={selectedVerifikation.hasUnderlag ? "Underlag finns" : "Underlag saknas"}
-                                            size="sm"
-                                        />
-                                    </div>
-                                </div>
+    {/* Details Dialog */ }
+    <Dialog open={detailsDialogOpen} onOpenChange={setDetailsDialogOpen}>
+        <DialogContent>
+            <DialogHeader>
+                <DialogTitle>Verifikation #{selectedVerifikation?.id}</DialogTitle>
+            </DialogHeader>
+            {selectedVerifikation && (
+                <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <p className="text-sm text-muted-foreground">Datum</p>
+                            <p className="font-medium">{selectedVerifikation.date}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Konto</p>
+                            <p className="font-medium">{selectedVerifikation.konto} - {selectedVerifikation.kontoName}</p>
+                        </div>
+                        <div className="col-span-2">
+                            <p className="text-sm text-muted-foreground">Beskrivning</p>
+                            <p className="font-medium">{selectedVerifikation.description}</p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Belopp</p>
+                            <p className={`font-medium ${selectedVerifikation.amount >= 0 ? "text-green-600 dark:text-green-500/70" : ""}`}>
+                                {selectedVerifikation.amount.toLocaleString('sv-SE')} kr
+                            </p>
+                        </div>
+                        <div>
+                            <p className="text-sm text-muted-foreground">Status</p>
+                            <div className="flex gap-2 mt-1">
+                                <AppStatusBadge
+                                    status={selectedVerifikation.hasTransaction ? "Transaktion kopplad" : "Transaktion saknas"}
+                                    size="sm"
+                                />
+                                <AppStatusBadge
+                                    status={selectedVerifikation.hasUnderlag ? "Underlag finns" : "Underlag saknas"}
+                                    size="sm"
+                                />
                             </div>
                         </div>
-                    )}
-                    <DialogFooter>
-                        <DialogClose asChild>
-                            <Button variant="outline">Stäng</Button>
-                        </DialogClose>
-                        <Button variant="outline">
-                            <Download className="h-4 w-4 mr-2" />
-                            Ladda ner
-                        </Button>
-                        <Button>
-                            <Check className="h-4 w-4 mr-2" />
-                            Godkänn
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
+                    </div>
+                </div>
+            )}
+            <DialogFooter>
+                <DialogClose asChild>
+                    <Button variant="outline">Stäng</Button>
+                </DialogClose>
+                <Button variant="outline">
+                    <Download className="h-4 w-4 mr-2" />
+                    Ladda ner
+                </Button>
+                <Button>
+                    <Check className="h-4 w-4 mr-2" />
+                    Godkänn
+                </Button>
+            </DialogFooter>
+        </DialogContent>
+    </Dialog>
 
-            {/* Main Verifikationer Table */}
-            <DataTable
-                title="Verifikationer"
-                headerActions={
-                    <div className="flex items-center gap-2">
-                        {/* Search Input */}
-                        <SearchBar
-                            placeholder="Sök verifikationer..."
-                            value={searchQuery}
-                            onChange={setSearchQuery}
-                        />
+    {/* Main Verifikationer Table */ }
+    <DataTable
+        title="Verifikationer"
+        headerActions={
+            <div className="flex items-center gap-2">
+                {/* Search Input */}
+                <SearchBar
+                    placeholder="Sök verifikationer..."
+                    value={searchQuery}
+                    onChange={setSearchQuery}
+                />
 
-                        {/* Konto Filter Dropdown */}
-                        <div className="relative">
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className={cn("h-8 gap-2", selectedKonto && "border-primary text-primary")}
-                                onClick={() => setKontoDropdownOpen(!kontoDropdownOpen)}
-                            >
-                                <FolderTree className="h-4 w-4" />
-                                {selectedKonto ? selectedKonto : "Alla konton"}
-                                <ChevronDown className="h-4 w-4" />
-                            </Button>
+                {/* Konto Filter Dropdown */}
+                <div className="relative">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        className={cn("h-8 gap-2", selectedKonto && "border-primary text-primary")}
+                        onClick={() => setKontoDropdownOpen(!kontoDropdownOpen)}
+                    >
+                        <FolderTree className="h-4 w-4" />
+                        {selectedKonto ? selectedKonto : "Alla konton"}
+                        <ChevronDown className="h-4 w-4" />
+                    </Button>
 
-                            {kontoDropdownOpen && (
-                                <div className="absolute top-full right-0 mt-1 w-[280px] bg-background border border-border rounded-md shadow-lg z-10">
-                                    <div className="p-1">
-                                        <button
-                                            onClick={() => { setSelectedKonto(null); setKontoDropdownOpen(false); }}
-                                            className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted transition-colors text-left"
-                                        >
-                                            <div className="w-4 h-4 flex items-center justify-center">
-                                                {selectedKonto === null && <Check className="h-4 w-4" />}
-                                            </div>
-                                            <span className="font-medium">Alla konton</span>
-                                        </button>
-                                        <Separator className="my-1" />
-                                        {basAccounts.map((account) => (
-                                            <button
-                                                key={account.number}
-                                                onClick={() => { setSelectedKonto(account.number); setKontoDropdownOpen(false); }}
-                                                className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted transition-colors text-left"
-                                            >
-                                                <div className="w-4 h-4 flex items-center justify-center">
-                                                    {selectedKonto === account.number && <Check className="h-4 w-4" />}
-                                                </div>
-                                                <span className="tabular-nums text-muted-foreground">{account.number}</span>
-                                                <span className="truncate">{account.name}</span>
-                                            </button>
-                                        ))}
+                    {kontoDropdownOpen && (
+                        <div className="absolute top-full right-0 mt-1 w-[280px] bg-background border border-border rounded-md shadow-lg z-10">
+                            <div className="p-1">
+                                <button
+                                    onClick={() => { setSelectedKonto(null); setKontoDropdownOpen(false); }}
+                                    className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted transition-colors text-left"
+                                >
+                                    <div className="w-4 h-4 flex items-center justify-center">
+                                        {selectedKonto === null && <Check className="h-4 w-4" />}
+                                    </div>
+                                    <span className="font-medium">Alla konton</span>
+                                </button>
+                                <Separator className="my-1" />
+                                {basAccounts.map((account) => (
+                                    <button
+                                        key={account.number}
+                                        onClick={() => { setSelectedKonto(account.number); setKontoDropdownOpen(false); }}
+                                        className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted transition-colors text-left"
+                                    >
+                                        <div className="w-4 h-4 flex items-center justify-center">
+                                            {selectedKonto === account.number && <Check className="h-4 w-4" />}
+                                        </div>
+                                        <span className="tabular-nums text-muted-foreground">{account.number}</span>
+                                        <span className="truncate">{account.name}</span>
+                                    </button>
+                                ))}
                                     </div>
                                 </div>
                             )}
@@ -346,85 +353,81 @@ export function VerifikationerTable() {
                             <Download className="h-3.5 w-3.5" />
                             Exportera
                         </Button>
-                        <Button size="sm" className="h-8 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                            <Plus className="h-3.5 w-3.5" />
-                            Ny verifikation
-                        </Button>
-                    </div>
+                        </div>
                 }
             >
-                <DataTableHeader>
-                    <DataTableHeaderCell icon={Hash} label="Nr" />
-                    <DataTableHeaderCell icon={Calendar} label="Datum" />
-                    <DataTableHeaderCell icon={FolderTree} label="Konto" />
-                    <DataTableHeaderCell icon={Tag} label="Kategori" />
-                    <DataTableHeaderCell icon={Banknote} label="Belopp" align="right" />
-                    <DataTableHeaderCell className="w-10">
-                        <Checkbox
-                            checked={selection.allSelected && filteredVerifikationer.length > 0}
-                            onCheckedChange={selection.toggleAll}
-                        />
-                    </DataTableHeaderCell>
-                </DataTableHeader>
-                <DataTableBody>
-                    {filteredVerifikationer.map((v) => (
-                        <DataTableRow
-                            key={v.id}
-                            className="cursor-pointer"
-                            onClick={() => handleViewDetails(v)}
-                            selected={selection.isSelected(String(v.id))}
-                        >
+                    <DataTableHeader>
+                        <DataTableHeaderCell icon={Hash} label="Nr" />
+                        <DataTableHeaderCell icon={Calendar} label="Datum" />
+                        <DataTableHeaderCell icon={FolderTree} label="Konto" />
+                        <DataTableHeaderCell icon={Tag} label="Kategori" />
+                        <DataTableHeaderCell icon={Banknote} label="Belopp" align="right" />
+                        <DataTableHeaderCell className="w-10">
+                            <Checkbox
+                                checked={selection.allSelected && filteredVerifikationer.length > 0}
+                                onCheckedChange={selection.toggleAll}
+                            />
+                        </DataTableHeaderCell>
+                    </DataTableHeader>
+                    <DataTableBody>
+                        {filteredVerifikationer.map((v) => (
+                            <DataTableRow
+                                key={v.id}
+                                className="cursor-pointer"
+                                onClick={() => handleViewDetails(v)}
+                                selected={selection.isSelected(String(v.id))}
+                            >
 
-                            <DataTableCell mono muted>{v.id}</DataTableCell>
-                            <DataTableCell muted>{v.date}</DataTableCell>
-                            <DataTableCell mono muted>{v.konto}</DataTableCell>
-                            <DataTableCell>
-                                <CategoryBadge>{v.kontoName}</CategoryBadge>
-                            </DataTableCell>
-                            <DataTableCell align="right" bold>
-                                <AmountText value={v.amount} />
-                            </DataTableCell>
-                            <DataTableCell className="w-10 text-right">
-                                <div className="flex justify-end pr-2">
-                                    <Checkbox
-                                        checked={selection.isSelected(String(v.id))}
-                                        onCheckedChange={() => selection.toggleItem(String(v.id))}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </div>
-                            </DataTableCell>
-                        </DataTableRow>
-                    ))}
-                    {filteredVerifikationer.length === 0 && (
-                        <DataTableRow>
-                            <DataTableCell colSpan={8} className="text-center py-8">
-                                {searchQuery ? "Inga verifikationer matchar din sökning" : "Inga verifikationer"}
-                            </DataTableCell>
-                        </DataTableRow>
-                    )}
-                </DataTableBody>
-            </DataTable>
+                                <DataTableCell mono muted>{v.id}</DataTableCell>
+                                <DataTableCell muted>{v.date}</DataTableCell>
+                                <DataTableCell mono muted>{v.konto}</DataTableCell>
+                                <DataTableCell>
+                                    <CategoryBadge>{v.kontoName}</CategoryBadge>
+                                </DataTableCell>
+                                <DataTableCell align="right" bold>
+                                    <AmountText value={v.amount} />
+                                </DataTableCell>
+                                <DataTableCell className="w-10 text-right">
+                                    <div className="flex justify-end pr-2">
+                                        <Checkbox
+                                            checked={selection.isSelected(String(v.id))}
+                                            onCheckedChange={() => selection.toggleItem(String(v.id))}
+                                            onClick={(e) => e.stopPropagation()}
+                                        />
+                                    </div>
+                                </DataTableCell>
+                            </DataTableRow>
+                        ))}
+                        {filteredVerifikationer.length === 0 && (
+                            <DataTableRow>
+                                <DataTableCell colSpan={8} className="text-center py-8">
+                                    {searchQuery ? "Inga verifikationer matchar din sökning" : "Inga verifikationer"}
+                                </DataTableCell>
+                            </DataTableRow>
+                        )}
+                    </DataTableBody>
+                </DataTable>
 
 
-            <BulkActionToolbar
-                selectedCount={selection.selectedCount}
-                selectedIds={selection.selectedIds}
-                onClearSelection={selection.clearSelection}
-                actions={[
-                    {
-                        id: "export",
-                        label: "Exportera PDF",
-                        icon: FileText,
-                        onClick: () => handleBulkAction("Export")
-                    },
-                    {
-                        id: "print",
-                        label: "Skriv ut",
-                        icon: Printer,
-                        onClick: () => handleBulkAction("Utskrift")
-                    }
-                ]}
-            />
-        </div >
+                <BulkActionToolbar
+                    selectedCount={selection.selectedCount}
+                    selectedIds={selection.selectedIds}
+                    onClearSelection={selection.clearSelection}
+                    actions={[
+                        {
+                            id: "export",
+                            label: "Exportera PDF",
+                            icon: FileText,
+                            onClick: () => handleBulkAction("Export")
+                        },
+                        {
+                            id: "print",
+                            label: "Skriv ut",
+                            icon: Printer,
+                            onClick: () => handleBulkAction("Utskrift")
+                        }
+                    ]}
+                />
+            </div >
     )
 }

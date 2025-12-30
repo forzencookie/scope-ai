@@ -167,69 +167,7 @@ export default function InboxPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
-                <div className="flex items-center gap-2">
-                    {/* Category filter dropdown */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <button
-                                className={`h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors ${categoryFilter !== "all" ? "text-primary" : "text-muted-foreground"}`}
-                            >
-                                <Menu className="h-4 w-4" />
-                            </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48">
-                            <DropdownMenuItem
-                                onClick={() => setCategoryFilter("all")}
-                                className="flex items-center justify-between"
-                            >
-                                <span>Alla</span>
-                                {categoryFilter === "all" && <CheckCircle className="h-4 w-4 text-primary" />}
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem
-                                onClick={() => setCategoryFilter("kvitto")}
-                                className="flex items-center justify-between"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <Receipt className="h-4 w-4" />
-                                    Kvitton
-                                </span>
-                                {categoryFilter === "kvitto" && <CheckCircle className="h-4 w-4 text-primary" />}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setCategoryFilter("faktura")}
-                                className="flex items-center justify-between"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <FileText className="h-4 w-4" />
-                                    Fakturor (utgående)
-                                </span>
-                                {categoryFilter === "faktura" && <CheckCircle className="h-4 w-4 text-primary" />}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setCategoryFilter("leverantorsfaktura")}
-                                className="flex items-center justify-between"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <Building2 className="h-4 w-4" />
-                                    Leverantörsfakturor
-                                </span>
-                                {categoryFilter === "leverantorsfaktura" && <CheckCircle className="h-4 w-4 text-primary" />}
-                            </DropdownMenuItem>
-                            <DropdownMenuItem
-                                onClick={() => setCategoryFilter("annat")}
-                                className="flex items-center justify-between"
-                            >
-                                <span className="flex items-center gap-2">
-                                    <Mail className="h-4 w-4" />
-                                    Övrigt
-                                </span>
-                                {categoryFilter === "annat" && <CheckCircle className="h-4 w-4 text-primary" />}
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
-                    <BreadcrumbAIBadge />
-                </div>
+                <BreadcrumbAIBadge />
             </header>
 
             <div className="flex flex-col gap-6 p-6">
@@ -268,6 +206,66 @@ export default function InboxPage() {
                             value={searchQuery}
                             onChange={setSearchQuery}
                         />
+                        {/* Category filter dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className={`h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors ${categoryFilter !== "all" ? "text-primary" : "text-muted-foreground"}`}
+                                >
+                                    <Menu className="h-3.5 w-3.5" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("all")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span>Alla</span>
+                                    {categoryFilter === "all" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("kvitto")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Receipt className="h-4 w-4" />
+                                        Kvitton
+                                    </span>
+                                    {categoryFilter === "kvitto" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("faktura")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        Fakturor (utgående)
+                                    </span>
+                                    {categoryFilter === "faktura" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("leverantorsfaktura")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4" />
+                                        Leverantörsfakturor
+                                    </span>
+                                    {categoryFilter === "leverantorsfaktura" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("annat")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4" />
+                                        Övrigt
+                                    </span>
+                                    {categoryFilter === "annat" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
 
                     </div>
                 </div>
