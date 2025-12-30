@@ -53,17 +53,21 @@ export function TransactionsTab() {
         )
     }
 
-    const transactionPieData = [
+    const transactionPieDataRaw = [
         { name: "bokförda", value: transactionStats.recorded, fill: "var(--chart-1)" },
         { name: "attBokföra", value: transactionStats.pending, fill: "var(--chart-2)" },
         { name: "saknarUnderlag", value: transactionStats.missingDocs, fill: "var(--chart-5)" },
-    ].filter(d => d.value > 0)
+    ]
+    const transactionPieData = transactionPieDataRaw.filter(d => d.value > 0)
+    const hasTransactionData = transactionPieData.length > 0
 
-    const invoicePieData = [
+    const invoicePieDataRaw = [
         { name: "betalda", value: invoiceStats.paid, fill: "var(--chart-1)" },
         { name: "förfallna", value: invoiceStats.overdue, fill: "var(--chart-5)" },
         { name: "utkast", value: invoiceStats.draft, fill: "var(--chart-4)" },
-    ].filter(d => d.value > 0)
+    ]
+    const invoicePieData = invoicePieDataRaw.filter(d => d.value > 0)
+    const hasInvoiceData = invoicePieData.length > 0
 
     const percentageBooked = transactionStats.total > 0
         ? Math.round((transactionStats.recorded / transactionStats.total) * 100)
@@ -87,11 +91,17 @@ export function TransactionsTab() {
                                     content={<ChartTooltipContent hideLabel />}
                                 />
                                 <Pie
-                                    data={transactionPieData}
+                                    data={hasTransactionData ? transactionPieData : [{ name: "Ingen data", value: 1 }]}
                                     dataKey="value"
                                     nameKey="name"
                                     stroke="0"
-                                />
+                                >
+                                    {hasTransactionData ? transactionPieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    )) : (
+                                        <Cell fill="var(--muted)" />
+                                    )}
+                                </Pie>
                             </PieChart>
                         </ChartContainer>
                     </CardContent>
@@ -119,11 +129,17 @@ export function TransactionsTab() {
                                     content={<ChartTooltipContent hideLabel />}
                                 />
                                 <Pie
-                                    data={invoicePieData}
+                                    data={hasInvoiceData ? invoicePieData : [{ name: "Ingen data", value: 1 }]}
                                     dataKey="value"
                                     nameKey="name"
                                     stroke="0"
-                                />
+                                >
+                                    {hasInvoiceData ? invoicePieData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.fill} />
+                                    )) : (
+                                        <Cell fill="var(--muted)" />
+                                    )}
+                                </Pie>
                             </PieChart>
                         </ChartContainer>
                     </CardContent>
