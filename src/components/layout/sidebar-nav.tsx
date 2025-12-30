@@ -279,7 +279,8 @@ export function NavAIConversations() {
     }
   }, [])
 
-  if (conversations.length === 0 && !isLoading) return null
+  // Always show the section header, even if empty
+  // (conversations list will just be empty inside)
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
