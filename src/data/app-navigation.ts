@@ -82,13 +82,14 @@ export const navPlatform: NavItem[] = [
         isActive: true,
         muted: true,
     },
-    {
-        title: "Uppgifter",
-        titleEnkel: "Uppgifter",
-        url: "/dashboard/dagbok",
-        icon: CheckSquare,
-        muted: true,
-    },
+    // DORMANT: Uppgifter page deactivated until bank API integration
+    // {
+    //     title: "Uppgifter",
+    //     titleEnkel: "Uppgifter",
+    //     url: "/dashboard/dagbok",
+    //     icon: CheckSquare,
+    //     muted: true,
+    // },
 ]
 
 // ============================================

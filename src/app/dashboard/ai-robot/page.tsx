@@ -11,14 +11,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import {
-    Sheet,
-    SheetContent,
-    SheetHeader,
-    SheetTitle,
-    SheetTrigger,
-} from "@/components/ui/sheet"
-import { Plus, Send, Loader2, History, RefreshCw, AlertCircle, MessageSquare, Trash2, Paperclip, Mic, ArrowRight, Inbox, LayoutGrid, AtSign } from "lucide-react"
+import { Plus, Send, Loader2, RefreshCw, AlertCircle, Paperclip, Mic, ArrowRight, Inbox, LayoutGrid, AtSign } from "lucide-react"
 import { useRef, useState, useEffect, useCallback, Suspense } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
@@ -632,59 +625,6 @@ function AIRobotPageContent() {
                     >
                         <Plus className="h-4 w-4" />
                     </Button>
-                    <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
-                        <SheetTrigger asChild>
-                            <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-9 w-9 rounded-full hover:bg-muted"
-                                aria-label="Historik"
-                            >
-                                <History className="h-4 w-4" />
-                            </Button>
-                        </SheetTrigger>
-                        <SheetContent side="right" className="w-80">
-                            <SheetHeader>
-                                <SheetTitle>Chatthistorik</SheetTitle>
-                            </SheetHeader>
-                            <div className="mt-6 flex flex-col gap-1">
-                                {conversations.length === 0 ? (
-                                    <p className="text-sm text-muted-foreground text-center py-8">
-                                        Inga tidigare konversationer
-                                    </p>
-                                ) : (
-                                    conversations.map((conv) => (
-                                        <button
-                                            key={conv.id}
-                                            onClick={() => loadConversation(conv.id)}
-                                            className={cn(
-                                                "flex items-center gap-3 p-3 rounded-lg text-left transition-colors group",
-                                                conv.id === currentConversationId
-                                                    ? "bg-muted"
-                                                    : "hover:bg-muted/50"
-                                            )}
-                                        >
-                                            <MessageSquare className="h-4 w-4 shrink-0 text-muted-foreground" />
-                                            <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-medium truncate">{conv.title}</p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    {new Date(conv.updatedAt).toLocaleDateString('sv-SE')}
-                                                </p>
-                                            </div>
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive"
-                                                onClick={(e) => deleteConversation(conv.id, e)}
-                                            >
-                                                <Trash2 className="h-3.5 w-3.5" />
-                                            </Button>
-                                        </button>
-                                    ))
-                                )}
-                            </div>
-                        </SheetContent>
-                    </Sheet>
                 </div>
             </header>
 
