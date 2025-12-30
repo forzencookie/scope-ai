@@ -80,7 +80,6 @@ export const navPlatform: NavItem[] = [
         url: "/dashboard/inkorg",
         icon: Mail,
         isActive: true,
-        muted: true,
     },
     // DORMANT: Uppgifter page deactivated until bank API integration
     // {
