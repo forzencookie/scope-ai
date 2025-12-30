@@ -67,7 +67,7 @@ interface AccountWithActivity {
 
 export function Huvudbok() {
     const [searchQuery, setSearchQuery] = useState("")
-    const [viewMode, setViewMode] = useState<ViewMode>("activity")
+    const [viewMode, setViewMode] = useState<ViewMode>("all")
     const [classFilter, setClassFilter] = useState<AccountClassFilter>("all")
     const [dateRange, setDateRange] = useState<DateRangeFilter>("allTime")
     const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)

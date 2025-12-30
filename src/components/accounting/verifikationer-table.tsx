@@ -325,17 +325,17 @@ export function VerifikationerTable() {
                                             <span className="font-medium">Alla konton</span>
                                         </button>
                                         <Separator className="my-1" />
-                                        {availableAccounts.map((k) => (
+                                        {basAccounts.map((account) => (
                                             <button
-                                                key={k.konto}
-                                                onClick={() => { setSelectedKonto(k.konto); setKontoDropdownOpen(false); }}
+                                                key={account.number}
+                                                onClick={() => { setSelectedKonto(account.number); setKontoDropdownOpen(false); }}
                                                 className="w-full flex items-center gap-2 px-3 py-2 text-sm rounded hover:bg-muted transition-colors text-left"
                                             >
                                                 <div className="w-4 h-4 flex items-center justify-center">
-                                                    {selectedKonto === k.konto && <Check className="h-4 w-4" />}
+                                                    {selectedKonto === account.number && <Check className="h-4 w-4" />}
                                                 </div>
-                                                <span className="tabular-nums text-muted-foreground">{k.konto}</span>
-                                                <span className="truncate">{k.name}</span>
+                                                <span className="tabular-nums text-muted-foreground">{account.number}</span>
+                                                <span className="truncate">{account.name}</span>
                                             </button>
                                         ))}
                                     </div>
