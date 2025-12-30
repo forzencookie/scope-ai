@@ -156,7 +156,7 @@ export interface DashboardData {
 // Inbox Types
 // ============================================
 
-export type InboxCategory = "skatt" | "myndighet" | "faktura" | "other"
+export type InboxCategory = "skatt" | "myndighet" | "faktura" | "kvitto" | "leverantorsfaktura" | "annat" | "other"
 
 export interface InboxItem {
   id: string

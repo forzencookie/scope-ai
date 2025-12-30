@@ -14,7 +14,7 @@ import {
     Sparkles,
     ArrowRight,
     MoreHorizontal,
-    Eye,
+    Menu,
     Trash2,
     Archive,
     Star,
@@ -24,6 +24,7 @@ import {
     Link2,
     Upload,
     RefreshCw,
+    CheckCircle,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -37,7 +38,6 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { useToast } from "@/components/ui/toast"
 import { SearchBar } from "@/components/ui/search-bar"
-import { FilterButtonIcon } from "@/components/ui/filter-button"
 import { FilterTabs } from "@/components/ui/filter-tabs"
 import {
     DropdownMenu,
@@ -51,11 +51,15 @@ import {
 import { categoryColors, categoryLabels } from "@/data/inbox"
 import type { InboxItem, InboxFilter } from "@/types"
 
+// Category filter type
+type CategoryFilter = "all" | "kvitto" | "faktura" | "leverantorsfaktura" | "annat"
+
 export default function InboxPage() {
     const router = useRouter()
     const toast = useToast()
     const [items, setItems] = useState<InboxItem[]>([])
     const [filter, setFilter] = useState<InboxFilter>("all")
+    const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all")
     const [searchQuery, setSearchQuery] = useState("")
 
     const fetchItems = async () => {
@@ -93,9 +97,18 @@ export default function InboxPage() {
     }, [])
 
     const filteredItems = items.filter(item => {
-        // Apply filter
+        // Apply status filter (unread/starred)
         if (filter === "unread" && item.read) return false
         if (filter === "starred" && !item.starred) return false
+
+        // Apply category filter
+        if (categoryFilter !== "all") {
+            // Check if item has been categorized (approved by user)
+            if (categoryFilter === "kvitto" && item.category !== "kvitto") return false
+            if (categoryFilter === "faktura" && item.category !== "faktura") return false
+            if (categoryFilter === "leverantorsfaktura" && item.category !== "leverantorsfaktura") return false
+            if (categoryFilter === "annat" && item.category !== "annat") return false
+        }
 
         // Apply search
         if (searchQuery) {
@@ -193,7 +206,66 @@ export default function InboxPage() {
                             value={searchQuery}
                             onChange={setSearchQuery}
                         />
-                        <FilterButtonIcon />
+                        {/* Category filter dropdown */}
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <button
+                                    className={`h-8 w-8 flex items-center justify-center rounded-md hover:bg-muted/50 transition-colors ${categoryFilter !== "all" ? "text-primary" : "text-muted-foreground"}`}
+                                >
+                                    <Menu className="h-3.5 w-3.5" />
+                                </button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-48">
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("all")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span>Alla</span>
+                                    {categoryFilter === "all" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("kvitto")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Receipt className="h-4 w-4" />
+                                        Kvitton
+                                    </span>
+                                    {categoryFilter === "kvitto" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("faktura")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <FileText className="h-4 w-4" />
+                                        Fakturor (utgående)
+                                    </span>
+                                    {categoryFilter === "faktura" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("leverantorsfaktura")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Building2 className="h-4 w-4" />
+                                        Leverantörsfakturor
+                                    </span>
+                                    {categoryFilter === "leverantorsfaktura" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                                <DropdownMenuItem
+                                    onClick={() => setCategoryFilter("annat")}
+                                    className="flex items-center justify-between"
+                                >
+                                    <span className="flex items-center gap-2">
+                                        <Mail className="h-4 w-4" />
+                                        Övrigt
+                                    </span>
+                                    {categoryFilter === "annat" && <CheckCircle className="h-4 w-4 text-primary" />}
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
                     </div>
                 </div>
 
@@ -336,7 +408,7 @@ export default function InboxPage() {
                                     </DropdownMenuTrigger>
                                     <DropdownMenuContent align="end">
                                         <DropdownMenuItem onClick={() => handleOpenInKivra(item)}>
-                                            <Eye className="h-4 w-4 mr-2" />
+                                            <ExternalLink className="h-4 w-4 mr-2" />
                                             Visa i Kivra
                                         </DropdownMenuItem>
                                         <DropdownMenuItem onClick={(e) => handleDownload(e as unknown as React.MouseEvent, item)}>
