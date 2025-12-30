@@ -10,6 +10,8 @@ export async function DELETE(request: NextRequest) {
         // regenerate types with: npx supabase gen types typescript --project-id <id> > src/types/database.types.ts
         await supabase.from('receipts').delete().neq('id', '0');
         await supabase.from('transactions').delete().neq('id', '0');
+        // @ts-ignore
+        await supabase.from('verifications').delete().neq('id', '0');
 
         // For untyped tables, use raw SQL or skip until types are regenerated
         // These tables exist but aren't in the generated types yet:
