@@ -26,11 +26,13 @@ import {
     ArsredovisningContent,
     ArsbokslutContent,
 } from "@/components/skatt"
+import { LazyAGIContent } from "@/components/shared"
 
 // Tab configuration with feature keys for filtering
 const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send; feature: FeatureKey }> = [
     { id: "momsdeklaration", label: "Momsdeklaration", icon: Calculator, feature: "momsdeklaration" },
     { id: "inkomstdeklaration", label: "Inkomstdeklaration", icon: Send, feature: "inkomstdeklaration" },
+    { id: "agi", label: "AGI", icon: Send, feature: "agi" },
 ]
 
 function SkattPageContent() {
@@ -45,19 +47,13 @@ function SkattPageContent() {
     const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "momsdeklaration"
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/appar/skatt?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/skatt?tab=${tab}`, { scroll: false })
     }, [router])
 
     return (
         <TooltipProvider delayDuration={400}>
             <div className="flex flex-col min-h-svh">
-                {/* Page Heading */}
-                <div className="px-4 pt-4">
-                    <div className="w-full">
-                        <h2 className="text-xl font-semibold">Skatt & Deklarationer</h2>
-                        <p className="text-sm text-muted-foreground">Hantera momsdeklarationer, inkomstdeklaration och bokslut.</p>
-                    </div>
-                </div>
+
 
                 {/* Tabs */}
                 <div className="px-4 pt-4">
@@ -103,6 +99,7 @@ function SkattPageContent() {
                 <div className="bg-background">
                     {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
                     {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
+                    {currentTab === "agi" && <LazyAGIContent />}
                     {currentTab === "arsredovisning" && <ArsredovisningContent />}
                     {currentTab === "arsbokslut" && <ArsbokslutContent />}
                 </div>

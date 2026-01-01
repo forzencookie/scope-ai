@@ -115,7 +115,7 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
                 component: 'TransactionsTable',
                 props: { transactions: data },
                 title: 'Transaktioner',
-                fullViewRoute: '/dashboard/appar/bokforing?tab=verifikationer',
+                fullViewRoute: '/dashboard/bokforing?tab=verifikationer',
             },
         }
     },
@@ -170,7 +170,7 @@ export const getPayslipsTool = defineTool<GetPayslipsParams, ProcessedPayslip[]>
                 component: 'PayslipsTable',
                 props: { payslips },
                 title: 'Lönebesked',
-                fullViewRoute: '/dashboard/appar/loner?tab=lonebesked',
+                fullViewRoute: '/dashboard/loner?tab=lonebesked',
             },
         }
     },
@@ -196,7 +196,7 @@ export const getEmployeesTool = defineTool<Record<string, never>, ProcessedEmplo
                 component: 'EmployeeList',
                 props: { employees },
                 title: 'Anställda',
-                fullViewRoute: '/dashboard/appar/loner?tab=personal',
+                fullViewRoute: '/dashboard/loner?tab=personal',
             },
         }
     },
@@ -233,7 +233,7 @@ export const getAGIReportsTool = defineTool<{ period?: string }, ProcessedAGIRep
                 component: 'DeadlinesList',
                 props: { items: reports },
                 title: 'AGI-rapporter',
-                fullViewRoute: '/dashboard/appar/loner?tab=agi',
+                fullViewRoute: '/dashboard/skatt?tab=agi',
             },
         }
     },
@@ -283,7 +283,7 @@ export const getVatReportTool = defineTool<{ period?: string }, ProcessedVATPeri
                 component: 'VatSummary',
                 props: { periods },
                 title: 'Momsdeklaration',
-                fullViewRoute: '/dashboard/appar/skatt?tab=momsdeklaration',
+                fullViewRoute: '/dashboard/skatt?tab=momsdeklaration',
             },
         }
     },
@@ -316,7 +316,7 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
                 component: 'IncomeStatement',
                 props: { items },
                 title: 'Resultaträkning',
-                fullViewRoute: '/dashboard/appar/rapporter/resultat',
+                fullViewRoute: '/dashboard/rapporter/resultat',
             },
         }
     },
@@ -345,7 +345,7 @@ export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFi
                 component: 'BalanceSheet',
                 props: { items },
                 title: 'Balansräkning',
-                fullViewRoute: '/dashboard/appar/rapporter/balans',
+                fullViewRoute: '/dashboard/rapporter/balans',
             },
         }
     },
@@ -506,7 +506,7 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
                 component: 'ReceiptsTable',
                 props: { receipts: data },
                 title: 'Kvitton',
-                fullViewRoute: '/dashboard/appar/bokforing?tab=kvitton',
+                fullViewRoute: '/dashboard/bokforing?tab=kvitton',
             },
         }
     },
@@ -552,7 +552,7 @@ export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
                 component: 'BenefitsTable' as any, // We'll add this mapping if needed
                 props: { benefits: filtered },
                 title: 'Tillgängliga Förmåner',
-                fullViewRoute: '/dashboard/appar/loner?tab=formaner',
+                fullViewRoute: '/dashboard/loner?tab=formaner',
             },
         }
     }

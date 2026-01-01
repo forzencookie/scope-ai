@@ -1,7 +1,7 @@
 "use client"
 
-// Payroll page - Löner, AGI, Utdelning, Egenavgifter (EF), Delägaruttag (HB/KB)
-// Optimized: Tab content components lazy loaded from src/components/payroll/
+// Payroll page - Löner, Förmåner, Team, Egenavgifter (EF), Delägaruttag (HB/KB)
+// Note: AGI moved to Skatt, Utdelning moved to Parter
 import { useCallback, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
@@ -23,21 +23,19 @@ import { cn } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
 
 // Import constants from payroll components
-import { allTabs } from "@/components/payroll/constants"
+import { allTabs } from "@/components/loner/constants"
 import { useLastUpdated } from "@/hooks/use-last-updated"
 
 // Lazy loaded tab components
 import {
     LazyLonesbeskContent,
-    LazyAGIContent,
-    LazyUtdelningContent,
     preloadPayrollTab
 } from "@/components/shared"
 
 // External components for EF/HB/KB tabs
 import { Egenavgifter as EgenavgifterCalculator, Delagaruttag as DelagaruttagManager } from "@/components/parter"
-import { TeamTab } from "@/components/payroll/team-tab"
-import { BenefitsTab } from "@/components/payroll/benefits-tab"
+import { TeamTab } from "@/components/loner/team-tab"
+import { BenefitsTab } from "@/components/loner/benefits-tab"
 
 function PayrollPageContent() {
     const searchParams = useSearchParams()
@@ -61,7 +59,7 @@ function PayrollPageContent() {
     }, [searchParams, tabs])
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/appar/loner?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/loner?tab=${tab}`, { scroll: false })
     }, [router])
 
     return (
@@ -132,8 +130,6 @@ function PayrollPageContent() {
                     {currentTab === "lonebesked" && <LazyLonesbeskContent />}
                     {currentTab === "team" && <TeamTab />}
                     {currentTab === "benefits" && <BenefitsTab />}
-                    {currentTab === "agi" && <LazyAGIContent />}
-                    {currentTab === "utdelning" && <LazyUtdelningContent />}
                     {currentTab === "egenavgifter" && (
                         <div className="px-4 pb-4 w-full">
                             <EgenavgifterCalculator />

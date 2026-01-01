@@ -424,6 +424,22 @@ export const db = {
         return data || { id, ...updates };
     },
 
+    addShareholder: async (shareholder: any) => {
+        const supabase = getSupabaseAdmin();
+        const { data, error } = await supabase.from('shareholders').insert({
+            name: shareholder.name,
+            ssn_org_nr: shareholder.ssn_org_nr || '',
+            shares_count: shareholder.shares_count || 0,
+            shares_percentage: shareholder.shares_percentage || 0,
+            share_class: shareholder.share_class || 'B', // Default to B shares if not specified
+        }).select().single();
+        if (error) {
+            console.error("Supabase Error (addShareholder):", error);
+            throw new Error(`Failed to add shareholder: ${error.message}`);
+        }
+        return data;
+    },
+
     // ============================================================================
     // Chat Persistence
     // ============================================================================

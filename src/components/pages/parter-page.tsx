@@ -13,6 +13,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card';
 import { useCompany } from '@/providers/company-provider';
 import { Aktiebok, Delagare, Medlemsregister, Styrelseprotokoll, Bolagsstamma, Arsmote, Firmatecknare, Myndigheter } from '@/components/parter';
+import { LazyUtdelningContent } from '@/components/shared';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
     Users,
@@ -22,6 +23,7 @@ import {
     Vote,
     PenTool,
     Building2,
+    DollarSign,
     type LucideIcon,
 } from 'lucide-react';
 
@@ -30,12 +32,13 @@ interface TabConfig {
     id: string;
     label: string;
     icon: LucideIcon;
-    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'styrelseprotokoll' | 'bolagsstamma' | 'arsmote' | null;
+    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'styrelseprotokoll' | 'bolagsstamma' | 'arsmote' | 'utdelning' | null;
 }
 
 const allTabs: TabConfig[] = [
     { id: 'aktiebok', label: 'Aktiebok', icon: BookOpen, feature: 'aktiebok' },
     { id: 'delagare', label: 'Delägare', icon: Users, feature: 'delagare' },
+    { id: 'utdelning', label: 'Utdelning', icon: DollarSign, feature: 'utdelning' },
     { id: 'medlemsregister', label: 'Medlemsregister', icon: Users, feature: 'medlemsregister' },
     { id: 'styrelseprotokoll', label: 'Styrelseprotokoll', icon: FileText, feature: 'styrelseprotokoll' },
     { id: 'bolagsstamma', label: 'Bolagsstämma', icon: Vote, feature: 'bolagsstamma' },
@@ -43,6 +46,46 @@ const allTabs: TabConfig[] = [
     { id: 'firmatecknare', label: 'Firmatecknare', icon: PenTool, feature: null },
     { id: 'myndigheter', label: 'Myndigheter', icon: Building2, feature: null },
 ];
+
+// Header configuration for each tab
+const tabHeaders: Record<string, { title: string; description: string }> = {
+    aktiebok: {
+        title: "Aktiebok",
+        description: "Digital aktiebok med historik över ägarförändringar och transaktioner."
+    },
+    delagare: {
+        title: "Delägare",
+        description: "Register över delägare, deras innehav och kontaktuppgifter."
+    },
+    utdelning: {
+        title: "Utdelning",
+        description: "Planera och dokumentera aktieutdelning för delägare."
+    },
+    medlemsregister: {
+        title: "Medlemsregister",
+        description: "Förteckning över föreningens medlemmar och medlemsstatus."
+    },
+    styrelseprotokoll: {
+        title: "Styrelseprotokoll",
+        description: "Samlade protokoll och beslutsunderlag från styrelsemöten."
+    },
+    bolagsstamma: {
+        title: "Bolagsstämma",
+        description: "Protokoll, kallelser och beslut från bolagsstämmor."
+    },
+    arsmote: {
+        title: "Årsmöte",
+        description: "Dokumentation och protokoll från årsmöten."
+    },
+    firmatecknare: {
+        title: "Firmatecknare",
+        description: "Information om registrerade firmatecknare och deras befogenheter."
+    },
+    myndigheter: {
+        title: "Myndigheter",
+        description: "Kontaktuppgifter och registrerade ärenden hos Bolagsverket och Skatteverket."
+    }
+};
 
 function ParterPageContent() {
     const searchParams = useSearchParams();
@@ -69,7 +112,7 @@ function ParterPageContent() {
     }, [searchParams, tabs]);
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/appar/parter?tab=${tab}`, { scroll: false });
+        router.push(`/dashboard/parter?tab=${tab}`, { scroll: false });
     }, [router]);
 
     // If EF, show simple owner info
@@ -95,22 +138,18 @@ function ParterPageContent() {
         );
     }
 
+    const currentHeader = tabHeaders[currentTab] || { title: "Parter", description: "" };
+
     return (
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
-                {/* Page Heading */}
-                <div className="px-4 pt-4">
-                    <div className="w-full">
-                        <h2 className="text-xl font-semibold">Parter</h2>
-                        <p className="text-sm text-muted-foreground">Ägare, styrelse, delägare och andra parter med roller i företaget.</p>
-                    </div>
-                </div>
+                {/* Global Heading Removed - Now per tab below */}
 
                 {/* Tab Content */}
                 <div className="bg-background px-4 py-4">
                     <div className="w-full">
                         {/* Tabs */}
-                        <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60 -ml-1">
+                        <div className="flex items-center gap-1 pb-2 border-b-2 border-border/60 -ml-1">
                             {tabs.map((tab) => {
                                 const isActive = currentTab === tab.id;
                                 const Icon = tab.icon;
@@ -145,9 +184,16 @@ function ParterPageContent() {
                             </div>
                         </div>
 
+                        {/* Dynamic Tab Header */}
+                        <div className="py-6">
+                            <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
+                            <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
+                        </div>
+
                         {/* Tab Content */}
                         {currentTab === 'aktiebok' && <Aktiebok />}
                         {currentTab === 'delagare' && <Delagare />}
+                        {currentTab === 'utdelning' && <LazyUtdelningContent />}
                         {currentTab === 'medlemsregister' && <Medlemsregister />}
                         {currentTab === 'styrelseprotokoll' && <Styrelseprotokoll />}
                         {currentTab === 'bolagsstamma' && <Bolagsstamma />}

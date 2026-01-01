@@ -69,9 +69,9 @@ export const navPlatform: NavItem[] = [
         icon: Bot,
     },
     {
-        title: "Appar",
-        titleEnkel: "Appar",
-        url: "/dashboard/appar",
+        title: "Dashboard",
+        titleEnkel: "Dashboard",
+        url: "/dashboard",
         icon: LayoutGrid,
     },
     {
@@ -95,7 +95,7 @@ export const navPlatform: NavItem[] = [
 // Economy Navigation (REMOVED - accessed via Sök page now)
 // ============================================
 
-// navEconomy has been removed - all economy pages are accessed via /dashboard/appar/
+// navEconomy has been removed - all economy pages are accessed via /dashboard/
 
 // ============================================
 // Settings Navigation

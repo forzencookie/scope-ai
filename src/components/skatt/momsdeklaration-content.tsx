@@ -22,14 +22,7 @@ import { SearchBar } from "@/components/ui/search-bar"
 import { FilterButton } from "@/components/ui/filter-button"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
-import {
-    DataTable,
-    DataTableHeader,
-    DataTableHeaderCell,
-    DataTableBody,
-    DataTableRow,
-    DataTableCell
-} from "@/components/ui/data-table"
+import { Table3Header, Table3Rows, Table3Row } from "@/components/bokforing/report-table"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -223,6 +216,14 @@ export function MomsdeklarationContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
+                {/* Page Heading */}
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Momsdeklaration</h2>
+                        <p className="text-muted-foreground">Hantera momsrapporter och skicka till Skatteverket.</p>
+                    </div>
+                </div>
+
                 <StatCardGrid columns={3}>
                     <StatCard
                         label={text.reports.nextDeclaration}
@@ -283,91 +284,103 @@ export function MomsdeklarationContent() {
                     }}
                 />
 
-                <DataTable
-                    title={text.reports.vatPeriods}
-                    headerActions={
-                        <div className="flex items-center gap-2">
-                            <SearchBar
-                                value={searchQuery}
-                                onChange={setSearchQuery}
-                                placeholder="Sök period..."
-                                className="w-48"
-                            />
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <FilterButton
-                                        label="Status"
-                                        isActive={!!statusFilter}
-                                    />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                    <DropdownMenuItem onClick={() => setStatusFilter(null)}>
-                                        Alla
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setStatusFilter("upcoming")}>
-                                        <Clock className="h-4 w-4 mr-2" />
-                                        Kommande
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setStatusFilter("submitted")}>
-                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                        Inskickad
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button size="sm" onClick={() => setShowAIDialog(true)}>
-                                <Plus className="h-4 w-4 mr-1.5" />
-                                Ny period
-                            </Button>
-                        </div>
+                {/* Table Header with Title and Actions */}
+                <div className="flex items-center justify-between py-2 mb-2">
+                    <h3 className="font-semibold text-lg">{text.reports.vatPeriods}</h3>
+                    <div className="flex items-center gap-2">
+                        <SearchBar
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            placeholder="Sök period..."
+                            className="w-48"
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <FilterButton
+                                    label="Status"
+                                    isActive={!!statusFilter}
+                                />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => setStatusFilter(null)}>
+                                    Alla
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setStatusFilter("upcoming")}>
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    Kommande
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setStatusFilter("submitted")}>
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Inskickad
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button size="sm" onClick={() => setShowAIDialog(true)}>
+                            <Plus className="h-4 w-4 mr-1.5" />
+                            Ny period
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Table3 Header */}
+                <Table3Header
+                    columns={[
+                        { label: "Period", icon: Calendar, span: 2 },
+                        { label: "Deadline", icon: Clock, span: 2 },
+                        { label: "Utgående moms", icon: ArrowUpRight, span: 2, align: "right" },
+                        { label: "Ingående moms", icon: ArrowDownRight, span: 2, align: "right" },
+                        { label: "Att betala", icon: Wallet, span: 2, align: "right" },
+                        { label: "Status", icon: CheckCircle2, span: 1 },
+                    ]}
+                    trailing={
+                        <Checkbox
+                            checked={selection.allSelected && filteredPeriods.length > 0}
+                            onCheckedChange={selection.toggleAll}
+                        />
                     }
-                >
-                    <DataTableHeader>
+                />
 
-                        <DataTableHeaderCell label="Period" icon={Calendar} />
-                        <DataTableHeaderCell label="Deadline" icon={Clock} />
-                        <DataTableHeaderCell label="Utgående moms" icon={ArrowUpRight} />
-                        <DataTableHeaderCell label="Ingående moms" icon={ArrowDownRight} />
-                        <DataTableHeaderCell label="Att betala" icon={Wallet} />
-                        <DataTableHeaderCell label="Status" icon={CheckCircle2} />
-                        <DataTableHeaderCell className="w-10">
-                            <Checkbox
-                                checked={selection.allSelected && filteredPeriods.length > 0}
-                                onCheckedChange={selection.toggleAll}
-                            />
-                        </DataTableHeaderCell>
-
-                    </DataTableHeader>
-                    <DataTableBody>
-                        {filteredPeriods.map((item) => (
-                            <DataTableRow
-                                key={item.period}
-                                selected={selection.isSelected(item.period)}
-                                onClick={() => setSelectedReport(item)}
-                                className="cursor-pointer"
+                {/* Table3 Rows */}
+                <Table3Rows>
+                    {filteredPeriods.map((item) => (
+                        <Table3Row
+                            key={item.period}
+                            onClick={() => setSelectedReport(item)}
+                            selected={selection.isSelected(item.period)}
+                        >
+                            <div style={{ gridColumn: 'span 2' }} className="font-medium">
+                                {item.period}
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
+                                {item.dueDate}
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                {item.salesVat.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                {item.inputVat.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums font-medium">
+                                {item.netVat.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div style={{ gridColumn: 'span 1' }}>
+                                <AppStatusBadge
+                                    status={item.status === "upcoming" ? "Kommande" : "Inskickad"}
+                                />
+                            </div>
+                            <div
+                                style={{ gridColumn: 'span 1' }}
+                                className="flex justify-end"
+                                onClick={(e) => e.stopPropagation()}
                             >
-
-                                <DataTableCell bold>{item.period}</DataTableCell>
-                                <DataTableCell muted>{item.dueDate}</DataTableCell>
-                                <DataTableCell>{item.salesVat.toLocaleString("sv-SE")} kr</DataTableCell>
-                                <DataTableCell>{item.inputVat.toLocaleString("sv-SE")} kr</DataTableCell>
-                                <DataTableCell bold>{item.netVat.toLocaleString("sv-SE")} kr</DataTableCell>
-                                <DataTableCell>
-                                    <AppStatusBadge
-                                        status={item.status === "upcoming" ? "Kommande" : "Inskickad"}
-                                    />
-                                </DataTableCell>
-                                <DataTableCell className="w-10 text-right" onClick={(e) => e?.stopPropagation()}>
-                                    <div className="flex justify-end pr-2">
-                                        <Checkbox
-                                            checked={selection.isSelected(item.period)}
-                                            onCheckedChange={() => selection.toggleItem(item.period)}
-                                        />
-                                    </div>
-                                </DataTableCell>
-                            </DataTableRow>
-                        ))}
-                    </DataTableBody>
-                </DataTable>
+                                <Checkbox
+                                    checked={selection.isSelected(item.period)}
+                                    onCheckedChange={() => selection.toggleItem(item.period)}
+                                />
+                            </div>
+                        </Table3Row>
+                    ))}
+                </Table3Rows>
 
                 <BulkActionToolbar
                     selectedCount={selection.selectedCount}

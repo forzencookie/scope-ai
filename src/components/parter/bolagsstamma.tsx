@@ -545,43 +545,7 @@ export function Bolagsstamma() {
         )}
       </div>
 
-      {/* Upcoming features */}
-      <Card className="bg-muted/30">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Kommande funktioner
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>AI-genererad kallelse baserad på bolagets data</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Digital röstning och fullmaktshantering</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Automatisk protokollgenerering</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Besluts- och utdelningsberäkningar</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Årsredovisningspresentation</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Integration med Bolagsverket</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }

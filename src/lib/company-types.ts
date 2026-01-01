@@ -78,9 +78,11 @@ export type FeatureKey =
   | 'transaktioner'
   | 'kundfakturor'
   | 'leverantorsfakturor'
+  | 'fakturor' // General invoices view
   | 'kvitton'
   | 'verifikationer'
   | 'huvudbok'
+  | 'inventarier'
   // Reports
   | 'momsdeklaration'
   | 'inkomstdeklaration'
@@ -127,7 +129,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
     description: 'Aktiebolag med begränsat personligt ansvar. Kräver 25 000 kr i aktiekapital.',
     features: [
       // Bookkeeping (all)
-      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'kvitton', 'verifikationer', 'huvudbok',
+      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'fakturor', 'kvitton', 'verifikationer', 'inventarier', 'huvudbok',
       // Reports (all) - AB uses Årsredovisning (K2/K3)
       'momsdeklaration', 'inkomstdeklaration', 'arsredovisning', 'resultatrakning', 'balansrakning',
       // Payroll
@@ -145,7 +147,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
     description: 'Enskild näringsverksamhet där du som person är ansvarig för företagets skulder.',
     features: [
       // Bookkeeping (all)
-      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'kvitton', 'verifikationer', 'huvudbok',
+      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'fakturor', 'kvitton', 'verifikationer', 'inventarier', 'huvudbok',
       // Reports (all)
       'momsdeklaration', 'inkomstdeklaration', 'arsbokslut', 'resultatrakning', 'balansrakning',
       // Payroll (if employees + egenavgifter)
@@ -162,7 +164,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
     description: 'Bolag med minst två delägare som är personligt och solidariskt ansvariga.',
     features: [
       // Bookkeeping (all)
-      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'kvitton', 'verifikationer', 'huvudbok',
+      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'fakturor', 'kvitton', 'verifikationer', 'inventarier', 'huvudbok',
       // Reports (all)
       'momsdeklaration', 'inkomstdeklaration', 'arsbokslut', 'resultatrakning', 'balansrakning',
       // Payroll
@@ -304,6 +306,18 @@ export const featureInfo: Record<FeatureKey, FeatureInfo> = {
     key: 'huvudbok',
     label: 'Huvudbok',
     description: 'Kontoöversikt med saldon och aktivitet',
+    category: 'bookkeeping',
+  },
+  fakturor: {
+    key: 'fakturor',
+    label: 'Fakturor',
+    description: 'Hantera kund- och leverantörsfakturor',
+    category: 'bookkeeping',
+  },
+  inventarier: {
+    key: 'inventarier',
+    label: 'Inventarier',
+    description: 'Hantera anläggningstillgångar',
     category: 'bookkeeping',
   },
   // Reports

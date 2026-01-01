@@ -22,7 +22,7 @@ import {
     OverviewTab,
     TransactionsTab,
     ExpensesTab,
-} from "@/components/statistics"
+} from "@/components/rapporter"
 
 export default function CompanyStatisticsPage() {
     return (

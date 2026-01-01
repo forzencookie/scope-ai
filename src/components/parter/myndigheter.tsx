@@ -123,16 +123,14 @@ export function Myndigheter() {
                     const meta = authorityMeta[connection.authority];
                     const status = statusConfig[connection.status];
                     const StatusIcon = status.icon;
-                    const AuthorityIcon = meta.icon;
+                    // const AuthorityIcon = meta.icon; // Icon removed
 
                     return (
-                        <Card key={connection.id}>
-                            <CardHeader className="pb-3">
+                        <Card key={connection.id} className="border-0 shadow-none bg-muted/20">
+                            <CardHeader className="pb-3 px-4 pt-4">
                                 <div className="flex items-start justify-between">
                                     <div className="flex items-center gap-3">
-                                        <div className={cn("p-2 rounded-lg", meta.bgClass)}>
-                                            <AuthorityIcon className={cn("h-5 w-5", meta.colorClass)} />
-                                        </div>
+
                                         <div>
                                             <CardTitle className="text-base">{connection.name}</CardTitle>
                                             <CardDescription className="text-xs mt-0.5">
@@ -168,11 +166,14 @@ export function Myndigheter() {
                                     </div>
                                 )}
                                 <div className="flex gap-2 pt-2">
-                                    <Button variant="outline" size="sm" className="flex-1 gap-1.5">
-                                        <RefreshCw className="h-3.5 w-3.5" />
+                                    <Button
+                                        size="sm"
+                                        className="gap-2 px-4 bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                                    >
                                         Synka
+                                        <RefreshCw className="h-3.5 w-3.5" />
                                     </Button>
-                                    <Button variant="ghost" size="sm" className="gap-1.5">
+                                    <Button variant="ghost" size="sm" className="gap-1.5 hover:bg-muted/50">
                                         <ExternalLink className="h-3.5 w-3.5" />
                                         Öppna
                                     </Button>

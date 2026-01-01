@@ -20,12 +20,12 @@ const mobileNavItems = [
   },
   {
     title: "Bokföring",
-    href: "/dashboard/appar/bokforing",
+    href: "/dashboard/bokforing",
     icon: BookOpen,
   },
   {
     title: "Rapporter",
-    href: "/dashboard/appar/rapporter",
+    href: "/dashboard/rapporter",
     icon: PieChart,
   },
 ]

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Plus } from "lucide-react"
+import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Plus, Loader2 } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -223,7 +223,7 @@ export { IconWrapper, iconColors }
 // NavAIConversations - Quick access to recent AI conversations in sidebar
 // ============================================================================
 
-const AI_STORAGE_KEY = 'ai-robot-conversations'
+const AI_STORAGE_KEY = 'ai-robot-conversations' // Legacy, kept for reference
 
 interface AIConversation {
   id: string
@@ -237,47 +237,64 @@ export function NavAIConversations() {
   const [isOpen, setIsOpen] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(true)
 
-  // Load conversations from Supabase via API
-  React.useEffect(() => {
-    async function fetchConversations() {
-      try {
-        const res = await fetch('/api/chat/history')
-        if (res.ok) {
-          const data = await res.json()
-          setConversations(data.slice(0, 4)) // Show first 4
-          setTotalCount(data.length)
-        }
-      } catch (error) {
-        console.error('Failed to fetch AI conversations:', error)
-      } finally {
-        setIsLoading(false)
+  // Fetch conversations from Supabase via API
+  const fetchConversations = React.useCallback(async () => {
+    try {
+      const res = await fetch('/api/chat/history')
+      if (res.ok) {
+        const data = await res.json()
+        // Map to sidebar format
+        const mapped = data.map((conv: { id: string; title: string; updated_at?: string; created_at: string }) => ({
+          id: conv.id,
+          title: conv.title || 'Ny konversation',
+          updatedAt: new Date(conv.updated_at || conv.created_at).getTime()
+        }))
+        // Sort by most recent first
+        const sorted = mapped.sort((a: AIConversation, b: AIConversation) => b.updatedAt - a.updatedAt)
+        setConversations(sorted.slice(0, 4))
+        setTotalCount(sorted.length)
       }
+    } catch (error) {
+      console.error('Failed to fetch AI conversations:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    fetchConversations()
   }, [])
+
+  // Initial load
+  React.useEffect(() => {
+    fetchConversations()
+  }, [fetchConversations])
 
   // Listen for update events to refresh the list
   React.useEffect(() => {
-    const handleUpdate = async () => {
-      try {
-        const res = await fetch('/api/chat/history')
-        if (res.ok) {
-          const data = await res.json()
-          setConversations(data.slice(0, 4))
-          setTotalCount(data.length)
-        }
-      } catch {
-        // Silent fail
-      }
+    const handleUpdate = () => {
+      fetchConversations()
     }
 
     window.addEventListener('ai-conversations-updated', handleUpdate)
 
+    // Polling every 30 seconds (only when tab is visible)
+    const pollInterval = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        fetchConversations()
+      }
+    }, 30000)
+
+    // Refetch when tab becomes visible
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchConversations()
+      }
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
     return () => {
       window.removeEventListener('ai-conversations-updated', handleUpdate)
+      clearInterval(pollInterval)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
     }
-  }, [])
+  }, [fetchConversations])
 
   // Always show the section header, even if empty
   // (conversations list will just be empty inside)
@@ -303,14 +320,20 @@ export function NavAIConversations() {
         <CollapsibleContent>
           <SidebarMenu>
             {isLoading ? (
-              // Skeleton loading state
-              Array.from({ length: 3 }).map((_, i) => (
-                <SidebarMenuItem key={i}>
-                  <div className="flex h-8 w-full items-center px-2 gap-2">
-                    <div className="h-4 w-full rounded bg-sidebar-accent/50 animate-pulse" />
-                  </div>
-                </SidebarMenuItem>
-              ))
+              // Skeleton with spinner while loading
+              <SidebarMenuItem>
+                <div className="flex h-8 w-full items-center px-2 gap-2">
+                  <div className="h-4 flex-1 rounded bg-sidebar-accent/50 animate-pulse" />
+                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+                </div>
+              </SidebarMenuItem>
+            ) : conversations.length === 0 ? (
+              // Empty state
+              <SidebarMenuItem>
+                <span className="text-xs text-muted-foreground px-2 py-1">
+                  Inga konversationer än
+                </span>
+              </SidebarMenuItem>
             ) : (
               conversations.map((conv) => (
                 <SidebarMenuItem key={conv.id}>

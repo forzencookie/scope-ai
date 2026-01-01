@@ -149,7 +149,7 @@ export function LazyModule({
 // Transactions module
 export const LazyTransactionsTable = createLazyComponent(
     async () => {
-        const { TransactionsTable } = await import('@/components/transactions');
+        const { TransactionsTable } = await import('@/components/bokforing');
         return { default: TransactionsTable };
     },
     'table'
@@ -158,7 +158,7 @@ export const LazyTransactionsTable = createLazyComponent(
 // Invoices module
 export const LazyInvoicesTable = createLazyComponent(
     async () => {
-        const { InvoicesTable } = await import('../revenue/invoices-table');
+        const { InvoicesTable } = await import('../bokforing/invoices-table');
         return { default: InvoicesTable };
     },
     'table'
@@ -167,7 +167,7 @@ export const LazyInvoicesTable = createLazyComponent(
 // Receipts module
 export const LazyReceiptsTable = createLazyComponent(
     async () => {
-        const { ReceiptsTable } = await import('../expenses/receipts-table');
+        const { ReceiptsTable } = await import('../bokforing/receipts-table');
         return { default: ReceiptsTable };
     },
     'table'
@@ -176,7 +176,7 @@ export const LazyReceiptsTable = createLazyComponent(
 // Verifikationer module
 export const LazyVerifikationerTable = createLazyComponent(
     async () => {
-        const { VerifikationerTable } = await import('../accounting/verifikationer-table');
+        const { VerifikationerTable } = await import('../bokforing/verifikationer-table');
         return { default: VerifikationerTable };
     },
     'table'
@@ -185,7 +185,7 @@ export const LazyVerifikationerTable = createLazyComponent(
 // Journal Calendar
 export const LazyJournalCalendar = createLazyComponent(
     async () => {
-        const { JournalCalendar } = await import('../accounting/journal-calendar');
+        const { JournalCalendar } = await import('../bokforing/journal-calendar');
         return { default: JournalCalendar };
     },
     'chart'
@@ -234,7 +234,7 @@ export const LazyArsredovisningContent = createLazyComponent(
 // Resultaträkning tab
 export const LazyResultatrakningContent = createLazyComponent(
     async () => {
-        const { ResultatrakningContent } = await import('@/components/reports/financial-statements');
+        const { ResultatrakningContent } = await import('@/components/rapporter/financial-statements');
         return { default: ResultatrakningContent };
     },
     'table'
@@ -243,7 +243,7 @@ export const LazyResultatrakningContent = createLazyComponent(
 // Balansräkning tab
 export const LazyBalansrakningContent = createLazyComponent(
     async () => {
-        const { BalansrakningContent } = await import('@/components/reports/financial-statements');
+        const { BalansrakningContent } = await import('@/components/rapporter/financial-statements');
         return { default: BalansrakningContent };
     },
     'table'
@@ -252,7 +252,7 @@ export const LazyBalansrakningContent = createLazyComponent(
 // Företagsstatistik tab
 export const LazyForetagsstatistikContent = createLazyComponent(
     async () => {
-        const { ForetagsstatistikContent } = await import('@/components/reports/foretagsstatistik-content');
+        const { ForetagsstatistikContent } = await import('@/components/rapporter/foretagsstatistik-content');
         return { default: ForetagsstatistikContent };
     },
     'chart'
@@ -276,9 +276,9 @@ export function preloadModule(importFn: () => Promise<unknown>): void {
  * Common modules to preload on dashboard load
  */
 export const dashboardModulePreloaders = {
-    transactions: () => import('@/components/transactions'),
-    invoices: () => import('../revenue/invoices-table'),
-    receipts: () => import('../expenses/receipts-table'),
+    transactions: () => import('@/components/bokforing'),
+    invoices: () => import('../bokforing/invoices-table'),
+    receipts: () => import('../bokforing/receipts-table'),
 } as const
 
 /**
@@ -288,8 +288,8 @@ export const reportsModulePreloaders = {
     momsdeklaration: () => import('@/components/skatt/momsdeklaration-content'),
     inkomstdeklaration: () => import('@/components/skatt/inkomstdeklaration-content'),
     arsredovisning: () => import('@/components/skatt/arsredovisning-content'),
-    financialStatements: () => import('@/components/reports/financial-statements'),
-    foretagsstatistik: () => import('@/components/reports/foretagsstatistik-content'),
+    financialStatements: () => import('@/components/rapporter/financial-statements'),
+    foretagsstatistik: () => import('@/components/rapporter/foretagsstatistik-content'),
 } as const
 
 /**
@@ -318,7 +318,7 @@ export function preloadReportsTab(tabId: string): void {
 // Lönebesked tab
 export const LazyLonesbeskContent = createLazyComponent(
     async () => {
-        const { LonesbeskContent } = await import('@/components/payroll/lonebesked-content');
+        const { LonesbeskContent } = await import('@/components/loner/lonebesked-content');
         return { default: LonesbeskContent };
     },
     'payroll'
@@ -336,7 +336,7 @@ export const LazyAGIContent = createLazyComponent(
 // Utdelning tab
 export const LazyUtdelningContent = createLazyComponent(
     async () => {
-        const { UtdelningContent } = await import('@/components/payroll/utdelning-content');
+        const { UtdelningContent } = await import('@/components/parter/utdelning-content');
         return { default: UtdelningContent };
     },
     'payroll'
@@ -346,9 +346,9 @@ export const LazyUtdelningContent = createLazyComponent(
  * Payroll modules to preload when user hovers over payroll nav
  */
 export const payrollModulePreloaders = {
-    lonebesked: () => import('@/components/payroll/lonebesked-content'),
+    lonebesked: () => import('@/components/loner/lonebesked-content'),
     agi: () => import('@/components/skatt/agi-content'),
-    utdelning: () => import('@/components/payroll/utdelning-content'),
+    utdelning: () => import('@/components/parter/utdelning-content'),
     egenavgifter: () => import('@/components/parter/egenavgifter'),
     delagaruttag: () => import('@/components/parter/delagaruttag'),
 } as const

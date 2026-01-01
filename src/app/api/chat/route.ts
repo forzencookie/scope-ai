@@ -131,19 +131,19 @@ Du har tillgång till verktyg för att:
  
 ⚠️ **KRITISKT FÖR BOKFÖRINGSLAGEN:** Du får ALDRIG skapa en bokföringspost utan dokumentation!
 
-Exempel: "Jag köpte kontorsmaterial för 450 kr på Staples"
+### OM ANVÄNDAREN HAR BIFOGAT EN BILD:
+Om meddelandet innehåller en bild (du kan se den), behandla den som kvitto/dokument:
+1. **Analysera bilden** - Extrahera leverantör, belopp, datum, moms från bilden
+2. **Visa förhandsgranskning** - Bekräfta uppgifterna du läste ut
+3. **Använd verktyg** - Anropa create_receipt med extraherad data
+4. **Vänta på bekräftelse** - Användaren måste bekräfta innan sparande
 
-1. **Bekräfta och be om kvitto:**
-   "📝 Förstår! Ett inköp på Staples för 450 kr.
-   
-   👉 För att jag ska kunna registrera detta behöver jag se kvittot.
+### OM ANVÄNDAREN INTE HAR BIFOGAT BILD:
+Om användaren bara skriver text utan bild (t.ex. "Jag köpte kaffe för 45 kr"):
+1. **Be om kvitto:**
+   "📝 Förstår! För att jag ska kunna registrera detta behöver jag se kvittot.
    Ladda upp en bild eller PDF på kvittot så fortsätter vi!"
-
 2. **Vänta på dokumentuppladdning** - SKAPA INGET utan dokument
-3. **Efter uppladdning:** Extrahera data från dokumentet
-4. **Visa förhandsgranskning** med kvittokort
-5. **Vänta på bekräftelse** ("Bekräfta"-knappen)
-6. **Spara först efter bekräftelse**
 
 ## Viktiga regler
 
@@ -214,7 +214,12 @@ export async function POST(request: NextRequest) {
             return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400, headers: { 'Content-Type': 'application/json' } })
         }
 
-        const { messages, confirmationId, conversationId: reqConversationId } = body as { messages: unknown; confirmationId?: string; conversationId?: string }
+        const { messages, confirmationId, conversationId: reqConversationId, attachments } = body as {
+            messages: unknown;
+            confirmationId?: string;
+            conversationId?: string;
+            attachments?: Array<{ name: string; type: string; data: string }>
+        }
         const messageValidation = validateChatMessages(messages)
 
         if (!messageValidation.valid || !messageValidation.data) {
@@ -249,13 +254,59 @@ export async function POST(request: NextRequest) {
         const tools = aiToolRegistry.getAll()
         const openAITools = toolsToOpenAIFunctions(tools)
 
+        // Build messages array, potentially with multi-modal content for the last message
+        const buildMessages = () => {
+            const baseMessages = messageValidation.data!.map((m, index) => {
+                // Only add attachments to the last user message
+                if (m.role === 'user' && index === messageValidation.data!.length - 1 && attachments && attachments.length > 0) {
+                    // Construct multi-modal content array
+                    const content: Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string; detail?: 'low' | 'high' | 'auto' } }> = [
+                        { type: 'text', text: m.content || 'Se bifogade filer.' }
+                    ]
+
+                    for (const attachment of attachments) {
+                        if (attachment.type.startsWith('image/')) {
+                            // Add image as vision content
+                            content.push({
+                                type: 'image_url',
+                                image_url: {
+                                    url: `data:${attachment.type};base64,${attachment.data}`,
+                                    detail: 'auto'
+                                }
+                            })
+                        } else {
+                            // For non-images, decode and add as text context
+                            try {
+                                const textContent = Buffer.from(attachment.data, 'base64').toString('utf-8')
+                                content.push({
+                                    type: 'text',
+                                    text: `\n\n[Bifogad fil: ${attachment.name}]\n${textContent.slice(0, 2000)}${textContent.length > 2000 ? '...(trunkerad)' : ''}`
+                                })
+                            } catch {
+                                content.push({
+                                    type: 'text',
+                                    text: `[Bifogad fil: ${attachment.name} (kunde inte läsas)]`
+                                })
+                            }
+                        }
+                    }
+
+                    return { role: m.role, content }
+                }
+                return m
+            })
+            return baseMessages
+        }
+
+        const messagesForAI = buildMessages()
+
         let response
         try {
             response = await openai.chat.completions.create({
                 model: 'gpt-4o-mini',
                 messages: [
                     { role: 'system', content: SYSTEM_PROMPT },
-                    ...messageValidation.data
+                    ...messagesForAI as any
                 ],
                 tools: openAITools.length > 0 ? openAITools : undefined,
                 tool_choice: openAITools.length > 0 ? 'auto' : undefined,

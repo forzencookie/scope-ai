@@ -31,8 +31,8 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { ReceiptDocument } from "@/components/expenses"
-import { InvoiceDocument } from "@/components/revenue"
+import { ReceiptDocument } from "@/components/bokforing"
+import { InvoiceDocument } from "@/components/bokforing"
 import type { ReceiptDocumentData, InvoiceDocumentData } from "@/types/documents"
 
 

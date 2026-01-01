@@ -17,11 +17,11 @@ import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SectionCard } from "@/components/ui/section-card"
 import { Button } from "@/components/ui/button"
 import {
-    ReportContainer,
-    ReportHeader,
-    ReportSection,
-    type ReportItem
-} from "./report-ui"
+    Table2Container,
+    Table2Header,
+    Table2Section,
+    type Table2Item
+} from "@/components/bokforing/report-table"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
@@ -63,7 +63,7 @@ export function ArsbokslutContent() {
     const result = Math.round(totals.netIncome)
 
     // P&L Items
-    const plItems: ReportItem[] = useMemo(() => ([
+    const plItems: Table2Item[] = useMemo(() => ([
         { label: "Försäljning och övriga intäkter", value: Math.round(sales) },
         { label: "Varor, material och tjänster", value: Math.round(materials) * -1 },
         { label: "Övriga externa kostnader", value: Math.round(externalExpenses) * -1 },
@@ -106,13 +106,13 @@ export function ArsbokslutContent() {
     const totalEqLiab = Math.round(equity + result + payables + taxes + otherLiabilities)
 
     // Balance Sheet Items
-    const assetItems: ReportItem[] = useMemo(() => ([
+    const assetItems: Table2Item[] = useMemo(() => ([
         { label: "Anläggningstillgångar", value: Math.round(fixedAssets) },
         { label: "Kundfordringar mm", value: Math.round(receivables) },
         { label: "Kassa och bank", value: Math.round(cash) },
     ]), [fixedAssets, receivables, cash]);
 
-    const liabilityItems: ReportItem[] = useMemo(() => ([
+    const liabilityItems: Table2Item[] = useMemo(() => ([
         { label: "Eget kapital (inkl. årets resultat)", value: Math.round(equity + result) },
         { label: "Leverantörsskulder", value: Math.round(payables) },
         { label: "Skatteskulder", value: Math.round(taxes) },
@@ -165,7 +165,7 @@ export function ArsbokslutContent() {
                 <div className="border-b-2 border-border/60" />
 
                 {/* Header with Actions */}
-                <ReportHeader
+                <Table2Header
                     title="Årsbokslut 2024"
                     subtitle="Räkenskapsår 2024-01-01 – 2024-12-31"
                 >
@@ -181,7 +181,7 @@ export function ArsbokslutContent() {
                         <Send className="mr-2 h-4 w-4" />
                         Skicka till Bolagsverket
                     </Button>
-                </ReportHeader>
+                </Table2Header>
 
                 {/* Simplified P&L - Form Style */}
                 <div className="space-y-4">
@@ -189,15 +189,15 @@ export function ArsbokslutContent() {
                         {text.reports.profitLossSimplified}
                     </h2>
 
-                    <ReportContainer>
+                    <Table2Container>
                         <div className="space-y-4">
-                            <ReportSection
+                            <Table2Section
                                 title="Intäkter och kostnader"
                                 items={plItems}
                                 total={result}
                             />
                         </div>
-                    </ReportContainer>
+                    </Table2Container>
                 </div>
 
                 {/* Section Separator */}
@@ -208,20 +208,20 @@ export function ArsbokslutContent() {
                     <h2 className="text-sm font-medium uppercase tracking-wide text-muted-foreground">
                         {text.reports.balanceSheetSimplified}
                     </h2>
-                    <ReportContainer>
+                    <Table2Container>
                         <div className="space-y-2">
-                            <ReportSection
+                            <Table2Section
                                 title="Tillgångar"
                                 items={assetItems}
                                 total={totalAssets}
                             />
-                            <ReportSection
+                            <Table2Section
                                 title="Eget kapital och skulder"
                                 items={liabilityItems}
                                 total={totalEqLiab}
                             />
                         </div>
-                    </ReportContainer>
+                    </Table2Container>
                 </div>
             </div>
         </main>

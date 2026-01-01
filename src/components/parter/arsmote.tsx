@@ -643,43 +643,7 @@ export function Arsmote() {
         )}
       </div>
 
-      {/* Upcoming features */}
-      <Card className="bg-muted/30">
-        <CardHeader>
-          <CardTitle className="text-base flex items-center gap-2">
-            <Sparkles className="h-4 w-4 text-primary" />
-            Kommande funktioner
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-3 md:grid-cols-2">
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Digital kallelse till medlemmar</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Motionshantering med styrelsens yttranden</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Valberedningens förslag</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Digital röstning och poströstning</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>AI-genererat årsmötesprotokoll</span>
-            </div>
-            <div className="flex items-start gap-2 text-sm">
-              <CheckCircle className="h-4 w-4 mt-0.5 text-muted-foreground" />
-              <span>Verksamhetsberättelse och ekonomisk rapport</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+
     </div>
   )
 }

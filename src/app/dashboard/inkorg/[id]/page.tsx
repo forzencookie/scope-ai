@@ -24,8 +24,8 @@ import { categoryColors, categoryLabels } from "@/data/inbox"
 import { InboxItem } from "@/types"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { InvoiceDocument } from "@/components/revenue"
-import { ReceiptDocument } from "@/components/expenses"
+import { InvoiceDocument } from "@/components/bokforing"
+import { ReceiptDocument } from "@/components/bokforing"
 
 export default function MessagePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
@@ -180,7 +180,7 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                                             })
                                             if (res.ok) {
                                                 toast.success("Kvitto registrerat", "Dokumentet har flyttats till kvitton.")
-                                                router.push('/dashboard/appar/bokforing?tab=kvitton')
+                                                router.push('/dashboard/bokforing?tab=kvitton')
                                             } else {
                                                 toast.error("Fel", "Kunde inte skapa kvitto.")
                                             }
@@ -206,7 +206,7 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                                             })
                                             if (res.ok) {
                                                 toast.success("Faktura registrerad", "Dokumentet har flyttats till leverantörsfakturor.")
-                                                router.push('/dashboard/appar/bokforing?tab=leverantorsfakturor')
+                                                router.push('/dashboard/bokforing?tab=leverantorsfakturor')
                                             } else {
                                                 toast.error("Fel", "Kunde inte skapa faktura.")
                                             }

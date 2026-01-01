@@ -56,7 +56,7 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>(
                         component: 'ComplianceList' as any,
                         props: { documents: displayDocs },
                         title: 'Bolagsdokument',
-                        fullViewRoute: '/dashboard/appar/parter',
+                        fullViewRoute: '/dashboard/parter',
                     },
                 }
             }
@@ -100,7 +100,7 @@ export const getShareholdersTool = defineTool<Record<string, never>, any[]>({
                         component: 'ShareholderList' as any,
                         props: { shareholders },
                         title: 'Aktiebok',
-                        fullViewRoute: '/dashboard/appar/parter?tab=aktiebok',
+                        fullViewRoute: '/dashboard/parter?tab=aktiebok',
                     },
                 }
             }

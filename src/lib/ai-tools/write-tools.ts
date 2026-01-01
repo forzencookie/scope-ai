@@ -138,7 +138,7 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
                 component: 'InvoicePreview',
                 props: { invoice: invoiceData },
                 title: 'Skapad faktura',
-                fullViewRoute: '/dashboard/appar/bokforing?tab=kundfakturor',
+                fullViewRoute: '/dashboard/bokforing?tab=kundfakturor',
             },
         }
     },
@@ -258,7 +258,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, ProcessedPayslip[]>({
                 component: 'PayslipsTable',
                 props: { payslips },
                 title: 'Lönebesked',
-                fullViewRoute: '/dashboard/appar/loner',
+                fullViewRoute: '/dashboard/loner',
             },
         }
     },
@@ -539,7 +539,7 @@ export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>
                 component: 'ReceiptCard',
                 props: { receipt: savedReceipt },
                 title: 'Registrerat kvitto',
-                fullViewRoute: '/dashboard/appar/bokforing?tab=kvitton',
+                fullViewRoute: '/dashboard/bokforing?tab=kvitton',
             },
         }
     },
@@ -700,7 +700,7 @@ export const createTransactionTool = defineTool<CreateTransactionParams, Created
                 component: 'TransactionCard',
                 props: { transaction: savedTransaction },
                 title: 'Registrerad transaktion',
-                fullViewRoute: '/dashboard/appar/bokforing?tab=transaktioner',
+                fullViewRoute: '/dashboard/bokforing?tab=transaktioner',
             },
         }
     },

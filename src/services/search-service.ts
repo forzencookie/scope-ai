@@ -75,7 +75,7 @@ async function searchTransactions(query: string): Promise<SearchResult[]> {
                 type: 'transaction' as SearchResultType,
                 title: txn.name,
                 subtitle: txn.category,
-                href: `/dashboard/appar/bokforing?tab=transaktioner&search=${encodeURIComponent(txn.name)}`,
+                href: `/dashboard/bokforing?tab=transaktioner&search=${encodeURIComponent(txn.name)}`,
                 category: "Transaktioner",
                 colorClass: searchColors["Transaktioner"],
                 matchedField: txn.name.toLowerCase().includes(lowerQuery) ? 'name' : 'category',
@@ -109,7 +109,7 @@ async function searchReceipts(query: string): Promise<SearchResult[]> {
                 type: 'receipt' as SearchResultType,
                 title: receipt.supplier,
                 subtitle: receipt.category,
-                href: `/dashboard/appar/bokforing?tab=kvitton&search=${encodeURIComponent(receipt.supplier)}`,
+                href: `/dashboard/bokforing?tab=kvitton&search=${encodeURIComponent(receipt.supplier)}`,
                 category: "Kvitton",
                 colorClass: searchColors["Kvitton"],
                 matchedField: receipt.supplier.toLowerCase().includes(lowerQuery) ? 'supplier' : 'category',
@@ -155,7 +155,7 @@ async function searchInvoices(query: string): Promise<SearchResult[]> {
         type: 'invoice' as SearchResultType,
         title: inv.supplierName,
         subtitle: `Faktura ${inv.invoiceNumber} · ${inv.category || 'Okategoriserad'}`,
-        href: `/dashboard/appar/bokforing?tab=kvitton&id=${inv.id}`, // Linking to receipts/invoices tab
+        href: `/dashboard/bokforing?tab=kvitton&id=${inv.id}`, // Linking to receipts/invoices tab
         category: "Fakturor",
         colorClass: searchColors["Fakturor"],
         matchedField: inv.supplierName.toLowerCase().includes(lowerQuery) ? 'supplier' : 'number',
@@ -176,7 +176,7 @@ async function searchEmployees(query: string): Promise<SearchResult[]> {
         type: 'employee' as SearchResultType,
         title: s.name,
         subtitle: `Aktieägare · ${s.ownershipPercentage}% ägande`,
-        href: `/dashboard/appar/parter?tab=aktiebok&id=${s.id}`,
+        href: `/dashboard/parter?tab=aktiebok&id=${s.id}`,
         category: "Parter",
         colorClass: searchColors["Parter"],
         matchedField: 'name'
@@ -189,7 +189,7 @@ async function searchEmployees(query: string): Promise<SearchResult[]> {
         type: 'employee' as SearchResultType,
         title: p.name,
         subtitle: `Delägare · ${p.type}`,
-        href: `/dashboard/appar/parter?tab=delagare&id=${p.id}`,
+        href: `/dashboard/parter?tab=delagare&id=${p.id}`,
         category: "Parter",
         colorClass: searchColors["Parter"],
         matchedField: 'name'
@@ -202,7 +202,7 @@ async function searchEmployees(query: string): Promise<SearchResult[]> {
         type: 'employee' as SearchResultType,
         title: m.name,
         subtitle: `Medlem · ${m.roles.join(', ') || 'Medlem'}`,
-        href: `/dashboard/appar/parter?tab=delagare&id=${m.id}`,
+        href: `/dashboard/parter?tab=delagare&id=${m.id}`,
         category: "Parter",
         colorClass: searchColors["Parter"],
         matchedField: 'name'
@@ -233,7 +233,7 @@ async function searchTaxReports(query: string): Promise<SearchResult[]> {
             type: 'page' as SearchResultType,
             title: r.title,
             subtitle: `${r.type} · ${r.status}`,
-            href: `/dashboard/appar/skatt?tab=momsdeklaration&id=${r.id}`,
+            href: `/dashboard/skatt?tab=momsdeklaration&id=${r.id}`,
             category: "Skatt",
             colorClass: searchColors["Verifikationer"], // Use verification color (emerald) or Skatt (purple)? Sök page uses purple for Skatt.
             matchedField: 'title',
@@ -248,7 +248,7 @@ async function searchTaxReports(query: string): Promise<SearchResult[]> {
             type: 'page' as SearchResultType,
             title: 'Resultaträkning 2024',
             subtitle: 'Rapport · Hittills i år',
-            href: `/dashboard/appar/rapporter/resultat`,
+            href: `/dashboard/rapporter/resultat`,
             category: "Rapporter",
             colorClass: searchColors["Fakturor"], // Orange matches Rapporter in Sök page
             matchedField: 'title'
@@ -261,7 +261,7 @@ async function searchTaxReports(query: string): Promise<SearchResult[]> {
             type: 'page' as SearchResultType,
             title: 'Balansräkning 2024',
             subtitle: 'Rapport · Nuvarande ställning',
-            href: `/dashboard/appar/rapporter/balans`,
+            href: `/dashboard/rapporter/balans`,
             category: "Rapporter",
             colorClass: searchColors["Fakturor"],
             matchedField: 'title'
@@ -332,13 +332,13 @@ export function groupSearchResults(results: SearchResult[], query?: string): Sea
 
     // Convert to array with metadata
     const viewAllHrefs: Record<string, string> = {
-        "Transaktioner": "/dashboard/appar/bokforing?tab=transaktioner",
-        "Kvitton": "/dashboard/appar/bokforing?tab=kvitton",
-        "Verifikationer": "/dashboard/appar/bokforing?tab=verifikationer",
-        "Anställda": "/dashboard/appar/loner?tab=lonebesked",
-        "Fakturor": "/dashboard/appar/bokforing?tab=kvitton",
-        "Händelser": "/dashboard/appar/handelser",
-        "Bolagsåtgärder": "/dashboard/appar/handelser?filter=action",
+        "Transaktioner": "/dashboard/bokforing?tab=transaktioner",
+        "Kvitton": "/dashboard/bokforing?tab=kvitton",
+        "Verifikationer": "/dashboard/bokforing?tab=bokforing",
+        "Anställda": "/dashboard/loner?tab=lonebesked",
+        "Fakturor": "/dashboard/bokforing?tab=kvitton",
+        "Händelser": "/dashboard/handelser",
+        "Bolagsåtgärder": "/dashboard/handelser?filter=action",
     }
 
     return Object.entries(grouped).map(([category, results]) => {

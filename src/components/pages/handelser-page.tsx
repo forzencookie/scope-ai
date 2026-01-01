@@ -24,7 +24,7 @@ import { useLastUpdated } from "@/hooks/use-last-updated"
 import { useEvents } from "@/hooks/use-events"
 import { eventSourceMeta, eventStatusMeta, type EventSource, type CorporateActionType } from "@/types/events"
 import { cn } from "@/lib/utils"
-import { ActionWizard } from "@/components/corporate-actions"
+import { ActionWizard } from "@/components/parter"
 import {
     EventsFolderView,
     EventsTable,
@@ -32,7 +32,7 @@ import {
     countEventsByQuarter,
     filterEventsByQuarter,
     type Quarter,
-} from "@/components/events"
+} from "@/components/handelser"
 
 // View types
 type ViewType = "folders" | "timeline" | "calendar"

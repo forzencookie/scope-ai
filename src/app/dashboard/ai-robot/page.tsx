@@ -11,8 +11,8 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
-import { Plus, Send, Loader2, RefreshCw, AlertCircle, Paperclip, Mic, ArrowRight, Inbox, LayoutGrid, AtSign } from "lucide-react"
-import { useRef, useState, useEffect, useCallback, Suspense } from "react"
+import { Plus, Send, Loader2, RefreshCw, AlertCircle, Paperclip, Mic, ArrowRight, Inbox, LayoutGrid, AtSign, X, FileText, Image as ImageIcon, ZoomIn } from "lucide-react"
+import { useRef, useState, useEffect, useCallback, Suspense, useMemo } from "react"
 import { useSearchParams } from "next/navigation"
 import Link from "next/link"
 import ReactMarkdown from "react-markdown"
@@ -31,6 +31,8 @@ interface Message {
     role: 'user' | 'assistant'
     content: string
     error?: boolean
+    // Attachments for user messages
+    attachments?: Array<{ name: string; type: string; dataUrl: string }>
     // Structured data for AI cards
     display?: {
         type: 'ReceiptCard' | 'TransactionCard' | 'TaskChecklist' | 'ReceiptsTable'
@@ -56,7 +58,6 @@ interface Conversation {
     updatedAt: number
 }
 
-const STORAGE_KEY = 'ai-robot-conversations'
 
 // Generate title from first user message
 function generateTitle(messages: Message[]): string {
@@ -91,6 +92,25 @@ function AIRobotPageContent() {
     const [hasAppliedInitialPrompt, setHasAppliedInitialPrompt] = useState(false)
     const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
     const [isMentionOpen, setIsMentionOpen] = useState(false)
+    const [attachedFiles, setAttachedFiles] = useState<File[]>([])
+    const [isDragging, setIsDragging] = useState(false)
+    const [previewFile, setPreviewFile] = useState<{ url: string; name: string } | null>(null)
+    const fileInputRef = useRef<HTMLInputElement>(null)
+
+    // Create stable preview URLs for attached files
+    const filePreviewUrls = useMemo(() => {
+        return attachedFiles.map(file => ({
+            file,
+            url: URL.createObjectURL(file)
+        }))
+    }, [attachedFiles])
+
+    // Cleanup object URLs when files change
+    useEffect(() => {
+        return () => {
+            filePreviewUrls.forEach(({ url }) => URL.revokeObjectURL(url))
+        }
+    }, [filePreviewUrls])
 
     // Get current conversation
     const currentConversation = conversations.find(c => c.id === currentConversationId)
@@ -108,24 +128,37 @@ function AIRobotPageContent() {
         }
     }, [initialPrompt, hasAppliedInitialPrompt])
 
-    // Load conversations from localStorage
+    // Load conversations from Supabase on mount
     useEffect(() => {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
+        async function loadConversations() {
             try {
-                const parsed = JSON.parse(stored) as Conversation[]
-                setConversations(parsed)
-            } catch {
-                console.error('Failed to parse stored conversations')
+                const res = await fetch('/api/chat/history')
+                if (res.ok) {
+                    const data = await res.json()
+                    // Map Supabase format to frontend format
+                    const mapped = data.map((conv: { id: string; title: string; created_at: string; updated_at: string; messages?: any[] }) => ({
+                        id: conv.id,
+                        title: conv.title || 'Ny konversation',
+                        messages: (conv.messages || []).map((m: { id: string; role: string; content: string }) => ({
+                            id: m.id || crypto.randomUUID(),
+                            role: m.role as 'user' | 'assistant',
+                            content: m.content || ''
+                        })),
+                        createdAt: new Date(conv.created_at).getTime(),
+                        updatedAt: new Date(conv.updated_at || conv.created_at).getTime()
+                    }))
+                    setConversations(mapped)
+                }
+            } catch (error) {
+                console.error('Failed to load conversations from Supabase:', error)
             }
         }
+        loadConversations()
     }, [])
 
-    // Save conversations to localStorage
+    // Notify sidebar when conversations change (for same-tab updates)
     useEffect(() => {
         if (conversations.length > 0) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(conversations))
-            // Dispatch event for sidebar to update
             window.dispatchEvent(new Event('ai-conversations-updated'))
         }
     }, [conversations])
@@ -187,7 +220,9 @@ function AIRobotPageContent() {
     // Send message
     const sendMessage = useCallback(async (retryMessageId?: string, confirmationId?: string) => {
         const messageContent = textareaValue.trim()
-        if (!messageContent && !retryMessageId && !confirmationId) return
+        const hasFiles = attachedFiles.length > 0
+        // Allow sending if: has text, has files, is retry, or is confirmation
+        if (!messageContent && !hasFiles && !retryMessageId && !confirmationId) return
         if (isLoading) return
 
         let conversationId = currentConversationId
@@ -200,13 +235,7 @@ function AIRobotPageContent() {
                 updatedMessages = updatedMessages.slice(0, retryIndex)
             }
         } else {
-            // Add user message
-            const userMessage: Message = {
-                id: crypto.randomUUID(),
-                role: 'user',
-                content: messageContent
-            }
-            updatedMessages = [...updatedMessages, userMessage]
+            // We'll add the user message after converting files to base64
         }
 
         // Create or update conversation
@@ -216,7 +245,6 @@ function AIRobotPageContent() {
             role: 'assistant',
             content: ''
         }
-        updatedMessages = [...updatedMessages, assistantMessage]
 
         if (!conversationId) {
             // New conversation
@@ -279,11 +307,74 @@ function AIRobotPageContent() {
         setIsExpanded(false)
         setIsLoading(true)
 
+        // Capture files before clearing
+        const filesToSend = [...attachedFiles]
+        setAttachedFiles([]) // Clear attachments
+
         if (textareaRef.current) {
             textareaRef.current.style.height = 'auto'
         }
 
+        // Helper function to convert file to base64 data URL
+        const fileToDataUrl = (file: File): Promise<string> => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => resolve(reader.result as string)
+                reader.onerror = reject
+                reader.readAsDataURL(file)
+            })
+        }
+
+        // Helper for API (base64 without prefix)
+        const fileToBase64 = (file: File): Promise<{ name: string; type: string; data: string }> => {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader()
+                reader.onload = () => {
+                    const base64 = (reader.result as string).split(',')[1]
+                    resolve({ name: file.name, type: file.type, data: base64 })
+                }
+                reader.onerror = reject
+                reader.readAsDataURL(file)
+            })
+        }
+
         try {
+            // Convert files to base64 data URLs for message display
+            const messageAttachments = await Promise.all(
+                filesToSend.map(async (file) => ({
+                    name: file.name,
+                    type: file.type,
+                    dataUrl: await fileToDataUrl(file)
+                }))
+            )
+
+            // Now add the user message with base64 data URLs (persistent)
+            if (!retryMessageId) {
+                const userMessage: Message = {
+                    id: crypto.randomUUID(),
+                    role: 'user',
+                    content: messageContent,
+                    attachments: messageAttachments.length > 0 ? messageAttachments : undefined
+                }
+
+                // Update the conversation with the user message
+                setConversations(prev => prev.map(c =>
+                    c.id === conversationId
+                        ? { ...c, messages: [...c.messages.filter(m => m.id !== assistantMessageId), userMessage, assistantMessage] }
+                        : c
+                ))
+            } else {
+                // Just add the assistant message for retry
+                setConversations(prev => prev.map(c =>
+                    c.id === conversationId
+                        ? { ...c, messages: [...updatedMessages, assistantMessage] }
+                        : c
+                ))
+            }
+
+            // Convert files for API
+            const attachments = await Promise.all(filesToSend.map(fileToBase64))
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -291,7 +382,8 @@ function AIRobotPageContent() {
                     messages: updatedMessages
                         .filter(m => m.role === 'user' || (m.role === 'assistant' && (m.content || m.display || m.confirmationRequired)))
                         .map(m => ({ role: m.role, content: m.content })),
-                    confirmationId
+                    confirmationId,
+                    attachments: attachments.length > 0 ? attachments : undefined
                 })
             })
 
@@ -387,11 +479,124 @@ function AIRobotPageContent() {
         }
     }
 
+    // File upload handlers
+    const handleFileSelect = useCallback((files: FileList | null) => {
+        if (!files) return
+        const newFiles = Array.from(files).filter(file => {
+            // Accept images, PDFs, and common document types
+            const allowedTypes = ['image/', 'application/pdf', 'text/', 'application/json']
+            return allowedTypes.some(type => file.type.startsWith(type))
+        })
+        setAttachedFiles(prev => [...prev, ...newFiles].slice(0, 5)) // Max 5 files
+    }, [])
+
+    const removeFile = useCallback((index: number) => {
+        setAttachedFiles(prev => prev.filter((_, i) => i !== index))
+    }, [])
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(true)
+    }, [])
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+    }, [])
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragging(false)
+        handleFileSelect(e.dataTransfer.files)
+    }, [handleFileSelect])
+
+    // Check if file is an image
+    const isImageFile = (file: File) => file.type.startsWith('image/')
+
     // Chat input component - Compact Cursor-style layout
     const chatInputJSX = (
         <div className="w-full max-w-2xl mx-auto">
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*,.pdf,.txt,.json,.csv"
+                className="hidden"
+                onChange={(e) => handleFileSelect(e.target.files)}
+            />
+
             {/* Input container - stacked layout: textarea top, buttons bottom */}
-            <div className="bg-muted/40 dark:bg-muted/30 border-2 border-border/50 rounded-xl overflow-hidden">
+            <div
+                className={cn(
+                    "bg-muted/40 dark:bg-muted/30 border-2 rounded-xl overflow-hidden transition-colors",
+                    isDragging ? "border-primary bg-primary/5" : "border-border/50"
+                )}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+                onDrop={handleDrop}
+            >
+                {/* Attached files preview */}
+                {filePreviewUrls.length > 0 && (
+                    <div className="px-3 pt-3 flex flex-wrap gap-2">
+                        {filePreviewUrls.map(({ file, url }, index) => (
+                            <div
+                                key={`${file.name}-${index}`}
+                                className="relative group flex items-center gap-2 bg-muted/60 rounded-lg p-2 pr-3 text-xs"
+                            >
+                                {isImageFile(file) ? (
+                                    <button
+                                        type="button"
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            setPreviewFile({ url, name: file.name })
+                                        }}
+                                        className="relative w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer z-10"
+                                    >
+                                        <img
+                                            src={url}
+                                            alt={file.name}
+                                            className="w-full h-full object-cover"
+                                        />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
+                                            <ZoomIn className="h-4 w-4 text-white" />
+                                        </div>
+                                    </button>
+                                ) : (
+                                    <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                        <FileText className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                )}
+                                <div className="flex flex-col min-w-0">
+                                    <span className="font-medium truncate max-w-[100px]">{file.name}</span>
+                                    <span className="text-muted-foreground">
+                                        {(file.size / 1024).toFixed(0)} KB
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={(e) => {
+                                        e.stopPropagation()
+                                        removeFile(index)
+                                    }}
+                                    className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-muted-foreground/80 hover:bg-muted-foreground text-background rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity z-20"
+                                >
+                                    <X className="h-3 w-3" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Drag overlay indicator */}
+                {isDragging && (
+                    <div className="px-4 py-3 text-center text-sm text-primary font-medium">
+                        Släpp filer här för att bifoga
+                    </div>
+                )}
+
                 {/* Top row - Textarea */}
                 <div className="w-full">
                     <Textarea
@@ -399,7 +604,7 @@ function AIRobotPageContent() {
                         value={textareaValue}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
-                        placeholder="Skriv ett meddelande..."
+                        placeholder={attachedFiles.length > 0 ? "Lägg till ett meddelande..." : "Skriv ett meddelande..."}
                         className="resize-none border-0 bg-transparent px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full min-h-[40px] max-h-[200px] text-sm leading-relaxed"
                         rows={1}
                     />
@@ -412,8 +617,12 @@ function AIRobotPageContent() {
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground"
+                            className={cn(
+                                "h-7 w-7 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground",
+                                attachedFiles.length > 0 && "text-primary"
+                            )}
                             aria-label="Lägg till bilaga"
+                            onClick={() => fileInputRef.current?.click()}
                         >
                             <Paperclip className="h-4 w-4" />
                         </Button>
@@ -447,7 +656,7 @@ function AIRobotPageContent() {
                             className="h-7 w-7 rounded-md disabled:opacity-50"
                             aria-label="Skicka meddelande"
                             onClick={() => sendMessage()}
-                            disabled={isLoading || !textareaValue.trim()}
+                            disabled={isLoading || (!textareaValue.trim() && attachedFiles.length === 0)}
                         >
                             {isLoading ? (
                                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -481,7 +690,7 @@ function AIRobotPageContent() {
             {/* Navigation links below chatbar */}
             <div className="flex items-center gap-4 mt-2 px-1">
                 <Link
-                    href="/dashboard/appar"
+                    href="/dashboard"
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <LayoutGrid className="h-3.5 w-3.5" />
@@ -651,8 +860,42 @@ function AIRobotPageContent() {
                                     )}
                                 >
                                     {message.role === 'user' ? (
-                                        <div className="rounded-2xl px-4 py-3 bg-primary text-primary-foreground max-w-[85%]">
-                                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                        <div className="max-w-[85%] flex flex-col gap-2 items-end">
+                                            {/* Text message */}
+                                            {message.content && (
+                                                <div className="rounded-lg px-3 py-1.5 bg-primary text-primary-foreground">
+                                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                                </div>
+                                            )}
+                                            {/* Attachments - compact badge style like input bar */}
+                                            {message.attachments && message.attachments.length > 0 && (
+                                                <div className="flex flex-wrap gap-2 justify-end">
+                                                    {message.attachments.map((att, i) => (
+                                                        <div
+                                                            key={i}
+                                                            className="flex items-center gap-2 bg-muted/60 rounded-lg p-2 pr-3 text-xs"
+                                                        >
+                                                            {att.type.startsWith('image/') ? (
+                                                                <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
+                                                                    <img
+                                                                        src={att.dataUrl}
+                                                                        alt={att.name}
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                </div>
+                                                            ) : (
+                                                                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                                                                    <FileText className="h-5 w-5 text-muted-foreground" />
+                                                                </div>
+                                                            )}
+                                                            <div className="flex flex-col min-w-0">
+                                                                <span className="font-medium truncate max-w-[100px]">{att.name}</span>
+                                                                <span className="text-muted-foreground">Bifogad fil</span>
+                                                            </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
                                         </div>
                                     ) : (
                                         <div className="w-full max-w-[85%]">
@@ -689,6 +932,34 @@ function AIRobotPageContent() {
                         {chatInputJSX}
                     </div>
                 </>
+            )}
+
+            {/* Image Preview Modal */}
+            {previewFile && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4"
+                    onClick={() => setPreviewFile(null)}
+                    onKeyDown={(e) => e.key === 'Escape' && setPreviewFile(null)}
+                    role="dialog"
+                    aria-modal="true"
+                >
+                    <div className="relative max-w-4xl max-h-[90vh] w-full">
+                        <button
+                            onClick={() => setPreviewFile(null)}
+                            className="absolute -top-10 right-0 p-2 text-white hover:text-white/80 transition-colors"
+                            aria-label="Stäng förhandsgranskning"
+                        >
+                            <X className="h-6 w-6" />
+                        </button>
+                        <img
+                            src={previewFile.url}
+                            alt={previewFile.name}
+                            className="w-full h-auto max-h-[85vh] object-contain rounded-lg"
+                            onClick={(e) => e.stopPropagation()}
+                        />
+                        <p className="text-center text-white/70 text-sm mt-2">{previewFile.name}</p>
+                    </div>
+                </div>
             )}
         </div>
     )

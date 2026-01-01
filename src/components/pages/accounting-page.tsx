@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, Suspense, useMemo, useEffect, useState, useRef } from "react"
+import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
 import type { TransactionWithAI } from "@/types"
@@ -27,7 +27,6 @@ import {
     Receipt,
     ClipboardCheck,
     FileText,
-    Building2,
     List,
     RefreshCw,
     Monitor,
@@ -44,77 +43,60 @@ import {
     LazyVerifikationerTable
 } from "@/components/shared"
 import { useFeature } from "@/providers/company-provider"
-import { SupplierInvoicesKanban, type SupplierInvoicesKanbanRef } from "@/components/expenses"
-import { Huvudbok } from "@/components/accounting"
-import { InventarierTable } from "@/components/assets"
-import { InvoicesDashboardLayout } from "@/components/revenue/invoices-dashboard-layout"
+import { Huvudbok, BookkeepingView } from "@/components/bokforing"
+import { InventarierTable } from "@/components/bokforing"
+import { UnifiedInvoicesView } from "@/components/bokforing"
 import { useTextMode } from "@/providers/text-mode-provider"
 
 // Tab configuration with feature requirements and translations
 const allTabs = [
     {
         id: "transaktioner",
-        labelEnkel: "Pengar in & ut",
+        labelEnkel: "Transaktioner",
         labelAvancerad: "Transaktioner",
         icon: BookOpen,
         feature: null, // Available to all
     },
     {
-        id: "kundfakturor",
-        labelEnkel: "Skicka fakturor",
-        labelAvancerad: "Kundfakturor",
+        id: "fakturor",
+        labelEnkel: "Fakturor",
+        labelAvancerad: "Fakturor",
         icon: FileText,
         feature: null, // Available to all
     },
     {
-        id: "leverantorsfakturor",
-        labelEnkel: "Fakturor att betala",
-        labelAvancerad: "Leverantörsfakturor",
-        icon: Building2,
-        feature: 'leverantorsfakturor' as const,
-    },
-    {
         id: "kvitton",
-        labelEnkel: "Kvitton & underlag",
+        labelEnkel: "Kvitton",
         labelAvancerad: "Kvitton",
         icon: Receipt,
         feature: null, // Available to all
     },
     {
-        id: "verifikationer",
-        labelEnkel: "Alla bokningar",
-        labelAvancerad: "Verifikationer",
-        icon: ClipboardCheck,
-        feature: 'verifikationer' as const, // Part of proper bookkeeping
+        id: "bokforing",
+        labelEnkel: "Bokföring",
+        labelAvancerad: "Bokföring",
+        icon: List,
+        feature: 'verifikationer' as const, // Uses verifikationer feature flag
     },
     {
         id: "inventarier",
         labelEnkel: "Inventarier",
-        labelAvancerad: "Anläggningsregister",
         icon: Monitor,
         feature: null,
     },
-    {
-        id: "huvudbok",
-        labelEnkel: "Kontoöversikt",
-        labelAvancerad: "Huvudbok",
-        icon: List,
-        feature: null, // Available to all - general ledger view
-    },
 ]
-
 
 // ============ MAIN PAGE COMPONENT ============
 function AccountingPageContent() {
+    // ... no changes to hooks ...
     const searchParams = useSearchParams()
     const router = useRouter()
     const toast = useToast()
-    const currentTab = searchParams.get("tab") || "transaktioner"
+    const paramTab = searchParams.get("tab")
+    // Handle legacy/alternate URL mapping: 'verifikationer' -> 'bokforing'
+    const currentTab = (paramTab === "verifikationer" ? "bokforing" : paramTab) || "transaktioner"
 
-    // Ref for supplier invoices table
-    const supplierInvoicesRef = useRef<SupplierInvoicesKanbanRef>(null)
-
-    // Fetch PROCESSED transactions from API
+    // State for transactions and UI
     const [apiTransactions, setApiTransactions] = useState<TransactionWithAI[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
@@ -150,26 +132,12 @@ function AccountingPageContent() {
     // Auto-refresh every 5 seconds when on transactions tab
     useEffect(() => {
         if (currentTab !== "transaktioner") return
-
-        // const interval = setInterval(() => {
-        //     fetchTransactions()
-        // }, 5000)
-
-        // return () => clearInterval(interval)
     }, [currentTab])
 
     // Manual refresh function
     const handleRefresh = () => {
         setIsLoading(true)
-        if (currentTab === "leverantorsfakturor") {
-            // Refresh supplier invoices table
-            supplierInvoicesRef.current?.refresh()
-            setIsLoading(false)
-            setLastRefresh(new Date())
-        } else {
-            // Refresh transactions (default)
-            fetchTransactions()
-        }
+        fetchTransactions()
     }
 
     // Use only API transactions (no mock data)
@@ -206,7 +174,6 @@ function AccountingPageContent() {
     }, [toast])
 
     // Feature checks for conditional tabs
-    const hasLeverantorsfakturor = useFeature('leverantorsfakturor')
     const hasVerifikationer = useFeature('verifikationer')
 
     // Text mode for Enkel/Avancerad labels
@@ -216,11 +183,10 @@ function AccountingPageContent() {
     const tabs = useMemo(() => {
         return allTabs.filter(tab => {
             if (!tab.feature) return true
-            if (tab.feature === 'leverantorsfakturor') return hasLeverantorsfakturor
             if (tab.feature === 'verifikationer') return hasVerifikationer
             return true
         })
-    }, [hasLeverantorsfakturor, hasVerifikationer])
+    }, [hasVerifikationer])
 
     // Helper to get the correct label based on mode
     const getTabLabel = (tab: typeof allTabs[0]) => {
@@ -228,7 +194,7 @@ function AccountingPageContent() {
     }
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/appar/bokforing?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/bokforing?tab=${tab}`, { scroll: false })
     }, [router])
 
     // Get current tab label for breadcrumb
@@ -248,7 +214,7 @@ function AccountingPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/dashboard/appar/bokforing">{isEnkel ? "Min bokföring" : "Bokföring"}</BreadcrumbLink>
+                                    <BreadcrumbLink href="/dashboard/bokforing">{isEnkel ? "Min bokföring" : "Bokföring"}</BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
@@ -263,9 +229,9 @@ function AccountingPageContent() {
                 {/* Tab Content */}
                 <div className="bg-background px-4 py-4">
                     <div className="w-full">
-                        {/* Tabs - Show max 3 visible, rest in overflow */}
+                        {/* Tabs - Show max 4 visible (since we reduced count), rest in overflow */}
                         <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60 -ml-1">
-                            {tabs.slice(0, 3).map((tab) => {
+                            {tabs.slice(0, 4).map((tab) => {
                                 const isActive = currentTab === tab.id
                                 const Icon = tab.icon
 
@@ -295,7 +261,7 @@ function AccountingPageContent() {
                             })}
 
                             {/* Overflow tabs - toggle expand */}
-                            {tabs.length > 3 && !showAllTabs && (
+                            {tabs.length > 4 && !showAllTabs && (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <button
@@ -306,13 +272,13 @@ function AccountingPageContent() {
                                         </button>
                                     </TooltipTrigger>
                                     <TooltipContent side="bottom">
-                                        <p>Visa fler ({tabs.length - 3})</p>
+                                        <p>Visa fler ({tabs.length - 4})</p>
                                     </TooltipContent>
                                 </Tooltip>
                             )}
 
-                            {/* Expanded tabs (4+) */}
-                            {showAllTabs && tabs.slice(3).map((tab) => {
+                            {/* Expanded tabs (5+) */}
+                            {showAllTabs && tabs.slice(4).map((tab) => {
                                 const isActive = currentTab === tab.id
                                 const Icon = tab.icon
 
@@ -342,7 +308,7 @@ function AccountingPageContent() {
                             })}
 
                             {/* Collapse button when expanded */}
-                            {showAllTabs && tabs.length > 3 && (
+                            {showAllTabs && tabs.length > 4 && (
                                 <Tooltip>
                                     <TooltipTrigger asChild>
                                         <button
@@ -386,22 +352,16 @@ function AccountingPageContent() {
                                 onTransactionBooked={handleTransactionBooked}
                             />
                         )}
-                        {currentTab === "kundfakturor" && (
-                            <InvoicesDashboardLayout />
-                        )}
-                        {currentTab === "leverantorsfakturor" && (
-                            <SupplierInvoicesKanban ref={supplierInvoicesRef} />
+                        {currentTab === "fakturor" && (
+                            <UnifiedInvoicesView />
                         )}
                         {currentTab === "kvitton" && (
                             <LazyReceiptsTable />
                         )}
-                        {currentTab === "verifikationer" && (
+                        {currentTab === "bokforing" && (
                             <div className="space-y-4">
-                                <LazyVerifikationerTable />
+                                <BookkeepingView />
                             </div>
-                        )}
-                        {currentTab === "huvudbok" && (
-                            <Huvudbok />
                         )}
                         {currentTab === "inventarier" && (
                             <InventarierTable />

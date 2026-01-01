@@ -24,9 +24,9 @@ import { SectionCard, ListCard, ListCardItem } from "@/components/ui/section-car
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { ArsredovisningWizardDialog } from "./ai-wizard-dialog"
 import {
-    ReportContainer,
-    ReportHeader
-} from "./report-ui"
+    Table2Container,
+    Table2Header
+} from "@/components/bokforing/report-table"
 import { reportSections } from "./constants"
 import { useVerifications } from "@/hooks/use-verifications"
 import { AnnualReportProcessor } from "@/lib/annual-report-processor"
@@ -151,7 +151,7 @@ export function ArsredovisningContent() {
                 />
 
                 <div className="space-y-4">
-                    <ReportHeader
+                    <Table2Header
                         title="Delar av årsredovisningen"
                     >
                         <div className="flex items-center gap-2">
@@ -164,7 +164,7 @@ export function ArsredovisningContent() {
                                 Skicka till Bolagsverket
                             </button>
                         </div>
-                    </ReportHeader>
+                    </Table2Header>
 
                     <ListCard variant="minimal">
                         {reportSections.map((section) => (

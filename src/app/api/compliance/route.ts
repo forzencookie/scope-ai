@@ -38,6 +38,14 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, data: updated })
         }
 
+        if (type === 'shareholder_create') {
+            // Remove id if present to let DB generate it
+            // eslint-disable-next-line @typescript-eslint/no-unused-vars
+            const { id, ...newShareholder } = data
+            const created = await db.addShareholder(newShareholder)
+            return NextResponse.json({ success: true, data: created })
+        }
+
         return NextResponse.json(
             { success: false, error: 'Invalid compliance action type' },
             { status: 400 }

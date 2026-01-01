@@ -388,7 +388,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
           </AnimatePresence>
 
           {/* Footer */}
-          <div className="flex items-center justify-between px-8 py-4 border-t bg-muted/30">
+          <div className="flex items-center justify-between px-8 py-4">
             <div>
               {!isFirstStep && (
                 <Button variant="ghost" onClick={handleBack}>
@@ -429,13 +429,26 @@ export function useOnboarding() {
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(true)
 
   useEffect(() => {
-    // Check localStorage for onboarding status
+    // Check localStorage for permanent completion
     const completed = localStorage.getItem("scope-onboarding-completed")
-    if (!completed) {
-      setHasCompletedOnboarding(false)
-      // Show onboarding after a short delay for smooth transition
-      setTimeout(() => setShowOnboarding(true), 500)
+    if (completed) {
+      setHasCompletedOnboarding(true)
+      return
     }
+
+    // Check sessionStorage to see if already shown/skipped this session
+    const shownThisSession = sessionStorage.getItem("scope-onboarding-shown")
+    if (shownThisSession) {
+      // Already shown this session, don't show again
+      setHasCompletedOnboarding(false)
+      return
+    }
+
+    // First time this session - show onboarding
+    setHasCompletedOnboarding(false)
+    sessionStorage.setItem("scope-onboarding-shown", "true")
+    // Show onboarding after a short delay for smooth transition
+    setTimeout(() => setShowOnboarding(true), 500)
   }, [])
 
   const completeOnboarding = useCallback(() => {
@@ -445,11 +458,14 @@ export function useOnboarding() {
   }, [])
 
   const skipOnboarding = useCallback(() => {
+    // Mark as shown for this session so it won't reappear on navigation
+    sessionStorage.setItem("scope-onboarding-shown", "true")
     setShowOnboarding(false)
   }, [])
 
   const resetOnboarding = useCallback(() => {
     localStorage.removeItem("scope-onboarding-completed")
+    sessionStorage.removeItem("scope-onboarding-shown")
     setHasCompletedOnboarding(false)
     setShowOnboarding(true)
   }, [])

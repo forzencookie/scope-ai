@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { TransactionsTable } from "../transactions"
+import { TransactionsTable } from "../bokforing"
 import type { Transaction } from "@/types"
 import { TRANSACTION_STATUSES } from "@/types"
 

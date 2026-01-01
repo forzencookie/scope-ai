@@ -11,6 +11,8 @@ import { useAuth } from "./use-auth"
 import {
   deleteStoredTransaction,
 } from "@/lib/demo-storage"
+import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
+import { allTransactions as MOCK_TRANSACTIONS } from "@/lib/transaction-data"
 
 // ============================================
 // Service Selection Helper
@@ -33,6 +35,8 @@ function useTransactionService() {
 // useTransactions Hook - Main transactions data
 // ============================================
 
+
+
 export function useTransactions() {
   const { userId, isAuthenticated } = useTransactionService()
 
@@ -47,11 +51,18 @@ export function useTransactions() {
       if (isAuthenticated && userId) {
         const response = await transactionService.getTransactionsWithAI(userId)
         if (!response.success) throw new Error(response.error || "Failed to fetch transactions")
+
+        // Return mock data if no real data exists (for demo purposes)
+        if (!response.data || response.data.length === 0) {
+          return MOCK_TRANSACTIONS
+        }
+
         return response.data
       } else {
-        // Return empty array for unauthenticated users (Phase 1 Cleanup requirement)
-        return [] as TransactionWithAI[]
+        // Return mock data for unauthenticated/demo state
+        return MOCK_TRANSACTIONS
       }
+
     },
     [] as TransactionWithAI[],
     [userId, isAuthenticated]

@@ -25,7 +25,7 @@ export interface KanbanColumnConfig {
 // ============================================================================
 
 export interface KanbanCardProps {
-    title: string
+    title: React.ReactNode
     subtitle?: string
     amount: number
     date?: string

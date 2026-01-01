@@ -118,7 +118,7 @@ export const formanerCatalog: FormanCatalogItem[] = [
         id: 'julgava',
         name: 'Julgåva',
         category: 'tax_free',
-        maxAmount: 500,
+        maxAmount: 550,
         taxFree: true,
         description: 'Jul- eller nyårsgåva till anställda',
         basAccount: '7699',
@@ -127,7 +127,7 @@ export const formanerCatalog: FormanCatalogItem[] = [
         id: 'jubileumsgava',
         name: 'Jubileumsgåva',
         category: 'tax_free',
-        maxAmount: 1500,
+        maxAmount: 1650,
         taxFree: true,
         description: 'Gåva vid företagets jubileum',
         basAccount: '7699',
@@ -140,6 +140,15 @@ export const formanerCatalog: FormanCatalogItem[] = [
         taxFree: true,
         description: 'Gåva vid 25 år, pension, etc.',
         basAccount: '7699',
+    },
+    {
+        id: 'cykel_skattefri',
+        name: 'Cykelförmån (skattefri)',
+        category: 'tax_free',
+        maxAmount: 3000,
+        taxFree: true,
+        description: 'Skattefri cykelförmån upp till 3000 kr/år',
+        basAccount: '7399',
     },
 
     // Taxable Benefits (Skattepliktiga förmåner)

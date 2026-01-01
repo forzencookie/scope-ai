@@ -72,12 +72,16 @@ export function StatCard({
                 <div className={cn("flex flex-col", iconPosition === "inline" && "w-full")}>
                     <div className="flex items-center gap-1.5 mb-1">
                         <p className="text-sm font-semibold text-muted-foreground">{label}</p>
-                        {HeaderIcon && (
+                        {/* Auto-magically handle both legacy 'icon' and new 'headerIcon' props to ensure consistency */}
+                        {(HeaderIcon || (Icon && iconPosition === "right")) && (
                             <div className={cn(
                                 "h-6 w-6 rounded-md flex items-center justify-center bg-muted/50",
                                 headerIconClassName
                             )}>
-                                <HeaderIcon className="h-3.5 w-3.5 text-muted-foreground" strokeWidth={2} />
+                                {(HeaderIcon || Icon) && React.createElement(HeaderIcon || Icon!, {
+                                    className: "h-3.5 w-3.5 text-muted-foreground",
+                                    strokeWidth: 2
+                                })}
                             </div>
                         )}
                         {tooltip && (
@@ -105,14 +109,7 @@ export function StatCard({
                         </div>
                     )}
                 </div>
-                {Icon && iconPosition === "right" && (
-                    <div className={cn(
-                        "h-8 w-8 rounded-md flex items-center justify-center",
-                        iconClassName
-                    )}>
-                        <Icon className="h-5 w-5 text-muted-foreground" strokeWidth={2.5} />
-                    </div>
-                )}
+                {/* Legacy right-icon support removed to enforce consistency */}
             </div>
 
             {iconPosition === "right" && <p className="text-2xl font-semibold mt-1">{value}</p>}

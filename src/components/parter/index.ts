@@ -17,4 +17,4 @@ export { Medlemsregister } from './medlemsregister'
 // Corporate Actions & Compliance
 export { Firmatecknare } from './firmatecknare'
 export { Myndigheter } from './myndigheter'
-
+export { ActionWizard } from './action-wizard'

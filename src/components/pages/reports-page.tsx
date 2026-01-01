@@ -23,6 +23,9 @@ import {
     FileText,
     Send,
     Calculator,
+    PieChart,
+    TrendingUp,
+    Scale,
 } from "lucide-react"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
@@ -35,9 +38,15 @@ import {
     ArsredovisningContent,
     ArsbokslutContent,
 } from "@/components/skatt"
+import {
+    ResultatrakningContent,
+    BalansrakningContent,
+} from "@/components/rapporter/financial-statements"
 
 // Tab configuration with feature keys for filtering
-const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send; feature: FeatureKey }> = [
+const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send | typeof TrendingUp | typeof Scale; feature: FeatureKey }> = [
+    { id: "resultatrakning", label: "Resultaträkning", icon: TrendingUp, feature: "arsredovisning" },
+    { id: "balansrakning", label: "Balansräkning", icon: Scale, feature: "arsredovisning" },
     { id: "arsredovisning", label: "Årsredovisning", icon: FileBarChart, feature: "arsredovisning" },
     { id: "arsbokslut", label: "Årsbokslut", icon: FileText, feature: "arsbokslut" },
 ]
@@ -54,7 +63,7 @@ function ReportsPageContent() {
     const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "arsredovisning"
 
     const setCurrentTab = useCallback((tab: string) => {
-        router.push(`/dashboard/appar/rapporter?tab=${tab}`, { scroll: false })
+        router.push(`/dashboard/rapporter?tab=${tab}`, { scroll: false })
     }, [router])
 
     return (
@@ -120,6 +129,8 @@ function ReportsPageContent() {
 
                 {/* Tab Content */}
                 <div className="bg-background">
+                    {currentTab === "resultatrakning" && <ResultatrakningContent />}
+                    {currentTab === "balansrakning" && <BalansrakningContent />}
                     {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
                     {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
                     {currentTab === "arsredovisning" && <ArsredovisningContent />}

@@ -30,14 +30,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import {
-    DataTable,
-    DataTableHeader,
-    DataTableBody,
-    DataTableRow,
-    DataTableCell,
-    DataTableHeaderCell
-} from "@/components/ui/data-table"
+import { Table3Header, Table3Rows, Table3Row } from "@/components/bokforing/report-table"
 import { IconButton, IconButtonGroup } from "@/components/ui/icon-button"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { useToast } from "@/components/ui/toast"
@@ -45,7 +38,7 @@ import { BulkActionToolbar, type BulkAction } from "../shared/bulk-action-toolba
 
 
 import { termExplanations } from "./constants"
-import { agiReports as initialAgiReports } from "@/components/payroll/constants"
+import { agiReports as initialAgiReports } from "@/components/loner/constants"
 import { submitToSkatteverket, type SkatteverketResponse } from "@/services/myndigheter-client"
 
 type AGIReport = typeof initialAgiReports[0]
@@ -313,6 +306,14 @@ export function AGIContent() {
     return (
         <div className="px-6 pt-2 pb-6">
             <div className="max-w-6xl w-full space-y-6 min-w-0">
+                {/* Page Heading */}
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Arbetsgivardeklaration</h2>
+                        <p className="text-muted-foreground">Rapportera löner, skatt och arbetsgivaravgifter till Skatteverket.</p>
+                    </div>
+                </div>
+
                 <StatCardGrid columns={3}>
                     <StatCard
                         label="Nästa AGI"
@@ -563,90 +564,100 @@ export function AGIContent() {
 
 
 
-                <DataTable
-                    title="Arbetsgivardeklarationer (AGI)"
-                    headerActions={
-                        <div className="flex items-center gap-2">
-                            <SearchBar
-                                value={searchQuery}
-                                onChange={setSearchQuery}
-                                placeholder="Sök period..."
-                                className="w-48"
-                            />
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <FilterButton
-                                        label="Status"
-                                        isActive={!!statusFilter}
-                                    />
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40">
-                                    <DropdownMenuItem onClick={() => setStatusFilter(null)}>
-                                        Alla
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setStatusFilter("pending")}>
-                                        <Clock className="h-4 w-4 mr-2" />
-                                        Väntar
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem onClick={() => setStatusFilter("submitted")}>
-                                        <CheckCircle2 className="h-4 w-4 mr-2" />
-                                        Inskickad
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
-                            <Button size="sm" onClick={() => setShowAIDialog(true)}>
-                                <Plus className="h-4 w-4 mr-1.5" />
-                                Ny AGI
-                            </Button>
-                        </div>
+                {/* Table Header with Title and Actions */}
+                <div className="flex items-center justify-between py-2 mb-2">
+                    <h3 className="font-semibold text-lg">Arbetsgivardeklarationer (AGI)</h3>
+                    <div className="flex items-center gap-2">
+                        <SearchBar
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            placeholder="Sök period..."
+                            className="w-48"
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <FilterButton
+                                    label="Status"
+                                    isActive={!!statusFilter}
+                                />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40">
+                                <DropdownMenuItem onClick={() => setStatusFilter(null)}>
+                                    Alla
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setStatusFilter("pending")}>
+                                    <Clock className="h-4 w-4 mr-2" />
+                                    Väntar
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setStatusFilter("submitted")}>
+                                    <CheckCircle2 className="h-4 w-4 mr-2" />
+                                    Inskickad
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                        <Button size="sm" onClick={() => setShowAIDialog(true)}>
+                            <Plus className="h-4 w-4 mr-1.5" />
+                            Ny AGI
+                        </Button>
+                    </div>
+                </div>
+
+                {/* Table3 Header */}
+                <Table3Header
+                    columns={[
+                        { label: "Period", icon: Calendar, span: 2 },
+                        { label: "Deadline", icon: Clock, span: 2 },
+                        { label: "Anställda", icon: Users, span: 1 },
+                        { label: "Bruttolön", icon: Banknote, span: 2, align: "right" },
+                        { label: "Skatteavdrag", icon: Wallet, span: 2, align: "right" },
+                        { label: "Avgifter", icon: Calculator, span: 2, align: "right" },
+                    ]}
+                    trailing={
+                        <Checkbox
+                            checked={selectedIds.size === filteredReports.length && filteredReports.length > 0}
+                            onCheckedChange={toggleAll}
+                        />
                     }
-                >
-                    <DataTableHeader>
-                        <DataTableHeaderCell className="w-10">
-                            <Checkbox
-                                checked={selectedIds.size === filteredReports.length && filteredReports.length > 0}
-                                onCheckedChange={toggleAll}
-                            />
-                        </DataTableHeaderCell>
-                        <DataTableHeaderCell label="Period" icon={Calendar} />
-                        <DataTableHeaderCell label="Deadline" icon={Clock} />
-                        <DataTableHeaderCell label="Anställda" icon={Users} />
-                        <DataTableHeaderCell label="Bruttolön" icon={Banknote} />
-                        <DataTableHeaderCell label="Skatteavdrag" icon={Wallet} />
-                        <DataTableHeaderCell label="Arbetsgivaravgifter" icon={Calculator} />
-                        <DataTableHeaderCell label="Status" icon={CheckCircle2} />
+                />
 
-                    </DataTableHeader>
-                    <DataTableBody>
-                        {filteredReports.map((report) => (
-                            <DataTableRow
-                                key={report.period}
-                                selected={selectedIds.has(report.period)}
+                {/* Table3 Rows */}
+                <Table3Rows>
+                    {filteredReports.map((report) => (
+                        <Table3Row
+                            key={report.period}
+                            selected={selectedIds.has(report.period)}
+                        >
+                            <div style={{ gridColumn: 'span 2' }} className="font-medium">
+                                {report.period}
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
+                                {report.dueDate}
+                            </div>
+                            <div style={{ gridColumn: 'span 1' }} className="tabular-nums">
+                                {report.employees}
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                {report.totalSalary.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                {report.tax.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                {report.contributions.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div
+                                style={{ gridColumn: 'span 1' }}
+                                className="flex justify-end"
+                                onClick={(e) => e.stopPropagation()}
                             >
-                                <DataTableCell className="w-10">
-                                    <Checkbox
-                                        checked={selectedIds.has(report.period)}
-                                        onCheckedChange={() => toggleSelection(report.period)}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                </DataTableCell>
-                                <DataTableCell bold>{report.period}</DataTableCell>
-                                <DataTableCell muted>{report.dueDate}</DataTableCell>
-                                <DataTableCell>{report.employees}</DataTableCell>
-                                <DataTableCell>{report.totalSalary.toLocaleString("sv-SE")} kr</DataTableCell>
-                                <DataTableCell>{report.tax.toLocaleString("sv-SE")} kr</DataTableCell>
-                                <DataTableCell>{report.contributions.toLocaleString("sv-SE")} kr</DataTableCell>
-                                <DataTableCell>
-                                    <AppStatusBadge
-                                        status={report.status === "pending" ? "Väntar" : "Inskickad"}
-                                        size="sm"
-                                    />
-                                </DataTableCell>
-
-                            </DataTableRow>
-                        ))}
-                    </DataTableBody>
-                </DataTable>
+                                <Checkbox
+                                    checked={selectedIds.has(report.period)}
+                                    onCheckedChange={() => toggleSelection(report.period)}
+                                />
+                            </div>
+                        </Table3Row>
+                    ))}
+                </Table3Rows>
 
                 <BulkActionToolbar
                     selectedCount={selectedIds.size}

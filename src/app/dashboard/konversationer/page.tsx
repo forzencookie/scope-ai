@@ -10,7 +10,7 @@ import {
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Trash2, Plus, Search } from "lucide-react"
+import { MessageSquare, Trash2, Plus, Search, Loader2 } from "lucide-react"
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import { cn } from "@/lib/utils"
@@ -37,7 +37,6 @@ export default function KonversationerPage() {
     useEffect(() => {
         async function fetchHistory() {
             try {
-                // In future: Append ?userId=... if needed, or rely on cookie/session
                 const res = await fetch('/api/chat/history')
                 if (res.ok) {
                     const data = await res.json()
@@ -52,11 +51,30 @@ export default function KonversationerPage() {
 
         fetchHistory()
 
-        // Listen for updates (local event for now, eventually realtime subscription)
+        // Listen for updates (local event for same-tab updates)
         const handleUpdate = () => fetchHistory()
         window.addEventListener('ai-conversations-updated', handleUpdate)
 
-        return () => window.removeEventListener('ai-conversations-updated', handleUpdate)
+        // Polling every 30 seconds for cross-tab sync (only when tab is visible)
+        const pollInterval = setInterval(() => {
+            if (document.visibilityState === 'visible') {
+                fetchHistory()
+            }
+        }, 30000)
+
+        // Also refetch when tab becomes visible after being hidden
+        const handleVisibilityChange = () => {
+            if (document.visibilityState === 'visible') {
+                fetchHistory()
+            }
+        }
+        document.addEventListener('visibilitychange', handleVisibilityChange)
+
+        return () => {
+            window.removeEventListener('ai-conversations-updated', handleUpdate)
+            clearInterval(pollInterval)
+            document.removeEventListener('visibilitychange', handleVisibilityChange)
+        }
     }, [])
 
     // Delete a conversation
@@ -132,7 +150,24 @@ export default function KonversationerPage() {
                     </div>
 
                     {/* Conversations list */}
-                    {filteredConversations.length === 0 ? (
+                    {isLoading ? (
+                        // Loading skeleton with spinner
+                        <div className="flex flex-col gap-2">
+                            {[1, 2, 3].map((i) => (
+                                <div
+                                    key={i}
+                                    className="flex items-center gap-3 p-4 rounded-xl border border-border/50 bg-card"
+                                >
+                                    <div className="h-5 w-5 rounded bg-muted animate-pulse" />
+                                    <div className="flex-1 space-y-2">
+                                        <div className="h-4 w-3/4 rounded bg-muted animate-pulse" />
+                                        <div className="h-3 w-1/2 rounded bg-muted/70 animate-pulse" />
+                                    </div>
+                                    <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                </div>
+                            ))}
+                        </div>
+                    ) : filteredConversations.length === 0 ? (
                         <div className="text-center py-12">
                             <MessageSquare className="h-12 w-12 mx-auto mb-4 text-muted-foreground/50" />
                             <p className="text-muted-foreground">

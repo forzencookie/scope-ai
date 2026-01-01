@@ -25,11 +25,11 @@ import {
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import {
-    ReportContainer,
-    ReportHeader,
-    ReportSection,
-    type ReportItem
-} from "./report-ui"
+    Table2Container,
+    Table2Header,
+    Table2Section,
+    type Table2Item
+} from "@/components/bokforing/report-table"
 import { useVerifications } from "@/hooks/use-verifications"
 import { Ink2Processor, type Ink2FormField } from "@/lib/ink2-processor"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
@@ -163,6 +163,14 @@ export function InkomstdeklarationContent() {
 
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
+                {/* Page Heading */}
+                <div className="flex items-start justify-between gap-4">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Inkomstdeklaration</h2>
+                        <p className="text-muted-foreground">Sammanställ INK2-deklaration baserat på bokföringen.</p>
+                    </div>
+                </div>
+
                 <StatCardGrid columns={3}>
                     <StatCard
                         label="Beskattningsår"
@@ -211,9 +219,9 @@ export function InkomstdeklarationContent() {
 
                 {/* Form Header with Actions */}
 
-                <ReportContainer>
+                <Table2Container>
                     {/* Form Header with Actions */}
-                    <ReportHeader
+                    <Table2Header
                         title={
                             activeFilter === "all" ? "INK2 – Komplett" :
                                 activeFilter === "incomeStatement" ? "INK2 – Resultaträkning" :
@@ -271,7 +279,7 @@ export function InkomstdeklarationContent() {
                             <Send className="h-4 w-4 mr-1.5" />
                             Skicka till Skatteverket
                         </Button>
-                    </ReportHeader>
+                    </Table2Header>
 
                     {/* Form Sections */}
                     <div className="space-y-8">
@@ -284,7 +292,7 @@ export function InkomstdeklarationContent() {
                                     </h3>
                                 )}
                                 {incomeStatementSections.map((section, idx) => (
-                                    <ReportSection
+                                    <Table2Section
                                         key={section.title}
                                         title={section.title}
                                         items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
@@ -304,7 +312,7 @@ export function InkomstdeklarationContent() {
                                     </h3>
                                 )}
                                 {balanceSheetSections.map((section, idx) => (
-                                    <ReportSection
+                                    <Table2Section
                                         key={section.title}
                                         title={section.title}
                                         items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
@@ -324,7 +332,7 @@ export function InkomstdeklarationContent() {
                                     </h3>
                                 )}
                                 {taxAdjustmentSections.map((section, idx) => (
-                                    <ReportSection
+                                    <Table2Section
                                         key={section.title}
                                         title={section.title}
                                         items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
@@ -334,7 +342,7 @@ export function InkomstdeklarationContent() {
                             </div>
                         )}
                     </div>
-                </ReportContainer>
+                </Table2Container>
 
 
             </div>
