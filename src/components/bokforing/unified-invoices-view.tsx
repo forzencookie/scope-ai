@@ -578,12 +578,12 @@ export function UnifiedInvoicesView() {
 
             {/* Sub-header with filters */}
             <div className="flex items-center justify-between">
-                <h3 className="text-lg font-semibold">{viewFilterLabels[viewFilter]}</h3>
+                <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{viewFilterLabels[viewFilter]}</h3>
                 <div className="flex items-center gap-2">
                     {/* View Filter */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-1.5">
+                            <Button variant="outline" size="sm" className="gap-1.5 h-8">
                                 {viewFilterLabels[viewFilter]}
                                 <ChevronDown className="h-3.5 w-3.5" />
                             </Button>
@@ -608,8 +608,7 @@ export function UnifiedInvoicesView() {
                     {/* Period Filter */}
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-2">
-                                {periodFilter === "all" ? "Alla" : periodLabels[periodFilter]}
+                            <Button variant="ghost" size="icon" className="h-8 w-8">
                                 <Calendar className="h-4 w-4" />
                             </Button>
                         </DropdownMenuTrigger>

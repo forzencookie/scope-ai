@@ -96,6 +96,30 @@ export function ArsredovisningContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
+                {/* Page Header */}
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Årsredovisning</h2>
+                            <p className="text-muted-foreground mt-1">
+                                Sammanställning av räkenskapsåret för Bolagsverket.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <button
+                                onClick={() => setShowBankIdDialog(true)}
+                                className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+                            >
+                                <Send className="h-4 w-4" />
+                                Skicka till Bolagsverket
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Separator */}
+                <div className="border-b-2 border-border/60" />
+
                 <StatCardGrid columns={3}>
                     <StatCard
                         label="Räkenskapsår"
@@ -155,14 +179,7 @@ export function ArsredovisningContent() {
                         title="Delar av årsredovisningen"
                     >
                         <div className="flex items-center gap-2">
-                            <IconButton icon={Download} label="Ladda ner PDF" showLabel />
-                            <button
-                                onClick={() => setShowBankIdDialog(true)}
-                                className="px-4 py-2 rounded-lg font-medium flex items-center gap-2 bg-primary text-primary-foreground hover:bg-primary/90 transition-colors text-sm h-9"
-                            >
-                                <Send className="h-4 w-4" />
-                                Skicka till Bolagsverket
-                            </button>
+                            <IconButton icon={Download} label="Exportera XBRL" showLabel />
                         </div>
                     </Table2Header>
 

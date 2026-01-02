@@ -271,6 +271,42 @@ export function Aktiebok() {
 
   return (
     <div className="space-y-6">
+      {/* Page Heading */}
+      <div className="flex flex-col gap-6 pt-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Aktiebok</h2>
+            <p className="text-muted-foreground mt-1">
+              Digital aktiebok med historik över ägarförändringar och transaktioner.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Åtgärder
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Nyemission
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
+                  <ArrowRightLeft className="h-4 w-4 mr-2" />
+                  Registrera överlåtelse
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>
+                  <Download className="h-4 w-4 mr-2" />
+                  Exportera aktiebok
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+        </div>
+      </div>
       {/* Stats Overview */}
       <StatCardGrid columns={3}>
         <StatCard
@@ -298,7 +334,7 @@ export function Aktiebok() {
         <div className="space-y-4 pt-8 border-t-2 border-border/60">
           {/* Header & Actions */}
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-medium">{text.owners.shareholdersTable}</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.owners.shareholdersTable}</h2>
             <div className="flex items-center gap-2">
               <SearchBar
                 placeholder={text.owners.searchOwners}
@@ -315,30 +351,6 @@ export function Aktiebok() {
                 <ArrowRightLeft className="h-4 w-4 mr-2" />
                 {text.owners.transactions}
               </Button>
-
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button size="sm" className="h-8">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Åtgärder
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Nyemission
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
-                    <ArrowRightLeft className="h-4 w-4 mr-2" />
-                    Registrera överlåtelse
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem>
-                    <Download className="h-4 w-4 mr-2" />
-                    Exportera aktiebok
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
             </div>
           </div>
 
@@ -445,7 +457,7 @@ export function Aktiebok() {
       {activeTab === 'transactions' && (
         <div className="space-y-4 pt-8 border-t-2 border-border/60">
           <div className="flex items-center justify-between px-1">
-            <h2 className="font-medium">{text.owners.transactionsTable}</h2>
+            <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.owners.transactionsTable}</h2>
             <div className="flex items-center gap-2">
               <SearchBar
                 placeholder={text.owners.searchTransactions}

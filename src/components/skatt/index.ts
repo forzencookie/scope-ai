@@ -5,6 +5,8 @@
 // Content Components
 export { MomsdeklarationContent } from './momsdeklaration-content'
 export { InkomstdeklarationContent } from './inkomstdeklaration-content'
+export { NEBilagaContent } from './ne-bilaga-content'
+export { K10Content } from './k10-content'
 export { ArsredovisningContent } from './arsredovisning-content'
 export { ArsbokslutContent } from './arsbokslut-content'
 export { AGIContent } from './agi-content'

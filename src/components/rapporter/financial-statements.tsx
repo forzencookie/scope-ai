@@ -133,8 +133,8 @@ export function ResultatrakningContent() {
                 </div>
 
                 {/* Årets resultat */}
-                <div className="border-t-2 border-primary/30 pt-4 mt-4 bg-muted/20 -mx-2 px-4 py-3 rounded-lg">
-                    <div className="flex justify-between items-center font-bold text-lg">
+                <div className="border-t-2 border-border/60 pt-3 mt-3">
+                    <div className="flex justify-between items-center py-2 font-bold text-lg">
                         <span>Årets resultat</span>
                         <span className={cn(
                             "tabular-nums",

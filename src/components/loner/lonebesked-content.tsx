@@ -10,8 +10,10 @@ import {
     Download,
     User,
     CheckCircle2,
-    Trash2
+    Trash2,
+    Plus
 } from "lucide-react"
+import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SectionCard } from "@/components/ui/section-card"
@@ -205,6 +207,24 @@ export function LonesbeskContent() {
     return (
         <main className="px-6 pt-2 pb-6">
             <div className="max-w-6xl w-full space-y-6">
+                {/* Page Heading */}
+                <div className="flex flex-col gap-6 pt-2">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Lönekörning</h2>
+                            <p className="text-muted-foreground mt-1">
+                                Hantera löner och lönespecifikationer för dina anställda.
+                            </p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={() => setShowAIDialog(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Ny lönekörning
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+
                 <StatCardGrid columns={3}>
                     <StatCard
                         label="Aktuell period"
@@ -258,7 +278,7 @@ export function LonesbeskContent() {
                 {/* Table Title + Actions */}
                 <div className="space-y-4 pt-8 border-t-2 border-border/60">
                     <div className="flex items-center justify-between px-1">
-                        <h2 className="font-medium">Lönespecifikationer</h2>
+                        <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Lönespecifikationer</h2>
                         <div className="flex items-center gap-2">
                             <SearchBar
                                 placeholder="Sök anställd..."

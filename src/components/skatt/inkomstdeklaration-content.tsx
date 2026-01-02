@@ -164,10 +164,19 @@ export function InkomstdeklarationContent() {
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
                 {/* Page Heading */}
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Inkomstdeklaration</h2>
-                        <p className="text-muted-foreground">Sammanställ INK2-deklaration baserat på bokföringen.</p>
+                {/* Page Heading */}
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Inkomstdeklaration</h2>
+                            <p className="text-muted-foreground mt-1">Sammanställ INK2-deklaration baserat på bokföringen.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={handleSend}>
+                                <Send className="h-4 w-4 mr-2" />
+                                Skicka till Skatteverket
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -274,11 +283,6 @@ export function InkomstdeklarationContent() {
                             <FileDown className="h-4 w-4 mr-1.5" />
                             Exportera SRU
                         </Button>
-
-                        <Button size="sm" onClick={handleSend}>
-                            <Send className="h-4 w-4 mr-1.5" />
-                            Skicka till Skatteverket
-                        </Button>
                     </Table2Header>
 
                     {/* Form Sections */}
@@ -345,7 +349,7 @@ export function InkomstdeklarationContent() {
                 </Table2Container>
 
 
-            </div>
-        </main>
+            </div >
+        </main >
     )
 }

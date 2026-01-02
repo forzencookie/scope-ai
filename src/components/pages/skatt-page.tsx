@@ -8,6 +8,15 @@ import {
     TooltipTrigger,
     TooltipProvider
 } from "@/components/ui/tooltip"
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbAIBadge,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import {
     Calculator,
@@ -25,14 +34,16 @@ import {
     InkomstdeklarationContent,
     ArsredovisningContent,
     ArsbokslutContent,
+    K10Content,
 } from "@/components/skatt"
 import { LazyAGIContent } from "@/components/shared"
 
 // Tab configuration with feature keys for filtering
-const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send; feature: FeatureKey }> = [
-    { id: "momsdeklaration", label: "Momsdeklaration", icon: Calculator, feature: "momsdeklaration" },
-    { id: "inkomstdeklaration", label: "Inkomstdeklaration", icon: Send, feature: "inkomstdeklaration" },
-    { id: "agi", label: "AGI", icon: Send, feature: "agi" },
+const tabs: Array<{ id: string; label: string; color: string; feature: FeatureKey }> = [
+    { id: "momsdeklaration", label: "Momsdeklaration", color: "bg-purple-500", feature: "momsdeklaration" },
+    { id: "inkomstdeklaration", label: "Inkomstdeklaration", color: "bg-amber-500", feature: "inkomstdeklaration" },
+    { id: "agi", label: "AGI", color: "bg-emerald-500", feature: "agi" },
+    { id: "k10", label: "K10", color: "bg-blue-500", feature: "k10" },
 ]
 
 function SkattPageContent() {
@@ -53,7 +64,25 @@ function SkattPageContent() {
     return (
         <TooltipProvider delayDuration={400}>
             <div className="flex flex-col min-h-svh">
-
+                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                    <div className="flex items-center gap-2">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-purple-100 text-purple-600 dark:bg-purple-950/50 dark:text-purple-400">
+                                            <Calculator className="h-4 w-4" />
+                                        </div>
+                                        Skatt
+                                    </BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
+                    </div>
+                    <BreadcrumbAIBadge />
+                </header>
 
                 {/* Tabs */}
                 <div className="px-4 pt-4">
@@ -61,7 +90,6 @@ function SkattPageContent() {
                         <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
-                                const Icon = tab.icon
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -71,11 +99,11 @@ function SkattPageContent() {
                                                 className={cn(
                                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                                     isActive
-                                                        ? "bg-primary/10 text-primary"
+                                                        ? "bg-primary/5 text-primary"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
-                                                <Icon className="h-4 w-4" />
+                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
                                                 {isActive && <span>{tab.label}</span>}
                                             </button>
                                         </TooltipTrigger>
@@ -98,6 +126,7 @@ function SkattPageContent() {
                 {/* Tab Content */}
                 <div className="bg-background">
                     {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
+                    {currentTab === "k10" && <K10Content />}
                     {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
                     {currentTab === "agi" && <LazyAGIContent />}
                     {currentTab === "arsredovisning" && <ArsredovisningContent />}

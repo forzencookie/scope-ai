@@ -217,10 +217,18 @@ export function MomsdeklarationContent() {
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
                 {/* Page Heading */}
-                <div className="flex items-start justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Momsdeklaration</h2>
-                        <p className="text-muted-foreground">Hantera momsrapporter och skicka till Skatteverket.</p>
+                <div className="flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                        <div>
+                            <h2 className="text-2xl font-bold tracking-tight">Momsdeklaration</h2>
+                            <p className="text-muted-foreground mt-1">Hantera momsrapporter och skicka till Skatteverket.</p>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Button onClick={() => setShowAIDialog(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Ny period
+                            </Button>
+                        </div>
                     </div>
                 </div>
 
@@ -284,9 +292,9 @@ export function MomsdeklarationContent() {
                     }}
                 />
 
-                {/* Table Header with Title and Actions */}
+                {/* Table Actions Toolbar */}
                 <div className="flex items-center justify-between py-2 mb-2">
-                    <h3 className="font-semibold text-lg">{text.reports.vatPeriods}</h3>
+                    <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Alla perioder</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar
                             value={searchQuery}
@@ -315,10 +323,6 @@ export function MomsdeklarationContent() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button size="sm" onClick={() => setShowAIDialog(true)}>
-                            <Plus className="h-4 w-4 mr-1.5" />
-                            Ny period
-                        </Button>
                     </div>
                 </div>
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Gift, Check, ArrowRight, Banknote } from "lucide-react"
+import { Gift, Check, ArrowRight, Banknote, Plus } from "lucide-react"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
@@ -244,6 +244,12 @@ export function BenefitsTab() {
                         Hantera personalförmåner och skattefria avdrag.
                     </p>
                 </div>
+                <div className="flex items-center gap-2">
+                    <Button onClick={() => document.getElementById('benefits-search')?.focus()}>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Registrera förmån
+                    </Button>
+                </div>
             </div>
 
             {/* KPI Cards - 3 new actionable metrics */}
@@ -296,6 +302,7 @@ export function BenefitsTab() {
                 <div className="flex items-center justify-between px-1">
                     <h2 className="font-medium">Tillgängliga Förmåner</h2>
                     <SearchBar
+                        id="benefits-search"
                         placeholder="Sök förmåner..."
                         value={searchQuery}
                         onChange={setSearchQuery}

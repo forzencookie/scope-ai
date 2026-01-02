@@ -94,6 +94,7 @@ export type FeatureKey =
   | 'lonebesked'
   | 'agi'
   | 'utdelning'
+  | 'k10' // K10 blankett for fåmansföretag (AB only)
   | 'egenavgifter'
   | 'delagaruttag'
   // Ownership & Governance
@@ -133,7 +134,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Reports (all) - AB uses Årsredovisning (K2/K3)
       'momsdeklaration', 'inkomstdeklaration', 'arsredovisning', 'resultatrakning', 'balansrakning',
       // Payroll
-      'lonebesked', 'agi', 'utdelning',
+      'lonebesked', 'agi', 'utdelning', 'k10',
       // Ownership & Governance
       'aktiebok', 'agarinfo', 'styrelseprotokoll', 'bolagsstamma',
     ],
@@ -373,8 +374,14 @@ export const featureInfo: Record<FeatureKey, FeatureInfo> = {
   utdelning: {
     key: 'utdelning',
     label: 'Utdelning',
-    description: 'Hantera utdelning och K10-deklaration',
+    description: 'Hantera utdelning till delägare',
     category: 'payroll',
+  },
+  k10: {
+    key: 'k10',
+    label: 'K10',
+    description: 'Blankett K10 för fåmansföretag - beräkna gränsbelopp',
+    category: 'reports',
   },
   egenavgifter: {
     key: 'egenavgifter',

@@ -387,7 +387,7 @@ export function ReceiptsTable() {
 
                 {/* Sub-header with title and actions */}
                 <div className="flex items-center justify-between py-3">
-                    <h3 className="text-lg font-semibold">{text.receipts.allReceipts}</h3>
+                    <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.receipts.allReceipts}</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar
                             placeholder={text.actions.search}

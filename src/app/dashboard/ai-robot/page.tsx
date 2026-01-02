@@ -694,7 +694,7 @@ function AIRobotPageContent() {
                     className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <LayoutGrid className="h-3.5 w-3.5" />
-                    <span>Öppna Appar</span>
+                    <span>Öppna Dashboard</span>
                 </Link>
                 <Link
                     href="/dashboard/konversationer"

@@ -27,6 +27,7 @@ import {
     PenTool,
     Building2,
     Bird,
+    Calendar,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
@@ -77,12 +78,12 @@ const categoryColors: Record<string, string> = {
 }
 
 const categoryDetails: Record<string, { icon: any, description: string }> = {
-    "Bokföring": { icon: BookOpen, description: "Bokför verifikat och hantera transaktioner" },
-    "Rapporter": { icon: PieChart, description: "Följ upp resultat och balans" },
+    "Bokföring": { icon: FileText, description: "Bokför verifikat och hantera transaktioner" },
+    "Rapporter": { icon: Bird, description: "Följ upp resultat och balans" },
     "Skatt": { icon: Calculator, description: "Moms och deklarationer" },
-    "Löner": { icon: DollarSign, description: "Löneutbetalningar och förmåner" },
+    "Löner": { icon: PiggyBank, description: "Löneutbetalningar och förmåner" },
     "Parter": { icon: Users, description: "Kunder, leverantörer och ägare" },
-    "Händelser": { icon: Activity, description: "Tidslinje och historik" },
+    "Händelser": { icon: Calendar, description: "Tidslinje och historik" },
 }
 
 const searchItems: SearchItem[] = [
@@ -101,6 +102,7 @@ const searchItems: SearchItem[] = [
     { id: "6", title: "Momsdeklaration", titleEnkel: "Momsrapport", description: "Hantera moms", icon: <Calculator className="h-4 w-4" />, href: "/dashboard/skatt?tab=momsdeklaration", category: "Skatt", feature: "momsdeklaration", colorClass: categoryColors["Skatt"] },
     { id: "7", title: "Inkomstdeklaration", titleEnkel: "Skatterapport", description: "Inkomstskatt", icon: <Send className="h-4 w-4" />, href: "/dashboard/skatt?tab=inkomstdeklaration", category: "Skatt", feature: "inkomstdeklaration", colorClass: categoryColors["Skatt"] },
     { id: "new-4", title: "AGI", titleEnkel: "Arbetsgivardeklaration", description: "Arbetsgivardeklaration på individnivå", icon: <FileStack className="h-4 w-4" />, href: "/dashboard/skatt?tab=agi", category: "Skatt", feature: "agi", colorClass: categoryColors["Skatt"] },
+    { id: "k10", title: "K10", titleEnkel: "K10", description: "Blankett K10 - gränsbelopp för utdelning", icon: <FileText className="h-4 w-4" />, href: "/dashboard/skatt?tab=k10", category: "Skatt", feature: "k10", colorClass: categoryColors["Skatt"] },
     { id: "8", title: "Årsredovisning", titleEnkel: "Årssammanställning", description: "Årsredovisning", icon: <Bird className="h-4 w-4" />, href: "/dashboard/rapporter?tab=arsredovisning", category: "Rapporter", feature: "arsredovisning", colorClass: categoryColors["Rapporter"] },
     { id: "9", title: "Årsbokslut", titleEnkel: "Bokslut", description: "Årsbokslut", icon: <FileText className="h-4 w-4" />, href: "/dashboard/rapporter?tab=arsbokslut", category: "Rapporter", feature: "arsbokslut", colorClass: categoryColors["Rapporter"] },
 
@@ -277,7 +279,17 @@ export default function DashboardPage() {
 
                                 return (
                                     <div key={category} className="flex flex-col gap-2">
-                                        <h3 className="font-semibold text-lg px-3 text-foreground/80">{category}</h3>
+                                        <h3 className="font-semibold text-lg px-3 text-foreground/80 flex items-center gap-2">
+                                            {categoryDetails[category]?.icon && (
+                                                <div className={cn("flex items-center justify-center w-8 h-8 rounded-md", categoryColors[category])}>
+                                                    {(() => {
+                                                        const Icon = categoryDetails[category].icon
+                                                        return <Icon className="h-5 w-5" />
+                                                    })()}
+                                                </div>
+                                            )}
+                                            {category}
+                                        </h3>
                                         <div className="flex flex-col">
                                             {items.slice(0, 3).map((item) => (
                                                 <a
@@ -285,9 +297,6 @@ export default function DashboardPage() {
                                                     href={item.href}
                                                     className="flex items-center gap-3 px-3 py-2 transition-colors hover:bg-muted/50 rounded-md group"
                                                 >
-                                                    <div className={cn("flex-shrink-0 w-6 h-6 rounded flex items-center justify-center", item.colorClass)}>
-                                                        {item.icon}
-                                                    </div>
                                                     <div className="flex-1 min-w-0">
                                                         <span className="font-medium text-sm text-foreground/90">
                                                             {isEnkel ? item.titleEnkel : item.title}
@@ -378,7 +387,15 @@ export default function DashboardPage() {
                     <div className="space-y-4 mb-8">
                         {/* Header with back button */}
                         <div className="flex items-center justify-between">
-                            <h3 className="text-lg font-semibold text-foreground/80 px-4">
+                            <h3 className="flex items-center gap-3 text-lg font-semibold text-foreground/80 px-4">
+                                {categoryDetails[activeFilter!]?.icon && (
+                                    <div className={cn("flex items-center justify-center w-8 h-8 rounded-md", categoryColors[activeFilter!])}>
+                                        {(() => {
+                                            const Icon = categoryDetails[activeFilter!].icon
+                                            return <Icon className="h-5 w-5" />
+                                        })()}
+                                    </div>
+                                )}
                                 {activeFilter}
                                 {query.length > 0 && (
                                     <span className="text-muted-foreground font-normal ml-2">
@@ -449,11 +466,8 @@ export default function DashboardPage() {
                                     <a
                                         key={item.id}
                                         href={item.href}
-                                        className="flex items-center gap-4 px-4 py-3.5 transition-colors hover:bg-muted/50 rounded-lg group"
+                                        className="flex items-center gap-3 px-4 py-3.5 transition-colors hover:bg-muted/50 rounded-lg group"
                                     >
-                                        <div className={cn("flex-shrink-0 w-6 h-6 rounded flex items-center justify-center", item.colorClass)}>
-                                            {item.icon}
-                                        </div>
                                         <div className="flex-1 min-w-0">
                                             <span className="font-medium text-sm text-foreground/90">
                                                 {isEnkel ? item.titleEnkel : item.title}

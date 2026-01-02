@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
+import { PiggyBank } from "lucide-react"
 
 // Import constants from payroll components
 import { allTabs } from "@/components/loner/constants"
@@ -75,7 +76,12 @@ function PayrollPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage>Löner</BreadcrumbPage>
+                                    <BreadcrumbPage className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-pink-100 text-pink-600 dark:bg-pink-950/50 dark:text-pink-400">
+                                            <PiggyBank className="h-4 w-4" />
+                                        </div>
+                                        Löner
+                                    </BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -101,11 +107,11 @@ function PayrollPageContent() {
                                                 className={cn(
                                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                                     isActive
-                                                        ? "bg-primary/10 text-primary"
+                                                        ? "bg-primary/5 text-primary"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
-                                                <Icon className="h-4 w-4" />
+                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
                                                 {isActive && <span>{tab.label}</span>}
                                             </button>
                                         </TooltipTrigger>

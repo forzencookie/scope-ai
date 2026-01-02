@@ -210,7 +210,7 @@ export function TransactionsTable({
                 <div className="border-b-2 border-border/60" />
                 {/* Sub-header with title and actions */}
                 <div className="flex items-center justify-between py-3">
-                    <h3 className="text-lg font-semibold">{title || text.transactions.allTransactions}</h3>
+                    <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{title || text.transactions.allTransactions}</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar
                             placeholder={text.transactions.search}

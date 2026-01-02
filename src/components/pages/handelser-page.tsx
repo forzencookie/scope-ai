@@ -156,7 +156,12 @@ function HandelserPageContent() {
             <div className="px-6 pt-6">
                 <div className="max-w-4xl w-full flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold">Händelser</h2>
+                        <h2 className="text-xl font-semibold flex items-center gap-2">
+                            <div className="flex items-center justify-center w-7 h-7 rounded-md bg-sky-100 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400">
+                                <Calendar className="h-4 w-4" />
+                            </div>
+                            Händelser
+                        </h2>
                         <p className="text-sm text-muted-foreground">
                             Arkiv över företagshändelser — organiserat per kvartal.
                         </p>

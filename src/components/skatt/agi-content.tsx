@@ -305,12 +305,20 @@ export function AGIContent() {
 
     return (
         <div className="px-6 pt-2 pb-6">
-            <div className="max-w-6xl w-full space-y-6 min-w-0">
-                {/* Page Heading */}
-                <div className="flex items-start justify-between gap-4">
+            {/* Page Header */}
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Arbetsgivardeklaration</h2>
-                        <p className="text-muted-foreground">Rapportera löner, skatt och arbetsgivaravgifter till Skatteverket.</p>
+                        <h2 className="text-2xl font-bold tracking-tight">Arbetsgivardeklaration (AGI)</h2>
+                        <p className="text-muted-foreground mt-1">
+                            Hantera månatliga deklarationer för anställda och skatter.
+                        </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                        <Button onClick={() => setShowAIDialog(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ny AGI
+                        </Button>
                     </div>
                 </div>
 
@@ -564,9 +572,13 @@ export function AGIContent() {
 
 
 
-                {/* Table Header with Title and Actions */}
+
+                {/* Separator */}
+                <div className="border-b-2 border-border/60" />
+
+                {/* Table Actions Toolbar */}
                 <div className="flex items-center justify-between py-2 mb-2">
-                    <h3 className="font-semibold text-lg">Arbetsgivardeklarationer (AGI)</h3>
+                    <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Alla deklarationer</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar
                             value={searchQuery}
@@ -595,10 +607,6 @@ export function AGIContent() {
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <Button size="sm" onClick={() => setShowAIDialog(true)}>
-                            <Plus className="h-4 w-4 mr-1.5" />
-                            Ny AGI
-                        </Button>
                     </div>
                 </div>
 

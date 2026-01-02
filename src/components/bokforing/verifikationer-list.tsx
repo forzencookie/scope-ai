@@ -37,6 +37,7 @@ import {
 import { useTransactions } from "@/hooks/use-transactions"
 import { basAccounts, accountClassLabels, type AccountClass } from "@/data/accounts"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
+import { useTextMode } from "@/providers/text-mode-provider"
 
 import { VerifikationDialog } from "./verifikation-dialog"
 import { Separator } from "@/components/ui/separator"
@@ -55,6 +56,7 @@ interface Verification {
 
 export function VerifikationerList() {
     const toast = useToast()
+    const { text } = useTextMode()
     const { transactions } = useTransactions()
     const [classFilter, setClassFilter] = useState<AccountClass | "all">("all")
     const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
@@ -179,12 +181,7 @@ export function VerifikationerList() {
                 {/* Sub-header row like INK2: Title on left, actions on right */}
                 <div className="flex items-center justify-between py-3">
                     <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold tracking-tight">
-                            {classFilter === "all"
-                                ? "BAS Kontoplan"
-                                : accountClassLabels[classFilter]
-                            }
-                        </h3>
+                        <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.bookkeeping.verifications}</h3>
                         <span className="text-sm text-muted-foreground tabular-nums">
                             {classFilter === "all" ? "1xxx–8xxx" : `${classFilter}xxx`}
                         </span>

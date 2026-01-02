@@ -16,8 +16,17 @@ import { Aktiebok, Delagare, Medlemsregister, Styrelseprotokoll, Bolagsstamma, A
 import { LazyUtdelningContent } from '@/components/shared';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
-    Users,
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+    BreadcrumbAIBadge,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import {
     User,
+    Users,
     BookOpen,
     FileText,
     Vote,
@@ -32,19 +41,20 @@ interface TabConfig {
     id: string;
     label: string;
     icon: LucideIcon;
+    color: string;
     feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'styrelseprotokoll' | 'bolagsstamma' | 'arsmote' | 'utdelning' | null;
 }
 
 const allTabs: TabConfig[] = [
-    { id: 'aktiebok', label: 'Aktiebok', icon: BookOpen, feature: 'aktiebok' },
-    { id: 'delagare', label: 'Delägare', icon: Users, feature: 'delagare' },
-    { id: 'utdelning', label: 'Utdelning', icon: DollarSign, feature: 'utdelning' },
-    { id: 'medlemsregister', label: 'Medlemsregister', icon: Users, feature: 'medlemsregister' },
-    { id: 'styrelseprotokoll', label: 'Styrelseprotokoll', icon: FileText, feature: 'styrelseprotokoll' },
-    { id: 'bolagsstamma', label: 'Bolagsstämma', icon: Vote, feature: 'bolagsstamma' },
-    { id: 'arsmote', label: 'Årsmöte', icon: Vote, feature: 'arsmote' },
-    { id: 'firmatecknare', label: 'Firmatecknare', icon: PenTool, feature: null },
-    { id: 'myndigheter', label: 'Myndigheter', icon: Building2, feature: null },
+    { id: 'aktiebok', label: 'Aktiebok', icon: BookOpen, color: "bg-blue-500", feature: 'aktiebok' },
+    { id: 'delagare', label: 'Delägare', icon: Users, color: "bg-purple-500", feature: 'delagare' },
+    { id: 'utdelning', label: 'Utdelning', icon: DollarSign, color: "bg-emerald-500", feature: 'utdelning' },
+    { id: 'medlemsregister', label: 'Medlemsregister', icon: Users, color: "bg-indigo-500", feature: 'medlemsregister' },
+    { id: 'styrelseprotokoll', label: 'Styrelseprotokoll', icon: FileText, color: "bg-amber-500", feature: 'styrelseprotokoll' },
+    { id: 'bolagsstamma', label: 'Bolagsstämma', icon: Vote, color: "bg-orange-500", feature: 'bolagsstamma' },
+    { id: 'arsmote', label: 'Årsmöte', icon: Vote, color: "bg-teal-500", feature: 'arsmote' },
+    { id: 'firmatecknare', label: 'Firmatecknare', icon: PenTool, color: "bg-cyan-500", feature: null },
+    { id: 'myndigheter', label: 'Myndigheter', icon: Building2, color: "bg-gray-500", feature: null },
 ];
 
 // Header configuration for each tab
@@ -123,7 +133,12 @@ function ParterPageContent() {
                     {/* Page Heading */}
                     <div className="px-4 pt-4">
                         <div className="w-full">
-                            <h2 className="text-xl font-semibold">Företagare</h2>
+                            <h2 className="text-xl font-semibold flex items-center gap-2">
+                                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+                                    <User className="h-4 w-4" />
+                                </div>
+                                Företagare
+                            </h2>
                             <p className="text-sm text-muted-foreground">Information om dig som enskild näringsidkare.</p>
                         </div>
                     </div>
@@ -143,7 +158,25 @@ function ParterPageContent() {
     return (
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
-                {/* Global Heading Removed - Now per tab below */}
+                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
+                    <div className="flex items-center gap-2">
+                        <SidebarTrigger className="-ml-1" />
+                        <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
+                        <Breadcrumb>
+                            <BreadcrumbList>
+                                <BreadcrumbItem>
+                                    <BreadcrumbPage className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
+                                            <Users className="h-4 w-4" />
+                                        </div>
+                                        Parter
+                                    </BreadcrumbPage>
+                                </BreadcrumbItem>
+                            </BreadcrumbList>
+                        </Breadcrumb>
+                    </div>
+                    <BreadcrumbAIBadge />
+                </header>
 
                 {/* Tab Content */}
                 <div className="bg-background px-4 py-4">
@@ -152,7 +185,7 @@ function ParterPageContent() {
                         <div className="flex items-center gap-1 pb-2 border-b-2 border-border/60 -ml-1">
                             {tabs.map((tab) => {
                                 const isActive = currentTab === tab.id;
-                                const Icon = tab.icon;
+
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -162,11 +195,11 @@ function ParterPageContent() {
                                                 className={cn(
                                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                                     isActive
-                                                        ? "bg-primary/10 text-primary"
+                                                        ? "bg-primary/5 text-primary"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
-                                                <Icon className="h-4 w-4" />
+                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
                                                 {isActive && <span>{tab.label}</span>}
                                             </button>
                                         </TooltipTrigger>
@@ -184,11 +217,13 @@ function ParterPageContent() {
                             </div>
                         </div>
 
-                        {/* Dynamic Tab Header */}
-                        <div className="py-6">
-                            <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
-                            <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
-                        </div>
+                        {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
+                        {!['aktiebok', 'styrelseprotokoll', 'bolagsstamma'].includes(currentTab) && (
+                            <div className="py-6">
+                                <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
+                                <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
+                            </div>
+                        )}
 
                         {/* Tab Content */}
                         {currentTab === 'aktiebok' && <Aktiebok />}

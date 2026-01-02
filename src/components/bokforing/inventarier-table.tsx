@@ -96,6 +96,98 @@ export function InventarierTable() {
 
     return (
         <div className="space-y-6">
+            {/* Header Section (Moved to Top) */}
+            <div className="flex items-center justify-between pb-2">
+                <div className="space-y-1">
+                    <h2 className="text-2xl font-bold tracking-tight">Tillgångar</h2>
+                    <p className="text-muted-foreground">
+                        Datorer, möbler och andra saker du äger.
+                    </p>
+                </div>
+                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button className="gap-2">
+                            <Plus className="h-4 w-4" />
+                            Lägg till
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>{text.assets.newAsset}</DialogTitle>
+                            <DialogDescription>
+                                {text.assets.newAssetDesc}
+                            </DialogDescription>
+                        </DialogHeader>
+                        <div className="grid gap-4 py-4">
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="name" className="text-right">
+                                    Namn
+                                </Label>
+                                <Input
+                                    id="name"
+                                    value={newAsset.name || ""}
+                                    onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
+                                    className="col-span-3"
+                                    placeholder="t.ex. MacBook Pro"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="category" className="text-right">
+                                    Kategori
+                                </Label>
+                                <Input
+                                    id="category"
+                                    value={newAsset.category || ""}
+                                    onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value })}
+                                    className="col-span-3"
+                                    placeholder="Datorer, Inventarier..."
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="price" className="text-right">
+                                    Inköpspris
+                                </Label>
+                                <Input
+                                    id="price"
+                                    type="number"
+                                    value={newAsset.purchasePrice || ""}
+                                    onChange={(e) => setNewAsset({ ...newAsset, purchasePrice: Number(e.target.value) })}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="date" className="text-right">
+                                    Datum
+                                </Label>
+                                <Input
+                                    id="date"
+                                    type="date"
+                                    value={newAsset.purchaseDate || ""}
+                                    onChange={(e) => setNewAsset({ ...newAsset, purchaseDate: e.target.value })}
+                                    className="col-span-3"
+                                />
+                            </div>
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="life" className="text-right">
+                                    Livslängd (år)
+                                </Label>
+                                <Input
+                                    id="life"
+                                    type="number"
+                                    value={newAsset.usefulLifeYears || ""}
+                                    onChange={(e) => setNewAsset({ ...newAsset, usefulLifeYears: Number(e.target.value) })}
+                                    className="col-span-3"
+                                />
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Avbryt</Button>
+                            <Button onClick={handleAddAsset}>Spara</Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+            </div>
+
             <StatCardGrid columns={3}>
                 <StatCard
                     label="Totalt Bokfört Värde"
@@ -117,101 +209,12 @@ export function InventarierTable() {
 
             {/* Table Section */}
             <div>
-                <div className="border-b-2 border-border/60" />
+                <div className="border-b-2 border-border/60 mb-4" />
 
-                <div className="flex items-center justify-between py-3">
-                    <div className="flex items-center gap-3">
-                        <h3 className="text-lg font-semibold tracking-tight">{text.assets.title}</h3>
-                        <p className="text-sm text-muted-foreground hidden sm:block">
-                            {text.assets.subtitle}
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                            <DialogTrigger asChild>
-                                <Button size="sm" className="gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    {text.assets.addAsset}
-                                </Button>
-                            </DialogTrigger>
-                            <DialogContent>
-                                <DialogHeader>
-                                    <DialogTitle>{text.assets.newAsset}</DialogTitle>
-                                    <DialogDescription>
-                                        {text.assets.newAssetDesc}
-                                    </DialogDescription>
-                                </DialogHeader>
-                                <div className="grid gap-4 py-4">
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="name" className="text-right">
-                                            Namn
-                                        </Label>
-                                        <Input
-                                            id="name"
-                                            value={newAsset.name || ""}
-                                            onChange={(e) => setNewAsset({ ...newAsset, name: e.target.value })}
-                                            className="col-span-3"
-                                            placeholder="t.ex. MacBook Pro"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="category" className="text-right">
-                                            Kategori
-                                        </Label>
-                                        <Input
-                                            id="category"
-                                            value={newAsset.category || ""}
-                                            onChange={(e) => setNewAsset({ ...newAsset, category: e.target.value })}
-                                            className="col-span-3"
-                                            placeholder="Datorer, Inventarier..."
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="price" className="text-right">
-                                            Inköpspris
-                                        </Label>
-                                        <Input
-                                            id="price"
-                                            type="number"
-                                            value={newAsset.purchasePrice || ""}
-                                            onChange={(e) => setNewAsset({ ...newAsset, purchasePrice: Number(e.target.value) })}
-                                            className="col-span-3"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="date" className="text-right">
-                                            Datum
-                                        </Label>
-                                        <Input
-                                            id="date"
-                                            type="date"
-                                            value={newAsset.purchaseDate || ""}
-                                            onChange={(e) => setNewAsset({ ...newAsset, purchaseDate: e.target.value })}
-                                            className="col-span-3"
-                                        />
-                                    </div>
-                                    <div className="grid grid-cols-4 items-center gap-4">
-                                        <Label htmlFor="life" className="text-right">
-                                            Livslängd (år)
-                                        </Label>
-                                        <Input
-                                            id="life"
-                                            type="number"
-                                            value={newAsset.usefulLifeYears || ""}
-                                            onChange={(e) => setNewAsset({ ...newAsset, usefulLifeYears: Number(e.target.value) })}
-                                            className="col-span-3"
-                                        />
-                                    </div>
-                                </div>
-                                <DialogFooter>
-                                    <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Avbryt</Button>
-                                    <Button onClick={handleAddAsset}>Spara</Button>
-                                </DialogFooter>
-                            </DialogContent>
-                        </Dialog>
-                    </div>
+                <div className="flex items-center justify-between pb-4">
+                    <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Inventarieförteckning</h3>
                 </div>
+
 
                 <Table3Header
                     gridCols={15}

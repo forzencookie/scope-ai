@@ -26,6 +26,7 @@ import {
     PieChart,
     TrendingUp,
     Scale,
+    Origami,
 } from "lucide-react"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
@@ -44,11 +45,11 @@ import {
 } from "@/components/rapporter/financial-statements"
 
 // Tab configuration with feature keys for filtering
-const tabs: Array<{ id: string; label: string; icon: typeof Calculator | typeof FileBarChart | typeof FileText | typeof Send | typeof TrendingUp | typeof Scale; feature: FeatureKey }> = [
-    { id: "resultatrakning", label: "Resultaträkning", icon: TrendingUp, feature: "arsredovisning" },
-    { id: "balansrakning", label: "Balansräkning", icon: Scale, feature: "arsredovisning" },
-    { id: "arsredovisning", label: "Årsredovisning", icon: FileBarChart, feature: "arsredovisning" },
-    { id: "arsbokslut", label: "Årsbokslut", icon: FileText, feature: "arsbokslut" },
+const tabs: Array<{ id: string; label: string; color: string; feature: FeatureKey }> = [
+    { id: "resultatrakning", label: "Resultaträkning", color: "bg-green-500", feature: "arsredovisning" },
+    { id: "balansrakning", label: "Balansräkning", color: "bg-blue-500", feature: "arsredovisning" },
+    { id: "arsredovisning", label: "Årsredovisning", color: "bg-purple-500", feature: "arsredovisning" },
+    { id: "arsbokslut", label: "Årsbokslut", color: "bg-amber-500", feature: "arsbokslut" },
 ]
 
 function ReportsPageContent() {
@@ -79,7 +80,12 @@ function ReportsPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage>Rapporter</BreadcrumbPage>
+                                    <BreadcrumbPage className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-orange-100 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400">
+                                            <Origami className="h-4 w-4" />
+                                        </div>
+                                        Rapporter
+                                    </BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
@@ -93,7 +99,7 @@ function ReportsPageContent() {
                         <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
-                                const Icon = tab.icon
+
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -103,11 +109,11 @@ function ReportsPageContent() {
                                                 className={cn(
                                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                                     isActive
-                                                        ? "bg-primary/10 text-primary"
+                                                        ? "bg-primary/5 text-primary"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
-                                                <Icon className="h-4 w-4" />
+                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
                                                 {isActive && <span>{tab.label}</span>}
                                             </button>
                                         </TooltipTrigger>

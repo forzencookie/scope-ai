@@ -111,11 +111,17 @@ export function Myndigheter() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div>
-                <p className="text-sm text-muted-foreground">
-                    Kopplingar till myndigheter för {company?.name || 'ditt företag'}.
-                </p>
-            </div>
+
+
+            {/* Info card */}
+            <Card className="bg-muted/30 border-dashed">
+                <CardContent className="py-4">
+                    <p className="text-sm text-muted-foreground">
+                        💡 Anslutningar till myndigheter möjliggör automatisk hämtning av företagsdata
+                        och förifyllda formulär vid ändringsanmälningar.
+                    </p>
+                </CardContent>
+            </Card>
 
             {/* Authority cards */}
             <div className="grid gap-4 md:grid-cols-2">
@@ -139,7 +145,7 @@ export function Myndigheter() {
                                         </div>
                                     </div>
                                     <div className={cn(
-                                        "flex items-center gap-1 text-xs px-2 py-0.5 rounded-full",
+                                        "flex items-center gap-1 text-xs px-2 py-0.5 rounded-sm",
                                         status.bgClass,
                                         status.colorClass
                                     )}>
@@ -184,15 +190,7 @@ export function Myndigheter() {
                 })}
             </div>
 
-            {/* Info card */}
-            <Card className="bg-muted/30 border-dashed">
-                <CardContent className="py-4">
-                    <p className="text-sm text-muted-foreground">
-                        💡 Anslutningar till myndigheter möjliggör automatisk hämtning av företagsdata
-                        och förifyllda formulär vid ändringsanmälningar.
-                    </p>
-                </CardContent>
-            </Card>
+
         </div>
     );
 }

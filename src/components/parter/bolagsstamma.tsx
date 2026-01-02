@@ -220,6 +220,23 @@ export function Bolagsstamma() {
 
   return (
     <div className="space-y-6">
+      {/* Page Heading */}
+      <div className="flex flex-col gap-6 pt-2">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Bolagsstämma</h2>
+            <p className="text-muted-foreground mt-1">
+              Protokoll, kallelser och beslut från bolagsstämmor.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Planera stämma
+            </Button>
+          </div>
+        </div>
+      </div>
       {/* Stats Overview */}
       <StatCardGrid columns={4}>
         <StatCard
@@ -300,43 +317,6 @@ export function Bolagsstamma() {
         </div>
 
         <div className="ml-auto flex items-center gap-2">
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Planera stämma
-          </Button>
-          <PlanMeetingDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
-            type="general"
-            defaultAgenda={standardAgenda}
-            onSubmit={(data) => {
-              addDocument({
-                type: 'general_meeting_minutes',
-                title: `${data.type === 'extra' ? 'Extra bolagsstämma' : 'Ordinarie årsstämma'} ${data.year}`,
-                date: data.date,
-                content: JSON.stringify({
-                  year: parseInt(data.year),
-                  location: data.location,
-                  type: data.type,
-                  decisions: [],
-                  attendeesCount: 0
-                }),
-                status: 'draft',
-                source: 'manual'
-              })
-              setShowCreateDialog(false)
-            }}
-          />
-
-          {/* Send Notice Dialog */}
-          <SendNoticeDialog
-            open={showSendNoticeDialog}
-            onOpenChange={setShowSendNoticeDialog}
-            variant="corporate"
-            recipientCount={mockShareholders.length}
-            onSubmit={() => console.log("Notice prepared")}
-          />
-
           <Button variant="outline" size="sm">
             <Download className="h-4 w-4 mr-2" />
             Exportera
@@ -344,209 +324,242 @@ export function Bolagsstamma() {
         </div>
       </div>
 
+      <PlanMeetingDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        type="general"
+        defaultAgenda={standardAgenda}
+        onSubmit={(data) => {
+          addDocument({
+            type: 'general_meeting_minutes',
+            title: `${data.type === 'extra' ? 'Extra bolagsstämma' : 'Ordinarie årsstämma'} ${data.year}`,
+            date: data.date,
+            content: JSON.stringify({
+              year: parseInt(data.year),
+              location: data.location,
+              type: data.type,
+              decisions: [],
+              attendeesCount: 0
+            }),
+            status: 'draft',
+            source: 'manual'
+          })
+          setShowCreateDialog(false)
+        }}
+      />
+
+      {/* Send Notice Dialog */}
+      <SendNoticeDialog
+        open={showSendNoticeDialog}
+        onOpenChange={setShowSendNoticeDialog}
+        variant="corporate"
+        recipientCount={mockShareholders.length}
+        onSubmit={() => console.log("Notice prepared")}
+      />
+
       {/* Meetings List */}
       <div className="space-y-4">
-        {filteredMeetings.map((meeting) => (
-          <Card
-            key={meeting.id}
-            className={cn(
-              "cursor-pointer transition-all hover:shadow-md",
-              selectedMeeting?.id === meeting.id && "ring-2 ring-primary"
-            )}
-            onClick={() => setSelectedMeeting(selectedMeeting?.id === meeting.id ? null : meeting)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Vote className="h-5 w-5 text-primary" />
-                    {getMeetingTypeLabel(meeting.type)} {meeting.year}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-4">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDateLong(meeting.date)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {meeting.location}
-                    </span>
-                    {meeting.sharesRepresented && meeting.sharesRepresented > 0 && (
+        {
+          filteredMeetings.map((meeting) => (
+            <Card
+              key={meeting.id}
+              className={cn(
+                "cursor-pointer transition-all hover:shadow-md",
+                selectedMeeting?.id === meeting.id && "ring-2 ring-primary"
+              )}
+              onClick={() => setSelectedMeeting(selectedMeeting?.id === meeting.id ? null : meeting)}
+            >
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between">
+                  <div className="space-y-1">
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      <Vote className="h-5 w-5 text-primary" />
+                      {getMeetingTypeLabel(meeting.type)} {meeting.year}
+                    </CardTitle>
+                    <CardDescription className="flex items-center gap-4">
                       <span className="flex items-center gap-1">
-                        <Scale className="h-3 w-3" />
-                        {meeting.sharesRepresented.toLocaleString('sv-SE')} aktier representerade
+                        <Calendar className="h-3 w-3" />
+                        {formatDateLong(meeting.date)}
                       </span>
-                    )}
-                  </CardDescription>
-                </div>
-                <div className="flex items-center gap-2">
-                  {getStatusBadge(meeting.status)}
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Visa protokoll</DropdownMenuItem>
-                      <DropdownMenuItem>Redigera</DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Download className="h-4 w-4 mr-2" />
-                        Ladda ned PDF
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {meeting.status === 'kallad' && (
-                        <DropdownMenuItem onClick={() => setShowSendNoticeDialog(true)}>
-                          <Send className="h-4 w-4 mr-2" />
-                          Skicka kallelse
-                        </DropdownMenuItem>
+                      <span className="flex items-center gap-1">
+                        <MapPin className="h-3 w-3" />
+                        {meeting.location}
+                      </span>
+                      {meeting.sharesRepresented && meeting.sharesRepresented > 0 && (
+                        <span className="flex items-center gap-1">
+                          <Scale className="h-3 w-3" />
+                          {meeting.sharesRepresented.toLocaleString('sv-SE')} aktier representerade
+                        </span>
                       )}
-                      {meeting.status === 'genomförd' && (
-                        <DropdownMenuItem>
-                          <CheckCircle className="h-4 w-4 mr-2" />
-                          Markera som signerat
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuItem onClick={() => handleGenerateAISummary(meeting)}>
-                        <Sparkles className="h-4 w-4 mr-2" />
-                        Generera AI-protokoll
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-            </CardHeader>
-
-            {/* Expanded content */}
-            {selectedMeeting?.id === meeting.id && (
-              <CardContent className="pt-0">
-                <div className="border-t pt-4 space-y-4">
-                  {/* Meeting details */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Ordförande:</span>
-                      <span className="font-medium">{meeting.chairperson || 'Ej vald'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Sekreterare:</span>
-                      <span className="font-medium">{meeting.secretary || 'Ej vald'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Närvarande:</span>
-                      <span className="font-medium">{meeting.attendeesCount || 0} st</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Scale className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Röster:</span>
-                      <span className="font-medium">{meeting.votesRepresented?.toLocaleString('sv-SE') || 0}</span>
-                    </div>
+                    </CardDescription>
                   </div>
+                  <div className="flex items-center gap-2">
+                    {getStatusBadge(meeting.status)}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <MoreHorizontal className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem>Visa protokoll</DropdownMenuItem>
+                        <DropdownMenuItem>Redigera</DropdownMenuItem>
+                        <DropdownMenuItem>
+                          <Download className="h-4 w-4 mr-2" />
+                          Ladda ned PDF
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {meeting.status === 'kallad' && (
+                          <DropdownMenuItem onClick={() => setShowSendNoticeDialog(true)}>
+                            <Send className="h-4 w-4 mr-2" />
+                            Skicka kallelse
+                          </DropdownMenuItem>
+                        )}
+                        {meeting.status === 'genomförd' && (
+                          <DropdownMenuItem>
+                            <CheckCircle className="h-4 w-4 mr-2" />
+                            Markera som signerat
+                          </DropdownMenuItem>
+                        )}
+                        <DropdownMenuItem onClick={() => handleGenerateAISummary(meeting)}>
+                          <Sparkles className="h-4 w-4 mr-2" />
+                          Generera AI-protokoll
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </div>
+                </div>
+              </CardHeader>
 
-                  {/* Decisions */}
-                  {meeting.decisions.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <Gavel className="h-4 w-4" />
-                        Beslut ({meeting.decisions.length} st)
-                      </h4>
-                      <div className="space-y-2">
-                        {meeting.decisions.map((decision, index) => (
-                          <div
-                            key={decision.id}
-                            className={cn(
-                              "flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-3 rounded-lg border",
-                              decision.booked ? "bg-green-50 border-green-100" : "bg-muted/50 border-border"
-                            )}
-                          >
-                            <div className="flex items-start gap-3">
-                              <span className="text-muted-foreground font-mono text-sm mt-0.5">
-                                §{index + 1}
-                              </span>
-                              <div className="space-y-1">
-                                <div className="flex items-center gap-2">
-                                  <p className="font-medium text-sm">{decision.title}</p>
-                                  {decision.booked && (
-                                    <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1">
-                                      <CheckCircle className="h-3 w-3" />
-                                      Bokförd
-                                    </span>
-                                  )}
-                                </div>
-                                <p className="text-sm text-muted-foreground">{decision.decision}</p>
-                                {decision.amount && (
-                                  <p className="text-sm font-medium mt-1">
-                                    Belopp: {decision.amount.toLocaleString('sv-SE')} kr
-                                  </p>
-                                )}
-                              </div>
-                            </div>
-
-                            {decision.type === 'dividend' && decision.amount && !decision.booked && meeting.status === 'protokoll signerat' && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                className="shrink-0"
-                                onClick={(e) => {
-                                  e.stopPropagation()
-                                  handleBookDecision(meeting, decision)
-                                }}
-                              >
-                                <Banknote className="h-3.5 w-3.5 mr-2 text-green-600" />
-                                Bokför utdelning
-                              </Button>
-                            )}
-                          </div>
-                        ))}
+              {/* Expanded content */}
+              {selectedMeeting?.id === meeting.id && (
+                <CardContent className="pt-0">
+                  <div className="border-t pt-4 space-y-4">
+                    {/* Meeting details */}
+                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Ordförande:</span>
+                        <span className="font-medium">{meeting.chairperson || 'Ej vald'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <User className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Sekreterare:</span>
+                        <span className="font-medium">{meeting.secretary || 'Ej vald'}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Närvarande:</span>
+                        <span className="font-medium">{meeting.attendeesCount || 0} st</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Scale className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-muted-foreground">Röster:</span>
+                        <span className="font-medium">{meeting.votesRepresented?.toLocaleString('sv-SE') || 0}</span>
                       </div>
                     </div>
-                  )}
 
-                  {/* Pending meeting info */}
-                  {meeting.status === 'kallad' && (
-                    <Card className="bg-muted/50">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-2">
-                          <Sparkles className="h-4 w-4 mt-0.5 text-primary" />
-                          <div className="text-sm">
-                            <p className="font-medium">AI-assistans tillgänglig</p>
-                            <p className="text-muted-foreground">
-                              När stämman genomförts kan AI hjälpa till att generera protokoll
-                              baserat på dagordningen och fattade beslut.
-                            </p>
-                          </div>
+                    {/* Decisions */}
+                    {meeting.decisions.length > 0 && (
+                      <div className="space-y-3">
+                        <h4 className="font-medium flex items-center gap-2">
+                          <Gavel className="h-4 w-4" />
+                          Beslut ({meeting.decisions.length} st)
+                        </h4>
+                        <div className="space-y-2">
+                          {meeting.decisions.map((decision, index) => (
+                            <div
+                              key={decision.id}
+                              className={cn(
+                                "flex flex-col sm:flex-row sm:items-start justify-between gap-3 p-3 rounded-lg border",
+                                decision.booked ? "bg-green-50 border-green-100" : "bg-muted/50 border-border"
+                              )}
+                            >
+                              <div className="flex items-start gap-3">
+                                <span className="text-muted-foreground font-mono text-sm mt-0.5">
+                                  §{index + 1}
+                                </span>
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-2">
+                                    <p className="font-medium text-sm">{decision.title}</p>
+                                    {decision.booked && (
+                                      <span className="text-[10px] bg-green-100 text-green-700 px-1.5 py-0.5 rounded-full font-medium flex items-center gap-1">
+                                        <CheckCircle className="h-3 w-3" />
+                                        Bokförd
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p className="text-sm text-muted-foreground">{decision.decision}</p>
+                                  {decision.amount && (
+                                    <p className="text-sm font-medium mt-1">
+                                      Belopp: {decision.amount.toLocaleString('sv-SE')} kr
+                                    </p>
+                                  )}
+                                </div>
+                              </div>
+
+                              {decision.type === 'dividend' && decision.amount && !decision.booked && meeting.status === 'protokoll signerat' && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="shrink-0"
+                                  onClick={(e) => {
+                                    e.stopPropagation()
+                                    handleBookDecision(meeting, decision)
+                                  }}
+                                >
+                                  <Banknote className="h-3.5 w-3.5 mr-2 text-green-600" />
+                                  Bokför utdelning
+                                </Button>
+                              )}
+                            </div>
+                          ))}
                         </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
+                      </div>
+                    )}
+
+                    {/* Pending meeting info */}
+                    {meeting.status === 'kallad' && (
+                      <Card className="bg-muted/50">
+                        <CardContent className="pt-4">
+                          <div className="flex items-start gap-2">
+                            <Sparkles className="h-4 w-4 mt-0.5 text-primary" />
+                            <div className="text-sm">
+                              <p className="font-medium">AI-assistans tillgänglig</p>
+                              <p className="text-muted-foreground">
+                                När stämman genomförts kan AI hjälpa till att generera protokoll
+                                baserat på dagordningen och fattade beslut.
+                              </p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                </CardContent>
+              )}
+            </Card>
+          ))
+        }
 
         {/* Empty state */}
-        {filteredMeetings.length === 0 && (
-          <Card className="py-12">
-            <CardContent className="text-center">
-              <Vote className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Inga bolagsstämmor</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery ? 'Inga stämmor matchade din sökning' : 'Planera din första bolagsstämma'}
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Planera stämma
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-      </div>
+        {
+          filteredMeetings.length === 0 && (
+            <Card className="py-12 border-dashed">
+              <CardContent className="text-center">
+                <Vote className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium mb-2">Inga bolagsstämmor</h3>
+                <p className="text-muted-foreground mb-4">
+                  {searchQuery ? 'Inga stämmor matchade din sökning' : 'Planera din första bolagsstämma'}
+                </p>
+              </CardContent>
+            </Card>
+          )
+        }
+      </div >
 
 
-    </div>
+    </div >
   )
 }
 

@@ -49,7 +49,7 @@ function ApparBreadcrumb({ section }: { section: string }) {
                         <BreadcrumbItem>
                             <BreadcrumbLink asChild>
                                 <Link href="/dashboard" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                    Appar
+                                    Dashboard
                                 </Link>
                             </BreadcrumbLink>
                         </BreadcrumbItem>

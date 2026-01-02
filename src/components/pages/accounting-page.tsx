@@ -54,34 +54,34 @@ const allTabs = [
         id: "transaktioner",
         labelEnkel: "Transaktioner",
         labelAvancerad: "Transaktioner",
-        icon: BookOpen,
+        color: "bg-blue-500",
         feature: null, // Available to all
     },
     {
         id: "fakturor",
         labelEnkel: "Fakturor",
         labelAvancerad: "Fakturor",
-        icon: FileText,
+        color: "bg-purple-500",
         feature: null, // Available to all
     },
     {
         id: "kvitton",
         labelEnkel: "Kvitton",
         labelAvancerad: "Kvitton",
-        icon: Receipt,
+        color: "bg-amber-500",
         feature: null, // Available to all
     },
     {
         id: "bokforing",
         labelEnkel: "Bokföring",
         labelAvancerad: "Bokföring",
-        icon: List,
+        color: "bg-emerald-500",
         feature: 'verifikationer' as const, // Uses verifikationer feature flag
     },
     {
         id: "inventarier",
         labelEnkel: "Inventarier",
-        icon: Monitor,
+        color: "bg-indigo-500",
         feature: null,
     },
 ]
@@ -214,7 +214,12 @@ function AccountingPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbLink href="/dashboard/bokforing">{isEnkel ? "Min bokföring" : "Bokföring"}</BreadcrumbLink>
+                                    <BreadcrumbLink href="/dashboard/bokforing" className="flex items-center gap-2">
+                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-emerald-100 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400">
+                                            <FileText className="h-4 w-4" />
+                                        </div>
+                                        {isEnkel ? "Min bokföring" : "Bokföring"}
+                                    </BreadcrumbLink>
                                 </BreadcrumbItem>
                                 <BreadcrumbSeparator />
                                 <BreadcrumbItem>
@@ -233,7 +238,7 @@ function AccountingPageContent() {
                         <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60 -ml-1">
                             {tabs.slice(0, 4).map((tab) => {
                                 const isActive = currentTab === tab.id
-                                const Icon = tab.icon
+
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -247,7 +252,7 @@ function AccountingPageContent() {
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
-                                                <Icon className="h-4 w-4" />
+                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
                                                 {isActive && <span>{getTabLabel(tab)}</span>}
                                             </button>
                                         </TooltipTrigger>
@@ -280,7 +285,7 @@ function AccountingPageContent() {
                             {/* Expanded tabs (5+) */}
                             {showAllTabs && tabs.slice(4).map((tab) => {
                                 const isActive = currentTab === tab.id
-                                const Icon = tab.icon
+
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -294,7 +299,7 @@ function AccountingPageContent() {
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
-                                                <Icon className="h-4 w-4" />
+                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
                                                 {isActive && <span>{getTabLabel(tab)}</span>}
                                             </button>
                                         </TooltipTrigger>

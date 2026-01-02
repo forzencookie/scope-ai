@@ -2,14 +2,13 @@
 // Payroll - Shared Constants & Data
 // ============================================
 
-import {
-    FileText,
-    Percent,
-    Users,
-    Car,
-    Gift,
-    type LucideIcon
-} from "lucide-react"
+//     FileText,
+//     Percent,
+//     Users,
+//     Car,
+//     Gift,
+//     type LucideIcon
+// } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
 
 // Swedish payroll term explanations
@@ -29,16 +28,16 @@ export const termExplanations: Record<string, string> = {
 export interface PayrollTabConfig {
     id: string
     label: string
-    icon: LucideIcon
+    color: string
     feature: FeatureKey | null
 }
 
 export const allTabs: PayrollTabConfig[] = [
-    { id: "lonebesked", label: "Lönekörning", icon: FileText, feature: 'lonebesked' },
-    { id: "benefits", label: "Förmåner", icon: Gift, feature: 'lonebesked' }, // Grouped with payroll/lonebesked feature for now
-    { id: "team", label: "Team & Rapportering", icon: Users, feature: null }, // Team tab
-    { id: "egenavgifter", label: "Egenavgifter", icon: Percent, feature: 'egenavgifter' },
-    { id: "delagaruttag", label: "Delägaruttag", icon: Users, feature: 'delagaruttag' },
+    { id: "lonebesked", label: "Lönekörning", color: "bg-green-500", feature: 'lonebesked' },
+    { id: "benefits", label: "Förmåner", color: "bg-purple-500", feature: 'lonebesked' }, // Grouped with payroll/lonebesked feature for now
+    { id: "team", label: "Team & Rapportering", color: "bg-blue-500", feature: null }, // Team tab
+    { id: "egenavgifter", label: "Egenavgifter", color: "bg-amber-500", feature: 'egenavgifter' },
+    { id: "delagaruttag", label: "Delägaruttag", color: "bg-indigo-500", feature: 'delagaruttag' },
 ]
 
 // Payslip data
