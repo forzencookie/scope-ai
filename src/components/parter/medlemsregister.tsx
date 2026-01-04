@@ -48,7 +48,11 @@ import {
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
-import { DataTableRaw } from "@/components/ui/data-table"
+import {
+  GridTableHeader,
+  GridTableRow,
+  GridTableRows,
+} from "@/components/ui/grid-table"
 import { cn } from "@/lib/utils"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { type MembershipStatus, type MembershipChangeType } from "@/lib/status-types"
@@ -216,6 +220,93 @@ export function Medlemsregister() {
 
   return (
     <div className="space-y-6">
+      {/* Page Heading */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Medlemsregister</h2>
+            <p className="text-muted-foreground mt-1">
+              Hantera föreningens medlemmar och avgifter.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ny medlem
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Lägg till medlem</DialogTitle>
+                  <DialogDescription>
+                    Registrera en ny medlem och bokför insatser
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-4 py-4">
+                  <div className="space-y-2">
+                    <Label>Namn</Label>
+                    <Input placeholder="För- och efternamn" value={newName} onChange={e => setNewName(e.target.value)} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>E-post</Label>
+                      <Input type="email" placeholder="namn@exempel.se" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Telefon</Label>
+                      <Input placeholder="070-XXX XX XX" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
+                    </div>
+                  </div>
+
+                  <div className="border-t pt-4 space-y-3">
+                    <Label>Bokföring</Label>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="pay-fee" checked={payFee} onCheckedChange={(c) => setPayFee(Boolean(c))} />
+                      <label
+                        htmlFor="pay-fee"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                      >
+                        Betala årsavgift (500 kr)
+                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox id="pay-capital" checked={payCapital} onCheckedChange={(c) => setPayCapital(Boolean(c))} />
+                        <label
+                          htmlFor="pay-capital"
+                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                        >
+                          Betala medlemsinsats
+                        </label>
+                      </div>
+                      {payCapital && (
+                        <Input
+                          type="number"
+                          value={capitalAmount}
+                          onChange={e => setCapitalAmount(e.target.value)}
+                          className="w-32 mt-1"
+                          placeholder="Belopp"
+                        />
+                      )}
+                    </div>
+                  </div>
+
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setShowAddDialog(false)}>
+                    Avbryt
+                  </Button>
+                  <Button onClick={handleAddMember}>
+                    Spara & Bokför
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+      </div>
       {/* Stats Overview */}
       <StatCardGrid columns={4}>
         <StatCard
@@ -291,80 +382,6 @@ export function Medlemsregister() {
         )}
 
         <div className="ml-auto flex items-center gap-2">
-          <Dialog open={showAddDialog} onOpenChange={setShowAddDialog}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="h-8">
-                <Plus className="h-4 w-4 mr-2" />
-                Ny medlem
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Lägg till medlem</DialogTitle>
-                <DialogDescription>
-                  Registrera en ny medlem och bokför insatser
-                </DialogDescription>
-              </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label>Namn</Label>
-                  <Input placeholder="För- och efternamn" value={newName} onChange={e => setNewName(e.target.value)} />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>E-post</Label>
-                    <Input type="email" placeholder="namn@exempel.se" value={newEmail} onChange={e => setNewEmail(e.target.value)} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Telefon</Label>
-                    <Input placeholder="070-XXX XX XX" value={newPhone} onChange={e => setNewPhone(e.target.value)} />
-                  </div>
-                </div>
-
-                <div className="border-t pt-4 space-y-3">
-                  <Label>Bokföring</Label>
-                  <div className="flex items-center space-x-2">
-                    <Checkbox id="pay-fee" checked={payFee} onCheckedChange={(c) => setPayFee(Boolean(c))} />
-                    <label
-                      htmlFor="pay-fee"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                    >
-                      Betala årsavgift (500 kr)
-                    </label>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center space-x-2">
-                      <Checkbox id="pay-capital" checked={payCapital} onCheckedChange={(c) => setPayCapital(Boolean(c))} />
-                      <label
-                        htmlFor="pay-capital"
-                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                      >
-                        Betala medlemsinsats
-                      </label>
-                    </div>
-                    {payCapital && (
-                      <Input
-                        type="number"
-                        value={capitalAmount}
-                        onChange={e => setCapitalAmount(e.target.value)}
-                        className="w-32 mt-1"
-                        placeholder="Belopp"
-                      />
-                    )}
-                  </div>
-                </div>
-
-              </div>
-              <DialogFooter>
-                <Button variant="outline" onClick={() => setShowAddDialog(false)}>
-                  Avbryt
-                </Button>
-                <Button onClick={handleAddMember}>
-                  Spara & Bokför
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
           <Button variant="outline" size="sm" className="h-8">
             <Download className="h-4 w-4 mr-2" />
             Exportera
@@ -373,128 +390,132 @@ export function Medlemsregister() {
       </div>
 
       {/* Members List */}
-      <DataTableRaw>
-        <table className="w-full text-sm">
-          <thead className="bg-muted/50">
-            <tr className="border-b border-border/40 text-left text-muted-foreground">
-              <th className="w-10 px-4 py-3">
+      {/* Members List */}
+      <div>
+        <GridTableHeader
+          columns={[
+            { label: "", span: 1 }, // Checkbox
+            { label: "Medlem", span: 3 },
+            { label: "Kontakt", span: 2 },
+            { label: "Typ", span: 2 },
+            { label: "Medlem sedan", span: 1 },
+            { label: "Avgift", span: 1 },
+            { label: "Status", span: 1 },
+            { label: "", span: 1 },
+          ]}
+        />
+        <GridTableRows>
+          {filteredMembers.map((member) => (
+            <GridTableRow
+              key={member.id}
+              className={cn(
+                memberSelection.isSelected(member.id) && "bg-primary/5"
+              )}
+            >
+              {/* Checkbox */}
+              <div className="col-span-1 flex items-center">
                 <Checkbox
-                  checked={memberSelection.allSelected}
-                  onCheckedChange={memberSelection.toggleAll}
+                  checked={memberSelection.isSelected(member.id)}
+                  onCheckedChange={() => memberSelection.toggleItem(member.id)}
                 />
-              </th>
-              <th className="px-4 py-3 font-medium">Medlem</th>
-              <th className="px-4 py-3 font-medium">Kontakt</th>
-              <th className="px-4 py-3 font-medium">Typ</th>
-              <th className="px-4 py-3 font-medium">Medlem sedan</th>
-              <th className="px-4 py-3 font-medium">Avgift</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 w-10"></th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredMembers.map((member) => (
-              <tr
-                key={member.id}
-                className={cn(
-                  "border-b border-border/40 hover:bg-muted/30 transition-colors",
-                  memberSelection.isSelected(member.id) && "bg-primary/5"
+              </div>
+
+              {/* Medlem */}
+              <div className="col-span-3">
+                <div className="font-medium flex items-center gap-2">
+                  {member.name}
+                  {member.roles.length > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {member.roles[0]}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  #{member.memberNumber}
+                </div>
+              </div>
+
+              {/* Kontakt */}
+              <div className="col-span-2 text-sm space-y-0.5">
+                {member.email && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Mail className="h-3 w-3" />
+                    <span className="truncate">{member.email}</span>
+                  </div>
                 )}
-              >
-                <td className="px-4 py-3">
-                  <Checkbox
-                    checked={memberSelection.isSelected(member.id)}
-                    onCheckedChange={() => memberSelection.toggleItem(member.id)}
-                  />
-                </td>
-                <td className="px-4 py-3">
-                  <div>
-                    <div className="font-medium flex items-center gap-2">
-                      {member.name}
-                      {member.roles.length > 0 && (
-                        <Badge variant="outline" className="text-xs">
-                          {member.roles[0]}
-                        </Badge>
-                      )}
-                    </div>
-                    <div className="text-xs text-muted-foreground">
-                      #{member.memberNumber}
-                    </div>
+                {member.phone && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    {member.phone}
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  <div className="text-sm space-y-0.5">
-                    {member.email && (
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Mail className="h-3 w-3" />
-                        {member.email}
-                      </div>
-                    )}
-                    {member.phone && (
-                      <div className="flex items-center gap-1 text-muted-foreground">
-                        <Phone className="h-3 w-3" />
-                        {member.phone}
-                      </div>
-                    )}
+                )}
+              </div>
+
+              {/* Typ */}
+              <div className="col-span-2">
+                <Badge variant={member.membershipType === 'hedersmedlem' ? 'default' : 'secondary'}>
+                  {member.membershipType === 'hedersmedlem' && <Award className="h-3 w-3 mr-1" />}
+                  {getMembershipTypeLabel(member.membershipType)}
+                </Badge>
+              </div>
+
+              {/* Join Date */}
+              <div className="col-span-1 text-sm">
+                {formatDate(member.joinDate)}
+              </div>
+
+              {/* Avgift */}
+              <div className="col-span-1">
+                <div>
+                  <div className="tabular-nums text-sm">
+                    {formatCurrency(MEMBERSHIP_FEES[member.membershipType])}
                   </div>
-                </td>
-                <td className="px-4 py-3">
-                  <Badge variant={member.membershipType === 'hedersmedlem' ? 'default' : 'secondary'}>
-                    {member.membershipType === 'hedersmedlem' && <Award className="h-3 w-3 mr-1" />}
-                    {getMembershipTypeLabel(member.membershipType)}
-                  </Badge>
-                </td>
-                <td className="px-4 py-3 text-sm">
-                  {formatDate(member.joinDate)}
-                </td>
-                <td className="px-4 py-3">
-                  <div>
-                    <div className="tabular-nums text-sm">
-                      {formatCurrency(MEMBERSHIP_FEES[member.membershipType])}
-                    </div>
-                    {member.membershipType !== 'hedersmedlem' && (
-                      member.currentYearFeePaid ? (
-                        <span className="text-xs text-green-600 dark:text-green-500/70">Betald</span>
-                      ) : (
-                        <span className="text-xs text-amber-600">Obetald</span>
-                      )
+                  {member.membershipType !== 'hedersmedlem' && (
+                    member.currentYearFeePaid ? (
+                      <span className="text-xs text-green-600 dark:text-green-500/70">Betald</span>
+                    ) : (
+                      <span className="text-xs text-amber-600">Obetald</span>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="col-span-1">
+                <AppStatusBadge status={getMembershipStatusLabel(member.status)} showIcon />
+              </div>
+
+              {/* Actions */}
+              <div className="col-span-1 flex justify-end">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>Visa profil</DropdownMenuItem>
+                    <DropdownMenuItem>Redigera</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Skicka e-post
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {!member.currentYearFeePaid && member.membershipType !== 'hedersmedlem' && (
+                      <DropdownMenuItem>Skicka betalningspåminnelse</DropdownMenuItem>
                     )}
-                  </div>
-                </td>
-                <td className="px-4 py-3">
-                  <AppStatusBadge status={getMembershipStatusLabel(member.status)} showIcon />
-                </td>
-                <td className="px-4 py-3">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Visa profil</DropdownMenuItem>
-                      <DropdownMenuItem>Redigera</DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Skicka e-post
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {!member.currentYearFeePaid && member.membershipType !== 'hedersmedlem' && (
-                        <DropdownMenuItem>Skicka betalningspåminnelse</DropdownMenuItem>
-                      )}
-                      {member.status === 'aktiv' && (
-                        <DropdownMenuItem>Sätt som vilande</DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">Avsluta medlemskap</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </DataTableRaw>
+                    {member.status === 'aktiv' && (
+                      <DropdownMenuItem>Sätt som vilande</DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600">Avsluta medlemskap</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </GridTableRow>
+          ))}
+        </GridTableRows>
+      </div>
 
       {/* Recent Changes */}
       <Card>

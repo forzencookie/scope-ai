@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from 'react';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, cn } from '@/lib/utils';
 import {
   Card,
   CardContent,
@@ -12,13 +12,10 @@ import {
 import { StatCard, StatCardGrid } from '@/components/ui/stat-card';
 import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card';
 import {
-  DataTable,
-  DataTableHeader,
-  DataTableHeaderCell,
-  DataTableBody,
-  DataTableRow,
-  DataTableCell,
-} from '@/components/ui/data-table';
+  GridTableHeader,
+  GridTableRow,
+  GridTableRows,
+} from '@/components/ui/grid-table';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { AppStatusBadge } from '@/components/ui/status-badge';
@@ -329,61 +326,72 @@ export function Delagare() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable>
-            <DataTableHeader>
-              <DataTableHeaderCell label="Namn" icon={User} />
-              <DataTableHeaderCell label="Personnummer" />
-              {showKommanditdelägare && <DataTableHeaderCell label="Typ" />}
-              <DataTableHeaderCell label="Ägarandel" icon={Percent} align="right" />
-              <DataTableHeaderCell label="Insatskapital" icon={Banknote} align="right" />
-              <DataTableHeaderCell label="Kapitalsaldo" icon={Wallet} align="right" />
-              <DataTableHeaderCell className="w-10">
-                <Checkbox
-                  checked={partnerSelection.allSelected}
-                  onCheckedChange={partnerSelection.toggleAll}
-                />
-              </DataTableHeaderCell>
-            </DataTableHeader>
-            <DataTableBody>
+          <div>
+            <GridTableHeader
+              columns={[
+                { label: "", span: 1 }, // Checkbox
+                { label: "Namn", icon: User, span: 3 },
+                { label: "Personnummer", span: 2 },
+                // Conditional 'Typ' column handled by spans or rendering logic? 
+                // GridTable doesn't strictly support conditional columns well in 'columns' array if we want 12-grid stability.
+                // We'll include it if showKommanditdelägare is true.
+                ...(showKommanditdelägare ? [{ label: "Typ", span: 2 }] : []),
+                { label: "Ägarandel", icon: Percent, span: 1, align: 'right' },
+                { label: "Insatskapital", icon: Banknote, span: showKommanditdelägare ? 1.5 : 2, align: 'right' },
+                { label: "Kapitalsaldo", icon: Wallet, span: showKommanditdelägare ? 1.5 : 2, align: 'right' },
+              ]}
+            />
+            <GridTableRows>
               {filteredPartners.map((partner) => (
-                <DataTableRow
-                  key={partner.id}
-                  selected={partnerSelection.isSelected(partner.id)}
-                >
+                <GridTableRow key={partner.id}>
+                  {/* Checkbox */}
+                  <div className="col-span-1 flex items-center">
+                    <Checkbox
+                      checked={partnerSelection.isSelected(partner.id)}
+                      onCheckedChange={() => partnerSelection.toggleItem(partner.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
 
-                  <DataTableCell bold>{partner.name}</DataTableCell>
-                  <DataTableCell mono muted>
+                  {/* Name */}
+                  <div className="col-span-3 font-semibold">
+                    {partner.name}
+                  </div>
+
+                  {/* PNR */}
+                  <div className="col-span-2 font-mono text-sm text-muted-foreground">
                     {formatPersonalNumber(partner.personalNumber)}
-                  </DataTableCell>
+                  </div>
+
+                  {/* Type (Conditional) */}
                   {showKommanditdelägare && (
-                    <DataTableCell>
+                    <div className="col-span-2">
                       <AppStatusBadge
                         status={partner.type === 'komplementär' ? 'Komplementär' : 'Kommanditdelägare'}
                       />
-                    </DataTableCell>
+                    </div>
                   )}
-                  <DataTableCell align="right">{partner.ownershipPercentage}%</DataTableCell>
-                  <DataTableCell align="right" mono>
+
+                  {/* Ownership */}
+                  <div className="col-span-1 text-right">
+                    {partner.ownershipPercentage}%
+                  </div>
+
+                  {/* Capital */}
+                  <div className={cn("text-right font-mono", showKommanditdelägare ? "col-span-[1.5]" : "col-span-2")}>
                     {formatCurrency(partner.capitalContribution)}
-                  </DataTableCell>
-                  <DataTableCell align="right" mono>
+                  </div>
+
+                  {/* Balance */}
+                  <div className={cn("text-right font-mono", showKommanditdelägare ? "col-span-[1.5]" : "col-span-2")}>
                     <span className={partner.currentCapitalBalance < partner.capitalContribution ? 'text-amber-600' : 'text-green-600 dark:text-green-500/70'}>
                       {formatCurrency(partner.currentCapitalBalance)}
                     </span>
-                  </DataTableCell>
-                  <DataTableCell className="w-10 text-right">
-                    <div className="flex justify-end pr-2">
-                      <Checkbox
-                        checked={partnerSelection.isSelected(partner.id)}
-                        onCheckedChange={() => partnerSelection.toggleItem(partner.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  </DataTableCell>
-                </DataTableRow>
+                  </div>
+                </GridTableRow>
               ))}
-            </DataTableBody>
-          </DataTable>
+            </GridTableRows>
+          </div>
         </CardContent>
       </Card>
 
@@ -409,55 +417,46 @@ export function Delagare() {
           </div>
         </CardHeader>
         <CardContent className="p-0">
-          <DataTable>
-            <DataTableHeader>
-              <DataTableHeaderCell label="Datum" icon={Calendar} />
-              <DataTableHeaderCell label="Delägare" icon={User} />
-              <DataTableHeaderCell label="Typ" />
-              <DataTableHeaderCell label="Beskrivning" />
-              <DataTableHeaderCell label="Belopp" icon={Banknote} align="right" />
-              <DataTableHeaderCell className="w-10">
-                <Checkbox
-                  checked={withdrawalSelection.allSelected}
-                  onCheckedChange={withdrawalSelection.toggleAll}
-                />
-              </DataTableHeaderCell>
-            </DataTableHeader>
-            <DataTableBody>
+          <div>
+            <GridTableHeader
+              columns={[
+                { label: "", span: 1 }, // Checkbox
+                { label: "Datum", icon: Calendar, span: 2 },
+                { label: "Delägare", icon: User, span: 2 },
+                { label: "Typ", span: 2 },
+                { label: "Beskrivning", span: 3 },
+                { label: "Belopp", icon: Banknote, span: 2, align: 'right' },
+              ]}
+            />
+            <GridTableRows>
               {filteredWithdrawals.map((withdrawal) => (
-                <DataTableRow
-                  key={withdrawal.id}
-                  selected={withdrawalSelection.isSelected(withdrawal.id)}
-                >
+                <GridTableRow key={withdrawal.id}>
+                  {/* Checkbox */}
+                  <div className="col-span-1 flex items-center">
+                    <Checkbox
+                      checked={withdrawalSelection.isSelected(withdrawal.id)}
+                      onCheckedChange={() => withdrawalSelection.toggleItem(withdrawal.id)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
+                  </div>
 
-                  <DataTableCell muted>{withdrawal.date}</DataTableCell>
-                  <DataTableCell bold>{withdrawal.partnerName}</DataTableCell>
-                  <DataTableCell>
+                  <div className="col-span-2 text-sm text-muted-foreground">{withdrawal.date}</div>
+                  <div className="col-span-2 font-medium">{withdrawal.partnerName}</div>
+                  <div className="col-span-2">
                     <AppStatusBadge
                       status={withdrawal.type === 'uttag' ? 'Uttag' : 'Insättning'}
                     />
-                  </DataTableCell>
-                  <DataTableCell muted>
-                    {withdrawal.description}
-                  </DataTableCell>
-                  <DataTableCell align="right" mono>
+                  </div>
+                  <div className="col-span-3 text-sm text-muted-foreground truncate">{withdrawal.description}</div>
+                  <div className="col-span-2 text-right font-mono">
                     <span className={withdrawal.type === 'uttag' ? 'text-red-600 dark:text-red-500/70' : 'text-green-600 dark:text-green-500/70'}>
                       {withdrawal.type === 'uttag' ? '-' : '+'}{formatCurrency(withdrawal.amount)}
                     </span>
-                  </DataTableCell>
-                  <DataTableCell className="w-10 text-right">
-                    <div className="flex justify-end pr-2">
-                      <Checkbox
-                        checked={withdrawalSelection.isSelected(withdrawal.id)}
-                        onCheckedChange={() => withdrawalSelection.toggleItem(withdrawal.id)}
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                  </DataTableCell>
-                </DataTableRow>
+                  </div>
+                </GridTableRow>
               ))}
-            </DataTableBody>
-          </DataTable>
+            </GridTableRows>
+          </div>
         </CardContent>
       </Card>
 

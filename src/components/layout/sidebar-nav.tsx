@@ -28,11 +28,15 @@ const iconColors: Record<string, { bg: string; icon: string }> = {
 function IconWrapper({ title, Icon, className }: { title: string; Icon: LucideIcon; className?: string }) {
   const colors = iconColors[title]
   if (!colors) {
-    // No color config - render plain icon
-    return <Icon className="size-4" />
+    // No color config - render plain icon but wrapped for alignment
+    return (
+      <span className={cn("flex items-center justify-center size-8 rounded-lg", className)}>
+        <Icon className="size-4" />
+      </span>
+    )
   }
   return (
-    <span className={cn("flex items-center justify-center size-6 rounded", colors.bg, className)}>
+    <span className={cn("flex items-center justify-center size-8 rounded-lg", colors.bg, className)}>
       <Icon className={cn("size-4", colors.icon)} />
     </span>
   )
@@ -189,19 +193,19 @@ export function NavSettings({
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel className="-ml-2">{isEnkel ? "Övrigt" : "Mer"}</SidebarGroupLabel>
+      <SidebarGroupLabel>{isEnkel ? "Övrigt" : "Mer"}</SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const displayTitle = getTitle(item)
           return (
             <SidebarMenuItem key={item.title}>
               {item.title === "Inställningar" && onSettingsClick ? (
-                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle} className="-ml-2">
+                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle}>
                   {item.icon && <item.icon className="size-4" />}
                   <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton asChild tooltip={displayTitle} className="-ml-2">
+                <SidebarMenuButton asChild tooltip={displayTitle}>
                   <Link href={item.url}>
                     {item.icon && <item.icon className="size-4" />}
                     <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>

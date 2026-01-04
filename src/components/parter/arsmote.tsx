@@ -45,9 +45,9 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { MotionDialog } from "./dialogs/motion-dialog"
-import { PlanMeetingDialog } from "./dialogs/plan-meeting-dialog"
-import { SendNoticeDialog } from "./dialogs/send-notice-dialog"
+import { MotionDialog } from "./dialogs/motion"
+import { PlanMeetingDialog } from "./dialogs/mote"
+import { SendNoticeDialog } from "./dialogs/kallelse"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { type MeetingStatus } from "@/lib/status-types"
 import { mockMembers } from "@/data/ownership"
@@ -268,7 +268,17 @@ export function Arsmote() {
   }
 
   if (isLoadingDocuments) {
-    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar stämmor...</div>
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="h-24 bg-muted animate-pulse" />
+          ))}
+        </div>
+        <div className="border-b-2 border-border/60" />
+        <Card className="h-96 bg-muted animate-pulse" />
+      </div>
+    )
   }
 
   return (

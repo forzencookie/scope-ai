@@ -26,8 +26,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </SidebarInset>
             </SidebarProvider>
             <MobileBottomNav />
-            <LazyOnboardingWizard 
-                isOpen={showOnboarding} 
+            <LazyOnboardingWizard
+                isOpen={showOnboarding}
                 onClose={skipOnboarding}
                 onComplete={completeOnboarding}
             />

@@ -24,8 +24,6 @@ import { categoryColors, categoryLabels } from "@/data/inbox"
 import { InboxItem } from "@/types"
 import { useState, useEffect } from "react"
 import { cn } from "@/lib/utils"
-import { InvoiceDocument } from "@/components/bokforing"
-import { ReceiptDocument } from "@/components/bokforing"
 
 export default function MessagePage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = use(params)
@@ -247,13 +245,13 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
 
                 {/* Render actual invoice or receipt document */}
                 {item.documentData ? (
-                    <div className="max-h-[800px] overflow-y-auto">
-                        {item.documentData.type === 'invoice' && (
-                            <InvoiceDocument data={item.documentData} />
-                        )}
-                        {item.documentData.type === 'receipt' && (
-                            <ReceiptDocument data={item.documentData} />
-                        )}
+                    <div className="p-8 bg-white dark:bg-neutral-900">
+                        <div className="text-center text-muted-foreground">
+                            <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                            <p className="text-sm font-medium">{item.documentData.type === 'invoice' ? 'Faktura' : 'Kvitto'}</p>
+                            <p className="text-xs mt-1">Från {item.sender}</p>
+                            <p className="text-xs mt-2">Belopp: {(item.documentData as any).total?.toLocaleString('sv-SE')} kr</p>
+                        </div>
                     </div>
                 ) : (
                     <div className="aspect-[3/4] max-h-[600px] bg-white dark:bg-neutral-900 flex items-center justify-center">

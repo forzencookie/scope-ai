@@ -11,6 +11,7 @@ import {
     List,
     Calendar,
     ChevronLeft,
+    Loader2,
 } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -423,28 +424,9 @@ function HandelserPageContent() {
 
 function HandelserPageLoading() {
     return (
-        <div className="flex flex-col min-h-svh">
-            <div className="px-6 pt-6">
-                <div className="max-w-4xl w-full space-y-6 animate-pulse">
-                    {/* Page heading skeleton */}
-                    <div className="space-y-2">
-                        <div className="h-6 w-32 rounded bg-muted" />
-                        <div className="h-4 w-64 rounded bg-muted" />
-                    </div>
-                    {/* Tabs skeleton */}
-                    <div className="flex gap-2 pb-2 border-b-2 border-border/60">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-8 w-8 rounded-md bg-muted" />
-                        ))}
-                    </div>
-                    {/* Folder cards skeleton */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-36 rounded-lg bg-muted" />
-                        ))}
-                    </div>
-                </div>
-            </div>
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Laddar händelser...
         </div>
     )
 }

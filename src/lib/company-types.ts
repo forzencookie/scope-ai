@@ -104,7 +104,8 @@ export type FeatureKey =
   | 'medlemsregister'
   | 'styrelseprotokoll'
   | 'bolagsstamma'
-  | 'arsmote';
+  | 'arsmote'
+
 
 // Company type metadata
 export interface CompanyTypeInfo {
@@ -438,4 +439,5 @@ export const featureInfo: Record<FeatureKey, FeatureInfo> = {
     description: 'Protokoll och dokument för årsmöte',
     category: 'ownership',
   },
+
 };

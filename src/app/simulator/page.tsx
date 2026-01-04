@@ -31,12 +31,10 @@ import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { cn } from "@/lib/utils"
 import { Dialog, DialogContent, DialogTrigger } from "@/components/ui/dialog"
-import { ReceiptDocument } from "@/components/bokforing"
-import { InvoiceDocument } from "@/components/bokforing"
+
+
+
 import type { ReceiptDocumentData, InvoiceDocumentData } from "@/types/documents"
-
-
-
 interface BankTransaction {
   id: string
   description: string
@@ -892,7 +890,14 @@ export default function SimulatorPage() {
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-md p-0 overflow-hidden bg-white border-none shadow-2xl">
-                              <ReceiptDocument data={receipt.visualData} />
+                              <div className="p-8 bg-white dark:bg-neutral-900">
+                                <div className="text-center text-muted-foreground">
+                                  <Receipt className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                                  <p className="text-sm font-medium">Kvitto</p>
+                                  <p className="text-xs mt-1">{receipt.vendor}</p>
+                                  <p className="text-xs mt-2">{receipt.amount}</p>
+                                </div>
+                              </div>
                             </DialogContent>
                           </Dialog>
                         )}
@@ -1172,7 +1177,14 @@ export default function SimulatorPage() {
                               </Button>
                             </DialogTrigger>
                             <DialogContent className="max-w-4xl p-0 overflow-y-auto max-h-[90vh] bg-white border-none shadow-2xl">
-                              <InvoiceDocument data={inv.visualData} />
+                              <div className="p-8 bg-white dark:bg-neutral-900">
+                                <div className="text-center text-muted-foreground">
+                                  <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                                  <p className="text-sm font-medium">Faktura {inv.invoiceNumber}</p>
+                                  <p className="text-xs mt-1">{inv.customerName}</p>
+                                  <p className="text-xs mt-2">{new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(inv.amount)}</p>
+                                </div>
+                              </div>
                             </DialogContent>
                           </Dialog>
                         )}

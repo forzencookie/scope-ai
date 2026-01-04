@@ -46,74 +46,22 @@ export function Hero() {
         </div>
       </motion.div>
 
-      {/* Control Board Animation */}
+      import {ScopeDogIllustration} from "@/components/ui/icons/scope-dog-illustration"
+
+      // ... (in component)
+
+      {/* Control Board Animation / Illustration */}
       <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 0.8, delay: 0.2 }}
-        className="relative aspect-square md:aspect-[4/3] bg-stone-50 border border-stone-200 rounded-xl p-6 grid grid-cols-2 gap-4 overflow-hidden will-change-transform-opacity"
+        className="relative aspect-square md:aspect-[4/3] flex items-center justify-center p-6 will-change-transform-opacity"
       >
-        {/* Dither background - very subtle */}
-        <DitherPattern className="inset-0 opacity-[0.02]" />
-        
-        {/* Module 1: Payroll */}
-        <div className="col-span-2 bg-stone-100 border border-stone-200 rounded-lg p-4 relative">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Users className="w-4 h-4 text-stone-600" />
-              <span className="text-xs font-mono text-stone-600 uppercase">Lönekörning</span>
-            </div>
-            <StatusBadge status="active" />
-          </div>
-          <div className="space-y-2">
-            <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
-              <motion.div
-                className="h-full bg-violet-500 rounded-full"
-                initial={{ width: "0%" }}
-                animate={{ width: "100%" }}
-                transition={{ duration: 2, repeat: Infinity, repeatDelay: 3 }}
-              />
-            </div>
-            <div className="flex justify-between text-xs text-stone-600 font-mono">
-              <span>Beräknar skatter...</span>
-              <span>85%</span>
-            </div>
-          </div>
-        </div>
+        <div className="relative w-full h-full max-w-md">
+          <ScopeDogIllustration className="w-full h-full text-stone-900" />
 
-        {/* Module 2: VAT */}
-        <div className="bg-stone-100 border border-stone-200 rounded-lg p-4 flex flex-col justify-between">
-          <div className="flex items-center gap-2 mb-2">
-            <Building className="w-4 h-4 text-stone-600" />
-            <span className="text-xs font-mono text-stone-600 uppercase">Moms</span>
-          </div>
-          <div className="text-2xl font-bold text-stone-900">25,0%</div>
-          <div className="text-xs text-stone-500">Nästa rapport: 12 dagar</div>
-        </div>
-
-        {/* Module 3: Receipts */}
-        <div className="bg-stone-100 border border-stone-200 rounded-lg p-4 relative overflow-hidden">
-          <div className="flex items-center justify-between mb-2">
-            <div className="flex items-center gap-2">
-              <FileText className="w-4 h-4 text-stone-600" />
-              <span className="text-xs font-mono text-stone-600 uppercase">Inkorg</span>
-            </div>
-            <div className="w-2 h-2 bg-amber-500" />
-          </div>
-          <div className="space-y-2 mt-4">
-            {[1, 2, 3].map(i => (
-              <motion.div
-                key={i}
-                initial={{ x: 100, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ delay: 1 + (i * 0.2), duration: 0.5 }}
-                className="flex items-center justify-between p-2 bg-white border border-stone-200 rounded text-xs text-stone-600"
-              >
-                <span>Receipt_00{i}.pdf</span>
-                <Check className="w-3 h-3 text-emerald-500" />
-              </motion.div>
-            ))}
-          </div>
+          {/* Optional: Keep dither pattern behind if desired, or remove */}
+          <DitherPattern className="inset-0 opacity-[0.05] absolute -z-10" />
         </div>
       </motion.div>
     </Section>

@@ -3,19 +3,20 @@
 // ============================================
 
 // Content Components
-export { MomsdeklarationContent } from './momsdeklaration-content'
-export { InkomstdeklarationContent } from './inkomstdeklaration-content'
-export { NEBilagaContent } from './ne-bilaga-content'
-export { K10Content } from './k10-content'
-export { ArsredovisningContent } from './arsredovisning-content'
-export { ArsbokslutContent } from './arsbokslut-content'
-export { AGIContent } from './agi-content'
+export { MomsdeklarationContent } from './moms'
+export { InkomstdeklarationContent } from './inkomstdeklaration'
+export { NEBilagaContent } from './ne-bilaga'
+export { K10Content } from './k10'
+export { ArsredovisningContent } from './arsredovisning'
+export { ArsbokslutContent } from './arsbokslut'
+export { AGIContent } from './agi'
 
 // Dialogs
-export { MomsDetailDialog } from './moms-detail-dialog'
-export { MomsPreview } from './moms-preview'
-export { AGIDetailsDialog } from './agi-details-dialog'
+export { MomsDetailDialog } from './dialogs/moms'
 
-export { InkomstWizardDialog, ArsredovisningWizardDialog } from './ai-wizard-dialog'
-export { ReportPreviewDialog } from './report-preview-dialog'
-export type { ReportSection } from './report-preview-dialog'
+export { AGIDetailsDialog } from './dialogs/agi'
+export { InkomstWizardDialog, ArsredovisningWizardDialog } from './dialogs/assistent'
+export { ReportPreviewDialog } from './dialogs/rapport'
+export type { ReportSection } from './dialogs/rapport'
+export { SRUPreviewDialog } from './dialogs/sru'
+export { Ink2PreviewDialog } from './dialogs/ink2'

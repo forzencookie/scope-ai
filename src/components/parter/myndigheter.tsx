@@ -111,9 +111,16 @@ export function Myndigheter() {
     return (
         <div className="space-y-6">
             {/* Header */}
-
-
-            {/* Info card */}
+            <div className="flex flex-col gap-6">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <h2 className="text-2xl font-bold tracking-tight">Myndigheter</h2>
+                        <p className="text-muted-foreground mt-1">
+                            Hantera kopplingar till Skatteverket och Bolagsverket.
+                        </p>
+                    </div>
+                </div>
+            </div>            {/* Info card */}
             <Card className="bg-muted/30 border-dashed">
                 <CardContent className="py-4">
                     <p className="text-sm text-muted-foreground">

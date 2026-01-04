@@ -18,11 +18,9 @@ import {
 } from "lucide-react"
 
 // Import extracted tab components
-import {
-    OverviewTab,
-    TransactionsTab,
-    ExpensesTab,
-} from "@/components/rapporter"
+import { EkonomiskOversikt } from "@/components/foretagsstatistik/oversikt"
+import { Transaktionsrapport } from "@/components/foretagsstatistik/transaktionsrapport"
+import { Kostnadsanalys } from "@/components/foretagsstatistik/kostnadsanalys"
 
 export default function CompanyStatisticsPage() {
     return (
@@ -50,22 +48,22 @@ export default function CompanyStatisticsPage() {
                     <div className="max-w-6xl w-full">
                         <Tabs defaultValue="overview" className="w-full">
                             <TabsList className="bg-transparent rounded-none h-auto p-0 mb-6 flex gap-2 border-b-2 border-border/60 pb-2 w-full justify-start">
-                                <TabsTrigger 
-                                    value="overview" 
+                                <TabsTrigger
+                                    value="overview"
                                     className="gap-2 data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm font-medium"
                                 >
                                     <LayoutDashboard className="h-3.5 w-3.5" />
                                     Översikt
                                 </TabsTrigger>
-                                <TabsTrigger 
-                                    value="transactions" 
+                                <TabsTrigger
+                                    value="transactions"
                                     className="gap-2 data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm font-medium"
                                 >
                                     <ArrowLeftRight className="h-3.5 w-3.5" />
                                     Transaktioner & Fakturor
                                 </TabsTrigger>
-                                <TabsTrigger 
-                                    value="expenses" 
+                                <TabsTrigger
+                                    value="expenses"
                                     className="gap-2 data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm font-medium"
                                 >
                                     <TrendingDown className="h-3.5 w-3.5" />
@@ -74,15 +72,15 @@ export default function CompanyStatisticsPage() {
                             </TabsList>
 
                             <TabsContent value="overview">
-                                <OverviewTab />
+                                <EkonomiskOversikt />
                             </TabsContent>
 
                             <TabsContent value="transactions">
-                                <TransactionsTab />
+                                <Transaktionsrapport />
                             </TabsContent>
 
                             <TabsContent value="expenses">
-                                <ExpensesTab />
+                                <Kostnadsanalys />
                             </TabsContent>
                         </Tabs>
                     </div>

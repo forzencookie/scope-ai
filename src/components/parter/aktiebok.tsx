@@ -57,10 +57,11 @@ import {
 import { Label } from "@/components/ui/label"
 
 import {
-  Table3Header,
-  Table3Row,
-  Table3Rows
-} from "@/components/bokforing/report-table"
+
+  GridTableHeader,
+  GridTableRow,
+  GridTableRows
+} from "@/components/ui/grid-table"
 
 import { cn } from "@/lib/utils"
 import { AppStatusBadge } from "@/components/ui/status-badge"
@@ -72,14 +73,8 @@ import {
   type ShareTransaction
 } from "@/data/ownership"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import {
-  DataTable,
-  DataTableHeader,
-  DataTableHeaderCell,
-  DataTableBody,
-  DataTableRow,
-  DataTableCell
-} from "@/components/ui/data-table"
+
+
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useTextMode } from "@/providers/text-mode-provider"
@@ -266,13 +261,23 @@ export function Aktiebok() {
   }
 
   if (isLoadingShareholders) {
-    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar aktiebok...</div>
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-3">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <Card key={i} className="h-24 bg-muted animate-pulse" />
+          ))}
+        </div>
+        <div className="border-b-2 border-border/60" />
+        <Card className="h-96 bg-muted animate-pulse" />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* Page Heading */}
-      <div className="flex flex-col gap-6 pt-2">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Aktiebok</h2>
@@ -355,7 +360,7 @@ export function Aktiebok() {
           </div>
 
           <div>
-            <Table3Header
+            <GridTableHeader
               columns={[
                 { label: 'Aktieägare', icon: User, span: 3 },
                 { label: 'Typ', icon: Building2, span: 2 },
@@ -366,9 +371,9 @@ export function Aktiebok() {
                 { label: '', span: 1 }, // Actions
               ]}
             />
-            <Table3Rows>
+            <GridTableRows>
               {filteredShareholders.map((shareholder) => (
-                <Table3Row key={shareholder.id}>
+                <GridTableRow key={shareholder.id}>
                   {/* 1. Ägare */}
                   <div className="col-span-3 flex items-center gap-3">
                     <div className="mt-0.5 text-muted-foreground">
@@ -445,9 +450,9 @@ export function Aktiebok() {
                       </DropdownMenuContent>
                     </DropdownMenu>
                   </div>
-                </Table3Row>
+                </GridTableRow>
               ))}
-            </Table3Rows>
+            </GridTableRows>
           </div>
         </div>
       )}
@@ -498,7 +503,7 @@ export function Aktiebok() {
           </div>
 
           <div>
-            <Table3Header
+            <GridTableHeader
               columns={[
                 { label: "Datum", icon: Calendar, span: 2 },
                 { label: "Typ", icon: CheckCircle2, span: 2 },
@@ -509,9 +514,9 @@ export function Aktiebok() {
                 { label: "Totalt", icon: Banknote, span: 1, align: 'right' },
               ]}
             />
-            <Table3Rows>
+            <GridTableRows>
               {filteredTransactions.map((tx) => (
-                <Table3Row key={tx.id}>
+                <GridTableRow key={tx.id}>
                   {/* 1. Datum */}
                   <div className="col-span-2 text-sm">
                     {formatDate(tx.date)}
@@ -547,9 +552,9 @@ export function Aktiebok() {
                   <div className="col-span-1 font-medium tabular-nums text-sm text-right">
                     {formatCurrency(tx.totalPrice)}
                   </div>
-                </Table3Row>
+                </GridTableRow>
               ))}
-            </Table3Rows>
+            </GridTableRows>
           </div>
         </div>
       )}

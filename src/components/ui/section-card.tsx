@@ -55,14 +55,13 @@ export function SectionCard({
             )}
         >
             <div className="flex items-start gap-3">
-                {Icon && (
+                {Icon && variant !== "ai" && (
                     <Icon className={cn(
                         "h-5 w-5 mt-0.5 shrink-0",
                         variant === "highlight" && "text-primary",
-                        variant === "ai" && "text-purple-600 dark:text-purple-500",
                         variant === "warning" && "text-amber-600 dark:text-amber-500",
                         variant === "success" && "text-emerald-600 dark:text-emerald-500",
-                        variant !== "highlight" && variant !== "ai" && variant !== "warning" && variant !== "success" && "text-muted-foreground"
+                        variant !== "highlight" && variant !== "warning" && variant !== "success" && "text-muted-foreground"
                     )} />
                 )}
                 <div className="flex-1 min-w-0">

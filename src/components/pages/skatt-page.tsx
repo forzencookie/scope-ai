@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
+import { useSearchParams, useRouter, notFound } from "next/navigation"
 import {
     Tooltip,
     TooltipContent,
@@ -23,28 +23,31 @@ import {
     FileText,
     Send,
     FileBarChart,
+    Loader2,
 } from "lucide-react"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
 import { useLastUpdated } from "@/hooks/use-last-updated"
 
-// Import tab content components
+// Lazy loaded tab content components
 import {
-    MomsdeklarationContent,
-    InkomstdeklarationContent,
-    ArsredovisningContent,
-    ArsbokslutContent,
-    K10Content,
-} from "@/components/skatt"
-import { LazyAGIContent } from "@/components/shared"
+    LazyMomsdeklaration,
+    LazyInkomstdeklaration,
+    LazyArsredovisning,
+    LazyArsbokslut,
+    LazyK10,
+    LazyAGI,
+} from "@/components/shared"
 
 // Tab configuration with feature keys for filtering
 const tabs: Array<{ id: string; label: string; color: string; feature: FeatureKey }> = [
     { id: "momsdeklaration", label: "Momsdeklaration", color: "bg-purple-500", feature: "momsdeklaration" },
     { id: "inkomstdeklaration", label: "Inkomstdeklaration", color: "bg-amber-500", feature: "inkomstdeklaration" },
     { id: "agi", label: "AGI", color: "bg-emerald-500", feature: "agi" },
-    { id: "k10", label: "K10", color: "bg-blue-500", feature: "k10" },
-]
+    { id: "arsredovisning", label: "Årsredovisning", color: "bg-blue-500", feature: "arsredovisning" },
+    { id: "arsbokslut", label: "Årsbokslut", color: "bg-indigo-500", feature: "arsbokslut" },
+    { id: "k10", label: "K10", color: "bg-purple-100 text-purple-700", feature: "k10" },
+];
 
 function SkattPageContent() {
     const searchParams = useSearchParams()
@@ -55,7 +58,14 @@ function SkattPageContent() {
     // Filter tabs based on company type features
     const availableTabs = tabs.filter(tab => hasFeature(tab.feature))
 
-    const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "momsdeklaration"
+    const tabParam = searchParams.get("tab")
+
+    // If a specific tab is requested but not valid/available, 404
+    if (tabParam && !availableTabs.find(t => t.id === tabParam)) {
+        notFound()
+    }
+
+    const currentTab = tabParam || availableTabs[0]?.id || "momsdeklaration"
 
     const setCurrentTab = useCallback((tab: string) => {
         router.push(`/dashboard/skatt?tab=${tab}`, { scroll: false })
@@ -85,9 +95,9 @@ function SkattPageContent() {
                 </header>
 
                 {/* Tabs */}
-                <div className="px-4 pt-4">
+                <div className="px-6 pt-4">
                     <div className="w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
 
@@ -125,12 +135,13 @@ function SkattPageContent() {
 
                 {/* Tab Content */}
                 <div className="bg-background">
-                    {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
-                    {currentTab === "k10" && <K10Content />}
-                    {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
-                    {currentTab === "agi" && <LazyAGIContent />}
-                    {currentTab === "arsredovisning" && <ArsredovisningContent />}
-                    {currentTab === "arsbokslut" && <ArsbokslutContent />}
+                    {currentTab === "momsdeklaration" && <LazyMomsdeklaration />}
+                    {currentTab === "k10" && <LazyK10 />}
+
+                    {currentTab === "inkomstdeklaration" && <LazyInkomstdeklaration />}
+                    {currentTab === "agi" && <LazyAGI />}
+                    {currentTab === "arsredovisning" && <LazyArsredovisning />}
+                    {currentTab === "arsbokslut" && <LazyArsbokslut />}
                 </div>
             </div>
         </TooltipProvider>
@@ -139,21 +150,9 @@ function SkattPageContent() {
 
 function SkattPageLoading() {
     return (
-        <div className="flex flex-col min-h-svh">
-            <div className="px-4 pt-4">
-                <div className="w-full space-y-6 animate-pulse">
-                    {/* Stats cards */}
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-24 rounded-lg bg-muted" />
-                        ))}
-                    </div>
-                    {/* Separator */}
-                    <div className="border-b-2 border-border/60" />
-                    {/* Table */}
-                    <div className="h-96 rounded-lg bg-muted" />
-                </div>
-            </div>
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Laddar skatt & deklarationer...
         </div>
     )
 }

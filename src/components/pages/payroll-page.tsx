@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
-import { PiggyBank } from "lucide-react"
+import { PiggyBank, Loader2 } from "lucide-react"
 
 // Import constants from payroll components
 import { allTabs } from "@/components/loner/constants"
@@ -29,14 +29,12 @@ import { useLastUpdated } from "@/hooks/use-last-updated"
 
 // Lazy loaded tab components
 import {
-    LazyLonesbeskContent,
-    preloadPayrollTab
+    LazyLonebesked,
+    LazyTeamTab,
+    LazyBenefitsTab,
+    LazyEgenavgifter,
+    LazyDelagaruttag,
 } from "@/components/shared"
-
-// External components for EF/HB/KB tabs
-import { Egenavgifter as EgenavgifterCalculator, Delagaruttag as DelagaruttagManager } from "@/components/parter"
-import { TeamTab } from "@/components/loner/team-tab"
-import { BenefitsTab } from "@/components/loner/benefits-tab"
 
 function PayrollPageContent() {
     const searchParams = useSearchParams()
@@ -90,20 +88,17 @@ function PayrollPageContent() {
                 </header>
 
                 {/* Tabs with preload on hover */}
-                <div className="px-4 pt-4">
+                <div className="px-6 pt-4">
                     <div className="w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
                             {tabs.map((tab) => {
                                 const isActive = currentTab === tab.id
-                                const Icon = tab.icon
 
                                 return (
                                     <Tooltip key={tab.id}>
                                         <TooltipTrigger asChild>
                                             <button
                                                 onClick={() => setCurrentTab(tab.id)}
-                                                onMouseEnter={() => preloadPayrollTab(tab.id)}
-                                                onFocus={() => preloadPayrollTab(tab.id)}
                                                 className={cn(
                                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                                     isActive
@@ -131,19 +126,19 @@ function PayrollPageContent() {
                     </div>
                 </div>
 
-                {/* Tab Content - Lazy loaded */}
+                {/* Tab Content */}
                 <div className="bg-background">
-                    {currentTab === "lonebesked" && <LazyLonesbeskContent />}
-                    {currentTab === "team" && <TeamTab />}
-                    {currentTab === "benefits" && <BenefitsTab />}
+                    {currentTab === "lonebesked" && <LazyLonebesked />}
+                    {currentTab === "team" && <LazyTeamTab />}
+                    {currentTab === "benefits" && <LazyBenefitsTab />}
                     {currentTab === "egenavgifter" && (
                         <div className="px-4 pb-4 w-full">
-                            <EgenavgifterCalculator />
+                            <LazyEgenavgifter />
                         </div>
                     )}
                     {currentTab === "delagaruttag" && (
                         <div className="px-4 pb-4 w-full">
-                            <DelagaruttagManager />
+                            <LazyDelagaruttag />
                         </div>
                     )}
                 </div>
@@ -154,24 +149,9 @@ function PayrollPageContent() {
 
 function PayrollPageLoading() {
     return (
-        <div className="flex flex-col min-h-svh">
-            <div className="px-4 pt-4">
-                <div className="w-full space-y-6 animate-pulse">
-                    {/* Stats cards */}
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-24 rounded-lg bg-muted" />
-                        ))}
-                    </div>
-                    {/* Info banner */}
-                    <div className="h-20 rounded-lg bg-muted" />
-                    {/* Two column layout */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="h-48 rounded-lg bg-muted" />
-                        <div className="h-48 rounded-lg bg-muted" />
-                    </div>
-                </div>
-            </div>
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Laddar löner...
         </div>
     )
 }

@@ -19,13 +19,10 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import {
-  DataTable,
-  DataTableHeader,
-  DataTableHeaderCell,
-  DataTableBody,
-  DataTableRow,
-  DataTableCell,
-} from "@/components/ui/data-table"
+  GridTableHeader,
+  GridTableRow,
+  GridTableRows,
+} from "@/components/ui/grid-table"
 import {
   Card,
   CardContent,
@@ -131,6 +128,17 @@ export function EgenavgifterCalculator() {
   return (
     <TooltipProvider>
       <div className="space-y-6">
+        {/* Page Heading */}
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-2xl font-bold tracking-tight">Egenavgifter</h2>
+              <p className="text-muted-foreground mt-1">
+                Beräkna och planera dina egenavgifter och skatter.
+              </p>
+            </div>
+          </div>
+        </div>
         {/* Stats Overview */}
         <StatCardGrid columns={4}>
           <StatCard
@@ -347,31 +355,35 @@ export function EgenavgifterCalculator() {
         </div>
 
         {/* Monthly Trend */}
-        <DataTable title="Månadsvis översikt">
-          <DataTableHeader>
-            <DataTableHeaderCell label="Månad" icon={Calendar} />
-            <DataTableHeaderCell label="Vinst" icon={Banknote} align="right" />
-            <DataTableHeaderCell label="Egenavgifter" icon={Percent} align="right" />
-            <DataTableHeaderCell label="Netto" icon={TrendingUp} align="right" />
-          </DataTableHeader>
-          <DataTableBody>
+        {/* Monthly Trend */}
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg">Månadsvis översikt</h3>
+          <GridTableHeader
+            columns={[
+              { label: "Månad", icon: Calendar, span: 3 },
+              { label: "Vinst", icon: Banknote, span: 3, align: 'right' },
+              { label: "Egenavgifter", icon: Percent, span: 3, align: 'right' },
+              { label: "Netto", icon: TrendingUp, span: 3, align: 'right' },
+            ]}
+          />
+          <GridTableRows>
             {monthlyData.map((m) => (
-              <DataTableRow key={m.month}>
-                <DataTableCell bold>{m.month}</DataTableCell>
-                <DataTableCell align="right" mono>{formatCurrency(m.profit)}</DataTableCell>
-                <DataTableCell align="right" mono className="text-red-600 dark:text-red-500/70">-{formatCurrency(m.egenavgifter)}</DataTableCell>
-                <DataTableCell align="right" mono className="text-green-600 dark:text-green-500/70">{formatCurrency(m.profit - m.egenavgifter)}</DataTableCell>
-              </DataTableRow>
+              <GridTableRow key={m.month}>
+                <div className="col-span-3 font-semibold">{m.month}</div>
+                <div className="col-span-3 text-right font-mono">{formatCurrency(m.profit)}</div>
+                <div className="col-span-3 text-right font-mono text-red-600 dark:text-red-500/70">-{formatCurrency(m.egenavgifter)}</div>
+                <div className="col-span-3 text-right font-mono text-green-600 dark:text-green-500/70">{formatCurrency(m.profit - m.egenavgifter)}</div>
+              </GridTableRow>
             ))}
-            {/* Total row */}
-            <DataTableRow className="font-medium bg-muted/30">
-              <DataTableCell bold>Totalt</DataTableCell>
-              <DataTableCell align="right" mono>{formatCurrency(annualProfit)}</DataTableCell>
-              <DataTableCell align="right" mono className="text-red-600 dark:text-red-500/70">-{formatCurrency(calculation.avgifter)}</DataTableCell>
-              <DataTableCell align="right" mono className="text-green-600 dark:text-green-500/70">{formatCurrency(calculation.nettoEfterAvgifter)}</DataTableCell>
-            </DataTableRow>
-          </DataTableBody>
-        </DataTable>
+            {/* Total row - Manual styling to mimic header/footer if needed, or just another row */}
+            <div className="grid grid-cols-12 px-4 py-3 bg-muted/30 font-medium border-t border-border/60">
+              <div className="col-span-3 font-bold">Totalt</div>
+              <div className="col-span-3 text-right font-mono">{formatCurrency(annualProfit)}</div>
+              <div className="col-span-3 text-right font-mono text-red-600 dark:text-red-500/70">-{formatCurrency(calculation.avgifter)}</div>
+              <div className="col-span-3 text-right font-mono text-green-600 dark:text-green-500/70">{formatCurrency(calculation.nettoEfterAvgifter)}</div>
+            </div>
+          </GridTableRows>
+        </div>
       </div>
     </TooltipProvider>
   )

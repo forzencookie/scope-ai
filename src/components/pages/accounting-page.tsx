@@ -32,20 +32,20 @@ import {
     Monitor,
     Plus,
     X,
+    Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
+import { transactionService, type TransactionStats } from "@/lib/services/transaction-service"
 
+import { useFeature } from "@/providers/company-provider"
 import {
     LazyTransactionsTable,
     LazyReceiptsTable,
-    LazyVerifikationerTable
+    LazyInventarierTable,
+    LazyUnifiedInvoicesView,
 } from "@/components/shared"
-import { useFeature } from "@/providers/company-provider"
-import { Huvudbok, BookkeepingView } from "@/components/bokforing"
-import { InventarierTable } from "@/components/bokforing"
-import { UnifiedInvoicesView } from "@/components/bokforing"
 import { useTextMode } from "@/providers/text-mode-provider"
 
 // Tab configuration with feature requirements and translations
@@ -71,13 +71,7 @@ const allTabs = [
         color: "bg-amber-500",
         feature: null, // Available to all
     },
-    {
-        id: "bokforing",
-        labelEnkel: "Bokföring",
-        labelAvancerad: "Bokföring",
-        color: "bg-emerald-500",
-        feature: 'verifikationer' as const, // Uses verifikationer feature flag
-    },
+
     {
         id: "inventarier",
         labelEnkel: "Inventarier",
@@ -93,29 +87,26 @@ function AccountingPageContent() {
     const router = useRouter()
     const toast = useToast()
     const paramTab = searchParams.get("tab")
-    // Handle legacy/alternate URL mapping: 'verifikationer' -> 'bokforing'
-    const currentTab = (paramTab === "verifikationer" ? "bokforing" : paramTab) || "transaktioner"
+    // Handle legacy/alternate URL mapping: 'verifikationer' -> 'transaktioner'
+    const currentTab = (paramTab === "verifikationer" ? "transaktioner" : paramTab) || "transaktioner"
 
     // State for transactions and UI
     const [apiTransactions, setApiTransactions] = useState<TransactionWithAI[]>([])
+    const [transactionStats, setTransactionStats] = useState<TransactionStats | undefined>()
     const [isLoading, setIsLoading] = useState(true)
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
     const [showAllTabs, setShowAllTabs] = useState(false)
 
     const fetchTransactions = async () => {
         try {
-            // Use the processed endpoint which clothes naked transactions
-            const response = await fetch('/api/transactions/processed', {
-                cache: 'no-store',
-            })
-            const data = await response.json()
+            // Fetch stats and list in parallel using the service
+            const [listData, statsData] = await Promise.all([
+                transactionService.getTransactions({ limit: 50 }),
+                transactionService.getStats()
+            ])
 
-            if (data.transactions && data.transactions.length > 0) {
-                // Transactions are already processed with correct properties
-                setApiTransactions(data.transactions)
-            } else {
-                setApiTransactions([])
-            }
+            setApiTransactions(listData.transactions as TransactionWithAI[])
+            setTransactionStats(statsData)
         } catch (error) {
             console.error('Failed to fetch transactions:', error)
         } finally {
@@ -232,10 +223,10 @@ function AccountingPageContent() {
                 </header>
 
                 {/* Tab Content */}
-                <div className="bg-background px-4 py-4">
+                <div className="px-6 pt-4">
                     <div className="w-full">
                         {/* Tabs - Show max 4 visible (since we reduced count), rest in overflow */}
-                        <div className="flex items-center gap-1 pb-2 mb-6 border-b-2 border-border/60 -ml-1">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
                             {tabs.slice(0, 4).map((tab) => {
                                 const isActive = currentTab === tab.id
 
@@ -348,31 +339,32 @@ function AccountingPageContent() {
                                 </Button>
                             </div>
                         </div>
+                    </div>
+                </div>
 
+                <main className="flex-1 flex flex-col p-6">
+                    <div className="max-w-6xl w-full space-y-6">
                         {/* Content */}
                         {currentTab === "transaktioner" && (
                             <LazyTransactionsTable
                                 title="Transaktioner"
                                 transactions={transactions}
+                                stats={transactionStats}
                                 onTransactionBooked={handleTransactionBooked}
                             />
                         )}
                         {currentTab === "fakturor" && (
-                            <UnifiedInvoicesView />
+                            <LazyUnifiedInvoicesView />
                         )}
                         {currentTab === "kvitton" && (
                             <LazyReceiptsTable />
                         )}
-                        {currentTab === "bokforing" && (
-                            <div className="space-y-4">
-                                <BookkeepingView />
-                            </div>
-                        )}
+
                         {currentTab === "inventarier" && (
-                            <InventarierTable />
+                            <LazyInventarierTable />
                         )}
                     </div>
-                </div>
+                </main>
             </div>
         </TooltipProvider>
     )
@@ -381,21 +373,9 @@ function AccountingPageContent() {
 // Loading fallback for Suspense
 function AccountingPageLoading() {
     return (
-        <div className="flex flex-col min-h-svh">
-            <div className="px-4 pt-4">
-                <div className="w-full space-y-6 animate-pulse">
-                    {/* Stats cards */}
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-24 rounded-lg bg-muted" />
-                        ))}
-                    </div>
-                    {/* Separator */}
-                    <div className="border-b-2 border-border/60" />
-                    {/* Table */}
-                    <div className="h-96 rounded-lg bg-muted" />
-                </div>
-            </div>
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Laddar bokföring...
         </div>
     )
 }

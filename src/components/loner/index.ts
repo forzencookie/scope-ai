@@ -15,8 +15,10 @@ export {
 } from "./constants"
 
 // Tab content components
-export { LonesbeskContent } from "./lonebesked-content"
-export { AGIContent } from "@/components/skatt/agi-content"
+export { LonesbeskContent } from "./lonebesked"
+export { AGIContent } from "@/components/skatt"
 
 // Dialog components
-export { PayslipDetailsDialog } from "./payslip-details-dialog"
+export { PayslipDetailsDialog } from "./dialogs/spec"
+export { PayslipCreateDialog } from "./dialogs/lonebesked"
+export { BenefitDetailsDialog, getBenefitIcon } from "./dialogs/forman"

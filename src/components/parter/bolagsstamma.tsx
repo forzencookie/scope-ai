@@ -29,13 +29,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -43,8 +37,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { PlanMeetingDialog } from "./dialogs/plan-meeting-dialog"
-import { SendNoticeDialog } from "./dialogs/send-notice-dialog"
+import { PlanMeetingDialog } from "./dialogs/mote"
+import { SendNoticeDialog } from "./dialogs/kallelse"
 import { Label } from "@/components/ui/label"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { Progress } from "@/components/ui/progress"
@@ -215,7 +209,17 @@ export function Bolagsstamma() {
   ]
 
   if (isLoadingDocuments) {
-    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar stämmor...</div>
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="h-24 bg-muted animate-pulse" />
+          ))}
+        </div>
+        <div className="border-b-2 border-border/60" />
+        <Card className="h-96 bg-muted animate-pulse" />
+      </div>
+    )
   }
 
   return (

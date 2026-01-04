@@ -225,13 +225,23 @@ export function Styrelseprotokoll() {
   ]
 
   if (isLoadingDocuments) {
-    return <div className="p-8 text-center animate-pulse text-muted-foreground">Laddar protokoll...</div>
+    return (
+      <div className="space-y-6">
+        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Card key={i} className="h-24 bg-muted animate-pulse" />
+          ))}
+        </div>
+        <div className="border-b-2 border-border/60" />
+        <Card className="h-96 bg-muted animate-pulse" />
+      </div>
+    )
   }
 
   return (
     <div className="space-y-6">
       {/* Page Heading */}
-      <div className="flex flex-col gap-6 pt-2">
+      <div className="flex flex-col gap-6">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold tracking-tight">Styrelseprotokoll</h2>

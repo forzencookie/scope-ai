@@ -50,13 +50,10 @@ import { mockPartners, type Partner } from "@/data/ownership"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { LegalInfoCard } from "@/components/ui/legal-info-card"
 import {
-  DataTable,
-  DataTableHeader,
-  DataTableHeaderCell,
-  DataTableBody,
-  DataTableRow,
-  DataTableCell
-} from "@/components/ui/data-table"
+  GridTableHeader,
+  GridTableRow,
+  GridTableRows
+} from "@/components/ui/grid-table"
 import { AppStatusBadge, type AppStatus } from "@/components/ui/status-badge"
 import { GENERAL_STATUS_LABELS } from "@/lib/localization"
 import { useVerifications } from "@/hooks/use-verifications"
@@ -266,6 +263,17 @@ export function DelagaruttagManager() {
 
   return (
     <div className="space-y-6">
+      {/* Page Heading */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Delägaruttag</h2>
+            <p className="text-muted-foreground mt-1">
+              Hantera uttag, insättningar och löner.
+            </p>
+          </div>
+        </div>
+      </div>
       {/* Stats Overview */}
       <StatCardGrid columns={4}>
         <StatCard
@@ -498,47 +506,49 @@ export function DelagaruttagManager() {
           </div>
 
           {/* Table */}
-          <DataTable>
-            <DataTableHeader>
-              <DataTableHeaderCell label="Datum" icon={Calendar} />
-              <DataTableHeaderCell label="Delägare" icon={Users} />
-              <DataTableHeaderCell label="Typ" />
-              <DataTableHeaderCell label="Beskrivning" />
-              <DataTableHeaderCell label="Belopp" icon={Wallet} />
-              <DataTableHeaderCell label="Status" />
-              <DataTableHeaderCell label="" />
-            </DataTableHeader>
-            <DataTableBody>
+          <div>
+            <GridTableHeader
+              columns={[
+                { label: "Datum", icon: Calendar, span: 2 },
+                { label: "Delägare", icon: Users, span: 2 },
+                { label: "Typ", span: 2 },
+                { label: "Beskrivning", span: 3 },
+                { label: "Belopp", icon: Wallet, span: 1, align: 'right' },
+                { label: "Status", span: 1 },
+                { label: "", span: 1 },
+              ]}
+            />
+            <GridTableRows>
               {filteredWithdrawals.map((w) => {
                 const typeInfo = typeConfig[w.type]
                 const TypeIcon = typeInfo.icon
 
                 return (
-                  <DataTableRow key={w.id}>
-                    <DataTableCell>
+                  <GridTableRow key={w.id}>
+                    <div className="col-span-2 text-sm">
                       {formatDate(w.date)}
-                    </DataTableCell>
-                    <DataTableCell bold>
+                    </div>
+                    <div className="col-span-2 font-medium">
                       {w.partnerName}
-                    </DataTableCell>
-                    <DataTableCell>
+                    </div>
+                    <div className="col-span-2">
                       <AppStatusBadge status={typeInfo.label} />
-                    </DataTableCell>
-                    <DataTableCell muted>
+                    </div>
+                    <div className="col-span-3 text-sm text-muted-foreground truncate" title={w.description}>
                       {w.description}
-                    </DataTableCell>
-                    <DataTableCell>
+                    </div>
+                    <div className="col-span-1 text-right">
                       <span className={cn(
-                        "tabular-nums font-medium",
+                        "tabular-nums font-medium text-sm",
                         w.type === 'insättning' ? "text-green-600 dark:text-green-500/70" : "text-red-600 dark:text-red-500/70"
                       )}>
                         {w.type === 'insättning' ? '+' : '-'}{formatCurrency(w.amount)}
                       </span>
-                    </DataTableCell>
-                    <DataTableCell>
+                    </div>
+                    <div className="col-span-1">
                       <AppStatusBadge status={w.approved ? 'Godkänd' : 'Väntar'} />
-                    </DataTableCell>
-                    <DataTableCell>
+                    </div>
+                    <div className="col-span-1 flex justify-end">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                           <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -558,12 +568,12 @@ export function DelagaruttagManager() {
                           <DropdownMenuItem className="text-red-600">Ta bort</DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </DataTableCell>
-                  </DataTableRow>
+                    </div>
+                  </GridTableRow>
                 )
               })}
-            </DataTableBody>
-          </DataTable>
+            </GridTableRows>
+          </div>
 
           {filteredWithdrawals.length === 0 && (
             <div className="text-center py-8 text-muted-foreground">

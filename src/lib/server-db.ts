@@ -475,7 +475,8 @@ export const db = {
         role: 'user' | 'assistant' | 'system' | 'data',
         content: string,
         tool_calls?: any,
-        tool_results?: any
+        tool_results?: any,
+        metadata?: any
     }) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('messages').insert({
@@ -483,7 +484,8 @@ export const db = {
             role: message.role,
             content: message.content,
             tool_calls: message.tool_calls,
-            tool_results: message.tool_results
+            tool_results: message.tool_results,
+            metadata: message.metadata
         }).select().single();
 
         // Update conversation timestamp

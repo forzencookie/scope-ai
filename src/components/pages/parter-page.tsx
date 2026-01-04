@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, Suspense, useMemo } from 'react';
+import { useCallback, Suspense, useMemo, useState } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
     Tooltip,
@@ -12,8 +12,17 @@ import { cn } from '@/lib/utils';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card';
 import { useCompany } from '@/providers/company-provider';
-import { Aktiebok, Delagare, Medlemsregister, Styrelseprotokoll, Bolagsstamma, Arsmote, Firmatecknare, Myndigheter } from '@/components/parter';
-import { LazyUtdelningContent } from '@/components/shared';
+import {
+    LazyAktiebok,
+    LazyDelagare,
+    LazyUtdelning,
+    LazyMedlemsregister,
+    LazyStyrelseprotokoll,
+    LazyBolagsstamma,
+    LazyArsmote,
+    LazyFirmatecknare,
+    LazyMyndigheter,
+} from '@/components/shared';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
     Breadcrumb,
@@ -33,8 +42,12 @@ import {
     PenTool,
     Building2,
     DollarSign,
+    Plus,
+    X,
     type LucideIcon,
+    Loader2,
 } from 'lucide-react';
+
 
 // Tab configuration with feature requirements
 interface TabConfig {
@@ -121,9 +134,24 @@ function ParterPageContent() {
         return isTabAvailable ? requestedTab : (tabs[0]?.id || 'aktiebok');
     }, [searchParams, tabs]);
 
+    // State for manual tab expansion (user clicked +/-)
+    const [isManuallyExpanded, setIsManuallyExpanded] = useState(false);
+
+    // Check if current tab is in the overflow section
+    const currentTabIndex = tabs.findIndex(t => t.id === currentTab);
+    const isCurrentTabInOverflow = currentTabIndex >= 3;
+
+    // Show expanded if: user manually expanded OR current tab is in overflow
+    const shouldShowExpanded = isManuallyExpanded || isCurrentTabInOverflow;
+
     const setCurrentTab = useCallback((tab: string) => {
+        const tabIndex = tabs.findIndex(t => t.id === tab);
+        // Auto-collapse when selecting a tab in the first 3
+        if (tabIndex < 3) {
+            setIsManuallyExpanded(false);
+        }
         router.push(`/dashboard/parter?tab=${tab}`, { scroll: false });
-    }, [router]);
+    }, [router, tabs]);
 
     // If EF, show simple owner info
     if (isEF) {
@@ -143,11 +171,11 @@ function ParterPageContent() {
                         </div>
                     </div>
 
-                    <div className="bg-background px-4 py-4">
-                        <div className="w-full">
+                    <main className="flex-1 flex flex-col p-6">
+                        <div className="max-w-6xl w-full">
                             <EnskildFirmaOwnerInfo />
                         </div>
-                    </div>
+                    </main>
                 </div>
             </TooltipProvider>
         );
@@ -178,14 +206,12 @@ function ParterPageContent() {
                     <BreadcrumbAIBadge />
                 </header>
 
-                {/* Tab Content */}
-                <div className="bg-background px-4 py-4">
+                {/* Tabs */}
+                <div className="px-6 pt-4">
                     <div className="w-full">
-                        {/* Tabs */}
-                        <div className="flex items-center gap-1 pb-2 border-b-2 border-border/60 -ml-1">
-                            {tabs.map((tab) => {
+                        <div className="flex items-center gap-1 pb-2 border-b-2 border-border/60">
+                            {(shouldShowExpanded ? tabs : tabs.slice(0, 3)).map((tab) => {
                                 const isActive = currentTab === tab.id;
-
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -212,31 +238,56 @@ function ParterPageContent() {
                                 );
                             })}
 
+                            {/* Expand/Collapse Button */}
+                            {tabs.length > 3 && (
+                                <Tooltip>
+                                    <TooltipTrigger asChild>
+                                        <button
+                                            onClick={() => setIsManuallyExpanded(!shouldShowExpanded)}
+                                            className="flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                        >
+                                            {shouldShowExpanded ? (
+                                                <X className="h-4 w-4" />
+                                            ) : (
+                                                <Plus className="h-4 w-4" />
+                                            )}
+                                        </button>
+                                    </TooltipTrigger>
+                                    <TooltipContent side="bottom">
+                                        <p>{shouldShowExpanded ? 'Visa färre' : 'Visa fler'}</p>
+                                    </TooltipContent>
+                                </Tooltip>
+                            )}
+
                             <div className="ml-auto text-sm text-muted-foreground">
                                 {lastUpdated}
                             </div>
                         </div>
+                    </div>
+                </div>
 
+                {/* Tab Content */}
+                <main className="flex-1 flex flex-col p-6">
+                    <div className="max-w-6xl w-full">
                         {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
                         {!['aktiebok', 'styrelseprotokoll', 'bolagsstamma'].includes(currentTab) && (
-                            <div className="py-6">
+                            <div className="pb-6">
                                 <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
                                 <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
                             </div>
                         )}
 
-                        {/* Tab Content */}
-                        {currentTab === 'aktiebok' && <Aktiebok />}
-                        {currentTab === 'delagare' && <Delagare />}
-                        {currentTab === 'utdelning' && <LazyUtdelningContent />}
-                        {currentTab === 'medlemsregister' && <Medlemsregister />}
-                        {currentTab === 'styrelseprotokoll' && <Styrelseprotokoll />}
-                        {currentTab === 'bolagsstamma' && <Bolagsstamma />}
-                        {currentTab === 'arsmote' && <Arsmote />}
-                        {currentTab === 'firmatecknare' && <Firmatecknare />}
-                        {currentTab === 'myndigheter' && <Myndigheter />}
+                        {currentTab === 'aktiebok' && <LazyAktiebok />}
+                        {currentTab === 'delagare' && <LazyDelagare />}
+                        {currentTab === 'utdelning' && <LazyUtdelning />}
+                        {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
+                        {currentTab === 'styrelseprotokoll' && <LazyStyrelseprotokoll />}
+                        {currentTab === 'bolagsstamma' && <LazyBolagsstamma />}
+                        {currentTab === 'arsmote' && <LazyArsmote />}
+                        {currentTab === 'firmatecknare' && <LazyFirmatecknare />}
+                        {currentTab === 'myndigheter' && <LazyMyndigheter />}
                     </div>
-                </div>
+                </main>
             </div>
         </TooltipProvider>
     );
@@ -302,21 +353,9 @@ function EnskildFirmaOwnerInfo() {
 
 function ParterPageLoading() {
     return (
-        <div className="flex flex-col min-h-svh">
-            <div className="px-4 pt-4">
-                <div className="w-full space-y-6 animate-pulse">
-                    {/* Stats cards */}
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-24 rounded-lg bg-muted" />
-                        ))}
-                    </div>
-                    {/* Separator */}
-                    <div className="border-b-2 border-border/60" />
-                    {/* Table */}
-                    <div className="h-96 rounded-lg bg-muted" />
-                </div>
-            </div>
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Laddar parter...
         </div>
     );
 }

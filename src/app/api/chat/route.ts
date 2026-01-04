@@ -189,6 +189,23 @@ interface ChatResponse {
     conversationId?: string
 }
 
+// Helper to stream text
+const textEncoder = new TextEncoder()
+function streamText(controller: ReadableStreamDefaultController, text: string) {
+    if (!text) return
+    // Sanitize newlines to avoid breaking protocol (replace \n with \\n or handle in frontend?)
+    // Actually, protocol T: <content>\n means we can't have raw \n in content breaking the line.
+    // Better protocol: T:<json_string>\n
+    // Or just encode newlines? 
+    // Simple approach: Replace \n with a placeholder or just assume frontend reads until next T:?
+    // Robust approach: T:JSON.stringify(text)\n
+    controller.enqueue(textEncoder.encode(`T:${JSON.stringify(text)}\n`))
+}
+
+function streamData(controller: ReadableStreamDefaultController, data: any) {
+    controller.enqueue(textEncoder.encode(`D:${JSON.stringify(data)}\n`))
+}
+
 export async function POST(request: NextRequest) {
     try {
         if (!validateRequestOrigin(request)) {
@@ -199,37 +216,22 @@ export async function POST(request: NextRequest) {
         const rateLimitResult = await checkRateLimit(clientId, RATE_LIMIT_CONFIG)
 
         if (!rateLimitResult.success) {
-            return new Response(JSON.stringify({ error: 'Too many requests. Please try again later.', retryAfter: rateLimitResult.retryAfter }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitResult.retryAfter) } })
-        }
-
-        if (!process.env.OPENAI_API_KEY) {
-            return new Response(JSON.stringify({ error: 'Service temporarily unavailable' }), { status: 503, headers: { 'Content-Type': 'application/json' } })
+            return new Response(JSON.stringify({ error: 'Too many requests.', retryAfter: rateLimitResult.retryAfter }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitResult.retryAfter) } })
         }
 
         let body: unknown
-        try { body = await request.json() } catch { return new Response(JSON.stringify({ error: 'Invalid JSON in request body' }), { status: 400, headers: { 'Content-Type': 'application/json' } }) }
+        try { body = await request.json() } catch { return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 }) }
 
         const bodyValidation = validateJsonBody(body)
-        if (!bodyValidation.valid) {
-            return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400, headers: { 'Content-Type': 'application/json' } })
-        }
+        if (!bodyValidation.valid) return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400 })
 
-        const { messages, confirmationId, conversationId: reqConversationId, attachments } = body as {
-            messages: unknown;
-            confirmationId?: string;
-            conversationId?: string;
-            attachments?: Array<{ name: string; type: string; data: string }>
-        }
+        const { messages, confirmationId, conversationId: reqConversationId, attachments, mentions } = body as any
         const messageValidation = validateChatMessages(messages)
+        if (!messageValidation.valid || !messageValidation.data) return new Response(JSON.stringify({ error: messageValidation.error }), { status: 400 })
 
-        if (!messageValidation.valid || !messageValidation.data) {
-            return new Response(JSON.stringify({ error: messageValidation.error }), { status: 400, headers: { 'Content-Type': 'application/json' } })
-        }
-
+        // Token limit check
         const tokenValidation = validateTokenLimits(messageValidation.data)
-        if (!tokenValidation.valid) {
-            return new Response(JSON.stringify({ error: tokenValidation.error, code: 'TOKEN_LIMIT_EXCEEDED' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
-        }
+        if (!tokenValidation.valid) return new Response(JSON.stringify({ error: tokenValidation.error }), { status: 400 })
 
         const latestUserMessage = messageValidation.data[messageValidation.data.length - 1];
 
@@ -245,7 +247,11 @@ export async function POST(request: NextRequest) {
             await db.addMessage({
                 conversation_id: conversationId,
                 role: 'user',
-                content: latestUserMessage.content
+                content: latestUserMessage.content,
+                metadata: {
+                    mentions: mentions || [],
+                    attachments: attachments?.map((a: any) => ({ name: a.name, type: a.type })) || []
+                }
             });
         }
         // === PERSISTENCE END ===
@@ -254,152 +260,177 @@ export async function POST(request: NextRequest) {
         const tools = aiToolRegistry.getAll()
         const openAITools = toolsToOpenAIFunctions(tools)
 
-        // Build messages array, potentially with multi-modal content for the last message
-        const buildMessages = () => {
-            const baseMessages = messageValidation.data!.map((m, index) => {
-                // Only add attachments to the last user message
-                if (m.role === 'user' && index === messageValidation.data!.length - 1 && attachments && attachments.length > 0) {
-                    // Construct multi-modal content array
-                    const content: Array<{ type: 'text'; text: string } | { type: 'image_url'; image_url: { url: string; detail?: 'low' | 'high' | 'auto' } }> = [
-                        { type: 'text', text: m.content || 'Se bifogade filer.' }
-                    ]
+        // Build Messages (Same as before)
+        const messagesForAI = messageValidation.data!.map((m, index) => {
+            if (m.role === 'user' && index === messageValidation.data!.length - 1 && ((attachments && attachments.length > 0) || (mentions && mentions.length > 0))) {
+                const content: any[] = [{ type: 'text', text: m.content || ' ' }]
 
+                if (attachments) {
                     for (const attachment of attachments) {
                         if (attachment.type.startsWith('image/')) {
-                            // Add image as vision content
-                            content.push({
-                                type: 'image_url',
-                                image_url: {
-                                    url: `data:${attachment.type};base64,${attachment.data}`,
-                                    detail: 'auto'
-                                }
-                            })
+                            content.push({ type: 'image_url', image_url: { url: `data:${attachment.type};base64,${attachment.data}`, detail: 'auto' } })
                         } else {
-                            // For non-images, decode and add as text context
                             try {
                                 const textContent = Buffer.from(attachment.data, 'base64').toString('utf-8')
-                                content.push({
-                                    type: 'text',
-                                    text: `\n\n[Bifogad fil: ${attachment.name}]\n${textContent.slice(0, 2000)}${textContent.length > 2000 ? '...(trunkerad)' : ''}`
-                                })
+                                content.push({ type: 'text', text: `\n\n[Bifogad fil: ${attachment.name}]\n${textContent.slice(0, 2000)}` })
                             } catch {
-                                content.push({
-                                    type: 'text',
-                                    text: `[Bifogad fil: ${attachment.name} (kunde inte läsas)]`
-                                })
+                                content.push({ type: 'text', text: `[Bifogad fil: ${attachment.name} (kunde inte läsas)]` })
+                            }
+                        }
+                    }
+                }
+
+                if (mentions && mentions.length > 0) {
+                    const mentionsText = mentions.map((m: any) => m.type === 'page' ? `Active Page: ${m.label} (${m.pageType})` : `Mention: ${m.label}`).join('\n')
+                    content.push({ type: 'text', text: `\n\n[Context]\n${mentionsText}` })
+                }
+                return { role: m.role, content }
+            }
+            return m
+        })
+
+        // Create Stream
+        const stream = new ReadableStream({
+            async start(controller) {
+                // Buffer for DB persistence
+                let fullContent = ''
+                let allToolResults: any[] = []
+                let finalToolCalls: any[] = []
+
+                try {
+                    const aiStream = await openai.chat.completions.create({
+                        model: 'gpt-4o-mini',
+                        messages: [
+                            { role: 'system', content: SYSTEM_PROMPT },
+                            ...messagesForAI as any
+                        ],
+                        tools: openAITools.length > 0 ? openAITools : undefined,
+                        tool_choice: openAITools.length > 0 ? 'auto' : undefined,
+                        temperature: 0.7,
+                        max_tokens: 1500,
+                        stream: true,
+                    })
+
+                    const toolCallsBuffer: Record<number, any> = {}
+
+                    for await (const chunk of aiStream) {
+                        const delta = chunk.choices[0]?.delta
+                        if (!delta) continue
+
+                        // Stream Text
+                        if (delta.content) {
+                            fullContent += delta.content
+                            streamText(controller, delta.content)
+                        }
+
+                        // Accumulate Tool Calls
+                        if (delta.tool_calls) {
+                            for (const tc of delta.tool_calls) {
+                                const index = tc.index
+                                if (!toolCallsBuffer[index]) {
+                                    toolCallsBuffer[index] = { ...tc, function: { name: '', arguments: '' } }
+                                }
+                                if (tc.function?.name) toolCallsBuffer[index].function.name += tc.function.name
+                                if (tc.function?.arguments) toolCallsBuffer[index].function.arguments += tc.function.arguments
+                                if (tc.id) toolCallsBuffer[index].id = tc.id
+                                if (tc.type) toolCallsBuffer[index].type = tc.type
                             }
                         }
                     }
 
-                    return { role: m.role, content }
+                    // Process Tool Calls if any
+                    const toolCalls = Object.values(toolCallsBuffer)
+                    if (toolCalls.length > 0) {
+                        finalToolCalls = toolCalls
+                        // We have tool calls. Execute them.
+                        // Can't stream intermediate status easily unless we introduce new protocol events.
+                        // For now we just execute and send result.
+
+                        const toolResults: Array<{ toolName: string; result: AIToolResult }> = []
+                        let display: AIDisplayInstruction | undefined
+                        let navigation: AINavigationInstruction | undefined
+                        let confirmationRequired: AIConfirmationRequest | undefined
+
+                        for (const toolCall of toolCalls) {
+                            if (toolCall.type !== 'function') continue
+                            const funcCall = toolCall
+                            const toolName = funcCall.function.name
+                            let params: unknown
+                            try { params = JSON.parse(funcCall.function.arguments) } catch { params = {} }
+
+                            // Maybe stream a "Thinking" update here?
+                            // streamText(controller, `\n\n(Kör verktyg: ${toolName}...)`)
+
+                            const result = await aiToolRegistry.execute(toolName, params, { confirmationId, userId: 'user-1' })
+                            toolResults.push({ toolName, result })
+
+                            if (result.display && !display) display = result.display
+                            if (result.navigation && !navigation) navigation = result.navigation
+                            if (result.confirmationRequired && !confirmationRequired) confirmationRequired = result.confirmationRequired
+
+                            // Append tool output to content for history/context
+                            if (result.message) {
+                                const msg = `\n\n${result.message}`
+                                fullContent += msg
+                                streamText(controller, msg)
+                            }
+                            if (result.error) {
+                                const msg = `\n\n⚠️ ${result.error}`
+                                fullContent += msg
+                                streamText(controller, msg)
+                            }
+                        }
+
+                        // Send Data Packet
+                        allToolResults = toolResults
+                        if (display || navigation || confirmationRequired) {
+                            if (confirmationRequired) {
+                                const msg = '\n\n👆 Granska informationen ovan och bekräfta för att fortsätta.'
+                                fullContent += msg
+                                streamText(controller, msg)
+                            }
+
+                            streamData(controller, {
+                                display,
+                                navigation,
+                                confirmationRequired,
+                                toolResults // for debugging/history
+                            })
+                        }
+                    }
+
+                } catch (error: any) {
+                    console.error("Streaming error:", error)
+                    const errorMsg = "\n\nEtt fel uppstod vid generering."
+                    fullContent += errorMsg
+                    streamText(controller, errorMsg)
+                } finally {
+                    // === PERSISTENCE: Save AI Response ===
+                    if (conversationId && fullContent) {
+                        // Fire and forget persistence? No, we should ensure it saves.
+                        // But we don't want to delay closing stream?
+                        // Just await it.
+                        try {
+                            await db.addMessage({
+                                conversation_id: conversationId,
+                                role: 'assistant',
+                                content: fullContent,
+                                tool_calls: finalToolCalls.length > 0 ? finalToolCalls : undefined,
+                                tool_results: allToolResults.length > 0 ? allToolResults : undefined
+                            })
+                        } catch (e) {
+                            console.error("Failed to save message", e)
+                        }
+                    }
+                    controller.close()
                 }
-                return m
-            })
-            return baseMessages
-        }
-
-        const messagesForAI = buildMessages()
-
-        let response
-        try {
-            response = await openai.chat.completions.create({
-                model: 'gpt-4o-mini',
-                messages: [
-                    { role: 'system', content: SYSTEM_PROMPT },
-                    ...messagesForAI as any
-                ],
-                tools: openAITools.length > 0 ? openAITools : undefined,
-                tool_choice: openAITools.length > 0 ? 'auto' : undefined,
-                temperature: 0.7,
-                max_tokens: 1500,
-            })
-        } catch (error) {
-            return handleOpenAIError(error)
-        }
-
-        const choice = response.choices[0]
-        const message = choice.message
-
-        if (message.tool_calls && message.tool_calls.length > 0) {
-            const toolResults: Array<{ toolName: string; result: AIToolResult }> = []
-            let display: AIDisplayInstruction | undefined
-            let navigation: AINavigationInstruction | undefined
-            let confirmationRequired: AIConfirmationRequest | undefined
-
-            for (const toolCall of message.tool_calls) {
-                if (toolCall.type !== 'function') continue
-                const funcCall = toolCall as { type: 'function'; function: { name: string; arguments: string } }
-                const toolName = funcCall.function.name
-                let params: unknown
-                try { params = JSON.parse(funcCall.function.arguments) } catch { params = {} }
-
-                const result = await aiToolRegistry.execute(toolName, params, { confirmationId, userId: 'user-1' })
-                toolResults.push({ toolName, result })
-
-                if (result.display && !display) display = result.display
-                if (result.navigation && !navigation) navigation = result.navigation
-                if (result.confirmationRequired && !confirmationRequired) confirmationRequired = result.confirmationRequired
             }
+        })
 
-            let responseContent = message.content || ''
-            for (const { toolName, result } of toolResults) {
-                if (result.message) {
-                    if (responseContent) responseContent += '\n\n'
-                    responseContent += result.message
-                }
-                if (result.error) {
-                    if (responseContent) responseContent += '\n\n'
-                    responseContent += `⚠️ ${result.error}`
-                }
-            }
-            if (confirmationRequired) {
-                if (responseContent) responseContent += '\n\n'
-                responseContent += '👆 Granska informationen ovan och bekräfta för att fortsätta.'
-            }
-
-            // === PERSISTENCE: Save AI Response ===
-            if (conversationId) {
-                await db.addMessage({
-                    conversation_id: conversationId,
-                    role: 'assistant',
-                    content: responseContent,
-                    tool_calls: message.tool_calls,
-                    tool_results: toolResults
-                });
-            }
-
-            const chatResponse: ChatResponse = {
-                content: responseContent,
-                conversationId,
-                toolResults,
-                display,
-                navigation,
-                confirmationRequired,
-            }
-
-            return new Response(JSON.stringify(chatResponse), { headers: { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': String(rateLimitResult.remaining), 'X-RateLimit-Reset': String(rateLimitResult.resetTime) } })
-        }
-
-        const responseContent = message.content || ''
-
-        // === PERSISTENCE: Save Simple Response ===
-        if (conversationId) {
-            await db.addMessage({
-                conversation_id: conversationId,
-                role: 'assistant',
-                content: responseContent
-            });
-        }
-
-        const chatResponse: ChatResponse = {
-            content: responseContent,
-            conversationId
-        }
-
-        return new Response(JSON.stringify(chatResponse), { headers: { 'Content-Type': 'application/json', 'X-RateLimit-Remaining': String(rateLimitResult.remaining), 'X-RateLimit-Reset': String(rateLimitResult.resetTime) } })
+        return new Response(stream, { headers: { 'Content-Type': 'text/plain; charset=utf-8' } })
 
     } catch (error) {
         console.error('Chat API error:', error)
-        return new Response(JSON.stringify({ error: 'An unexpected error occurred. Please try again.' }), { status: 500, headers: { 'Content-Type': 'application/json' } })
+        return new Response(JSON.stringify({ error: 'An unexpected error occurred.' }), { status: 500 })
     }
 }

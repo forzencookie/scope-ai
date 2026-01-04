@@ -28,6 +28,8 @@ import {
     Building2,
     Bird,
     Calendar,
+    TrendingUp,
+    TrendingDown,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Card } from "@/components/ui/card"
@@ -103,8 +105,8 @@ const searchItems: SearchItem[] = [
     { id: "7", title: "Inkomstdeklaration", titleEnkel: "Skatterapport", description: "Inkomstskatt", icon: <Send className="h-4 w-4" />, href: "/dashboard/skatt?tab=inkomstdeklaration", category: "Skatt", feature: "inkomstdeklaration", colorClass: categoryColors["Skatt"] },
     { id: "new-4", title: "AGI", titleEnkel: "Arbetsgivardeklaration", description: "Arbetsgivardeklaration på individnivå", icon: <FileStack className="h-4 w-4" />, href: "/dashboard/skatt?tab=agi", category: "Skatt", feature: "agi", colorClass: categoryColors["Skatt"] },
     { id: "k10", title: "K10", titleEnkel: "K10", description: "Blankett K10 - gränsbelopp för utdelning", icon: <FileText className="h-4 w-4" />, href: "/dashboard/skatt?tab=k10", category: "Skatt", feature: "k10", colorClass: categoryColors["Skatt"] },
-    { id: "8", title: "Årsredovisning", titleEnkel: "Årssammanställning", description: "Årsredovisning", icon: <Bird className="h-4 w-4" />, href: "/dashboard/rapporter?tab=arsredovisning", category: "Rapporter", feature: "arsredovisning", colorClass: categoryColors["Rapporter"] },
-    { id: "9", title: "Årsbokslut", titleEnkel: "Bokslut", description: "Årsbokslut", icon: <FileText className="h-4 w-4" />, href: "/dashboard/rapporter?tab=arsbokslut", category: "Rapporter", feature: "arsbokslut", colorClass: categoryColors["Rapporter"] },
+    { id: "8", title: "Årsredovisning", titleEnkel: "Årssammanställning", description: "Årsredovisning", icon: <Bird className="h-4 w-4" />, href: "/dashboard/skatt?tab=arsredovisning", category: "Skatt", feature: "arsredovisning", colorClass: categoryColors["Skatt"] },
+    { id: "9", title: "Årsbokslut", titleEnkel: "Bokslut", description: "Årsbokslut", icon: <FileText className="h-4 w-4" />, href: "/dashboard/skatt?tab=arsbokslut", category: "Skatt", feature: "arsbokslut", colorClass: categoryColors["Skatt"] },
 
     // Löner (Pink) - Conditional
     { id: "10", title: "Lönebesked", titleEnkel: "Lönebesked", description: "Hantera löner", icon: <PiggyBank className="h-4 w-4" />, href: "/dashboard/loner?tab=lonebesked", category: "Löner", feature: "lonebesked", colorClass: categoryColors["Löner"] },

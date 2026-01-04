@@ -16,6 +16,17 @@ const DEFAULT_MESSAGES = [
     "Snart klar..."
 ]
 
+// Bouncing dots component
+function BouncingDots() {
+    return (
+        <span className="inline-flex items-end gap-0.5 ml-0.5 h-[1em] pb-[0.15em]">
+            <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:-0.3s]" />
+            <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:-0.15s]" />
+            <span className="w-1 h-1 bg-current rounded-full animate-bounce" />
+        </span>
+    )
+}
+
 export function AiProcessingState({
     messages = DEFAULT_MESSAGES,
     subtext,
@@ -30,19 +41,20 @@ export function AiProcessingState({
         return () => clearInterval(interval)
     }, [messages])
 
+    // Remove trailing "..." from message since we'll show bouncing dots
+    const displayMessage = messages[messageIndex].replace(/\.{3}$/, '')
+
     return (
-        <div className={cn("flex flex-col items-center justify-center py-12 gap-6", className)}>
-            <div className="h-16 w-16 rounded-full border-4 border-muted border-t-primary animate-spin" />
-            <div className="text-center space-y-2">
-                <h3 className="font-semibold text-lg animate-in fade-in slide-in-from-bottom-2 duration-300 key={messageIndex}">
-                    {messages[messageIndex]}
-                </h3>
-                {subtext && (
-                    <p className="text-sm text-muted-foreground max-w-[250px] mx-auto">
-                        {subtext}
-                    </p>
-                )}
-            </div>
+        <div className={cn("flex items-center py-3", className)}>
+            <p className="text-sm text-muted-foreground animate-in fade-in duration-300">
+                {displayMessage}
+                <BouncingDots />
+            </p>
+            {subtext && (
+                <p className="text-xs text-muted-foreground/70 ml-2">
+                    {subtext}
+                </p>
+            )}
         </div>
     )
 }

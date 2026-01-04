@@ -22,6 +22,7 @@ import {
     PiggyBank,
     Captions,
     LayoutGrid,
+    Scale,
 } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
@@ -115,3 +116,4 @@ export const navSettings: NavItem[] = [
         icon: Captions,
     },
 ]
+

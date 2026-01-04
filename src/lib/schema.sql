@@ -44,6 +44,7 @@ create table if not exists transactions (
   created_at timestamptz default now()
 );
 
+
 -- Receipts (Kvitton)
 create table if not exists receipts (
   id text primary key,
@@ -56,6 +57,24 @@ create table if not exists receipts (
   status text default 'mottagen', -- 'mottagen', 'behandlas', 'bokförd'
   image_url text,
   linked_transaction_id text references transactions(id),
+  created_at timestamptz default now()
+);
+
+-- Customer Invoices (Kundfakturor)
+create table if not exists customer_invoices (
+  id text primary key,
+  company_id text references companies(id) default 'demo-company',
+  invoice_number text,
+  customer_name text not null,
+  customer_email text,
+  amount numeric(20, 2) not null, -- Excl VAT
+  vat_amount numeric(20, 2),
+  total_amount numeric(20, 2) not null, -- Incl VAT
+  due_date date,
+  issue_date date,
+  status text default 'utkast', -- 'utkast', 'skickad', 'betald', 'förfallen'
+  ocr text,
+  document_url text,
   created_at timestamptz default now()
 );
 
@@ -86,6 +105,20 @@ create table if not exists verifications (
   description text not null,
   rows jsonb not null, -- Array of { account, debit, credit }
   created_at timestamptz default now()
+);
+
+-- Inventarier (Fixed Assets / Tillgångar)
+create table if not exists inventarier (
+  id text primary key,
+  company_id text references companies(id) default 'demo-company',
+  namn text not null,                        -- Asset name
+  kategori text default 'Inventarier',       -- Category (Datorer, Möbler, etc.)
+  inkopsdatum date,                          -- Purchase date
+  inkopspris numeric(20, 2) not null,        -- Purchase price
+  livslangd_ar integer default 5,            -- Useful life in years
+  anteckningar text,                         -- Notes
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
 );
 
 -- =============================================================================
@@ -299,6 +332,9 @@ create policy "Access own company receipts" on receipts
   for all using (is_company_member(company_id));
 
 create policy "Access own company supplier_invoices" on supplier_invoices
+  for all using (is_company_member(company_id));
+
+create policy "Access own company customer_invoices" on customer_invoices
   for all using (is_company_member(company_id));
 
 create policy "Access own company verifications" on verifications

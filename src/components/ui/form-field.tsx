@@ -30,10 +30,14 @@ interface FormFieldBaseProps {
     disabled?: boolean
     /** Additional className for wrapper */
     className?: string
+    /** Suffix text (e.g. "kr", "mil", "kvm") */
+    suffix?: string
+    /** Extra text next to label (e.g. "Max 5 000 kr/år") */
+    labelExtra?: string
 }
 
 interface TextFieldProps extends FormFieldBaseProps {
-    type: "text" | "email" | "password" | "number" | "date" | "tel" | "url"
+    type: "text" | "email" | "password" | "number" | "date" | "month" | "tel" | "url"
     value: string
     onChange: (value: string) => void
     placeholder?: string
@@ -77,17 +81,22 @@ export function FormField(props: FormFieldProps) {
 
     return (
         <div className={cn("grid gap-2", className)}>
-            <Label
-                htmlFor={fieldId}
-                className={cn(
-                    "flex items-center gap-2",
-                    error && "text-destructive"
+            <div className="flex items-center justify-between">
+                <Label
+                    htmlFor={fieldId}
+                    className={cn(
+                        "flex items-center gap-2",
+                        error && "text-destructive"
+                    )}
+                >
+                    {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
+                    {label}
+                    {required && <span className="text-destructive">*</span>}
+                </Label>
+                {props.labelExtra && (
+                    <span className="text-xs text-muted-foreground">{props.labelExtra}</span>
                 )}
-            >
-                {Icon && <Icon className="h-3.5 w-3.5 text-muted-foreground" />}
-                {label}
-                {required && <span className="text-destructive">*</span>}
-            </Label>
+            </div>
 
             {props.type === "textarea" ? (
                 <Textarea
@@ -117,15 +126,22 @@ export function FormField(props: FormFieldProps) {
                     </SelectContent>
                 </Select>
             ) : (
-                <Input
-                    id={fieldId}
-                    type={props.type}
-                    value={props.value}
-                    onChange={(e) => props.onChange(e.target.value)}
-                    placeholder={props.placeholder}
-                    disabled={disabled}
-                    className={cn(error && "border-destructive")}
-                />
+                <div className="relative">
+                    <Input
+                        id={fieldId}
+                        type={props.type}
+                        value={props.value}
+                        onChange={(e) => props.onChange(e.target.value)}
+                        placeholder={props.placeholder}
+                        disabled={disabled}
+                        className={cn(error && "border-destructive", props.suffix && "pr-12")}
+                    />
+                    {props.suffix && (
+                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                            {props.suffix}
+                        </span>
+                    )}
+                </div>
             )}
 
             {error && (

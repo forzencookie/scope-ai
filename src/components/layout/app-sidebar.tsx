@@ -3,9 +3,8 @@
 import * as React from "react"
 import { Sparkles, PanelLeft, type LucideIcon } from "lucide-react"
 
-import { NavMain, NavSettings, NavUser, NavAIConversations } from "./sidebar-nav"
-import { AdaptiveNavMain } from "./adaptive-nav"
-import { TeamSwitcher } from "./team-switcher"
+import { NavMain, NavSettings, NavAIConversations } from "./sidebar-nav"
+import { UserTeamSwitcher } from "./user-team-switcher"
 import {
   Sidebar,
   SidebarContent,
@@ -109,7 +108,7 @@ export function AppSidebar({
     <>
       <Sidebar collapsible="icon" {...props}>
         <SidebarHeader>
-          <TeamSwitcher teams={mockTeams} />
+          <UserTeamSwitcher user={mockUser} teams={mockTeams} />
         </SidebarHeader>
         <SidebarContent>
           <NavMain items={navPlatform} />
@@ -117,7 +116,6 @@ export function AppSidebar({
         </SidebarContent>
         <SidebarFooter>
           <NavSettings items={navSettings} onSettingsClick={() => setSettingsOpen(true)} />
-          <NavUser user={mockUser} />
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>

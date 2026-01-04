@@ -1,44 +1,21 @@
-// Bokföring Components - Consolidated from accounting, transactions, revenue, invoices, expenses, assets
+// Bokforing - Main exports (cleaned up)
 
-// Original accounting exports
-export { Huvudbok } from "./huvudbok"
-export { JournalCalendar } from "./journal-calendar"
-export { VerifikationerTable } from "./verifikationer-table"
-export { Calendar } from "./calendar"
-export { BookkeepingView } from "./bookkeeping-view"
+// Core views
 
-// From transactions/
-export { TransactionsTable } from "./table"
-export { BookingDialog } from "./BookingDialog"
-export { AIBookingChat } from "./AIBookingChat"
-export { TransactionsToolbar } from "./TransactionsToolbar"
-export {
-    ICON_MAP,
-    TransactionRow,
-    TransactionsEmptyState,
-    NewTransactionDialog,
-    TransactionDetailsDialog,
-} from "./components"
-export type { TransactionRowProps } from "./components"
+export { UnifiedInvoicesView, UnifiedInvoicesView as InvoicesTable } from "./fakturor"
+export { ReceiptsTable } from "./kvitton"
+export { TransactionsTable } from "./transaktioner"
+export { InventarierTable } from "./inventarier"
 
-// From revenue/ (invoices table & kanban)
-export { InvoicesTable } from "./invoices-table"
-export { InvoicesKanban } from "./invoices-kanban"
-export { InvoiceCreateDialog } from "./invoice-create-dialog"
-export { InvoiceDocument } from "./invoice-document"
-export { InvoiceSummaryPanel } from "./invoice-summary-panel"
-export { InvoicesDashboardLayout } from "./invoices-dashboard-layout"
+// Shared transaction components
+// Shared constants
+export { ICON_MAP } from "./constants"
 
-// From invoices/
-export { UnifiedInvoicesView } from "./unified-invoices-view"
 
-// From expenses/
-export { ReceiptsTable } from "./receipts-table"
-export { LeverantorsfakturorTable } from "./leverantorsfakturor-table"
-export { ReceiptDocument } from "./receipt-document"
-export { SupplierInvoiceDialog } from "./supplier-invoice-dialog"
-export { SupplierInvoicesKanban } from "./supplier-invoices-kanban"
-export { UnderlagDialog } from "./underlag-dialog"
-
-// From assets/
-export { InventarierTable } from "./inventarier-table"
+// Dialogs
+export { BookingDialog, type BookingData } from "./dialogs/bokforing"
+export { InvoiceCreateDialog } from "./dialogs/faktura"
+export { SupplierInvoiceDialog } from "./dialogs/leverantor"
+export { UnderlagDialog } from "./dialogs/underlag"
+export { VerifikationDialog } from "./dialogs/verifikation"
+export { TinkPaymentDialog } from "./dialogs/betalning"

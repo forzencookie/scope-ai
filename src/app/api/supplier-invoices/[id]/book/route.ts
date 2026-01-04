@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { db } from '@/lib/server-db'
-import type { BookingData } from '@/components/bokforing/BookingDialog'
+import type { BookingData } from '@/components/bokforing/dialogs/bokforing'
 
 export async function POST(
     request: Request,

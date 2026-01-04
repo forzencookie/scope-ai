@@ -3,11 +3,11 @@
 import * as React from "react"
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover"
-import { FileText, Receipt, CreditCard, ScrollText, Building2 } from "lucide-react"
+import { FileText, Receipt, CreditCard, ScrollText, Building2, LayoutGrid } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 // Types for mentionable entities
-export type MentionCategory = "faktura" | "kvitto" | "transaktion" | "konto" | "leverantor"
+export type MentionCategory = "faktura" | "kvitto" | "transaktion" | "konto" | "leverantor" | "page"
 
 export interface MentionItem {
     id: string
@@ -15,6 +15,8 @@ export interface MentionItem {
     label: string
     sublabel?: string
     data?: Record<string, unknown>
+    /** For page mentions, the page type identifier */
+    pageType?: string
 }
 
 interface MentionPopoverProps {
@@ -33,6 +35,7 @@ const categoryIcons: Record<MentionCategory, typeof FileText> = {
     transaktion: CreditCard,
     konto: ScrollText,
     leverantor: Building2,
+    page: LayoutGrid,
 }
 
 const categoryLabels: Record<MentionCategory, string> = {
@@ -41,6 +44,7 @@ const categoryLabels: Record<MentionCategory, string> = {
     transaktion: "Transaktioner",
     konto: "Konton",
     leverantor: "Leverantörer",
+    page: "Sidor",
 }
 
 export function MentionPopover({
@@ -59,6 +63,7 @@ export function MentionPopover({
             transaktion: [],
             konto: [],
             leverantor: [],
+            page: [],
         }
 
         items.forEach(item => {

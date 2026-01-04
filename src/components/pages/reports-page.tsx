@@ -27,29 +27,22 @@ import {
     TrendingUp,
     Scale,
     Origami,
+    Loader2,
 } from "lucide-react"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
 import { useLastUpdated } from "@/hooks/use-last-updated"
 
-// Import extracted tab content components
+// Lazy loaded tab content components
 import {
-    MomsdeklarationContent,
-    InkomstdeklarationContent,
-    ArsredovisningContent,
-    ArsbokslutContent,
-} from "@/components/skatt"
-import {
-    ResultatrakningContent,
-    BalansrakningContent,
-} from "@/components/rapporter/financial-statements"
+    LazyResultatrakning,
+    LazyBalansrakning,
+} from "@/components/shared"
 
 // Tab configuration with feature keys for filtering
 const tabs: Array<{ id: string; label: string; color: string; feature: FeatureKey }> = [
     { id: "resultatrakning", label: "Resultaträkning", color: "bg-green-500", feature: "arsredovisning" },
     { id: "balansrakning", label: "Balansräkning", color: "bg-blue-500", feature: "arsredovisning" },
-    { id: "arsredovisning", label: "Årsredovisning", color: "bg-purple-500", feature: "arsredovisning" },
-    { id: "arsbokslut", label: "Årsbokslut", color: "bg-amber-500", feature: "arsbokslut" },
 ]
 
 function ReportsPageContent() {
@@ -94,9 +87,9 @@ function ReportsPageContent() {
                 </header>
 
                 {/* Tabs */}
-                <div className="px-4 pt-4">
+                <div className="px-6 pt-4">
                     <div className="w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 -ml-1">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
 
@@ -135,12 +128,9 @@ function ReportsPageContent() {
 
                 {/* Tab Content */}
                 <div className="bg-background">
-                    {currentTab === "resultatrakning" && <ResultatrakningContent />}
-                    {currentTab === "balansrakning" && <BalansrakningContent />}
-                    {currentTab === "momsdeklaration" && <MomsdeklarationContent />}
-                    {currentTab === "inkomstdeklaration" && <InkomstdeklarationContent />}
-                    {currentTab === "arsredovisning" && <ArsredovisningContent />}
-                    {currentTab === "arsbokslut" && <ArsbokslutContent />}
+                    {currentTab === "resultatrakning" && <LazyResultatrakning />}
+                    {currentTab === "balansrakning" && <LazyBalansrakning />}
+
                 </div>
             </div>
         </TooltipProvider>
@@ -149,24 +139,9 @@ function ReportsPageContent() {
 
 function ReportsPageLoading() {
     return (
-        <div className="flex flex-col min-h-svh">
-            <div className="px-4 pt-4">
-                <div className="w-full space-y-6 animate-pulse">
-                    {/* Stats cards */}
-                    <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-                        {[1, 2, 3, 4].map((i) => (
-                            <div key={i} className="h-24 rounded-lg bg-muted" />
-                        ))}
-                    </div>
-                    {/* Chart areas */}
-                    <div className="grid grid-cols-2 gap-6">
-                        <div className="h-48 rounded-lg bg-muted" />
-                        <div className="h-48 rounded-lg bg-muted" />
-                    </div>
-                    {/* Bottom section */}
-                    <div className="h-32 rounded-lg bg-muted" />
-                </div>
-            </div>
+        <div className="flex h-64 items-center justify-center text-muted-foreground">
+            <Loader2 className="mr-2 h-6 w-6 animate-spin" />
+            Laddar rapporter...
         </div>
     )
 }
