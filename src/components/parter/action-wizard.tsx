@@ -12,6 +12,7 @@ import {
     Plus,
     Minus,
 } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
@@ -29,7 +30,7 @@ import { corporateActionTypeMeta } from "@/types/events"
 import { useCompliance, type Shareholder } from "@/hooks/use-compliance"
 
 // Icon mapping for corporate action types
-const actionIcons: Record<CorporateActionType, React.ElementType> = {
+const actionIcons: Record<CorporateActionType, LucideIcon> = {
     board_change: Users,
     dividend: Coins,
     capital_change: TrendingUp,

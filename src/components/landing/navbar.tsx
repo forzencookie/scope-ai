@@ -32,7 +32,7 @@ export function Navbar() {
           </Link>
           <Link
             href="/register"
-            className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors"
+            className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors"
           >
             Kom igång
           </Link>

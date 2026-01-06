@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check } from "lucide-react"
+import type { LucideIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -32,7 +33,7 @@ interface UserTeamSwitcherProps {
     user: { name: string; email: string; avatar: string }
     teams: {
         name: string
-        logo: React.ElementType
+        logo: LucideIcon
         plan: string
     }[]
 }

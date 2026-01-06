@@ -186,7 +186,9 @@ export function BenefitsTab() {
         totalCost: 0,
         employeesWithBenefits: 0,
         totalEmployees: 10,
-        unusedPotential: 0
+        unusedPotential: 0,
+        totalBenefits: 0,
+        activeBenefits: 0
     })
 
     useEffect(() => {

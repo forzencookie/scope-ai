@@ -16,7 +16,7 @@ export interface Message {
     mentions?: MentionItem[]
     // Structured data for AI cards
     display?: {
-        type: 'ReceiptCard' | 'TransactionCard' | 'TaskChecklist' | 'ReceiptsTable'
+        type: 'ReceiptCard' | 'TransactionCard' | 'TaskChecklist' | 'ReceiptsTable' | 'ActivityCard' | 'ComparisonTable'
         data: any
     }
     confirmationRequired?: {

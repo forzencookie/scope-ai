@@ -11,6 +11,7 @@ import {
     User,
     ChevronRight,
 } from 'lucide-react';
+import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
@@ -30,7 +31,7 @@ const mockSignatoryOptions: SignatoryOption[] = [
     { id: '3', name: 'Maria Magnusson', email: 'maria@company.se', role: 'Ledamot' },
 ];
 
-const statusConfig: Record<SignatureStatus, { label: string; colorClass: string; bgClass: string; icon: React.ElementType }> = {
+const statusConfig: Record<SignatureStatus, { label: string; colorClass: string; bgClass: string; icon: LucideIcon }> = {
     pending: {
         label: 'Väntar',
         colorClass: 'text-amber-700 dark:text-amber-400',

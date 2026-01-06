@@ -84,10 +84,7 @@ function RegisterContent() {
         setError(null)
 
         try {
-            const { error } = await signUp(email, password, {
-                full_name: name,
-                company_name: companyName
-            })
+            const { error } = await signUp(email, password)
             if (error) {
                 setError(error.message)
             } else {

@@ -20,6 +20,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import type { LucideIcon } from 'lucide-react';
 import type { CorporateDocumentType, SignatureStatus } from '@/types/documents';
 
 // Mock document data
@@ -62,7 +63,7 @@ const documentTypeMeta: Record<CorporateDocumentType, { label: string; colorClas
     },
 };
 
-const signatureStatusConfig: Record<string, { label: string; colorClass: string; bgClass: string; icon: React.ElementType }> = {
+const signatureStatusConfig: Record<string, { label: string; colorClass: string; bgClass: string; icon: LucideIcon }> = {
     none: {
         label: 'Inga signaturer',
         colorClass: 'text-gray-600 dark:text-gray-400',

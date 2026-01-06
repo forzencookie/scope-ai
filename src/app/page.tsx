@@ -1,11 +1,8 @@
 import {
   Navbar,
   Hero,
-  SocialProof,
-  BentoGrid,
-  IntegrationMesh,
-  Analytics,
-  Testimonials,
+  CoreFeatures,
+  Vision,
   Pricing,
   Footer,
 } from "@/components/landing"
@@ -27,23 +24,16 @@ export default function ScopeLandingPage() {
         {/* Navbar */}
         <Navbar />
 
-        {/* Hero - isolated card */}
+        {/* Hero - AI demo showcase */}
         <Hero />
 
-        {/* Social proof */}
-        <SocialProof />
+        {/* Core Features - Cal.com-style cards with dashboard previews */}
+        <CoreFeatures />
 
-        {/* Features - isolated cards */}
-        <BentoGrid />
 
-        {/* Integrations */}
-        <IntegrationMesh />
 
-        {/* Analytics */}
-        <Analytics />
-
-        {/* Testimonials */}
-        <Testimonials />
+        {/* Vision & Roadmap (honest about what's ready vs coming soon) */}
+        <Vision />
 
         {/* Pricing */}
         <Pricing />

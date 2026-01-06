@@ -7,10 +7,13 @@ export type { BadgeStatus } from "./ui"
 // Components
 export { Navbar } from "./navbar"
 export { Hero } from "./hero"
-export { SocialProof as SocialProofSection } from "./ui" // Verify if SocialProof was used from UI or if it needs a separate file. It was in ui.tsx.
-export { BentoGrid } from "./bento-grid"
+export { CoreFeatures } from "./core-features"
+
 export { IntegrationMesh } from "./integration-mesh"
 export { Analytics } from "./analytics"
+export { Vision } from "./vision"
 export { Testimonials } from "./testimonials"
 export { Pricing } from "./pricing"
 export { Footer } from "./footer"
+
+

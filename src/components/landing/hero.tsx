@@ -289,7 +289,7 @@ export function Hero() {
             {/* CTA Button */}
             <Link
               href="/register"
-              className="h-12 px-8 bg-stone-900 text-white rounded-full flex items-center gap-2 font-medium hover:bg-stone-800 transition-colors"
+              className="h-12 px-8 bg-stone-900 text-white rounded-lg flex items-center gap-2 font-medium hover:bg-stone-800 transition-colors"
             >
               Kom igång gratis
               <ArrowRight className="w-4 h-4" />
@@ -372,291 +372,294 @@ export function Hero() {
                 ))}
               </div>
 
-              <div className="bg-white rounded-3xl shadow-2xl shadow-stone-200/50 p-6 flex flex-col h-[560px] relative overflow-hidden">
-                {/* Cursor */}
-                {showCursor && (
-                  <DemoCursor x={cursorPos.x} y={cursorPos.y} clicking={clicking} />
-                )}
-
-                {/* Welcome State - Greeting (fades when user starts) */}
-                <AnimatePresence>
-                  {showGreeting && (
-                    <motion.div
-                      initial={{ opacity: 1 }}
-                      exit={{ opacity: 0 }}
-                      transition={{ duration: 0.3 }}
-                      className="absolute inset-0 flex flex-col items-center justify-center p-6"
-                    >
-                      {/* Scope Logo */}
-                      <div className="w-12 h-12 bg-stone-900 rounded-full flex items-center justify-center mb-6">
-                        <div className="w-5 h-5 bg-white rounded-sm" />
-                      </div>
-                      {/* Greeting */}
-                      <p className="text-xl text-stone-600 text-center max-w-sm">
-                        God eftermiddag! Vad vill du att jag hjälper dig med idag?
-                      </p>
-                    </motion.div>
+              {/* Outer border layer for visual depth */}
+              <div className="bg-stone-200/50 rounded-[28px] p-2 border-2 border-stone-300/60">
+                <div className="bg-white rounded-3xl p-6 flex flex-col h-[560px] relative overflow-hidden border border-stone-200/60">
+                  {/* Cursor */}
+                  {showCursor && (
+                    <DemoCursor x={cursorPos.x} y={cursorPos.y} clicking={clicking} />
                   )}
-                </AnimatePresence>
 
-                {/* Chat Messages - visible after greeting fades */}
-                <div className={`flex flex-col gap-3 flex-1 transition-opacity duration-300 ${showGreeting ? 'opacity-0' : 'opacity-100'}`}>
-                  {/* User Message - only visible in first round (before comment sent) */}
+                  {/* Welcome State - Greeting (fades when user starts) */}
                   <AnimatePresence>
-                    {step >= 2 && step < 6 && (
+                    {showGreeting && (
                       <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex flex-col items-end gap-2"
-                      >
-                        <div className="rounded-lg px-3 py-1.5 bg-stone-900 text-white">
-                          <p className="text-sm">Bokför det här kvittot</p>
-                        </div>
-                        <div className="flex items-center gap-2 bg-stone-100 rounded-lg p-2 pr-3 text-xs">
-                          <div className="w-8 h-8 rounded bg-stone-200 flex items-center justify-center">
-                            <span className="text-lg">🧾</span>
-                          </div>
-                          <div className="flex flex-col">
-                            <span className="font-medium text-stone-700">taxi_kvitto.jpg</span>
-                            <span className="text-stone-500">12 KB</span>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* AI Thinking - first round */}
-                  <AnimatePresence>
-                    {step === 3 && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
+                        initial={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
-                        className="text-sm text-stone-400"
+                        transition={{ duration: 0.3 }}
+                        className="absolute inset-0 flex flex-col items-center justify-center p-6"
                       >
-                        Tänker...
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* AI Response + Original Card (before comment) */}
-                  <AnimatePresence>
-                    {step >= 4 && step < 6 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-3"
-                      >
-                        <p className="text-sm text-stone-700">
-                          Jag tolkade kvittot. Vill du att jag bokför det?
-                        </p>
-
-                        <div className="rounded-xl border-2 border-dashed border-stone-400/40 bg-stone-50/50 overflow-hidden">
-                          <div className="px-4 py-3 border-b border-stone-200/40 flex items-center gap-3">
-                            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-200/60 text-base">
-                              🧾
-                            </div>
-                            <div>
-                              <h3 className="font-semibold text-sm">Skapa kvitto</h3>
-                              <p className="text-xs text-stone-500">Taxi Stockholm AB • -495 kr</p>
-                            </div>
-                          </div>
-                          <div className="px-4 py-3 space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-stone-500">Leverantör</span>
-                              <span className="font-medium">Taxi Stockholm AB</span>
-                            </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-stone-500">Konto</span>
-                              <span className="font-medium">5800 Resekostnader</span>
-                            </div>
-                          </div>
-                          <div className="px-4 py-3 border-t border-stone-200/40 flex items-center gap-2">
-                            <button className="h-7 px-3 bg-stone-900 text-white text-xs font-medium rounded-md flex items-center gap-1">
-                              <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-                              Godkänn
-                            </button>
-                            <button className={`h-7 px-3 text-stone-600 text-xs font-medium rounded-md ${hoverButton === 'kommentera' ? 'bg-stone-200' : 'hover:bg-stone-100'}`}>
-                              Kommentera
-                            </button>
-                            <button className="h-7 px-3 text-stone-600 text-xs font-medium rounded-md hover:bg-stone-100 ml-auto">
-                              Avbryt
-                            </button>
-                          </div>
+                        {/* Scope Logo */}
+                        <div className="w-12 h-12 bg-stone-900 rounded-full flex items-center justify-center mb-6">
+                          <div className="w-5 h-5 bg-white rounded-sm" />
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* User Comment */}
-                  <AnimatePresence>
-                    {step >= 6 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-end"
-                      >
-                        <div className="rounded-lg px-3 py-1.5 bg-stone-900 text-white">
-                          <p className="text-sm">{typedComment}</p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* AI Thinking - second round (after comment) */}
-                  <AnimatePresence>
-                    {step === 7 && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-sm text-stone-400"
-                      >
-                        Tänker...
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* AI Response + Card (transforms to green when approved) */}
-                  <AnimatePresence>
-                    {step >= 8 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-3"
-                      >
-                        <p className="text-sm text-stone-700">
-                          {step === 9
-                            ? "Klart! Kvittot är nu bokfört."
-                            : "Perfekt, jag ändrade kontot. Godkänn för att bokföra."
-                          }
+                        {/* Greeting */}
+                        <p className="text-xl text-stone-600 text-center max-w-sm">
+                          God eftermiddag! Vad vill du att jag hjälper dig med idag?
                         </p>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
 
-                        {/* Card - transforms to green when step === 9 */}
-                        <div className={`rounded-xl border-2 overflow-hidden transition-colors duration-300 ${step === 9
-                          ? 'border-emerald-500 bg-emerald-50/30'
-                          : 'border-dashed border-stone-400/40 bg-stone-50/50'
-                          }`}>
-                          <div className={`px-4 py-3 flex items-center gap-3 ${step === 9 ? 'border-b border-emerald-200/60' : 'border-b border-stone-200/40'
-                            }`}>
-                            <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-base ${step === 9 ? 'bg-emerald-500/20' : 'bg-stone-200/60'
-                              }`}>
-                              {step === 9 ? (
-                                <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
-                              ) : (
-                                <span>🧾</span>
-                              )}
-                            </div>
-                            <div className="flex-1">
-                              <h3 className="font-semibold text-sm">Skapa kvitto</h3>
-                              <p className="text-xs text-stone-500">Taxi Stockholm AB • -495 kr</p>
-                            </div>
-                            {step === 9 && (
-                              <span className="text-xs font-medium px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-700">
-                                Bokfört ✓
-                              </span>
-                            )}
+                  {/* Chat Messages - visible after greeting fades */}
+                  <div className={`flex flex-col gap-3 flex-1 transition-opacity duration-300 ${showGreeting ? 'opacity-0' : 'opacity-100'}`}>
+                    {/* User Message - only visible in first round (before comment sent) */}
+                    <AnimatePresence>
+                      {step >= 2 && step < 6 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex flex-col items-end gap-2"
+                        >
+                          <div className="rounded-lg px-3 py-1.5 bg-stone-900 text-white">
+                            <p className="text-sm">Bokför det här kvittot</p>
                           </div>
-                          <div className="px-4 py-3 space-y-2">
-                            <div className="flex justify-between text-sm">
-                              <span className="text-stone-500">Leverantör</span>
-                              <span className="font-medium">Taxi Stockholm AB</span>
+                          <div className="flex items-center gap-2 bg-stone-100 rounded-lg p-2 pr-3 text-xs">
+                            <div className="w-8 h-8 rounded bg-stone-200 flex items-center justify-center">
+                              <span className="text-lg">🧾</span>
                             </div>
-                            <div className="flex justify-between text-sm">
-                              <span className="text-stone-500">Konto</span>
-                              <span className="font-medium text-emerald-600">5810 Taxi & Transport</span>
+                            <div className="flex flex-col">
+                              <span className="font-medium text-stone-700">taxi_kvitto.jpg</span>
+                              <span className="text-stone-500">12 KB</span>
                             </div>
                           </div>
-                          {/* Buttons - only show before approval */}
-                          {step < 9 && (
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Thinking - first round */}
+                    <AnimatePresence>
+                      {step === 3 && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="text-sm text-stone-400"
+                        >
+                          Tänker...
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Response + Original Card (before comment) */}
+                    <AnimatePresence>
+                      {step >= 4 && step < 6 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-3"
+                        >
+                          <p className="text-sm text-stone-700">
+                            Jag tolkade kvittot. Vill du att jag bokför det?
+                          </p>
+
+                          <div className="rounded-xl border-2 border-dashed border-stone-400/40 bg-stone-50/50 overflow-hidden">
+                            <div className="px-4 py-3 border-b border-stone-200/40 flex items-center gap-3">
+                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-stone-200/60 text-base">
+                                🧾
+                              </div>
+                              <div>
+                                <h3 className="font-semibold text-sm">Skapa kvitto</h3>
+                                <p className="text-xs text-stone-500">Taxi Stockholm AB • -495 kr</p>
+                              </div>
+                            </div>
+                            <div className="px-4 py-3 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-stone-500">Leverantör</span>
+                                <span className="font-medium">Taxi Stockholm AB</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-stone-500">Konto</span>
+                                <span className="font-medium">5800 Resekostnader</span>
+                              </div>
+                            </div>
                             <div className="px-4 py-3 border-t border-stone-200/40 flex items-center gap-2">
-                              <button className={`h-7 px-3 text-white text-xs font-medium rounded-md flex items-center gap-1 transition-colors ${hoverButton === 'godkann' ? 'bg-stone-700' : 'bg-stone-900'}`}>
+                              <button className="h-7 px-3 bg-stone-900 text-white text-xs font-medium rounded-md flex items-center gap-1">
                                 <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
                                 Godkänn
                               </button>
-                              <button className="h-7 px-3 text-stone-600 text-xs font-medium rounded-md hover:bg-stone-100">
+                              <button className={`h-7 px-3 text-stone-600 text-xs font-medium rounded-md ${hoverButton === 'kommentera' ? 'bg-stone-200' : 'hover:bg-stone-100'}`}>
                                 Kommentera
                               </button>
                               <button className="h-7 px-3 text-stone-600 text-xs font-medium rounded-md hover:bg-stone-100 ml-auto">
                                 Avbryt
                               </button>
                             </div>
-                          )}
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* User Thank You */}
-                  <AnimatePresence>
-                    {step >= 10 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="flex justify-end"
-                      >
-                        <div className="rounded-lg px-3 py-1.5 bg-stone-900 text-white">
-                          <p className="text-sm">Tack!</p>
-                        </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* AI Thinking - after thank you */}
-                  <AnimatePresence>
-                    {step === 11 && (
-                      <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="text-sm text-stone-400"
-                      >
-                        Tänker...
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-
-                  {/* AI Encouraging Response - streaming */}
-                  <AnimatePresence>
-                    {step === 12 && (
-                      <motion.div
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-2"
-                      >
-                        <p className="text-sm text-stone-700">
-                          {aiStreamText}<span className="animate-pulse">|</span>
-                        </p>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                </div>
-
-                {/* Input Bar */}
-                <div className="mt-auto pt-4">
-                  <div className={`bg-stone-100/60 border-2 rounded-xl overflow-hidden transition-colors ${hoverButton === 'input' ? 'border-stone-400' : 'border-stone-200/60'}`}>
-                    <div className="px-4 py-3 min-h-[24px]">
-                      {inputText ? (
-                        <span className="text-stone-900 text-sm">{inputText}<span className="animate-pulse">|</span></span>
-                      ) : (
-                        <span className="text-stone-400 text-sm">Skriv ett meddelande...</span>
+                          </div>
+                        </motion.div>
                       )}
-                    </div>
-                    <div className="flex items-center justify-between px-2 pb-2">
-                      <div className="flex items-center gap-0.5">
-                        <div className="h-7 w-7 rounded-md flex items-center justify-center text-stone-400">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
-                        </div>
-                        <div className="h-7 w-7 rounded-md flex items-center justify-center text-stone-400">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" /></svg>
-                        </div>
+                    </AnimatePresence>
+
+                    {/* User Comment */}
+                    <AnimatePresence>
+                      {step >= 6 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex justify-end"
+                        >
+                          <div className="rounded-lg px-3 py-1.5 bg-stone-900 text-white">
+                            <p className="text-sm">{typedComment}</p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Thinking - second round (after comment) */}
+                    <AnimatePresence>
+                      {step === 7 && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="text-sm text-stone-400"
+                        >
+                          Tänker...
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Response + Card (transforms to green when approved) */}
+                    <AnimatePresence>
+                      {step >= 8 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-3"
+                        >
+                          <p className="text-sm text-stone-700">
+                            {step === 9
+                              ? "Klart! Kvittot är nu bokfört."
+                              : "Perfekt, jag ändrade kontot. Godkänn för att bokföra."
+                            }
+                          </p>
+
+                          {/* Card - transforms to green when step === 9 */}
+                          <div className={`rounded-xl border-2 overflow-hidden transition-colors duration-300 ${step === 9
+                            ? 'border-emerald-500 bg-emerald-50/30'
+                            : 'border-dashed border-stone-400/40 bg-stone-50/50'
+                            }`}>
+                            <div className={`px-4 py-3 flex items-center gap-3 ${step === 9 ? 'border-b border-emerald-200/60' : 'border-b border-stone-200/40'
+                              }`}>
+                              <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-base ${step === 9 ? 'bg-emerald-500/20' : 'bg-stone-200/60'
+                                }`}>
+                                {step === 9 ? (
+                                  <svg className="w-4 h-4 text-emerald-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                                ) : (
+                                  <span>🧾</span>
+                                )}
+                              </div>
+                              <div className="flex-1">
+                                <h3 className="font-semibold text-sm">Skapa kvitto</h3>
+                                <p className="text-xs text-stone-500">Taxi Stockholm AB • -495 kr</p>
+                              </div>
+                              {step === 9 && (
+                                <span className="text-xs font-medium px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-700">
+                                  Bokfört ✓
+                                </span>
+                              )}
+                            </div>
+                            <div className="px-4 py-3 space-y-2">
+                              <div className="flex justify-between text-sm">
+                                <span className="text-stone-500">Leverantör</span>
+                                <span className="font-medium">Taxi Stockholm AB</span>
+                              </div>
+                              <div className="flex justify-between text-sm">
+                                <span className="text-stone-500">Konto</span>
+                                <span className="font-medium text-emerald-600">5810 Taxi & Transport</span>
+                              </div>
+                            </div>
+                            {/* Buttons - only show before approval */}
+                            {step < 9 && (
+                              <div className="px-4 py-3 border-t border-stone-200/40 flex items-center gap-2">
+                                <button className={`h-7 px-3 text-white text-xs font-medium rounded-md flex items-center gap-1 transition-colors ${hoverButton === 'godkann' ? 'bg-stone-700' : 'bg-stone-900'}`}>
+                                  <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="20 6 9 17 4 12" /></svg>
+                                  Godkänn
+                                </button>
+                                <button className="h-7 px-3 text-stone-600 text-xs font-medium rounded-md hover:bg-stone-100">
+                                  Kommentera
+                                </button>
+                                <button className="h-7 px-3 text-stone-600 text-xs font-medium rounded-md hover:bg-stone-100 ml-auto">
+                                  Avbryt
+                                </button>
+                              </div>
+                            )}
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* User Thank You */}
+                    <AnimatePresence>
+                      {step >= 10 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="flex justify-end"
+                        >
+                          <div className="rounded-lg px-3 py-1.5 bg-stone-900 text-white">
+                            <p className="text-sm">Tack!</p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Thinking - after thank you */}
+                    <AnimatePresence>
+                      {step === 11 && (
+                        <motion.div
+                          initial={{ opacity: 0 }}
+                          animate={{ opacity: 1 }}
+                          exit={{ opacity: 0 }}
+                          className="text-sm text-stone-400"
+                        >
+                          Tänker...
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+
+                    {/* AI Encouraging Response - streaming */}
+                    <AnimatePresence>
+                      {step === 12 && (
+                        <motion.div
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          className="space-y-2"
+                        >
+                          <p className="text-sm text-stone-700">
+                            {aiStreamText}<span className="animate-pulse">|</span>
+                          </p>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+
+                  {/* Input Bar */}
+                  <div className="mt-auto pt-4">
+                    <div className={`bg-stone-100/60 border-2 rounded-xl overflow-hidden transition-colors ${hoverButton === 'input' ? 'border-stone-400' : 'border-stone-200/60'}`}>
+                      <div className="px-4 py-3 min-h-[24px]">
+                        {inputText ? (
+                          <span className="text-stone-900 text-sm">{inputText}<span className="animate-pulse">|</span></span>
+                        ) : (
+                          <span className="text-stone-400 text-sm">Skriv ett meddelande...</span>
+                        )}
                       </div>
-                      <div className="flex items-center gap-0.5">
-                        <div className="h-7 w-7 rounded-md flex items-center justify-center text-stone-400">
-                          <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
+                      <div className="flex items-center justify-between px-2 pb-2">
+                        <div className="flex items-center gap-0.5">
+                          <div className="h-7 w-7 rounded-md flex items-center justify-center text-stone-400">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48" /></svg>
+                          </div>
+                          <div className="h-7 w-7 rounded-md flex items-center justify-center text-stone-400">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="4" /><path d="M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-3.92 7.94" /></svg>
+                          </div>
                         </div>
-                        <div className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${hoverButton === 'send' ? 'bg-stone-700' : 'bg-stone-900'}`}>
-                          <ArrowRight className="w-4 h-4 text-white" />
+                        <div className="flex items-center gap-0.5">
+                          <div className="h-7 w-7 rounded-md flex items-center justify-center text-stone-400">
+                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3Z" /><path d="M19 10v2a7 7 0 0 1-14 0v-2" /><line x1="12" x2="12" y1="19" y2="22" /></svg>
+                          </div>
+                          <div className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${hoverButton === 'send' ? 'bg-stone-700' : 'bg-stone-900'}`}>
+                            <ArrowRight className="w-4 h-4 text-white" />
+                          </div>
                         </div>
                       </div>
                     </div>

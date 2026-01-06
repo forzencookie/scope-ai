@@ -73,7 +73,7 @@ export function Pricing() {
               <Link
                 href={tier.price === "Kommer snart" ? "#" : "/register"}
                 className={cn(
-                  "w-full py-3 text-sm font-medium rounded-xl transition-colors border text-center block",
+                  "w-full py-3 text-sm font-medium rounded-lg transition-colors border text-center block",
                   tier.highlight
                     ? "bg-stone-900 text-white border-stone-900 hover:bg-stone-800"
                     : tier.price === "Kommer snart"
