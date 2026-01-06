@@ -18,7 +18,7 @@ import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/
 export interface StatusOption {
     value: string
     label: string
-    icon?: React.ElementType
+    icon?: React.ComponentType<{ className?: string }>
 }
 
 export interface SortOption {

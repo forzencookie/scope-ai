@@ -2,16 +2,17 @@
 
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 export function Footer() {
   return (
     <footer className="bg-stone-50 text-stone-600 py-24 px-3 md:px-4 border-t border-stone-200">
       <div className="max-w-[2400px] mx-auto grid md:grid-cols-5 gap-12">
         <div className="col-span-2">
-          <div className="flex items-center gap-2 mb-6">
-            <div className="w-5 h-5 bg-stone-900 rounded-sm" />
+          <Link href="/" className="flex items-center gap-2 mb-6">
+            <ScopeAILogo className="w-6 h-6" />
             <span className="text-stone-900 font-bold tracking-tight text-lg">Scope AI</span>
-          </div>
+          </Link>
           <p className="text-sm leading-relaxed max-w-xs mb-8">
             AI-driven bokföring för svenska företag. Automatisera hela din ekonomi.
           </p>

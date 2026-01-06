@@ -63,7 +63,7 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
   const addToast = useCallback((toast: Omit<Toast, "id">) => {
     const id = Math.random().toString(36).substring(2, 9)
     const newToast = { ...toast, id }
-    
+
     setToasts((prev) => [...prev, newToast])
 
     // Auto remove after duration
@@ -107,7 +107,7 @@ export function useToast() {
 }
 
 // Icon mapping
-const icons: Record<ToastVariant, React.ElementType> = {
+const icons: Record<ToastVariant, React.ComponentType<{ className?: string }>> = {
   default: Info,
   success: CheckCircle2,
   destructive: AlertCircle,
@@ -116,12 +116,12 @@ const icons: Record<ToastVariant, React.ElementType> = {
 }
 
 // Toast Viewport - renders all toasts
-function ToastViewport({ 
-  toasts, 
-  removeToast 
-}: { 
+function ToastViewport({
+  toasts,
+  removeToast
+}: {
   toasts: Toast[]
-  removeToast: (id: string) => void 
+  removeToast: (id: string) => void
 }) {
   return (
     <div className="fixed top-4 right-4 z-[100] flex max-h-screen w-full flex-col gap-2 p-4 sm:max-w-[420px] pointer-events-none">

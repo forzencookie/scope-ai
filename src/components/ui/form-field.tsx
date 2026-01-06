@@ -17,7 +17,7 @@ interface FormFieldBaseProps {
     /** Field label */
     label: string
     /** Optional icon component */
-    icon?: React.ElementType
+    icon?: React.ComponentType<{ className?: string }>
     /** Field name/id */
     name?: string
     /** Error message */

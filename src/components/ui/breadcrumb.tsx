@@ -5,8 +5,9 @@ import { Slot } from "@radix-ui/react-slot"
 import { ChevronRight, MoreHorizontal } from "lucide-react"
 
 import { cn } from "@/lib/utils"
-import { AIButton } from "@/components/ui/button"
 import { useAIChat } from "@/providers/ai-chat-provider"
+
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 function Breadcrumb({ className, ...props }: React.ComponentProps<"nav">) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" className={cn("flex items-center", className)} {...props} />
@@ -78,9 +79,7 @@ function BreadcrumbSeparator({
       aria-hidden="true"
       className={cn("[&>svg]:size-3.5", className)}
       {...props}
-    >
-      {children ?? <ChevronRight />}
-    </li>
+    />
   )
 }
 
@@ -119,7 +118,12 @@ function BreadcrumbAIBadge({ className, ...props }: React.ComponentProps<"div">)
       {...props}
     >
       {/* AI button - opens chat dialog */}
-      <AIButton onClick={handleOpenChat} />
+      <div onClick={handleOpenChat} className="cursor-pointer">
+        <div className="inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 h-8 w-8 rounded-full bg-purple-900/20 text-purple-600/50 hover:bg-purple-900/30 hover:text-purple-700 dark:bg-purple-900/20 dark:text-purple-400/50 dark:hover:bg-purple-800/30 dark:hover:text-purple-300">
+          <ScopeAILogo className="size-6" />
+          <span className="sr-only">Öppna AI-chatt</span>
+        </div>
+      </div>
     </div>
   )
 }

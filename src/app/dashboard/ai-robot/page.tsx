@@ -171,9 +171,8 @@ function AIRobotPageContent() {
                     <Breadcrumb>
                         <BreadcrumbList>
                             <BreadcrumbItem>
-                                <BreadcrumbPage className="flex items-center gap-2 font-[family-name:var(--font-zen-dots)]">
-                                    <ScopeAILogo className="h-4 w-4" />
-                                    Scope ai
+                                <BreadcrumbPage className="font-bold tracking-tight">
+                                    Scope AI
                                 </BreadcrumbPage>
                             </BreadcrumbItem>
                         </BreadcrumbList>

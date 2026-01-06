@@ -27,7 +27,7 @@ interface AlertMessageProps {
   children: React.ReactNode;
   variant?: keyof typeof alertVariants;
   className?: string;
-  icon?: React.ElementType;
+  icon?: React.ComponentType<{ className?: string }>;
   showIcon?: boolean;
 }
 

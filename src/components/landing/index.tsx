@@ -1,19 +1,19 @@
-// Landing page components - individual exports
+// Landing page components - barrel exports
 
-// UI primitives
-export { Section, StatusBadge, DitherPattern, GridBackground, SocialProof } from "./ui"
-export type { BadgeStatus } from "./ui"
+// UI primitives (shared/)
+export { Section, StatusBadge, DitherPattern, GridBackground, SocialProof } from "./shared/ui"
+export type { BadgeStatus } from "./shared/ui"
+export { SectionHeader } from "./shared/section-header"
 
-// Components
-export { Navbar } from "./navbar"
-export { Hero } from "./hero"
-export { CoreFeatures } from "./core-features"
+// Layout (layout/)
+export { Navbar } from "./layout/navbar"
+export { Footer } from "./layout/footer"
 
-export { IntegrationMesh } from "./integration-mesh"
-export { Analytics } from "./analytics"
-export { Vision } from "./vision"
-export { Testimonials } from "./testimonials"
-export { Pricing } from "./pricing"
-export { Footer } from "./footer"
-
-
+// Sections (sections/)
+export { Hero } from "./sections/hero"
+export { CoreFeatures } from "./sections/features"
+export { IntegrationMesh } from "./sections/integration-mesh"
+export { Analytics } from "./sections/analytics"
+export { Vision } from "./sections/vision"
+export { Testimonials } from "./sections/testimonials"
+export { Pricing } from "./sections/pricing"

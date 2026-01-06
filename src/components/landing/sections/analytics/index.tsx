@@ -4,7 +4,7 @@ import { useRef } from "react"
 import { motion, useInView } from "framer-motion"
 import { TrendingUp, Calendar, PieChart, ArrowUpRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { StatusBadge } from "./ui"
+import { StatusBadge } from "../../shared/ui"
 
 export function Analytics() {
   const ref = useRef(null)

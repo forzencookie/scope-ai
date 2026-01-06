@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 export function Navbar() {
   return (
@@ -13,10 +14,10 @@ export function Navbar() {
     >
       <div className="bg-white/80 backdrop-blur-md rounded-2xl h-14 px-4 flex items-center justify-between">
         {/* Logo - Left */}
-        <div className="flex items-center gap-2">
-          <div className="w-5 h-5 bg-stone-900 rounded-sm" />
+        <Link href="/" className="flex items-center gap-2">
+          <ScopeAILogo className="w-6 h-6" />
           <span className="text-stone-900 font-bold tracking-tight">Scope AI</span>
-        </div>
+        </Link>
 
         {/* Nav Links - Center */}
         <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">

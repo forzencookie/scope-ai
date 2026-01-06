@@ -9,6 +9,7 @@ import { Label } from '@/components/ui/label'
 import { Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
 import { AlertMessage } from '@/components/ui/alert-message'
 import Link from 'next/link'
+import { ScopeAILogo } from '@/components/ui/icons/scope-ai-logo'
 
 // Google icon
 function GoogleIcon({ className }: { className?: string }) {
@@ -122,7 +123,7 @@ function RegisterContent() {
             <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-11 gap-8">
 
                 {/* Left: Branded Card with Dashboard Decoration (55%) */}
-                <div className="hidden lg:flex lg:col-span-6 flex-col relative bg-gradient-to-b from-stone-100 to-stone-50 rounded-3xl overflow-hidden min-h-[600px]">
+                <div className="hidden lg:flex lg:col-span-6 flex-col relative bg-gradient-to-b from-violet-100/50 to-violet-50/30 rounded-3xl overflow-hidden min-h-[600px]">
                     {/* Subtle grid pattern */}
                     <div className="absolute inset-0 bg-grid-stone opacity-20" />
 
@@ -132,17 +133,17 @@ function RegisterContent() {
                     {/* Content - Centered */}
                     <div className="relative z-10 flex-1 flex flex-col items-center justify-center text-center px-12">
                         {/* Status Badge */}
-                        <div className="relative inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-stone-200 rounded-full mb-8 overflow-hidden">
+                        <div className="relative inline-flex items-center gap-2 px-3 py-1.5 bg-white border border-violet-200 rounded-full mb-8 overflow-hidden">
                             <div className="absolute inset-0 opacity-[0.08] bg-dither-pattern" />
                             <div className="relative flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                                <div className="w-1.5 h-1.5 rounded-full bg-violet-500 animate-pulse" />
                                 <span className="text-xs font-mono text-stone-600 uppercase tracking-widest">Systemet är redo</span>
                             </div>
                         </div>
 
                         {/* Logo & Headline */}
                         <div className="flex items-center gap-3 mb-4">
-                            <div className="w-8 h-8 bg-stone-900 rounded-lg" />
+                            <ScopeAILogo className="w-8 h-8" />
                             <h1 className="text-3xl font-bold text-stone-900 tracking-tight">Scope AI</h1>
                         </div>
 
@@ -164,10 +165,10 @@ function RegisterContent() {
                                         </svg>
                                         <span className="text-xs font-mono text-stone-600 uppercase">Kvitto</span>
                                     </div>
-                                    <span className="text-[10px] font-medium bg-blue-100 text-blue-700 px-2 py-0.5 rounded">Skannad</span>
+                                    <span className="text-[10px] font-medium bg-violet-100 text-violet-700 px-2 py-0.5 rounded">Skannad</span>
                                 </div>
                                 <div className="h-2 w-full bg-stone-200 rounded-full overflow-hidden">
-                                    <div className="h-full bg-blue-500 rounded-full" style={{ width: '85%' }} />
+                                    <div className="h-full bg-violet-600 rounded-full" style={{ width: '85%' }} />
                                 </div>
                                 <div className="flex justify-between text-xs text-stone-500 mt-2">
                                     <span>AI analyserar...</span>
@@ -194,12 +195,6 @@ function RegisterContent() {
                 <div className="lg:col-span-5 flex flex-col justify-center px-4 lg:px-12">
                     <div className="w-full max-w-sm mx-auto">
 
-                        {/* Logo (mobile only) */}
-                        <div className="lg:hidden flex items-center gap-2 mb-8">
-                            <div className="h-8 w-8 rounded-lg bg-stone-900" />
-                            <span className="text-lg font-semibold text-stone-900">Scope AI</span>
-                        </div>
-
                         {/* Header */}
                         <div className="mb-8">
                             <h2 className="text-2xl font-bold text-stone-900 mb-1">Skapa konto</h2>
@@ -217,6 +212,7 @@ function RegisterContent() {
                                 <GoogleIcon className="h-4 w-4 mr-3" />
                                 Regsitrera med Google
                             </Button>
+                            {/* Microsoft login - disabled until Azure OAuth is configured
                             <Button
                                 variant="outline"
                                 onClick={() => handleOAuthLogin('azure')}
@@ -226,6 +222,7 @@ function RegisterContent() {
                                 <MicrosoftIcon className="h-4 w-4 mr-3" />
                                 Registrera med Microsoft
                             </Button>
+                            */}
                         </div>
 
                         {/* Divider */}

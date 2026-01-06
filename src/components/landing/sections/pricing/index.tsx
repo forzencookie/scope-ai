@@ -2,18 +2,24 @@
 
 import { useState } from "react"
 import Link from "next/link"
-import { Check } from "lucide-react"
+import { Check, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { SectionHeader } from "../../shared/section-header"
 
 export function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
 
   return (
-    <section id="pricing" className="px-3 md:px-4 py-8 max-w-[2400px] mx-auto">
+    <section id="pricing" className="px-3 md:px-4 py-24 max-w-[2400px] mx-auto">
+      <SectionHeader
+        badge="Priser"
+        title="Transparent prissättning för alla"
+        description="Inga dolda avgifter eller långa bindningstider. Välj det som passar ditt företag bäst."
+        icon={CreditCard}
+        className="mb-12"
+      />
       <div className="bg-white border border-stone-200 rounded-3xl p-8 md:p-12">
         <div className="text-center mb-12">
-          <h2 className="text-3xl font-bold text-stone-900 tracking-tight mb-4">Transparent prissättning</h2>
-          <p className="text-stone-600 mb-8">Inga dolda avgifter. Avsluta när du vill.</p>
 
           {/* Billing toggle */}
           <div className="inline-flex border border-stone-200 rounded-lg p-1 bg-stone-50">
