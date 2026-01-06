@@ -43,6 +43,7 @@ import { useVerifications } from "@/hooks/use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { taxService, type VatStats } from "@/lib/services/tax-service"
 
 export function MomsdeklarationContent() {
     const router = useRouter()
@@ -116,27 +117,59 @@ export function MomsdeklarationContent() {
     }, [vatPeriodsState])
 
     // Calculate stats from the active period (Q4 2024 or upcoming)
-    const stats = useMemo(() => {
-        // Find the first upcoming or Q4 period
-        const upcomingPeriod = vatPeriodsState.find(p => p.status === "upcoming") || vatPeriodsState[0]
+    const [stats, setStats] = useState<{
+        nextPeriod: string,
+        deadline: string,
+        salesVat: number,
+        inputVat: number,
+        netVat: number,
+        fullReport?: VatReport
+    }>({
+        nextPeriod: "Laddar...",
+        deadline: "",
+        salesVat: 0,
+        inputVat: 0,
+        netVat: 0,
+    })
 
-        if (!upcomingPeriod) return {
-            nextPeriod: "Ingen period",
-            deadline: "",
-            salesVat: 0,
-            inputVat: 0,
-            netVat: 0,
-        }
+    useEffect(() => {
+        const loadStats = async () => {
+            // Import tax period helper for fallback
+            const { getNextVatPeriod } = await import('@/lib/tax-periods')
+            const vatFrequency = company?.vatFrequency || 'quarterly'
+            const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
 
-        return {
-            nextPeriod: upcomingPeriod.period,
-            deadline: `Deadline: ${upcomingPeriod.dueDate}`,
-            salesVat: upcomingPeriod.salesVat,
-            inputVat: upcomingPeriod.inputVat,
-            netVat: upcomingPeriod.netVat,
-            fullReport: upcomingPeriod
+            // If DB periods available, use them
+            if (!isLoading && periods.length > 0) {
+                const upcomingPeriod = periods.find(p => p.status === 'open' || p.status === 'upcoming') || periods[0]
+
+                if (upcomingPeriod && upcomingPeriod.start_date && upcomingPeriod.end_date) {
+                    const rpcStats = await taxService.getVatStats(upcomingPeriod.start_date, upcomingPeriod.end_date)
+
+                    setStats({
+                        nextPeriod: upcomingPeriod.name,
+                        deadline: upcomingPeriod.due_date ? `Deadline: ${upcomingPeriod.due_date}` : "Datum saknas",
+                        salesVat: rpcStats.salesVat,
+                        inputVat: rpcStats.inputVat,
+                        netVat: rpcStats.netVat,
+                        fullReport: vatPeriodsState.find(p => p.periodId === upcomingPeriod.id)
+                    })
+                    return
+                }
+            }
+
+            // Fallback: Use onboarding-driven calculation
+            const calculatedPeriod = getNextVatPeriod(vatFrequency, fiscalYearEnd)
+            setStats({
+                nextPeriod: calculatedPeriod.periodName,
+                deadline: `Deadline: ${calculatedPeriod.deadline}`,
+                salesVat: 0,
+                inputVat: 0,
+                netVat: 0,
+            })
         }
-    }, [vatPeriodsState])
+        loadStats()
+    }, [periods, isLoading, company?.vatFrequency, company?.fiscalYearEnd])
 
     // Filter periods - use stateful vatPeriods for updates to persist
     const filteredPeriods = useMemo(() => {

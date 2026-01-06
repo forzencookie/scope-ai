@@ -9,26 +9,30 @@ export function Navbar() {
       initial={{ y: -20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5 }}
-      className="fixed top-0 inset-x-0 z-50 h-16 border-b border-stone-200 bg-white/80 backdrop-blur-md will-change-transform-opacity"
+      className="sticky top-4 z-50 px-3 md:px-4 max-w-[2400px] mx-auto will-change-transform-opacity"
     >
-      <div className="max-w-[1400px] mx-auto px-6 h-full flex items-center justify-between">
+      <div className="bg-white/80 backdrop-blur-md rounded-2xl h-14 px-4 flex items-center justify-between">
+        {/* Logo - Left */}
         <div className="flex items-center gap-2">
           <div className="w-5 h-5 bg-stone-900 rounded-sm" />
-          <span className="text-stone-900 font-bold tracking-tight text-lg">Scope AI</span>
+          <span className="text-stone-900 font-bold tracking-tight">Scope AI</span>
         </div>
 
-        <div className="flex items-center gap-6">
-          <div className="hidden md:flex items-center gap-6 text-sm font-medium text-stone-600">
-            <Link href="#features" className="hover:text-stone-900 transition-colors">Funktioner</Link>
-            <Link href="#pricing" className="hover:text-stone-900 transition-colors">Priser</Link>
-          </div>
-          <div className="h-4 w-[1px] bg-stone-200 hidden md:block" />
-          <Link href="/login" className="text-sm font-medium text-stone-600 hover:text-stone-900 transition-colors">
+        {/* Nav Links - Center */}
+        <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
+          <Link href="#features" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">Funktioner</Link>
+          <Link href="#pricing" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">Priser</Link>
+          <Link href="#about" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">Om oss</Link>
+        </div>
+
+        {/* Auth - Right */}
+        <div className="flex items-center gap-4">
+          <Link href="/login" className="text-sm text-stone-600 hover:text-stone-900 transition-colors hidden md:block">
             Logga in
           </Link>
           <Link
             href="/register"
-            className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-md hover:bg-stone-800 transition-colors"
+            className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-full hover:bg-stone-800 transition-colors"
           >
             Kom igång
           </Link>

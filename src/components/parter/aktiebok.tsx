@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import {
   Users,
@@ -102,6 +102,31 @@ export function Aktiebok() {
   const [txFrom, setTxFrom] = useState("")
   const [txShareClass, setTxShareClass] = useState<'A' | 'B'>('B')
 
+  // Fetch stats from server
+  const [stats, setStats] = useState({
+    totalShares: 0,
+    totalVotes: 0,
+    totalValue: 0,
+    shareholderCount: 0
+  })
+
+  useEffect(() => {
+    async function fetchStats() {
+      const { supabase } = await import('@/lib/supabase')
+      const { data, error } = await supabase.rpc('get_shareholder_stats')
+
+      if (!error && data) {
+        setStats({
+          totalShares: Number(data.totalShares) || 0,
+          totalVotes: Number(data.totalVotes) || 0,
+          totalValue: 0, // Still 0 as per previous logic or lack of data
+          shareholderCount: Number(data.shareholderCount) || 0
+        })
+      }
+    }
+    fetchStats()
+  }, []) // Run once on mount
+
   // Map real shareholders to component format
   const shareholders = useMemo(() => {
     return (realShareholders || []).map(s => ({
@@ -121,20 +146,6 @@ export function Aktiebok() {
 
   // Mock transactions for now until we have a real transactions table in DB
   const [transactions, setTransactions] = useState<ShareTransaction[]>(mockShareTransactions)
-
-  // Calculate stats
-  const stats = useMemo(() => {
-    const totalShares = shareholders.reduce((sum, s) => sum + s.shares, 0)
-    const totalVotes = shareholders.reduce((sum, s) => sum + s.votes, 0)
-    const totalValue = shareholders.reduce((sum, s) => sum + s.acquisitionPrice, 0)
-
-    return {
-      totalShares,
-      totalVotes,
-      totalValue,
-      shareholderCount: shareholders.length,
-    }
-  }, [shareholders])
 
   // Filter shareholders
   const filteredShareholders = useMemo(() => {

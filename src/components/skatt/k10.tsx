@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     Calendar,
     TrendingUp,
@@ -34,6 +34,7 @@ import { AppStatusBadge } from "@/components/ui/status-badge"
 import { k10Declarations, dividendHistory } from "@/components/loner/constants"
 import { SectionCard } from "@/components/ui/section-card"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useCompany } from "@/providers/company-provider"
 
 // =============================================================================
 // K10 Page - Blankett K10 for Fåmansföretag (3:12 rules)
@@ -100,9 +101,63 @@ function useK10Calculation() {
 
 export function K10Content() {
     const { addToast: toast } = useToast()
-    const k10Data = useK10Calculation()
+    const { company } = useCompany()
     const [showBreakdown, setShowBreakdown] = useState(false)
     const navigateToAI = useNavigateToAIChat()
+
+    // Get dynamic beskattningsår from helper
+    const [taxYear, setTaxYear] = useState({ year: 2024, deadline: '2 maj 2025' })
+    useEffect(() => {
+        const loadTaxYear = async () => {
+            const { getCurrentBeskattningsar, getK10Deadline } = await import('@/lib/tax-periods')
+            const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
+            const result = getCurrentBeskattningsar(fiscalYearEnd)
+            const k10Deadline = getK10Deadline(result.year)
+            setTaxYear({ year: result.year, deadline: k10Deadline })
+        }
+        loadTaxYear()
+    }, [company?.fiscalYearEnd])
+
+    // Calculate K10 using dynamic year
+    const k10Data = useMemo(() => {
+        // These would normally come from company data
+        const aktiekapital = 50000
+        const omkostnadsbelopp = 50000 // What you paid for shares
+        const agarandel = 100 // Ownership percentage
+        const arslonSumma = 520000 // Total salaries in company
+        const egenLon = 45000 * 12 // Owner's salary
+
+        // Schablonbelopp (2024 rate: 9.65% of IBB * ownership)
+        const ibb2024 = 57300 // Inkomstbasbelopp 2024
+        const schablonRate = 0.0965
+        const schablonbelopp = Math.round(ibb2024 * 2.75 * schablonRate * (agarandel / 100))
+
+        // Lönebaserat utrymme (simplified - 50% of salary portion)
+        const lonebaseratUtrymme = Math.round(arslonSumma * 0.5 * (agarandel / 100))
+
+        // Total gränsbelopp
+        const gransbelopp = schablonbelopp + lonebaseratUtrymme
+
+        // Get dividend history for the tax year
+        const totalDividends = dividendHistory
+            .filter(d => d.year === taxYear.year.toString())
+            .reduce((sum, d) => sum + d.amount, 0)
+
+        const remainingUtrymme = gransbelopp - totalDividends
+
+        return {
+            year: taxYear.year.toString(),
+            schablonbelopp,
+            lonebaseratUtrymme,
+            gransbelopp,
+            totalDividends,
+            remainingUtrymme,
+            aktiekapital,
+            omkostnadsbelopp,
+            agarandel,
+            egenLon,
+        }
+    }, [taxYear.year])
 
     const handleSubmit = () => {
         toast({
@@ -153,7 +208,7 @@ export function K10Content() {
                     <StatCardGrid columns={4}>
                         <StatCard
                             label="Inkomstår"
-                            value="2024"
+                            value={taxYear.year.toString()}
                             subtitle="Blankett K10"
                             headerIcon={Calendar}
                         />
@@ -172,7 +227,7 @@ export function K10Content() {
                         <StatCard
                             label="Status"
                             value={INVOICE_STATUS_LABELS.DRAFT}
-                            subtitle="Deadline: 2 maj 2025"
+                            subtitle={`Deadline: ${taxYear.deadline}`}
                             headerIcon={Clock}
                         />
                     </StatCardGrid>

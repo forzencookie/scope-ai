@@ -2,13 +2,16 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { Check, X, AlertTriangle } from "lucide-react"
+import { Check, X, AlertTriangle, MessageSquare, Pencil } from "lucide-react"
+import { useState } from "react"
 import type { AIConfirmationRequest } from "@/lib/ai-tools/types"
 
 interface ConfirmationCardProps {
     confirmation: AIConfirmationRequest
     onConfirm: () => void
     onCancel: () => void
+    onComment?: (comment: string) => void
+    onSuggestChange?: () => void
     isLoading?: boolean
     className?: string
 }
@@ -19,25 +22,45 @@ interface ConfirmationCardProps {
  * Displays a preview of an AI action that requires user confirmation
  * before execution. Used for write operations like creating receipts,
  * transactions, invoices, etc.
+ * 
+ * Philosophy: AI prepares, Human approves.
  */
 export function ConfirmationCard({
     confirmation,
     onConfirm,
     onCancel,
+    onComment,
+    onSuggestChange,
     isLoading = false,
     className,
 }: ConfirmationCardProps) {
+    const [showComment, setShowComment] = useState(false)
+    const [comment, setComment] = useState('')
+
+    const handleSubmitComment = () => {
+        if (comment.trim() && onComment) {
+            onComment(comment.trim())
+            setComment('')
+            setShowComment(false)
+        }
+    }
+
     return (
         <div className={cn(
-            "rounded-lg border-2 border-border/60 bg-card overflow-hidden",
+            "rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 overflow-hidden",
             className
         )}>
             {/* Header */}
-            <div className="px-4 py-3 border-b border-border/40 bg-muted/30">
-                <h3 className="font-medium text-sm">{confirmation.title}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">
-                    {confirmation.description}
-                </p>
+            <div className="px-4 py-3 border-b border-border/40 flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
+                    <Pencil className="h-4 w-4 text-primary" />
+                </div>
+                <div>
+                    <h3 className="font-semibold text-sm">{confirmation.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                        {confirmation.description}
+                    </p>
+                </div>
             </div>
 
             {/* Summary Items */}
@@ -62,17 +85,30 @@ export function ConfirmationCard({
                 </div>
             )}
 
+            {/* Comment input */}
+            {showComment && (
+                <div className="px-4 py-3 border-t border-border/40">
+                    <textarea
+                        value={comment}
+                        onChange={(e) => setComment(e.target.value)}
+                        placeholder="Skriv din kommentar eller justering..."
+                        className="w-full rounded-lg border border-border bg-background p-3 text-sm
+                            focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                        rows={3}
+                    />
+                    <div className="mt-2 flex gap-2">
+                        <Button size="sm" onClick={handleSubmitComment} disabled={!comment.trim()}>
+                            Skicka
+                        </Button>
+                        <Button size="sm" variant="ghost" onClick={() => setShowComment(false)}>
+                            Avbryt
+                        </Button>
+                    </div>
+                </div>
+            )}
+
             {/* Actions */}
-            <div className="px-4 py-3 border-t border-border/40 flex items-center justify-end gap-2">
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={onCancel}
-                    disabled={isLoading}
-                >
-                    <X className="h-3.5 w-3.5 mr-1" />
-                    Avbryt
-                </Button>
+            <div className="px-4 py-3 border-t border-border/40 flex flex-wrap items-center gap-2">
                 <Button
                     size="sm"
                     onClick={onConfirm}
@@ -87,14 +123,50 @@ export function ConfirmationCard({
                     ) : (
                         <>
                             <Check className="h-3.5 w-3.5 mr-1" />
-                            Proceed
+                            Godkänn
                         </>
                     )}
+                </Button>
+
+                {onComment && !showComment && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowComment(true)}
+                        disabled={isLoading}
+                    >
+                        <MessageSquare className="h-3.5 w-3.5 mr-1" />
+                        Kommentera
+                    </Button>
+                )}
+
+                {onSuggestChange && (
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onSuggestChange}
+                        disabled={isLoading}
+                    >
+                        <Pencil className="h-3.5 w-3.5 mr-1" />
+                        Ändra förslag
+                    </Button>
+                )}
+
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={onCancel}
+                    disabled={isLoading}
+                    className="ml-auto"
+                >
+                    <X className="h-3.5 w-3.5 mr-1" />
+                    Avbryt
                 </Button>
             </div>
         </div>
     )
 }
+
 
 /**
  * Receipt Card for displaying created receipts

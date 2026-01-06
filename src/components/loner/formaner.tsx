@@ -19,6 +19,7 @@ import { BenefitDetailsDialog, getBenefitIcon } from "./dialogs/forman"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { benefitService, type BenefitStats } from "@/lib/services/benefit-service"
 
 const MAX_VISIBLE_BENEFITS = 5
 
@@ -180,19 +181,26 @@ export function BenefitsTab() {
         load()
     }, [currentYear])
 
-    // Stats - new actionable metrics
-    const totalCost = assignedBenefits.reduce((sum, b) => sum + b.amount, 0)
+    // Stats - new actionable metrics via RPC
+    const [stats, setStats] = useState<BenefitStats>({
+        totalCost: 0,
+        employeesWithBenefits: 0,
+        totalEmployees: 10,
+        unusedPotential: 0
+    })
 
-    // Calculate unique employees with benefits
-    const employeesWithBenefits = new Set(assignedBenefits.map(b => b.employeeName)).size
-    // TODO: Get total employee count from API - using 10 as placeholder
-    const totalEmployees = 10
-    const coveragePercent = totalEmployees > 0 ? Math.round((employeesWithBenefits / totalEmployees) * 100) : 0
+    useEffect(() => {
+        const loadStats = async () => {
+            const data = await benefitService.getStats(currentYear)
+            setStats(data)
+        }
+        loadStats()
+    }, [currentYear, assignedBenefits]) // Reload if assigned benefits change (client-side add pushes to DB but we want to reflect local state too? Actually RPC is best)
 
-    // Calculate unused potential (friskvård max * employees without it)
-    const friskvardMax = 5000
-    const employeesWithFriskvard = assignedBenefits.filter(b => b.benefitType === 'friskvard').length
-    const unusedPotential = (totalEmployees - employeesWithFriskvard) * friskvardMax
+    // Derived for UI
+    const coveragePercent = stats.totalEmployees > 0
+        ? Math.round((stats.employeesWithBenefits / stats.totalEmployees) * 100)
+        : 0
 
     const handleRowClick = (benefit: FormanCatalogItem) => {
         setSelectedBenefit(benefit)
@@ -256,7 +264,7 @@ export function BenefitsTab() {
             <StatCardGrid columns={3}>
                 <StatCard
                     label="Totalt"
-                    value={`${totalCost.toLocaleString('sv-SE')} kr`}
+                    value={`${stats.totalCost.toLocaleString('sv-SE')} kr`}
                     subtitle="kostnad i år"
                     headerIcon={Banknote}
                 />
@@ -268,7 +276,7 @@ export function BenefitsTab() {
                 />
                 <StatCard
                     label="Outnyttjat"
-                    value={`${unusedPotential.toLocaleString('sv-SE')} kr`}
+                    value={`${stats.unusedPotential.toLocaleString('sv-SE')} kr`}
                     subtitle="kvar att nyttja"
                     headerIcon={Gift}
                 />
@@ -278,14 +286,14 @@ export function BenefitsTab() {
             <div className="border-b-2 border-border/60" />
 
             {/* Suggestion Banner - simple logic, no AI */}
-            {(totalEmployees - employeesWithFriskvard) > 0 && (
+            {(stats.totalEmployees - stats.employeesWithBenefits) > 0 && (
                 <div className="flex items-center justify-between p-4 rounded-lg bg-muted/30 border border-border/60">
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-full bg-amber-500/10">
                             <Gift className="h-4 w-4 text-amber-600" />
                         </div>
                         <span className="text-sm">
-                            <strong>{totalEmployees - employeesWithFriskvard} anställda</strong> har outnyttjat friskvård
+                            <strong>{stats.totalEmployees - stats.employeesWithBenefits} anställda</strong> har outnyttjat friskvård
                         </span>
                     </div>
                     <Button variant="outline" size="sm">
@@ -315,7 +323,7 @@ export function BenefitsTab() {
                         title="Skattefria Förmåner"
                         benefits={taxFreeBenefits}
                         assignedBenefits={assignedBenefits}
-                        totalEmployees={totalEmployees}
+                        totalEmployees={stats.totalEmployees}
                         defaultOpen={true}
                         onRowClick={handleRowClick}
                     />
@@ -325,7 +333,7 @@ export function BenefitsTab() {
                         title="Skattepliktiga Förmåner"
                         benefits={taxableBenefits}
                         assignedBenefits={assignedBenefits}
-                        totalEmployees={totalEmployees}
+                        totalEmployees={stats.totalEmployees}
                         defaultOpen={false}
                         onRowClick={handleRowClick}
                     />
@@ -335,7 +343,7 @@ export function BenefitsTab() {
                         title="Löneväxling"
                         benefits={salarySacrificeBenefits}
                         assignedBenefits={assignedBenefits}
-                        totalEmployees={totalEmployees}
+                        totalEmployees={stats.totalEmployees}
                         defaultOpen={false}
                         onRowClick={handleRowClick}
                     />

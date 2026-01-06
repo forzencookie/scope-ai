@@ -1,53 +1,25 @@
 /**
- * AI Navigation Tools
- * 
- * Tools for navigating the user to different dashboard pages.
- * These don't mutate data but control what the user sees.
+ * Common AI Tools - Navigation
+ *
+ * Tools for navigating the dashboard.
  */
 
-import { defineTool } from './registry'
+import { defineTool } from '../registry'
 
 // =============================================================================
 // Route Mapping
 // =============================================================================
 
 const ROUTES = {
-    dashboard: {
-        path: '/dashboard',
-        label: 'Startsidan',
-    },
-    transactions: {
-        path: '/dashboard/bokforing?tab=transaktioner',
-        label: 'Transaktioner',
-    },
-    bookkeeping: {
-        path: '/dashboard/bokforing',
-        label: 'Bokföring',
-    },
-    payroll: {
-        path: '/dashboard/loner',
-        label: 'Löner',
-    },
-    reports: {
-        path: '/dashboard/rapporter',
-        label: 'Rapporter',
-    },
-    vat: {
-        path: '/dashboard/skatt?tab=momsdeklaration',
-        label: 'Momsdeklaration',
-    },
-    inbox: {
-        path: '/dashboard/inkorg',
-        label: 'Inkorg',
-    },
-    statistics: {
-        path: '/dashboard/foretagsstatistik',
-        label: 'Statistik',
-    },
-    settings: {
-        path: '/dashboard/installningar',
-        label: 'Inställningar',
-    },
+    dashboard: { path: '/dashboard', label: 'Startsidan' },
+    transactions: { path: '/dashboard/bokforing?tab=transaktioner', label: 'Transaktioner' },
+    bookkeeping: { path: '/dashboard/bokforing', label: 'Bokföring' },
+    payroll: { path: '/dashboard/loner', label: 'Löner' },
+    reports: { path: '/dashboard/rapporter', label: 'Rapporter' },
+    vat: { path: '/dashboard/skatt?tab=momsdeklaration', label: 'Momsdeklaration' },
+    inbox: { path: '/dashboard/inkorg', label: 'Inkorg' },
+    statistics: { path: '/dashboard/foretagsstatistik', label: 'Statistik' },
+    settings: { path: '/dashboard/installningar', label: 'Inställningar' },
 } as const
 
 type RouteName = keyof typeof ROUTES
@@ -69,14 +41,8 @@ export const navigateToTool = defineTool<NavigateToParams, { route: string }>({
     parameters: {
         type: 'object',
         properties: {
-            page: {
-                type: 'string',
-                description: 'Sidan att navigera till (t.ex. "transactions", "payroll", "vat")',
-            },
-            newTab: {
-                type: 'boolean',
-                description: 'Öppna i ny flik (standard: false)',
-            },
+            page: { type: 'string', description: 'Sidan att navigera till (t.ex. "transactions", "payroll", "vat")' },
+            newTab: { type: 'boolean', description: 'Öppna i ny flik (standard: false)' },
         },
         required: ['page'],
     },
@@ -85,41 +51,29 @@ export const navigateToTool = defineTool<NavigateToParams, { route: string }>({
         const routeInfo = ROUTES[routeKey]
 
         if (!routeInfo) {
-            // Try to use it as a direct path
             if (params.page.startsWith('/')) {
                 return {
                     success: true,
                     data: { route: params.page },
                     message: `Öppnar ${params.page}`,
-                    navigation: {
-                        route: params.page,
-                        label: 'Öppna sida',
-                        newTab: params.newTab,
-                    },
+                    navigation: { route: params.page, label: 'Öppna sida', newTab: params.newTab },
                 }
             }
 
-            return {
-                success: false,
-                error: `Okänd sida: "${params.page}". Tillgängliga: ${Object.keys(ROUTES).join(', ')}`,
-            }
+            return { success: false, error: `Okänd sida: "${params.page}". Tillgängliga: ${Object.keys(ROUTES).join(', ')}` }
         }
 
         return {
             success: true,
             data: { route: routeInfo.path },
             message: `Öppnar ${routeInfo.label}`,
-            navigation: {
-                route: routeInfo.path,
-                label: routeInfo.label,
-                newTab: params.newTab,
-            },
+            navigation: { route: routeInfo.path, label: routeInfo.label, newTab: params.newTab },
         }
     },
 })
 
 // =============================================================================
-// Show Preview Tool (for inline rendering)
+// Show Preview Tool
 // =============================================================================
 
 export interface ShowPreviewParams {
@@ -135,21 +89,12 @@ export const showPreviewTool = defineTool<ShowPreviewParams, null>({
     parameters: {
         type: 'object',
         properties: {
-            type: {
-                type: 'string',
-                enum: ['transactions', 'payslips', 'vat', 'income_statement', 'balance_sheet', 'employees'],
-                description: 'Typ av data att visa',
-            },
-            limit: {
-                type: 'number',
-                description: 'Max antal poster att visa (standard: 5)',
-            },
+            type: { type: 'string', enum: ['transactions', 'payslips', 'vat', 'income_statement', 'balance_sheet', 'employees'], description: 'Typ av data att visa' },
+            limit: { type: 'number', description: 'Max antal poster att visa (standard: 5)' },
         },
         required: ['type'],
     },
     execute: async (params) => {
-        // This tool delegates to the appropriate read tool
-        // The AI workspace will handle the display component
         const componentMap: Record<ShowPreviewParams['type'], { component: string; route: string }> = {
             transactions: { component: 'TransactionsTable', route: '/dashboard/bokforing?tab=transaktioner' },
             payslips: { component: 'PayslipsTable', route: '/dashboard/loner?tab=lonebesked' },
@@ -175,7 +120,7 @@ export const showPreviewTool = defineTool<ShowPreviewParams, null>({
 })
 
 // =============================================================================
-// Get Upcoming Deadlines
+// Deadlines Tool
 // =============================================================================
 
 export interface Deadline {
@@ -191,12 +136,8 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
     description: 'Hämta kommande deadlines för moms, AGI och andra deklarationer.',
     category: 'read',
     requiresConfirmation: false,
-    parameters: {
-        type: 'object',
-        properties: {},
-    },
+    parameters: { type: 'object', properties: {} },
     execute: async () => {
-        // Would normally fetch from real services
         const deadlines: Deadline[] = [
             { type: 'Moms', period: 'Q4 2024', dueDate: '12 feb 2025', amount: 80000, status: 'Kommande' },
             { type: 'AGI', period: 'December 2024', dueDate: '12 jan 2025', amount: 47090, status: 'Väntar' },
@@ -215,10 +156,6 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
         }
     },
 })
-
-// =============================================================================
-// Export all navigation tools
-// =============================================================================
 
 export const navigationTools = [
     navigateToTool,

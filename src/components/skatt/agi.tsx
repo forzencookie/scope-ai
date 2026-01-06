@@ -41,11 +41,12 @@ import { BulkActionToolbar, type BulkAction } from "../shared/bulk-action-toolba
 import { termExplanations } from "./constants"
 import { agiReports as initialAgiReports } from "@/components/loner/constants"
 import { submitToSkatteverket, type SkatteverketResponse } from "@/services/myndigheter-client"
+import { taxService, type AgiStats } from "@/lib/services/tax-service"
 
 type AGIReport = typeof initialAgiReports[0]
 
 import { useVerifications } from "@/hooks/use-verifications"
-import { getMonth, getYear, parseISO, format } from "date-fns"
+import { getMonth, getYear, parseISO, format, subMonths } from "date-fns"
 import { sv } from "date-fns/locale"
 import { generateAgiXML } from "@/lib/agi-generator"
 
@@ -238,33 +239,53 @@ export function AGIContent() {
         },
     ]
 
-    // Calculate stats from agiReports data
-    const stats = useMemo(() => {
-        // Find the first pending report (next AGI to submit)
-        const pendingReport = agiReportsState.find(r => r.status === "pending")
+    const [stats, setStats] = useState<{
+        nextPeriod: string,
+        deadline: string,
+        tax: number,
+        contributions: number,
+        totalSalary: number,
+        employees: number
+    }>({
+        nextPeriod: "Laddar...",
+        deadline: "",
+        tax: 0,
+        contributions: 0,
+        totalSalary: 0,
+        employees: 0,
+    })
 
-        if (pendingReport) {
-            return {
-                nextPeriod: pendingReport.period,
-                deadline: `Deadline: ${pendingReport.dueDate}`,
-                tax: pendingReport.tax,
-                contributions: pendingReport.contributions,
-                totalSalary: pendingReport.totalSalary,
-                employees: pendingReport.employees,
-            }
-        }
+    useEffect(() => {
+        const loadStats = async () => {
+            // Default to previous month (standard AGI workflow)
+            const today = new Date()
+            const targetDate = subMonths(today, 1) // e.g., if Jan, target Dec
+            const year = getYear(targetDate)
+            const month = getMonth(targetDate) + 1 // 1-indexed for SQL
 
-        // Fallback to first report if none pending
-        const firstReport = agiReportsState[0]
-        return {
-            nextPeriod: firstReport?.period || "Ingen period",
-            deadline: firstReport?.dueDate ? `Deadline: ${firstReport.dueDate}` : "",
-            tax: firstReport?.tax || 0,
-            contributions: firstReport?.contributions || 0,
-            totalSalary: firstReport?.totalSalary || 0,
-            employees: firstReport?.employees || 0,
+            const periodName = format(targetDate, "MMMM yyyy", { locale: sv })
+            const capitalizedPeriod = periodName.charAt(0).toUpperCase() + periodName.slice(1)
+
+            // Deadline is 12th of the month AFTER the target month (which is current month usually)
+            // But if today > 12th, maybe looking at next one? 
+            // Standard: You declare previous month. Deadline is 12th of current month.
+            const deadlineDate = new Date(getYear(today), getMonth(today), 12)
+            const deadlineStr = format(deadlineDate, "d MMM yyyy", { locale: sv })
+
+            const data = await taxService.getAgiStats(year, month)
+
+            setStats({
+                nextPeriod: capitalizedPeriod,
+                deadline: `Deadline: ${deadlineStr}`,
+                tax: data.tax,
+                contributions: data.contributions,
+                totalSalary: data.totalSalary,
+                employees: 0, // SQL doesn't return count yet accurately, or set to 0. AGI stats usually focused on money.
+                // If we want employee count, we need it in RPC return. My SQL had logic for it but commented it falls back.
+            })
         }
-    }, [agiReportsState])
+        loadStats()
+    }, []) // Run once on mount
     // Filter reports based on search and status
     const filteredReports = useMemo(() => {
         return agiReportsState.filter(report => {

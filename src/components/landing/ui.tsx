@@ -14,7 +14,7 @@ interface SectionProps {
 
 export function Section({ children, className, id }: SectionProps) {
   return (
-    <section id={id} className={cn("px-6 py-24 md:py-32 max-w-[1400px] mx-auto", className)}>
+    <section id={id} className={cn("px-3 md:px-4 py-24 md:py-32 max-w-[2400px] mx-auto", className)}>
       {children}
     </section>
   )
@@ -39,10 +39,10 @@ export function StatusBadge({ status }: StatusBadgeProps) {
   }
 
   const labels = {
-    active: "Processing",
-    pending: "Pending",
-    complete: "Complete",
-    warning: "Attention",
+    active: "Aktiv",
+    pending: "Väntar",
+    complete: "Klar",
+    warning: "Varning",
   }
 
   return (
@@ -63,7 +63,7 @@ interface DitherPatternProps {
 
 export function DitherPattern({ className, opacity = 0.1 }: DitherPatternProps) {
   return (
-    <div 
+    <div
       className={cn("absolute pointer-events-none bg-dither-pattern", className)}
       style={{ opacity }}
     />
@@ -95,19 +95,22 @@ export function GridBackground() {
 
 export function SocialProof() {
   const logos = ["Volvo", "Klarna", "Spotify", "H&M", "IKEA", "Ericsson", "Northvolt", "Truecaller"]
-  
+
   return (
-    <div className="border-b border-stone-200 bg-white py-8 overflow-hidden">
-      <div className="flex animate-marquee">
-        {[...logos, ...logos].map((logo, i) => (
-          <div 
-            key={i} 
-            className="flex-shrink-0 px-12 text-xl font-bold text-stone-400 hover:text-stone-600 transition-colors duration-300 cursor-default"
-          >
-            {logo}
-          </div>
-        ))}
+    <section className="px-3 md:px-4 py-4 max-w-[2400px] mx-auto">
+      <div className="bg-stone-50 rounded-2xl py-6 overflow-hidden">
+        <div className="flex animate-marquee">
+          {[...logos, ...logos].map((logo, i) => (
+            <div
+              key={i}
+              className="flex-shrink-0 px-12 text-xl font-bold text-stone-400 hover:text-stone-600 transition-colors duration-300 cursor-default"
+            >
+              {logo}
+            </div>
+          ))}
+        </div>
       </div>
-    </div>
+    </section>
   )
 }
+

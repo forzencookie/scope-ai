@@ -1,10 +1,12 @@
+"use client"
+
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 
 export function Footer() {
   return (
-    <footer className="bg-stone-50 text-stone-600 py-24 px-6 border-t border-stone-200">
-      <div className="max-w-[1400px] mx-auto grid md:grid-cols-5 gap-12">
+    <footer className="bg-stone-50 text-stone-600 py-24 px-3 md:px-4 border-t border-stone-200">
+      <div className="max-w-[2400px] mx-auto grid md:grid-cols-5 gap-12">
         <div className="col-span-2">
           <div className="flex items-center gap-2 mb-6">
             <div className="w-5 h-5 bg-stone-900 rounded-sm" />
@@ -32,8 +34,8 @@ export function Footer() {
             <ul className="space-y-4 text-sm">
               {col.links.map(link => (
                 <li key={link}>
-                  <Link 
-                    href="#" 
+                  <Link
+                    href="#"
                     className="hover:text-stone-900 transition-colors"
                     aria-label={`${link} - ${col.title}`}
                   >
@@ -45,10 +47,10 @@ export function Footer() {
           </nav>
         ))}
       </div>
-      
-      <div className="max-w-[1400px] mx-auto mt-16 pt-8 border-t border-stone-200">
+
+      <div className="max-w-[2400px] mx-auto mt-16 pt-8 border-t border-stone-200">
         <div className="text-xs text-stone-500">
-          © 2024 Scope AI AB. All rights reserved.
+          © 2024 Scope AI AB. Alla rättigheter förbehållna.
         </div>
       </div>
     </footer>

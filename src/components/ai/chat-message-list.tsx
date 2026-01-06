@@ -4,16 +4,20 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, FileText, X } from "lucide-react"
 import ReactMarkdown from "react-markdown"
+import remarkGfm from "remark-gfm"
 import {
     ConfirmationCard,
     ReceiptCard,
     TransactionCard,
     TaskChecklist
 } from "@/components/ai"
+import { ActivityCard } from "@/components/ai/activity-card"
+import { ComparisonTable } from "@/components/ai/comparison-table"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import type { Message } from "@/lib/chat-types"
 import { useEffect, useRef } from "react"
+
 
 interface ChatMessageListProps {
     messages: Message[]
@@ -59,8 +63,8 @@ export function ChatMessageList({
             <div className="space-y-4 w-full">
                 {/* Markdown Text */}
                 {message.content && (
-                    <div className="prose prose-sm max-w-none dark:prose-invert">
-                        <ReactMarkdown>{message.content}</ReactMarkdown>
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-table:border-collapse prose-td:border prose-td:border-border/40 prose-td:p-2 prose-th:border prose-th:border-border/40 prose-th:p-2 prose-th:bg-muted/30">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
                     </div>
                 )}
 
@@ -101,6 +105,23 @@ export function ChatMessageList({
                                     ))}
                                 </ul>
                             </div>
+                        )}
+                        {message.display.type === 'ActivityCard' && (
+                            <ActivityCard
+                                action={message.display.data.action || 'created'}
+                                entityType={message.display.data.entityType || 'transaction'}
+                                title={message.display.data.title || 'Åtgärd utförd'}
+                                subtitle={message.display.data.subtitle}
+                                changes={message.display.data.changes || []}
+                                link={message.display.data.link}
+                                linkLabel={message.display.data.linkLabel}
+                            />
+                        )}
+                        {message.display.type === 'ComparisonTable' && (
+                            <ComparisonTable
+                                title={message.display.data.title}
+                                rows={message.display.data.rows || []}
+                            />
                         )}
                     </div>
                 )}

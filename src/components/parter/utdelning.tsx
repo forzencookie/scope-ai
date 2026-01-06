@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import {
     Calendar,
     Wallet,
@@ -109,6 +109,30 @@ export function UtdelningContent() {
     const [showRegisterDialog, setShowRegisterDialog] = useState(false)
     const [registerAmount, setRegisterAmount] = useState("")
     const [registerYear, setRegisterYear] = useState(new Date().getFullYear().toString())
+
+    // Fetch stats from server
+    const [stats, setStats] = useState({
+        gransbelopp: 195250, // Default fallback
+        planerad: 150000,
+        skatt: 30000
+    })
+
+    useEffect(() => {
+        async function fetchStats() {
+            const { supabase } = await import('@/lib/supabase')
+            const currentYear = new Date().getFullYear()
+            const { data, error } = await supabase.rpc('get_dividend_stats', { target_year: currentYear })
+
+            if (!error && data) {
+                setStats({
+                    gransbelopp: Number(data.gransbelopp) || 0,
+                    planerad: Number(data.planerad) || 0,
+                    skatt: Number(data.skatt) || 0
+                })
+            }
+        }
+        fetchStats()
+    }, [])
 
     const [step, setStep] = useState(1)
     const [chatInput, setChatInput] = useState("")
@@ -284,22 +308,22 @@ export function UtdelningContent() {
             </div>
             <StatCardGrid columns={3}>
                 <StatCard
-                    label="Gränsbelopp 2024"
-                    value="195 250 kr"
+                    label={`Gränsbelopp ${new Date().getFullYear()}`}
+                    value={`${formatCurrency(stats.gransbelopp)}`}
                     subtitle="Schablonmetoden (2,75 IBB)"
                     headerIcon={TrendingUp}
                     tooltip={termExplanations["Gränsbelopp"]}
                 />
                 <StatCard
                     label="Planerad utdelning"
-                    value="150 000 kr"
-                    subtitle="Inom gränsbeloppet"
+                    value={`${formatCurrency(stats.planerad)}`}
+                    subtitle={stats.planerad <= stats.gransbelopp ? "Inom gränsbeloppet" : "Överstiger gränsbeloppet"}
                     headerIcon={DollarSign}
                     tooltip={termExplanations["Utdelning"]}
                 />
                 <StatCard
                     label="Skatt på utdelning"
-                    value="30 000 kr"
+                    value={`${formatCurrency(stats.skatt)}`}
                     subtitle="20% kapitalskatt"
                     headerIcon={Calculator}
                 />

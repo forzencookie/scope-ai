@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
     Calendar,
@@ -39,6 +39,7 @@ import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
 
 import { SectionCard } from "@/components/ui/section-card"
 import { SRUPreviewDialog } from "./dialogs/sru"
+import { useCompany } from "@/providers/company-provider"
 
 
 // =============================================================================
@@ -50,23 +51,37 @@ export function InkomstdeklarationContent() {
     const router = useRouter()
     const { addToast: toast } = useToast()
     const { verifications } = useVerifications()
+    const { company } = useCompany()
     const [showSRUPreview, setShowSRUPreview] = useState(false)
     const [activeFilter, setActiveFilter] = useState<"all" | "incomeStatement" | "balanceSheet" | "taxAdjustments">("all")
 
+    // Get dynamic beskattningsår from helper
+    const [taxYear, setTaxYear] = useState({ year: 2024, deadlineLabel: '1 jul 2025' })
+    useEffect(() => {
+        const loadTaxYear = async () => {
+            const { getCurrentBeskattningsar } = await import('@/lib/tax-periods')
+            const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
+            const result = getCurrentBeskattningsar(fiscalYearEnd)
+            setTaxYear({ year: result.year, deadlineLabel: result.deadlineLabel })
+        }
+        loadTaxYear()
+    }, [company?.fiscalYearEnd])
+
     // Calculate all fields from ledger
     const calculatedData = useMemo(() => {
-        return Ink2Processor.calculateAll(verifications, 2024)
-    }, [verifications])
+        return Ink2Processor.calculateAll(verifications, taxYear.year)
+    }, [verifications, taxYear.year])
 
     // Calculate stats
     const stats = useMemo(() => {
         const arsResultat = calculatedData.totals.netIncome
         return {
-            year: "2024",
+            year: taxYear.year.toString(),
             result: arsResultat,
             status: INVOICE_STATUS_LABELS.DRAFT,
+            deadline: taxYear.deadlineLabel,
         }
-    }, [calculatedData])
+    }, [calculatedData, taxYear])
 
     // Group income statement fields by sub-section
     const incomeStatementSections = useMemo(() => {
@@ -184,7 +199,7 @@ export function InkomstdeklarationContent() {
                 <StatCardGrid columns={3}>
                     <StatCard
                         label="Beskattningsår"
-                        value="2024"
+                        value={stats.year}
                         subtitle="Inkomstdeklaration 2"
                         headerIcon={Calendar}
                     />
@@ -197,7 +212,7 @@ export function InkomstdeklarationContent() {
                     <StatCard
                         label="Status"
                         value={INVOICE_STATUS_LABELS.DRAFT}
-                        subtitle="Deadline: 1 jul 2025"
+                        subtitle={`Deadline: ${stats.deadline}`}
                         headerIcon={Clock}
                     />
                 </StatCardGrid>

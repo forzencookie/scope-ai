@@ -42,10 +42,10 @@ export const translations = {
   // Transactions / Bokföring
   // ============================================================================
   transactions: {
-    title: { enkel: "Pengar in & ut", avancerad: "Transaktioner" },
-    subtitle: { enkel: "Alla betalningar från banken visas här.", avancerad: "Granska och bokför banktransaktioner." },
-    allTransactions: { enkel: "Alla betalningar", avancerad: "Alla transaktioner" },
-    newTransaction: { enkel: "Ny betalning", avancerad: "Ny transaktion" },
+    title: { enkel: "köpt och sålt", avancerad: "Transaktioner" },
+    subtitle: { enkel: "Alla kostnader och inkomster visas här", avancerad: "Granska och bokför transaktioner." },
+    allTransactions: { enkel: "Alla kostnader och inkomster", avancerad: "Alla transaktioner" },
+    newTransaction: { enkel: "Ny betalning eller inkomst", avancerad: "Ny transaktion" },
     toRecord: { enkel: "Att sortera", avancerad: "Att bokföra" },
     recorded: { enkel: "Klara", avancerad: "Bokförda" },
     missingDoc: { enkel: "Saknar kvitto", avancerad: "Saknar underlag" },
@@ -75,8 +75,8 @@ export const translations = {
     statusIgnored: { enkel: "Hoppad över", avancerad: "Ignorerad" },
 
     // Empty state
-    empty: { enkel: "Inga betalningar ännu", avancerad: "Inga transaktioner" },
-    emptyDesc: { enkel: "När du kopplar ditt bankkonto visas dina betalningar här", avancerad: "Transaktioner visas här när bankkontot är kopplat" },
+    empty: { enkel: "Inga kostnader eller inkomster ännu", avancerad: "Inga transaktioner" },
+    emptyDesc: { enkel: "Ladda upp dina transaktioner så sköter vi resten.", avancerad: "Ladda upp dina transaktioner så sköter vi resten." },
 
     // Search
     search: { enkel: "Sök betalningar...", avancerad: "Sök transaktioner..." },

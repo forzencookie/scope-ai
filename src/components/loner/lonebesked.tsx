@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import {
     Calendar,
@@ -42,6 +42,7 @@ import { AppStatusBadge } from "@/components/ui/status-badge"
 import { PayslipDetailsDialog } from "./dialogs/spec"
 import { PayslipCreateDialog } from "./dialogs/lonebesked"
 import { generatePayslipPDF } from "@/lib/pdf-generator"
+import { payrollService, type PayrollStats } from "@/lib/services/payroll-service"
 
 type Payslip = {
     id: string | number
@@ -92,7 +93,7 @@ export function LonesbeskContent() {
         }
     }
 
-    useMemo(() => {
+    useEffect(() => {
         fetchPayslips()
     }, [])
 
@@ -102,6 +103,28 @@ export function LonesbeskContent() {
         setViewDialogOpen(true)
     }
 
+    // Calculate stats from payslips data
+    const [stats, setStats] = useState<PayrollStats>({
+        currentPeriod: "Laddar...",
+        employeeCount: 0,
+        totalGross: 0,
+        totalTax: 0
+    })
+
+    useEffect(() => {
+        const loadStats = async () => {
+            const data = await payrollService.getStats()
+            setStats(data)
+        }
+        loadStats()
+    }, [allPayslips]) // Reload if payslips change (e.g. after add)
+
+    /*
+    const filteredPayslips = useMemo(() => {
+        return allPayslips.filter(slip => {
+    */
+
+    // Kept filteredPayslips logic below but removing the stats useMemo block
     const filteredPayslips = useMemo(() => {
         return allPayslips.filter(slip => {
             const matchesSearch = !searchQuery ||
@@ -115,40 +138,7 @@ export function LonesbeskContent() {
         })
     }, [searchQuery, statusFilter, allPayslips])
 
-    // Calculate stats from payslips data
-    const stats = useMemo(() => {
-        const periods = [...new Set(allPayslips.map(p => p.period))]
-        const currentPeriod = periods[0]
 
-        const currentPayslips = allPayslips.filter(p => p.period === currentPeriod)
-
-        const totalGross = currentPayslips.reduce((sum, p) => sum + p.grossSalary, 0)
-        const totalTax = currentPayslips.reduce((sum, p) => sum + p.tax, 0)
-        const employeeCount = currentPayslips.length
-
-        const periodMatch = currentPeriod ? currentPeriod.match(/(\w+)\s+(\d{4})/) : null
-        let deadline = "12 jan 2025"
-        if (periodMatch) {
-            const monthNames = ["Januari", "Februari", "Mars", "April", "Maj", "Juni",
-                "Juli", "Augusti", "September", "Oktober", "November", "December"]
-            const monthIndex = monthNames.findIndex(m =>
-                currentPeriod.toLowerCase().includes(m.toLowerCase())
-            )
-            if (monthIndex !== -1) {
-                const nextMonth = monthIndex === 11 ? 0 : monthIndex + 1
-                const nextYear = monthIndex === 11 ? parseInt(periodMatch[2]) + 1 : parseInt(periodMatch[2])
-                deadline = `12 ${monthNames[nextMonth].toLowerCase().slice(0, 3)} ${nextYear}`
-            }
-        }
-
-        return {
-            currentPeriod: currentPeriod || "Januari 2025",
-            employeeCount,
-            totalGross,
-            totalTax,
-            deadline,
-        }
-    }, [allPayslips])
 
     // Toggle selection for a single row
     const toggleSelection = (id: string) => {
@@ -244,7 +234,7 @@ export function LonesbeskContent() {
                     <StatCard
                         label="Skatt att betala"
                         value={formatCurrency(stats.totalTax)}
-                        subtitle={`Deadline: ${stats.deadline}`}
+                        subtitle="Avdragen skatt"
                         headerIcon={Wallet}
                     />
                 </StatCardGrid>

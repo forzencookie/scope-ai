@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { formatDateLong } from "@/lib/utils"
 import {
   Vote,
@@ -101,24 +101,48 @@ export function Bolagsstamma() {
       })
   }, [realDocuments])
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const upcoming = meetings.filter(m => m.status === 'kallad').length
-    const completed = meetings.filter(m => m.status === 'protokoll signerat').length
-    const totalDecisions = meetings.reduce((sum, m) => sum + m.decisions.length, 0)
+  // Fetch stats from server
+  const [serverStats, setServerStats] = useState({
+    upcoming: 0,
+    completed: 0,
+    totalDecisions: 0,
+    nextMeetingDate: null as string | null,
+    daysUntilNext: null as number | null
+  })
 
+  useEffect(() => {
+    async function fetchStats() {
+      const { supabase } = await import('@/lib/supabase')
+      const { data, error } = await supabase.rpc('get_meeting_stats', { meeting_type: 'general_meeting_minutes' })
+
+      if (!error && data) {
+        setServerStats({
+          upcoming: Number(data.planned) || 0, // 'planned' in RPC maps to 'upcoming/kallad'
+          completed: Number(data.signed) || 0, // 'signed' maps to 'completed' here
+          totalDecisions: Number(data.totalDecisions) || 0,
+          nextMeetingDate: data.nextMeeting || null,
+          daysUntilNext: data.daysUntilNext
+        })
+      }
+    }
+    fetchStats()
+  }, [])
+
+  // Calculate next meeting object for Alert Card (needs full type info)
+  const nextMeetingObject = useMemo(() => {
     const sortedUpcoming = meetings
       .filter(m => m.status === 'kallad')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-
-    const nextMeeting = sortedUpcoming[0]
-
-    const daysUntilNext = nextMeeting
-      ? Math.ceil((new Date(nextMeeting.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
-      : null
-
-    return { upcoming, completed, totalDecisions, nextMeeting, daysUntilNext }
+    return sortedUpcoming[0] || null
   }, [meetings])
+
+  const stats = {
+    upcoming: serverStats.upcoming,
+    completed: serverStats.completed,
+    totalDecisions: serverStats.totalDecisions,
+    nextMeeting: nextMeetingObject ? nextMeetingObject : (serverStats.nextMeetingDate ? { date: serverStats.nextMeetingDate, type: 'ordinarie' as const } : null),
+    daysUntilNext: serverStats.daysUntilNext
+  }
 
   // Filter meetings
   const filteredMeetings = useMemo(() => {

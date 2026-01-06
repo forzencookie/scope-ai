@@ -74,45 +74,18 @@ export const transactionService = {
     async getStats(): Promise<TransactionStats> {
         const supabase = getSupabaseClient()
 
-        // We use .select() with filters to get specific aggregations
-        // In a real optimized Postgres setup, we might use a .rpc() call for this, 
-        // but parallel queries are fast enough for <100k rows.
+        const { data, error } = await supabase.rpc('get_transaction_stats')
 
-        const [incomeResult, expenseResult, pendingResult] = await Promise.all([
-            // Sum Income (> 0)
-            supabase.from('transactions')
-                .select('amount.sum()')
-                .gt('amount', 0),
-
-            // Sum Expenses (< 0)
-            supabase.from('transactions')
-                .select('amount.sum()')
-                .lt('amount', 0),
-
-            // Count Pending (status = 'pending' or 'missing_docs')
-            supabase.from('transactions')
-                .select('id', { count: 'exact', head: true })
-                .or('status.eq.to_record,status.eq.missing_documentation')
-        ])
-
-        // Parse results
-        // Supabase returns [{ sum: 123 }]
-        const income = incomeResult.data?.[0]?.sum || 0
-        const expenses = Math.abs(expenseResult.data?.[0]?.sum || 0)
-        const pending = pendingResult.count || 0
-
-        // Get total count
-        const totalResult = await supabase
-            .from('transactions')
-            .select('id', { count: 'exact', head: true })
-
-        const totalCount = totalResult.count || 0
+        if (error) {
+            console.error('Failed to fetch transaction stats:', error)
+            return { income: 0, expenses: 0, pending: 0, totalCount: 0 }
+        }
 
         return {
-            income,
-            expenses,
-            pending,
-            totalCount
+            income: Number(data.income),
+            expenses: Number(data.expenses),
+            pending: Number(data.pending),
+            totalCount: Number(data.totalCount)
         }
     },
 

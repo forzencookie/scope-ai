@@ -82,47 +82,23 @@ export const receiptService = {
     async getStats(): Promise<ReceiptStats> {
         const supabase = getSupabaseClient()
 
-        // Matched statuses (fully processed)
-        const matchedStatuses = [RECEIPT_STATUSES.VERIFIED, RECEIPT_STATUSES.PROCESSED]
+        const { data, error } = await supabase.rpc('get_receipt_stats')
 
-        // Unmatched statuses (need attention)
-        const unmatchedStatuses = [
-            RECEIPT_STATUSES.PENDING,
-            RECEIPT_STATUSES.PROCESSING,
-            RECEIPT_STATUSES.REVIEW_NEEDED
-        ]
-
-        // Parallel queries for all stats
-        const [
-            totalResult,
-            matchedResult,
-            unmatchedResult,
-            amountResult
-        ] = await Promise.all([
-            // Total count
-            supabase.from('receipts')
-                .select('id', { count: 'exact', head: true }),
-
-            // Matched (processed/verified) count
-            supabase.from('receipts')
-                .select('id', { count: 'exact', head: true })
-                .in('status', matchedStatuses),
-
-            // Unmatched (pending/processing) count
-            supabase.from('receipts')
-                .select('id', { count: 'exact', head: true })
-                .in('status', unmatchedStatuses),
-
-            // Sum of all amounts
-            supabase.from('receipts')
-                .select('amount.sum()')
-        ])
+        if (error) {
+            console.error('Failed to fetch receipt stats:', error)
+            return {
+                total: 0,
+                matchedCount: 0,
+                unmatchedCount: 0,
+                totalAmount: 0
+            }
+        }
 
         return {
-            total: totalResult.count || 0,
-            matchedCount: matchedResult.count || 0,
-            unmatchedCount: unmatchedResult.count || 0,
-            totalAmount: Number(amountResult.data?.[0]?.sum || 0)
+            total: Number(data.total),
+            matchedCount: Number(data.matchedCount),
+            unmatchedCount: Number(data.unmatchedCount),
+            totalAmount: Number(data.totalAmount)
         }
     },
 

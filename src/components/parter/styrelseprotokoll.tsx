@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { formatDateLong, formatDateShort } from "@/lib/utils"
 import {
   FileText,
@@ -116,16 +116,30 @@ export function Styrelseprotokoll() {
   }, [realDocuments])
 
   // Calculate stats
-  const stats = useMemo(() => {
-    const signed = meetings.filter(m => m.status === 'protokoll signerat').length
-    const completed = meetings.filter(m => m.status === 'genomförd').length
-    const planned = meetings.filter(m => m.status === 'planerad').length
-    const totalDecisions = meetings.reduce((sum, m) =>
-      sum + m.agendaItems.filter(a => a.decision).length, 0
-    )
+  // Fetch stats from server
+  const [stats, setStats] = useState({
+    signed: 0,
+    completed: 0,
+    planned: 0,
+    totalDecisions: 0
+  })
 
-    return { signed, completed, planned, totalDecisions }
-  }, [meetings])
+  useEffect(() => {
+    async function fetchStats() {
+      const { supabase } = await import('@/lib/supabase')
+      const { data, error } = await supabase.rpc('get_meeting_stats', { meeting_type: 'board_meeting_minutes' })
+
+      if (!error && data) {
+        setStats({
+          signed: Number(data.signed) || 0,
+          completed: Number(data.completed) || 0,
+          planned: Number(data.planned) || 0,
+          totalDecisions: Number(data.totalDecisions) || 0
+        })
+      }
+    }
+    fetchStats()
+  }, [])
 
   // Filter meetings by search and status
   const filteredMeetings = useMemo(() => {

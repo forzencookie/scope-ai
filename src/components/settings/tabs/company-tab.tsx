@@ -115,6 +115,47 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     </Select>
                 </div>
 
+                <div className="grid gap-2">
+                    <Label>Momsredovisningsperiod</Label>
+                    <Select
+                        value={company?.vatFrequency || 'quarterly'}
+                        onValueChange={(val: 'monthly' | 'quarterly' | 'annually') => updateCompany({ vatFrequency: val })}
+                    >
+                        <SelectTrigger className="w-full text-left justify-between px-3">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="monthly">
+                                <span className="font-medium block">Månadsvis</span>
+                                <span className="text-xs text-muted-foreground">Omsättning över 40M SEK</span>
+                            </SelectItem>
+                            <SelectItem value="quarterly">
+                                <span className="font-medium block">Kvartalsvis</span>
+                                <span className="text-xs text-muted-foreground">Standard för de flesta företag</span>
+                            </SelectItem>
+                            <SelectItem value="annually">
+                                <span className="font-medium block">Helårsvis</span>
+                                <span className="text-xs text-muted-foreground">Omsättning under 1M SEK</span>
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                        <Label>Fåmansföretag (3:12-regler)</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Aktiverar K10-stöd för kvalificerade andelar
+                        </p>
+                    </div>
+                    <input
+                        type="checkbox"
+                        checked={company?.isCloselyHeld ?? true}
+                        onChange={(e) => updateCompany({ isCloselyHeld: e.target.checked })}
+                        className="h-4 w-4 rounded border-gray-300"
+                    />
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                     <SettingsFormField
                         id="org-nr"

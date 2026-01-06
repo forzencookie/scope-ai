@@ -135,57 +135,25 @@ export const invoiceService = {
     async getStats(): Promise<InvoiceStats> {
         const supabase = getSupabaseClient()
 
-        // Parallel queries for all stats - same pattern as transactionService
-        const [
-            customerUnpaidResult,
-            supplierUnpaidResult,
-            customerOverdueResult,
-            supplierOverdueResult,
-            paidResult
-        ] = await Promise.all([
-            // Sum of unpaid customer invoices (incoming money)
-            supabase.from('customer_invoices')
-                .select('total_amount.sum()')
-                .not('status', 'eq', 'betald'),
+        const { data, error } = await supabase.rpc('get_invoice_stats')
 
-            // Sum of unpaid supplier invoices (outgoing money)
-            supabase.from('supplier_invoices')
-                .select('total_amount.sum()')
-                .not('status', 'eq', 'betald'),
-
-            // Overdue customer invoices
-            supabase.from('customer_invoices')
-                .select('total_amount.sum(), id', { count: 'exact' })
-                .eq('status', INVOICE_STATUS_LABELS.OVERDUE),
-
-            // Overdue supplier invoices
-            supabase.from('supplier_invoices')
-                .select('total_amount.sum(), id', { count: 'exact' })
-                .eq('status', 'förfallen'),
-
-            // All paid invoices (both types)
-            supabase.from('customer_invoices')
-                .select('total_amount.sum()')
-                .eq('status', 'betald')
-        ])
-
-        // Parse results - Supabase returns [{ sum: 123 }] format
-        const incomingTotal = customerUnpaidResult.data?.[0]?.sum || 0
-        const outgoingTotal = supplierUnpaidResult.data?.[0]?.sum || 0
-
-        const customerOverdueAmount = customerOverdueResult.data?.[0]?.sum || 0
-        const supplierOverdueAmount = supplierOverdueResult.data?.[0]?.sum || 0
-        const customerOverdueCount = customerOverdueResult.count || 0
-        const supplierOverdueCount = supplierOverdueResult.count || 0
-
-        const paidAmount = paidResult.data?.[0]?.sum || 0
+        if (error) {
+            console.error('Failed to fetch invoice stats:', error)
+            return {
+                incomingTotal: 0,
+                outgoingTotal: 0,
+                overdueCount: 0,
+                overdueAmount: 0,
+                paidAmount: 0
+            }
+        }
 
         return {
-            incomingTotal: Number(incomingTotal),
-            outgoingTotal: Number(outgoingTotal),
-            overdueCount: customerOverdueCount + supplierOverdueCount,
-            overdueAmount: Number(customerOverdueAmount) + Number(supplierOverdueAmount),
-            paidAmount: Number(paidAmount)
+            incomingTotal: Number(data.incomingTotal),
+            outgoingTotal: Number(data.outgoingTotal),
+            overdueCount: Number(data.overdueCount),
+            overdueAmount: Number(data.overdueAmount),
+            paidAmount: Number(data.paidAmount)
         }
     },
 

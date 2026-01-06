@@ -68,30 +68,21 @@ export const inventarieService = {
     async getStats(): Promise<InventarieStats> {
         const supabase = getSupabaseClient()
 
-        // Parallel queries for all stats
-        const [countResult, sumResult, kategorierResult] = await Promise.all([
-            // Total count
-            supabase.from('inventarier')
-                .select('id', { count: 'exact', head: true }),
+        const { data, error } = await supabase.rpc('get_inventory_stats')
 
-            // Sum of purchase prices
-            supabase.from('inventarier')
-                .select('inkopspris.sum()'),
-
-            // Distinct categories count
-            supabase.from('inventarier')
-                .select('kategori')
-        ])
-
-        // Count unique categories
-        const uniqueKategorier = new Set(
-            (kategorierResult.data || []).map(row => row.kategori)
-        ).size
+        if (error) {
+            console.error('Failed to fetch inventory stats:', error)
+            return {
+                totalCount: 0,
+                totalInkopsvarde: 0,
+                kategorier: 0
+            }
+        }
 
         return {
-            totalCount: countResult.count || 0,
-            totalInkopsvarde: Number(sumResult.data?.[0]?.sum || 0),
-            kategorier: uniqueKategorier
+            totalCount: Number(data.totalCount),
+            totalInkopsvarde: Number(data.totalInkopsvarde),
+            kategorier: Number(data.kategorier)
         }
     },
 

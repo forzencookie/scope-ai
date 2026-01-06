@@ -19,22 +19,22 @@ const MAX_DELAY_MS = 30000
 export function delay(ms: number, signal?: AbortSignal): Promise<void> {
   if (ms <= 0) return Promise.resolve()
   if (signal?.aborted) return Promise.reject(new DOMException('Delay aborted', 'AbortError'))
-  
+
   const clampedMs = Math.min(ms, MAX_DELAY_MS)
-  
+
   return new Promise((resolve, reject) => {
     const onTimeout = () => {
       cleanup()
       resolve()
     }
-    
+
     const onAbort = () => {
       clearTimeout(timeoutId)
       reject(new DOMException('Delay aborted', 'AbortError'))
     }
-    
+
     const cleanup = () => signal?.removeEventListener('abort', onAbort)
-    
+
     const timeoutId = setTimeout(onTimeout, clampedMs)
     signal?.addEventListener('abort', onAbort, { once: true })
   })
@@ -50,19 +50,19 @@ export function delay(ms: number, signal?: AbortSignal): Promise<void> {
  */
 export function parseAmount(amount: string): number {
   if (!amount || typeof amount !== 'string') return 0
-  
+
   // Preserve the sign before normalization
   const isNegative = amount.includes('-')
-  
+
   // Remove all whitespace
   let normalized = amount.replace(/\s/g, '')
-  
+
   // Count separators to determine format
   const commaCount = (normalized.match(/,/g) || []).length
   const periodCount = (normalized.match(/\./g) || []).length
   const lastComma = normalized.lastIndexOf(',')
   const lastPeriod = normalized.lastIndexOf('.')
-  
+
   // Determine format based on separator positions and counts
   if (lastComma > lastPeriod && commaCount === 1) {
     // Swedish format: 1.234,56 or 1234,56 (comma is decimal separator)
@@ -80,13 +80,13 @@ export function parseAmount(amount: string): number {
     // Single separator or no separator - remove commas for safety
     normalized = normalized.replace(/,/g, '')
   }
-  
+
   // Keep only digits and decimal point
   normalized = normalized.replace(/[^\d.]/g, '')
-  
+
   const parsed = parseFloat(normalized)
   if (!Number.isFinite(parsed)) return 0
-  
+
   // Apply sign if original was negative
   return isNegative ? -Math.abs(parsed) : parsed
 }
@@ -114,13 +114,21 @@ export function parseDateSafe(dateString: string, fallback: Date = new Date()): 
  * @example formatCurrency(1234.56, "sv-SE", "SEK", 0) => "1 235 kr"
  */
 export function formatCurrency(
-  amount: number, 
-  locale = "sv-SE", 
+  amount: number,
+  locale = "sv-SE",
   currency = "SEK",
   minimumFractionDigits = 2
 ): string {
   if (!Number.isFinite(amount)) return formatCurrency(0, locale, currency, minimumFractionDigits)
-  
+
+  // Prevent -0 display by normalizing small negative numbers to 0
+  // If the absolute amount is less than half of the smallest fraction digit, it rounds to zero.
+  // We explicitly set it to positive 0 to avoid "-0,00 kr"
+  const epsilon = 0.5 * Math.pow(10, -minimumFractionDigits)
+  if (Math.abs(amount) < epsilon) {
+    amount = 0
+  }
+
   return new Intl.NumberFormat(locale, {
     style: "currency",
     currency,
@@ -202,7 +210,7 @@ export function debounce<T extends (...args: unknown[]) => void>(
 ): DebouncedFunction<T> {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   let pendingArgs: Parameters<T> | null = null
-  
+
   const debounced = ((...args: Parameters<T>) => {
     pendingArgs = args
     if (timeoutId) clearTimeout(timeoutId)
@@ -212,7 +220,7 @@ export function debounce<T extends (...args: unknown[]) => void>(
       timeoutId = null
     }, delayMs)
   }) as DebouncedFunction<T>
-  
+
   debounced.cancel = () => {
     if (timeoutId) {
       clearTimeout(timeoutId)
@@ -220,7 +228,7 @@ export function debounce<T extends (...args: unknown[]) => void>(
     }
     pendingArgs = null
   }
-  
+
   debounced.flush = () => {
     if (timeoutId && pendingArgs) {
       clearTimeout(timeoutId)
@@ -229,6 +237,6 @@ export function debounce<T extends (...args: unknown[]) => void>(
       pendingArgs = null
     }
   }
-  
+
   return debounced
 }

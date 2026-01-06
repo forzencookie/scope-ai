@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { formatCurrency, cn } from '@/lib/utils';
 import {
   Card,
@@ -122,16 +122,29 @@ export function Delagare() {
   });
 
 
-  const totalCapital = enrichedPartners.reduce((sum, p) => sum + p.currentCapitalBalance, 0);
+  // Fetch stats from server
+  const [stats, setStats] = useState({
+    partnerCount: 0,
+    totalCapital: 0,
+    totalWithdrawals: 0
+  })
 
-  // Withdrawals logic: Should ideally also come from verifications like DelagaruttagManager
-  // But for this view, we can keep the mock withdrawals list or unify it. 
-  // For now, let's keep the mock list for the "Recent Withdrawals" table to save time, 
-  // as the request highlighted "Logic: Calculate Eget Kapital" which I did above.
+  useEffect(() => {
+    async function fetchStats() {
+      const { supabase } = await import('@/lib/supabase')
+      const { data, error } = await supabase.rpc('get_partner_stats')
 
-  const totalWithdrawals = withdrawals.reduce((sum, w) =>
-    w.type === 'uttag' ? sum + w.amount : sum - w.amount, 0
-  );
+      if (!error && data) {
+        setStats({
+          partnerCount: Number(data.partnerCount) || 0,
+          totalCapital: Number(data.totalCapital) || 0,
+          totalWithdrawals: Number(data.totalWithdrawals) || 0
+        })
+      }
+    }
+    fetchStats()
+  }, [])
+
 
   const komplementarer = enrichedPartners.filter(p => p.type === 'komplementär');
   const kommanditdelägare = enrichedPartners.filter(p => p.type === 'kommanditdelägare');
@@ -281,7 +294,7 @@ export function Delagare() {
       <StatCardGrid columns={3}>
         <StatCard
           label="Antal delägare"
-          value={enrichedPartners.length.toString()}
+          value={stats.partnerCount.toString()}
           subtitle={showKommanditdelägare
             ? `${komplementarer.length} komplementärer, ${kommanditdelägare.length} kommanditdelägare`
             : 'Aktiva delägare'
@@ -290,13 +303,13 @@ export function Delagare() {
         />
         <StatCard
           label="Totalt kapital"
-          value={formatCurrency(totalCapital)}
+          value={formatCurrency(stats.totalCapital)}
           subtitle="Registrerat eget kapital"
           headerIcon={Wallet}
         />
         <StatCard
           label="Uttag i år"
-          value={formatCurrency(totalWithdrawals)}
+          value={formatCurrency(stats.totalWithdrawals)}
           subtitle={`${withdrawals.length} transaktioner`}
           headerIcon={TrendingDown}
         />

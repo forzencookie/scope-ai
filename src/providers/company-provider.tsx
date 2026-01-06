@@ -34,6 +34,19 @@ interface CompanyInfo {
   hasEmployees: boolean
   fiscalYearEnd: string // MM-DD format, e.g., "12-31"
   accountingMethod: 'cash' | 'invoice'
+  // Tax Settings (Onboarding-driven)
+  vatFrequency: 'monthly' | 'quarterly' | 'annually'
+  isCloselyHeld: boolean // Fåmansföretag - determines K10 applicability
+  // Share Structure (AB only)
+  shareCapital: number       // e.g., 25000 or 50000
+  totalShares: number        // e.g., 500 or 1000
+  shareClasses: { A: number; B: number }  // A-aktier, B-aktier
+  // Member/Partner Settings (Förening/HB/KB)
+  memberFee: number          // Annual member fee
+  capitalContribution: number // Insats/capital contribution
+  // Onboarding State
+  onboardingMode: 'fresh' | 'existing'
+  onboardingComplete: boolean
 }
 
 interface CompanyContextValue {
@@ -75,6 +88,18 @@ const defaultCompany: CompanyInfo = {
   hasEmployees: true,
   fiscalYearEnd: "12-31",
   accountingMethod: "invoice",
+  vatFrequency: "quarterly",
+  isCloselyHeld: true,
+  // Share Structure (AB defaults)
+  shareCapital: 25000,
+  totalShares: 500,
+  shareClasses: { A: 0, B: 500 },
+  // Member/Partner (Förening/HB/KB defaults)
+  memberFee: 0,
+  capitalContribution: 0,
+  // Onboarding
+  onboardingMode: "fresh",
+  onboardingComplete: false,
 }
 
 // ============================================

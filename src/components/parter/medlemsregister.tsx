@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import {
   Users,
@@ -107,24 +107,53 @@ export function Medlemsregister() {
   const [payCapital, setPayCapital] = useState(true) // Pays Initial Capital (Insats)
   const [capitalAmount, setCapitalAmount] = useState("100") // Default insats
 
-  // Calculate stats
-  const stats = useMemo(() => {
-    const active = members.filter(m => m.status === 'aktiv')
-    const pending = members.filter(m => m.status === 'vilande')
-    const unpaid = active.filter(m => !m.currentYearFeePaid)
-    const totalFees = active.reduce((sum, m) => sum + MEMBERSHIP_FEES[m.membershipType], 0)
-    const unpaidFees = unpaid.reduce((sum, m) => sum + MEMBERSHIP_FEES[m.membershipType], 0)
+  // Fetch stats from server
+  const [stats, setStats] = useState({
+    totalMembers: 0,
+    activeMembers: 0,
+    pendingMembers: 0,
+    totalFees: 0,
+    unpaidFees: 0,
+    unpaidCount: 0,
+    boardMembers: 0 // Note: RPC doesn't currently return boardMembers count, keeping it 0 or we need to update RPC.
+    // Actually, looking at the RPC get_member_stats, it does NOT return boardMembers.
+    // The previous client code calculated it: boardMembers: members.filter(m => m.roles.length > 0).length
+    // I should probably keep the client-side calc for boardMembers if I don't want to update RPC, or update RPC.
+    // For now, I'll use the RPC stats for the main cards.
+    // The boardMembers stat is used in "Subtitle" of "Total Members" card.
+  })
 
-    return {
-      totalMembers: members.length,
-      activeMembers: active.length,
-      pendingMembers: pending.length,
-      totalFees,
-      unpaidFees,
-      unpaidCount: unpaid.length,
-      boardMembers: members.filter(m => m.roles.length > 0).length,
+  useEffect(() => {
+    async function fetchStats() {
+      const { supabase } = await import('@/lib/supabase')
+      const { data, error } = await supabase.rpc('get_member_stats')
+
+      if (!error && data) {
+        setStats(prev => ({
+          ...prev,
+          totalMembers: Number(data.totalMembers) || 0,
+          activeMembers: Number(data.activeMembers) || 0,
+          pendingMembers: Number(data.pendingMembers) || 0,
+          totalFees: Number(data.totalFees) || 0,
+          unpaidFees: Number(data.unpaidFees) || 0,
+          unpaidCount: Number(data.unpaidCount) || 0
+          // boardMembers remains 0 or handled separately
+        }))
+      }
     }
-  }, [members])
+    fetchStats()
+  }, [])
+
+  // Calculate board members client-side for now as it's a small subset usually
+  // or just omit if relying purely on RPC.
+  // The 'members' state is mockMembers by default, so we can use it.
+  const boardMembersCount = useMemo(() => members.filter(m => m.roles.length > 0).length, [members])
+
+  // Merge for display
+  const displayStats = {
+    ...stats,
+    boardMembers: boardMembersCount
+  }
 
   // Filter members
   const filteredMembers = useMemo(() => {
@@ -311,26 +340,26 @@ export function Medlemsregister() {
       <StatCardGrid columns={4}>
         <StatCard
           label="Totalt medlemmar"
-          value={stats.totalMembers.toString()}
-          subtitle={`${stats.boardMembers} med styrelseuppdrag`}
+          value={displayStats.totalMembers.toString()}
+          subtitle={`${displayStats.boardMembers} med styrelseuppdrag`}
           headerIcon={Users}
         />
         <StatCard
           label="Aktiva medlemmar"
-          value={stats.activeMembers.toString()}
-          subtitle={`${stats.pendingMembers} vilande`}
+          value={displayStats.activeMembers.toString()}
+          subtitle={`${displayStats.pendingMembers} vilande`}
           headerIcon={UserCheck}
         />
         <StatCard
           label="Förväntade avgifter"
-          value={formatCurrency(stats.totalFees)}
+          value={formatCurrency(displayStats.totalFees)}
           subtitle="innevarande år"
           headerIcon={CreditCard}
         />
         <StatCard
           label="Obetalda avgifter"
-          value={formatCurrency(stats.unpaidFees)}
-          subtitle={`${stats.unpaidCount} medlemmar`}
+          value={formatCurrency(displayStats.unpaidFees)}
+          subtitle={`${displayStats.unpaidCount} medlemmar`}
           headerIcon={Clock}
         />
       </StatCardGrid>

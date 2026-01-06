@@ -33,6 +33,15 @@ const onboardingSteps = [
     bgColor: "bg-primary/10",
   },
   {
+    id: "onboarding-mode",
+    title: "Nystartat eller befintligt företag?",
+    description: "Välj hur du vill komma igång. Befintliga företag kan importera bokföring via SIE-fil.",
+    icon: Building2,
+    color: "text-violet-600",
+    bgColor: "bg-violet-500/10",
+    hasOnboardingMode: true,
+  },
+  {
     id: "company-type",
     title: "Vilken företagsform har du?",
     description: "Vi anpassar funktioner, rapporter och deklarationer baserat på din företagsform.",
@@ -57,6 +66,36 @@ const onboardingSteps = [
       { label: "Organisationsnummer", placeholder: "XXXXXX-XXXX", value: "559123-4567" },
       { label: "Företagsnamn", placeholder: "AB Exempel", value: "Scope AI AB" },
     ],
+  },
+  {
+    id: "share-structure",
+    title: "Aktiekapital och aktier",
+    description: "Ange ditt aktiekapital och antal aktier. Detta används för aktiebok och K10.",
+    icon: Landmark,
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-500/10",
+    companyTypes: ["ab"], // Only show for AB
+    hasShareStructure: true,
+  },
+  {
+    id: "shareholders",
+    title: "Aktieägare",
+    description: "Lägg till företagets aktieägare. Du kan alltid ändra detta senare i aktieboken.",
+    icon: Users,
+    color: "text-blue-600",
+    bgColor: "bg-blue-500/10",
+    companyTypes: ["ab"],
+    hasShareholders: true,
+  },
+  {
+    id: "partners",
+    title: "Delägare",
+    description: "Lägg till bolagets delägare och deras kapitalinsats.",
+    icon: Users,
+    color: "text-blue-600",
+    bgColor: "bg-blue-500/10",
+    companyTypes: ["hb", "kb"], // Only for HB/KB
+    hasPartners: true,
   },
   {
     id: "bank",
@@ -91,6 +130,7 @@ const onboardingSteps = [
     color: "text-blue-600",
     bgColor: "bg-blue-500/10",
     optional: true,
+    existingOnly: true, // Only show for existing mode
     hasSIEImport: true,
   },
   {
@@ -245,6 +285,107 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
               {step.id === "company-type" && (
                 <div className="w-full">
                   <CompanyTypeSelector showDescription={true} columns={2} />
+                </div>
+              )}
+
+              {step.id === "onboarding-mode" && (
+                <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
+                  <button
+                    className="p-6 rounded-lg border-2 border-primary bg-primary/5 text-left hover:bg-primary/10 transition-colors"
+                    onClick={() => {/* Would set onboardingMode to 'fresh' */ }}
+                  >
+                    <Sparkles className="h-8 w-8 text-primary mb-3" />
+                    <h3 className="font-semibold mb-1">Nystartat företag</h3>
+                    <p className="text-sm text-muted-foreground">Börja från noll med en ren bokföring</p>
+                  </button>
+                  <button
+                    className="p-6 rounded-lg border-2 border-border text-left hover:border-primary hover:bg-primary/5 transition-colors"
+                    onClick={() => {/* Would set onboardingMode to 'existing' */ }}
+                  >
+                    <UploadCloud className="h-8 w-8 text-muted-foreground mb-3" />
+                    <h3 className="font-semibold mb-1">Befintligt företag</h3>
+                    <p className="text-sm text-muted-foreground">Importera från annat bokföringssystem</p>
+                  </button>
+                </div>
+              )}
+
+              {step.id === "share-structure" && (
+                <div className="space-y-4 max-w-sm mx-auto">
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Aktiekapital</label>
+                    <input
+                      type="number"
+                      defaultValue={25000}
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">Minst 25 000 kr för privat AB</p>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-1.5 block">Antal aktier totalt</label>
+                    <input
+                      type="number"
+                      defaultValue={500}
+                      className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">A-aktier</label>
+                      <input
+                        type="number"
+                        defaultValue={0}
+                        className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-sm font-medium mb-1.5 block">B-aktier</label>
+                      <input
+                        type="number"
+                        defaultValue={500}
+                        className="w-full h-10 px-3 rounded-lg border border-border bg-background text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {step.id === "shareholders" && (
+                <div className="max-w-md mx-auto">
+                  <div className="space-y-3 mb-4">
+                    <div className="p-4 rounded-lg border border-border bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Johan Svensson</p>
+                          <p className="text-sm text-muted-foreground">500 aktier (100%)</p>
+                        </div>
+                        <Check className="h-5 w-5 text-primary" />
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <Users className="h-4 w-4 mr-2" />
+                    Lägg till aktieägare
+                  </Button>
+                </div>
+              )}
+
+              {step.id === "partners" && (
+                <div className="max-w-md mx-auto">
+                  <div className="space-y-3 mb-4">
+                    <div className="p-4 rounded-lg border border-border bg-muted/30">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <p className="font-medium">Delägare 1</p>
+                          <p className="text-sm text-muted-foreground">Kapitalinsats: 50 000 kr (50%)</p>
+                        </div>
+                        <Check className="h-5 w-5 text-primary" />
+                      </div>
+                    </div>
+                  </div>
+                  <Button variant="outline" className="w-full">
+                    <Users className="h-4 w-4 mr-2" />
+                    Lägg till delägare
+                  </Button>
                 </div>
               )}
 
