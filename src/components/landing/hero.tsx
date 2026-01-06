@@ -46,8 +46,11 @@ function DemoCursor({ x, y, clicking }: { x: number; y: number; clicking: boolea
 }
 
 export function Hero() {
-  // State for the demo
+  // Track current step for animations
   const [step, setStep] = useState(0)
+
+  // Force restart of timeline
+  const [restartKey, setRestartKey] = useState(0)
   const [inputText, setInputText] = useState("")
   const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
   const [clicking, setClicking] = useState(false)
@@ -69,10 +72,12 @@ export function Hero() {
     (s) => step >= s.stepRange[0] && step <= s.stepRange[1]
   )
 
+  const [timelineOffset, setTimelineOffset] = useState(0)
+
   // Jump to a specific section
   const jumpToSection = (sectionId: number) => {
-    // Only unpause if restarting from beginning
-    setIsPaused(sectionId !== 0)
+    // Always unpause to continue the loop
+    setIsPaused(false)
 
     const section = sections[sectionId]
     const targetStep = section.stepRange[0]
@@ -86,22 +91,29 @@ export function Hero() {
       setStep(0)
       setInputText("")
       setTypedComment("")
-      setAiStreamText("")
+      setTimelineOffset(1500)
+      setRestartKey(prev => prev + 1)
     } else if (sectionId === 1) {
       setStep(4) // Show first AI card
       setInputText("")
       setTypedComment("")
       setAiStreamText("")
+      setTimelineOffset(12500) // Skip to start of action
+      setRestartKey(prev => prev + 1)
     } else if (sectionId === 2) {
       setStep(8) // Show updated card with comment
       setInputText("")
       setTypedComment("Ändra konto till 5810")
       setAiStreamText("")
+      setTimelineOffset(23500) // Skip to start of action
+      setRestartKey(prev => prev + 1)
     } else if (sectionId === 3) {
       setStep(12) // Show final AI response
       setInputText("")
       setTypedComment("")
       setAiStreamText("Inga problem! 🙌 Det var ditt 47:e kvitto denna månad — du håller ett bra tempo.")
+      setTimelineOffset(34500)
+      setRestartKey(prev => prev + 1)
     }
   }
 
@@ -128,16 +140,18 @@ export function Hero() {
 
     const timeline = [
       // Phase 1: Cursor appears at input bar, greeting fades, typing starts
-      { delay: 2000, action: () => setCursorPos({ x: 200, y: 480 }) },
-      { delay: 2500, action: () => setStep(1) }, // Greeting fades
-      // Type in input bar (70ms per char) - no click needed
+      { delay: 2000, action: () => setCursorPos({ x: 200, y: 465 }) },
+      // Highlight input and click (wait for cursor to arrive - approx 600ms)
+      { delay: 2700, action: () => setHoverButton('input') },
+      { delay: 2850, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
+      // Type in input bar (70ms per char)
       ...userMessage.split('').map((_, i) => ({
         delay: 3000 + i * 70,
         action: () => setInputText(userMessage.slice(0, i + 1))
       })),
       // Pause after typing
       // Cursor to send button
-      { delay: 6000, action: () => setCursorPos({ x: 490, y: 510 }) },
+      { delay: 6000, action: () => setCursorPos({ x: 540, y: 485 }) },
       { delay: 6400, action: () => setHoverButton('send') },
       // Click send
       { delay: 6800, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
@@ -150,7 +164,7 @@ export function Hero() {
       // AI response + card (pause to read)
       { delay: 10000, action: () => setStep(4) },
       // Cursor to Kommentera button (wait for user to read card)
-      { delay: 13000, action: () => setCursorPos({ x: 140, y: 330 }) },
+      { delay: 13000, action: () => setCursorPos({ x: 140, y: 295 }) },
       { delay: 13500, action: () => setHoverButton('kommentera') },
       // Click Kommentera
       { delay: 14000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
@@ -164,7 +178,7 @@ export function Hero() {
       // Done typing, remove input highlight
       { delay: 16500, action: () => setHoverButton(null) },
       // Cursor to send
-      { delay: 17200, action: () => setCursorPos({ x: 490, y: 510 }) },
+      { delay: 17200, action: () => setCursorPos({ x: 540, y: 485 }) },
       { delay: 17600, action: () => setHoverButton('send') },
       // Click send
       { delay: 18000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
@@ -177,14 +191,14 @@ export function Hero() {
       // AI adjusted card (pause to read)
       { delay: 21000, action: () => setStep(8) },
       // Cursor to Godkänn button (wait for user to read)
-      { delay: 24000, action: () => setCursorPos({ x: 40, y: 330 }) },
+      { delay: 24000, action: () => setCursorPos({ x: 40, y: 240 }) },
       { delay: 24500, action: () => setHoverButton('godkann') },
       // Click Godkänn
       { delay: 25000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
       // Success (pause to see transformation)
       { delay: 25300, action: () => { setStep(9); setCursorPos({ x: 0, y: 0 }); setHoverButton(null) } },
       // Pause to view success card (longer)
-      { delay: 28000, action: () => setCursorPos({ x: 200, y: 480 }) },
+      { delay: 28000, action: () => setCursorPos({ x: 200, y: 465 }) },
       { delay: 28500, action: () => setHoverButton('input') },
       { delay: 29000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100); setHoverButton(null) } },
       // Type thank you character by character (slower)
@@ -194,7 +208,7 @@ export function Hero() {
       { delay: 30000, action: () => setInputText("Tack") },
       { delay: 30200, action: () => setInputText("Tack!") },
       // Cursor to send
-      { delay: 31000, action: () => setCursorPos({ x: 490, y: 510 }) },
+      { delay: 31000, action: () => setCursorPos({ x: 540, y: 485 }) },
       { delay: 31400, action: () => setHoverButton('send') },
       { delay: 31800, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
       // Show thank you, hide success card
@@ -218,13 +232,20 @@ export function Hero() {
           setAiStreamText("")
           setHoverButton(null)
           setCursorPos({ x: 0, y: 0 })
+          setTimelineOffset(0)
+          setRestartKey(prev => prev + 1)
         }
       },
     ]
 
-    const timeouts = timeline.map(({ delay, action }) => setTimeout(action, delay))
+    // Calculate active timeline based on offset
+    const activeTimeline = timeline
+      .filter(item => item.delay > timelineOffset)
+      .map(item => ({ ...item, delay: item.delay - timelineOffset }))
+
+    const timeouts = activeTimeline.map(({ delay, action }) => setTimeout(action, delay))
     return () => timeouts.forEach(clearTimeout)
-  }, [step === 0, isPaused])
+  }, [isPaused, restartKey])
 
   const showCursor = (cursorPos.x > 0 || cursorPos.y > 0)
   const showGreeting = step === 0
@@ -351,7 +372,7 @@ export function Hero() {
                 ))}
               </div>
 
-              <div className="bg-white border border-stone-200 rounded-3xl shadow-2xl shadow-stone-200/50 p-6 flex flex-col h-[560px] relative overflow-hidden">
+              <div className="bg-white rounded-3xl shadow-2xl shadow-stone-200/50 p-6 flex flex-col h-[560px] relative overflow-hidden">
                 {/* Cursor */}
                 {showCursor && (
                   <DemoCursor x={cursorPos.x} y={cursorPos.y} clicking={clicking} />
@@ -469,7 +490,7 @@ export function Hero() {
 
                   {/* User Comment */}
                   <AnimatePresence>
-                    {step >= 6 && step < 9 && (
+                    {step >= 6 && (
                       <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
@@ -498,7 +519,7 @@ export function Hero() {
 
                   {/* AI Response + Card (transforms to green when approved) */}
                   <AnimatePresence>
-                    {step >= 8 && step < 10 && (
+                    {step >= 8 && (
                       <motion.div
                         initial={{ opacity: 0, y: 8 }}
                         animate={{ opacity: 1, y: 0 }}
