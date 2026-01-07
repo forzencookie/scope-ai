@@ -1,46 +1,66 @@
 import {
   Navbar,
   Hero,
+  Stats,
+  FeaturePitch,
+  FeaturesChecklist,
   CoreFeatures,
-  Vision,
+  Integrations,
+
   Pricing,
+  FAQ,
+  Contact,
   Footer,
+  AnimatedDitherArt,
 } from "@/components/landing"
+
+import { ThemeProvider } from "@/providers/theme-provider"
 
 export default function ScopeLandingPage() {
   return (
-    <main className="min-h-screen bg-white font-sans text-stone-900 selection:bg-stone-200 selection:text-stone-900 scroll-smooth relative">
-      {/* Global dither pattern backgrounds */}
-      <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
-        {/* Full screen subtle dither pattern */}
-        <div className="absolute inset-0 opacity-[0.03] bg-dither-pattern" />
+    <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
+      <main className="light min-h-screen bg-white font-sans text-stone-900 selection:bg-stone-200 selection:text-stone-900 scroll-smooth relative overflow-x-hidden">
+        {/* Animated Dither Art Decorations */}
+        <AnimatedDitherArt />
 
-        {/* Optional: subtle vignette to fade edges slightly if needed, or keep it uniform */}
-        <div className="absolute inset-0 bg-gradient-to-b from-white/50 via-transparent to-white/80" />
-      </div>
+        {/* Content */}
+        <div className="relative z-10">
+          {/* Navbar */}
+          <Navbar />
 
-      {/* Content */}
-      <div className="relative z-10">
-        {/* Navbar */}
-        <Navbar />
+          {/* Hero - Centered text above, demo below */}
+          <Hero />
 
-        {/* Hero - AI demo showcase */}
-        <Hero />
+          {/* Stats Card - Time savings metric */}
+          <Stats />
 
-        {/* Core Features - Cal.com-style cards with dashboard previews */}
-        <CoreFeatures />
+          {/* Feature Pitch - Left headline, right feature list */}
+          <FeaturePitch />
+
+          {/* 3-Column Features Checklist */}
+          <FeaturesChecklist />
+
+          {/* Bento Grid Feature Demos */}
+          <CoreFeatures />
+
+          {/* Integrations - On/Off logo grid */}
+          <Integrations />
 
 
 
-        {/* Vision & Roadmap (honest about what's ready vs coming soon) */}
-        <Vision />
+          {/* Pricing */}
+          <Pricing />
 
-        {/* Pricing */}
-        <Pricing />
+          {/* FAQ - Minimal 2-column */}
+          <FAQ />
 
-        {/* Footer */}
-        <Footer />
-      </div>
-    </main>
+          {/* Contact Form */}
+          <Contact />
+
+          {/* Footer */}
+          <Footer />
+        </div>
+      </main>
+    </ThemeProvider>
   )
 }

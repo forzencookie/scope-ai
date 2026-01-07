@@ -17,10 +17,13 @@ import {
   CheckCircle2,
   Landmark,
   UploadCloud,
+  Percent,
+  Receipt,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { CompanyTypeSelector } from "./company-type-selector"
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 // Onboarding steps configuration with warm Swedish messaging
 const onboardingSteps = [
@@ -28,9 +31,9 @@ const onboardingSteps = [
     id: "welcome",
     title: "Välkommen till Scope AI! 🇸🇪",
     description: "Vi hjälper dig komma igång smidigt med din bokföring. Det tar bara några minuter — sen är du fri att fokusera på det du brinner för.",
-    icon: Sparkles,
-    color: "text-primary",
-    bgColor: "bg-primary/10",
+    icon: ScopeAILogo,
+    color: "text-stone-900",
+    bgColor: "",
   },
   {
     id: "onboarding-mode",
@@ -257,8 +260,10 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
             >
               {/* Step header */}
               <div className="text-center mb-8">
-                <div className={cn("inline-flex p-4 rounded-lg mb-4", step.bgColor)}>
-                  <Icon className={cn("h-8 w-8", step.color)} />
+                <div className="flex justify-center">
+                  <div className={cn(step.bgColor && "inline-flex p-4 rounded-lg mb-4", step.bgColor)}>
+                    <Icon className={cn(step.bgColor ? "h-8 w-8" : "h-16 w-16 mb-4", step.color)} />
+                  </div>
                 </div>
                 <h2 className="text-2xl font-semibold mb-2">{step.title}</h2>
                 <p className="text-muted-foreground max-w-md mx-auto">{step.description}</p>
@@ -266,15 +271,15 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
 
               {/* Step-specific content */}
               {step.id === "welcome" && (
-                <div className="space-y-4">
+                <div className="space-y-4 max-w-lg mx-auto">
                   <div className="grid grid-cols-3 gap-4">
                     {[
-                      { icon: CreditCard, label: "Automatisk banksync" },
-                      { icon: Sparkles, label: "AI-bokföring" },
-                      { icon: FileText, label: "Kvittohantering" },
+                      { icon: Percent, label: "Automatiserad moms" },
+                      { icon: ScopeAILogo, label: "AI-bokföring", color: "text-stone-900" },
+                      { icon: Receipt, label: "Kvittohantering" },
                     ].map((feature) => (
-                      <div key={feature.label} className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50">
-                        <feature.icon className="h-6 w-6 text-primary" />
+                      <div key={feature.label} className="flex flex-col items-center gap-2 p-4 rounded-lg bg-muted/50 transition-colors animate-in fade-in slide-in-from-bottom-2 duration-500">
+                        <feature.icon className={cn("h-6 w-6", feature.color || "text-primary")} />
                         <span className="text-sm text-center">{feature.label}</span>
                       </div>
                     ))}
@@ -294,7 +299,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                     className="p-6 rounded-lg border-2 border-primary bg-primary/5 text-left hover:bg-primary/10 transition-colors"
                     onClick={() => {/* Would set onboardingMode to 'fresh' */ }}
                   >
-                    <Sparkles className="h-8 w-8 text-primary mb-3" />
+                    <ScopeAILogo className="h-8 w-8 text-stone-900 mb-3" />
                     <h3 className="font-semibold mb-1">Nystartat företag</h3>
                     <p className="text-sm text-muted-foreground">Börja från noll med en ren bokföring</p>
                   </button>
@@ -419,11 +424,11 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
                     <CreditCard className="h-10 w-10 text-muted-foreground mx-auto mb-4" />
                     <h3 className="font-medium mb-2">Bankintegration kommer snart</h3>
                     <p className="text-sm text-muted-foreground mb-4">
-                      Vi arbetar på att erbjuda säker bankintegration via Open Banking.
-                      Under tiden kan du importera transaktioner manuellt eller via SIE-fil.
+                      Vi arbetar på att erbjuda säker bankintegration.
+                      Under tiden kan du importera transaktioner och SIE-filer manuellt.
                     </p>
-                    <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-primary/10 text-primary">
-                      <Sparkles className="h-3 w-3" />
+                    <span className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 rounded-full bg-muted text-muted-foreground">
+                      <ScopeAILogo className="h-3 w-3 text-stone-900" />
                       Kommer snart
                     </span>
                   </div>

@@ -34,15 +34,13 @@ export function PayrollPreview() {
                     </div>
                 </div>
 
-                {/* GridTable Header */}
+                {/* GridTable Header - simplified for narrow card */}
                 <GridTableHeader
                     columns={[
-                        { label: "Anställd", icon: User, span: 3 },
+                        { label: "Anställd", icon: User, span: 4 },
                         { label: "Period", icon: Calendar, span: 2 },
-                        { label: "Bruttolön", icon: Banknote, span: 2, align: 'right' },
-                        { label: "Skatt", icon: Banknote, span: 2, align: 'right' },
-                        { label: "Nettolön", icon: Wallet, span: 2, align: 'right' },
-                        { label: "Status", icon: CheckCircle2, span: 1 },
+                        { label: "Netto", icon: Wallet, span: 3, align: 'right' },
+                        { label: "Status", icon: CheckCircle2, span: 3 },
                     ]}
                 />
 
@@ -50,18 +48,12 @@ export function PayrollPreview() {
                 <GridTableRows>
                     {mockPayslips.map((slip) => (
                         <GridTableRow key={slip.id}>
-                            <div className="col-span-3 font-medium text-sm text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{slip.employee}</div>
+                            <div className="col-span-4 font-medium text-sm text-foreground whitespace-nowrap overflow-hidden text-ellipsis">{slip.employee}</div>
                             <div className="col-span-2 text-sm text-muted-foreground whitespace-nowrap">{slip.period}</div>
-                            <div className="col-span-2 text-right tabular-nums text-foreground/90 whitespace-nowrap">
-                                {slip.grossSalary.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div className="col-span-2 text-right tabular-nums text-red-600 dark:text-red-500/70 whitespace-nowrap">
-                                -{slip.tax.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div className="col-span-2 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
+                            <div className="col-span-3 text-right tabular-nums font-medium text-foreground whitespace-nowrap">
                                 {slip.netSalary.toLocaleString("sv-SE")} kr
                             </div>
-                            <div className="col-span-1 flex justify-end">
+                            <div className="col-span-3 flex justify-start">
                                 <PreviewStatusBadge
                                     status={slip.status}
                                     variant={slip.status === "Skickad" ? "success" : "warning"}

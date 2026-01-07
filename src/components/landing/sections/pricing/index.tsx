@@ -10,7 +10,7 @@ export function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
 
   return (
-    <section id="pricing" className="px-3 md:px-4 py-24 max-w-[2400px] mx-auto">
+    <section id="pricing" className="px-6 md:px-12 lg:px-24 py-24 max-w-[1400px] mx-auto border-t border-stone-200">
       <SectionHeader
         badge="Priser"
         title="Transparent prissättning för alla"

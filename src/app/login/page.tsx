@@ -43,11 +43,17 @@ function LoginFallback() {
   )
 }
 
+import { ThemeProvider } from "@/providers/theme-provider"
+
+// ... existing imports
+
 export default function LoginPage() {
   return (
-    <Suspense fallback={<LoginFallback />}>
-      <LoginContent />
-    </Suspense>
+    <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
+      <Suspense fallback={<LoginFallback />}>
+        <LoginContent />
+      </Suspense>
+    </ThemeProvider>
   )
 }
 
@@ -116,7 +122,7 @@ function LoginContent() {
   }
 
   return (
-    <div className="min-h-screen bg-white p-6 flex items-center justify-center">
+    <div className="light min-h-screen bg-white p-6 flex items-center justify-center">
       <div className="w-full max-w-7xl grid grid-cols-1 lg:grid-cols-11 gap-8">
 
         {/* Left: Branded Card with Dashboard Decoration (55%) */}

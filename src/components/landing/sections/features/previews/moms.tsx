@@ -154,7 +154,7 @@ export function MomsWorkflowPreview() {
             await new Promise(r => setTimeout(r, 400))
             if (!mounted) return
 
-            setCursor({ x: 750, y: 440, click: false, opacity: 0 })
+            setCursor({ x: 550, y: 440, click: false, opacity: 0 })
             await new Promise(r => setTimeout(r, 100))
             if (!mounted) return
 

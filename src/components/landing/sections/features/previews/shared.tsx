@@ -3,9 +3,11 @@
 import { motion } from "framer-motion"
 
 // Wrapper that scales down actual components to create miniature preview
-export function ScaledPreview({ children, scale = 0.65, className }: { children: React.ReactNode; scale?: number; className?: string }) {
+export function ScaledPreview({ children, scale = 0.65, className, extendToBottom = false }: { children: React.ReactNode; scale?: number; className?: string; extendToBottom?: boolean }) {
+    const roundingClass = extendToBottom ? 'rounded-t-xl' : 'rounded-xl'
+    const borderClass = extendToBottom ? 'border-t border-x' : 'border'
     return (
-        <div className={`bg-background border border-border rounded-xl overflow-hidden ${className}`}>
+        <div className={`bg-background ${borderClass} border-border ${roundingClass} overflow-hidden ${className}`}>
             {/* Window header with macOS dots */}
             <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/60 bg-muted/30">
                 <div className="w-2 h-2 rounded-full bg-red-400" />

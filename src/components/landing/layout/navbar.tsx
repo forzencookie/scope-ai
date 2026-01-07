@@ -27,10 +27,11 @@ export function Navbar() {
         </div>
 
         {/* Auth - Right */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <Link href="/login" className="text-sm text-stone-600 hover:text-stone-900 transition-colors hidden md:block">
             Logga in
           </Link>
+
           <Link
             href="/register"
             className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors"

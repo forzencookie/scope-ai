@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ArrowRight, FileText, CheckCircle2 } from "lucide-react"
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 // --- Sub-components (macos style cursor) ---
 function DemoCursor({ x, y, clicking }: { x: number; y: number; clicking: boolean }) {
@@ -176,8 +177,8 @@ export function HeroDemo({
                             transition={{ duration: 0.3 }}
                             className="absolute inset-0 flex flex-col items-center justify-center p-6"
                         >
-                            <div className="w-12 h-12 bg-primary rounded-full flex items-center justify-center mb-6">
-                                <div className="w-5 h-5 bg-white rounded-sm" />
+                            <div className="mb-6">
+                                <ScopeAILogo className="w-12 h-12 text-stone-900" />
                             </div>
                             <p className="text-xl text-muted-foreground text-center max-w-sm">
                                 God eftermiddag! Vad vill du att jag hjälper dig med idag?

@@ -34,7 +34,7 @@ export function CoreFeatures() {
     const gridFeatures = features.slice(1)
 
     return (
-        <section className="px-3 md:px-4 py-24 max-w-[2400px] mx-auto">
+        <section className="px-6 md:px-12 lg:px-24 py-24 max-w-[1400px] mx-auto border-t border-stone-200">
             <SectionHeader
                 badge="Funktioner"
                 title="Allt du behöver för din bokföring"
@@ -48,7 +48,7 @@ export function CoreFeatures() {
                     initial={{ opacity: 0, y: 30 }}
                     whileInView={{ opacity: 1, y: 0 }}
                     viewport={{ once: true }}
-                    className="bg-card border border-border rounded-3xl p-8 md:p-10 overflow-hidden relative min-h-[400px] md:min-h-[500px]"
+                    className="bg-card border border-border rounded-3xl p-8 md:p-10 pb-0 overflow-hidden relative min-h-[400px] md:min-h-[500px]"
                 >
                     {/* Text content - left side */}
                     <div className="max-w-md relative z-10">
@@ -66,9 +66,9 @@ export function CoreFeatures() {
                         </p>
                     </div>
 
-                    {/* Preview - floating right, partially cut off */}
-                    <div className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-[10%] w-[60%] md:w-[55%]">
-                        <div className="bg-muted/30 rounded-2xl p-4 border border-border/50">
+                    {/* Preview - floating right, extending to bottom */}
+                    <div className="absolute right-0 top-[20%] bottom-0 translate-x-[10%] w-[60%] md:w-[55%]">
+                        <div className="bg-muted/30 rounded-tl-2xl p-4 border-t border-l border-border/50 h-full">
                             <heroFeature.preview />
                         </div>
                     </div>

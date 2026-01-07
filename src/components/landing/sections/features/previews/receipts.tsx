@@ -10,11 +10,13 @@ export function ReceiptsPreview() {
     const mockReceipts = [
         { id: 1, supplier: "Taxi Stockholm AB", date: "2026-01-03", category: "Resekostnad", amount: "495 kr", status: "Bokförd" },
         { id: 2, supplier: "Kontorsmaterial AB", date: "2026-01-02", category: "Förbrukning", amount: "1 250 kr", status: "Att bokföra" },
-        { id: 3, supplier: "Amazon Web Services", date: "2026-01-01", category: "IT & Licenser", amount: "2 340 kr", status: "Väntar" }
+        { id: 3, supplier: "Amazon Web Services", date: "2026-01-01", category: "IT & Licenser", amount: "2 340 kr", status: "Väntar" },
+        { id: 4, supplier: "Telia AB", date: "2025-12-28", category: "Telefoni", amount: "899 kr", status: "Bokförd" },
+        { id: 5, supplier: "Swish Företag", date: "2025-12-27", category: "Bankavgifter", amount: "49 kr", status: "Bokförd" }
     ]
 
     return (
-        <ScaledPreview scale={0.65}>
+        <ScaledPreview scale={0.65} extendToBottom>
             <div className="p-6 space-y-6 max-w-6xl">
                 {/* Page Heading - matches real component */}
                 <div className="flex items-start justify-between gap-4">
