@@ -16,7 +16,7 @@ export { Stats } from "./sections/stats"
 export { FeaturePitch } from "./sections/features/feature-pitch"
 export { FeaturesChecklist } from "./sections/features/features-checklist"
 export { CoreFeatures } from "./sections/features"
-export { Integrations } from "./sections/integrations"
+export { GlobalReach } from "./sections/global-reach"
 
 export { Pricing } from "./sections/pricing"
 export { FAQ } from "./sections/faq"

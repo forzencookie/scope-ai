@@ -193,12 +193,42 @@
   }
 }
 
+/* Flowing glow effect for hero title */
+@keyframes flowing-glow {
+  0% {
+    background-position: 0% 50%;
+  }
+
+  50% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
 .animate-marquee {
   animation: marquee 30s linear infinite;
 }
 
 .animate-shine {
   animation: shine 2s ease-in-out;
+}
+
+/* Hero title with flowing glow */
+.hero-title-glow {
+  background: linear-gradient(90deg,
+      #7c3aed 0%,
+      #a855f7 25%,
+      #c084fc 50%,
+      #a855f7 75%,
+      #7c3aed 100%);
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  color: transparent;
+  animation: flowing-glow 8s ease-in-out infinite;
 }
 
 /* Hide scrollbar utility */
@@ -284,6 +314,10 @@
   }
 
   .animate-shine {
+    animation: none;
+  }
+
+  .hero-title-glow {
     animation: none;
   }
 

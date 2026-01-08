@@ -11,7 +11,9 @@ export function Footer() {
         <div className="col-span-2">
           <Link href="/" className="flex items-center gap-2 mb-6">
             <ScopeAILogo className="w-6 h-6" />
-            <span className="text-stone-900 font-bold tracking-tight text-lg">Scope AI</span>
+            <span className="font-mono text-stone-900 font-bold tracking-widest uppercase text-sm">
+              ScopeAI
+            </span>
           </Link>
           <p className="text-sm leading-relaxed max-w-xs mb-8">
             AI-driven bokföring för svenska företag. Automatisera hela din ekonomi.

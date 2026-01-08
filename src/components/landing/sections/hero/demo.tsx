@@ -2,10 +2,10 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ArrowRight, FileText, CheckCircle2 } from "lucide-react"
+import { ArrowRight, FileText, CheckCircle2, Paperclip, Mic, AtSign } from "lucide-react"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
-// --- Sub-components (macos style cursor) ---
+// --- Sub-components (pointing hand cursor) ---
 function DemoCursor({ x, y, clicking }: { x: number; y: number; clicking: boolean }) {
     return (
         <motion.div
@@ -18,14 +18,11 @@ function DemoCursor({ x, y, clicking }: { x: number; y: number; clicking: boolea
                 animate={{ scale: clicking ? 0.9 : 1 }}
                 transition={{ duration: 0.08 }}
             >
-                <svg width="28" height="28" viewBox="0 0 28 28" fill="none" className="drop-shadow-lg">
-                    <path
-                        d="M8.5 4.5L8.5 22.5L12.5 18.5L15.5 25.5L18.5 24L15.5 17L21.5 17L8.5 4.5Z"
-                        fill="white"
-                        stroke="#1c1917"
-                        strokeWidth="1.5"
-                        strokeLinejoin="round"
-                    />
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" className="w-8 h-8 drop-shadow-lg">
+                    <path d="M11.3,20.4c-0.3-0.4-0.6-1.1-1.2-2c-0.3-0.5-1.2-1.5-1.5-1.9c-0.2-0.4-0.2-0.6-0.1-1c0.1-0.6,0.7-1.1,1.4-1.1c0.5,0,1,0.4,1.4,0.7c0.2,0.2,0.5,0.6,0.7,0.8c0.2,0.2,0.2,0.3,0.4,0.5c0.2,0.3,0.3,0.5,0.2,0.1c-0.1-0.5-0.2-1.3-0.4-2.1c-0.1-0.6-0.2-0.7-0.3-1.1c-0.1-0.5-0.2-0.8-0.3-1.3c-0.1-0.3-0.2-1.1-0.3-1.5c-0.1-0.5-0.1-1.4,0.3-1.8c0.3-0.3,0.9-0.4,1.3-0.2c0.5,0.3,0.8,1,0.9,1.3c0.2,0.5,0.4,1.2,0.5,2c0.2,1,0.5,2.5,0.5,2.8c0-0.4-0.1-1.1,0-1.5c0.1-0.3,0.3-0.7,0.7-0.8c0.3-0.1,0.6-0.1,0.9-0.1c0.3,0.1,0.6,0.3,0.8,0.5c0.4,0.6,0.4,1.9,0.4,1.8c0.1-0.4,0.1-1.2,0.3-1.6c0.1-0.2,0.5-0.4,0.7-0.5c0.3-0.1,0.7-0.1,1,0c0.2,0,0.6,0.3,0.7,0.5c0.2,0.3,0.3,1.3,0.4,1.7c0,0.1,0.1-0.4,0.3-0.7c0.4-0.6,1.8-0.8,1.9,0.6c0,0.7,0,0.6,0,1.1c0,0.5,0,0.8,0,1.2c0,0.4-0.1,1.3-0.2,1.7c-0.1,0.3-0.4,1-0.7,1.4c0,0-1.1,1.2-1.2,1.8c-0.1,0.6-0.1,0.6-0.1,1c0,0.4,0.1,0.9,0.1,0.9s-0.8,0.1-1.2,0c-0.4-0.1-0.9-0.8-1-1.1c-0.2-0.3-0.5-0.3-0.7,0c-0.2,0.4-0.7,1.1-1.1,1.1c-0.7,0.1-2.1,0-3.1,0c0,0,0.2-1-0.2-1.4c-0.3-0.3-0.8-0.8-1.1-1.1L11.3,20.4z" fill="white" stroke="#000" strokeWidth="0.75" strokeLinecap="round" strokeLinejoin="round" />
+                    <line x1="19.6" y1="20.7" x2="19.6" y2="17.3" stroke="#000" strokeWidth="0.75" strokeLinecap="round" />
+                    <line x1="17.6" y1="20.7" x2="17.5" y2="17.3" stroke="#000" strokeWidth="0.75" strokeLinecap="round" />
+                    <line x1="15.6" y1="17.3" x2="15.6" y2="20.7" stroke="#000" strokeWidth="0.75" strokeLinecap="round" />
                 </svg>
             </motion.div>
             <AnimatePresence>
@@ -51,6 +48,7 @@ interface HeroDemoProps {
     setTimelineOffset: (offset: number) => void
     isPaused: boolean
     setIsPaused: (paused: boolean) => void
+    onLoopComplete?: () => void
 }
 
 export function HeroDemo({
@@ -60,7 +58,8 @@ export function HeroDemo({
     timelineOffset,
     setTimelineOffset,
     isPaused,
-    setIsPaused
+    setIsPaused,
+    onLoopComplete
 }: HeroDemoProps) {
     const [inputText, setInputText] = useState("")
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
@@ -80,8 +79,9 @@ export function HeroDemo({
             return containerRef.current.offsetWidth - 75
         }
 
+
         const isMobile = window.innerWidth < 768
-        const sendButtonY = isMobile ? 465 : 480 // Mobile: 465 (between 450 and 480), Desktop: 480
+        const sendButtonY = isMobile ? 465 : 480
 
         const userMessage = "Bokför det här kvittot"
         const comment = "Ändra konto till 5810"
@@ -148,7 +148,8 @@ export function HeroDemo({
                     setHoverButton(null)
                     setCursorPos({ x: 0, y: 0 })
                     setTimelineOffset(0)
-                    // Parent handles the key increment for loop
+                    // Trigger loop restart in parent
+                    onLoopComplete?.()
                 }
             },
         ]
@@ -159,7 +160,7 @@ export function HeroDemo({
 
         const timeouts = activeTimeline.map(({ delay, action }) => setTimeout(action, delay))
         return () => timeouts.forEach(clearTimeout)
-    }, [isPaused, restartKey, timelineOffset, setStep, setTimelineOffset])
+    }, [isPaused, restartKey, timelineOffset, setStep, setTimelineOffset, onLoopComplete])
 
     const showCursor = (cursorPos.x > 0 || cursorPos.y > 0)
     const showGreeting = step === 0
@@ -342,11 +343,23 @@ export function HeroDemo({
                             )}
                         </div>
                         <div className="flex items-center justify-between px-2 pb-2">
-                            <div className="flex items-center gap-2 pl-2">
-                                <div className="text-muted-foreground/60"><ArrowRight className="w-4 h-4" /></div>
+                            {/* Left - attachment and mention buttons */}
+                            <div className="flex items-center gap-0.5">
+                                <div className={`h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground/60 hover:bg-muted/30 transition-colors`}>
+                                    <Paperclip className="w-4 h-4" />
+                                </div>
+                                <div className={`h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground/60 hover:bg-muted/30 transition-colors`}>
+                                    <AtSign className="w-4 h-4" />
+                                </div>
                             </div>
-                            <div className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${hoverButton === 'send' ? 'bg-primary/90' : 'bg-primary'}`}>
-                                <ArrowRight className="w-4 h-4 text-white" />
+                            {/* Right - mic and send */}
+                            <div className="flex items-center gap-0.5">
+                                <div className={`h-7 w-7 rounded-md flex items-center justify-center text-muted-foreground/60 hover:bg-muted/30 transition-colors`}>
+                                    <Mic className="w-4 h-4" />
+                                </div>
+                                <div className={`h-7 w-7 rounded-md flex items-center justify-center transition-colors ${hoverButton === 'send' ? 'bg-primary/90' : 'bg-primary'}`}>
+                                    <ArrowRight className="w-4 h-4 text-white" />
+                                </div>
                             </div>
                         </div>
                     </div>

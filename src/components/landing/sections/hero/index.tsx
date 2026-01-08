@@ -1,19 +1,50 @@
 "use client"
 
-import { useState } from "react"
-import { motion } from "framer-motion"
+import { useState, useRef, useEffect } from "react"
+import { motion, useInView } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Link from "next/link"
 import { HeroDemo } from "./demo"
 
 export function Hero() {
+  // Ref for the demo container to detect visibility
+  const demoRef = useRef<HTMLDivElement>(null)
+  const isInView = useInView(demoRef, { amount: 0.3 }) // 30% visible to trigger
+
   // Track current step for animations
   const [step, setStep] = useState(0)
 
   // Force restart of timeline
   const [restartKey, setRestartKey] = useState(0)
-  const [isPaused, setIsPaused] = useState(false)
+  const [isPaused, setIsPaused] = useState(true) // Start paused until visible
   const [timelineOffset, setTimelineOffset] = useState(0)
+
+  // Pause/resume based on visibility
+  useEffect(() => {
+    if (isInView) {
+      // When becoming visible, reset and start fresh
+      setStep(0)
+      setTimelineOffset(0)
+      setIsPaused(false)
+      setRestartKey(prev => prev + 1)
+    } else {
+      // When going out of view, pause
+      setIsPaused(true)
+    }
+  }, [isInView])
+
+  // Handle window resize to update coordinates in the demo
+  useEffect(() => {
+    const handleResize = () => {
+      // Debounce restart to avoid rapid flickering
+      const id = setTimeout(() => {
+        setRestartKey(prev => prev + 1)
+      }, 500)
+      return () => clearTimeout(id)
+    }
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [])
 
   // Define sections for navigation
   const sections = [
@@ -73,7 +104,7 @@ export function Hero() {
 
         {/* Headline */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-stone-900 tracking-tight leading-[1.1] mb-6 max-w-3xl mx-auto">
-          <span className="bg-gradient-to-r from-violet-600 via-purple-500 to-violet-400 bg-clip-text text-transparent">Din bokföring, fast smartare</span> — för svenska företag.
+          <span className="hero-title-glow">Din bokföring, fast smartare</span> — för svenska företag.
         </h1>
 
         {/* Subtext */}
@@ -92,7 +123,7 @@ export function Hero() {
           </Link>
           <Link
             href="#contact"
-            className="h-12 px-6 border border-stone-300 text-stone-900 rounded-lg flex items-center gap-2 font-medium hover:bg-stone-50 transition-colors"
+            className="h-12 px-6 bg-white/10 backdrop-blur-md border border-white/20 text-stone-900 rounded-lg flex items-center gap-2 font-medium hover:bg-white/20 transition-all shadow-sm"
           >
             Boka demo
           </Link>
@@ -101,6 +132,7 @@ export function Hero() {
 
       {/* Demo "Cinema Screen" - Below with margins */}
       <motion.div
+        ref={demoRef}
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.8, delay: 0.3 }}
@@ -176,6 +208,7 @@ export function Hero() {
             setTimelineOffset={setTimelineOffset}
             isPaused={isPaused}
             setIsPaused={setIsPaused}
+            onLoopComplete={() => setRestartKey(prev => prev + 1)}
           />
         </div>
       </motion.div>

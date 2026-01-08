@@ -5,8 +5,7 @@ import {
   FeaturePitch,
   FeaturesChecklist,
   CoreFeatures,
-  Integrations,
-
+  GlobalReach,
   Pricing,
   FAQ,
   Contact,
@@ -43,10 +42,8 @@ export default function ScopeLandingPage() {
           {/* Bento Grid Feature Demos */}
           <CoreFeatures />
 
-          {/* Integrations - On/Off logo grid */}
-          <Integrations />
-
-
+          {/* Vision - World map with feature highlights */}
+          <GlobalReach />
 
           {/* Pricing */}
           <Pricing />

@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { useState, useEffect, useRef } from "react"
+import { motion, AnimatePresence, useInView } from "framer-motion"
 import { Calendar, Wallet, ArrowDownRight, Search, Clock, ArrowUpRight, CheckCircle2 } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { GridTableHeader, GridTableRow, GridTableRows } from "@/components/ui/grid-table"
@@ -117,6 +117,10 @@ function MomsPageView() {
 }
 
 export function MomsWorkflowPreview() {
+    // Viewport detection for performance
+    const containerRef = useRef<HTMLDivElement>(null)
+    const isInView = useInView(containerRef, { amount: 0.3 })
+
     const [step, setStep] = useState(0)
     const [scrollTo, setScrollTo] = useState(0)
     // New state for page scrolling animation
@@ -124,6 +128,9 @@ export function MomsWorkflowPreview() {
     const [cursor, setCursor] = useState({ x: 300, y: 450, click: false, opacity: 0 })
 
     useEffect(() => {
+        // Only run animation when visible in viewport
+        if (!isInView) return
+
         let mounted = true
 
         const runSequence = async () => {
@@ -232,11 +239,11 @@ export function MomsWorkflowPreview() {
 
         runSequence()
         return () => { mounted = false }
-    }, [])
+    }, [isInView])
 
     return (
         <ScaledPreview scale={0.65} className="h-full flex flex-col rounded-b-none border-b-0 shadow-sm">
-            <div className="relative w-full h-full min-h-[900px]">
+            <div ref={containerRef} className="relative w-full h-full min-h-[900px]">
                 {/* Animate the page content scrolling */}
                 <motion.div
                     className="absolute inset-0 z-0"

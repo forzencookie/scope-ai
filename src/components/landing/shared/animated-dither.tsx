@@ -1,16 +1,19 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { motion } from "framer-motion"
+import { motion, useScroll, useTransform } from "framer-motion"
 
 // Animated dither dots that float and respond to scroll
 export function AnimatedDitherArt() {
-    const [scrollY, setScrollY] = useState(0)
+    const [mounted, setMounted] = useState(false)
+    const { scrollY } = useScroll()
+
+    // Transform scroll values directly to styles to avoid re-renders
+    const yLeft = useTransform(scrollY, value => value * 0.1)
+    const yRight = useTransform(scrollY, value => value * -0.08)
 
     useEffect(() => {
-        const handleScroll = () => setScrollY(window.scrollY)
-        window.addEventListener('scroll', handleScroll, { passive: true })
-        return () => window.removeEventListener('scroll', handleScroll)
+        setMounted(true)
     }, [])
 
     // Generate dot positions for organic shapes
@@ -29,6 +32,8 @@ export function AnimatedDitherArt() {
         return dots
     }
 
+    if (!mounted) return null
+
     const leftDots = generateDots(80, 0)
     const rightDots = generateDots(60, Math.PI)
 
@@ -38,7 +43,7 @@ export function AnimatedDitherArt() {
             <motion.div
                 className="absolute -left-12 top-[10%] w-72 h-72"
                 style={{
-                    y: scrollY * 0.1,
+                    y: yLeft,
                 }}
                 animate={{
                     rotate: 360
@@ -80,7 +85,7 @@ export function AnimatedDitherArt() {
             <motion.div
                 className="absolute -right-12 top-[35%] w-64 h-64"
                 style={{
-                    y: scrollY * -0.08,
+                    y: yRight,
                 }}
                 animate={{
                     rotate: -360

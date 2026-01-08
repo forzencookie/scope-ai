@@ -53,6 +53,7 @@ export function ReceiptsPreview() {
                         <StatCard
                             label="Totalt belopp"
                             value="45 230 kr"
+                            subtitle="Inklusive moms"
                             headerIcon={Banknote}
                         />
                     </div>

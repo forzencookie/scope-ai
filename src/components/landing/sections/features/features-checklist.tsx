@@ -2,7 +2,7 @@
 
 import { useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Check, BookOpen, Calculator, Shield, ChevronDown } from "lucide-react"
+import { Check, ChevronDown, Sparkles, FileText, Building2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface FeatureItem {
@@ -12,36 +12,36 @@ interface FeatureItem {
 
 const featureColumns = [
     {
-        icon: BookOpen,
-        title: "AI-assisterad bokföring",
+        icon: Sparkles,
+        title: "AI-Core & Automatisering",
         items: [
-            { title: "AI hjälper till med löpande bokföring", description: "Automatisk kontering av transaktioner baserat på tidigare mönster och branschstandard." },
-            { title: "AI matchar kvitton mot transaktioner", description: "Fota kvittot — AI kopplar ihop det med rätt banktransaktion automatiskt." },
-            { title: "AI assisterar med moms & representation", description: "Rätt momssats föreslås automatiskt, inklusive avdragsbegränsningar för representation." },
-            { title: "AI underlättar avstämning av bank", description: "Se direkt vilka transaktioner som saknar underlag och få förslag på åtgärder." },
-            { title: "Jobbar dygnet runt", description: "Din digitala assistent är alltid tillgänglig — ingen väntan på svar." }
+            { title: "Bokföringsautopilot", description: "Vår AI sköter löpande bokföring och matchning automatiskt." },
+            { title: "Smart händelselogg", description: "Allt som händer i bolaget loggas och sparas i en sökbar tidslinje." },
+            { title: "Kvitto- & Faktura-AI", description: "Ladda upp underlag så tolkar och bokför AI:n åt dig direkt." },
+            { title: "Ditt jobb", description: "AI:n gör grovjobbet, men du har alltid full kontroll och sista ordet." },
+            { title: "Prata med AI", description: "Styr bokföringen med din röst via appen eller webben." }
         ]
     },
     {
-        icon: Calculator,
-        title: "AI-assisterad skatt",
+        icon: FileText,
+        title: "Skatt, Lön & Deklarationer",
         items: [
-            { title: "AI förbereder underlag för INK2", description: "Sammanställer automatiskt underlag för inkomstdeklaration för aktiebolag." },
-            { title: "AI hjälper med momsredovisning", description: "Beräknar utgående och ingående moms, redo att rapporteras till Skatteverket." },
-            { title: "Stöd för K2-regelverk", description: "Följer K2-reglerna för mindre företag med förenklad årsredovisning." },
-            { title: "AI assisterar med periodiseringsfonder", description: "Föreslår optimala avsättningar för att jämna ut resultat mellan år." },
-            { title: "AI ger realtids-prognos för skatt", description: "Se hur mycket skatt du kan förvänta dig att betala — uppdateras löpande." }
+            { title: "Lönehantering & Lönebesked", description: "Skapa löner och hantera utbetalningar till anställda smidigt." },
+            { title: "Moms- & Arbetsgivardeklaration", description: "Automatiska rapporter för moms och AGI direkt till Skatteverket." },
+            { title: "Årsredovisning & Bokslut", description: "Färdiga underlag för årsredovisning och bokslut enligt K2." },
+            { title: "K10 & Utdelning", description: "Fullt stöd för utdelning och K10-blanketten för fåmansbolag." },
+            { title: "Digitala blanketter", description: "Tillgång till alla viktiga bolagsblanketter digitalt." }
         ]
     },
     {
-        icon: Shield,
-        title: "Säkerhet & Data",
+        icon: Building2,
+        title: "Bolagsstyrning & Insikter",
         items: [
-            { title: "Spara tid med SIE-export", description: "Exportera din bokföring i SIE-format för enkel överföring till revisor eller annat system." },
-            { title: "Bank-klassad kryptering", description: "All data skyddas med samma krypteringsstandard som banker använder." },
-            { title: "Ingen träning på din data", description: "Dina affärsuppgifter används aldrig för att träna AI-modeller." },
-            { title: "Svenska servrar (GDPR)", description: "All data lagras på servrar i Sverige, fullt GDPR-kompatibelt." },
-            { title: "Automatiska säkerhetskopior", description: "Din data backas upp automatiskt — ingen risk att förlora något." }
+            { title: "Aktiebok & Ägarstruktur", description: "Digital aktiebok som håller koll på ägare och antal aktier." },
+            { title: "Styrelse & Protokoll", description: "Verktyg för styrelsearbete, protokoll och årsmöten." },
+            { title: "Resultat- & Balansräkning", description: "Följ företagets ekonomi med rapporter i realtid." },
+            { title: "Företagsstatistik", description: "Djupgående insikter och nyckeltal om hur bolaget presterar." },
+            { title: "Myndighetsregister", description: "Håll ordning på alla viktiga kontakter med myndigheter." }
         ]
     }
 ]

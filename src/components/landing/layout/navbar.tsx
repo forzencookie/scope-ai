@@ -16,7 +16,9 @@ export function Navbar() {
         {/* Logo - Left */}
         <Link href="/" className="flex items-center gap-2">
           <ScopeAILogo className="w-6 h-6" />
-          <span className="text-stone-900 font-bold tracking-tight">Scope AI</span>
+          <span className="font-mono text-stone-900 font-bold tracking-widest uppercase text-sm">
+            ScopeAI
+          </span>
         </Link>
 
         {/* Nav Links - Center */}
