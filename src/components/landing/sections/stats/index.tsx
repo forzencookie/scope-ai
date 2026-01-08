@@ -2,6 +2,7 @@
 
 import { motion, useInView } from "framer-motion"
 import { useEffect, useState, useRef } from "react"
+import { DitherPattern } from "../../shared/dither-pattern"
 
 // Scramble effect for 10X - shows random characters before final value
 function ScrambleText({ finalText, isInView }: { finalText: string, isInView: boolean }) {
@@ -73,7 +74,7 @@ function LoadingPercent({ isInView }: { isInView: boolean }) {
     return <span className="tabular-nums inline-block w-full text-center">{percent}%</span>
 }
 
-// Countdown animation for 0 min (from 120 to 0)
+// Countdown animation for 20 min (from 120 to 20)
 function CountdownMinutes({ isInView }: { isInView: boolean }) {
     const [minutes, setMinutes] = useState(120)
 
@@ -81,10 +82,10 @@ function CountdownMinutes({ isInView }: { isInView: boolean }) {
         if (!isInView) return
 
         let current = 120
-        const target = 0
+        const target = 20
         const duration = 2500
         const steps = 50
-        const decrement = current / steps
+        const decrement = (current - target) / steps
         const stepTime = duration / steps
 
         const interval = setInterval(() => {
@@ -127,64 +128,77 @@ export function Stats() {
                 <div ref={ref} className="flex-1 w-full">
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
                         {/* 10X Card - Scramble Effect */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0, duration: 0.5 }}
-                            className="bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-row-reverse items-center justify-between md:flex-col md:justify-center md:items-center text-left md:text-center hover:bg-white hover:shadow-md transition-all duration-300"
-                        >
-                            <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter block mb-0 md:mb-2 text-stone-900">
-                                <ScrambleText finalText="10X" isInView={isInView} />
-                            </span>
-                            <p className="text-xs sm:text-xs md:text-sm font-bold text-stone-900 uppercase tracking-wide mb-0 md:mb-1">
-                                Snabbare bokföring
-                            </p>
-                            <p className="text-[10px] md:text-xs text-stone-500 hidden sm:block">
-                                Än traditionella byråer
-                            </p>
-                        </motion.div>
+                        <CardWithHoverReplay delay={0}>
+                            {(key) => (
+                                <>
+                                    <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter block mb-0 md:mb-2 text-foreground">
+                                        <ScrambleText key={key} finalText="10X" isInView={isInView} />
+                                    </span>
+                                    <p className="text-xs sm:text-xs md:text-sm font-bold text-foreground uppercase tracking-wide mb-0 md:mb-1">
+                                        Effektivare arbete
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">
+                                        Jämfört med traditionella byråer
+                                    </p>
+                                </>
+                            )}
+                        </CardWithHoverReplay>
 
                         {/* 100% Card - Loading Effect */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.1, duration: 0.5 }}
-                            className="bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-row-reverse items-center justify-between md:flex-col md:justify-center md:items-center text-left md:text-center hover:bg-white hover:shadow-md transition-all duration-300"
-                        >
-                            <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter block mb-0 md:mb-2 text-violet-600">
-                                <LoadingPercent isInView={isInView} />
-                            </span>
-                            <p className="text-xs sm:text-xs md:text-sm font-bold text-stone-900 uppercase tracking-wide mb-0 md:mb-1">
-                                Automatiserad moms
-                            </p>
-                            <p className="text-[10px] md:text-xs text-stone-500 hidden sm:block">
-                                Aldrig mer sena kvällar
-                            </p>
-                        </motion.div>
+                        <CardWithHoverReplay delay={0.1}>
+                            {(key) => (
+                                <>
+                                    <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter block mb-0 md:mb-2 text-violet-600">
+                                        <LoadingPercent key={key} isInView={isInView} />
+                                    </span>
+                                    <p className="text-xs sm:text-xs md:text-sm font-bold text-foreground uppercase tracking-wide mb-0 md:mb-1">
+                                        AI gör jobbet
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">
+                                        Färre sena kvällar
+                                    </p>
+                                </>
+                            )}
+                        </CardWithHoverReplay>
 
-                        {/* 0 min Card - Countdown Effect */}
-                        <motion.div
-                            initial={{ opacity: 0, y: 20 }}
-                            whileInView={{ opacity: 1, y: 0 }}
-                            viewport={{ once: true }}
-                            transition={{ delay: 0.2, duration: 0.5 }}
-                            className="bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-row-reverse items-center justify-between md:flex-col md:justify-center md:items-center text-left md:text-center hover:bg-white hover:shadow-md transition-all duration-300"
-                        >
-                            <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter block mb-0 md:mb-2 text-stone-900">
-                                <CountdownMinutes isInView={isInView} />
-                            </span>
-                            <p className="text-xs sm:text-xs md:text-sm font-bold text-stone-900 uppercase tracking-wide mb-0 md:mb-1">
-                                Manuell handpåläggning
-                            </p>
-                            <p className="text-[10px] md:text-xs text-stone-500 hidden sm:block">
-                                Luta dig tillbaka
-                            </p>
-                        </motion.div>
+                        {/* 20 min Card - Countdown Effect */}
+                        <CardWithHoverReplay delay={0.2}>
+                            {(key) => (
+                                <>
+                                    <span className="text-2xl sm:text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter block mb-0 md:mb-2 text-foreground">
+                                        <CountdownMinutes key={key} isInView={isInView} />
+                                    </span>
+                                    <p className="text-xs sm:text-xs md:text-sm font-bold text-foreground uppercase tracking-wide mb-0 md:mb-1">
+                                        Kraftigt reducerad handpåläggning
+                                    </p>
+                                    <p className="text-[10px] md:text-xs text-muted-foreground hidden sm:block">
+                                        Fokusera på kärnverksamheten
+                                    </p>
+                                </>
+                            )}
+                        </CardWithHoverReplay>
                     </div>
                 </div>
             </div>
         </section>
+    )
+}
+
+function CardWithHoverReplay({ children, delay }: { children: (key: number) => React.ReactNode, delay: number }) {
+    const [replayKey, setReplayKey] = useState(0)
+
+    return (
+        <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ delay, duration: 0.5 }}
+            onMouseEnter={() => setReplayKey(k => k + 1)}
+            className="relative overflow-hidden bg-stone-50 border border-stone-200 rounded-xl md:rounded-2xl p-4 md:p-6 flex flex-row-reverse items-center justify-between md:flex-col md:justify-center md:items-center text-left md:text-center hover:bg-white hover:shadow-md transition-all duration-300 cursor-default"
+        >
+            {/* Dither pattern background */}
+            <DitherPattern className="inset-0 w-full h-full" opacity={0.04} />
+            {children(replayKey)}
+        </motion.div>
     )
 }

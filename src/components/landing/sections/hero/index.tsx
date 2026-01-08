@@ -73,12 +73,12 @@ export function Hero() {
 
         {/* Headline */}
         <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold text-stone-900 tracking-tight leading-[1.1] mb-6 max-w-3xl mx-auto">
-          <span className="bg-gradient-to-r from-violet-600 via-purple-500 to-violet-400 bg-clip-text text-transparent">Bokföring på autopilot</span> för svenska företag.
+          <span className="bg-gradient-to-r from-violet-600 via-purple-500 to-violet-400 bg-clip-text text-transparent">Din bokföring, fast smartare</span> — för svenska företag.
         </h1>
 
         {/* Subtext */}
         <p className="text-lg md:text-xl text-stone-600 leading-relaxed max-w-2xl mx-auto mb-10">
-          Scope sköter kvitton, löner och moms automatiskt. Du får full koll, utan krånglet.
+          Scope automatiserar din administration — kvitton, löner, moms. Vi automatiserar det manuella, så du kan fokusera på affärerna.
         </p>
 
         {/* Dual CTAs - Centered */}
