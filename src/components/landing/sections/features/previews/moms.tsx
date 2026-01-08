@@ -119,6 +119,8 @@ function MomsPageView() {
 export function MomsWorkflowPreview() {
     const [step, setStep] = useState(0)
     const [scrollTo, setScrollTo] = useState(0)
+    // New state for page scrolling animation
+    const [pageScroll, setPageScroll] = useState(0)
     const [cursor, setCursor] = useState({ x: 300, y: 450, click: false, opacity: 0 })
 
     useEffect(() => {
@@ -126,20 +128,58 @@ export function MomsWorkflowPreview() {
 
         const runSequence = async () => {
             if (!mounted) return
+
+            // Check if mobile (md breakpoint is 768px)
+            const isMobile = window.innerWidth < 768
+
             setStep(0)
-            setCursor({ x: 300, y: 415, click: false, opacity: 0 })
+            setPageScroll(0)
 
-            await new Promise(r => setTimeout(r, 1000))
-            if (!mounted) return
-            setCursor(c => ({ ...c, opacity: 1 }))
-            await new Promise(r => setTimeout(r, 800))
-            if (!mounted) return
+            if (isMobile) {
+                // === MOBILE SEQUENCE (With Scroll) ===
+                // Start cursor lower
+                setCursor({ x: 300, y: 460, click: false, opacity: 0 })
 
-            setCursor(c => ({ ...c, click: true }))
-            await new Promise(r => setTimeout(r, 300))
-            if (!mounted) return
-            setCursor(c => ({ ...c, click: false }))
+                await new Promise(r => setTimeout(r, 1000))
+                if (!mounted) return
+                setCursor(c => ({ ...c, opacity: 1 }))
 
+                // 1. Scroll down animation
+                await new Promise(r => setTimeout(r, 500))
+                setPageScroll(-60) // Scroll up
+                // Adjust cursor to follow scroll
+                setCursor(c => ({ ...c, y: 430 }))
+
+                await new Promise(r => setTimeout(r, 800))
+                if (!mounted) return
+
+                // 2. Click the row
+                setCursor(c => ({ ...c, click: true }))
+                await new Promise(r => setTimeout(r, 300))
+                if (!mounted) return
+                setCursor(c => ({ ...c, click: false }))
+            } else {
+                // === DESKTOP SEQUENCE (No Scroll) ===
+                // Original simple click behavior
+                setCursor({ x: 300, y: 415, click: false, opacity: 0 })
+
+                await new Promise(r => setTimeout(r, 1000))
+                if (!mounted) return
+                setCursor(c => ({ ...c, opacity: 1 }))
+                await new Promise(r => setTimeout(r, 800))
+                if (!mounted) return
+
+                // Click the row at original position
+                setCursor(c => ({ ...c, click: true }))
+                await new Promise(r => setTimeout(r, 300))
+                if (!mounted) return
+                setCursor(c => ({ ...c, click: false }))
+            }
+
+            // Hide cursor immediately after click
+            setCursor(c => ({ ...c, opacity: 0 }))
+
+            // Shared sequence (Dialog open, etc.)
             setStep(1)
 
             await new Promise(r => setTimeout(r, 800))
@@ -150,11 +190,15 @@ export function MomsWorkflowPreview() {
             await new Promise(r => setTimeout(r, 1000))
             if (!mounted) return
 
+            // Redundant fade out removed/kept for safety
             setCursor(c => ({ ...c, opacity: 0 }))
             await new Promise(r => setTimeout(r, 400))
             if (!mounted) return
 
-            setCursor({ x: 550, y: 440, click: false, opacity: 0 })
+            // Moving cursor left on desktop: NO, needs to be RIGHT because dialog is centered and container is wider
+            // Mobile (450), Desktop (700)
+            setCursor({ x: isMobile ? 450 : 700, y: 410, click: false, opacity: 0 })
+
             await new Promise(r => setTimeout(r, 100))
             if (!mounted) return
 
@@ -172,7 +216,17 @@ export function MomsWorkflowPreview() {
 
             await new Promise(r => setTimeout(r, 3000))
             setCursor(c => ({ ...c, opacity: 0 }))
+
+            // Wait for fade out, then reset everything silently
+            await new Promise(r => setTimeout(r, 500))
             if (!mounted) return
+
+            // RESET SCROLL AND STEPS SILENTLY BEFORE RESTARTING
+            setPageScroll(0)
+            setStep(0)
+
+            // Small pause before restarting loop
+            await new Promise(r => setTimeout(r, 500))
             runSequence()
         }
 
@@ -183,13 +237,22 @@ export function MomsWorkflowPreview() {
     return (
         <ScaledPreview scale={0.65} className="h-full flex flex-col rounded-b-none border-b-0 shadow-sm">
             <div className="relative w-full h-full min-h-[900px]">
-                <div className="absolute inset-0 z-0">
+                {/* Animate the page content scrolling */}
+                <motion.div
+                    className="absolute inset-0 z-0"
+                    animate={{ y: pageScroll }}
+                    transition={{
+                        duration: pageScroll === 0 ? 0 : 0.8,
+                        ease: "easeInOut"
+                    }}
+                >
                     <MomsPageView />
-                </div>
+                </motion.div>
 
                 <AnimatePresence>
                     {step > 0 && (
-                        <div className="absolute inset-0 z-10 flex items-start justify-center pt-12 pointer-events-none">
+                        // Changed to items-start pt-4 to spawn dialog higher up per user request
+                        <div className="absolute inset-0 z-10 flex items-start justify-center pt-4 pointer-events-none">
                             <motion.div
                                 initial={{ opacity: 0 }}
                                 animate={{ opacity: 1 }}
@@ -272,7 +335,7 @@ export function MomsWorkflowPreview() {
                                         <motion.div
                                             initial={{ scale: 0.8, opacity: 0 }}
                                             animate={{ scale: 1, opacity: 1 }}
-                                            className="w-16 h-16 bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400 rounded-full flex items-center justify-center"
+                                            className="w-16 h-16 bg-[#d1fae5] text-[#059669] rounded-full flex items-center justify-center mb-4"
                                         >
                                             <CheckCircle2 className="w-8 h-8" />
                                         </motion.div>

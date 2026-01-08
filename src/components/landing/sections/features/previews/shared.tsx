@@ -31,7 +31,7 @@ export function ScaledPreview({ children, scale = 0.65, className, extendToBotto
     )
 }
 
-// ===== Status badge that matches AppStatusBadge styling =====
+// ===== Status badge with explicit light mode colors =====
 export function PreviewStatusBadge({
     status,
     variant = "neutral"
@@ -39,10 +39,11 @@ export function PreviewStatusBadge({
     status: string
     variant?: "success" | "warning" | "neutral"
 }) {
+    // Harmonized colors - 100 bg with 600 text
     const variantStyles = {
-        success: "text-green-700 dark:text-green-500/70 bg-green-100 dark:bg-green-900/20",
-        warning: "text-amber-700 dark:text-amber-500/70 bg-amber-100 dark:bg-amber-900/20",
-        neutral: "text-muted-foreground bg-muted/50"
+        success: "text-[#059669] bg-[#d1fae5]", // emerald-600, emerald-100
+        warning: "text-[#d97706] bg-[#fef3c7]", // amber-600, amber-100
+        neutral: "text-[#57534e] bg-[#f5f5f4]"  // stone-600, stone-100
     }
 
     return (

@@ -6,13 +6,13 @@ import { motion } from "framer-motion"
 const integrations = [
     // Active (lit) - what we have
     { name: "Supabase", active: true },
-    { name: "AWS", active: true },
     { name: "Google Cloud", active: true },
     { name: "Vercel", active: true },
 
     // Planned (greyed) - what we want
     { name: "BankID", active: false },
-    { name: "Fortnox", active: false },
+    { name: "Swish", active: false },
+    { name: "Kivra", active: false },
     { name: "Skatteverket", active: false },
     { name: "SEB", active: false },
     { name: "Swedbank", active: false },
@@ -51,7 +51,7 @@ export function Integrations() {
             </div>
 
             {/* Logo grid */}
-            <div className="grid grid-cols-3 md:grid-cols-5 gap-6 max-w-3xl mx-auto">
+            <div className="grid grid-cols-2 md:grid-cols-5 gap-6 max-w-3xl mx-auto">
                 {integrations.map((integration, index) => (
                     <motion.div
                         key={integration.name}

@@ -26,8 +26,8 @@ export function ReceiptsPreview() {
                     </div>
                 </div>
 
-                {/* Stats Cards - exact StatCardGrid with 4 columns like real component */}
-                <StatCardGrid columns={4}>
+                {/* Stats Cards - 3 cols on mobile, 4 on larger */}
+                <div className="grid grid-cols-3 sm:grid-cols-4 gap-4">
                     <StatCard
                         label="Totalt antal"
                         value="24"
@@ -48,12 +48,15 @@ export function ReceiptsPreview() {
                         headerIcon={Clock}
                         changeType="negative"
                     />
-                    <StatCard
-                        label="Totalt belopp"
-                        value="45 230 kr"
-                        headerIcon={Banknote}
-                    />
-                </StatCardGrid>
+                    {/* Hide last card on very small screens, show on sm+ */}
+                    <div className="hidden sm:block">
+                        <StatCard
+                            label="Totalt belopp"
+                            value="45 230 kr"
+                            headerIcon={Banknote}
+                        />
+                    </div>
+                </div>
 
                 {/* Section Separator */}
                 <div className="border-b-2 border-border/60" />

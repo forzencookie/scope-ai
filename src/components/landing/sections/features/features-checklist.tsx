@@ -6,24 +6,24 @@ import { Check, Lock, Settings, Sparkles } from "lucide-react"
 const featureColumns = [
     {
         icon: Lock,
-        title: "Bokföring på autopilot",
+        title: "AI-assisterad bokföring",
         items: [
-            "Helautomatisk löpande bokföring",
-            "Matchar kvitton mot transaktioner",
-            "Hanterar moms & representation",
-            "Automatisk avstämning av bank",
+            "AI hjälper till med löpande bokföring",
+            "AI matchar kvitton mot transaktioner",
+            "AI assisterar med moms & representation",
+            "AI underlättar avstämning av bank",
             "Jobbar dygnet runt"
         ]
     },
     {
         icon: Settings,
-        title: "Bokslut & Skatt",
+        title: "AI-assisterad skatt",
         items: [
-            "Färdiga underlag för INK2",
-            "Momsredovisning & XML-export",
+            "AI förbereder underlag för INK2",
+            "AI hjälper med momsredovisning",
             "Stöd för K2-regelverk",
-            "Hanterar periodiseringsfonder",
-            "Realtids-prognos för skatt"
+            "AI assisterar med periodiseringsfonder",
+            "AI ger realtids-prognos för skatt"
         ]
     },
     {

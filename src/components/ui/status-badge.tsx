@@ -43,13 +43,13 @@ export interface StatusBadgeProps {
 }
 
 const variantConfig: Record<StatusVariant, { color: string; bgColor: string; defaultIcon: LucideIcon; srLabel: string }> = {
-    success: { color: "text-green-700 dark:text-green-500/70", bgColor: "bg-green-100 dark:bg-green-900/20", defaultIcon: CheckCircle2, srLabel: "Slutförd" },
-    warning: { color: "text-amber-700 dark:text-amber-500/70", bgColor: "bg-amber-100 dark:bg-amber-900/20", defaultIcon: Clock, srLabel: "Väntar" },
-    error: { color: "text-red-700 dark:text-red-500/70", bgColor: "bg-red-100 dark:bg-red-900/20", defaultIcon: AlertCircle, srLabel: "Fel" },
-    info: { color: "text-blue-700 dark:text-blue-500/70", bgColor: "bg-blue-100 dark:bg-blue-900/20", defaultIcon: AlertCircle, srLabel: "Information" },
-    neutral: { color: "text-muted-foreground", bgColor: "bg-muted/50", defaultIcon: Clock, srLabel: "Neutral" },
-    violet: { color: "text-violet-700 dark:text-violet-500/70", bgColor: "bg-violet-100 dark:bg-violet-900/20", defaultIcon: AlertCircle, srLabel: "Info" },
-    purple: { color: "text-purple-700 dark:text-purple-500/70", bgColor: "bg-purple-100 dark:bg-purple-900/20", defaultIcon: AlertCircle, srLabel: "Info" },
+    success: { color: "text-[#15803d]", bgColor: "bg-[#dcfce7]", defaultIcon: CheckCircle2, srLabel: "Slutförd" }, // green-700, green-100
+    warning: { color: "text-[#b45309]", bgColor: "bg-[#fef3c7]", defaultIcon: Clock, srLabel: "Väntar" }, // amber-700, amber-100
+    error: { color: "text-[#b91c1c]", bgColor: "bg-[#fee2e2]", defaultIcon: AlertCircle, srLabel: "Fel" }, // red-700, red-100
+    info: { color: "text-[#1d4ed8]", bgColor: "bg-[#dbeafe]", defaultIcon: AlertCircle, srLabel: "Information" }, // blue-700, blue-100
+    neutral: { color: "text-[#78716c]", bgColor: "bg-[#f5f5f4]", defaultIcon: Clock, srLabel: "Neutral" }, // stone-500, stone-100
+    violet: { color: "text-[#6d28d9]", bgColor: "bg-[#ede9fe]", defaultIcon: AlertCircle, srLabel: "Info" }, // violet-700, violet-100
+    purple: { color: "text-[#7e22ce]", bgColor: "bg-[#f3e8ff]", defaultIcon: AlertCircle, srLabel: "Info" }, // purple-700, purple-100
 }
 
 export function StatusBadge({

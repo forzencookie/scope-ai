@@ -68,9 +68,20 @@ export function HeroDemo({
     const [typedComment, setTypedComment] = useState("")
     const [aiStreamText, setAiStreamText] = useState("")
     const [hoverButton, setHoverButton] = useState<string | null>(null)
+    const containerRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
         if (isPaused) return
+
+        const getSendButtonX = () => {
+            if (!containerRef.current) return 320
+            // Adjusted offset from right edge to hit center of send button
+            // Was 55, moving left -> 75
+            return containerRef.current.offsetWidth - 75
+        }
+
+        const isMobile = window.innerWidth < 768
+        const sendButtonY = isMobile ? 465 : 480 // Mobile: 465 (between 450 and 480), Desktop: 480
 
         const userMessage = "Bokför det här kvittot"
         const comment = "Ändra konto till 5810"
@@ -82,7 +93,7 @@ export function HeroDemo({
                 delay: 3500 + i * 70,
                 action: () => setInputText(userMessage.slice(0, i + 1))
             })),
-            { delay: 6000, action: () => setCursorPos({ x: 580, y: 480 }) },
+            { delay: 6000, action: () => setCursorPos({ x: getSendButtonX(), y: sendButtonY }) },
             { delay: 6400, action: () => setHoverButton('send') },
             { delay: 6800, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
             { delay: 7100, action: () => { setInputText(""); setStep(2); setHoverButton(null) } },
@@ -98,7 +109,7 @@ export function HeroDemo({
                 action: () => setInputText(comment.slice(0, i + 1))
             })),
             { delay: 16500, action: () => setHoverButton(null) },
-            { delay: 17200, action: () => setCursorPos({ x: 580, y: 480 }) },
+            { delay: 17200, action: () => setCursorPos({ x: getSendButtonX(), y: sendButtonY }) },
             { delay: 17600, action: () => setHoverButton('send') },
             { delay: 18000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
             { delay: 18300, action: () => { setInputText(""); setTypedComment(comment); setStep(6); setHoverButton(null) } },
@@ -111,13 +122,13 @@ export function HeroDemo({
             { delay: 25300, action: () => { setStep(9); setCursorPos({ x: 0, y: 0 }); setHoverButton(null) } },
             { delay: 28000, action: () => setCursorPos({ x: 200, y: 460 }) },
             { delay: 28500, action: () => setHoverButton('input') },
-            { delay: 29000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100); setHoverButton(null) } },
+            { delay: 29000, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100); } },
             { delay: 29400, action: () => setInputText("T") },
             { delay: 29600, action: () => setInputText("Ta") },
             { delay: 29800, action: () => setInputText("Tac") },
             { delay: 30000, action: () => setInputText("Tack") },
             { delay: 30200, action: () => setInputText("Tack!") },
-            { delay: 31000, action: () => setCursorPos({ x: 580, y: 480 }) },
+            { delay: 31000, action: () => setCursorPos({ x: getSendButtonX(), y: sendButtonY }) },
             { delay: 31400, action: () => setHoverButton('send') },
             { delay: 31800, action: () => { setClicking(true); setTimeout(() => setClicking(false), 100) } },
             { delay: 32100, action: () => { setInputText(""); setStep(10); setHoverButton(null) } },
@@ -154,7 +165,7 @@ export function HeroDemo({
     const showGreeting = step === 0
 
     return (
-        <div className="bg-background rounded-xl flex flex-col h-[560px] relative overflow-hidden border border-border">
+        <div ref={containerRef} className="bg-background rounded-xl flex flex-col h-[560px] relative overflow-hidden border border-border">
             {/* Window Chrome / Traffic Lights - Standardized size/padding */}
             <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/40 bg-muted/20">
                 <div className="w-2 h-2 rounded-full bg-red-400/80" />
@@ -263,7 +274,7 @@ export function HeroDemo({
                     </AnimatePresence>
 
                     <AnimatePresence>
-                        {(step === 8 || step === 9 || step === 10) && (
+                        {step >= 8 && (
                             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                                 <p className="text-sm text-muted-foreground">
                                     {step >= 9 ? "Klart! Kvittot är nu bokfört." : "Perfekt, jag ändrade kontot. Godkänn för att bokföra."}
