@@ -61,6 +61,53 @@ export function HeroDemo({
     setIsPaused,
     onLoopComplete
 }: HeroDemoProps) {
+    const [isInView, setIsInView] = useState(false)
+    const containerRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        const observer = new IntersectionObserver(
+            ([entry]) => {
+                if (entry.isIntersecting) {
+                    setIsInView(true)
+                    observer.disconnect()
+                }
+            },
+            { threshold: 0.1 }
+        )
+
+        if (containerRef.current) {
+            observer.observe(containerRef.current)
+        }
+
+        return () => observer.disconnect()
+    }, [])
+
+    if (!isInView) {
+        return <div ref={containerRef} className="bg-background rounded-xl flex flex-col h-[560px] relative overflow-hidden border border-border" />
+    }
+
+    return <HeroDemoContent
+        step={step}
+        setStep={setStep}
+        restartKey={restartKey}
+        timelineOffset={timelineOffset}
+        setTimelineOffset={setTimelineOffset}
+        isPaused={isPaused}
+        setIsPaused={setIsPaused}
+        onLoopComplete={onLoopComplete}
+    />
+}
+
+function HeroDemoContent({
+    step,
+    setStep,
+    restartKey,
+    timelineOffset,
+    setTimelineOffset,
+    isPaused,
+    setIsPaused,
+    onLoopComplete
+}: HeroDemoProps) {
     const [inputText, setInputText] = useState("")
     const [cursorPos, setCursorPos] = useState({ x: 0, y: 0 })
     const [clicking, setClicking] = useState(false)

@@ -3,7 +3,6 @@ import {
   Hero,
   Stats,
   FeaturePitch,
-  FeaturesChecklist,
   CoreFeatures,
   GlobalReach,
   Pricing,
@@ -33,11 +32,8 @@ export default function ScopeLandingPage() {
           {/* Stats Card - Time savings metric */}
           <Stats />
 
-          {/* Feature Pitch - Left headline, right feature list */}
+          {/* Feature Pitch + Company-Specific Features Checklist */}
           <FeaturePitch />
-
-          {/* 3-Column Features Checklist */}
-          <FeaturesChecklist />
 
           {/* Bento Grid Feature Demos */}
           <CoreFeatures />

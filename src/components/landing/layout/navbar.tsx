@@ -5,6 +5,13 @@ import Link from "next/link"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 export function Navbar() {
+  const navItems = [
+    { name: "Funktioner", href: "/#features" },
+    { name: "Pris", href: "/#pricing" },
+    { name: "Om oss", href: "/om-oss" },
+    { name: "Vanliga frågor", href: "/#faq" },
+  ]
+
   return (
     <motion.nav
       initial={{ y: -20, opacity: 0 }}
@@ -23,9 +30,11 @@ export function Navbar() {
 
         {/* Nav Links - Center */}
         <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          <Link href="#features" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">Funktioner</Link>
-          <Link href="#pricing" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">Priser</Link>
-          <Link href="#about" className="text-sm text-stone-600 hover:text-stone-900 transition-colors">Om oss</Link>
+          {navItems.map((item) => (
+            <Link key={item.name} href={item.href} className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
+              {item.name}
+            </Link>
+          ))}
         </div>
 
         {/* Auth - Right */}

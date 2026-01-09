@@ -1,41 +1,81 @@
 "use client"
 
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useState } from "react"
 import { motion, useScroll, useTransform } from "framer-motion"
 
-// Animated dither dots that float and respond to scroll
-export function AnimatedDitherArt() {
-    const [mounted, setMounted] = useState(false)
-    const { scrollY } = useScroll()
+// Shared dot generation constants
+// These match the original "organic" generation logic exactly
+const generateDotsData = (count: number, seed: number) => {
+    return Array.from({ length: count }, (_, i) => {
+        const angle = (i / count) * Math.PI * 2 + seed
+        const radius = 30 + Math.sin(i * 0.5) * 20 + Math.cos(i * 0.3) * 15
+        const x = 50 + Math.cos(angle) * radius
+        const y = 50 + Math.sin(angle) * radius
+        const size = 2 + Math.sin(i * 0.7) * 1.5
+        const opacity = 0.3 + Math.cos(i * 0.4) * 0.2
+        return { x, y, size, opacity, delay: i * 0.02 }
+    })
+}
 
-    // Transform scroll values directly to styles to avoid re-renders
+const leftDotsData = generateDotsData(80, 0)
+const rightDotsData = generateDotsData(60, Math.PI)
+
+// 1. Static version for mobile (CSS rotation only, no individual dot animations)
+function StaticDitherArt() {
+    const { scrollY } = useScroll()
     const yLeft = useTransform(scrollY, value => value * 0.1)
     const yRight = useTransform(scrollY, value => value * -0.08)
 
-    useEffect(() => {
-        setMounted(true)
-    }, [])
+    return (
+        <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+            {/* Left side - CSS rotation */}
+            <motion.div
+                className="absolute -left-12 top-[10%] w-72 h-72 animate-spin-slow"
+                style={{ y: yLeft }}
+            >
+                <svg viewBox="-20 -20 140 140" className="w-full h-full overflow-visible">
+                    {leftDotsData.map((dot, i) => (
+                        <circle
+                            key={i}
+                            cx={dot.x}
+                            cy={dot.y}
+                            r={dot.size}
+                            fill="currentColor"
+                            className="text-violet-400"
+                            style={{ opacity: dot.opacity }}
+                        />
+                    ))}
+                </svg>
+            </motion.div>
 
-    // Generate dot positions for organic shapes
-    const generateDots = (count: number, seed: number) => {
-        const dots = []
-        for (let i = 0; i < count; i++) {
-            // Use seed to create consistent but varied positions
-            const angle = (i / count) * Math.PI * 2 + seed
-            const radius = 30 + Math.sin(i * 0.5) * 20 + Math.cos(i * 0.3) * 15
-            const x = 50 + Math.cos(angle) * radius
-            const y = 50 + Math.sin(angle) * radius
-            const size = 2 + Math.sin(i * 0.7) * 1.5
-            const opacity = 0.3 + Math.cos(i * 0.4) * 0.2
-            dots.push({ x, y, size, opacity, delay: i * 0.02 })
-        }
-        return dots
-    }
+            {/* Right side - CSS rotation (reverse) */}
+            <motion.div
+                className="absolute -right-12 top-[35%] w-64 h-64 animate-spin-slow-reverse"
+                style={{ y: yRight }}
+            >
+                <svg viewBox="-20 -20 140 140" className="w-full h-full overflow-visible">
+                    {rightDotsData.map((dot, i) => (
+                        <circle
+                            key={i}
+                            cx={dot.x}
+                            cy={dot.y}
+                            r={dot.size}
+                            fill="currentColor"
+                            className="text-violet-400"
+                            style={{ opacity: dot.opacity }}
+                        />
+                    ))}
+                </svg>
+            </motion.div>
+        </div>
+    )
+}
 
-    if (!mounted) return null
-
-    const leftDots = generateDots(80, 0)
-    const rightDots = generateDots(60, Math.PI)
+// 2. Full Organic version for Desktop (Exact match to original component)
+function OrganicDitherArt() {
+    const { scrollY } = useScroll()
+    const yLeft = useTransform(scrollY, value => value * 0.1)
+    const yRight = useTransform(scrollY, value => value * -0.08)
 
     return (
         <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
@@ -49,13 +89,13 @@ export function AnimatedDitherArt() {
                     rotate: 360
                 }}
                 transition={{
-                    duration: 100,
+                    duration: 200,
                     repeat: Infinity,
                     ease: "linear"
                 }}
             >
                 <svg viewBox="-20 -20 140 140" className="w-full h-full overflow-visible">
-                    {leftDots.map((dot, i) => (
+                    {leftDotsData.map((dot, i) => (
                         <motion.circle
                             key={i}
                             cx={dot.x}
@@ -91,13 +131,13 @@ export function AnimatedDitherArt() {
                     rotate: -360
                 }}
                 transition={{
-                    duration: 120,
+                    duration: 240,
                     repeat: Infinity,
                     ease: "linear"
                 }}
             >
                 <svg viewBox="-20 -20 140 140" className="w-full h-full overflow-visible">
-                    {rightDots.map((dot, i) => (
+                    {rightDotsData.map((dot, i) => (
                         <motion.circle
                             key={i}
                             cx={dot.x}
@@ -123,8 +163,7 @@ export function AnimatedDitherArt() {
                 </svg>
             </motion.div>
 
-
-            {/* Floating particles in the middle */}
+            {/* Floating particles in the middle (Original logic) */}
             {Array.from({ length: 20 }).map((_, i) => (
                 <motion.div
                     key={i}
@@ -148,4 +187,29 @@ export function AnimatedDitherArt() {
             ))}
         </div>
     )
+}
+
+// Main component: Adapts based on viewport
+export function AnimatedDitherArt() {
+    const [mounted, setMounted] = useState(false)
+    const [isDesktop, setIsDesktop] = useState(true)
+
+    useEffect(() => {
+        setMounted(true)
+
+        const checkViewport = () => {
+            // 768px is standard tablet/mobile breakpoint
+            setIsDesktop(window.innerWidth >= 768)
+        }
+
+        checkViewport()
+        window.addEventListener("resize", checkViewport)
+        return () => window.removeEventListener("resize", checkViewport)
+    }, [])
+
+    if (!mounted) return null
+
+    // Desktop gets the full organic experience (exact original)
+    // Mobile gets the optimized static version (CSS rotation)
+    return isDesktop ? <OrganicDitherArt /> : <StaticDitherArt />
 }

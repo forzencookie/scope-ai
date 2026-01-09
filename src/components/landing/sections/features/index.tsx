@@ -3,165 +3,81 @@
 import { motion } from "framer-motion"
 import { LayoutGrid } from "lucide-react"
 import { SectionHeader } from "../../shared/section-header"
-import { ReceiptsPreview } from "./previews/receipts"
-import { MomsWorkflowPreview } from "./previews/moms"
-import { PayrollPreview } from "./previews/payroll"
+import { ZReportContextPreview } from "./previews/zreport-context"
+import { JournalEntryPreview } from "./previews/journal-entry"
+import { BokforingPagePreview } from "./previews/bokforing-page"
 
-// Feature card data
+// Feature card data - 3-step connected story
 const features = [
     {
         number: "01",
-        title: "AI läser dina kvitton",
-        description: "Ladda upp kvitton, fakturor och utlägg. AI:n läser av dokumenten och föreslår kontering — du godkänner bara.",
-        preview: ReceiptsPreview
+        title: "Ladda upp & analysera",
+        description: "Ladda upp en Z-rapport, kvitto eller faktura. AI:n tolkar dokumentet och föreslår kontering.",
+        preview: ZReportContextPreview
     },
     {
         number: "02",
-        title: "AI hjälper med moms och skatt",
-        description: "AI:n assisterar med momsdeklaration och arbetsgivaravgifter baserat på dina bokförda transaktioner.",
-        preview: MomsWorkflowPreview
+        title: "Granska verifikation",
+        description: "AI:n skapar en komplett verifikation med debet- och kreditrader. Du ser exakt vad som bokförs.",
+        preview: JournalEntryPreview
     },
     {
         number: "03",
-        title: "AI påskyndar lönehanteringen",
-        description: "AI:n hjälper dig skapa lönebesked med skatt och sociala avgifter. Exportera till bankfil eller PDF.",
-        preview: PayrollPreview
+        title: "Klar i bokföringen",
+        description: "Verifikationen sparas direkt i bokföringen. Du har full översikt och kan alltid gå tillbaka.",
+        preview: BokforingPagePreview
     }
 ]
 
 export function CoreFeatures() {
-    const heroFeature = features[0]
-    const gridFeatures = features.slice(1)
-
     return (
         <section className="px-6 md:px-12 lg:px-24 py-24 max-w-[1400px] mx-auto border-t border-stone-200">
             <SectionHeader
-                badge="Funktioner"
-                title="Allt du behöver för din bokföring"
-                description="Från kvittohantering till färdiga deklarationer. Scope AI automatiserar det tidskrävande arbetet så att du kan fokusera på din verksamhet."
+                badge="Hur det funkar"
+                title="Allt du behöver, i tre enkla steg"
+                description="Ladda upp, granska, klar. Scope AI hanterar resten — från kvitton till färdiga verifikationer."
                 icon={LayoutGrid}
                 className="mb-16"
             />
+
+            {/* 3-Step Connected Story - Stacked for larger demos */}
             <div className="space-y-6">
-                {/* Hero Feature - Stacked on mobile, side-by-side on desktop */}
-                <motion.div
-                    initial={{ opacity: 0, y: 30 }}
-                    whileInView={{ opacity: 1, y: 0 }}
-                    viewport={{ once: true }}
-                    className="bg-card border border-border rounded-3xl p-6 md:p-8 lg:p-10 pb-0 overflow-hidden relative"
-                >
-                    {/* Text content */}
-                    <div className="md:max-w-[45%] relative z-10">
-                        <div className="flex items-center gap-3 mb-3">
-                            <div className="w-1 h-6 bg-foreground rounded-full" />
-                            <span className="text-sm font-mono text-muted-foreground">{heroFeature.number}</span>
-                        </div>
-
-                        <h3 className="text-xl md:text-2xl lg:text-4xl font-bold tracking-tight mb-2">
-                            {heroFeature.title}
-                        </h3>
-
-                        <p className="text-muted-foreground leading-relaxed text-sm">
-                            {heroFeature.description}
-                        </p>
-                    </div>
-
-                    {/* Preview - stacked below on mobile, floating right on desktop */}
-                    {/* Mobile: relative, scaled preview */}
-                    <div className="md:hidden mt-6 relative h-[280px] overflow-hidden">
-                        <div className="absolute inset-0 bg-muted/30 rounded-t-xl p-2 pb-0 border-t border-x border-border/50">
-                            <heroFeature.preview />
-                        </div>
-                    </div>
-
-                    {/* Desktop: absolute positioned with progressive reveal */}
-                    <div className="hidden md:block absolute right-0 top-[20%] bottom-0 w-[55%] min-h-[400px] overflow-hidden rounded-tl-2xl border-t border-l border-border/50 bg-muted/30">
-                        {/* Wrapper for fixed-width content */}
-                        <div className="w-[600px] lg:w-[700px] p-4 h-full">
-                            <heroFeature.preview />
-                        </div>
-                    </div>
-                </motion.div>
-
-                {/* Grid Features - Bento Grid Layout */}
-                <div className="grid md:grid-cols-3 gap-6">
-                    {gridFeatures.map((feature, i) => {
-                        const isPayroll = feature.title.toLowerCase().includes("löne")
-                        const isMoms = i === 0 // Moms is the first grid item
-                        // Momsdeklaration (first item) takes 2 columns, Payroll takes 1
-                        const colSpan = i === 0 ? "md:col-span-2" : "md:col-span-1"
-
-                        // Apply Reduced padding for both Payroll and Moms to let them extend to bottom
-                        const paddingClass = (isPayroll || isMoms) ? 'pt-8 pl-8 pr-8 pb-0' : 'p-6 md:p-8'
-
-                        return (
-                            <motion.div
-                                key={feature.number}
-                                initial={{ opacity: 0, y: 30 }}
-                                whileInView={{ opacity: 1, y: 0 }}
-                                viewport={{ once: true }}
-                                transition={{ delay: i * 0.1 }}
-                                // Conditional padding and Spans
-                                className={`bg-card border border-border rounded-3xl overflow-hidden flex flex-col relative ${colSpan} ${paddingClass}`}
-                            >
-                                {/* Text content */}
-                                <div className={`${(isPayroll || isMoms) ? 'mb-8 relative z-10' : 'mb-6'}`}>
-                                    <div className="flex items-center gap-3 mb-3">
-                                        <div className="w-1 h-6 bg-foreground rounded-full" />
-                                        <span className="text-sm font-mono text-muted-foreground">{feature.number}</span>
-                                    </div>
-
-                                    <h3 className="text-xl md:text-2xl font-bold tracking-tight mb-2">
-                                        {feature.title}
-                                    </h3>
-
-                                    <p className="text-muted-foreground leading-relaxed text-sm">
-                                        {feature.description}
-                                    </p>
+                {features.map((feature, i) => (
+                    <motion.div
+                        key={feature.number}
+                        initial={{ opacity: 0, y: 30 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: i * 0.1 }}
+                        className="bg-card border border-border rounded-3xl overflow-hidden relative"
+                    >
+                        {/* Desktop: side-by-side | Mobile: stacked */}
+                        <div className="flex flex-col md:flex-row">
+                            {/* Text content */}
+                            <div className="p-6 md:p-8 lg:p-10 md:w-[40%] lg:w-[35%] flex flex-col justify-center">
+                                <div className="flex items-center gap-3 mb-3">
+                                    <div className="w-1 h-6 bg-foreground rounded-full" />
+                                    <span className="text-sm font-mono text-muted-foreground">{feature.number}</span>
                                 </div>
 
-                                {/* Preview container */}
-                                {/* For Moms & Payroll, we want full width/height extension to bottom without the 'inset' card look */}
-                                <div className={`flex-1 relative ${(isPayroll || isMoms) ? 'min-h-[320px] md:min-h-[340px]' : 'bg-muted/30 rounded-xl p-3 border border-border/50'}`}>
-                                    {isPayroll ? (
-                                        // Payroll styling - stacked on mobile, tabbed on desktop
-                                        <>
-                                            {/* Mobile: Simple scaled preview */}
-                                            <div className="md:hidden absolute inset-0 overflow-hidden rounded-t-xl border-t border-x border-border/50 bg-muted/30">
-                                                <div className="scale-[0.65] origin-top-left w-[154%]">
-                                                    <feature.preview />
-                                                </div>
-                                            </div>
+                                <h3 className="text-xl md:text-2xl lg:text-3xl font-bold tracking-tight mb-3">
+                                    {feature.title}
+                                </h3>
 
-                                            {/* Desktop: Multi-tab stacked effect with progressive reveal */}
-                                            <div className="hidden md:block absolute inset-0">
-                                                {/* Tab 1 (Back) - fixed position */}
-                                                <div className="absolute top-0 left-[12%] w-[600px] h-full bg-muted border-t border-l border-border rounded-tl-2xl z-0" />
-                                                {/* Tab 2 (Middle) - fixed position */}
-                                                <div className="absolute top-4 left-[6%] w-[620px] h-full bg-muted border-t border-l border-border rounded-tl-2xl z-0" />
+                                <p className="text-muted-foreground leading-relaxed">
+                                    {feature.description}
+                                </p>
+                            </div>
 
-                                                {/* Main Preview (Front) - FIXED WIDTH, clipped by parent overflow */}
-                                                <div className="absolute top-8 left-0 w-[700px] bottom-[-25%] z-10 shadow-xl rounded-tl-2xl overflow-hidden bg-background border-t border-l border-border">
-                                                    <feature.preview />
-                                                </div>
-                                            </div>
-                                        </>
-                                    ) : isMoms ? (
-                                        // Moms styling: "Inner Card" look but extended to bottom
-                                        // Re-adding the grey background and borders, but flush with bottom
-                                        <div className="absolute inset-0 top-0 overflow-hidden rounded-t-xl border-t border-x border-border/50 bg-muted/30 p-2 pb-0">
-                                            <feature.preview />
-                                        </div>
-                                    ) : (
-                                        // Standard styling for other grid items
-                                        <feature.preview />
-                                    )}
-                                </div>
-                            </motion.div>
-                        )
-                    })}
-                </div>
+                            {/* Preview - takes remaining space, ScaledPreview handles container */}
+                            <div className="md:w-[60%] lg:w-[65%] p-4 md:p-6 md:pb-0 bg-muted/30 flex flex-col justify-end">
+                                <feature.preview />
+                            </div>
+                        </div>
+                    </motion.div>
+                ))}
             </div>
         </section>
     )
 }
+

@@ -3,7 +3,7 @@
 import { motion } from "framer-motion"
 import { Globe, Zap, Bot, UserCheck } from "lucide-react"
 import { SectionHeader } from "../../shared/section-header"
-import { DottedWorldMap } from "./dotted-world-map"
+import { StaticWorldMap } from "./static-world-map"
 
 const visionPoints = [
     {
@@ -73,7 +73,7 @@ export function GlobalReach() {
                     transition={{ duration: 0.6 }}
                     className="relative flex items-center justify-center"
                 >
-                    <DottedWorldMap className="w-full max-w-lg" dotColor="#8b5cf6" />
+                    <StaticWorldMap className="w-full max-w-lg" dotColor="#8b5cf6" />
                 </motion.div>
             </div>
         </section>

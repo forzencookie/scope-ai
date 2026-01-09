@@ -208,12 +208,41 @@
   }
 }
 
+/* Slow rotation for dither art shapes */
+@keyframes spin-slow {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin-slow-reverse {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(-360deg);
+  }
+}
+
 .animate-marquee {
   animation: marquee 30s linear infinite;
 }
 
 .animate-shine {
   animation: shine 2s ease-in-out;
+}
+
+.animate-spin-slow {
+  animation: spin-slow 200s linear infinite;
+}
+
+.animate-spin-slow-reverse {
+  animation: spin-slow-reverse 240s linear infinite;
 }
 
 /* Hero title with flowing glow */
@@ -318,6 +347,11 @@
   }
 
   .hero-title-glow {
+    animation: none;
+  }
+
+  .animate-spin-slow,
+  .animate-spin-slow-reverse {
     animation: none;
   }
 

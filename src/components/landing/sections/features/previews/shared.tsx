@@ -3,11 +3,46 @@
 import { motion } from "framer-motion"
 
 // Wrapper that scales down actual components to create miniature preview
-export function ScaledPreview({ children, scale = 0.65, className, extendToBottom = false }: { children: React.ReactNode; scale?: number; className?: string; extendToBottom?: boolean }) {
-    const roundingClass = extendToBottom ? 'rounded-t-xl' : 'rounded-xl'
-    const borderClass = extendToBottom ? 'border-t border-x' : 'border'
+export function ScaledPreview({
+    children,
+    scale = 0.65,
+    className,
+    extendToBottom = false,
+    variant = "default"
+}: {
+    children: React.ReactNode;
+    scale?: number;
+    className?: string;
+    extendToBottom?: boolean;
+    variant?: "default" | "flush" | "responsive-flush" // flush = extendToBottom
+}) {
+    // Logic for variants
+    // default: rounded-xl, border, border-border
+    // flush: rounded-t-xl, border-t border-x, border-border (old extendToBottom)
+    // responsive-flush: rounded-xl border (mobile) -> rounded-t-xl border-x border-t border-b-0 (desktop)
+
+    // Backward compatibility
+    const effectiveVariant = extendToBottom ? "flush" : variant
+
+    const getClasses = () => {
+        const base = `bg-background overflow-hidden ${className || ''}`
+
+        if (effectiveVariant === "flush") {
+            return `${base} rounded-t-xl border-t border-x border-border`
+        }
+
+        if (effectiveVariant === "responsive-flush") {
+            // Mobile: Standard box (rounded-xl, border)
+            // Desktop: Flush bottom (rounded-t-xl, border-t/x, no bottom border/rounding)
+            return `${base} rounded-xl border border-border md:rounded-b-none md:border-b-0`
+        }
+
+        // Default
+        return `${base} rounded-xl border border-border`
+    }
+
     return (
-        <div className={`bg-background ${borderClass} border-border ${roundingClass} overflow-hidden ${className}`}>
+        <div className={getClasses()}>
             {/* Window header with macOS dots */}
             <div className="flex items-center gap-1.5 px-3 py-2 border-b border-border/60 bg-muted/30">
                 <div className="w-2 h-2 rounded-full bg-red-400" />
