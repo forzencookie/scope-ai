@@ -388,10 +388,13 @@ export function TransactionsTable({
                             )}
                         </GridTableRows>
 
-                        <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setNewTransactionDialogOpen(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            {text.transactions.newTransaction}
-                        </Button>
+                        {/* Only show add row button when table is empty - avoids redundancy with header button */}
+                        {filteredTransactions.length === 0 && !filter.hasActiveFilters && (
+                            <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setNewTransactionDialogOpen(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                {text.transactions.newTransaction}
+                            </Button>
+                        )}
                     </div>
                 </div>
             </div>

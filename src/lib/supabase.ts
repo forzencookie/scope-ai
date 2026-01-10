@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/database'
+import type { Database } from '@/types/supabase'
 
 // Environment variables - validated lazily to prevent build-time crashes
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''
@@ -31,12 +31,12 @@ export function getSupabaseClient(): SupabaseClient<Database> {
       'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
     )
   }
-  
+
   if (!_supabaseClient) {
     // Use createBrowserClient from @supabase/ssr for proper cookie handling
     _supabaseClient = createBrowserClient<Database>(supabaseUrl, supabaseAnonKey)
   }
-  
+
   return _supabaseClient
 }
 
@@ -72,16 +72,16 @@ export function getSupabaseAdmin(): SupabaseClient<Database> {
       'Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY.'
     )
   }
-  
+
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
-  
+
   if (!serviceRoleKey) {
     throw new Error(
       'Missing SUPABASE_SERVICE_ROLE_KEY. ' +
       'This is required for admin operations.'
     )
   }
-  
+
   if (!_supabaseAdmin) {
     _supabaseAdmin = createClient<Database>(supabaseUrl, serviceRoleKey, {
       auth: {
@@ -90,6 +90,6 @@ export function getSupabaseAdmin(): SupabaseClient<Database> {
       }
     })
   }
-  
+
   return _supabaseAdmin
 }

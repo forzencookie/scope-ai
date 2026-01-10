@@ -5,6 +5,7 @@ import { Sparkles, PanelLeft, type LucideIcon } from "lucide-react"
 
 import { NavMain, NavSettings, NavAIConversations } from "./sidebar-nav"
 import { UserTeamSwitcher } from "./user-team-switcher"
+import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
@@ -44,8 +45,44 @@ export function AppSidebar({
   minimalHeader,
   ...props
 }: AppSidebarProps) {
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
+  const searchParams = useSearchParams()
+  const settingsParam = searchParams?.get("settings")
   const { state, toggleSidebar } = useSidebar()
+
+  // State for settings dialog
+  const [settingsOpen, setSettingsOpen] = React.useState(!!settingsParam)
+
+  // Sync state with URL param
+  React.useEffect(() => {
+    setSettingsOpen(!!settingsParam)
+  }, [settingsParam])
+
+  // Handle opening settings (pushes to history for back button support)
+  const handleOpenSettings = React.useCallback(() => {
+    const params = new URLSearchParams(searchParams?.toString())
+    params.set("settings", "Konto") // Default tab
+    router.push(`${pathname}?${params.toString()}`)
+  }, [router, pathname, searchParams])
+
+  // Handle dialog state change
+  const handleSettingsOpenChange = (open: boolean) => {
+    if (!open && settingsParam) {
+      // Closing: Replace URL to remove param without adding history stack (user expects to stay on current page)
+      // or simply rely on router.back() if we tracked history?
+      // "Back button closes dialog" works if we pushed.
+      // If user clicks "X", we want to remove the param.
+      // Using replace() here is safe.
+      const params = new URLSearchParams(searchParams?.toString())
+      params.delete("settings")
+      router.replace(`${pathname}?${params.toString()}`)
+    } else if (open && !settingsParam) {
+      // Opening via other means (if any), push state
+      handleOpenSettings()
+    }
+    setSettingsOpen(open)
+  }
 
   // Default minimal header for AI workspace style
   const header = minimalHeader ?? {
@@ -115,11 +152,15 @@ export function AppSidebar({
           <NavAIConversations />
         </SidebarContent>
         <SidebarFooter>
-          <NavSettings items={navSettings} onSettingsClick={() => setSettingsOpen(true)} />
+          <NavSettings items={navSettings} onSettingsClick={handleOpenSettings} />
         </SidebarFooter>
         <SidebarRail />
       </Sidebar>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
+      <SettingsDialog
+        open={settingsOpen}
+        onOpenChange={handleSettingsOpenChange}
+        defaultTab={settingsParam || undefined}
+      />
     </>
   )
 }

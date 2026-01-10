@@ -53,7 +53,7 @@ export type NEAppendix = {
 
 export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
     const supabase = getSupabaseClient()
-    let query = supabase.from('ne_appendix').select('*').order('tax_year', { ascending: false })
+    let query = supabase.from('ne_appendices').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch NE appendix:', error); return [] }

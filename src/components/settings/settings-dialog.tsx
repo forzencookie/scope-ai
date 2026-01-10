@@ -72,14 +72,29 @@ const data = {
 interface SettingsDialogProps {
   open?: boolean
   onOpenChange?: (open: boolean) => void
+  defaultTab?: string
 }
 
-export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = React.useState("Konto")
   const [isExpanded, setIsExpanded] = React.useState(false)
   const [integrations, setIntegrations] = React.useState<Record<string, boolean>>({})
   const { company, updateCompany } = useCompany()
   const { addToast } = useToast()
+
+  // Sync active tab with defaultTab when it changes
+  React.useEffect(() => {
+    if (defaultTab) {
+      // Find matching tab case-insensitive or exact
+      const matchedTab = data.nav.find(item =>
+        item.name.toLowerCase() === defaultTab.toLowerCase() ||
+        item.name === defaultTab
+      )
+      if (matchedTab) {
+        setActiveTab(matchedTab.name)
+      }
+    }
+  }, [defaultTab])
 
   // Local form state
   const [formData, setFormData] = React.useState({

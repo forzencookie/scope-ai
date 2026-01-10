@@ -38,6 +38,8 @@ import { Button } from "@/components/ui/button"
 
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
 import { transactionService, type TransactionStats } from "@/lib/services/transaction-service"
+import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
+import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 
 import { useFeature } from "@/providers/company-provider"
 import {
@@ -102,10 +104,12 @@ function AccountingPageContent() {
     const [apiTransactions, setApiTransactions] = useState<TransactionWithAI[]>([])
     const [transactionStats, setTransactionStats] = useState<TransactionStats | undefined>()
     const [isLoading, setIsLoading] = useState(true)
+    const [fetchError, setFetchError] = useState<string | null>(null)
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
     const [showAllTabs, setShowAllTabs] = useState(false)
 
-    const fetchTransactions = async () => {
+    const fetchTransactions = useCallback(async (isMounted: { current: boolean }) => {
+        setFetchError(null)
         try {
             // Fetch stats and list in parallel using the service
             const [listData, statsData] = await Promise.all([
@@ -113,20 +117,31 @@ function AccountingPageContent() {
                 transactionService.getStats()
             ])
 
-            setApiTransactions(listData.transactions as TransactionWithAI[])
-            setTransactionStats(statsData)
+            if (isMounted.current) {
+                setApiTransactions(listData.transactions as TransactionWithAI[])
+                setTransactionStats(statsData)
+            }
         } catch (error) {
             console.error('Failed to fetch transactions:', error)
+            if (isMounted.current) {
+                setFetchError('Kunde inte hämta transaktioner. Försök igen.')
+            }
         } finally {
-            setIsLoading(false)
-            setLastRefresh(new Date())
+            if (isMounted.current) {
+                setIsLoading(false)
+                setLastRefresh(new Date())
+            }
         }
-    }
-
-    // Initial fetch
-    useEffect(() => {
-        fetchTransactions()
     }, [])
+
+    // Initial fetch with cleanup
+    useEffect(() => {
+        const isMounted = { current: true }
+        fetchTransactions(isMounted)
+        return () => {
+            isMounted.current = false
+        }
+    }, [fetchTransactions])
 
     // Auto-refresh every 5 seconds when on transactions tab
     useEffect(() => {
@@ -134,10 +149,11 @@ function AccountingPageContent() {
     }, [currentTab])
 
     // Manual refresh function
-    const handleRefresh = () => {
+    const handleRefresh = useCallback(() => {
         setIsLoading(true)
-        fetchTransactions()
-    }
+        const isMounted = { current: true }
+        fetchTransactions(isMounted)
+    }, [fetchTransactions])
 
     // Use only API transactions (no mock data)
     const transactions = apiTransactions
@@ -354,12 +370,21 @@ function AccountingPageContent() {
                     <div className="max-w-6xl w-full space-y-6">
                         {/* Content */}
                         {currentTab === "transaktioner" && (
-                            <LazyTransactionsTable
-                                title="Transaktioner"
-                                transactions={transactions}
-                                stats={transactionStats}
-                                onTransactionBooked={handleTransactionBooked}
-                            />
+                            fetchError ? (
+                                <DataErrorState
+                                    message={fetchError}
+                                    onRetry={handleRefresh}
+                                />
+                            ) : (
+                                <SectionErrorBoundary sectionName="Transaktioner">
+                                    <LazyTransactionsTable
+                                        title="Transaktioner"
+                                        transactions={transactions}
+                                        stats={transactionStats}
+                                        onTransactionBooked={handleTransactionBooked}
+                                    />
+                                </SectionErrorBoundary>
+                            )
                         )}
                         {currentTab === "fakturor" && (
                             <LazyUnifiedInvoicesView />

@@ -17,7 +17,7 @@
     "functions:serve": "supabase functions serve",
     "functions:deploy": "supabase functions deploy",
     "functions:new": "supabase functions new",
-    "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.ts"
+    "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/supabase.ts"
   },
   "dependencies": {
     "@radix-ui/react-alert-dialog": "^1.1.15",

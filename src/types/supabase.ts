@@ -325,6 +325,84 @@ export type Database = {
         }
         Relationships: []
       }
+      board_minutes: {
+        Row: {
+          agenda_items: Json | null
+          attachments: Json | null
+          attendees: Json | null
+          chairman: string | null
+          company_id: string
+          created_at: string | null
+          decisions: Json | null
+          id: string
+          meeting_date: string
+          meeting_id: string | null
+          notes: string | null
+          protocol_number: string | null
+          secretary: string | null
+          signed_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agenda_items?: Json | null
+          attachments?: Json | null
+          attendees?: Json | null
+          chairman?: string | null
+          company_id: string
+          created_at?: string | null
+          decisions?: Json | null
+          id?: string
+          meeting_date: string
+          meeting_id?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          secretary?: string | null
+          signed_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agenda_items?: Json | null
+          attachments?: Json | null
+          attendees?: Json | null
+          chairman?: string | null
+          company_id?: string
+          created_at?: string | null
+          decisions?: Json | null
+          id?: string
+          meeting_date?: string
+          meeting_id?: string | null
+          notes?: string | null
+          protocol_number?: string | null
+          secretary?: string | null
+          signed_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_minutes_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_minutes_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "company_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       categories: {
         Row: {
           created_at: string
@@ -386,6 +464,238 @@ export type Database = {
           settings?: Json | null
         }
         Relationships: []
+      }
+      company_meetings: {
+        Row: {
+          agenda: string | null
+          attendees: Json | null
+          company_id: string
+          created_at: string | null
+          deadline_proposals: string | null
+          decisions: Json | null
+          id: string
+          is_digital: boolean | null
+          location: string | null
+          meeting_date: string
+          meeting_link: string | null
+          meeting_time: string | null
+          meeting_type: string
+          minutes: string | null
+          notice_sent_at: string | null
+          status: string | null
+          title: string
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          agenda?: string | null
+          attendees?: Json | null
+          company_id: string
+          created_at?: string | null
+          deadline_proposals?: string | null
+          decisions?: Json | null
+          id?: string
+          is_digital?: boolean | null
+          location?: string | null
+          meeting_date: string
+          meeting_link?: string | null
+          meeting_time?: string | null
+          meeting_type: string
+          minutes?: string | null
+          notice_sent_at?: string | null
+          status?: string | null
+          title: string
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          agenda?: string | null
+          attendees?: Json | null
+          company_id?: string
+          created_at?: string | null
+          deadline_proposals?: string | null
+          decisions?: Json | null
+          id?: string
+          is_digital?: boolean | null
+          location?: string | null
+          meeting_date?: string
+          meeting_link?: string | null
+          meeting_time?: string | null
+          meeting_type?: string
+          minutes?: string | null
+          notice_sent_at?: string | null
+          status?: string | null
+          title?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "company_meetings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      customer_invoices: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          currency: string | null
+          customer_address: string | null
+          customer_email: string | null
+          customer_name: string
+          customer_org_number: string | null
+          due_date: string
+          id: string
+          invoice_date: string
+          invoice_number: string
+          items: Json | null
+          last_reminder_at: string | null
+          paid_amount: number | null
+          paid_at: string | null
+          payment_reference: string | null
+          reminder_count: number | null
+          status: string | null
+          subtotal: number
+          total_amount: number
+          updated_at: string | null
+          user_id: string
+          vat_amount: number | null
+          vat_rate: number | null
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          currency?: string | null
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name: string
+          customer_org_number?: string | null
+          due_date: string
+          id?: string
+          invoice_date: string
+          invoice_number: string
+          items?: Json | null
+          last_reminder_at?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          reminder_count?: number | null
+          status?: string | null
+          subtotal: number
+          total_amount: number
+          updated_at?: string | null
+          user_id: string
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          currency?: string | null
+          customer_address?: string | null
+          customer_email?: string | null
+          customer_name?: string
+          customer_org_number?: string | null
+          due_date?: string
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          items?: Json | null
+          last_reminder_at?: string | null
+          paid_amount?: number | null
+          paid_at?: string | null
+          payment_reference?: string | null
+          reminder_count?: number | null
+          status?: string | null
+          subtotal?: number
+          total_amount?: number
+          updated_at?: string | null
+          user_id?: string
+          vat_amount?: number | null
+          vat_rate?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "customer_invoices_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      dividends: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          decision_date: string
+          fiscal_year: number
+          id: string
+          meeting_id: string | null
+          net_amount: number | null
+          payment_date: string | null
+          per_share_amount: number | null
+          status: string | null
+          tax_rate: number | null
+          total_amount: number
+          total_tax: number | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          decision_date: string
+          fiscal_year: number
+          id?: string
+          meeting_id?: string | null
+          net_amount?: number | null
+          payment_date?: string | null
+          per_share_amount?: number | null
+          status?: string | null
+          tax_rate?: number | null
+          total_amount: number
+          total_tax?: number | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          decision_date?: string
+          fiscal_year?: number
+          id?: string
+          meeting_id?: string | null
+          net_amount?: number | null
+          payment_date?: string | null
+          per_share_amount?: number | null
+          status?: string | null
+          tax_rate?: number | null
+          total_amount?: number
+          total_tax?: number | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "dividends_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dividends_meeting_id_fkey"
+            columns: ["meeting_id"]
+            isOneToOne: false
+            referencedRelation: "company_meetings"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       employee_benefits: {
         Row: {
@@ -474,7 +784,75 @@ export type Database = {
         }
         Relationships: []
       }
-      inbox: {
+      events: {
+        Row: {
+          actor_id: string | null
+          actor_name: string | null
+          category: string | null
+          company_id: string
+          created_at: string | null
+          description: string | null
+          entity_id: string | null
+          entity_type: string | null
+          event_type: string
+          id: string
+          metadata: Json | null
+          related_to: Json | null
+          source: string
+          status: string | null
+          timestamp: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          actor_id?: string | null
+          actor_name?: string | null
+          category?: string | null
+          company_id: string
+          created_at?: string | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type: string
+          id?: string
+          metadata?: Json | null
+          related_to?: Json | null
+          source: string
+          status?: string | null
+          timestamp?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          actor_id?: string | null
+          actor_name?: string | null
+          category?: string | null
+          company_id?: string
+          created_at?: string | null
+          description?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          event_type?: string
+          id?: string
+          metadata?: Json | null
+          related_to?: Json | null
+          source?: string
+          status?: string | null
+          timestamp?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      inbox_items: {
         Row: {
           ai_status: string | null
           ai_suggestion: string | null
@@ -570,7 +948,76 @@ export type Database = {
         }
         Relationships: []
       }
-      ne_appendix: {
+      k10_declarations: {
+        Row: {
+          company_id: string
+          created_at: string | null
+          deadline: string | null
+          fiscal_year: number
+          gransbelopp: number | null
+          id: string
+          lonebaserat_utrymme: number | null
+          omkostnadsbelopp: number | null
+          saved_gransbelopp: number | null
+          shareholder_id: string | null
+          status: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          used_gransbelopp: number | null
+          user_id: string
+        }
+        Insert: {
+          company_id: string
+          created_at?: string | null
+          deadline?: string | null
+          fiscal_year: number
+          gransbelopp?: number | null
+          id?: string
+          lonebaserat_utrymme?: number | null
+          omkostnadsbelopp?: number | null
+          saved_gransbelopp?: number | null
+          shareholder_id?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          used_gransbelopp?: number | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string
+          created_at?: string | null
+          deadline?: string | null
+          fiscal_year?: number
+          gransbelopp?: number | null
+          id?: string
+          lonebaserat_utrymme?: number | null
+          omkostnadsbelopp?: number | null
+          saved_gransbelopp?: number | null
+          shareholder_id?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          used_gransbelopp?: number | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "k10_declarations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "k10_declarations_shareholder_id_fkey"
+            columns: ["shareholder_id"]
+            isOneToOne: false
+            referencedRelation: "shareholders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      ne_appendices: {
         Row: {
           business_expenses: number | null
           business_income: number | null
@@ -774,6 +1221,71 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholders: {
+        Row: {
+          acquired_date: string | null
+          address: string | null
+          company_id: string
+          created_at: string | null
+          email: string | null
+          id: string
+          name: string
+          person_number: string | null
+          phone: string | null
+          share_class: string | null
+          share_percentage: number | null
+          shares: number
+          status: string | null
+          updated_at: string | null
+          user_id: string
+          voting_rights: number | null
+        }
+        Insert: {
+          acquired_date?: string | null
+          address?: string | null
+          company_id: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name: string
+          person_number?: string | null
+          phone?: string | null
+          share_class?: string | null
+          share_percentage?: number | null
+          shares?: number
+          status?: string | null
+          updated_at?: string | null
+          user_id: string
+          voting_rights?: number | null
+        }
+        Update: {
+          acquired_date?: string | null
+          address?: string | null
+          company_id?: string
+          created_at?: string | null
+          email?: string | null
+          id?: string
+          name?: string
+          person_number?: string | null
+          phone?: string | null
+          share_class?: string | null
+          share_percentage?: number | null
+          shares?: number
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string
+          voting_rights?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -1077,7 +1589,7 @@ export type Database = {
       }
     }
     Views: {
-      monthly_tax_summary: {
+      tax_monthly_summaries: {
         Row: {
           month: string | null
           receipts_count: number | null
@@ -1118,6 +1630,7 @@ export type Database = {
       get_invoice_stats: { Args: never; Returns: Json }
       get_payroll_stats: { Args: never; Returns: Json }
       get_receipt_stats: { Args: never; Returns: Json }
+      get_shareholder_stats: { Args: { p_company_id: string }; Returns: Json }
       get_transaction_stats: { Args: never; Returns: Json }
       get_vat_stats: {
         Args: { end_date: string; start_date: string }

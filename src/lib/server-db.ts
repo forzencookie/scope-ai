@@ -220,7 +220,7 @@ export const db = {
     getInboxItems: async () => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase
-            .from('inbox')
+            .from('inbox_items')
             .select('*')
             .order('created_at', { ascending: false });
         if (error) console.error('getInboxItems error:', error);
@@ -244,7 +244,7 @@ export const db = {
 
     addInboxItem: async (item: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('inbox').insert({
+        const { data, error } = await supabase.from('inbox_items').insert({
             id: item.id || undefined,
             sender: item.sender,
             title: item.title,
@@ -274,14 +274,14 @@ export const db = {
         if (updates.linkedEntityType !== undefined) dbUpdates.linked_entity_type = updates.linkedEntityType;
         if (updates.category !== undefined) dbUpdates.category = updates.category;
 
-        const { error } = await supabase.from('inbox').update(dbUpdates).eq('id', id);
+        const { error } = await supabase.from('inbox_items').update(dbUpdates).eq('id', id);
         if (error) console.error('updateInboxItem error:', error);
         return { id, ...updates };
     },
 
     clearInbox: async () => {
         const supabase = getSupabaseAdmin();
-        const { error } = await supabase.from('inbox').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from('inbox_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error) console.error('clearInbox error:', error);
         return { success: !error };
     },

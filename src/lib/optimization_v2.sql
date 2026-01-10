@@ -159,7 +159,7 @@ CREATE TABLE IF NOT EXISTS income_declarations (
 );
 
 -- NE-bilaga (Sole Proprietor Appendix)
-CREATE TABLE IF NOT EXISTS ne_appendix (
+CREATE TABLE IF NOT EXISTS ne_appendices (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id TEXT NOT NULL,
   tax_year INTEGER NOT NULL,

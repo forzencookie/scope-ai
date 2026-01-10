@@ -2,9 +2,9 @@
 // Supabase-backed Transactions Service
 // ============================================
 
-import type { 
+import type {
   TransactionFilters,
-  ApiResponse, 
+  ApiResponse,
   PaginatedResponse,
   SortConfig,
   Transaction,
@@ -14,7 +14,7 @@ import type {
 import type { TransactionStatus } from "@/lib/status-types"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
 import { supabase } from "@/lib/supabase"
-import type { Tables } from "@/types/database"
+import type { Tables } from "@/types/supabase"
 
 // ============================================
 // Type Mappings
@@ -28,7 +28,7 @@ type DbTransaction = Tables<"transactions">
 function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
   const isNegative = db.amount < 0
   const formattedAmount = `${isNegative ? '-' : '+'}$${Math.abs(db.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
-  
+
   return {
     id: db.id,
     name: db.merchant || db.description || 'Unknown Transaction',
@@ -179,10 +179,10 @@ export async function getTransactions(userId: string): Promise<ApiResponse<Trans
     return errorResponse('Failed to fetch transactions', [])
   }
 
-  const transactions = data.map(t => 
+  const transactions = data.map(t =>
     mapDbToTransaction(t, (t.categories as { name: string } | null)?.name)
   )
-  
+
   return successResponse(transactions)
 }
 
@@ -208,7 +208,7 @@ export async function getTransactionsWithAI(userId: string): Promise<ApiResponse
     aiSuggestion: undefined, // Would be populated from AI service
     isAIApproved: false,
   }))
-  
+
   return successResponse(transactions)
 }
 
@@ -249,9 +249,9 @@ export async function getTransactionsPaginated(
 
   // Apply sorting
   if (sort) {
-    const dbField = sort.field === 'timestamp' ? 'occurred_at' : 
-                    sort.field === 'amountValue' ? 'amount' :
-                    sort.field === 'name' ? 'merchant' : sort.field
+    const dbField = sort.field === 'timestamp' ? 'occurred_at' :
+      sort.field === 'amountValue' ? 'amount' :
+        sort.field === 'name' ? 'merchant' : sort.field
     query = query.order(dbField as string, { ascending: sort.direction === 'asc' })
   } else {
     query = query.order('occurred_at', { ascending: false })
@@ -281,7 +281,7 @@ export async function getTransactionsPaginated(
   }))
 
   const total = count ?? 0
-  
+
   return {
     data: transactions,
     total,
@@ -315,7 +315,7 @@ export async function getTransaction(id: string, userId: string): Promise<ApiRes
     aiSuggestion: undefined,
     isAIApproved: false,
   }
-  
+
   return successResponse(transaction)
 }
 
@@ -347,12 +347,12 @@ export async function getTransactionsByStatus(
     aiSuggestion: undefined,
     isAIApproved: false,
   }))
-  
+
   return successResponse(transactions)
 }
 
 export async function updateTransactionStatus(
-  id: string, 
+  id: string,
   userId: string,
   status: TransactionStatus
 ): Promise<ApiResponse<TransactionWithAI | null>> {
@@ -380,7 +380,7 @@ export async function updateTransactionStatus(
     aiSuggestion: undefined,
     isAIApproved: false,
   }
-  
+
   return successResponse(transaction)
 }
 
@@ -394,7 +394,7 @@ export async function updateTransaction(
   updates: Partial<Transaction>
 ): Promise<ApiResponse<TransactionWithAI | null>> {
   const dbUpdates: Record<string, unknown> = {}
-  
+
   if (updates.name !== undefined) dbUpdates.merchant = updates.name
   if (updates.amountValue !== undefined) dbUpdates.amount = updates.amountValue
   if (updates.timestamp !== undefined) dbUpdates.occurred_at = updates.timestamp.toISOString()
@@ -425,7 +425,7 @@ export async function updateTransaction(
     aiSuggestion: undefined,
     isAIApproved: false,
   }
-  
+
   return successResponse(transaction)
 }
 
@@ -440,7 +440,7 @@ export async function deleteTransaction(id: string, userId: string): Promise<Api
     console.error('Failed to delete transaction:', error)
     return errorResponse('Failed to delete transaction', false)
   }
-  
+
   return successResponse(true)
 }
 
@@ -475,7 +475,7 @@ export async function createTransaction(
     aiSuggestion: undefined,
     isAIApproved: false,
   }
-  
+
   return successResponse(newTransaction)
 }
 
@@ -508,7 +508,7 @@ export async function bulkUpdateStatus(
     aiSuggestion: undefined,
     isAIApproved: false,
   }))
-  
+
   return successResponse(transactions)
 }
 
@@ -526,7 +526,7 @@ export async function bulkDeleteTransactions(
     console.error('Failed to bulk delete transactions:', error)
     return errorResponse('Failed to bulk delete transactions', false)
   }
-  
+
   return successResponse(true)
 }
 
@@ -566,6 +566,6 @@ export async function getTransactionStats(userId: string): Promise<ApiResponse<T
     missingDocs: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.MISSING_DOCUMENTATION).length,
     ignored: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.IGNORED).length,
   }
-  
+
   return successResponse(stats)
 }

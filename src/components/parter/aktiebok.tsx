@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import {
   Users,
@@ -73,7 +73,8 @@ import {
   type ShareTransaction
 } from "@/data/ownership"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-
+import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
+import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
@@ -109,22 +110,53 @@ export function Aktiebok() {
     totalValue: 0,
     shareholderCount: 0
   })
+  const [statsError, setStatsError] = useState<string | null>(null)
+  const [isLoadingStats, setIsLoadingStats] = useState(true)
 
   useEffect(() => {
-    async function fetchStats() {
-      const { supabase } = await import('@/lib/supabase')
-      const { data, error } = await supabase.rpc('get_shareholder_stats')
+    let isMounted = true
 
-      if (!error && data) {
-        setStats({
-          totalShares: Number(data.totalShares) || 0,
-          totalVotes: Number(data.totalVotes) || 0,
-          totalValue: 0, // Still 0 as per previous logic or lack of data
-          shareholderCount: Number(data.shareholderCount) || 0
-        })
+    async function fetchStats() {
+      setIsLoadingStats(true)
+      setStatsError(null)
+
+      try {
+        const { supabase } = await import('@/lib/supabase')
+        const { data, error } = await supabase.rpc('get_shareholder_stats') as {
+          data: { totalShares?: number; totalVotes?: number; shareholderCount?: number } | null;
+          error: any;
+        }
+
+        if (!isMounted) return
+
+        if (error) {
+          console.error('Failed to fetch shareholder stats:', error)
+          setStatsError('Kunde inte hämta aktieägarstatistik')
+        } else if (data) {
+          setStats({
+            totalShares: Number(data.totalShares) || 0,
+            totalVotes: Number(data.totalVotes) || 0,
+            totalValue: 0,
+            shareholderCount: Number(data.shareholderCount) || 0
+          })
+        }
+      } catch (err) {
+        if (isMounted) {
+          console.error('Failed to fetch shareholder stats:', err)
+          setStatsError('Kunde inte hämta aktieägarstatistik')
+        }
+      } finally {
+        if (isMounted) {
+          setIsLoadingStats(false)
+        }
       }
     }
+
     fetchStats()
+
+    return () => {
+      isMounted = false
+    }
   }, []) // Run once on mount
 
   // Map real shareholders to component format
@@ -324,26 +356,39 @@ export function Aktiebok() {
         </div>
       </div>
       {/* Stats Overview */}
-      <StatCardGrid columns={3}>
-        <StatCard
-          label={text.owners.totalShares}
-          value={stats.totalShares.toLocaleString('sv-SE')}
-          headerIcon={FileText}
-          subtitle="Totalt antal aktier"
+      {statsError ? (
+        <DataErrorState
+          message={statsError}
+          variant="inline"
         />
-        <StatCard
-          label={text.owners.shareholderCount}
-          value={stats.shareholderCount.toString()}
-          headerIcon={Users}
-          subtitle="Antal ägare"
-        />
-        <StatCard
-          label={text.owners.totalVotes}
-          value={stats.totalVotes.toLocaleString('sv-SE')}
-          headerIcon={Vote}
-          subtitle="Totalt antal röster"
-        />
-      </StatCardGrid>
+      ) : isLoadingStats ? (
+        <StatCardGrid columns={3}>
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+          <StatCardSkeleton />
+        </StatCardGrid>
+      ) : (
+        <StatCardGrid columns={3}>
+          <StatCard
+            label={text.owners.totalShares}
+            value={stats.totalShares.toLocaleString('sv-SE')}
+            headerIcon={FileText}
+            subtitle="Totalt antal aktier"
+          />
+          <StatCard
+            label={text.owners.shareholderCount}
+            value={stats.shareholderCount.toString()}
+            headerIcon={Users}
+            subtitle="Antal ägare"
+          />
+          <StatCard
+            label={text.owners.totalVotes}
+            value={stats.totalVotes.toLocaleString('sv-SE')}
+            headerIcon={Vote}
+            subtitle="Totalt antal röster"
+          />
+        </StatCardGrid>
+      )}
 
       {/* Shareholders Table */}
       {activeTab === 'owners' && (
