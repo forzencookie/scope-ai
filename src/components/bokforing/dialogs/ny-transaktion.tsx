@@ -13,6 +13,7 @@ import {
     DialogFooter,
     DialogClose,
 } from "@/components/ui/dialog"
+import { useToast } from "@/components/ui/toast"
 
 interface NewTransactionDialogProps {
     open: boolean
@@ -20,13 +21,65 @@ interface NewTransactionDialogProps {
 }
 
 export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialogProps) {
+    const toast = useToast()
     const [activeTab, setActiveTab] = useState<'single' | 'z-rapport' | 'bulk'>('single')
     const [file, setFile] = useState<File | null>(null)
     const [isProcessing, setIsProcessing] = useState(false)
 
+    // Single transaction form state
+    const [description, setDescription] = useState("")
+    const [amount, setAmount] = useState("")
+    const [date, setDate] = useState(new Date().toISOString().split('T')[0])
+    const [account, setAccount] = useState("")
+
+    const resetForm = () => {
+        setDescription("")
+        setAmount("")
+        setDate(new Date().toISOString().split('T')[0])
+        setAccount("")
+        setFile(null)
+    }
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
             setFile(e.target.files[0])
+        }
+    }
+
+    const handleAddSingle = async () => {
+        if (!description.trim() || !amount) {
+            toast.error("Fyll i alla fält", "Beskrivning och belopp krävs.")
+            return
+        }
+
+        setIsProcessing(true)
+        try {
+            const res = await fetch('/api/transactions', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    name: description.trim(),
+                    amount: parseFloat(amount) || 0,
+                    date: date,
+                    account: account || "1930",
+                    category: "Manuell",
+                    status: "Ej bokförd"
+                })
+            })
+
+            if (res.ok) {
+                toast.success("Transaktion tillagd", `"${description}" har lagts till.`)
+                onOpenChange(false)
+                resetForm()
+                window.dispatchEvent(new Event('transactions-updated'))
+            } else {
+                toast.error("Kunde inte spara", "Ett fel uppstod vid sparande.")
+            }
+        } catch (error) {
+            console.error('Create transaction failed:', error)
+            toast.error("Kunde inte spara", "Ett fel uppstod vid sparande.")
+        } finally {
+            setIsProcessing(false)
         }
     }
 
@@ -48,7 +101,7 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
                 const data = await res.json()
                 // Success - close dialog and refresh
                 onOpenChange(false)
-                setFile(null)
+                resetForm()
                 window.dispatchEvent(new Event('transactions-updated'))
             }
         } catch (error) {
@@ -57,6 +110,7 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
             setIsProcessing(false)
         }
     }
+
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -107,21 +161,39 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
                         <div className="space-y-4">
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Beskrivning</label>
-                                <Input placeholder="Ange beskrivning..." />
+                                <Input
+                                    placeholder="Ange beskrivning..."
+                                    value={description}
+                                    onChange={(e) => setDescription(e.target.value)}
+                                />
                             </div>
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Belopp</label>
-                                    <Input placeholder="0.00 kr" />
+                                    <Input
+                                        placeholder="0.00 kr"
+                                        type="number"
+                                        step="0.01"
+                                        value={amount}
+                                        onChange={(e) => setAmount(e.target.value)}
+                                    />
                                 </div>
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Datum</label>
-                                    <Input type="date" />
+                                    <Input
+                                        type="date"
+                                        value={date}
+                                        onChange={(e) => setDate(e.target.value)}
+                                    />
                                 </div>
                             </div>
                             <div className="space-y-2">
                                 <label className="text-sm font-medium">Konto</label>
-                                <Input placeholder="Välj konto..." />
+                                <Input
+                                    placeholder="T.ex. 1930"
+                                    value={account}
+                                    onChange={(e) => setAccount(e.target.value)}
+                                />
                             </div>
                         </div>
                     )}
@@ -196,7 +268,12 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
                         <Button variant="outline">Avbryt</Button>
                     </DialogClose>
                     {activeTab === 'single' ? (
-                        <Button>Lägg till</Button>
+                        <Button
+                            onClick={handleAddSingle}
+                            disabled={isProcessing}
+                        >
+                            {isProcessing ? 'Sparar...' : 'Lägg till'}
+                        </Button>
                     ) : (
                         <Button
                             onClick={handleUpload}

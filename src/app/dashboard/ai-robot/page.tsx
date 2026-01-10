@@ -192,19 +192,43 @@ function AIRobotPageContent() {
                 </div>
             </header>
 
-            {messages.length === 0 ? (
-                /* Empty state - centered greeting with input */
-                <div className="flex-1 flex flex-col items-center justify-center gap-8 px-4 pb-24">
-                    <div className="text-center">
-                        <h1 className="text-2xl font-semibold">{getGreeting()}!</h1>
-                        <p className="text-muted-foreground mt-2">Hur kan jag hjälpa dig idag?</p>
+            {/* Main Content Area */}
+            <div className="flex-1 overflow-y-auto px-4 pb-32">
+                {messages.length === 0 ? (
+                    <div className="flex h-full flex-col items-center justify-center text-center gap-8">
+                        <div>
+                            <h1 className="text-2xl font-semibold">{getGreeting()}!</h1>
+                            <p className="text-muted-foreground mt-2">Hur kan jag hjälpa dig idag?</p>
+                        </div>
+                        {/* Desktop: Centered Input (Hidden on mobile) */}
+                        <div className="hidden md:block w-full max-w-2xl px-4">
+                            {chatInputJSX}
+                        </div>
+
+                        {/* Mobile Navigation Links (Empty State) */}
+                        <div className="md:hidden flex items-center justify-center gap-4 py-4 opacity-70">
+                            <a
+                                href="/dashboard"
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <div className="h-3.5 w-3.5 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-grid h-3.5 w-3.5"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>
+                                </div>
+                                <span>Öppna Dashboard</span>
+                            </a>
+                            <a
+                                href="/dashboard/konversationer"
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <div className="h-3.5 w-3.5 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-inbox h-3.5 w-3.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
+                                </div>
+                                <span>Visa konversationer</span>
+                            </a>
+                        </div>
                     </div>
-                    {chatInputJSX}
-                </div>
-            ) : (
-                /* Chat state - messages scroll, chatbar fixed at bottom */
-                <>
-                    <div className="flex-1 overflow-y-auto px-4 pb-32">
+                ) : (
+                    <>
                         <ChatMessageList
                             messages={messages}
                             isLoading={isLoading}
@@ -214,14 +238,39 @@ function AIRobotPageContent() {
                             onRegenerate={regenerateResponse}
                         />
                         <div ref={messagesEndRef} />
-                    </div>
 
-                    {/* Fixed chatbar */}
-                    <div className="fixed bottom-0 inset-x-0 md:left-[var(--sidebar-width)] bg-gradient-to-t from-background from-70% to-transparent pt-6 pb-4 px-4">
-                        {chatInputJSX}
-                    </div>
-                </>
-            )}
+                        {/* Mobile Navigation Links (Scrollable) */}
+                        <div className="md:hidden flex items-center justify-center gap-4 py-4 opacity-70">
+                            <a
+                                href="/dashboard"
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <div className="h-3.5 w-3.5 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-layout-grid h-3.5 w-3.5"><rect width="7" height="7" x="3" y="3" rx="1" /><rect width="7" height="7" x="14" y="3" rx="1" /><rect width="7" height="7" x="14" y="14" rx="1" /><rect width="7" height="7" x="3" y="14" rx="1" /></svg>
+                                </div>
+                                <span>Öppna Dashboard</span>
+                            </a>
+                            <a
+                                href="/dashboard/konversationer"
+                                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <div className="h-3.5 w-3.5 flex items-center justify-center">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="lucide lucide-inbox h-3.5 w-3.5"><polyline points="22 12 16 12 14 15 10 15 8 12 2 12" /><path d="M5.45 5.11 2 12v6a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2v-6l-3.45-6.89A2 2 0 0 0 16.76 4H7.24a2 2 0 0 0-1.79 1.11z" /></svg>
+                                </div>
+                                <span>Visa konversationer</span>
+                            </a>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {/* Fixed Chat Input - Mobile: Always visible. Desktop: Only visible when chatting. */}
+            <div className={cn(
+                "fixed bottom-0 inset-x-0 md:left-[var(--sidebar-width)] bg-gradient-to-t from-background from-70% to-transparent pt-6 pb-8 px-4",
+                messages.length === 0 ? "md:hidden" : "flex"
+            )}>
+                {chatInputJSX}
+            </div>
 
             {/* Image Preview Modal */}
             {previewFile && (

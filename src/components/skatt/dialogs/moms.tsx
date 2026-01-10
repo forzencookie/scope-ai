@@ -35,6 +35,7 @@ import {
 import { cn } from "@/lib/utils"
 import { VatReport, recalculateVatReport } from "@/lib/vat-processor"
 import { downloadVatXML, defaultCompanyInfo } from "@/lib/vat-xml-export"
+import { useToast } from "@/components/ui/toast"
 
 interface MomsDetailDialogProps {
     report: VatReport | null
@@ -200,6 +201,7 @@ export function MomsDetailDialog({
     onOpenChange,
     onSave,
 }: MomsDetailDialogProps) {
+    const toast = useToast()
     const [editedReport, setEditedReport] = useState<VatReport | null>(null)
     const [isExpanded, setIsExpanded] = useState(false)
 
@@ -376,7 +378,10 @@ export function MomsDetailDialog({
                     </div>
 
                     {editedReport.status === "upcoming" && (
-                        <Button className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-600">
+                        <Button
+                            className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-600"
+                            onClick={() => toast.info("Kommer snart", "Integration med Skatteverket är under utveckling.")}
+                        >
                             <Send className="h-4 w-4" />
                             Skicka till Skatteverket
                         </Button>

@@ -18,10 +18,6 @@ const iconColors: Record<string, { bg: string; icon: string }> = {
   "Löner": { bg: "bg-pink-500/15", icon: "text-pink-500" },
   "Ägare & Styrning": { bg: "bg-indigo-500/15", icon: "text-indigo-500" },
   "Ägarinfo": { bg: "bg-indigo-500/15", icon: "text-indigo-500" },
-  // Settings
-  "Inställningar": { bg: "bg-slate-500/15", icon: "text-slate-500" },
-  "Företagsstatistik": { bg: "bg-cyan-500/15", icon: "text-cyan-500" },
-  "Statistik": { bg: "bg-cyan-500/15", icon: "text-cyan-500" },
 }
 
 // Helper component for styled icons
@@ -201,13 +197,13 @@ export function NavSettings({
             <SidebarMenuItem key={item.title}>
               {item.title === "Inställningar" && onSettingsClick ? (
                 <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle}>
-                  {item.icon && <item.icon className="size-4" />}
+                  {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
                   <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                 </SidebarMenuButton>
               ) : (
                 <SidebarMenuButton asChild tooltip={displayTitle}>
                   <Link href={item.url}>
-                    {item.icon && <item.icon className="size-4" />}
+                    {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
                     <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                   </Link>
                 </SidebarMenuButton>

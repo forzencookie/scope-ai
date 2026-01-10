@@ -326,9 +326,9 @@ export function ChatInput({
                 />
             </div>
 
-            {/* Navigation links below chatbar */}
+            {/* Navigation links - Desktop (Below) */}
             {showNavLinks && (
-                <div className="flex items-center gap-4 mt-2 px-1">
+                <div className="hidden md:flex items-center gap-4 mt-2 px-1">
                     <Link
                         href="/dashboard"
                         className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"

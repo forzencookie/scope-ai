@@ -165,44 +165,8 @@ export function AGIContent() {
             label: "Skicka till Skatteverket",
             icon: Send,
             onClick: async (ids) => {
-                setIsSending(true)
-                const reportsToSend = agiReportsState.filter(r => ids.includes(r.period))
-
-                let successCount = 0
-                let errorCount = 0
-                let lastError = ''
-
-                for (const report of reportsToSend) {
-                    const result = await sendToSkatteverket(report)
-                    if (result.success) {
-                        successCount++
-                        // Update status in local state (would need to persist sending status somewhere)
-                        // For now just toast
-                    } else {
-                        errorCount++
-                        lastError = result.aiReview?.errors?.[0]?.message || result.message
-                    }
-                }
-
-                setIsSending(false)
+                toast.info("Kommer snart", "Inlämning direkt till Skatteverket via API är under utveckling. Du kan ladda ner XML-filen för manuell inlämning.")
                 setSelectedIds(new Set())
-
-                if (successCount > 0 && errorCount === 0) {
-                    toast.success(
-                        "Rapporter skickade",
-                        `${successCount} AGI-rapport(er) skickades till Skatteverket. Se resultat i simulatorn.`
-                    )
-                } else if (successCount > 0 && errorCount > 0) {
-                    toast.warning(
-                        "Delvis skickat",
-                        `${successCount} skickade, ${errorCount} med fel: ${lastError}`
-                    )
-                } else {
-                    toast.error(
-                        "Kunde inte skicka",
-                        lastError || "Kontrollera dokumenten och försök igen"
-                    )
-                }
             },
         },
         {

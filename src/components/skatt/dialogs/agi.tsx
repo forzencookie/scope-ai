@@ -105,9 +105,8 @@ export function AGIDetailsDialog({
                     </Button>
                     {report.status === "pending" && (
                         <Button onClick={() => {
+                            toast.info("Kommer snart", "Integration med Skatteverket är under utveckling.")
                             onOpenChange(false)
-                            onSend(report.period)
-                            toast.success("Rapport skickad", `AGI för ${report.period} skickades till Skatteverket`)
                         }}>
                             <Send className="h-4 w-4 mr-2" />
                             Skicka till Skatteverket

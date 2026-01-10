@@ -170,8 +170,8 @@ export function InkomstdeklarationContent() {
 
     const handleSend = () => {
         toast({
-            title: "Deklaration skickad",
-            description: "Inkomstdeklaration 2 har skickats till Skatteverket.",
+            title: "Kommer snart",
+            description: "Integration med Skatteverket är under utveckling.",
         })
     }
 

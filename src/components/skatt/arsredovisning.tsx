@@ -11,13 +11,6 @@ import {
     Send,
     FileText,
 } from "lucide-react"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
@@ -32,13 +25,14 @@ import { reportSections } from "./constants"
 import { useVerifications } from "@/hooks/use-verifications"
 import { AnnualReportProcessor } from "@/lib/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
+import { useToast } from "@/components/ui/toast"
 
 import { useCompany } from "@/providers/company-provider"
 import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
 
 export function ArsredovisningContent() {
     const router = useRouter()
-    const [showBankIdDialog, setShowBankIdDialog] = useState(false)
+    const toast = useToast()
     const [showAIDialog, setShowAIDialog] = useState(false)
     const { verifications } = useVerifications()
     const { company, companyTypeFullName, companyTypeName } = useCompany()
@@ -110,7 +104,7 @@ export function ArsredovisningContent() {
                         </div>
                         <div className="flex items-center gap-2">
                             <Button
-                                onClick={() => setShowBankIdDialog(true)}
+                                onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}
                             >
                                 <Send className="h-4 w-4 mr-2" />
                                 Skicka till Bolagsverket
@@ -208,58 +202,6 @@ export function ArsredovisningContent() {
                         ))}
                     </ListCard>
                 </div>
-
-                {/* BankID Signing Dialog */}
-                <Dialog open={showBankIdDialog} onOpenChange={setShowBankIdDialog}>
-                    <DialogContent className="sm:max-w-md">
-                        <DialogHeader>
-                            <DialogTitle>Skicka årsredovisning till Bolagsverket</DialogTitle>
-                            <DialogDescription>
-                                Du är på väg att skicka in årsredovisningen för räkenskapsåret 2024.
-                            </DialogDescription>
-                        </DialogHeader>
-                        <div className="space-y-4 py-4">
-                            <div className="bg-muted/50 rounded-lg p-4 space-y-2">
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Bolag</span>
-                                    <span className="font-medium">{company?.name || "Mitt Företag AB"}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Org.nr</span>
-                                    <span className="font-medium">{company?.orgNumber || "556000-0000"}</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Räkenskapsår</span>
-                                    <span className="font-medium">2024-01-01 – 2024-12-31</span>
-                                </div>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-muted-foreground">Regelverk</span>
-                                    <span className="font-medium">K2</span>
-                                </div>
-                            </div>
-                            <p className="text-sm text-muted-foreground">
-                                Genom att signera bekräftar du att uppgifterna i årsredovisningen är korrekta och att du har behörighet att företräda bolaget.
-                            </p>
-                        </div>
-                        <div className="flex flex-col gap-3">
-                            <button
-                                onClick={() => setShowBankIdDialog(false)}
-                                className="w-full px-4 py-3 rounded-lg font-medium flex items-center justify-center gap-2 bg-[#183E4F] text-white hover:bg-[#183E4F]/90 transition-colors"
-                            >
-                                <svg className="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
-                                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                                </svg>
-                                Signera med BankID
-                            </button>
-                            <button
-                                onClick={() => setShowBankIdDialog(false)}
-                                className="w-full px-4 py-2 rounded-lg font-medium text-muted-foreground hover:bg-muted/50 transition-colors text-sm"
-                            >
-                                Avbryt
-                            </button>
-                        </div>
-                    </DialogContent>
-                </Dialog>
             </div>
         </main>
     )

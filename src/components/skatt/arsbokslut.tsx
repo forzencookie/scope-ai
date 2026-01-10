@@ -27,6 +27,7 @@ import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
 import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useToast } from "@/components/ui/toast"
 
 
 // =============================================================================
@@ -34,6 +35,7 @@ import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
 // =============================================================================
 export function ArsbokslutContent() {
     const router = useRouter()
+    const toast = useToast()
     const { companyTypeName } = useCompany()
     const { text } = useTextMode()
     const { accountBalances, totals, isLoading } = useAccountBalances()
@@ -195,7 +197,7 @@ export function ArsbokslutContent() {
                         <Download className="mr-2 h-4 w-4" />
                         Exportera PDF
                     </Button>
-                    <Button size="sm" className="h-9">
+                    <Button size="sm" className="h-9" onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}>
                         <Send className="mr-2 h-4 w-4" />
                         Skicka till Bolagsverket
                     </Button>

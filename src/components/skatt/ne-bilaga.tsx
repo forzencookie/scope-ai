@@ -152,8 +152,8 @@ export function NEBilagaContent() {
 
     const handleSend = () => {
         toast({
-            title: "NE-bilaga skickad",
-            description: "NE-bilaga har skickats till Skatteverket tillsammans med din inkomstdeklaration.",
+            title: "Kommer snart",
+            description: "Integration med Skatteverket är under utveckling.",
         })
     }
 

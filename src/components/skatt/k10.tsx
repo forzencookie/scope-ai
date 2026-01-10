@@ -161,8 +161,8 @@ export function K10Content() {
 
     const handleSubmit = () => {
         toast({
-            title: "K10 skickad",
-            description: "Blankett K10 har skickats till Skatteverket.",
+            title: "Kommer snart",
+            description: "Integration med Skatteverket är under utveckling.",
         })
     }
 

@@ -270,11 +270,21 @@ export function VerifikationerTable() {
                         <DialogClose asChild>
                             <Button variant="outline">Stäng</Button>
                         </DialogClose>
-                        <Button variant="outline">
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                toast.info("Laddar ner...", `Verifikation #${selectedVerifikation?.id} förbereds för nedladdning.`)
+                            }}
+                        >
                             <Download className="h-4 w-4 mr-2" />
                             Ladda ner
                         </Button>
-                        <Button>
+                        <Button
+                            onClick={() => {
+                                toast.success("Verifikation godkänd", `Verifikation #${selectedVerifikation?.id} har markerats som godkänd.`)
+                                setDetailsDialogOpen(false)
+                            }}
+                        >
                             <Check className="h-4 w-4 mr-2" />
                             Godkänn
                         </Button>
@@ -343,7 +353,14 @@ export function VerifikationerTable() {
                                 )}
                             </div>
 
-                            <Button size="sm" variant="outline" className="h-9 w-9 sm:w-auto px-0 sm:px-3 gap-2">
+                            <Button
+                                size="sm"
+                                variant="outline"
+                                className="h-9 w-9 sm:w-auto px-0 sm:px-3 gap-2"
+                                onClick={() => {
+                                    toast.info("Kommer snart", "Export-funktionen är under utveckling.")
+                                }}
+                            >
                                 <Download className="h-3.5 w-3.5" />
                                 <span className="hidden sm:inline">Exportera</span>
                             </Button>
