@@ -309,87 +309,91 @@ export function TransactionsTable({
                 </div>
 
 
-                {/* GridTable Header */}
-                <GridTableHeader
-                    columns={[
-                        { label: text.labels.supplier, icon: Building2, span: 3 },
-                        { label: text.labels.date, icon: Calendar, span: 2 },
-                        { label: text.labels.amount, icon: Banknote, span: 2 },
-                        { label: text.labels.status, icon: CheckCircle2, span: 2 },
-                        { label: text.labels.account, icon: CreditCard, span: 2 },
-                    ]}
-                    trailing={
-                        <Checkbox
-                            checked={selection.allSelected && filteredTransactions.length > 0}
-                            onCheckedChange={selection.toggleAll}
-                        />
-                    }
-                />
-
-                {/* GridTable Rows */}
-                <GridTableRows>
-                    {filteredTransactions.map((transaction) => (
-                        <GridTableRow
-                            key={transaction.id}
-                            onClick={() => handleTransactionClick(transaction)}
-                            selected={selection.isSelected(transaction.id)}
-                        >
-                            <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
-                                {transaction.name}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
-                                {transaction.date}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }}>
-                                <span className={cn(
-                                    "font-medium tabular-nums",
-                                    String(transaction.amount).startsWith("+") && "text-green-600 dark:text-green-400"
-                                )}>
-                                    {transaction.amount}
-                                </span>
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }}>
-                                <AppStatusBadge status={transaction.status} size="sm" />
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
-                                {transaction.account}
-                            </div>
-                            <div
-                                className={cn(
-                                    "flex justify-end items-center transition-opacity",
-                                    selection.isSelected(transaction.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                                )}
-                                onClick={(e) => e.stopPropagation()}
-                            >
+                <div className="w-full overflow-x-auto pb-2">
+                    <div className="min-w-[800px] px-2">
+                        {/* GridTable Header */}
+                        <GridTableHeader
+                            columns={[
+                                { label: text.labels.supplier, icon: Building2, span: 3 },
+                                { label: text.labels.date, icon: Calendar, span: 2 },
+                                { label: text.labels.amount, icon: Banknote, span: 2 },
+                                { label: text.labels.status, icon: CheckCircle2, span: 2 },
+                                { label: text.labels.account, icon: CreditCard, span: 2 },
+                            ]}
+                            trailing={
                                 <Checkbox
-                                    checked={selection.isSelected(transaction.id)}
-                                    onCheckedChange={() => selection.toggleItem(transaction.id)}
+                                    checked={selection.allSelected && filteredTransactions.length > 0}
+                                    onCheckedChange={selection.toggleAll}
                                 />
-                            </div>
-                        </GridTableRow>
-                    ))}
-                    {filteredTransactions.length === 0 && (
-                        <div className="text-center py-12 text-muted-foreground">
-                            <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>{filter.hasActiveFilters ? text.transactions.empty : text.transactions.empty}</p>
-                            {!filter.hasActiveFilters && (
-                                <Button
-                                    variant="outline"
-                                    className="mt-4"
-                                    onClick={() => setNewTransactionDialogOpen(true)}
-                                >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    {text.transactions.newTransaction}
-                                </Button>
-                            )}
-                        </div>
-                    )}
-                </GridTableRows>
+                            }
+                        />
 
-                <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setNewTransactionDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {text.transactions.newTransaction}
-                </Button>
+                        {/* GridTable Rows */}
+                        <GridTableRows>
+                            {filteredTransactions.map((transaction) => (
+                                <GridTableRow
+                                    key={transaction.id}
+                                    onClick={() => handleTransactionClick(transaction)}
+                                    selected={selection.isSelected(transaction.id)}
+                                >
+                                    <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
+                                        {transaction.name}
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate">
+                                        {transaction.date}
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <span className={cn(
+                                            "font-medium tabular-nums",
+                                            String(transaction.amount).startsWith("+") && "text-green-600 dark:text-green-400"
+                                        )}>
+                                            {transaction.amount}
+                                        </span>
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <AppStatusBadge status={transaction.status} size="sm" />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate">
+                                        {transaction.account}
+                                    </div>
+                                    <div
+                                        className={cn(
+                                            "flex justify-end items-center transition-opacity",
+                                            selection.isSelected(transaction.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                                        )}
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
+                                        <Checkbox
+                                            checked={selection.isSelected(transaction.id)}
+                                            onCheckedChange={() => selection.toggleItem(transaction.id)}
+                                        />
+                                    </div>
+                                </GridTableRow>
+                            ))}
+                            {filteredTransactions.length === 0 && (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                    <p>{filter.hasActiveFilters ? text.transactions.empty : text.transactions.empty}</p>
+                                    {!filter.hasActiveFilters && (
+                                        <Button
+                                            variant="outline"
+                                            className="mt-4"
+                                            onClick={() => setNewTransactionDialogOpen(true)}
+                                        >
+                                            <Plus className="h-4 w-4 mr-2" />
+                                            {text.transactions.newTransaction}
+                                        </Button>
+                                    )}
+                                </div>
+                            )}
+                        </GridTableRows>
+
+                        <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setNewTransactionDialogOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            {text.transactions.newTransaction}
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             {/* Bulk Action Toolbar - appears when items are selected */}

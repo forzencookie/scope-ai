@@ -1,6 +1,6 @@
 "use client"
 
-import { AppSidebar, MobileBottomNav } from "@/components/layout"
+import { AppSidebar } from "@/components/layout"
 import {
     SidebarInset,
     SidebarProvider,
@@ -20,12 +20,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             <SidebarProvider>
                 <AppSidebar />
                 <SidebarInset>
-                    <div className="pb-20 md:pb-0 w-full max-w-7xl mx-auto">
+                    <div className="w-full max-w-7xl mx-auto">
                         {children}
                     </div>
                 </SidebarInset>
             </SidebarProvider>
-            <MobileBottomNav />
+
             <LazyOnboardingWizard
                 isOpen={showOnboarding}
                 onClose={skipOnboarding}

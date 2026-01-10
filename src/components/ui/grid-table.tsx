@@ -47,14 +47,14 @@ export function GridTableHeader({
                     <div
                         key={idx}
                         className={cn(
-                            "flex items-center gap-1 w-full",
+                            "flex items-center gap-1 w-full min-w-0",
                             align === 'right' && "justify-end",
                             align === 'center' && "justify-center"
                         )}
                         style={spanStyle}
                     >
-                        {Icon && <Icon className="h-3 w-3" />}
-                        {col.label}
+                        {Icon && <Icon className="h-3 w-3 flex-shrink-0" />}
+                        <span className="truncate whitespace-nowrap">{col.label}</span>
                     </div>
                 )
             })}

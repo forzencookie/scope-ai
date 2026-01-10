@@ -74,9 +74,9 @@ export function PreviewStatusBadge({
     status: string
     variant?: "success" | "warning" | "neutral"
 }) {
-    // Harmonized colors - 100 bg with 600 text
+    // Harmonized colors - darker + lower opacity for subtle effect
     const variantStyles = {
-        success: "text-[#059669] bg-[#d1fae5]", // emerald-600, emerald-100
+        success: "text-emerald-700 bg-emerald-600/15", // darker green, lower opacity
         warning: "text-[#d97706] bg-[#fef3c7]", // amber-600, amber-100
         neutral: "text-[#57534e] bg-[#f5f5f4]"  // stone-600, stone-100
     }

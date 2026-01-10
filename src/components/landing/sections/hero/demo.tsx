@@ -259,8 +259,8 @@ function HeroDemoContent({
                                     <p className="text-sm">Bokför det här kvittot</p>
                                 </div>
                                 <div className="flex items-center gap-2 bg-muted/50 rounded-lg p-2 pr-3 text-xs">
-                                    <div className="w-8 h-8 rounded bg-muted flex items-center justify-center">
-                                        <span className="text-lg">🧾</span>
+                                    <div className="w-8 h-8 rounded bg-blue-100 flex items-center justify-center">
+                                        <FileText className="w-4 h-4 text-blue-600" />
                                     </div>
                                     <div className="flex flex-col">
                                         <span className="font-medium text-muted-foreground">taxi_kvitto.jpg</span>
@@ -284,21 +284,25 @@ function HeroDemoContent({
                             <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-3">
                                 <p className="text-sm text-muted-foreground">Jag tolkade kvittot. Vill du att jag bokför det?</p>
                                 <div className="rounded-xl border-2 border-dashed border-ring/40 bg-muted/30 overflow-hidden">
-                                    <div className="px-4 py-3 border-b border-border/40 flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-muted/60 text-base">🧾</div>
+                                    <div className="px-4 py-3 flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100"><FileText className="w-4 h-4 text-blue-600" /></div>
                                         <div>
                                             <h3 className="font-semibold text-sm">Skapa kvitto</h3>
                                             <p className="text-xs text-muted-foreground">Taxi Stockholm AB • -495 kr</p>
                                         </div>
                                     </div>
+                                    <div className="h-px bg-border/40 mx-4" />
                                     <div className="px-4 py-3 space-y-2 text-sm">
                                         <div className="flex justify-between"><span className="text-muted-foreground">Leverantör</span><span className="font-medium">Taxi Stockholm AB</span></div>
                                         <div className="flex justify-between"><span className="text-muted-foreground">Konto</span><span className="font-medium">5800 Resekostnader</span></div>
                                     </div>
-                                    <div className="px-4 py-3 border-t border-border/40 flex items-center gap-2">
-                                        <button className="h-7 px-3 bg-primary text-white text-xs font-medium rounded-md flex items-center gap-1">Godkänn</button>
-                                        <button className={`h-7 px-3 text-muted-foreground text-xs font-medium rounded-md ${hoverButton === 'kommentera' ? 'bg-muted' : 'hover:bg-muted/50'}`}>Kommentera</button>
-                                        <button className="h-7 px-3 text-muted-foreground text-xs font-medium rounded-md hover:bg-muted/50 ml-auto">Avbryt</button>
+                                    <div className="py-3">
+                                        <div className="h-px bg-border/40 mx-4 mb-3" />
+                                        <div className="px-4 flex items-center gap-2">
+                                            <button className="h-7 px-3 bg-primary text-white text-xs font-medium rounded-md flex items-center gap-1">Godkänn</button>
+                                            <button className={`h-7 px-3 text-muted-foreground text-xs font-medium rounded-md ${hoverButton === 'kommentera' ? 'bg-muted' : 'hover:bg-muted/50'}`}>Kommentera</button>
+                                            <button className="h-7 px-3 text-muted-foreground text-xs font-medium rounded-md hover:bg-muted/50 ml-auto">Avbryt</button>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -327,10 +331,10 @@ function HeroDemoContent({
                                 <p className="text-sm text-muted-foreground">
                                     {step >= 9 ? "Klart! Kvittot är nu bokfört." : "Perfekt, jag ändrade kontot. Godkänn för att bokföra."}
                                 </p>
-                                <div className={`rounded-xl border-2 overflow-hidden transition-colors duration-300 ${step >= 9 ? 'border-emerald-500 bg-emerald-50/30' : 'border-dashed border-ring/40 bg-muted/30'}`}>
-                                    <div className={`px-4 py-3 flex items-center gap-3 ${step === 9 ? 'border-b border-emerald-200/60' : 'border-b border-border/40'}`}>
-                                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg text-base ${step >= 9 ? 'bg-emerald-500/20' : 'bg-muted/60'}`}>
-                                            {step >= 9 ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <span>🧾</span>}
+                                <div className={`rounded-xl border-2 overflow-hidden transition-colors duration-300 ${step >= 9 ? 'border-emerald-600/40 bg-emerald-50/20' : 'border-dashed border-ring/40 bg-muted/30'}`}>
+                                    <div className="px-4 py-3 flex items-center gap-3">
+                                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${step >= 9 ? 'bg-emerald-500/20' : 'bg-blue-100'}`}>
+                                            {step >= 9 ? <CheckCircle2 className="w-4 h-4 text-emerald-600" /> : <FileText className="w-4 h-4 text-blue-600" />}
                                         </div>
                                         <div className="flex-1">
                                             <h3 className="font-semibold text-sm">Skapa kvitto</h3>
@@ -338,15 +342,19 @@ function HeroDemoContent({
                                         </div>
                                         {step >= 9 && <span className="text-xs font-medium px-2 py-1 rounded-md bg-emerald-500/20 text-emerald-700">Bokfört ✓</span>}
                                     </div>
+                                    <div className="h-px bg-border/40 mx-4" />
                                     <div className="px-4 py-3 space-y-2 text-sm">
                                         <div className="flex justify-between"><span className="text-muted-foreground">Leverantör</span><span className="font-medium">Taxi Stockholm AB</span></div>
                                         <div className="flex justify-between"><span className="text-muted-foreground">Konto</span><span className="font-medium text-emerald-600">5810 Taxi & Transport</span></div>
                                     </div>
                                     {step < 9 && (
-                                        <div className="px-4 py-3 border-t border-border/40 flex items-center gap-2">
-                                            <button className={`h-7 px-3 text-white text-xs font-medium rounded-md transition-colors ${hoverButton === 'godkann' ? 'bg-primary/90' : 'bg-primary'}`}>Godkänn</button>
-                                            <button className="h-7 px-3 text-muted-foreground text-xs font-medium rounded-md hover:bg-muted/50">Kommentera</button>
-                                            <button className="h-7 px-3 text-muted-foreground text-xs font-medium rounded-md hover:bg-muted/50 ml-auto">Avbryt</button>
+                                        <div className="py-3">
+                                            <div className="h-px bg-border/40 mx-4 mb-3" />
+                                            <div className="px-4 flex items-center gap-2">
+                                                <button className={`h-7 px-3 text-white text-xs font-medium rounded-md transition-colors ${hoverButton === 'godkann' ? 'bg-primary/90' : 'bg-primary'}`}>Godkänn</button>
+                                                <button className="h-7 px-3 text-muted-foreground text-xs font-medium rounded-md hover:bg-muted/50">Kommentera</button>
+                                                <button className="h-7 px-3 text-muted-foreground text-xs font-medium rounded-md hover:bg-muted/50 ml-auto">Avbryt</button>
+                                            </div>
                                         </div>
                                     )}
                                 </div>

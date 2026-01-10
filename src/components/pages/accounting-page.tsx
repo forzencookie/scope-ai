@@ -46,6 +46,7 @@ import {
     LazyInventarierTable,
     LazyUnifiedInvoicesView,
 } from "@/components/shared"
+import { VerifikationerTable } from "@/components/bokforing/verifikationer"
 import { useTextMode } from "@/providers/text-mode-provider"
 
 // Tab configuration with feature requirements and translations
@@ -75,8 +76,16 @@ const allTabs = [
     {
         id: "inventarier",
         labelEnkel: "Inventarier",
+        labelAvancerad: "Inventarier",
         color: "bg-indigo-500",
         feature: null,
+    },
+    {
+        id: "verifikationer",
+        labelEnkel: "Verifikationer",
+        labelAvancerad: "Verifikationer",
+        color: "bg-emerald-500",
+        feature: 'verifikationer' as const,
     },
 ]
 
@@ -87,8 +96,7 @@ function AccountingPageContent() {
     const router = useRouter()
     const toast = useToast()
     const paramTab = searchParams.get("tab")
-    // Handle legacy/alternate URL mapping: 'verifikationer' -> 'transaktioner'
-    const currentTab = (paramTab === "verifikationer" ? "transaktioner" : paramTab) || "transaktioner"
+    const currentTab = paramTab || "transaktioner"
 
     // State for transactions and UI
     const [apiTransactions, setApiTransactions] = useState<TransactionWithAI[]>([])
@@ -362,6 +370,10 @@ function AccountingPageContent() {
 
                         {currentTab === "inventarier" && (
                             <LazyInventarierTable />
+                        )}
+
+                        {currentTab === "verifikationer" && (
+                            <VerifikationerTable />
                         )}
                     </div>
                 </main>

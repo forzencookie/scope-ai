@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useInView } from "framer-motion"
-import { Search, FileText, Calendar, ArrowDownRight } from "lucide-react"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { ScaledPreview, PreviewStatusBadge } from "./shared"
 
 /**
@@ -19,6 +17,14 @@ const verifikationer = [
     { id: "V-1246", date: "2025-01-14", desc: "Kvitto Clas Ohlson", amount: -249, isNew: false },
     { id: "V-1245", date: "2025-01-13", desc: "Kundfaktura #1042", amount: 12500, isNew: false },
     { id: "V-1244", date: "2025-01-12", desc: "Leverantörsfaktura", amount: -4800, isNew: false },
+]
+
+// Tab configuration matching real app
+const tabs = [
+    { id: "transaktioner", label: "Transaktioner", color: "bg-blue-500" },
+    { id: "fakturor", label: "Fakturor", color: "bg-purple-500" },
+    { id: "kvitton", label: "Kvitton", color: "bg-amber-500" },
+    { id: "inventarier", label: "Inventarier", color: "bg-indigo-500" },
 ]
 
 export function BokforingPagePreview() {
@@ -60,6 +66,7 @@ function BokforingPagePreviewContent() {
 
     const [step, setStep] = useState(0)
     const [highlightNew, setHighlightNew] = useState(false)
+    const activeTab = "transaktioner"
 
     useEffect(() => {
         if (!isInView) return
@@ -104,99 +111,70 @@ function BokforingPagePreviewContent() {
                         <motion.div
                             initial={{ opacity: 0 }}
                             animate={{ opacity: 1 }}
-                            className="pt-6 pb-0 space-y-5 max-w-6xl origin-top w-full"
+                            className="pt-6 pb-0 space-y-4 max-w-6xl origin-top w-full"
                         >
                             {/* Page Header */}
-                            <div className="flex flex-col gap-4 px-6">
-                                <div className="flex items-center justify-between">
-                                    <div>
-                                        <h2 className="text-2xl font-bold tracking-tight">Bokföring</h2>
-                                        <p className="text-muted-foreground mt-1">Alla verifikationer och transaktioner</p>
+                            <div className="flex flex-col gap-2 px-6">
+                                <h2 className="text-2xl font-bold tracking-tight">Bokföring</h2>
+                                <p className="text-muted-foreground">Alla verifikationer och transaktioner</p>
+                            </div>
+
+                            {/* Tab Bar (matching real app) */}
+                            <div className="px-6">
+                                <div className="flex items-center gap-1 pb-2 border-b-2 border-border/60">
+                                    {tabs.map((tab) => {
+                                        const isActive = activeTab === tab.id
+                                        return (
+                                            <div
+                                                key={tab.id}
+                                                className={`flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all ${isActive
+                                                    ? "bg-primary/10 text-primary"
+                                                    : "text-muted-foreground"
+                                                    }`}
+                                            >
+                                                <div className={`h-2 w-2 rounded-full ${tab.color}`} />
+                                                {isActive && <span>{tab.label}</span>}
+                                            </div>
+                                        )
+                                    })}
+
+                                    {/* Last updated text */}
+                                    <div className="ml-auto text-xs text-muted-foreground">
+                                        Senast uppdaterad: 15:42
                                     </div>
                                 </div>
                             </div>
 
-                            {/* Stats summary */}
-                            <div className="px-6">
-                                <StatCardGrid columns={3}>
-                                    <StatCard
-                                        label="Verifikationer"
-                                        value="1 247"
-                                        subtitle="+4 denna vecka"
-                                        headerIcon={FileText}
-                                    />
-                                    <StatCard
-                                        label="Senast bokfört"
-                                        value="Idag"
-                                        subtitle="15:42"
-                                        headerIcon={Calendar}
-                                    />
-                                    <StatCard
-                                        label="Total omsättning"
-                                        value="847 520 kr"
-                                        subtitle="2025"
-                                        headerIcon={ArrowDownRight}
-                                    />
-                                </StatCardGrid>
-                            </div>
-
-                            {/* Search bar */}
-                            <div className="px-6">
-                                <div className="flex items-center gap-2 px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-muted-foreground">
-                                    <Search className="w-4 h-4" />
-                                    <span className="text-sm">Sök verifikation...</span>
-                                </div>
-                            </div>
-
-                            {/* Separator */}
-                            <div className="border-b-2 border-border/60" />
-
-                            {/* Table header */}
+                            {/* Table header - simplified columns */}
                             <div className="px-6">
                                 <div className="grid grid-cols-12 text-xs text-muted-foreground uppercase tracking-wider font-medium py-2 border-b border-border">
-                                    <div className="col-span-2">Verifikation</div>
-                                    <div className="col-span-2">Datum</div>
+                                    <div className="col-span-3">Datum</div>
                                     <div className="col-span-5">Beskrivning</div>
                                     <div className="col-span-2 text-right">Belopp</div>
-                                    <div className="col-span-1">Status</div>
+                                    <div className="col-span-2 text-right">Status</div>
                                 </div>
                             </div>
 
                             {/* Table rows */}
                             <div className="px-6 space-y-0">
-                                {verifikationer.map((v, i) => (
+                                {verifikationer.map((v) => (
                                     <motion.div
                                         key={v.id}
                                         initial={v.isNew ? { backgroundColor: "rgba(0,0,0,0)" } : false}
                                         animate={v.isNew && highlightNew ? {
-                                            backgroundColor: ["rgba(34, 197, 94, 0.15)", "rgba(34, 197, 94, 0.08)"]
+                                            backgroundColor: ["rgba(34, 197, 94, 0.08)", "rgba(34, 197, 94, 0.04)"]
                                         } : {}}
                                         transition={{ duration: 1.5, repeat: Infinity, repeatType: "reverse" }}
                                         className={`grid grid-cols-12 text-sm py-3 border-b border-border/40 items-center ${v.isNew && highlightNew ? 'rounded-lg' : ''}`}
                                     >
-                                        <div className="col-span-2 font-mono text-muted-foreground flex items-center gap-2">
-                                            {v.isNew && highlightNew && (
-                                                <motion.div
-                                                    initial={{ scale: 0 }}
-                                                    animate={{ scale: 1 }}
-                                                    className="w-2 h-2 rounded-full bg-emerald-500"
-                                                />
-                                            )}
-                                            {v.id}
-                                        </div>
-                                        <div className="col-span-2 text-muted-foreground">{v.date}</div>
+                                        <div className="col-span-3 text-muted-foreground">{v.date}</div>
                                         <div className="col-span-5 font-medium">
                                             {v.desc}
-                                            {v.isNew && highlightNew && (
-                                                <span className="ml-2 text-xs px-1.5 py-0.5 bg-emerald-500/20 text-emerald-700 rounded font-medium">
-                                                    NY
-                                                </span>
-                                            )}
                                         </div>
-                                        <div className={`col-span-2 text-right tabular-nums font-medium ${v.amount > 0 ? 'text-emerald-600' : ''}`}>
+                                        <div className={`col-span-2 text-right tabular-nums font-medium ${v.amount > 0 ? 'text-emerald-700/80' : ''}`}>
                                             {v.amount > 0 ? '+' : ''}{v.amount.toLocaleString('sv-SE')} kr
                                         </div>
-                                        <div className="col-span-1">
+                                        <div className="col-span-2 text-right">
                                             <PreviewStatusBadge
                                                 status="Bokförd"
                                                 variant="success"

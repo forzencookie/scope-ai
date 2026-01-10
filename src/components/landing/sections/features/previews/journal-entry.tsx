@@ -169,13 +169,13 @@ function JournalEntryPreviewContent() {
                                 </p>
 
                                 {/* Verifikat Card */}
-                                <div className={`rounded-xl border-2 overflow-hidden transition-colors max-w-lg ${step >= 4 ? 'border-emerald-500 bg-emerald-50/30' : 'border-border'}`}>
-                                    <div className={`px-4 py-3 flex items-center gap-3 ${step >= 4 ? 'bg-emerald-500/10' : 'bg-muted/30'}`}>
-                                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${step >= 4 ? 'bg-emerald-500/20' : 'bg-muted'}`}>
+                                <div className={`rounded-xl border-2 overflow-hidden transition-colors max-w-lg ${step >= 4 ? 'border-emerald-600/40 bg-emerald-50/20' : 'border-border'}`}>
+                                    <div className="px-4 py-3 flex items-center gap-3">
+                                        <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${step >= 4 ? 'bg-emerald-600/15' : 'bg-blue-100'}`}>
                                             {step >= 4 ? (
                                                 <CheckCircle2 className="h-4 w-4 text-emerald-600" />
                                             ) : (
-                                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                                <FileText className="h-4 w-4 text-blue-600" />
                                             )}
                                         </div>
                                         <div className="flex-1">
@@ -183,10 +183,10 @@ function JournalEntryPreviewContent() {
                                             <p className="text-xs text-muted-foreground">Z-rapport 2025-01-15</p>
                                         </div>
                                         {step >= 4 && (
-                                            <span className="text-xs font-medium px-2 py-1 rounded bg-emerald-500/20 text-emerald-700">✓ Bokfört</span>
+                                            <span className="text-xs font-medium px-2 py-1 rounded-md bg-emerald-600/15 text-emerald-700">✓ Bokfört</span>
                                         )}
                                     </div>
-
+                                    <div className="h-px bg-border/40 mx-4" />
                                     {/* Journal lines table */}
                                     <div className="px-4 py-3">
                                         {/* Header */}

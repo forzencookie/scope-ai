@@ -391,110 +391,114 @@ export function ReceiptsTable() {
                     </div>
                 </div>
 
-                {/* GridTable Header */}
-                <GridTableHeader
-                    columns={[
-                        { label: text.receipts.supplier, icon: Building2, span: 3 },
-                        { label: text.labels.date, icon: Calendar, span: 2 },
-                        { label: text.receipts.category, icon: Tag, span: 2 },
-                        { label: text.labels.amount, icon: Banknote, span: 2, align: "right" },
-                        { label: text.labels.status, icon: CheckCircle2, span: 2, align: "center" },
-                    ]}
-                    trailing={
-                        <div className="flex items-center justify-end gap-3">
-                            <Paperclip className="h-3 w-3" />
-                            <Checkbox
-                                checked={bulkSelection.allSelected && filteredReceipts.length > 0}
-                                onCheckedChange={bulkSelection.toggleAll}
-                                aria-label={text.actions.selectAll}
-                            />
-                        </div>
-                    }
-                />
+                <div className="w-full overflow-x-auto pb-2">
+                    <div className="min-w-[800px] px-2">
+                        {/* GridTable Header */}
+                        <GridTableHeader
+                            columns={[
+                                { label: text.receipts.supplier, icon: Building2, span: 3 },
+                                { label: text.labels.date, icon: Calendar, span: 2 },
+                                { label: text.receipts.category, icon: Tag, span: 2 },
+                                { label: text.labels.amount, icon: Banknote, span: 2, align: "right" },
+                                { label: text.labels.status, icon: CheckCircle2, span: 2, align: "center" },
+                            ]}
+                            trailing={
+                                <div className="flex items-center justify-end gap-3">
+                                    <Paperclip className="h-3 w-3" />
+                                    <Checkbox
+                                        checked={bulkSelection.allSelected && filteredReceipts.length > 0}
+                                        onCheckedChange={bulkSelection.toggleAll}
+                                        aria-label={text.actions.selectAll}
+                                    />
+                                </div>
+                            }
+                        />
 
-                {/* GridTable Rows */}
-                <GridTableRows>
-                    {filteredReceipts.map((receipt) => (
-                        <GridTableRow
-                            key={receipt.id}
-                            selected={bulkSelection.isSelected(receipt.id)}
-                            className="group"
-                        >
-                            <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
-                                {receipt.supplier}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground text-sm">
-                                {receipt.date}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }}>
-                                <CategoryBadge>
-                                    {receipt.category}
-                                </CategoryBadge>
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right">
-                                <AmountText value={parseAmount(receipt.amount)} />
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
-                                <AppStatusBadge
-                                    status={receipt.status}
-                                    size="sm"
-                                />
-                            </div>
-                            <div style={{ gridColumn: 'span 1' }} className="flex items-center justify-end gap-2">
-                                {receipt.attachment && (
-                                    <div className="text-muted-foreground bg-muted p-1 rounded-sm" title={receipt.attachment}>
-                                        <Paperclip className="h-3 w-3" />
+                        {/* GridTable Rows */}
+                        <GridTableRows>
+                            {filteredReceipts.map((receipt) => (
+                                <GridTableRow
+                                    key={receipt.id}
+                                    selected={bulkSelection.isSelected(receipt.id)}
+                                    className="group"
+                                >
+                                    <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
+                                        {receipt.supplier}
                                     </div>
-                                )}
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger asChild>
-                                        <Button variant="ghost" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" >
-                                            <span className="sr-only">{text.actions.openMenu}</span>
-                                            <MoreHorizontal className="h-4 w-4" />
-                                        </Button>
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuLabel>{text.labels.actions}</DropdownMenuLabel>
-                                        <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
-                                            {text.actions.viewDetails}
-                                        </DropdownMenuItem>
-                                        <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
-                                            {text.actions.edit}
-                                        </DropdownMenuItem>
-                                        {isInvoiceMethod && (
-                                            <DropdownMenuItem onClick={() => openBookingDialog(receipt)}>
-                                                <BookOpen className="h-4 w-4 mr-2" />
-                                                Bokför
-                                            </DropdownMenuItem>
+                                    <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground text-sm truncate">
+                                        {receipt.date}
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }}>
+                                        <CategoryBadge>
+                                            {receipt.category}
+                                        </CategoryBadge>
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }} className="text-right truncate">
+                                        <AmountText value={parseAmount(receipt.amount)} />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
+                                        <AppStatusBadge
+                                            status={receipt.status}
+                                            size="sm"
+                                        />
+                                    </div>
+                                    <div style={{ gridColumn: 'span 1' }} className="flex items-center justify-end gap-2">
+                                        {receipt.attachment && (
+                                            <div className="text-muted-foreground bg-muted p-1 rounded-sm" title={receipt.attachment}>
+                                                <Paperclip className="h-3 w-3" />
+                                            </div>
                                         )}
-                                        <DropdownMenuSeparator />
-                                        <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(receipt.id)}>
-                                            {text.actions.delete}
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
-                                <Checkbox
-                                    checked={bulkSelection.isSelected(receipt.id)}
-                                    onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
-                                    aria-label={`${text.actions.select} ${receipt.supplier}`}
-                                />
-                            </div>
-                        </GridTableRow>
-                    ))}
-                    {filteredReceipts.length === 0 && (
-                        <div className="text-center py-12 text-muted-foreground">
-                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>{tableData.searchQuery || tableData.statusFilter.length > 0
-                                ? text.errors.noMatchingReceipts
-                                : text.receipts.empty}</p>
-                        </div>
-                    )}
-                </GridTableRows>
+                                        <DropdownMenu>
+                                            <DropdownMenuTrigger asChild>
+                                                <Button variant="ghost" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" >
+                                                    <span className="sr-only">{text.actions.openMenu}</span>
+                                                    <MoreHorizontal className="h-4 w-4" />
+                                                </Button>
+                                            </DropdownMenuTrigger>
+                                            <DropdownMenuContent align="end">
+                                                <DropdownMenuLabel>{text.labels.actions}</DropdownMenuLabel>
+                                                <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
+                                                    {text.actions.viewDetails}
+                                                </DropdownMenuItem>
+                                                <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
+                                                    {text.actions.edit}
+                                                </DropdownMenuItem>
+                                                {isInvoiceMethod && (
+                                                    <DropdownMenuItem onClick={() => openBookingDialog(receipt)}>
+                                                        <BookOpen className="h-4 w-4 mr-2" />
+                                                        Bokför
+                                                    </DropdownMenuItem>
+                                                )}
+                                                <DropdownMenuSeparator />
+                                                <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(receipt.id)}>
+                                                    {text.actions.delete}
+                                                </DropdownMenuItem>
+                                            </DropdownMenuContent>
+                                        </DropdownMenu>
+                                        <Checkbox
+                                            checked={bulkSelection.isSelected(receipt.id)}
+                                            onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
+                                            aria-label={`${text.actions.select} ${receipt.supplier}`}
+                                        />
+                                    </div>
+                                </GridTableRow>
+                            ))}
+                            {filteredReceipts.length === 0 && (
+                                <div className="text-center py-12 text-muted-foreground">
+                                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                                    <p>{tableData.searchQuery || tableData.statusFilter.length > 0
+                                        ? text.errors.noMatchingReceipts
+                                        : text.receipts.empty}</p>
+                                </div>
+                            )}
+                        </GridTableRows>
 
-                <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setUploadDialogOpen(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {text.receipts.upload}
-                </Button>
+                        <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setUploadDialogOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            {text.receipts.upload}
+                        </Button>
+                    </div>
+                </div>
             </div>
 
             {/* Bulk Action Toolbar */}

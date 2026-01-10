@@ -183,16 +183,17 @@ function ZReportContextPreviewContent() {
                                     Jag tolkade Z-rapporten. 8 transaktioner identifierade.
                                 </p>
                                 {/* Confirmation Card */}
-                                <div className="rounded-xl border-2 border-dashed border-primary/40 bg-primary/5 overflow-hidden max-w-md">
-                                    <div className="px-4 py-3 border-b border-border/40 flex items-center gap-3">
-                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/10">
-                                            <Pencil className="h-4 w-4 text-primary" />
+                                <div className="rounded-xl border-2 border-dashed border-ring/40 bg-muted/30 overflow-hidden max-w-md">
+                                    <div className="px-4 py-3 flex items-center gap-3">
+                                        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-100">
+                                            <FileText className="h-4 w-4 text-blue-600" />
                                         </div>
                                         <div>
                                             <h3 className="font-semibold text-sm">Bokför Z-rapport</h3>
                                             <p className="text-xs text-muted-foreground">2025-01-15 • Kassasystem</p>
                                         </div>
                                     </div>
+                                    <div className="h-px bg-border/40 mx-4" />
                                     <div className="px-4 py-3 space-y-2 text-sm">
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Kontantförsäljning</span>
@@ -208,21 +209,24 @@ function ZReportContextPreviewContent() {
                                         </div>
                                         <div className="flex justify-between">
                                             <span className="text-muted-foreground">Returer/Rabatter</span>
-                                            <span className="font-medium text-red-500">-730 kr</span>
+                                            <span className="font-medium text-red-800/70">-730 kr</span>
                                         </div>
-                                        <div className="flex justify-between pt-2 border-t border-border/40">
+                                        <div className="flex justify-between pt-2">
                                             <span className="font-medium">Total</span>
                                             <span className="font-bold">30 970 kr</span>
                                         </div>
                                     </div>
-                                    <div className="px-4 py-3 border-t border-border/40 flex items-center gap-2">
-                                        <button className="h-8 px-3 bg-primary text-white text-sm font-medium rounded-md flex items-center gap-1.5">
-                                            <Check className="w-3.5 h-3.5" />Godkänn
-                                        </button>
-                                        <button className="h-8 px-3 text-muted-foreground text-sm font-medium rounded-md">Kommentera</button>
-                                        <button className="h-8 px-3 text-muted-foreground text-sm font-medium rounded-md ml-auto">
-                                            <X className="w-3.5 h-3.5" />
-                                        </button>
+                                    <div className="py-3">
+                                        <div className="h-px bg-border/40 mx-4 mb-3" />
+                                        <div className="px-4 flex items-center gap-2">
+                                            <button className="h-8 px-3 bg-primary text-white text-sm font-medium rounded-md flex items-center gap-1.5">
+                                                <Check className="w-3.5 h-3.5" />Godkänn
+                                            </button>
+                                            <button className="h-8 px-3 text-muted-foreground text-sm font-medium rounded-md">Kommentera</button>
+                                            <button className="h-8 px-3 text-muted-foreground text-sm font-medium rounded-md ml-auto">
+                                                <X className="w-3.5 h-3.5" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
                             </motion.div>
@@ -231,7 +235,7 @@ function ZReportContextPreviewContent() {
                 </div>
 
                 {/* Input Bar */}
-                <div className="mt-auto pt-2 md:mb-8">
+                <div className="mt-auto pt-2 md:mb-6">
                     {step >= 1 && step < 2 && (
                         <motion.div
                             initial={{ opacity: 0, y: 10 }}
