@@ -17,8 +17,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
     return (
         <>
-            <SidebarProvider>
-                <AppSidebar />
+            <SidebarProvider
+                style={
+                    {
+                        "--sidebar-width": "calc(var(--spacing) * 72)",
+                        "--header-height": "calc(var(--spacing) * 12)",
+                    } as React.CSSProperties
+                }
+            >
+                <AppSidebar variant="inset" />
                 <SidebarInset>
                     <div className="w-full max-w-7xl mx-auto">
                         {children}

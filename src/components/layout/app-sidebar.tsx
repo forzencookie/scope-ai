@@ -1,24 +1,27 @@
 "use client"
 
 import * as React from "react"
-import { Sparkles, PanelLeft, type LucideIcon } from "lucide-react"
+import { Sparkles, PanelLeft, Bot, Menu, type LucideIcon } from "lucide-react"
 
 import { NavMain, NavSettings, NavAIConversations } from "./sidebar-nav"
 import { UserTeamSwitcher } from "./user-team-switcher"
+import { AIChatSidebar } from "./ai-chat-sidebar"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
-  SidebarRail,
   SidebarMenu,
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
+  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { SettingsDialog } from "../settings"
+import { Button } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 
 // Import data from the data layer
 import {
@@ -28,9 +31,11 @@ import {
   navSettings
 } from "../../data/app-navigation"
 
+type SidebarMode = "navigation" | "ai-chat"
+
 interface AppSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, "variant"> {
   /** 'default' shows full navigation, 'minimal' shows empty sidebar with custom header */
-  variant?: "default" | "minimal"
+  variant?: "default" | "minimal" | "inset"
   /** Custom header config for minimal variant */
   minimalHeader?: {
     icon?: LucideIcon
@@ -51,6 +56,9 @@ export function AppSidebar({
   const settingsParam = searchParams?.get("settings")
   const { state, toggleSidebar } = useSidebar()
 
+  // Sidebar mode state
+  const [sidebarMode, setSidebarMode] = React.useState<SidebarMode>("navigation")
+
   // State for settings dialog
   const [settingsOpen, setSettingsOpen] = React.useState(!!settingsParam)
 
@@ -69,20 +77,19 @@ export function AppSidebar({
   // Handle dialog state change
   const handleSettingsOpenChange = (open: boolean) => {
     if (!open && settingsParam) {
-      // Closing: Replace URL to remove param without adding history stack (user expects to stay on current page)
-      // or simply rely on router.back() if we tracked history?
-      // "Back button closes dialog" works if we pushed.
-      // If user clicks "X", we want to remove the param.
-      // Using replace() here is safe.
       const params = new URLSearchParams(searchParams?.toString())
       params.delete("settings")
       router.replace(`${pathname}?${params.toString()}`)
     } else if (open && !settingsParam) {
-      // Opening via other means (if any), push state
       handleOpenSettings()
     }
     setSettingsOpen(open)
   }
+
+  // Toggle sidebar mode
+  const toggleMode = React.useCallback(() => {
+    setSidebarMode(prev => prev === "navigation" ? "ai-chat" : "navigation")
+  }, [])
 
   // Default minimal header for AI workspace style
   const header = minimalHeader ?? {
@@ -103,7 +110,6 @@ export function AppSidebar({
                 size="lg"
                 className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground cursor-default hover:bg-transparent"
                 onClick={() => {
-                  // If collapsed, clicking anywhere on the button (the logo) expands it
                   if (state === "collapsed") {
                     toggleSidebar()
                   }
@@ -136,31 +142,69 @@ export function AppSidebar({
         <SidebarContent>
           {/* Empty - minimal variant has no navigation */}
         </SidebarContent>
-        <SidebarRail />
       </Sidebar>
     )
   }
 
+  // Determine sidebar variant to pass to underlying Sidebar
+  const sidebarVariant = variant === "inset" ? "inset" : undefined
+
   return (
     <>
-      <Sidebar collapsible="icon" {...props}>
-        <SidebarHeader>
-          <UserTeamSwitcher user={mockUser} teams={mockTeams} />
-        </SidebarHeader>
-        <SidebarContent>
-          <NavMain items={navPlatform} />
-          <NavAIConversations />
-        </SidebarContent>
-        <SidebarFooter>
-          <NavSettings items={navSettings} onSettingsClick={handleOpenSettings} />
-        </SidebarFooter>
-        <SidebarRail />
-      </Sidebar>
       <SettingsDialog
         open={settingsOpen}
         onOpenChange={handleSettingsOpenChange}
         defaultTab={settingsParam || undefined}
       />
+      <Sidebar collapsible="offcanvas" variant={sidebarVariant} {...props}>
+        <SidebarHeader>
+          <UserTeamSwitcher user={mockUser} teams={mockTeams} />
+          {/* Mode Toggle */}
+          <div className="flex items-center justify-center gap-1 px-2 pt-1">
+            <Button
+              variant={sidebarMode === "navigation" ? "secondary" : "ghost"}
+              size="sm"
+              className="flex-1 h-8 text-xs gap-1.5"
+              onClick={() => setSidebarMode("navigation")}
+              title="Navigation"
+            >
+              <Menu className="h-3.5 w-3.5" />
+              <span>Meny</span>
+            </Button>
+            <Button
+              variant={sidebarMode === "ai-chat" ? "secondary" : "ghost"}
+              size="sm"
+              className="flex-1 h-8 text-xs gap-1.5"
+              onClick={() => setSidebarMode("ai-chat")}
+              title="AI Chat"
+            >
+              <Bot className="h-3.5 w-3.5" />
+              <span>AI</span>
+            </Button>
+          </div>
+        </SidebarHeader>
+
+        <SidebarContent>
+          {sidebarMode === "navigation" ? (
+            <>
+              <NavMain items={navPlatform} />
+              <NavAIConversations />
+            </>
+          ) : (
+            <AIChatSidebar />
+          )}
+        </SidebarContent>
+
+        {sidebarMode === "navigation" && (
+          <SidebarFooter>
+            <NavSettings items={navSettings} onSettingsClick={handleOpenSettings} />
+          </SidebarFooter>
+        )}
+
+
+      </Sidebar>
+
     </>
   )
 }
+
