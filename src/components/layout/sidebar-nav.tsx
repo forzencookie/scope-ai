@@ -8,48 +8,43 @@ import { cn } from "@/lib/utils"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useTextMode } from "@/providers/text-mode-provider"
-
-// Icon color configuration for sidebar items (using both advanced and easy mode keys)
-const iconColors: Record<string, { bg: string; icon: string }> = {
-  // Economy - Advanced
-  "Bokföring": { bg: "bg-emerald-500/15", icon: "text-emerald-500" },
-  "Min bokföring": { bg: "bg-emerald-500/15", icon: "text-emerald-500" },
-  "Rapporter": { bg: "bg-orange-500/15", icon: "text-orange-500" },
-  "Löner": { bg: "bg-pink-500/15", icon: "text-pink-500" },
-  "Ägare & Styrning": { bg: "bg-indigo-500/15", icon: "text-indigo-500" },
-  "Ägarinfo": { bg: "bg-indigo-500/15", icon: "text-indigo-500" },
-}
-
-// Helper component for styled icons
-function IconWrapper({ title, Icon, className }: { title: string; Icon: LucideIcon; className?: string }) {
-  const colors = iconColors[title]
-  if (!colors) {
-    // No color config - render plain icon but wrapped for alignment
-    return (
-      <span className={cn("flex items-center justify-center size-8 rounded-lg", className)}>
-        <Icon className="size-4" />
-      </span>
-    )
-  }
-  return (
-    <span className={cn("flex items-center justify-center size-8 rounded-lg", colors.bg, className)}>
-      <Icon className={cn("size-4", colors.icon)} />
-    </span>
-  )
-}
-
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuSub, DropdownMenuSubTrigger, DropdownMenuSubContent, DropdownMenuPortal } from "@/components/ui/dropdown-menu"
-import { SidebarGroup, SidebarGroupLabel, SidebarMenu, SidebarMenuAction, SidebarMenuButton, SidebarMenuItem, SidebarMenuSub, SidebarMenuSubButton, SidebarMenuSubItem, useSidebar } from "@/components/ui/sidebar"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuSeparator,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarGroupAction,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem,
+  useSidebar,
+} from "@/components/ui/sidebar"
 import { SettingsDialog } from "../settings"
 
 // ============================================================================
-// NavMain - Main sidebar navigation with collapsible submenus
+// NavSection - Shadcn-style section with "More" dropdown
 // ============================================================================
 
-export function NavMain({
+export function NavSection({
   items,
   label,
+  ...props
 }: {
   items: {
     title: string
@@ -57,11 +52,11 @@ export function NavMain({
     url: string
     icon?: LucideIcon
     isActive?: boolean
-    muted?: boolean
-    items?: { title: string; titleEnkel?: string; url: string }[]
   }[]
-  label?: string
+  label: string
+  icon?: LucideIcon
 }) {
+  const { isMobile } = useSidebar()
   const { isEnkel } = useTextMode()
 
   // Helper to get the correct title based on mode
@@ -69,103 +64,55 @@ export function NavMain({
     return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
   }
 
-  return (
-    <SidebarGroup>
-      {label && <SidebarGroupLabel>{label}</SidebarGroupLabel>}
-      <SidebarMenu>
-        {items.map((item) => {
-          const displayTitle = getTitle(item)
-          return item.items && item.items.length > 0 ? (
-            <Collapsible key={item.title} asChild defaultOpen={item.isActive} className="group/collapsible">
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild tooltip={displayTitle}>
-                  <Link href={item.url}>
-                    {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
-                    <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
-                  </Link>
-                </SidebarMenuButton>
-                <CollapsibleTrigger asChild>
-                  <SidebarMenuAction className="data-[state=open]:rotate-90">
-                    <ChevronRight />
-                    <span className="sr-only">Toggle</span>
-                  </SidebarMenuAction>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  <SidebarMenuSub>
-                    {item.items?.map((subItem) => (
-                      <SidebarMenuSubItem key={subItem.title}>
-                        <SidebarMenuSubButton asChild>
-                          <Link href={subItem.url}><span>{getTitle(subItem)}</span></Link>
-                        </SidebarMenuSubButton>
-                      </SidebarMenuSubItem>
-                    ))}
-                  </SidebarMenuSub>
-                </CollapsibleContent>
-              </SidebarMenuItem>
-            </Collapsible>
-          ) : (
-            <SidebarMenuItem key={item.title}>
-              <SidebarMenuButton asChild tooltip={displayTitle} className={item.muted ? "opacity-50 hover:opacity-100 transition-opacity" : ""}>
-                <Link href={item.url}>
-                  {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
-                  <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
-                </Link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )
-        })}
-      </SidebarMenu>
-    </SidebarGroup>
-  )
-}
-
-// ============================================================================
-// NavProjects - Projects list with dropdown actions
-// ============================================================================
-
-export function NavProjects({
-  projects,
-}: {
-  projects: { name: string; url: string; icon: LucideIcon }[]
-}) {
-  const { isMobile } = useSidebar()
+  // Split items into visible (first 3) and hidden (rest)
+  const visibleItems = items.slice(0, 3)
+  const hiddenItems = items.slice(3)
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel>Projects</SidebarGroupLabel>
+      <SidebarGroupLabel className="pl-1 flex items-center">
+        {label}
+        {props.icon && <props.icon className="ml-2 h-4 w-4 text-muted-foreground" />}
+      </SidebarGroupLabel>
+
       <SidebarMenu>
-        {projects.map((item) => (
-          <SidebarMenuItem key={item.name}>
-            <SidebarMenuButton asChild>
-              <a href={item.url}>
-                <item.icon />
-                <span>{item.name}</span>
-              </a>
+        {visibleItems.map((item) => (
+          <SidebarMenuItem key={item.title}>
+            <SidebarMenuButton asChild tooltip={getTitle(item)} className="pl-1">
+              <Link href={item.url}>
+                <span>{getTitle(item)}</span>
+              </Link>
             </SidebarMenuButton>
+          </SidebarMenuItem>
+        ))}
+
+        {hiddenItems.length > 0 && (
+          <SidebarMenuItem>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <SidebarMenuAction showOnHover>
-                  <MoreHorizontal />
-                  <span className="sr-only">More</span>
-                </SidebarMenuAction>
+                <SidebarMenuButton className="text-sidebar-foreground/70 pl-1">
+                  <MoreHorizontal className="text-sidebar-foreground/70" />
+                  <span>Mer</span>
+                </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 rounded-lg" side={isMobile ? "bottom" : "right"} align={isMobile ? "end" : "start"}>
-                <DropdownMenuItem><Folder className="text-muted-foreground" /><span>View Project</span></DropdownMenuItem>
-                <DropdownMenuItem><Forward className="text-muted-foreground" /><span>Share Project</span></DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem><Trash2 className="text-muted-foreground" /><span>Delete Project</span></DropdownMenuItem>
+              <DropdownMenuContent
+                className="w-48 rounded-lg"
+                side={isMobile ? "bottom" : "right"}
+                align={isMobile ? "end" : "start"}
+              >
+                {hiddenItems.map((item) => (
+                  <DropdownMenuItem key={item.title} asChild>
+                    <Link href={item.url} className="cursor-pointer">
+                      <span>{item.title}</span>
+                    </Link>
+                  </DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           </SidebarMenuItem>
-        ))}
-        <SidebarMenuItem>
-          <SidebarMenuButton className="text-sidebar-foreground/70">
-            <MoreHorizontal className="text-sidebar-foreground/70" />
-            <span>More</span>
-          </SidebarMenuButton>
-        </SidebarMenuItem>
+        )}
       </SidebarMenu>
-    </SidebarGroup>
+    </SidebarGroup >
   )
 }
 
@@ -176,9 +123,11 @@ export function NavProjects({
 export function NavSettings({
   items,
   onSettingsClick,
+  icon: Icon,
 }: {
   items: { title: string; titleEnkel?: string; url: string; icon?: LucideIcon }[]
   onSettingsClick?: () => void
+  icon?: LucideIcon
 }) {
   const { isEnkel } = useTextMode()
 
@@ -188,23 +137,24 @@ export function NavSettings({
   }
 
   return (
-    <SidebarGroup>
-      <SidebarGroupLabel>{isEnkel ? "Övrigt" : "Mer"}</SidebarGroupLabel>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
+      <SidebarGroupLabel className="pl-1 flex items-center">
+        {isEnkel ? "Övrigt" : "Mer"}
+        {Icon && <Icon className="ml-2 h-4 w-4 text-muted-foreground" />}
+      </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
           const displayTitle = getTitle(item)
           return (
             <SidebarMenuItem key={item.title}>
               {item.title === "Inställningar" && onSettingsClick ? (
-                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle}>
-                  {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
-                  <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
+                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle} className="pl-1">
+                  <span>{displayTitle}</span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton asChild tooltip={displayTitle}>
+                <SidebarMenuButton asChild tooltip={displayTitle} className="pl-1">
                   <Link href={item.url}>
-                    {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
-                    <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
+                    <span>{displayTitle}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
@@ -216,12 +166,6 @@ export function NavSettings({
   )
 }
 
-// Export IconWrapper and iconColors for use in other components
-export { IconWrapper, iconColors }
-
-// ============================================================================
-// NavAIConversations - Quick access to recent AI conversations in sidebar
-// ============================================================================
 
 const AI_STORAGE_KEY = 'ai-robot-conversations' // Legacy, kept for reference
 
@@ -337,10 +281,12 @@ export function NavAIConversations() {
             ) : (
               conversations.map((conv) => (
                 <SidebarMenuItem key={conv.id}>
-                  <SidebarMenuButton asChild>
-                    <Link href={`/dashboard/ai-robot?conversation=${conv.id}`}>
-                      <span className="truncate">{conv.title}</span>
-                    </Link>
+                  <SidebarMenuButton
+                    onClick={() => {
+                      window.dispatchEvent(new CustomEvent("load-conversation", { detail: conv.id }))
+                    }}
+                  >
+                    <span className="truncate">{conv.title}</span>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))

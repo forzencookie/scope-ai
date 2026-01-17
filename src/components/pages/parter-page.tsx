@@ -29,7 +29,7 @@ import {
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbAIBadge,
+
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -55,13 +55,14 @@ interface TabConfig {
     label: string;
     icon: LucideIcon;
     color: string;
-    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'styrelseprotokoll' | 'bolagsstamma' | 'arsmote' | 'utdelning' | null;
+    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'styrelseprotokoll' | 'bolagsstamma' | 'arsmote' | 'utdelning' | 'agarinfo' | 'k10' | null;
 }
 
 const allTabs: TabConfig[] = [
     { id: 'aktiebok', label: 'Aktiebok', icon: BookOpen, color: "bg-blue-500", feature: 'aktiebok' },
     { id: 'delagare', label: 'Delägare', icon: Users, color: "bg-purple-500", feature: 'delagare' },
     { id: 'utdelning', label: 'Utdelning', icon: DollarSign, color: "bg-emerald-500", feature: 'utdelning' },
+    { id: 'agarinfo', label: 'Ägarinfo', icon: Building2, color: "bg-blue-400", feature: 'agarinfo' },
     { id: 'medlemsregister', label: 'Medlemsregister', icon: Users, color: "bg-indigo-500", feature: 'medlemsregister' },
     { id: 'styrelseprotokoll', label: 'Styrelseprotokoll', icon: FileText, color: "bg-amber-500", feature: 'styrelseprotokoll' },
     { id: 'bolagsstamma', label: 'Bolagsstämma', icon: Vote, color: "bg-orange-500", feature: 'bolagsstamma' },
@@ -83,6 +84,10 @@ const tabHeaders: Record<string, { title: string; description: string }> = {
     utdelning: {
         title: "Utdelning",
         description: "Planera och dokumentera aktieutdelning för delägare."
+    },
+    agarinfo: {
+        title: "Ägarinfo",
+        description: "Information om företagets ägare och deras roller."
     },
     medlemsregister: {
         title: "Medlemsregister",
@@ -150,7 +155,7 @@ function ParterPageContent() {
         if (tabIndex < 3) {
             setIsManuallyExpanded(false);
         }
-        router.push(`/dashboard/parter?tab=${tab}`, { scroll: false });
+        router.push(`/dashboard/agare?tab=${tab}`, { scroll: false });
     }, [router, tabs]);
 
     // If EF, show simple owner info
@@ -161,10 +166,7 @@ function ParterPageContent() {
                     {/* Page Heading */}
                     <div className="px-4 pt-4">
                         <div className="w-full">
-                            <h2 className="text-xl font-semibold flex items-center gap-2">
-                                <div className="flex items-center justify-center w-8 h-8 rounded-md bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-                                    <User className="h-4 w-4" />
-                                </div>
+                            <h2 className="text-xl font-semibold">
                                 Företagare
                             </h2>
                             <p className="text-sm text-muted-foreground">Information om dig som enskild näringsidkare.</p>
@@ -193,17 +195,14 @@ function ParterPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="flex items-center gap-2">
-                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-blue-100 text-blue-600 dark:bg-blue-950/50 dark:text-blue-400">
-                                            <Users className="h-4 w-4" />
-                                        </div>
-                                        Parter
+                                    <BreadcrumbPage>
+                                        Ägare & Styrning
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
-                    <BreadcrumbAIBadge />
+
                 </header>
 
                 {/* Tabs */}
@@ -221,7 +220,7 @@ function ParterPageContent() {
                                                 className={cn(
                                                     "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
                                                     isActive
-                                                        ? "bg-primary/5 text-primary"
+                                                        ? "text-primary"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
@@ -280,6 +279,19 @@ function ParterPageContent() {
                         {currentTab === 'aktiebok' && <LazyAktiebok />}
                         {currentTab === 'delagare' && <LazyDelagare />}
                         {currentTab === 'utdelning' && <LazyUtdelning />}
+                        {currentTab === 'agarinfo' && (
+                            <div className="space-y-6">
+                                <Card>
+                                    <CardHeader>
+                                        <CardTitle>Ägaröversikt</CardTitle>
+                                        <CardDescription>Detaljerad information om alla registrerade ägare.</CardDescription>
+                                    </CardHeader>
+                                    <CardContent>
+                                        <div className="text-sm text-muted-foreground">Ägarinformation hämtas från aktieboken och Bolagsverket.</div>
+                                    </CardContent>
+                                </Card>
+                            </div>
+                        )}
                         {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
                         {currentTab === 'styrelseprotokoll' && <LazyStyrelseprotokoll />}
                         {currentTab === 'bolagsstamma' && <LazyBolagsstamma />}

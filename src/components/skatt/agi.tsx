@@ -18,7 +18,7 @@ import {
     Trash2,
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
@@ -54,6 +54,7 @@ import { useCompany } from "@/providers/company-provider"
 
 export function AGIContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const { verifications } = useVerifications()
     const { company } = useCompany()
@@ -273,7 +274,7 @@ export function AGIContent() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button onClick={() => router.push(buildAIChatUrl(getDefaultAIContext('agi')))}>
+                        <Button onClick={() => navigateToAI(getDefaultAIContext('agi', 'Ny Arbetsgivardeklaration'))}>
                             <Plus className="h-4 w-4 mr-2" />
                             Ny AGI
                         </Button>
@@ -312,7 +313,7 @@ export function AGIContent() {
                     title="Automatisk AGI"
                     description="AI beräknar skatt och avgifter från lönedata."
                     variant="ai"
-                    onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('agi')))}
+                    onAction={() => navigateToAI(getDefaultAIContext('agi'))}
                 />
 
                 {/* Separator */}

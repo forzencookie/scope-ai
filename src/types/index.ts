@@ -80,6 +80,7 @@ export interface Team {
   name: string
   logo: LucideIcon
   plan: "Free" | "Pro" | "Max"
+  companyType: CompanyType
 }
 
 // ============================================

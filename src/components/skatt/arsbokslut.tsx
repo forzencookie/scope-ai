@@ -26,7 +26,7 @@ import {
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 import { useToast } from "@/components/ui/toast"
 
 
@@ -35,6 +35,7 @@ import { useToast } from "@/components/ui/toast"
 // =============================================================================
 export function ArsbokslutContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const { companyTypeName } = useCompany()
     const { text } = useTextMode()
@@ -178,7 +179,7 @@ export function ArsbokslutContent() {
                     title={text.reports.aiYearEnd}
                     description={text.reports.aiYearEndDesc}
                     variant="ai"
-                    onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('arsbokslut')))}
+                    onAction={() => navigateToAI(getDefaultAIContext('arsbokslut'))}
                 />
 
                 {/* Section Separator */}

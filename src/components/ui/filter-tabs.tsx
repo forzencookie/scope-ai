@@ -35,7 +35,7 @@ export function FilterTabs({
 }: FilterTabsProps) {
   const isButtons = variant === "buttons"
   const isSmall = size === "sm"
-  
+
   return (
     <div className={cn(
       "flex items-center",
@@ -51,14 +51,14 @@ export function FilterTabs({
             isSmall ? "px-3 py-1.5 text-sm h-8" : "px-3 py-1.5 text-sm",
             isButtons
               ? value === option.value
-                ? "bg-secondary text-secondary-foreground"
-                : "text-muted-foreground hover:text-foreground hover:bg-accent"
+                ? "text-primary bg-transparent"
+                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
               : value === option.value
                 ? "bg-background text-foreground"
                 : "text-muted-foreground hover:text-foreground"
           )}
         >
-          {option.icon && <span className="mr-1.5">{option.icon}</span>}
+          {option.icon && <span className="mr-1.5 opacity-70">{option.icon}</span>}
           {option.label}
           {option.count !== undefined && (
             <span className={cn(

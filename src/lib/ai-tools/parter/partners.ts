@@ -30,7 +30,7 @@ export const getPartnersTool = defineTool<Record<string, never>, any[]>({
                         component: 'PartnerList' as any,
                         props: { stats: data },
                         title: 'Delägare',
-                        fullViewRoute: '/dashboard/parter?tab=delagare',
+                        fullViewRoute: '/dashboard/agare?tab=delagare',
                     },
                 }
             }
@@ -62,7 +62,7 @@ export const getMembersTool = defineTool<Record<string, never>, any[]>({
                         component: 'MemberList' as any,
                         props: { stats: data },
                         title: 'Medlemsregister',
-                        fullViewRoute: '/dashboard/parter?tab=medlemsregister',
+                        fullViewRoute: '/dashboard/agare?tab=medlemsregister',
                     },
                 }
             }

@@ -42,11 +42,12 @@ import { VatProcessor, type VatReport } from "@/lib/vat-processor"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 import { taxService, type VatStats } from "@/lib/services/tax-service"
 
 export function MomsdeklarationContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const { text } = useTextMode()
     const { verifications } = useVerifications()
@@ -300,7 +301,7 @@ export function MomsdeklarationContent() {
                     title={text.reports.aiVatReport}
                     description={text.reports.aiVatDesc}
                     variant="ai"
-                    onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('moms')))}
+                    onAction={() => navigateToAI(getDefaultAIContext('moms'))}
                 />
 
                 <MomsWizardDialog

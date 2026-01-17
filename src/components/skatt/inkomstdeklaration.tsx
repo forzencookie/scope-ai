@@ -35,7 +35,7 @@ import { useVerifications } from "@/hooks/use-verifications"
 import { Ink2Processor, type Ink2FormField } from "@/lib/ink2-processor"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { cn } from "@/lib/utils"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 
 import { SectionCard } from "@/components/ui/section-card"
 import { SRUPreviewDialog } from "./dialogs/sru"
@@ -49,6 +49,7 @@ import { useCompany } from "@/providers/company-provider"
 
 export function InkomstdeklarationContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const { addToast: toast } = useToast()
     const { verifications } = useVerifications()
     const { company } = useCompany()
@@ -225,7 +226,7 @@ export function InkomstdeklarationContent() {
                     title="AI-inkomstdeklaration"
                     description="INK2-fälten genereras automatiskt från bokföringen."
                     variant="ai"
-                    onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('inkomstdeklaration')))}
+                    onAction={() => navigateToAI(getDefaultAIContext('inkomstdeklaration'))}
                 />
 
                 <SRUPreviewDialog

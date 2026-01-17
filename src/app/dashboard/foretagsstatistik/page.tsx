@@ -5,7 +5,7 @@ import {
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbAIBadge,
+
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -21,8 +21,25 @@ import {
 import { EkonomiskOversikt } from "@/components/foretagsstatistik/oversikt"
 import { Transaktionsrapport } from "@/components/foretagsstatistik/transaktionsrapport"
 import { Kostnadsanalys } from "@/components/foretagsstatistik/kostnadsanalys"
+import { useSearchParams, useRouter } from "next/navigation"
+import { useCallback, useMemo } from "react"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
+import { cn } from "@/lib/utils"
 
 export default function CompanyStatisticsPage() {
+    const searchParams = useSearchParams()
+    const router = useRouter()
+
+    const currentTab = searchParams.get("tab") || "overview"
+
+    const setCurrentTab = useCallback((tab: string) => {
+        router.push(`/dashboard/foretagsstatistik?tab=${tab}`, { scroll: false })
+    }, [router])
+
     return (
         <TooltipProvider delayDuration={400}>
             <div className="flex flex-col min-h-svh">
@@ -41,48 +58,56 @@ export default function CompanyStatisticsPage() {
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
-                    <BreadcrumbAIBadge />
+
                 </header>
 
                 <main className="p-6">
                     <div className="max-w-6xl w-full">
-                        <Tabs defaultValue="overview" className="w-full">
-                            <TabsList className="bg-transparent rounded-none h-auto p-0 mb-6 flex gap-2 border-b-2 border-border/60 pb-2 w-full justify-start">
-                                <TabsTrigger
-                                    value="overview"
-                                    className="gap-2 data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm font-medium"
-                                >
-                                    <LayoutDashboard className="h-3.5 w-3.5" />
-                                    Översikt
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="transactions"
-                                    className="gap-2 data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm font-medium"
-                                >
-                                    <ArrowLeftRight className="h-3.5 w-3.5" />
-                                    Transaktioner & Fakturor
-                                </TabsTrigger>
-                                <TabsTrigger
-                                    value="expenses"
-                                    className="gap-2 data-[state=active]:bg-secondary data-[state=active]:shadow-none rounded-md px-3 py-1.5 text-sm font-medium"
-                                >
-                                    <TrendingDown className="h-3.5 w-3.5" />
-                                    Kostnader
-                                </TabsTrigger>
-                            </TabsList>
+                        {/* Tabs */}
+                        <div className="px-6 pt-4">
+                            <div className="w-full">
+                                <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 overflow-x-auto scrollbar-hide">
+                                    {[
+                                        { id: 'overview', label: 'Översikt', color: 'bg-emerald-500' },
+                                        { id: 'transactions', label: 'Transaktioner & Fakturor', color: 'bg-blue-500' },
+                                        { id: 'expenses', label: 'Kostnader', color: 'bg-amber-500' },
+                                    ].map((tab) => {
+                                        const isActive = currentTab === tab.id
 
-                            <TabsContent value="overview">
-                                <EkonomiskOversikt />
-                            </TabsContent>
+                                        return (
+                                            <Tooltip key={tab.id}>
+                                                <TooltipTrigger asChild>
+                                                    <button
+                                                        onClick={() => setCurrentTab(tab.id)}
+                                                        className={cn(
+                                                            "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap",
+                                                            isActive
+                                                                ? "text-primary"
+                                                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                                                        )}
+                                                    >
+                                                        <div className={cn("h-2 w-2 rounded-full", tab.color)} />
+                                                        {isActive && <span>{tab.label}</span>}
+                                                    </button>
+                                                </TooltipTrigger>
+                                                {!isActive && (
+                                                    <TooltipContent side="bottom">
+                                                        <p>{tab.label}</p>
+                                                    </TooltipContent>
+                                                )}
+                                            </Tooltip>
+                                        )
+                                    })}
+                                </div>
+                            </div>
+                        </div>
 
-                            <TabsContent value="transactions">
-                                <Transaktionsrapport />
-                            </TabsContent>
-
-                            <TabsContent value="expenses">
-                                <Kostnadsanalys />
-                            </TabsContent>
-                        </Tabs>
+                        {/* Tab Content */}
+                        <div className="bg-background">
+                            {currentTab === "overview" && <EkonomiskOversikt />}
+                            {currentTab === "transactions" && <Transaktionsrapport />}
+                            {currentTab === "expenses" && <Kostnadsanalys />}
+                        </div>
                     </div>
                 </main>
             </div>

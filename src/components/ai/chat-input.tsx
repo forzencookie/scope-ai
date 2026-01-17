@@ -159,7 +159,8 @@ export function ChatInput({
             {/* Input container */}
             <div
                 className={cn(
-                    "bg-muted/40 dark:bg-muted/30 border-2 rounded-xl overflow-hidden transition-colors",
+                    "bg-muted/40 dark:bg-muted/30 border-2 rounded-xl overflow-hidden transition-all",
+                    "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
                     isDragging ? "border-primary bg-primary/5" : "border-border/50"
                 )}
                 onDragOver={handleDragOver}

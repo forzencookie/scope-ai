@@ -28,10 +28,11 @@ import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
 
 import { useCompany } from "@/providers/company-provider"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 
 export function ArsredovisningContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const [showAIDialog, setShowAIDialog] = useState(false)
     const { verifications } = useVerifications()
@@ -144,7 +145,7 @@ export function ArsredovisningContent() {
                     title="AI-årsredovisning"
                     description="Genereras automatiskt från bokföringen enligt K2."
                     variant="ai"
-                    onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('arsredovisning')))}
+                    onAction={() => navigateToAI(getDefaultAIContext('arsredovisning'))}
                 />
 
                 {/* Section Separator */}

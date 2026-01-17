@@ -6,6 +6,7 @@ import { Verification } from "./mock-data"
  */
 export interface VatReport {
     // Metadata
+    periodId?: string | number
     period: string
     dueDate: string
     status: "upcoming" | "submitted" | "overdue"

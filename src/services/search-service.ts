@@ -176,7 +176,7 @@ async function searchEmployees(query: string): Promise<SearchResult[]> {
         type: 'employee' as SearchResultType,
         title: s.name,
         subtitle: `Aktieägare · ${s.ownershipPercentage}% ägande`,
-        href: `/dashboard/parter?tab=aktiebok&id=${s.id}`,
+        href: `/dashboard/agare?tab=aktiebok&id=${s.id}`,
         category: "Parter",
         colorClass: searchColors["Parter"],
         matchedField: 'name'
@@ -189,7 +189,7 @@ async function searchEmployees(query: string): Promise<SearchResult[]> {
         type: 'employee' as SearchResultType,
         title: p.name,
         subtitle: `Delägare · ${p.type}`,
-        href: `/dashboard/parter?tab=delagare&id=${p.id}`,
+        href: `/dashboard/agare?tab=delagare&id=${p.id}`,
         category: "Parter",
         colorClass: searchColors["Parter"],
         matchedField: 'name'
@@ -202,7 +202,7 @@ async function searchEmployees(query: string): Promise<SearchResult[]> {
         type: 'employee' as SearchResultType,
         title: m.name,
         subtitle: `Medlem · ${m.roles.join(', ') || 'Medlem'}`,
-        href: `/dashboard/parter?tab=delagare&id=${m.id}`,
+        href: `/dashboard/agare?tab=delagare&id=${m.id}`,
         category: "Parter",
         colorClass: searchColors["Parter"],
         matchedField: 'name'

@@ -1,32 +1,27 @@
 "use client"
 
-import { useCallback, Suspense } from "react"
-import { useSearchParams, useRouter } from "next/navigation"
-import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbAIBadge,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
+import { useCallback, Suspense, useMemo } from "react"
+import { useSearchParams, useRouter, notFound } from "next/navigation"
 import {
     Tooltip,
     TooltipContent,
     TooltipTrigger,
     TooltipProvider
 } from "@/components/ui/tooltip"
+import {
+    Breadcrumb,
+    BreadcrumbItem,
+    BreadcrumbList,
+    BreadcrumbPage,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import { SidebarTrigger } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import {
-    FileBarChart,
+    Calculator,
     FileText,
     Send,
-    Calculator,
-    PieChart,
-    TrendingUp,
-    Scale,
-    Origami,
+    FileBarChart,
     Loader2,
 } from "lucide-react"
 import { useCompany } from "@/providers/company-provider"
@@ -37,13 +32,25 @@ import { useLastUpdated } from "@/hooks/use-last-updated"
 import {
     LazyResultatrakning,
     LazyBalansrakning,
+    LazyMomsdeklaration,
+    LazyInkomstdeklaration,
+    LazyArsredovisning,
+    LazyArsbokslut,
+    LazyK10,
+    LazyAGI,
 } from "@/components/shared"
 
 // Tab configuration with feature keys for filtering
-const tabs: Array<{ id: string; label: string; color: string; feature: FeatureKey }> = [
-    { id: "resultatrakning", label: "Resultaträkning", color: "bg-green-500", feature: "arsredovisning" },
-    { id: "balansrakning", label: "Balansräkning", color: "bg-blue-500", feature: "arsredovisning" },
-]
+const allTabs: Array<{ id: string; label: string; color: string; feature: FeatureKey }> = [
+    { id: "resultatrakning", label: "Resultaträkning", color: "bg-emerald-500", feature: "resultatrakning" },
+    { id: "balansrakning", label: "Balansräkning", color: "bg-blue-500", feature: "balansrakning" },
+    { id: "momsdeklaration", label: "Momsdeklaration", color: "bg-purple-500", feature: "momsdeklaration" },
+    { id: "inkomstdeklaration", label: "Inkomstdeklaration", color: "bg-amber-500", feature: "inkomstdeklaration" },
+    { id: "agi", label: "AGI", color: "bg-emerald-500", feature: "agi" },
+    { id: "arsredovisning", label: "Årsredovisning", color: "bg-indigo-500", feature: "arsredovisning" },
+    { id: "arsbokslut", label: "Årsbokslut", color: "bg-indigo-400", feature: "arsbokslut" },
+    { id: "k10", label: "K10", color: "bg-purple-400", feature: "k10" },
+];
 
 function ReportsPageContent() {
     const searchParams = useSearchParams()
@@ -52,9 +59,18 @@ function ReportsPageContent() {
     const lastUpdated = useLastUpdated()
 
     // Filter tabs based on company type features
-    const availableTabs = tabs.filter(tab => hasFeature(tab.feature))
+    const availableTabs = useMemo(() => {
+        return allTabs.filter(tab => hasFeature(tab.feature))
+    }, [hasFeature])
 
-    const currentTab = searchParams.get("tab") || availableTabs[0]?.id || "arsredovisning"
+    const tabParam = searchParams.get("tab")
+
+    // Default to first available tab
+    const currentTab = useMemo(() => {
+        if (!tabParam) return availableTabs[0]?.id || "resultatrakning"
+        const isValid = availableTabs.some(t => t.id === tabParam)
+        return isValid ? tabParam : (availableTabs[0]?.id || "resultatrakning")
+    }, [tabParam, availableTabs])
 
     const setCurrentTab = useCallback((tab: string) => {
         router.push(`/dashboard/rapporter?tab=${tab}`, { scroll: false })
@@ -66,33 +82,25 @@ function ReportsPageContent() {
                 <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
                     <div className="flex items-center gap-2">
                         <SidebarTrigger className="-ml-1" />
-                        <Separator
-                            orientation="vertical"
-                            className="mr-2 data-[orientation=vertical]:h-4"
-                        />
+                        <Separator orientation="vertical" className="mr-2 data-[orientation=vertical]:h-4" />
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="flex items-center gap-2">
-                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-orange-100 text-orange-600 dark:bg-orange-950/50 dark:text-orange-400">
-                                            <Origami className="h-4 w-4" />
-                                        </div>
+                                    <BreadcrumbPage>
                                         Rapporter
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
-                    <BreadcrumbAIBadge />
                 </header>
 
                 {/* Tabs */}
                 <div className="px-6 pt-4">
                     <div className="w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
+                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 overflow-x-auto scrollbar-hide">
                             {availableTabs.map((tab) => {
                                 const isActive = currentTab === tab.id
-
 
                                 return (
                                     <Tooltip key={tab.id}>
@@ -100,9 +108,9 @@ function ReportsPageContent() {
                                             <button
                                                 onClick={() => setCurrentTab(tab.id)}
                                                 className={cn(
-                                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
+                                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap",
                                                     isActive
-                                                        ? "bg-primary/5 text-primary"
+                                                        ? "text-primary"
                                                         : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                                                 )}
                                             >
@@ -119,7 +127,7 @@ function ReportsPageContent() {
                                 )
                             })}
 
-                            <div className="ml-auto text-sm text-muted-foreground">
+                            <div className="ml-auto text-sm text-muted-foreground pl-4">
                                 {lastUpdated}
                             </div>
                         </div>
@@ -127,10 +135,15 @@ function ReportsPageContent() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-background">
+                <div className="bg-background px-6">
                     {currentTab === "resultatrakning" && <LazyResultatrakning />}
                     {currentTab === "balansrakning" && <LazyBalansrakning />}
-
+                    {currentTab === "momsdeklaration" && <LazyMomsdeklaration />}
+                    {currentTab === "k10" && <LazyK10 />}
+                    {currentTab === "inkomstdeklaration" && <LazyInkomstdeklaration />}
+                    {currentTab === "agi" && <LazyAGI />}
+                    {currentTab === "arsredovisning" && <LazyArsredovisning />}
+                    {currentTab === "arsbokslut" && <LazyArsbokslut />}
                 </div>
             </div>
         </TooltipProvider>

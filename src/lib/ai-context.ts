@@ -51,14 +51,19 @@ export function buildAIChatUrl(context: PageContext): string {
 }
 
 /**
+ * Custom event for opening AI chat with context
+ */
+export const AI_CHAT_EVENT = "open-ai-chat"
+
+/**
  * Hook to navigate to AI chat with context
+ * Now instead of navigating to a page, it dispatches an event that the sidebar listens to.
  */
 export function useNavigateToAIChat() {
-    const router = useRouter()
-
     const navigateToAI = useCallback((context: PageContext) => {
-        router.push(buildAIChatUrl(context))
-    }, [router])
+        const event = new CustomEvent(AI_CHAT_EVENT, { detail: context })
+        window.dispatchEvent(event)
+    }, [])
 
     return navigateToAI
 }

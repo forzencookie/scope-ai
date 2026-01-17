@@ -5,18 +5,18 @@ import { ChevronRight } from "lucide-react"
 import Link from "next/link"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { 
-  SidebarGroup, 
-  SidebarGroupLabel, 
-  SidebarMenu, 
-  SidebarMenuAction, 
-  SidebarMenuButton, 
-  SidebarMenuItem, 
-  SidebarMenuSub, 
-  SidebarMenuSubButton, 
-  SidebarMenuSubItem 
+import {
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuAction,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarMenuSub,
+  SidebarMenuSubButton,
+  SidebarMenuSubItem
 } from "@/components/ui/sidebar"
-import { IconWrapper } from "./sidebar-nav"
+
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import type { NavItem } from "@/types"
@@ -34,7 +34,7 @@ export function AdaptiveNavMain({
 }) {
   const { hasFeature } = useCompany()
   const { isEnkel } = useTextMode()
-  
+
   // Helper to get the correct title based on mode
   const getTitle = (item: { title: string; titleEnkel?: string }) => {
     return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
@@ -82,7 +82,7 @@ export function AdaptiveNavMain({
               <SidebarMenuItem>
                 <SidebarMenuButton asChild tooltip={displayTitle}>
                   <Link href={item.url}>
-                    {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
+                    {item.icon && <item.icon />}
                     <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                   </Link>
                 </SidebarMenuButton>
@@ -109,7 +109,7 @@ export function AdaptiveNavMain({
             <SidebarMenuItem key={item.title}>
               <SidebarMenuButton asChild tooltip={displayTitle}>
                 <Link href={item.url}>
-                  {item.icon && <IconWrapper title={displayTitle} Icon={item.icon} />}
+                  {item.icon && <item.icon />}
                   <span className="transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">{displayTitle}</span>
                 </Link>
               </SidebarMenuButton>

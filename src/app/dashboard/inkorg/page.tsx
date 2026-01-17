@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useRouter, notFound } from "next/navigation"
 import {
     Inbox,
     Mail,
@@ -32,7 +32,7 @@ import {
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbAIBadge,
+
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -55,6 +55,7 @@ import type { InboxItem, InboxFilter } from "@/types"
 type CategoryFilter = "all" | "kvitto" | "faktura" | "leverantorsfaktura" | "annat"
 
 export default function InboxPage() {
+    notFound()
     const router = useRouter()
     const toast = useToast()
     const [items, setItems] = useState<InboxItem[]>([])
@@ -167,15 +168,14 @@ export default function InboxPage() {
                         </BreadcrumbList>
                     </Breadcrumb>
                 </div>
-                <BreadcrumbAIBadge />
+
             </header>
 
             <div className="flex flex-col gap-6 p-6">
                 {/* Page Header */}
                 <div className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-2xl font-semibold flex items-center gap-2">
-                            <Inbox className="h-6 w-6" />
+                        <h1 className="text-2xl font-semibold">
                             Inkorg
                         </h1>
                         <p className="text-sm text-muted-foreground mt-1">

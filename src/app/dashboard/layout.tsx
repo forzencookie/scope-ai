@@ -1,6 +1,6 @@
 "use client"
 
-import { AppSidebar } from "@/components/layout"
+import { AppSidebar, type SidebarMode } from "@/components/layout"
 import {
     SidebarInset,
     SidebarProvider,
@@ -10,22 +10,23 @@ import { useOnboarding } from "@/components/onboarding/onboarding-wizard"
 import { LazyOnboardingWizard } from "@/components/shared"
 import { CompanyProvider } from "@/providers/company-provider"
 import { TextModeProvider } from "@/providers/text-mode-provider"
-import { AIChatProvider } from "@/providers/ai-chat-provider"
+import { useState } from "react"
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding()
+    const [sidebarMode, setSidebarMode] = useState<SidebarMode>("navigation")
 
     return (
         <>
             <SidebarProvider
                 style={
                     {
-                        "--sidebar-width": "calc(var(--spacing) * 72)",
+                        "--sidebar-width": sidebarMode === "ai-chat" ? "400px" : "calc(var(--spacing) * 72)",
                         "--header-height": "calc(var(--spacing) * 12)",
                     } as React.CSSProperties
                 }
             >
-                <AppSidebar variant="inset" />
+                <AppSidebar variant="inset" mode={sidebarMode} onModeChange={setSidebarMode} />
                 <SidebarInset>
                     <div className="w-full max-w-7xl mx-auto">
                         {children}
@@ -50,14 +51,13 @@ export default function DashboardLayout({
     return (
         <TextModeProvider>
             <CompanyProvider>
-                <AIChatProvider>
-                    <ToastProvider>
-                        <DashboardContent>
-                            {children}
-                        </DashboardContent>
-                    </ToastProvider>
-                </AIChatProvider>
+                <ToastProvider>
+                    <DashboardContent>
+                        {children}
+                    </DashboardContent>
+                </ToastProvider>
             </CompanyProvider>
         </TextModeProvider>
     )
 }
+

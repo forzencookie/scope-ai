@@ -6,7 +6,7 @@ export {
     // Main provider
     AppProviders,
     DataProvider, // Legacy alias
-    
+
     // Hooks
     useData,
     useTransactions,
@@ -15,11 +15,11 @@ export {
     useInvoicesContext, // Legacy alias
     useReceipts,
     useReceiptsContext, // Legacy alias
-    
+
     // Query client
     getQueryClient,
     QueryProvider,
-    
+
     // Convenience providers
     TransactionsOnlyProvider,
     TransactionsProvider, // Legacy alias
@@ -47,12 +47,6 @@ export {
 export type {
     TextMode,
 } from "./text-mode-provider"
-
-// AI Chat provider
-export {
-    AIChatProvider,
-    useAIChat,
-} from "./ai-chat-provider"
 
 export type {
     AppProvidersProps,

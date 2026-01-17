@@ -9,7 +9,7 @@ import {
     BreadcrumbItem,
     BreadcrumbList,
     BreadcrumbPage,
-    BreadcrumbAIBadge,
+
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -74,17 +74,14 @@ function PayrollPageContent() {
                         <Breadcrumb>
                             <BreadcrumbList>
                                 <BreadcrumbItem>
-                                    <BreadcrumbPage className="flex items-center gap-2">
-                                        <div className="flex items-center justify-center w-7 h-7 rounded-md bg-pink-100 text-pink-600 dark:bg-pink-950/50 dark:text-pink-400">
-                                            <PiggyBank className="h-4 w-4" />
-                                        </div>
+                                    <BreadcrumbPage>
                                         Löner
                                     </BreadcrumbPage>
                                 </BreadcrumbItem>
                             </BreadcrumbList>
                         </Breadcrumb>
                     </div>
-                    <BreadcrumbAIBadge />
+
                 </header>
 
                 {/* Tabs with preload on hover */}

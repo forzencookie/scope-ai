@@ -34,7 +34,7 @@ import {
 import { SectionCard } from "@/components/ui/section-card"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { useVerifications } from "@/hooks/use-verifications"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)
@@ -128,6 +128,7 @@ function useNECalculation() {
 
 export function NEBilagaContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const { addToast: toast } = useToast()
     const neData = useNECalculation()
     const [showAdjustments, setShowAdjustments] = useState(true)
@@ -212,7 +213,7 @@ export function NEBilagaContent() {
                         title="AI-hjälp för NE-bilaga"
                         description="Få hjälp att fylla i NE-bilagan baserat på din bokföring."
                         variant="ai"
-                        onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('ne-bilaga')))}
+                        onAction={() => navigateToAI(getDefaultAIContext('ne-bilaga'))}
                         actionLabel="Starta AI-guiden"
                     />
 

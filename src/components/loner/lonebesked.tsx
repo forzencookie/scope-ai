@@ -16,7 +16,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
-import { buildAIChatUrl, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SectionCard } from "@/components/ui/section-card"
 import { SearchBar } from "@/components/ui/search-bar"
@@ -57,6 +57,7 @@ type Payslip = {
 
 export function LonesbeskContent() {
     const router = useRouter()
+    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const [allPayslips, setAllPayslips] = useState<Payslip[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -247,7 +248,7 @@ export function LonesbeskContent() {
                     title="AI-löneförslag"
                     description="Baserat på tidigare månader och anställningsavtal."
                     variant="ai"
-                    onAction={() => router.push(buildAIChatUrl(getDefaultAIContext('lonebesked')))}
+                    onAction={() => navigateToAI(getDefaultAIContext('lonebesked'))}
                 />
 
                 {/* AI Salary Wizard Dialog - Extracted Component */}

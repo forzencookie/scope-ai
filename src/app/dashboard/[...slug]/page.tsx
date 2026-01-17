@@ -10,7 +10,7 @@ import {
     BreadcrumbLink,
     BreadcrumbPage,
     BreadcrumbSeparator,
-    BreadcrumbAIBadge,
+
 } from "@/components/ui/breadcrumb"
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
@@ -19,7 +19,6 @@ import { SidebarTrigger } from "@/components/ui/sidebar"
 import PayrollPage from "@/components/pages/payroll-page"
 import AccountingPage from "@/components/pages/accounting-page"
 import ReportsPage from "@/components/pages/reports-page"
-import SkattPage from "@/components/pages/skatt-page"
 import HandelserPage from "@/components/pages/handelser-page"
 import ParterPage from "@/components/pages/parter-page"
 
@@ -27,9 +26,8 @@ import ParterPage from "@/components/pages/parter-page"
 const pageMap: Record<string, { component: React.ComponentType; label: string }> = {
     bokforing: { component: AccountingPage, label: "Bokföring" },
     rapporter: { component: ReportsPage, label: "Rapporter" },
-    skatt: { component: SkattPage, label: "Skatt & Deklarationer" },
     handelser: { component: HandelserPage, label: "Händelser" },
-    parter: { component: ParterPage, label: "Parter" },
+    agare: { component: ParterPage, label: "Ägare & Styrning" },
     loner: { component: PayrollPage, label: "Löner" },
 }
 
@@ -47,22 +45,12 @@ function ApparBreadcrumb({ section }: { section: string }) {
                 <Breadcrumb>
                     <BreadcrumbList>
                         <BreadcrumbItem>
-                            <BreadcrumbLink asChild>
-                                <Link href="/dashboard" className="flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors">
-                                    Dashboard
-                                </Link>
-                            </BreadcrumbLink>
-                        </BreadcrumbItem>
-                        <BreadcrumbSeparator>
-                            <ChevronRight className="h-3.5 w-3.5" />
-                        </BreadcrumbSeparator>
-                        <BreadcrumbItem>
                             <BreadcrumbPage>{pageInfo?.label || section}</BreadcrumbPage>
                         </BreadcrumbItem>
                     </BreadcrumbList>
                 </Breadcrumb>
             </div>
-            <BreadcrumbAIBadge />
+
         </header>
     )
 }
