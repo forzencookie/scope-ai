@@ -10,20 +10,29 @@ interface AiProcessingStateProps {
 }
 
 const DEFAULT_MESSAGES = [
-    "Analyserar...",
-    "Bearbetar data...",
-    "Hämtar information...",
-    "Snart klar..."
+    "Snurrar",
+    "Kokar på en idé",
+    "Brygger ett svar",
+    "Funderar"
 ]
 
-// Bouncing dots component
-function BouncingDots() {
+// Pixel sparkle icon that rotates
+function PixelSparkle() {
     return (
-        <span className="inline-flex items-end gap-0.5 ml-0.5 h-[1em] pb-[0.15em]">
-            <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:-0.3s]" />
-            <span className="w-1 h-1 bg-current rounded-full animate-bounce [animation-delay:-0.15s]" />
-            <span className="w-1 h-1 bg-current rounded-full animate-bounce" />
-        </span>
+        <svg
+            width="14"
+            height="14"
+            viewBox="0 0 8 8"
+            shapeRendering="crispEdges"
+            className="inline-block mr-1.5 animate-spin [animation-duration:3s]"
+        >
+            {/* 4-pointed pixel star */}
+            <rect x="3" y="0" width="2" height="2" className="fill-amber-500" />
+            <rect x="3" y="6" width="2" height="2" className="fill-amber-500" />
+            <rect x="0" y="3" width="2" height="2" className="fill-amber-500" />
+            <rect x="6" y="3" width="2" height="2" className="fill-amber-500" />
+            <rect x="3" y="3" width="2" height="2" className="fill-amber-400" />
+        </svg>
     )
 }
 
@@ -37,18 +46,18 @@ export function AiProcessingState({
     useEffect(() => {
         const interval = setInterval(() => {
             setMessageIndex(prev => (prev + 1) % messages.length)
-        }, 2000)
+        }, 2500)
         return () => clearInterval(interval)
     }, [messages])
 
-    // Remove trailing "..." from message since we'll show bouncing dots
+    // Remove trailing "..." from message since we add it
     const displayMessage = messages[messageIndex].replace(/\.{3}$/, '')
 
     return (
         <div className={cn("flex items-center py-3", className)}>
-            <p className="text-sm text-muted-foreground animate-in fade-in duration-300">
-                {displayMessage}
-                <BouncingDots />
+            <p className="text-sm text-muted-foreground animate-in fade-in duration-300 flex items-center">
+                <PixelSparkle />
+                <span>{displayMessage}...</span>
             </p>
             {subtext && (
                 <p className="text-xs text-muted-foreground/70 ml-2">

@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useTextMode } from "@/providers/text-mode-provider"
+import { useCompany } from "@/providers/company-provider"
+import type { FeatureKey } from "@/lib/company-types"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
   DropdownMenu,
@@ -117,7 +119,92 @@ export function NavSection({
 }
 
 // ============================================================================
-// NavSettings - Simple settings navigation
+// NavCollapsibleSection - Collapsible section with localStorage persistence
+// ============================================================================
+
+export function NavCollapsibleSection({
+  items,
+  label,
+  storageKey,
+  defaultOpen = false,
+  icon: Icon,
+}: {
+  items: {
+    title: string
+    titleEnkel?: string
+    url: string
+    icon?: LucideIcon
+    isActive?: boolean
+    featureKey?: FeatureKey
+  }[]
+  label: string
+  storageKey: string
+  defaultOpen?: boolean
+  icon?: LucideIcon
+}) {
+  const { isEnkel } = useTextMode()
+  const { hasFeature } = useCompany()
+
+  // Filter items based on company features
+  const filteredItems = React.useMemo(() => {
+    return items.filter(item => {
+      if (!item.featureKey) return true // No feature requirement = always show
+      return hasFeature(item.featureKey)
+    })
+  }, [items, hasFeature])
+
+  // Initialize from localStorage
+  const [isOpen, setIsOpen] = React.useState(() => {
+    if (typeof window === 'undefined') return defaultOpen
+    const stored = localStorage.getItem(`sidebar-section-${storageKey}`)
+    return stored !== null ? stored === 'true' : defaultOpen
+  })
+
+  // Persist to localStorage
+  const handleOpenChange = React.useCallback((open: boolean) => {
+    setIsOpen(open)
+    localStorage.setItem(`sidebar-section-${storageKey}`, String(open))
+  }, [storageKey])
+
+  // Helper to get the correct title based on mode
+  const getTitle = (item: { title: string; titleEnkel?: string }) => {
+    return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
+  }
+
+  if (filteredItems.length === 0) return null
+
+  return (
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden py-0">
+      <Collapsible open={isOpen} onOpenChange={handleOpenChange}>
+        <CollapsibleTrigger asChild>
+          <SidebarMenuButton className="h-8">
+            <span className="flex-1 text-left text-sm">{label}</span>
+            <ChevronRight className={cn(
+              "h-4 w-4 text-muted-foreground/50 transition-transform duration-200",
+              isOpen && "rotate-90"
+            )} />
+          </SidebarMenuButton>
+        </CollapsibleTrigger>
+        <CollapsibleContent>
+          <SidebarMenu>
+            {filteredItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild tooltip={getTitle(item)} className="pl-6 h-8">
+                  <Link href={item.url}>
+                    <span className="text-sm">{getTitle(item)}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
+          </SidebarMenu>
+        </CollapsibleContent>
+      </Collapsible>
+    </SidebarGroup>
+  )
+}
+
+// ============================================================================
+// NavSettings - Simple section header with items (not collapsible, not a card)
 // ============================================================================
 
 export function NavSettings({
@@ -136,11 +223,13 @@ export function NavSettings({
     return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
   }
 
+  const label = isEnkel ? "Övrigt" : "Mer"
+
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <SidebarGroupLabel className="pl-1 flex items-center">
-        {isEnkel ? "Övrigt" : "Mer"}
-        {Icon && <Icon className="ml-2 h-4 w-4 text-muted-foreground" />}
+      <SidebarGroupLabel className="px-2 text-xs font-medium text-muted-foreground/70 flex items-center gap-1.5">
+        {Icon && <Icon className="h-4 w-4" />}
+        {label}
       </SidebarGroupLabel>
       <SidebarMenu>
         {items.map((item) => {
@@ -148,13 +237,13 @@ export function NavSettings({
           return (
             <SidebarMenuItem key={item.title}>
               {item.title === "Inställningar" && onSettingsClick ? (
-                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle} className="pl-1">
-                  <span>{displayTitle}</span>
+                <SidebarMenuButton onClick={onSettingsClick} tooltip={displayTitle} className="h-8">
+                  <span className="text-sm">{displayTitle}</span>
                 </SidebarMenuButton>
               ) : (
-                <SidebarMenuButton asChild tooltip={displayTitle} className="pl-1">
+                <SidebarMenuButton asChild tooltip={displayTitle} className="h-8">
                   <Link href={item.url}>
-                    <span>{displayTitle}</span>
+                    <span className="text-sm">{displayTitle}</span>
                   </Link>
                 </SidebarMenuButton>
               )}
@@ -178,7 +267,6 @@ interface AIConversation {
 export function NavAIConversations() {
   const [conversations, setConversations] = React.useState<AIConversation[]>([])
   const [totalCount, setTotalCount] = React.useState(0)
-  const [isOpen, setIsOpen] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(true)
 
   // Fetch conversations from Supabase via API
@@ -240,69 +328,128 @@ export function NavAIConversations() {
     }
   }, [fetchConversations])
 
-  // Always show the section header, even if empty
-  // (conversations list will just be empty inside)
+  // Handler to open AI mode with history
+  const handleOpenAIHistory = () => {
+    window.dispatchEvent(new CustomEvent("open-ai-chat", { detail: { showHistory: true } }))
+  }
 
   return (
-    <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-      <Collapsible open={isOpen} onOpenChange={setIsOpen}>
-        <div className="flex items-center group/label">
-          <SidebarGroupLabel className="flex-1 p-0">
-            <Link
-              href="/dashboard/konversationer"
-              className="flex h-8 w-full items-center px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
-            >
-              AI Konversationer
-            </Link>
-          </SidebarGroupLabel>
-          <CollapsibleTrigger asChild>
-            <button className="h-6 w-6 flex items-center justify-center rounded hover:bg-sidebar-accent text-sidebar-foreground/70 transition-colors ml-1">
-              <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", isOpen && "rotate-90")} />
-            </button>
-          </CollapsibleTrigger>
-        </div>
-        <CollapsibleContent>
-          <SidebarMenu>
-            {isLoading ? (
-              // Skeleton with spinner while loading
-              <SidebarMenuItem>
-                <div className="flex h-8 w-full items-center px-2 gap-2">
-                  <div className="h-4 flex-1 rounded bg-sidebar-accent/50 animate-pulse" />
-                  <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
-                </div>
-              </SidebarMenuItem>
-            ) : conversations.length === 0 ? (
-              // Empty state
-              <SidebarMenuItem>
-                <span className="text-xs text-muted-foreground px-2 py-1">
-                  Inga konversationer än
-                </span>
-              </SidebarMenuItem>
-            ) : (
-              conversations.map((conv) => (
-                <SidebarMenuItem key={conv.id}>
-                  <SidebarMenuButton
-                    onClick={() => {
-                      window.dispatchEvent(new CustomEvent("load-conversation", { detail: conv.id }))
-                    }}
-                  >
-                    <span className="truncate">{conv.title}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))
-            )}
-            {totalCount > 4 && (
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild className="text-muted-foreground">
-                  <Link href="/dashboard/konversationer">
-                    <span>Visa alla ({totalCount})</span>
-                  </Link>
+    <SidebarGroup className="group-data-[collapsible=icon]:hidden flex-1 flex flex-col">
+      {/* Header - clicking opens AI mode with history */}
+      <SidebarGroupLabel className="p-0">
+        <button
+          onClick={handleOpenAIHistory}
+          className="flex h-8 w-full items-center px-2 text-xs font-medium text-sidebar-foreground/70 outline-none ring-sidebar-ring hover:bg-sidebar-accent hover:text-sidebar-accent-foreground rounded-md transition-colors"
+        >
+          AI Konversationer
+        </button>
+      </SidebarGroupLabel>
+
+      {/* Conversations list with rounded border - grows to fill space */}
+      <div className="mt-1 rounded-lg border-2 border-dotted border-black/30 dark:border-white/50 flex-1 flex flex-col group/dog">
+        <SidebarMenu className="p-1 flex-1 flex flex-col">
+          {isLoading ? (
+            // Skeleton with spinner while loading
+            <SidebarMenuItem>
+              <div className="flex h-8 w-full items-center px-2 gap-2">
+                <div className="h-4 flex-1 rounded bg-sidebar-accent/50 animate-pulse" />
+                <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground" />
+              </div>
+            </SidebarMenuItem>
+          ) : conversations.length === 0 ? (
+            // Empty state - minimalistic with interactive pixel dog and simple button
+            <div className="flex-1 flex flex-col items-center justify-center py-8 px-4">
+              {/* Interactive Pixel Art Dog */}
+              <div
+                className="mb-4 cursor-pointer"
+                onClick={() => {
+                  // Little bark animation
+                  const dog = document.getElementById('pixel-dog')
+                  if (dog) {
+                    dog.classList.add('animate-bounce')
+                    setTimeout(() => dog.classList.remove('animate-bounce'), 500)
+                  }
+                }}
+              >
+                <svg id="pixel-dog" width="48" height="48" viewBox="0 0 16 16" shapeRendering="crispEdges">
+                  {/* Ears - wiggle on hover */}
+                  <rect x="2" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500 origin-bottom group-hover/dog:animate-pulse" />
+                  <rect x="12" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500 origin-bottom group-hover/dog:animate-pulse" />
+                  {/* Head */}
+                  <rect x="3" y="4" width="10" height="6" className="fill-amber-400 dark:fill-amber-300" />
+                  {/* Face markings */}
+                  <rect x="5" y="5" width="6" height="4" className="fill-amber-100 dark:fill-amber-50" />
+                  {/* Eyes - visible by default, hidden on hover */}
+                  <g className="group-hover/dog:hidden">
+                    <rect x="5" y="6" width="2" height="2" className="fill-gray-800 dark:fill-gray-900" />
+                    <rect x="9" y="6" width="2" height="2" className="fill-gray-800 dark:fill-gray-900" />
+                    <rect x="5" y="6" width="1" height="1" className="fill-white" />
+                    <rect x="9" y="6" width="1" height="1" className="fill-white" />
+                  </g>
+
+                  {/* Closed Eyes (^ ^) - hidden by default, visible on hover */}
+                  <g className="hidden group-hover/dog:block">
+                    {/* Left Eye ^ */}
+                    <rect x="5" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                    <rect x="6" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                    <rect x="7" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+
+                    {/* Right Eye ^ */}
+                    <rect x="9" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                    <rect x="10" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                    <rect x="11" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                  </g>
+                  {/* Nose */}
+                  <rect x="7" y="8" width="2" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                  {/* Tongue - always visible for happy face */}
+                  <rect x="7" y="9" width="2" height="1" className="fill-pink-400" />
+                  {/* Body */}
+                  <rect x="4" y="10" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
+                  {/* Chest */}
+                  <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
+                  {/* Tail - wags on hover */}
+                  <rect x="12" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500 origin-left group-hover/dog:animate-[wiggle_0.3s_ease-in-out_infinite]" />
+                  {/* Feet */}
+                  <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+                  <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+                </svg>
+              </div>
+              <p className="text-sm text-muted-foreground text-center mb-1">
+                Inga konversationer än
+              </p>
+              <p className="text-xs text-muted-foreground/70 text-center mb-4">
+                Ställ en fråga till AI:n
+              </p>
+              <button
+                onClick={() => window.dispatchEvent(new CustomEvent("open-ai-chat"))}
+                className="inline-flex items-center gap-2 h-9 px-4 py-2 text-sm font-medium rounded-md bg-primary text-primary-foreground hover:bg-primary/90 transition-colors shadow-sm"
+              >
+                <Plus className="h-4 w-4" />
+                Starta chatt
+              </button>
+            </div>
+          ) : (
+            conversations.map((conv) => (
+              <SidebarMenuItem key={conv.id}>
+                <SidebarMenuButton
+                  onClick={() => {
+                    window.dispatchEvent(new CustomEvent("load-conversation", { detail: conv.id }))
+                  }}
+                >
+                  <span className="truncate">{conv.title}</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
-            )}
-          </SidebarMenu>
-        </CollapsibleContent>
-      </Collapsible>
+            ))
+          )}
+          {totalCount > 4 && (
+            <SidebarMenuItem>
+              <SidebarMenuButton onClick={handleOpenAIHistory} className="text-muted-foreground">
+                <span>Visa alla ({totalCount})</span>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+          )}
+        </SidebarMenu>
+      </div>
     </SidebarGroup>
   )
 }

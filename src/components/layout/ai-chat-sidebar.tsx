@@ -45,6 +45,7 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
     const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
     const [attachedFiles, setAttachedFiles] = useState<File[]>([])
     const [showHistory, setShowHistory] = useState(false)
+    const [isInputFocused, setIsInputFocused] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     // Scroll to bottom when messages change
@@ -206,6 +207,62 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
                 <div className="flex-1 overflow-y-auto px-3">
                     {messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center py-8">
+                            {/* Interactive Pixel Art Dog - click to hop, smiles when input focused */}
+                            <div
+                                className="mb-4 cursor-pointer"
+                                onClick={(e) => {
+                                    const dog = e.currentTarget.querySelector('svg')
+                                    if (dog) {
+                                        dog.classList.add('animate-bounce')
+                                        setTimeout(() => dog.classList.remove('animate-bounce'), 500)
+                                    }
+                                }}
+                            >
+                                <svg width="48" height="48" viewBox="0 0 16 16" shapeRendering="crispEdges">
+                                    {/* Ears */}
+                                    <rect x="2" y="2" width="2" height="3" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-pulse")} />
+                                    <rect x="12" y="2" width="2" height="3" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-pulse")} />
+                                    {/* Head */}
+                                    <rect x="3" y="4" width="10" height="6" className="fill-amber-400 dark:fill-amber-300" />
+                                    {/* Face markings */}
+                                    <rect x="5" y="5" width="6" height="4" className="fill-amber-100 dark:fill-amber-50" />
+                                    {/* Eyes - open when not focused */}
+                                    {!isInputFocused && (
+                                        <>
+                                            <rect x="5" y="6" width="2" height="2" className="fill-gray-800 dark:fill-gray-900" />
+                                            <rect x="9" y="6" width="2" height="2" className="fill-gray-800 dark:fill-gray-900" />
+                                            <rect x="5" y="6" width="1" height="1" className="fill-white" />
+                                            <rect x="9" y="6" width="1" height="1" className="fill-white" />
+                                        </>
+                                    )}
+                                    {/* Closed Eyes (^ ^) - when input focused */}
+                                    {isInputFocused && (
+                                        <>
+                                            {/* Left Eye ^ */}
+                                            <rect x="5" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                            <rect x="6" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                            <rect x="7" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                            {/* Right Eye ^ */}
+                                            <rect x="9" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                            <rect x="10" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                            <rect x="11" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                        </>
+                                    )}
+                                    {/* Nose */}
+                                    <rect x="7" y="8" width="2" height="1" className="fill-gray-800 dark:fill-gray-900" />
+                                    {/* Tongue */}
+                                    <rect x="7" y="9" width="2" height="1" className="fill-pink-400" />
+                                    {/* Body */}
+                                    <rect x="4" y="10" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
+                                    {/* Chest */}
+                                    <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
+                                    {/* Tail - wags when focused */}
+                                    <rect x="12" y="11" width="2" height="2" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-[wiggle_0.3s_ease-in-out_infinite]")} />
+                                    {/* Feet */}
+                                    <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+                                    <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+                                </svg>
+                            </div>
                             <p className="text-sm font-medium">{getGreeting()}!</p>
                             <p className="text-xs text-muted-foreground mt-1">
                                 Hur kan jag hjälpa dig?
@@ -238,6 +295,8 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
                         mentions={mentionItems}
                         onMentionsChange={setMentionItems}
                         showNavLinks={false}
+                        onFocus={() => setIsInputFocused(true)}
+                        onBlur={() => setIsInputFocused(false)}
                     />
 
                     {/* Disclaimer */}

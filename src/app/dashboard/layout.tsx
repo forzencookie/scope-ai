@@ -6,6 +6,7 @@ import {
     SidebarInset,
     SidebarProvider,
     SidebarTrigger,
+    useSidebar,
 } from "@/components/ui/sidebar"
 import { ToastProvider } from "@/components/ui/toast"
 import { useOnboarding } from "@/components/onboarding/onboarding-wizard"
@@ -16,6 +17,68 @@ import { ModelProvider } from "@/providers/model-provider"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { MessageSquare, Plus, RefreshCw } from "lucide-react"
+
+function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
+    const { state } = useSidebar()
+    const isCollapsed = state === "collapsed"
+
+    return (
+        <div className="h-12 bg-sidebar flex items-center shrink-0 mt-2">
+            {/* Left spacer - matches sidebar width, hidden when collapsed */}
+            {!isCollapsed && (
+                <div
+                    className="h-full shrink-0 transition-all duration-200"
+                    style={{ width: "var(--sidebar-width)" }}
+                />
+            )}
+            {/* Sidebar toggle */}
+            <SidebarTrigger className="ml-2" />
+            {/* Search bar centered over main content area */}
+            <div className="flex-1 flex justify-center px-4">
+                <GlobalSearch />
+            </div>
+            {/* Right side actions */}
+            <div className="flex items-center gap-1 mr-4">
+                {/* Refresh button */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => window.dispatchEvent(new CustomEvent("page-refresh"))}
+                    title="Uppdatera"
+                >
+                    <RefreshCw className="h-4 w-4" />
+                </Button>
+                {/* Chat history - switches to AI mode and shows history */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                        setSidebarMode("ai-chat")
+                        window.dispatchEvent(new CustomEvent("ai-chat-show-history"))
+                    }}
+                    title="Chatthistorik"
+                >
+                    <MessageSquare className="h-4 w-4" />
+                </Button>
+                {/* New chat - switches to AI mode and starts new conversation */}
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => {
+                        setSidebarMode("ai-chat")
+                        window.dispatchEvent(new CustomEvent("ai-chat-new-conversation"))
+                    }}
+                    title="Ny chatt"
+                >
+                    <Plus className="h-4 w-4" />
+                </Button>
+            </div>
+        </div>
+    )
+}
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding()
@@ -33,64 +96,13 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 }
             >
                 {/* Grey toolbar spanning full width - scrolls with content */}
-                <div className="h-12 bg-sidebar flex items-center shrink-0 mt-2">
-                    {/* Left spacer - matches sidebar width */}
-                    <div
-                        className="h-full shrink-0"
-                        style={{ width: "var(--sidebar-width)" }}
-                    />
-                    {/* Sidebar toggle */}
-                    <SidebarTrigger className="ml-2" />
-                    {/* Search bar centered over main content area */}
-                    <div className="flex-1 flex justify-center px-4">
-                        <GlobalSearch />
-                    </div>
-                    {/* Right side actions */}
-                    <div className="flex items-center gap-1 mr-4">
-                        {/* Refresh button */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => window.dispatchEvent(new CustomEvent("page-refresh"))}
-                            title="Uppdatera"
-                        >
-                            <RefreshCw className="h-4 w-4" />
-                        </Button>
-                        {/* Chat history - switches to AI mode and shows history */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                                setSidebarMode("ai-chat")
-                                window.dispatchEvent(new CustomEvent("ai-chat-show-history"))
-                            }}
-                            title="Chatthistorik"
-                        >
-                            <MessageSquare className="h-4 w-4" />
-                        </Button>
-                        {/* New chat - switches to AI mode and starts new conversation */}
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8"
-                            onClick={() => {
-                                setSidebarMode("ai-chat")
-                                window.dispatchEvent(new CustomEvent("ai-chat-new-conversation"))
-                            }}
-                            title="Ny chatt"
-                        >
-                            <Plus className="h-4 w-4" />
-                        </Button>
-                    </div>
-                </div>
+                <DashboardToolbar sidebarMode={sidebarMode} setSidebarMode={setSidebarMode} />
 
                 {/* Main layout */}
                 <div className="flex flex-1 w-full bg-sidebar">
                     <AppSidebar variant="inset" mode={sidebarMode} onModeChange={setSidebarMode} />
                     <SidebarInset>
-                        <div className="w-full h-full">
+                        <div className="w-full h-full px-4 md:px-[5%]">
                             {children}
                         </div>
                     </SidebarInset>

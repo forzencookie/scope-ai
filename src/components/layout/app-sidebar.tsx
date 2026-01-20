@@ -2,9 +2,9 @@
 
 
 import * as React from "react"
-import { PanelLeft, Sparkles, type LucideIcon, Monitor, Calculator, Users, PieChart, Briefcase, Settings2, FileText, PiggyBank } from "lucide-react"
+import { PanelLeft, Sparkles, type LucideIcon, Calculator, Users, Settings2, FileText, PiggyBank, LayoutGrid } from "lucide-react"
 
-import { NavSettings, NavSection } from "./sidebar-nav"
+import { NavSettings, NavCollapsibleSection, NavAIConversations } from "./sidebar-nav"
 import { UserTeamSwitcher } from "./user-team-switcher"
 import { AIChatSidebar } from "./ai-chat-sidebar"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
@@ -21,12 +21,8 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar"
 import { SettingsDialog } from "../settings"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
-import { hasFeature } from "@/lib/company-types"
-import type { CompanyType, FeatureKey } from "@/lib/company-types"
-import type { NavItem } from "@/types"
 import { AI_CHAT_EVENT } from "@/lib/ai-context"
 
 // Import data from the data layer
@@ -41,7 +37,6 @@ import {
 } from "../../data/app-navigation"
 
 export type SidebarMode = "navigation" | "ai-chat"
-export type NavTab = "verksamhet" | "bolaget"
 
 interface AppSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, "variant"> {
   /** 'default' shows full navigation, 'minimal' shows empty sidebar with custom header */
@@ -59,23 +54,7 @@ interface AppSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, "va
   onModeChange?: (mode: SidebarMode) => void
 }
 
-// Helper to filter and render a group of modules
-function ModuleGroup({ items, label, companyType, icon: Icon }: { items: NavItem[], label: string, companyType: CompanyType, icon?: LucideIcon }) {
-  // Filter items based on company features
-  const filteredItems = React.useMemo(() => {
-    return items.filter(item => {
-      // If item requires a feature key, check it
-      if (item.featureKey && !hasFeature(companyType, item.featureKey)) {
-        return false
-      }
-      return true
-    })
-  }, [items, companyType])
 
-  if (filteredItems.length === 0) return null
-
-  return <NavSection items={filteredItems} label={label} icon={Icon} />
-}
 
 export function AppSidebar({
   variant = "default",
@@ -90,17 +69,11 @@ export function AppSidebar({
   const settingsParam = searchParams?.get("settings")
   const { state, toggleSidebar } = useSidebar()
 
-  // Use the first team as active for now (in real app this would be more complex)
-  const activeTeam = mockTeams[0]
-
   // Sidebar mode state (internal state for uncontrolled)
   const [internalMode, setInternalMode] = React.useState<SidebarMode>("navigation")
 
   // Use controlled mode if provided, otherwise internal
   const sidebarMode = mode ?? internalMode
-
-  // Navigation tab state (Verksamhet vs Bolaget)
-  const [navTab, setNavTab] = React.useState<NavTab>("verksamhet")
 
   // State for settings dialog
   const [settingsOpen, setSettingsOpen] = React.useState(!!settingsParam)
@@ -236,49 +209,46 @@ export function AppSidebar({
         }
         {...props}
       >
-        <SidebarHeader className="h-12 p-0 flex items-center px-2 mt-1">
+        <SidebarHeader className="p-0 px-2 pt-1">
           <SidebarModeDropdown mode={sidebarMode} onModeChange={onModeChange || setInternalMode} />
         </SidebarHeader>
 
         <SidebarContent>
           {sidebarMode === "navigation" ? (
             <>
-              {/* Tab Toggle Buttons */}
-              <div className="px-3 py-2 flex gap-1">
-                <Button
-                  variant={navTab === "verksamhet" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="flex-1 h-8"
-                  onClick={() => setNavTab("verksamhet")}
-                >
-                  <span className="text-xs">Verksamhet</span>
-                </Button>
-                <Button
-                  variant={navTab === "bolaget" ? "secondary" : "ghost"}
-                  size="sm"
-                  className="flex-1 h-8"
-                  onClick={() => setNavTab("bolaget")}
-                >
-                  <span className="text-xs">Bolaget</span>
-                </Button>
+              {/* Section header for modules */}
+              <div className="px-4 pt-4 pb-1 flex items-center gap-1.5">
+                <LayoutGrid className="h-4 w-4 text-muted-foreground/70" />
+                <span className="text-xs font-medium text-muted-foreground/70">Moduler</span>
               </div>
 
-              {/* Verksamhet Tab: Platform, Bokföring, Löner */}
-              {navTab === "verksamhet" && (
-                <>
-                  <ModuleGroup items={navBokforing} label="Bokföring" companyType={activeTeam.companyType} icon={FileText} />
-                  <ModuleGroup items={navLoner} label="Löner" companyType={activeTeam.companyType} icon={PiggyBank} />
-                </>
-              )}
+              {/* Collapsible navigation items */}
+              <NavCollapsibleSection
+                items={navBokforing}
+                label="Bokföring"
+                storageKey="bokforing"
+              />
+              <NavCollapsibleSection
+                items={navLoner}
+                label="Löner"
+                storageKey="loner"
+              />
+              <NavCollapsibleSection
+                items={navRapporter}
+                label="Rapporter"
+                storageKey="rapporter"
+              />
+              <NavCollapsibleSection
+                items={navAgare}
+                label="Ägare & Styrning"
+                storageKey="agare"
+              />
 
-              {/* Bolag Tab: Rapporter, Ägare, Settings */}
-              {navTab === "bolaget" && (
-                <>
-                  <ModuleGroup items={navRapporter} label="Rapporter" companyType={activeTeam.companyType} icon={Calculator} />
-                  <ModuleGroup items={navAgare} label="Ägare & Styrning" companyType={activeTeam.companyType} icon={Users} />
-                  <NavSettings items={navSettings} onSettingsClick={handleOpenSettings} icon={Settings2} />
-                </>
-              )}
+              {/* AI Conversations section - fills middle space */}
+              <NavAIConversations />
+
+              {/* Settings section at bottom - simple header style */}
+              <NavSettings items={navSettings} onSettingsClick={handleOpenSettings} icon={Settings2} />
             </>
           ) : (
             <AIChatSidebar mode={sidebarMode} onModeChange={onModeChange || setInternalMode} />

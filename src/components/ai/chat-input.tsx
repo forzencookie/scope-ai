@@ -41,6 +41,10 @@ interface ChatInputProps {
     onPreviewFile?: (file: { url: string; name: string }) => void
     /** Whether to show navigation links below input */
     showNavLinks?: boolean
+    /** Called when textarea receives focus */
+    onFocus?: () => void
+    /** Called when textarea loses focus */
+    onBlur?: () => void
 }
 
 export function ChatInput({
@@ -53,7 +57,9 @@ export function ChatInput({
     mentions,
     onMentionsChange,
     onPreviewFile,
-    showNavLinks = true
+    showNavLinks = true,
+    onFocus,
+    onBlur
 }: ChatInputProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -245,6 +251,8 @@ export function ChatInput({
                         value={value}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}
+                        onFocus={onFocus}
+                        onBlur={onBlur}
                         placeholder={files.length > 0 ? "Lägg till ett meddelande..." : "Skriv ett meddelande..."}
                         className="resize-none border-0 bg-transparent px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full min-h-[40px] max-h-[200px] text-sm leading-relaxed"
                         rows={1}
@@ -253,7 +261,7 @@ export function ChatInput({
 
                 {/* Bottom row - Buttons */}
                 <div className="flex items-center justify-between px-2 pb-2">
-                    {/* Left - attachment and mention buttons */}
+                    {/* Left - attachment, mention, separator, model selector */}
                     <div className="flex items-center gap-0.5">
                         <Button
                             variant="ghost"
@@ -280,12 +288,12 @@ export function ChatInput({
                             <AtSign className="h-4 w-4" />
                         </Button>
                         <span ref={mentionAnchorRef} className="hidden" />
+                        <div className="w-px h-4 bg-border/60 mx-1" />
+                        <ModelSelector />
                     </div>
 
-                    {/* Right - model selector, mic and send */}
+                    {/* Right - mic and send */}
                     <div className="flex items-center gap-0.5">
-                        <ModelSelector />
-                        <div className="w-px h-4 bg-border/60 mx-1" />
                         <Button
                             variant="ghost"
                             size="icon"
