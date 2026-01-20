@@ -5,16 +5,6 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
 import type { TransactionWithAI } from "@/types"
 import {
-    Breadcrumb,
-    BreadcrumbItem,
-    BreadcrumbList,
-    BreadcrumbPage,
-    BreadcrumbLink,
-    BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import {
     Tooltip,
     TooltipContent,
     TooltipProvider,
@@ -27,7 +17,6 @@ import {
     ClipboardCheck,
     FileText,
     List,
-    RefreshCw,
     Monitor,
     Plus,
     X,
@@ -154,6 +143,13 @@ function AccountingPageContent() {
         fetchTransactions(isMounted)
     }, [fetchTransactions])
 
+    // Listen for global refresh event from toolbar
+    useEffect(() => {
+        const onPageRefresh = () => handleRefresh()
+        window.addEventListener("page-refresh", onPageRefresh)
+        return () => window.removeEventListener("page-refresh", onPageRefresh)
+    }, [handleRefresh])
+
     // Use only API transactions (no mock data)
     const transactions = apiTransactions
 
@@ -218,31 +214,8 @@ function AccountingPageContent() {
     return (
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
-                <header className="flex h-16 shrink-0 items-center justify-between gap-2 transition-[width,height] ease-linear group-has-data-[collapsible=icon]/sidebar-wrapper:h-12 px-4">
-                    <div className="flex items-center gap-2">
-                        <SidebarTrigger className="-ml-1" />
-                        <Separator
-                            orientation="vertical"
-                            className="mr-2 data-[orientation=vertical]:h-4"
-                        />
-                        <Breadcrumb>
-                            <BreadcrumbList>
-                                <BreadcrumbItem>
-                                    <BreadcrumbLink href="/dashboard/bokforing">
-                                        {isEnkel ? "Min bokföring" : "Bokföring"}
-                                    </BreadcrumbLink>
-                                </BreadcrumbItem>
-                                <BreadcrumbSeparator />
-                                <BreadcrumbItem>
-                                    <BreadcrumbPage>{currentTabLabel}</BreadcrumbPage>
-                                </BreadcrumbItem>
-                            </BreadcrumbList>
-                        </Breadcrumb>
-                    </div>
-                </header>
-
                 {/* Tab Content */}
-                <div className="px-6 pt-4">
+                <div className="px-6 pt-6">
                     <div className="w-full">
                         {/* Tabs - Show max 4 visible (since we reduced count), rest in overflow */}
                         <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
@@ -339,23 +312,9 @@ function AccountingPageContent() {
                                 </Tooltip>
                             )}
 
-                            {/* Last updated with refresh button */}
-                            <div className="ml-auto flex items-center gap-2 text-sm text-muted-foreground">
-                                <span>
-                                    Senast uppdaterad: {lastRefresh.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                                </span>
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={handleRefresh}
-                                    disabled={isLoading}
-                                    className="h-7 w-7 p-0"
-                                >
-                                    <RefreshCw className={cn(
-                                        "h-3.5 w-3.5",
-                                        isLoading && "animate-spin"
-                                    )} />
-                                </Button>
+                            {/* Last updated */}
+                            <div className="ml-auto text-sm text-muted-foreground">
+                                Senast uppdaterad: {lastRefresh.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
                             </div>
                         </div>
                     </div>

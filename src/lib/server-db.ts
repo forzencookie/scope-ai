@@ -234,11 +234,6 @@ export const db = {
             category: row.category,
             read: row.read,
             starred: row.starred,
-            aiSuggestion: row.ai_suggestion,
-            aiStatus: row.ai_status,
-            linkedEntityId: row.linked_entity_id,
-            linkedEntityType: row.linked_entity_type,
-            documentData: row.document_data,
         }));
     },
 
@@ -253,11 +248,6 @@ export const db = {
             category: item.category || 'other',
             read: item.read ?? false,
             starred: item.starred ?? false,
-            ai_suggestion: item.aiSuggestion,
-            ai_status: item.aiStatus || 'pending',
-            linked_entity_id: item.linkedEntityId,
-            linked_entity_type: item.linkedEntityType,
-            document_data: item.documentData,
         }).select().single();
         if (error) console.error('addInboxItem error:', error);
         return data || item;
@@ -268,10 +258,6 @@ export const db = {
         const dbUpdates: any = {};
         if (updates.read !== undefined) dbUpdates.read = updates.read;
         if (updates.starred !== undefined) dbUpdates.starred = updates.starred;
-        if (updates.aiStatus !== undefined) dbUpdates.ai_status = updates.aiStatus;
-        if (updates.aiSuggestion !== undefined) dbUpdates.ai_suggestion = updates.aiSuggestion;
-        if (updates.linkedEntityId !== undefined) dbUpdates.linked_entity_id = updates.linkedEntityId;
-        if (updates.linkedEntityType !== undefined) dbUpdates.linked_entity_type = updates.linkedEntityType;
         if (updates.category !== undefined) dbUpdates.category = updates.category;
 
         const { error } = await supabase.from('inbox_items').update(dbUpdates).eq('id', id);

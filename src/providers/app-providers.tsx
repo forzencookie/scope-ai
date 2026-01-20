@@ -6,6 +6,7 @@ import { TransactionsProvider, type TransactionsProviderProps } from "./transact
 import { InvoicesProvider, type InvoicesProviderProps } from "./invoices-provider"
 import { ReceiptsProvider, type ReceiptsProviderProps } from "./receipts-provider"
 import { TextModeProvider } from "./text-mode-provider"
+import { ModelProvider } from "./model-provider"
 
 // ============================================================================
 // Composite Provider
@@ -45,13 +46,15 @@ export function AppProviders({
     return (
         <QueryProvider>
             <TextModeProvider>
-                <TransactionsProvider initialTransactions={initialTransactions}>
-                    <InvoicesProvider initialInvoices={initialInvoices}>
-                        <ReceiptsProvider initialReceipts={initialReceipts}>
-                            {children}
-                        </ReceiptsProvider>
-                    </InvoicesProvider>
-                </TransactionsProvider>
+                <ModelProvider>
+                    <TransactionsProvider initialTransactions={initialTransactions}>
+                        <InvoicesProvider initialInvoices={initialInvoices}>
+                            <ReceiptsProvider initialReceipts={initialReceipts}>
+                                {children}
+                            </ReceiptsProvider>
+                        </InvoicesProvider>
+                    </TransactionsProvider>
+                </ModelProvider>
             </TextModeProvider>
         </QueryProvider>
     )

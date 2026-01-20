@@ -86,21 +86,14 @@ Format it as a readable email body.`
             description: extractedText,
             date: new Date().toLocaleDateString('sv-SE'),
             timestamp: new Date(),
-            category: 'other', // AI will categorize
+            category: 'other',
             read: false,
             starred: false,
-            aiSuggestion: null,
-            aiStatus: 'pending', // Will be processed by AI
         }
 
         await db.addInboxItem(newItem)
 
         console.log('[Upload] Created inbox item:', newItem.id)
-
-        // Trigger AI processing
-        await fetch(`${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/api/ai/process-inbox`, {
-            method: 'POST'
-        })
 
         return NextResponse.json({ success: true, item: newItem })
     } catch (error) {

@@ -6,16 +6,11 @@ import {
     ArrowLeft,
     Building2,
     Download,
-    Star,
-    StarOff,
     Printer,
     ExternalLink,
-    Sparkles,
     FileText,
     Calendar,
     Tag,
-    ArrowRight,
-    Receipt,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -66,10 +61,6 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
 
     const handleOpenInKivra = () => {
         toast.info("Öppnar i Kivra", `${item?.title || 'Dokument'} öppnas i Kivra-appen`)
-    }
-
-    const handleAiAction = () => {
-        toast.success("AI-åtgärd utförd", item?.aiSuggestion || "Åtgärden har genomförts")
     }
 
     if (!item) {
@@ -142,96 +133,9 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                 </div>
                 <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4" />
-                    <span>{item.documentData ? 'Faktura/Kvitto' : 'PDF-dokument'}</span>
+                    <span>PDF-dokument</span>
                 </div>
             </div>
-
-            {/* AI Suggestion / Proposal */}
-            {item.aiSuggestion && !item.linkedEntityId && (
-                <div className="flex items-start gap-4 p-5 rounded-xl border border-purple-200 bg-purple-50 dark:bg-purple-950/20 dark:border-purple-800/50 shadow-sm">
-                    <div className="p-2 bg-purple-100 dark:bg-purple-900/40 rounded-full shrink-0">
-                        <Sparkles className="h-5 w-5 text-purple-600 dark:text-purple-400" />
-                    </div>
-
-                    <div className="flex-1 space-y-3">
-                        <div>
-                            <h3 className="text-sm font-semibold text-purple-900 dark:text-purple-100">
-                                AI-analys
-                            </h3>
-                            <p className="text-sm text-purple-700 dark:text-purple-300 mt-1 leading-relaxed">
-                                {item.aiSuggestion}
-                            </p>
-                        </div>
-
-                        <div className="flex items-center gap-3 pt-1">
-                            {item.aiSuggestion.toLowerCase().includes('kvitto') ? (
-                                <Button
-                                    size="sm"
-                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all"
-                                    onClick={async () => {
-                                        toast.info("Bearbetar...", "Skapar kvitto från dokument")
-                                        try {
-                                            const res = await fetch('/api/inbox/process', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ inboxId: item.id, targetType: 'receipt' })
-                                            })
-                                            if (res.ok) {
-                                                toast.success("Kvitto registrerat", "Dokumentet har flyttats till kvitton.")
-                                                router.push('/dashboard/bokforing?tab=kvitton')
-                                            } else {
-                                                toast.error("Fel", "Kunde inte skapa kvitto.")
-                                            }
-                                        } catch (err) {
-                                            toast.error("Nätverksfel", "Försök igen.")
-                                        }
-                                    }}
-                                >
-                                    <Receipt className="mr-2 h-4 w-4" />
-                                    Registrera som kvitto
-                                </Button>
-                            ) : (
-                                <Button
-                                    size="sm"
-                                    className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm transition-all"
-                                    onClick={async () => {
-                                        toast.info("Bearbetar...", "Skapar leverantörsfaktura från dokument")
-                                        try {
-                                            const res = await fetch('/api/inbox/process', {
-                                                method: 'POST',
-                                                headers: { 'Content-Type': 'application/json' },
-                                                body: JSON.stringify({ inboxId: item.id, targetType: 'invoice' })
-                                            })
-                                            if (res.ok) {
-                                                toast.success("Faktura registrerad", "Dokumentet har flyttats till leverantörsfakturor.")
-                                                router.push('/dashboard/bokforing?tab=leverantorsfakturor')
-                                            } else {
-                                                toast.error("Fel", "Kunde inte skapa faktura.")
-                                            }
-                                        } catch (err) {
-                                            toast.error("Nätverksfel", "Försök igen.")
-                                        }
-                                    }}
-                                >
-                                    <FileText className="mr-2 h-4 w-4" />
-                                    Registrera som leverantörsfaktura
-                                </Button>
-                            )}
-
-                            <Button
-                                variant="ghost"
-                                size="sm"
-                                className="text-purple-700 dark:text-purple-300 hover:bg-purple-100 dark:hover:bg-purple-900/40"
-                                onClick={() => {
-                                    toast.info("Förslaget avfärdat")
-                                }}
-                            >
-                                Avfärda
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-            )}
 
             {/* Document preview */}
             <Card className="overflow-hidden">
@@ -243,26 +147,14 @@ export default function MessagePage({ params }: { params: Promise<{ id: string }
                     </Button>
                 </div>
 
-                {/* Render actual invoice or receipt document */}
-                {item.documentData ? (
-                    <div className="p-8 bg-white dark:bg-neutral-900">
-                        <div className="text-center text-muted-foreground">
-                            <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                            <p className="text-sm font-medium">{item.documentData.type === 'invoice' ? 'Faktura' : 'Kvitto'}</p>
-                            <p className="text-xs mt-1">Från {item.sender}</p>
-                            <p className="text-xs mt-2">Belopp: {(item.documentData as any).total?.toLocaleString('sv-SE')} kr</p>
-                        </div>
+                <div className="aspect-[3/4] max-h-[600px] bg-white dark:bg-neutral-900 flex items-center justify-center">
+                    <div className="text-center text-muted-foreground">
+                        <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
+                        <p className="text-sm">{item.title}</p>
+                        <p className="text-xs mt-1">Från {item.sender}</p>
+                        <p className="text-xs mt-4 max-w-md mx-auto px-8">{item.description}</p>
                     </div>
-                ) : (
-                    <div className="aspect-[3/4] max-h-[600px] bg-white dark:bg-neutral-900 flex items-center justify-center">
-                        <div className="text-center text-muted-foreground">
-                            <FileText className="h-16 w-16 mx-auto mb-4 opacity-30" />
-                            <p className="text-sm">{item.title}</p>
-                            <p className="text-xs mt-1">Från {item.sender}</p>
-                            <p className="text-xs mt-4 max-w-md mx-auto px-8">{item.description}</p>
-                        </div>
-                    </div>
-                )}
+                </div>
             </Card>
         </div>
     )

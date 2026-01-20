@@ -236,12 +236,8 @@ export function AppSidebar({
         }
         {...props}
       >
-        <SidebarHeader className={sidebarMode === "ai-chat" ? "h-0 p-0 overflow-hidden" : ""}>
-          {sidebarMode === "navigation" && (
-            <div className="px-2 pt-2">
-              <SidebarModeDropdown mode={sidebarMode} onModeChange={onModeChange || setInternalMode} />
-            </div>
-          )}
+        <SidebarHeader className="h-12 p-0 flex items-center px-2 mt-1">
+          <SidebarModeDropdown mode={sidebarMode} onModeChange={onModeChange || setInternalMode} />
         </SidebarHeader>
 
         <SidebarContent>

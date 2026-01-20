@@ -107,7 +107,6 @@ export async function POST(request: Request) {
                 title: "No Title",
                 description: "No description",
                 category: "other",
-                aiStatus: 'pending',
                 ...(generateMockItem(type) as any)
             }
             await db.addInboxItem(newItem)
@@ -147,7 +146,6 @@ export async function PATCH(request: Request) {
 
 function generateMockItem(type: string): Partial<InboxItem> {
     const today = new Date()
-    const invoiceDate = today.toISOString().split('T')[0]
     const dueDate = new Date(today.getTime() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
     switch (type) {
@@ -157,7 +155,6 @@ function generateMockItem(type: string): Partial<InboxItem> {
                 title: 'Beslut om slutlig skatt',
                 description: 'Ditt besked om slutlig skatt finns nu att läsa.',
                 category: 'skatt',
-                aiSuggestion: 'Bokför som skattekostnad'
             }
         case 'skatteverket-moms':
             return {
@@ -165,7 +162,6 @@ function generateMockItem(type: string): Partial<InboxItem> {
                 title: 'Dags att deklarera moms',
                 description: 'Momsdeklaration för perioden ska vara inlämnad senast den 12:e.',
                 category: 'skatt',
-                aiSuggestion: 'Skapa momsrapport'
             }
         case 'bolagsverket':
             return {
@@ -173,7 +169,6 @@ function generateMockItem(type: string): Partial<InboxItem> {
                 title: 'Ärende registrerat',
                 description: 'Ditt ärende om ändring av styrelse har registrerats.',
                 category: 'myndighet',
-                aiSuggestion: null
             }
         case 'kivra-invoice':
             return {
@@ -192,46 +187,6 @@ OCR: ${Math.floor(Math.random() * 90000000000) + 10000000000}
 
 Betala senast förfallodagen.`,
                 category: 'other',
-                aiSuggestion: null,
-                // documentData for UI/preview only - AI reads description
-                documentData: {
-                    type: 'invoice',
-                    companyName: 'Fortum Sverige AB',
-                    companyLogo: '/logos/fortum.png',
-                    companyAddress: 'Box 1026, 169 03 Solna',
-                    companyOrgNr: '556059-4523',
-                    companyPhone: '010-850 00 00',
-                    companyEmail: 'kundservice@fortum.se',
-                    invoiceNumber: `FO-${Math.floor(Math.random() * 100000)}`,
-                    invoiceDate: invoiceDate,
-                    dueDate: dueDate,
-                    customerName: 'Ditt Företag AB',
-                    customerAddress: 'Din Gata 123, 123 45 Stockholm',
-                    lineItems: [
-                        {
-                            description: 'Elförbrukning December 2024',
-                            quantity: 1,
-                            unitPrice: 1000,
-                            vatRate: 25,
-                            amount: 1000
-                        },
-                        {
-                            description: 'Nätavgift',
-                            quantity: 1,
-                            unitPrice: 250,
-                            vatRate: 25,
-                            amount: 250
-                        }
-                    ],
-                    subtotal: 1250,
-                    vatAmount: 312.50,
-                    total: 1562.50,
-                    paymentInfo: {
-                        bankgiro: '5050-1234',
-                        ocrNumber: `${Math.floor(Math.random() * 90000000000) + 10000000000}`,
-                    },
-                    notes: 'Betala senast förfallodagen för att undvika förseningsavgift.'
-                }
             }
         case 'gmail-invoice':
             return {
@@ -243,29 +198,10 @@ Amount: $12.00 (120 kr)
 VAT (25%): 30 kr
 Total: 150 kr
 
-Payment Date: ${invoiceDate}
 Payment: Automatically charged to card ending in 4242
 
 Thank you for your business!`,
                 category: 'other',
-                aiSuggestion: null,
-                documentData: {
-                    type: 'invoice',
-                    companyName: 'Notion Labs Inc.',
-                    companyLogo: '/logos/notion.png',
-                    companyAddress: '2300 Harrison St, San Francisco, CA',
-                    companyOrgNr: 'US-461234567',
-                    invoiceNumber: `NOT-${Math.floor(Math.random() * 10000)}`,
-                    invoiceDate: invoiceDate,
-                    dueDate: invoiceDate,
-                    customerName: 'Ditt Företag AB',
-                    lineItems: [{ description: 'Notion Pro Plan', quantity: 1, unitPrice: 120, vatRate: 25, amount: 120 }],
-                    subtotal: 120,
-                    vatAmount: 30,
-                    total: 150,
-                    paymentInfo: { ocrNumber: `${Math.floor(Math.random() * 90000000000) + 10000000000}` },
-                    notes: 'Payment automatically charged to card.'
-                }
             }
         case 'yahoo-invoice':
             return {
@@ -281,7 +217,6 @@ Förfallodatum: ${dueDate}
 Bankgiro: 5851-7200
 OCR: ${Math.floor(Math.random() * 90000000000) + 10000000000}`,
                 category: 'other',
-                aiSuggestion: null,
             }
         case 'outlook-invoice':
             return {
@@ -294,12 +229,10 @@ Amount: 405 kr
 VAT (25%): 101.25 kr
 Total: 506.25 kr
 
-Payment Date: ${invoiceDate}
 Automatic renewal - Payment charged to card
 
 Ref: microsoftinvoice@microsoft.com`,
                 category: 'other',
-                aiSuggestion: null,
             }
         default:
             return {
@@ -307,7 +240,6 @@ Ref: microsoftinvoice@microsoft.com`,
                 title: 'Händelse',
                 description: 'En ny händelse har inträffat',
                 category: 'other',
-                aiSuggestion: null
             }
     }
 }

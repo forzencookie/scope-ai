@@ -17,7 +17,6 @@ import {
     SidebarMenuButton,
     useSidebar,
 } from "@/components/ui/sidebar"
-import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
 import { type SidebarMode } from "./app-sidebar"
 import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai-context"
 
@@ -86,10 +85,6 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
         const handleOpenAIChat = (e: Event) => {
             const context = (e as CustomEvent).detail as PageContext
             if (context) {
-                // If we're already in a conversation with messages, start a new one first?
-                // Or just append. For "Ask AI" buttons, usually starting fresh or just sending is best.
-                // The requirements say "deactivate page", so we want the sidebar to act as the page.
-
                 startNewConversation()
                 if (context.autoSend) {
                     sendMessage({ content: context.initialPrompt })
@@ -108,12 +103,28 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
             }
         }
 
+        const handleShowHistory = () => {
+            setShowHistory(true)
+        }
+
+        const handleNewConversation = () => {
+            startNewConversation()
+            setTextareaValue("")
+            setMentionItems([])
+            setAttachedFiles([])
+            setShowHistory(false)
+        }
+
         window.addEventListener(AI_CHAT_EVENT, handleOpenAIChat)
         window.addEventListener("load-conversation", handleLoadConversation)
+        window.addEventListener("ai-chat-show-history", handleShowHistory)
+        window.addEventListener("ai-chat-new-conversation", handleNewConversation)
 
         return () => {
             window.removeEventListener(AI_CHAT_EVENT, handleOpenAIChat)
             window.removeEventListener("load-conversation", handleLoadConversation)
+            window.removeEventListener("ai-chat-show-history", handleShowHistory)
+            window.removeEventListener("ai-chat-new-conversation", handleNewConversation)
         }
     }, [sendMessage, startNewConversation, loadConversation])
 
@@ -188,38 +199,7 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
 
     // Chat view
     return (
-        <SidebarGroup className="flex-1 flex flex-col overflow-hidden gap-2">
-            {/* Header */}
-            <div className="flex items-center justify-between px-2 shrink-0 h-8">
-                {mode && onModeChange ? (
-                    <div className="-ml-2 w-[180px]">
-                        <SidebarModeDropdown mode={mode} onModeChange={onModeChange} />
-                    </div>
-                ) : (
-                    <span className="text-sm font-medium">Scope AI</span>
-                )}
-                <div className="flex gap-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={() => setShowHistory(true)}
-                        title="Visa historik"
-                    >
-                        <MessageSquare className="h-3.5 w-3.5" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-6 w-6"
-                        onClick={handleNewConversation}
-                        title="Ny chatt"
-                    >
-                        <Plus className="h-3.5 w-3.5" />
-                    </Button>
-                </div>
-            </div>
-
+        <SidebarGroup className="flex-1 flex flex-col overflow-hidden gap-2 -mt-0.5">
             {/* Main Chat Container */}
             <div className="flex-1 flex flex-col min-h-0 bg-sidebar-accent rounded-lg overflow-hidden">
                 {/* Messages Area */}

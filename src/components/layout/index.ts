@@ -5,4 +5,5 @@ export { NavMain, NavProjects, NavSettings, IconWrapper, iconColors, NavUser } f
 export { AdaptiveNavMain } from "./adaptive-nav"
 export { MobileBottomNav } from "./mobile-bottom-nav"
 export { UserTeamSwitcher } from "./user-team-switcher"
+export { GlobalSearch } from "./global-search"
 

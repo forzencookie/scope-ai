@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { cn } from "@/lib/utils"
 import { MentionPopover, MentionBadge, type MentionItem } from "@/components/ai/mention-popover"
+import { ModelSelector } from "@/components/ai/model-selector"
 import {
     Paperclip,
     Mic,
@@ -281,8 +282,10 @@ export function ChatInput({
                         <span ref={mentionAnchorRef} className="hidden" />
                     </div>
 
-                    {/* Right - mic and send */}
+                    {/* Right - model selector, mic and send */}
                     <div className="flex items-center gap-0.5">
+                        <ModelSelector />
+                        <div className="w-px h-4 bg-border/60 mx-1" />
                         <Button
                             variant="ghost"
                             size="icon"

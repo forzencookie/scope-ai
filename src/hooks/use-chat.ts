@@ -9,6 +9,7 @@ import { useState, useCallback, useEffect } from 'react'
 import type { Message, Conversation } from '@/lib/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import { generateTitle, fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
+import { useModel } from '@/providers/model-provider'
 
 interface UseChatOptions {
     /** Initial conversation ID to load */
@@ -29,6 +30,7 @@ interface SendMessageOptions {
 }
 
 export function useChat(options: UseChatOptions = {}) {
+    const { modelId } = useModel()
     const [conversations, setConversations] = useState<Conversation[]>([])
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(
         options.initialConversationId || null
@@ -237,7 +239,8 @@ export function useChat(options: UseChatOptions = {}) {
                         .map(m => ({ role: m.role, content: m.content })),
                     confirmationId,
                     attachments: attachments.length > 0 ? attachments : undefined,
-                    mentions: mentions.length > 0 ? mentions : undefined
+                    mentions: mentions.length > 0 ? mentions : undefined,
+                    model: modelId
                 })
             })
 
@@ -355,7 +358,7 @@ export function useChat(options: UseChatOptions = {}) {
         } finally {
             setIsLoading(false)
         }
-    }, [messages, currentConversationId, isLoading, conversations])
+    }, [messages, currentConversationId, isLoading, conversations, modelId])
 
     // Regenerate last response
     const regenerateResponse = useCallback(() => {

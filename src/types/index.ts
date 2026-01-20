@@ -169,14 +169,7 @@ export interface InboxItem {
   category: InboxCategory
   read: boolean
   starred: boolean
-  aiSuggestion: string | null
   attachments?: string[]
-  // AI Processing fields
-  aiStatus?: 'pending' | 'processing' | 'processed' | 'error'
-  linkedEntityId?: string  // ID of created invoice/receipt
-  linkedEntityType?: 'supplier-invoice' | 'receipt' | null
-  // Document data (generated at creation time)
-  documentData?: import('./documents').DocumentData
 }
 
 export type InboxFilter = "all" | "unread" | "starred"
