@@ -240,7 +240,7 @@ function ParterPageContent() {
                 </div>
 
                 {/* Tab Content - Two Column Layout */}
-                <main className="flex-1 flex gap-6 p-6">
+                <main className="flex gap-6 p-6">
                     {/* Main Content */}
                     <div className="flex-1 min-w-0 max-w-6xl">
                         {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
