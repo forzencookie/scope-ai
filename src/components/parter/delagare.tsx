@@ -291,12 +291,12 @@ export function Delagare() {
       </div>
 
       {/* Partner Capital Overview */}
-      <div className="rounded-xl border bg-gradient-to-br from-emerald-50 via-teal-50 to-cyan-50 dark:from-emerald-950/30 dark:via-teal-950/30 dark:to-cyan-950/30 p-5">
+      <div className="rounded-xl border bg-muted/20 p-5">
         <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
           {/* Left: Capital Bar Visualization */}
           <div className="flex-1">
             <div className="flex items-center gap-2 mb-4">
-              <Wallet className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
+              <Wallet className="h-5 w-5 text-muted-foreground" />
               <h3 className="font-semibold">Kapitalfördelning</h3>
               <span className="text-sm text-muted-foreground ml-auto">
                 Totalt: {formatCurrency(stats.totalCapital)}
@@ -310,11 +310,11 @@ export function Delagare() {
                   ? (partner.currentCapitalBalance / stats.totalCapital) * 100
                   : 0
                 const colors = [
-                  'bg-emerald-500',
-                  'bg-teal-500',
-                  'bg-cyan-500',
-                  'bg-green-500',
-                  'bg-lime-500',
+                  'bg-foreground',
+                  'bg-foreground/80',
+                  'bg-foreground/60',
+                  'bg-foreground/40',
+                  'bg-foreground/20',
                 ]
                 return (
                   <div
@@ -337,10 +337,10 @@ export function Delagare() {
             <div className="flex flex-wrap gap-x-4 gap-y-1">
               {enrichedPartners.slice(0, 4).map((partner, index) => {
                 const colors = [
-                  'bg-emerald-500',
-                  'bg-teal-500',
-                  'bg-cyan-500',
-                  'bg-green-500',
+                  'bg-foreground',
+                  'bg-foreground/80',
+                  'bg-foreground/60',
+                  'bg-foreground/40',
                 ]
                 return (
                   <div key={partner.id} className="flex items-center gap-2">
@@ -361,17 +361,17 @@ export function Delagare() {
           {/* Right: Key Metrics */}
           <div className="grid grid-cols-3 gap-3 lg:w-auto lg:min-w-[360px]">
             <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-              <Users className="h-4 w-4 text-emerald-500 mb-1" />
+              <Users className="h-4 w-4 text-muted-foreground mb-1" />
               <p className="text-xl font-bold tabular-nums">{stats.partnerCount}</p>
               <p className="text-xs text-muted-foreground">Delägare</p>
             </div>
             <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-              <Wallet className="h-4 w-4 text-teal-500 mb-1" />
+              <Wallet className="h-4 w-4 text-muted-foreground mb-1" />
               <p className="text-xl font-bold tabular-nums">{formatCurrency(stats.totalCapital)}</p>
               <p className="text-xs text-muted-foreground">Kapital</p>
             </div>
             <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-              <TrendingDown className="h-4 w-4 text-red-500 mb-1" />
+              <TrendingDown className="h-4 w-4 text-muted-foreground mb-1" />
               <p className="text-xl font-bold tabular-nums">{formatCurrency(stats.totalWithdrawals)}</p>
               <p className="text-xs text-muted-foreground">Uttag i år</p>
             </div>
