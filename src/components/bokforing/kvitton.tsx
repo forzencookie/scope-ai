@@ -296,12 +296,12 @@ export function ReceiptsTable() {
     return (
         <div className="w-full space-y-6">
             {/* Page Heading */}
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">{text.receipts.title}</h2>
                     <p className="text-muted-foreground">{text.receipts.subtitle}</p>
                 </div>
-                <Button className="gap-2" onClick={() => setUploadDialogOpen(true)}>
+                <Button className="gap-2 w-full sm:w-auto" onClick={() => setUploadDialogOpen(true)}>
                     <UploadCloud className="h-4 w-4" />
                     {text.receipts.upload}
                 </Button>
@@ -379,7 +379,7 @@ export function ReceiptsTable() {
                 <div className="border-b-2 border-border/60" />
 
                 {/* Sub-header with title and actions */}
-                <div className="flex items-center justify-between py-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
                     <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.receipts.allReceipts}</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar

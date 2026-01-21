@@ -29,6 +29,7 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import {
+    GridTableContainer,
     GridTableHeader,
     GridTableRows,
     GridTableRow,
@@ -202,8 +203,8 @@ export function LonesbeskContent() {
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
                 {/* Page Heading */}
-                <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight">Lönekörning</h2>
                             <p className="text-muted-foreground mt-1">
@@ -211,7 +212,7 @@ export function LonesbeskContent() {
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button onClick={() => setShowAIDialog(true)}>
+                            <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Ny lönekörning
                             </Button>
@@ -271,7 +272,7 @@ export function LonesbeskContent() {
 
                 {/* Table Title + Actions */}
                 <div className="space-y-4 pt-8 border-t-2 border-border/60">
-                    <div className="flex items-center justify-between px-1">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
                         <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Lönespecifikationer</h2>
                         <div className="flex items-center gap-2">
                             <SearchBar
@@ -322,58 +323,56 @@ export function LonesbeskContent() {
                         </div>
                     </div>
 
-                    <div>
-                        <div>
-                            <GridTableHeader
-                                columns={[
-                                    { label: "Anställd", icon: User, span: 3 },
-                                    { label: "Period", icon: Calendar, span: 2 },
-                                    { label: "Bruttolön", icon: Banknote, span: 2, align: 'right' },
-                                    { label: "Skatt", icon: Banknote, span: 2, align: 'right' },
-                                    { label: "Nettolön", icon: Wallet, span: 2, align: 'right' },
-                                    { label: "Status", icon: CheckCircle2, span: 1 },
-                                ]}
-                            />
-                            <GridTableRows>
-                                {filteredPayslips.map((slip) => (
-                                    <GridTableRow
-                                        key={slip.id}
-                                        selected={selectedIds.has(String(slip.id))}
-                                        onClick={() => handleRowClick(slip)}
-                                    >
-                                        {/* Anställd */}
-                                        <div className="col-span-3 font-medium text-sm">{slip.employee}</div>
+                    <GridTableContainer>
+                        <GridTableHeader
+                            columns={[
+                                { label: "Anställd", icon: User, span: 3 },
+                                { label: "Period", icon: Calendar, span: 2 },
+                                { label: "Bruttolön", icon: Banknote, span: 2, align: 'right' },
+                                { label: "Skatt", icon: Banknote, span: 2, align: 'right' },
+                                { label: "Nettolön", icon: Wallet, span: 2, align: 'right' },
+                                { label: "Status", icon: CheckCircle2, span: 1 },
+                            ]}
+                        />
+                        <GridTableRows>
+                            {filteredPayslips.map((slip) => (
+                                <GridTableRow
+                                    key={slip.id}
+                                    selected={selectedIds.has(String(slip.id))}
+                                    onClick={() => handleRowClick(slip)}
+                                >
+                                    {/* Anställd */}
+                                    <div className="col-span-3 font-medium text-sm">{slip.employee}</div>
 
-                                        {/* Period */}
-                                        <div className="col-span-2 text-sm text-muted-foreground">{slip.period}</div>
+                                    {/* Period */}
+                                    <div className="col-span-2 text-sm text-muted-foreground">{slip.period}</div>
 
-                                        {/* Bruttolön */}
-                                        <div className="col-span-2 text-right tabular-nums">
-                                            {formatCurrency(slip.grossSalary)}
-                                        </div>
+                                    {/* Bruttolön */}
+                                    <div className="col-span-2 text-right tabular-nums">
+                                        {formatCurrency(slip.grossSalary)}
+                                    </div>
 
-                                        {/* Skatt */}
-                                        <div className="col-span-2 text-right tabular-nums text-red-600 dark:text-red-500/70">
-                                            -{slip.tax.toLocaleString("sv-SE")} kr
-                                        </div>
+                                    {/* Skatt */}
+                                    <div className="col-span-2 text-right tabular-nums text-red-600 dark:text-red-500/70">
+                                        -{slip.tax.toLocaleString("sv-SE")} kr
+                                    </div>
 
-                                        {/* Nettolön */}
-                                        <div className="col-span-2 text-right tabular-nums font-medium">
-                                            {formatCurrency(slip.netSalary)}
-                                        </div>
+                                    {/* Nettolön */}
+                                    <div className="col-span-2 text-right tabular-nums font-medium">
+                                        {formatCurrency(slip.netSalary)}
+                                    </div>
 
-                                        {/* Status */}
-                                        <div className="col-span-1">
-                                            <AppStatusBadge
-                                                status={slip.status === "pending" ? "Väntar" : "Skickad"}
-                                                size="sm"
-                                            />
-                                        </div>
-                                    </GridTableRow>
-                                ))}
-                            </GridTableRows>
-                        </div>
-                    </div>
+                                    {/* Status */}
+                                    <div className="col-span-1">
+                                        <AppStatusBadge
+                                            status={slip.status === "pending" ? "Väntar" : "Skickad"}
+                                            size="sm"
+                                        />
+                                    </div>
+                                </GridTableRow>
+                            ))}
+                        </GridTableRows>
+                    </GridTableContainer>
                 </div>
 
                 <BulkActionToolbar

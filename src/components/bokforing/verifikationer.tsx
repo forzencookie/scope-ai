@@ -170,16 +170,16 @@ export function VerifikationerTable() {
     return (
         <div className="w-full space-y-6">
             {/* Page Heading */}
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">Verifikationer</h2>
                         <p className="text-muted-foreground">Se alla bokförda transaktioner och verifikationer.</p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button size="sm" className="h-8 w-8 sm:w-auto px-0 sm:px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <Button size="sm" className="h-8 w-full sm:w-auto px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
                             <Plus className="h-3.5 w-3.5" />
-                            <span className="hidden sm:inline">Ny verifikation</span>
+                            <span>Ny verifikation</span>
                         </Button>
                     </div>
                 </div>

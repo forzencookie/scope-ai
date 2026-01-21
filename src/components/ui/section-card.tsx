@@ -65,7 +65,7 @@ export function SectionCard({
                     )} />
                 )}
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
                         <div>
                             <p className="text-sm font-medium">{title}</p>
                             {description && (

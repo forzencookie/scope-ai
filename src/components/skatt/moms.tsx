@@ -254,14 +254,14 @@ export function MomsdeklarationContent() {
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
                 {/* Page Heading */}
-                <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight">Momsdeklaration</h2>
                             <p className="text-muted-foreground mt-1">Hantera momsrapporter och skicka till Skatteverket.</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button onClick={() => setShowAIDialog(true)}>
+                            <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
                                 <Plus className="h-4 w-4 mr-2" />
                                 Ny period
                             </Button>
@@ -330,7 +330,7 @@ export function MomsdeklarationContent() {
                 />
 
                 {/* Table Actions Toolbar */}
-                <div className="flex items-center justify-between py-2 mb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2 mb-2">
                     <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Alla perioder</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar
@@ -363,26 +363,28 @@ export function MomsdeklarationContent() {
                     </div>
                 </div>
 
-                {/* GridTable Header */}
-                <GridTableHeader
-                    columns={[
-                        { label: "Period", icon: Calendar, span: 2 },
-                        { label: "Deadline", icon: Clock, span: 2 },
-                        { label: "Utgående moms", icon: ArrowUpRight, span: 2, align: "right" },
-                        { label: "Ingående moms", icon: ArrowDownRight, span: 2, align: "right" },
-                        { label: "Att betala", icon: Wallet, span: 2, align: "right" },
-                        { label: "Status", icon: CheckCircle2, span: 1 },
-                    ]}
-                    trailing={
-                        <Checkbox
-                            checked={selection.allSelected && filteredPeriods.length > 0}
-                            onCheckedChange={selection.toggleAll}
-                        />
-                    }
-                />
+                {/* Responsive Table Container */}
+                <div className="overflow-x-auto -mx-2 px-2">
+                    {/* GridTable Header */}
+                    <GridTableHeader
+                        columns={[
+                            { label: "Period", icon: Calendar, span: 2 },
+                            { label: "Deadline", icon: Clock, span: 2 },
+                            { label: "Utgående moms", icon: ArrowUpRight, span: 2, align: "right" },
+                            { label: "Ingående moms", icon: ArrowDownRight, span: 2, align: "right" },
+                            { label: "Att betala", icon: Wallet, span: 2, align: "right" },
+                            { label: "Status", icon: CheckCircle2, span: 1 },
+                        ]}
+                        trailing={
+                            <Checkbox
+                                checked={selection.allSelected && filteredPeriods.length > 0}
+                                onCheckedChange={selection.toggleAll}
+                            />
+                        }
+                    />
 
-                {/* GridTable Rows */}
-                <GridTableRows>
+                    {/* GridTable Rows */}
+                    <GridTableRows>
                     {filteredPeriods.map((item) => (
                         <GridTableRow
                             key={item.period}
@@ -421,7 +423,8 @@ export function MomsdeklarationContent() {
                             </div>
                         </GridTableRow>
                     ))}
-                </GridTableRows>
+                    </GridTableRows>
+                </div>
 
                 <BulkActionToolbar
                     selectedCount={selection.selectedCount}

@@ -265,8 +265,8 @@ export function AGIContent() {
     return (
         <main className="flex-1 flex flex-col p-6">
             {/* Page Header */}
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
                         <h2 className="text-2xl font-bold tracking-tight">Arbetsgivardeklaration (AGI)</h2>
                         <p className="text-muted-foreground mt-1">
@@ -274,7 +274,7 @@ export function AGIContent() {
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button onClick={() => navigateToAI(getDefaultAIContext('agi', 'Ny Arbetsgivardeklaration'))}>
+                        <Button onClick={() => navigateToAI(getDefaultAIContext('agi', 'Ny Arbetsgivardeklaration'))} className="w-full sm:w-auto">
                             <Plus className="h-4 w-4 mr-2" />
                             Ny AGI
                         </Button>
@@ -320,7 +320,7 @@ export function AGIContent() {
                 <div className="border-b-2 border-border/60" />
 
                 {/* Table Actions Toolbar */}
-                <div className="flex items-center justify-between py-2 mb-2">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2 mb-2">
                     <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Alla deklarationer</h3>
                     <div className="flex items-center gap-2">
                         <SearchBar
@@ -353,62 +353,65 @@ export function AGIContent() {
                     </div>
                 </div>
 
-                {/* GridTable Header */}
-                <GridTableHeader
-                    columns={[
-                        { label: "Period", icon: Calendar, span: 2 },
-                        { label: "Deadline", icon: Clock, span: 2 },
-                        { label: "Anställda", icon: Users, span: 1 },
-                        { label: "Bruttolön", icon: Banknote, span: 2, align: "right" },
-                        { label: "Skatteavdrag", icon: Wallet, span: 2, align: "right" },
-                        { label: "Avgifter", icon: Calculator, span: 2, align: "right" },
-                    ]}
-                    trailing={
-                        <Checkbox
-                            checked={selectedIds.size === filteredReports.length && filteredReports.length > 0}
-                            onCheckedChange={toggleAll}
-                        />
-                    }
-                />
+                {/* Responsive Table Container */}
+                <div className="overflow-x-auto -mx-2 px-2">
+                    {/* GridTable Header */}
+                    <GridTableHeader
+                        columns={[
+                            { label: "Period", icon: Calendar, span: 2 },
+                            { label: "Deadline", icon: Clock, span: 2 },
+                            { label: "Anställda", icon: Users, span: 1 },
+                            { label: "Bruttolön", icon: Banknote, span: 2, align: "right" },
+                            { label: "Skatteavdrag", icon: Wallet, span: 2, align: "right" },
+                            { label: "Avgifter", icon: Calculator, span: 2, align: "right" },
+                        ]}
+                        trailing={
+                            <Checkbox
+                                checked={selectedIds.size === filteredReports.length && filteredReports.length > 0}
+                                onCheckedChange={toggleAll}
+                            />
+                        }
+                    />
 
-                {/* GridTable Rows */}
-                <GridTableRows>
-                    {filteredReports.map((report) => (
-                        <GridTableRow
-                            key={report.period}
-                            selected={selectedIds.has(report.period)}
-                        >
-                            <div style={{ gridColumn: 'span 2' }} className="font-medium">
-                                {report.period}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
-                                {report.dueDate}
-                            </div>
-                            <div style={{ gridColumn: 'span 1' }} className="tabular-nums">
-                                {report.employees}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
-                                {report.totalSalary.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
-                                {report.tax.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
-                                {report.contributions.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div
-                                style={{ gridColumn: 'span 1' }}
-                                className="flex justify-end"
-                                onClick={(e) => e.stopPropagation()}
+                    {/* GridTable Rows */}
+                    <GridTableRows>
+                        {filteredReports.map((report) => (
+                            <GridTableRow
+                                key={report.period}
+                                selected={selectedIds.has(report.period)}
                             >
-                                <Checkbox
-                                    checked={selectedIds.has(report.period)}
-                                    onCheckedChange={() => toggleSelection(report.period)}
-                                />
-                            </div>
-                        </GridTableRow>
-                    ))}
-                </GridTableRows>
+                                <div style={{ gridColumn: 'span 2' }} className="font-medium">
+                                    {report.period}
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
+                                    {report.dueDate}
+                                </div>
+                                <div style={{ gridColumn: 'span 1' }} className="tabular-nums">
+                                    {report.employees}
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                    {report.totalSalary.toLocaleString("sv-SE")} kr
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                    {report.tax.toLocaleString("sv-SE")} kr
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                    {report.contributions.toLocaleString("sv-SE")} kr
+                                </div>
+                                <div
+                                    style={{ gridColumn: 'span 1' }}
+                                    className="flex justify-end"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <Checkbox
+                                        checked={selectedIds.has(report.period)}
+                                        onCheckedChange={() => toggleSelection(report.period)}
+                                    />
+                                </div>
+                            </GridTableRow>
+                        ))}
+                    </GridTableRows>
+                </div>
 
                 <BulkActionToolbar
                     selectedCount={selectedIds.size}

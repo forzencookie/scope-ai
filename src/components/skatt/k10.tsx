@@ -181,7 +181,7 @@ export function K10Content() {
             <main className="flex-1 flex flex-col p-6">
                 <div className="max-w-6xl w-full space-y-6">
                     {/* Page Heading */}
-                    <div className="flex items-center justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
                             <h2 className="text-2xl font-bold tracking-tight">K10 - Kvalificerade andelar</h2>
                             <p className="text-muted-foreground">
@@ -189,7 +189,7 @@ export function K10Content() {
                             </p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button onClick={handleSubmit}>
+                            <Button onClick={handleSubmit} className="w-full sm:w-auto">
                                 <Send className="h-4 w-4 mr-2" />
                                 Skicka till Skatteverket
                             </Button>

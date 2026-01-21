@@ -23,13 +23,16 @@ interface GridTableHeaderProps {
     /** Optional trailing element (e.g., checkbox) */
     trailing?: ReactNode
     className?: string
+    /** Minimum width for the grid (for horizontal scroll on mobile) */
+    minWidth?: string
 }
 
 export function GridTableHeader({
     columns,
     gridCols = 12,
     trailing,
-    className
+    className,
+    minWidth = "700px"
 }: GridTableHeaderProps) {
     return (
         <div
@@ -37,7 +40,10 @@ export function GridTableHeader({
                 "grid gap-4 px-2 py-3.5 -mx-2 mb-2 bg-muted/40 rounded-lg text-xs font-medium text-muted-foreground uppercase tracking-wider items-center",
                 className
             )}
-            style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+            style={{
+                gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+                minWidth
+            }}
         >
             {columns.map((col, idx) => {
                 const Icon = col.icon
@@ -67,6 +73,20 @@ export function GridTableHeader({
     )
 }
 
+interface GridTableContainerProps {
+    children: ReactNode
+    className?: string
+}
+
+/** Responsive container that adds horizontal scroll on mobile */
+export function GridTableContainer({ children, className }: GridTableContainerProps) {
+    return (
+        <div className={cn("overflow-x-auto -mx-2 px-2", className)}>
+            {children}
+        </div>
+    )
+}
+
 interface GridTableRowsProps {
     children: ReactNode
     className?: string
@@ -86,6 +106,8 @@ interface GridTableRowProps {
     selected?: boolean
     onClick?: () => void
     className?: string
+    /** Minimum width for the grid (for horizontal scroll on mobile) */
+    minWidth?: string
 }
 
 export function GridTableRow({
@@ -93,7 +115,8 @@ export function GridTableRow({
     gridCols = 12,
     selected,
     onClick,
-    className
+    className,
+    minWidth = "700px"
 }: GridTableRowProps) {
     return (
         <div
@@ -104,7 +127,10 @@ export function GridTableRow({
                 selected && "bg-muted/40",
                 className
             )}
-            style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+            style={{
+                gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))`,
+                minWidth
+            }}
         >
             {children}
         </div>
@@ -116,4 +142,5 @@ export {
     GridTableHeader as Table3Header,
     GridTableRows as Table3Rows,
     GridTableRow as Table3Row,
+    GridTableContainer as Table3Container,
 }
