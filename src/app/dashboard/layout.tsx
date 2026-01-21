@@ -16,11 +16,105 @@ import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ModelProvider } from "@/providers/model-provider"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { MessageSquare, Plus, RefreshCw } from "lucide-react"
+import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw } from "lucide-react"
+import { useRouter, usePathname } from "next/navigation"
+import { useEffect, useCallback } from "react"
+
+// Module-level navigation history store (persists across component remounts)
+const navigationStore = {
+    historyStack: [] as string[],
+    currentIndex: -1,
+    isNavigating: false,
+    listeners: new Set<() => void>(),
+
+    subscribe(listener: () => void) {
+        this.listeners.add(listener)
+        return () => this.listeners.delete(listener)
+    },
+
+    notify() {
+        this.listeners.forEach(l => l())
+    },
+
+    push(pathname: string) {
+        if (this.isNavigating) {
+            this.isNavigating = false
+            return
+        }
+
+        // If we're not at the end of the stack, truncate forward history
+        if (this.currentIndex < this.historyStack.length - 1) {
+            this.historyStack = this.historyStack.slice(0, this.currentIndex + 1)
+        }
+
+        // Don't add duplicate consecutive entries
+        if (this.historyStack[this.historyStack.length - 1] !== pathname) {
+            this.historyStack.push(pathname)
+            this.currentIndex = this.historyStack.length - 1
+            this.notify()
+        }
+    },
+
+    get canGoBack() {
+        return this.currentIndex > 0
+    },
+
+    get canGoForward() {
+        return this.currentIndex < this.historyStack.length - 1
+    }
+}
+
+// Custom hook to track navigation history
+function useNavigationHistory() {
+    const pathname = usePathname()
+    const router = useRouter()
+
+    // Use actual state for canGoBack/canGoForward to trigger proper re-renders
+    const [canGoBack, setCanGoBack] = useState(false)
+    const [canGoForward, setCanGoForward] = useState(false)
+
+    // Update state from store
+    const updateState = useCallback(() => {
+        setCanGoBack(navigationStore.currentIndex > 0)
+        setCanGoForward(navigationStore.currentIndex < navigationStore.historyStack.length - 1)
+    }, [])
+
+    // Subscribe to store changes
+    useEffect(() => {
+        return navigationStore.subscribe(updateState)
+    }, [updateState])
+
+    // Track pathname changes
+    useEffect(() => {
+        navigationStore.push(pathname)
+        updateState()
+    }, [pathname, updateState])
+
+    const goBack = useCallback(() => {
+        if (navigationStore.currentIndex > 0) {
+            navigationStore.isNavigating = true
+            navigationStore.currentIndex--
+            router.push(navigationStore.historyStack[navigationStore.currentIndex])
+            updateState()
+        }
+    }, [router, updateState])
+
+    const goForward = useCallback(() => {
+        if (navigationStore.currentIndex < navigationStore.historyStack.length - 1) {
+            navigationStore.isNavigating = true
+            navigationStore.currentIndex++
+            router.push(navigationStore.historyStack[navigationStore.currentIndex])
+            updateState()
+        }
+    }, [router, updateState])
+
+    return { canGoBack, canGoForward, goBack, goForward }
+}
 
 function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
+    const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()
 
     return (
         <div className="h-12 bg-sidebar flex items-center shrink-0 mt-2">
@@ -33,6 +127,29 @@ function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: Sideba
             )}
             {/* Sidebar toggle */}
             <SidebarTrigger className="ml-2" />
+            {/* Navigation buttons */}
+            <div className="flex items-center gap-0.5 ml-1">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-full"
+                    onClick={goBack}
+                    disabled={!canGoBack}
+                    title="Bakåt"
+                >
+                    <ChevronLeft className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-full"
+                    onClick={goForward}
+                    disabled={!canGoForward}
+                    title="Framåt"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
             {/* Search bar centered over main content area */}
             <div className="flex-1 flex justify-center px-4">
                 <GlobalSearch />
