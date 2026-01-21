@@ -276,7 +276,7 @@ function ParterPageContent() {
                     </div>
 
                     {/* Right Sidebar - Activity Panel */}
-                    <div id="page-right-sidebar" className="hidden xl:block w-80 shrink-0" />
+                    <div id="page-right-sidebar" className="hidden xl:block w-80 shrink-0 border-l border-border/50 pl-6" />
                 </main>
             </div>
         </TooltipProvider>
