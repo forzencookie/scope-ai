@@ -244,7 +244,7 @@ function ParterPageContent() {
                     {/* Main Content */}
                     <div className="flex-1 min-w-0 max-w-6xl">
                         {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
-                        {!['aktiebok', 'styrelseprotokoll', 'bolagsstamma'].includes(currentTab) && (
+                        {!['aktiebok', 'styrelseprotokoll', 'bolagsstamma', 'medlemsregister'].includes(currentTab) && (
                             <div className="pb-6">
                                 <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
                                 <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
