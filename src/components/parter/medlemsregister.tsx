@@ -550,19 +550,19 @@ export function Medlemsregister() {
       {/* Members List */}
       <div className="overflow-x-auto pb-4">
         <GridTableHeader
-          className="min-w-[800px]"
+          className="min-w-[1000px]"
           columns={[
             { label: "", span: 1 }, // Checkbox
             { label: "Medlem", span: 3 },
             { label: "Kontakt", span: 2 },
             { label: "Typ", span: 2 },
-            { label: "Medlem sedan", span: 1 },
+            { label: "Gick med", span: 1 },
             { label: "Avgift", span: 1 },
             { label: "Status", span: 1 },
             { label: "", span: 1 },
           ]}
         />
-        <GridTableRows className="min-w-[800px]">
+        <GridTableRows className="min-w-[1000px]">
           {filteredMembers.map((member) => (
             <GridTableRow
               key={member.id}
