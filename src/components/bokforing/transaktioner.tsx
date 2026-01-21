@@ -15,7 +15,9 @@ import {
     Clock,
     BookOpen,
     SlidersHorizontal,
-    Search, // Added Search
+    Search,
+    AlertCircle,
+    ChevronRight,
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -222,31 +224,72 @@ export function TransactionsTable({
                 </div>
             </div>
 
-            <StatCardGrid columns={4}>
-                <StatCard
-                    label={text.stats.totalTransactions}
-                    value={stats.totalCount}
-                    subtitle={text.stats.thisPeriod}
-                    headerIcon={ArrowRightLeft}
-                />
-                <StatCard
-                    label={text.stats.income}
-                    value={formatCurrency(stats.income)}
-                    headerIcon={TrendingUp}
-                    changeType="positive"
-                />
-                <StatCard
-                    label={text.stats.expenses}
-                    value={formatCurrency(stats.expenses)}
-                    headerIcon={TrendingDown}
-                    changeType="negative"
-                />
-                <StatCard
-                    label={text.stats.pendingReview}
-                    value={stats.pending}
-                    headerIcon={Clock}
-                />
-            </StatCardGrid>
+            {/* Hero Action Card - Pending Review */}
+            {stats.pending > 0 ? (
+                <div className="rounded-xl border-2 border-amber-200 dark:border-amber-900/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 p-5">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
+                                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
+                            </div>
+                            <div>
+                                <div className="flex items-baseline gap-2">
+                                    <span className="text-3xl font-bold text-amber-700 dark:text-amber-300">{stats.pending}</span>
+                                    <span className="text-amber-600 dark:text-amber-400 font-medium">transaktioner att granska</span>
+                                </div>
+                                <p className="text-sm text-amber-600/80 dark:text-amber-400/70 mt-0.5">
+                                    Kräver kvitto eller bokföring innan periodbokslut
+                                </p>
+                            </div>
+                        </div>
+                        <Button
+                            variant="outline"
+                            className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shrink-0"
+                            onClick={() => filter.setStatusFilter([TRANSACTION_STATUSES.TO_RECORD, TRANSACTION_STATUSES.MISSING_DOCUMENTATION])}
+                        >
+                            Visa alla
+                            <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                    </div>
+                </div>
+            ) : (
+                <div className="rounded-xl border-2 border-green-200 dark:border-green-900/50 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-5">
+                    <div className="flex items-center gap-4">
+                        <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
+                            <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
+                        </div>
+                        <div>
+                            <span className="text-lg font-semibold text-green-700 dark:text-green-300">Allt är i ordning!</span>
+                            <p className="text-sm text-green-600/80 dark:text-green-400/70">Alla transaktioner är granskade och bokförda</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Secondary Stats */}
+            <div className="grid grid-cols-3 gap-4">
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <ArrowRightLeft className="h-5 w-5 text-muted-foreground" />
+                    <div>
+                        <p className="text-2xl font-bold tabular-nums">{stats.totalCount}</p>
+                        <p className="text-xs text-muted-foreground">{text.stats.totalTransactions}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
+                    <div>
+                        <p className="text-2xl font-bold tabular-nums text-green-600 dark:text-green-400">{formatCurrency(stats.income)}</p>
+                        <p className="text-xs text-muted-foreground">{text.stats.income}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                    <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
+                    <div>
+                        <p className="text-2xl font-bold tabular-nums text-red-600 dark:text-red-400">{formatCurrency(stats.expenses)}</p>
+                        <p className="text-xs text-muted-foreground">{text.stats.expenses}</p>
+                    </div>
+                </div>
+            </div>
 
             <NewTransactionDialog
                 open={newTransactionDialogOpen}

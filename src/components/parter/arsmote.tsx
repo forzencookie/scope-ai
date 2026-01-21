@@ -276,124 +276,109 @@ export function Arsmote() {
         </div>
       </div>
 
-      {/* Meeting Preparation Dashboard */}
-      <div className="rounded-xl border bg-muted/20 p-5">
-        <div className="flex flex-col lg:flex-row gap-6">
-          {/* Left: Next Meeting & Preparation Progress */}
-          <div className="flex-1">
-            <div className="flex items-center gap-2 mb-3">
-              <HandHeart className="h-5 w-5 text-muted-foreground" />
-              <h3 className="font-semibold">
-                {stats.nextMeeting
-                  ? `Nästa årsmöte: ${formatDateLong(stats.nextMeeting.date)}`
-                  : 'Inget årsmöte planerat'
-                }
-              </h3>
-              {stats.nextMeeting && (
-                <AppStatusBadge status={getMeetingStatusLabel(stats.nextMeeting.status)} size="sm" />
-              )}
-            </div>
-
-            {stats.nextMeeting ? (
-              <>
-                {/* Preparation Progress */}
-                <div className="mb-4">
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm text-muted-foreground">
-                      Förberedelser
-                    </span>
-                    <span className="text-sm font-medium">
-                      {stats.prepProgress}%
-                    </span>
-                  </div>
-                  <div className="h-3 rounded-full bg-muted overflow-hidden">
-                    <div
-                      className={cn(
-                        "h-full rounded-full transition-all duration-500",
-                        stats.prepProgress === 100
-                          ? "bg-green-500"
-                          : stats.prepProgress >= 60
-                            ? "bg-foreground/80"
-                            : "bg-amber-500"
-                      )}
-                      style={{ width: `${stats.prepProgress}%` }}
-                    />
-                  </div>
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {stats.preparationItems.map((item, idx) => (
-                      <div
-                        key={idx}
-                        className={cn(
-                          "flex items-center gap-1.5 text-xs px-2 py-1 rounded-full",
-                          item.done
-                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                            : "bg-muted text-muted-foreground"
-                        )}
-                      >
-                        {item.done ? (
-                          <CheckCircle className="h-3 w-3" />
-                        ) : (
-                          <Clock className="h-3 w-3" />
-                        )}
-                        {item.label}
-                      </div>
-                    ))}
-                  </div>
+      {/* Next Meeting Hero Card */}
+      <div className="rounded-xl border bg-muted/20 p-6">
+        {stats.nextMeeting ? (
+          <div className="space-y-5">
+            {/* Header with title and status */}
+            <div className="flex items-start justify-between">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <HandHeart className="h-4 w-4" />
+                  <span>Nästa årsmöte</span>
                 </div>
-
-                {/* Meeting Info */}
-                <div className="flex items-center gap-4 pt-3 border-t border-border/50 text-sm">
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {stats.nextMeeting.location || 'Lokal ej angiven'}
-                  </div>
-                  <div className="flex items-center gap-1.5 text-muted-foreground">
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    {stats.totalMotions} motioner
-                  </div>
-                  {stats.daysUntilNext && stats.daysUntilNext > 0 && (
-                    <div className="flex items-center gap-1.5 font-medium">
-                      <Calendar className="h-3.5 w-3.5" />
-                      {stats.daysUntilNext} dagar kvar
-                    </div>
-                  )}
+                <h3 className="text-3xl font-bold tracking-tight">
+                  {formatDateLong(stats.nextMeeting.date)}
+                </h3>
+                <div className="flex items-center gap-1.5 text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>{stats.nextMeeting.location || 'Lokal ej angiven'}</span>
                 </div>
-              </>
-            ) : (
-              <div className="text-sm text-muted-foreground">
-                <p className="mb-3">Planera ett årsmöte för att komma igång med förberedelserna.</p>
-                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Planera årsmöte
-                </Button>
               </div>
-            )}
-          </div>
+              <AppStatusBadge status={getMeetingStatusLabel(stats.nextMeeting.status)} />
+            </div>
 
-          {/* Right: Key Metrics Grid */}
-          <div className="grid grid-cols-2 gap-3 lg:w-auto lg:min-w-[280px]">
-            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-              <UserCheck className="h-4 w-4 text-muted-foreground mb-1.5" />
-              <p className="text-2xl font-bold tabular-nums">{stats.votingMembersCount}</p>
-              <p className="text-xs text-muted-foreground">Röstberättigade</p>
+            {/* Divider */}
+            <div className="border-t border-border/50" />
+
+            {/* Preparation Progress */}
+            <div className="space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Förberedelser</span>
+                <span className="text-sm font-medium">{stats.prepProgress}%</span>
+              </div>
+              <div className="h-2 rounded-full bg-muted overflow-hidden">
+                <div
+                  className={cn(
+                    "h-full rounded-full transition-all duration-500",
+                    stats.prepProgress === 100
+                      ? "bg-green-500"
+                      : stats.prepProgress >= 60
+                        ? "bg-foreground/80"
+                        : "bg-amber-500"
+                  )}
+                  style={{ width: `${stats.prepProgress}%` }}
+                />
+              </div>
+              {/* Compact checklist */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
+                {stats.preparationItems.map((item, idx) => (
+                  <div
+                    key={idx}
+                    className={cn(
+                      "flex items-center gap-1.5",
+                      item.done ? "text-green-600 dark:text-green-500" : "text-muted-foreground"
+                    )}
+                  >
+                    {item.done ? (
+                      <CheckCircle className="h-3.5 w-3.5" />
+                    ) : (
+                      <Clock className="h-3.5 w-3.5" />
+                    )}
+                    <span>{item.label}</span>
+                  </div>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-              <MessageSquare className="h-4 w-4 text-muted-foreground mb-1.5" />
-              <p className="text-2xl font-bold tabular-nums">{stats.pendingMotions}</p>
-              <p className="text-xs text-muted-foreground">Väntande motioner</p>
-            </div>
-            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-              <FileCheck className="h-4 w-4 text-muted-foreground mb-1.5" />
-              <p className="text-2xl font-bold tabular-nums">{stats.completedCount}</p>
-              <p className="text-xs text-muted-foreground">Genomförda</p>
-            </div>
-            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-              <ClipboardList className="h-4 w-4 text-muted-foreground mb-1.5" />
-              <p className="text-2xl font-bold tabular-nums">{standardAgenda.length}</p>
-              <p className="text-xs text-muted-foreground">Dagordningspunkter</p>
+
+            {/* Divider */}
+            <div className="border-t border-border/50" />
+
+            {/* Inline Stats */}
+            <div className="flex items-center gap-8">
+              <div className="text-center">
+                <p className="text-2xl font-bold tabular-nums">{stats.votingMembersCount}</p>
+                <p className="text-xs text-muted-foreground">Röstberättigade</p>
+              </div>
+              <div className="text-center">
+                <p className="text-2xl font-bold tabular-nums">{stats.pendingMotions}</p>
+                <p className="text-xs text-muted-foreground">Motioner</p>
+              </div>
+              {stats.daysUntilNext && stats.daysUntilNext > 0 && (
+                <div className="text-center">
+                  <p className="text-2xl font-bold tabular-nums">{stats.daysUntilNext}</p>
+                  <p className="text-xs text-muted-foreground">Dagar kvar</p>
+                </div>
+              )}
+              <div className="text-center">
+                <p className="text-2xl font-bold tabular-nums">{stats.completedCount}</p>
+                <p className="text-xs text-muted-foreground">Genomförda</p>
+              </div>
             </div>
           </div>
-        </div>
+        ) : (
+          <div className="text-center py-8">
+            <HandHeart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">Inget årsmöte planerat</h3>
+            <p className="text-sm text-muted-foreground mb-4">
+              Planera ett årsmöte för att komma igång med förberedelserna.
+            </p>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Planera årsmöte
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Section Separator */}

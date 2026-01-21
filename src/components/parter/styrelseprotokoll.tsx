@@ -58,7 +58,7 @@ import { SearchBar } from "@/components/ui/search-bar"
 import { type MeetingStatus } from "@/lib/status-types"
 import { mockBoardMeetings, type BoardMeeting, type AgendaItem } from "@/data/ownership"
 import { useCompany } from "@/providers/company-provider"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+
 
 import { useCompliance } from "@/hooks/use-compliance"
 
@@ -75,9 +75,9 @@ export function Styrelseprotokoll() {
   const [isGeneratingAI, setIsGeneratingAI] = useState(false)
   const [collapsedYears, setCollapsedYears] = useState<Set<number>>(new Set())
 
-  // Map real documents to BoardMeeting format
+  // Map real documents to BoardMeeting format, fallback to mock data for demo
   const meetings = useMemo(() => {
-    return (realDocuments || [])
+    const realMeetings = (realDocuments || [])
       .filter(doc => doc.type === 'board_meeting_minutes')
       .map((doc, idx) => {
         let content = {
@@ -113,33 +113,26 @@ export function Styrelseprotokoll() {
           agendaItems: content.agendaItems
         }
       })
+
+    // Use mock data as fallback when no real data exists
+    if (realMeetings.length === 0) {
+      return mockBoardMeetings
+    }
+
+    return realMeetings
   }, [realDocuments])
 
-  // Calculate stats
-  // Fetch stats from server
-  const [stats, setStats] = useState({
-    signed: 0,
-    completed: 0,
-    planned: 0,
-    totalDecisions: 0
-  })
+  // Calculate stats from meetings data (works with both real and mock data)
+  const stats = useMemo(() => {
+    const signed = meetings.filter(m => m.status === 'protokoll signerat').length
+    const completed = meetings.filter(m => m.status === 'genomförd').length
+    const planned = meetings.filter(m => m.status === 'planerad').length
+    const totalDecisions = meetings.reduce((sum, m) =>
+      sum + m.agendaItems.filter(item => item.decision).length, 0
+    )
 
-  useEffect(() => {
-    async function fetchStats() {
-      const { supabase } = await import('@/lib/supabase')
-      const { data, error } = await supabase.rpc('get_meeting_stats', { meeting_type: 'board_meeting_minutes' })
-
-      if (!error && data) {
-        setStats({
-          signed: Number(data.signed) || 0,
-          completed: Number(data.completed) || 0,
-          planned: Number(data.planned) || 0,
-          totalDecisions: Number(data.totalDecisions) || 0
-        })
-      }
-    }
-    fetchStats()
-  }, [])
+    return { signed, completed, planned, totalDecisions }
+  }, [meetings])
 
   // Filter meetings by search and status
   const filteredMeetings = useMemo(() => {
@@ -238,13 +231,26 @@ export function Styrelseprotokoll() {
     { value: 'protokoll signerat', label: 'Signerade', count: stats.signed },
   ]
 
+  // Determine Hero Meeting (Priority: Planned > Signed > Completed)
+  const heroMeeting = useMemo(() => {
+    const planned = meetings.filter(m => m.status === 'planerad').sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+    if (planned) return { meeting: planned, label: 'Nästa möte' }
+
+    const latest = meetings.filter(m => m.status !== 'planerad').sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    if (latest) return { meeting: latest, label: 'Senaste protokoll' }
+
+    return null
+  }, [meetings])
+
   if (isLoadingDocuments) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="h-24 bg-muted animate-pulse" />
-          ))}
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-6 h-[400px]">
+          <div className="md:col-span-8 h-full bg-muted animate-pulse rounded-xl" />
+          <div className="md:col-span-4 flex flex-col gap-6 h-full">
+            <div className="flex-1 bg-muted animate-pulse rounded-xl" />
+            <div className="flex-1 bg-muted animate-pulse rounded-xl" />
+          </div>
         </div>
         <div className="border-b-2 border-border/60" />
         <Card className="h-96 bg-muted animate-pulse" />
@@ -254,50 +260,109 @@ export function Styrelseprotokoll() {
 
   return (
     <div className="space-y-6">
-      {/* Page Heading */}
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Styrelseprotokoll</h2>
-            <p className="text-muted-foreground mt-1">
-              Samlade protokoll och beslutsunderlag från styrelsemöten.
-            </p>
+      {/* Bento Grid Header */}
+      <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+        {/* Hero Card: Next/Latest Meeting */}
+        <div className="md:col-span-8">
+          <Card className="h-full bg-muted/20 border-border hover:bg-muted/30 transition-colors">
+            <CardHeader>
+              <div className="flex justify-between items-start">
+                <div>
+                  <Badge variant="outline" className="mb-2 bg-background">
+                    {heroMeeting?.label || 'Översikt'}
+                  </Badge>
+                  <CardTitle className="text-3xl font-bold tracking-tight">
+                    {heroMeeting ? `Styrelsemöte #${heroMeeting.meeting.meetingNumber}` : 'Styrelseprotokoll'}
+                  </CardTitle>
+                  <CardDescription className="text-base mt-2">
+                    {heroMeeting ? (
+                      <span className="flex items-center gap-4">
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-4 w-4" />
+                          {formatDateLong(heroMeeting.meeting.date)}
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <MapPin className="h-4 w-4" />
+                          {heroMeeting.meeting.location}
+                        </span>
+                      </span>
+                    ) : (
+                      "Samlade protokoll och beslutsunderlag från styrelsemöten."
+                    )}
+                  </CardDescription>
+                </div>
+                {heroMeeting && (
+                  <Button variant="default" onClick={() => setSelectedMeeting(selectedMeeting?.id === heroMeeting.meeting.id ? null : heroMeeting.meeting)}>
+                    <FileText className="h-4 w-4 mr-2" />
+                    Visa detaljer
+                  </Button>
+                )}
+              </div>
+            </CardHeader>
+            {heroMeeting && (
+              <CardContent>
+                <div className="grid grid-cols-3 gap-4 mt-4 pt-4 border-t border-border/50">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Status</span>
+                    <AppStatusBadge status={getMeetingStatusLabel(heroMeeting.meeting.status)} />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Ordförande</span>
+                    <span className="font-medium text-sm truncate">{heroMeeting.meeting.chairperson}</span>
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-muted-foreground uppercase tracking-wider">Antal beslut</span>
+                    <span className="font-medium text-sm tabular-nums">
+                      {heroMeeting.meeting.agendaItems.filter(i => i.decision).length} st
+                    </span>
+                  </div>
+                </div>
+              </CardContent>
+            )}
+            {!heroMeeting && (
+              <CardContent className="flex items-center justify-center h-32">
+                <Button onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Skapa första protokollet
+                </Button>
+              </CardContent>
+            )}
+          </Card>
+        </div>
+
+        {/* Right Column: Stats & Actions */}
+        <div className="md:col-span-4 flex flex-col gap-4">
+          {/* Quick Stats Row */}
+          <div className="grid grid-cols-2 gap-4 flex-1">
+            <Card className="flex flex-col justify-center p-4 bg-background border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+                <CheckCircle className="h-4 w-4" />
+                <span className="text-xs font-medium">Signerade</span>
+              </div>
+              <p className="text-2xl font-bold tabular-nums">{stats.signed}</p>
+            </Card>
+            <Card className="flex flex-col justify-center p-4 bg-background border-border shadow-sm">
+              <div className="flex items-center gap-2 mb-2 text-muted-foreground">
+                <FileCheck className="h-4 w-4" />
+                <span className="text-xs font-medium">Beslut</span>
+              </div>
+              <p className="text-2xl font-bold tabular-nums">{stats.totalDecisions}</p>
+            </Card>
           </div>
-          <div className="flex items-center gap-2">
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Nytt protokoll
-            </Button>
+
+          {/* Create New Action Card */}
+          <div
+            className="flex-1 rounded-xl border border-dashed border-border hover:border-primary/50 hover:bg-muted/30 transition-all cursor-pointer flex flex-col items-center justify-center p-6 text-center group"
+            onClick={() => setShowCreateDialog(true)}
+          >
+            <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center mb-3 group-hover:bg-primary/20 transition-colors">
+              <Plus className="h-5 w-5 text-primary" />
+            </div>
+            <h3 className="font-semibold">Nytt protokoll</h3>
+            <p className="text-xs text-muted-foreground mt-1 max-w-[150px]">Skapa och signera digitalt</p>
           </div>
         </div>
       </div>
-      {/* Stats Overview */}
-      <StatCardGrid columns={4}>
-        <StatCard
-          label="Totalt protokoll"
-          value={meetings.length.toString()}
-          subtitle="registrerade möten"
-          headerIcon={FileText}
-        />
-        <StatCard
-          label="Signerade"
-          value={stats.signed.toString()}
-          subtitle={`av ${meetings.length} protokoll`}
-          headerIcon={CheckCircle}
-        />
-        <StatCard
-          label="Planerade"
-          value={stats.planned.toString()}
-          subtitle="kommande möten"
-          headerIcon={Clock}
-        />
-        <StatCard
-          label="Beslut"
-          value={stats.totalDecisions.toString()}
-          subtitle="dokumenterade beslut"
-          headerIcon={FileCheck}
-        />
-      </StatCardGrid>
 
       {/* Section Separator */}
       <div className="border-b-2 border-border/60" />

@@ -21,7 +21,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+import { FilterTabs } from "@/components/ui/filter-tabs"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { type Invoice } from "@/data/invoices"
 import { type SupplierInvoice } from "@/data/ownership"
@@ -111,6 +111,65 @@ function InvoicesEmptyState({ hasFilters }: { hasFilters: boolean }) {
         </div>
     )
 }
+
+// =============================================================================
+// Compact Summary Bar Component
+// =============================================================================
+
+function InvoiceSummaryBar({
+    incoming,
+    outgoing,
+    overdueCount,
+}: {
+    incoming: number
+    outgoing: number
+    overdueCount: number
+}) {
+    return (
+        <div className="flex items-center gap-6 py-3 px-4 bg-muted/30 rounded-lg border border-border/40">
+            {/* Incoming */}
+            <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-md bg-green-500/10 flex items-center justify-center">
+                    <ArrowDownLeft className="h-3.5 w-3.5 text-green-500" />
+                </div>
+                <div>
+                    <span className="text-xs text-muted-foreground">Att få</span>
+                    <p className="text-sm font-semibold tabular-nums">{formatCurrency(incoming)}</p>
+                </div>
+            </div>
+
+            <div className="h-8 w-px bg-border/60" />
+
+            {/* Outgoing */}
+            <div className="flex items-center gap-2">
+                <div className="h-6 w-6 rounded-md bg-red-500/10 flex items-center justify-center">
+                    <ArrowUpRight className="h-3.5 w-3.5 text-red-500" />
+                </div>
+                <div>
+                    <span className="text-xs text-muted-foreground">Att betala</span>
+                    <p className="text-sm font-semibold tabular-nums">{formatCurrency(outgoing)}</p>
+                </div>
+            </div>
+
+            {/* Overdue warning - only show if there are overdue invoices */}
+            {overdueCount > 0 && (
+                <>
+                    <div className="h-8 w-px bg-border/60" />
+                    <div className="flex items-center gap-2">
+                        <div className="h-6 w-6 rounded-md bg-amber-500/10 flex items-center justify-center">
+                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
+                        </div>
+                        <div>
+                            <span className="text-xs text-muted-foreground">Förfallna</span>
+                            <p className="text-sm font-semibold">{overdueCount} st</p>
+                        </div>
+                    </div>
+                </>
+            )}
+        </div>
+    )
+}
+
 
 // =============================================================================
 // Main Component
@@ -525,67 +584,27 @@ export function UnifiedInvoicesView() {
                 </DropdownMenu>
             </div>
 
-            {/* Stats */}
-            <StatCardGrid columns={4}>
-                <StatCard
-                    label="Att få"
-                    value={formatCurrency(stats.incoming)}
-                    subtitle="Kundfakturor"
-                    headerIcon={ArrowDownLeft}
-                    changeType="positive"
+            {/* Summary Bar + Filters in one row */}
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+                {/* Compact Summary */}
+                <InvoiceSummaryBar
+                    incoming={stats.incoming}
+                    outgoing={stats.outgoing}
+                    overdueCount={stats.overdueCount}
                 />
-                <StatCard
-                    label="Att betala"
-                    value={formatCurrency(stats.outgoing)}
-                    subtitle="Leverantörsfakturor"
-                    headerIcon={ArrowUpRight}
-                />
-                <StatCard
-                    label="Förfallna"
-                    value={formatCurrency(stats.overdue)}
-                    subtitle={`${stats.overdueCount} fakturor`}
-                    headerIcon={AlertTriangle}
-                    changeType="negative"
-                />
-                <StatCard
-                    label="Betalda"
-                    value={formatCurrency(stats.paid)}
-                    headerIcon={TrendingUp}
-                    changeType="positive"
-                />
-            </StatCardGrid>
 
-            {/* Separator */}
-            <div className="border-b-2 border-border/60" />
-
-            {/* Sub-header with filters */}
-            <div className="flex items-center justify-between">
-                <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{viewFilterLabels[viewFilter]}</h3>
-                <div className="flex items-center gap-2">
-                    {/* View Filter */}
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button variant="outline" size="sm" className="gap-1.5 h-8">
-                                {viewFilterLabels[viewFilter]}
-                                <ChevronDown className="h-3.5 w-3.5" />
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuLabel>Visa</DropdownMenuLabel>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem onClick={() => setViewFilter("all")}>
-                                Alla fakturor
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setViewFilter("kundfakturor")}>
-                                <ArrowDownLeft className="h-4 w-4 mr-2 text-green-600" />
-                                Kundfakturor
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => setViewFilter("leverantorsfakturor")}>
-                                <ArrowUpRight className="h-4 w-4 mr-2 text-red-600" />
-                                Leverantörsfakturor
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                {/* Filters */}
+                <div className="flex items-center gap-3">
+                    {/* View Filter with FilterTabs */}
+                    <FilterTabs
+                        value={viewFilter}
+                        onChange={(v) => setViewFilter(v as ViewFilter)}
+                        options={[
+                            { value: "all", label: "Alla", icon: <FileText className="h-3.5 w-3.5" /> },
+                            { value: "kundfakturor", label: "Inkommande", icon: <ArrowDownLeft className="h-3.5 w-3.5 text-green-600" /> },
+                            { value: "leverantorsfakturor", label: "Utgående", icon: <ArrowUpRight className="h-3.5 w-3.5 text-red-600" /> },
+                        ]}
+                    />
 
                     {/* Period Filter */}
                     <DropdownMenu>
@@ -606,6 +625,7 @@ export function UnifiedInvoicesView() {
                     </DropdownMenu>
                 </div>
             </div>
+
 
             {/* Kanban - Different views based on filter */}
             {viewFilter === "all" && renderUnifiedKanban()}

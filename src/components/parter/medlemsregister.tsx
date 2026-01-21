@@ -132,13 +132,15 @@ function RightSidebarContent({
           {changes.map((change) => {
             const changeLabel = getMembershipChangeTypeLabel(change.changeType)
             return (
-              <div key={change.id} className="flex items-start gap-3 p-2 rounded-lg bg-muted/50">
-                <AppStatusBadge status={changeLabel} size="sm" />
-                <div className="flex-1 min-w-0">
-                  <p className="font-medium text-sm truncate">{change.memberName}</p>
-                  <p className="text-xs text-muted-foreground truncate">{change.details}</p>
+              <div key={change.id} className="flex items-center gap-3 p-2 rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 min-w-0">
+                  <div className="min-w-0">
+                    <p className="font-medium text-sm truncate">{change.memberName}</p>
+                    <p className="text-xs text-muted-foreground truncate">{change.details}</p>
+                  </div>
+                  <AppStatusBadge status={changeLabel} size="sm" className="shrink-0" />
                 </div>
-                <div className="text-xs text-muted-foreground shrink-0">
+                <div className="text-xs text-muted-foreground tabular-nums shrink-0 ml-auto">
                   {formatDate(change.date)}
                 </div>
               </div>
@@ -547,25 +549,26 @@ export function Medlemsregister() {
       </div>
 
       {/* Members List */}
-      {/* Members List */}
-      <div className="overflow-x-auto pb-4">
-        <GridTableHeader
-          className="min-w-[1200px]"
-          columns={[
-            { label: "", span: 1 }, // Checkbox
-            { label: "Medlem", span: 3 },
-            { label: "Kontakt", span: 2 },
-            { label: "Typ", span: 2 },
-            { label: "Gick med", span: 1 },
-            { label: "Avgift", span: 1 },
-            { label: "Status", span: 1 },
-            { label: "", span: 1 },
-          ]}
-        />
-        <GridTableRows className="min-w-[1200px]">
+      <div className="overflow-x-auto pb-4 -mx-2">
+        <div className="min-w-[900px] px-2">
+          <GridTableHeader
+            minWidth="0"
+            columns={[
+              { label: "", span: 1 }, // Checkbox
+              { label: "Medlem", span: 3 },
+              { label: "Kontakt", span: 2 },
+              { label: "Typ", span: 2 },
+              { label: "Gick med", span: 1 },
+              { label: "Avgift", span: 1 },
+              { label: "Status", span: 1 },
+              { label: "", span: 1 },
+            ]}
+          />
+          <GridTableRows>
           {filteredMembers.map((member) => (
             <GridTableRow
               key={member.id}
+              minWidth="0"
               className={cn(
                 memberSelection.isSelected(member.id) && "bg-primary/5"
               )}
@@ -672,7 +675,8 @@ export function Medlemsregister() {
               </div>
             </GridTableRow>
           ))}
-        </GridTableRows>
+          </GridTableRows>
+        </div>
       </div>
 
       {/* Recent Changes - Rendered in right sidebar if available */}

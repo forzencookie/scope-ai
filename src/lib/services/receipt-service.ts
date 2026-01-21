@@ -1,6 +1,7 @@
 // @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
 import { getSupabaseClient } from '../supabase'
 import { RECEIPT_STATUSES } from '@/lib/status-types'
+import { mockReceipts, mockReceiptStats } from '@/data/mock-data'
 
 // Type matching schema.sql and existing Receipt type from @/types
 export type Receipt = {
@@ -58,6 +59,14 @@ export const receiptService = {
 
         if (error) throw error
 
+        // Return mock data if no real data exists
+        if (!data || data.length === 0) {
+            return {
+                receipts: mockReceipts as Receipt[],
+                totalCount: mockReceipts.length
+            }
+        }
+
         // Map DB columns to UI Receipt type
         const receipts: Receipt[] = (data || []).map(row => ({
             id: row.id,
@@ -84,14 +93,9 @@ export const receiptService = {
 
         const { data, error } = await supabase.rpc('get_receipt_stats')
 
-        if (error) {
-            console.error('Failed to fetch receipt stats:', error)
-            return {
-                total: 0,
-                matchedCount: 0,
-                unmatchedCount: 0,
-                totalAmount: 0
-            }
+        if (error || !data || data.total === 0) {
+            // Return mock stats when no real data
+            return mockReceiptStats
         }
 
         return {

@@ -3,6 +3,7 @@
 import { useState, useCallback } from "react"
 import { useAsync, useAsyncMutation } from "./use-async"
 import { useAuth } from "./use-auth"
+import { mockShareholders as ownershipMockShareholders } from "@/data/ownership"
 
 export interface CorporateDocument {
     id: string
@@ -56,6 +57,17 @@ export function useCompliance() {
             const res = await fetch('/api/compliance?type=shareholders')
             const json = await res.json()
             if (!res.ok) throw new Error(json.error || 'Failed to fetch shareholders')
+            // Return mock data if empty
+            if (!json.data || json.data.length === 0) {
+                return ownershipMockShareholders.map(s => ({
+                    id: s.id,
+                    name: s.name,
+                    ssn_org_nr: s.personalNumber || '',
+                    shares_count: s.shares,
+                    shares_percentage: s.ownershipPercentage,
+                    share_class: s.shareClass === 'stamaktier' ? 'B' : s.shareClass,
+                })) as Shareholder[]
+            }
             return json.data as Shareholder[]
         },
         [] as Shareholder[],
