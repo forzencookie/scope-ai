@@ -477,166 +477,162 @@ export function Medlemsregister() {
         </div>
       </div>
 
-      {/* Main Content: Table + Sidebar */}
-      <div className="flex gap-6">
-        {/* Members List */}
-        <div className="flex-1 min-w-0">
-          <GridTableHeader
-            columns={[
-              { label: "", span: 1 }, // Checkbox
-              { label: "Medlem", span: 3 },
-              { label: "Kontakt", span: 2 },
-              { label: "Typ", span: 2 },
-              { label: "Medlem sedan", span: 1 },
-              { label: "Avgift", span: 1 },
-              { label: "Status", span: 1 },
-              { label: "", span: 1 },
-            ]}
-          />
-          <GridTableRows>
-            {filteredMembers.map((member) => (
-              <GridTableRow
-                key={member.id}
-                className={cn(
-                  memberSelection.isSelected(member.id) && "bg-primary/5"
-                )}
-              >
-                {/* Checkbox */}
-                <div className="col-span-1 flex items-center">
-                  <Checkbox
-                    checked={memberSelection.isSelected(member.id)}
-                    onCheckedChange={() => memberSelection.toggleItem(member.id)}
-                  />
-                </div>
+      {/* Members List */}
+      {/* Members List */}
+      <div>
+        <GridTableHeader
+          columns={[
+            { label: "", span: 1 }, // Checkbox
+            { label: "Medlem", span: 3 },
+            { label: "Kontakt", span: 2 },
+            { label: "Typ", span: 2 },
+            { label: "Medlem sedan", span: 1 },
+            { label: "Avgift", span: 1 },
+            { label: "Status", span: 1 },
+            { label: "", span: 1 },
+          ]}
+        />
+        <GridTableRows>
+          {filteredMembers.map((member) => (
+            <GridTableRow
+              key={member.id}
+              className={cn(
+                memberSelection.isSelected(member.id) && "bg-primary/5"
+              )}
+            >
+              {/* Checkbox */}
+              <div className="col-span-1 flex items-center">
+                <Checkbox
+                  checked={memberSelection.isSelected(member.id)}
+                  onCheckedChange={() => memberSelection.toggleItem(member.id)}
+                />
+              </div>
 
-                {/* Medlem */}
-                <div className="col-span-3">
-                  <div className="font-medium flex items-center gap-2">
-                    {member.name}
-                    {member.roles.length > 0 && (
-                      <Badge variant="outline" className="text-xs">
-                        {member.roles[0]}
-                      </Badge>
+              {/* Medlem */}
+              <div className="col-span-3">
+                <div className="font-medium flex items-center gap-2">
+                  {member.name}
+                  {member.roles.length > 0 && (
+                    <Badge variant="outline" className="text-xs">
+                      {member.roles[0]}
+                    </Badge>
+                  )}
+                </div>
+                <div className="text-xs text-muted-foreground">
+                  #{member.memberNumber}
+                </div>
+              </div>
+
+              {/* Kontakt */}
+              <div className="col-span-2 text-sm space-y-0.5">
+                {member.email && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Mail className="h-3 w-3" />
+                    <span className="truncate">{member.email}</span>
+                  </div>
+                )}
+                {member.phone && (
+                  <div className="flex items-center gap-1 text-muted-foreground">
+                    <Phone className="h-3 w-3" />
+                    {member.phone}
+                  </div>
+                )}
+              </div>
+
+              {/* Typ */}
+              <div className="col-span-2">
+                <Badge variant={member.membershipType === 'hedersmedlem' ? 'default' : 'secondary'}>
+                  {member.membershipType === 'hedersmedlem' && <Award className="h-3 w-3 mr-1" />}
+                  {getMembershipTypeLabel(member.membershipType)}
+                </Badge>
+              </div>
+
+              {/* Join Date */}
+              <div className="col-span-1 text-sm">
+                {formatDate(member.joinDate)}
+              </div>
+
+              {/* Avgift */}
+              <div className="col-span-1">
+                <div>
+                  <div className="tabular-nums text-sm">
+                    {formatCurrency(MEMBERSHIP_FEES[member.membershipType])}
+                  </div>
+                  {member.membershipType !== 'hedersmedlem' && (
+                    member.currentYearFeePaid ? (
+                      <span className="text-xs text-green-600 dark:text-green-500/70">Betald</span>
+                    ) : (
+                      <span className="text-xs text-amber-600">Obetald</span>
+                    )
+                  )}
+                </div>
+              </div>
+
+              {/* Status */}
+              <div className="col-span-1">
+                <AppStatusBadge status={getMembershipStatusLabel(member.status)} showIcon />
+              </div>
+
+              {/* Actions */}
+              <div className="col-span-1 flex justify-end">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                      <MoreHorizontal className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem>Visa profil</DropdownMenuItem>
+                    <DropdownMenuItem>Redigera</DropdownMenuItem>
+                    <DropdownMenuItem>
+                      <Mail className="h-4 w-4 mr-2" />
+                      Skicka e-post
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    {!member.currentYearFeePaid && member.membershipType !== 'hedersmedlem' && (
+                      <DropdownMenuItem>Skicka betalningspåminnelse</DropdownMenuItem>
                     )}
+                    {member.status === 'aktiv' && (
+                      <DropdownMenuItem>Sätt som vilande</DropdownMenuItem>
+                    )}
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600">Avsluta medlemskap</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            </GridTableRow>
+          ))}
+        </GridTableRows>
+      </div>
+
+      {/* Recent Changes */}
+      <Card>
+        <CardHeader>
+          <CardTitle>Senaste aktivitet</CardTitle>
+          <CardDescription>
+            Medlemsändringar och händelser
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-4">
+            {changes.map((change) => {
+              const changeLabel = getMembershipChangeTypeLabel(change.changeType)
+              return (
+                <div key={change.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
+                  <AppStatusBadge status={changeLabel} showIcon />
+                  <div className="flex-1">
+                    <p className="font-medium text-sm">{change.memberName}</p>
+                    <p className="text-xs text-muted-foreground">{change.details}</p>
                   </div>
                   <div className="text-xs text-muted-foreground">
-                    #{member.memberNumber}
+                    {formatDate(change.date)}
                   </div>
                 </div>
-
-                {/* Kontakt */}
-                <div className="col-span-2 text-sm space-y-0.5">
-                  {member.email && (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Mail className="h-3 w-3" />
-                      <span className="truncate">{member.email}</span>
-                    </div>
-                  )}
-                  {member.phone && (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                      <Phone className="h-3 w-3" />
-                      {member.phone}
-                    </div>
-                  )}
-                </div>
-
-                {/* Typ */}
-                <div className="col-span-2">
-                  <Badge variant={member.membershipType === 'hedersmedlem' ? 'default' : 'secondary'}>
-                    {member.membershipType === 'hedersmedlem' && <Award className="h-3 w-3 mr-1" />}
-                    {getMembershipTypeLabel(member.membershipType)}
-                  </Badge>
-                </div>
-
-                {/* Join Date */}
-                <div className="col-span-1 text-sm">
-                  {formatDate(member.joinDate)}
-                </div>
-
-                {/* Avgift */}
-                <div className="col-span-1">
-                  <div>
-                    <div className="tabular-nums text-sm">
-                      {formatCurrency(MEMBERSHIP_FEES[member.membershipType])}
-                    </div>
-                    {member.membershipType !== 'hedersmedlem' && (
-                      member.currentYearFeePaid ? (
-                        <span className="text-xs text-green-600 dark:text-green-500/70">Betald</span>
-                      ) : (
-                        <span className="text-xs text-amber-600">Obetald</span>
-                      )
-                    )}
-                  </div>
-                </div>
-
-                {/* Status */}
-                <div className="col-span-1">
-                  <AppStatusBadge status={getMembershipStatusLabel(member.status)} showIcon />
-                </div>
-
-                {/* Actions */}
-                <div className="col-span-1 flex justify-end">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-8 w-8">
-                        <MoreHorizontal className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem>Visa profil</DropdownMenuItem>
-                      <DropdownMenuItem>Redigera</DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Mail className="h-4 w-4 mr-2" />
-                        Skicka e-post
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      {!member.currentYearFeePaid && member.membershipType !== 'hedersmedlem' && (
-                        <DropdownMenuItem>Skicka betalningspåminnelse</DropdownMenuItem>
-                      )}
-                      {member.status === 'aktiv' && (
-                        <DropdownMenuItem>Sätt som vilande</DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem className="text-red-600">Avsluta medlemskap</DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </GridTableRow>
-            ))}
-          </GridTableRows>
-        </div>
-
-        {/* Recent Activity Sidebar */}
-        <div className="w-80 shrink-0 hidden lg:block">
-          <Card className="sticky top-6">
-            <CardHeader className="pb-3">
-              <CardTitle className="text-base">Senaste aktivitet</CardTitle>
-              <CardDescription className="text-xs">
-                Medlemsändringar och händelser
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="space-y-3">
-                {changes.map((change) => {
-                  const changeLabel = getMembershipChangeTypeLabel(change.changeType)
-                  return (
-                    <div key={change.id} className="flex items-start gap-3 p-2 rounded-lg bg-muted/50">
-                      <AppStatusBadge status={changeLabel} size="sm" />
-                      <div className="flex-1 min-w-0">
-                        <p className="font-medium text-sm truncate">{change.memberName}</p>
-                        <p className="text-xs text-muted-foreground truncate">{change.details}</p>
-                      </div>
-                      <div className="text-xs text-muted-foreground shrink-0">
-                        {formatDate(change.date)}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
+              )
+            })}
+          </div>
+        </CardContent>
+      </Card>
 
       {filteredMembers.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
