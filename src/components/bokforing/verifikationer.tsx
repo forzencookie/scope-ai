@@ -149,6 +149,30 @@ export function VerifikationerTable() {
         }
     }, [verifikationer])
 
+    // Calculate breakdown by account class
+    const accountClassBreakdown = useMemo(() => {
+        const breakdown: Record<AccountClass, { count: number; amount: number }> = {
+            1: { count: 0, amount: 0 },
+            2: { count: 0, amount: 0 },
+            3: { count: 0, amount: 0 },
+            4: { count: 0, amount: 0 },
+            5: { count: 0, amount: 0 },
+            6: { count: 0, amount: 0 },
+            7: { count: 0, amount: 0 },
+            8: { count: 0, amount: 0 },
+        }
+
+        verifikationer.forEach(v => {
+            const classNum = parseInt(v.konto.charAt(0)) as AccountClass
+            if (classNum >= 1 && classNum <= 8) {
+                breakdown[classNum].count++
+                breakdown[classNum].amount += Math.abs(v.amount)
+            }
+        })
+
+        return breakdown
+    }, [verifikationer])
+
     const handleViewDetails = (v: typeof verifikationer[0]) => {
         setSelectedVerifikation(v)
         setDetailsDialogOpen(true)
@@ -185,34 +209,32 @@ export function VerifikationerTable() {
                 </div>
             </div>
 
-            {/* Stats Cards */}
-            <StatCardGrid columns={4}>
-                <StatCard
-                    label="Totalt verifikationer"
-                    value={stats.total}
-                    subtitle="Denna period"
-                    icon={FileCheck}
-                />
-                <StatCard
-                    label="Med transaktion"
-                    value={stats.withTransaction}
-                    subtitle="Kopplade"
-                    icon={Link2}
-                    changeType="positive"
-                />
-                <StatCard
-                    label="Saknar underlag"
-                    value={stats.missingUnderlag}
-                    subtitle="Behöver åtgärdas"
-                    icon={AlertTriangle}
-                    changeType={stats.missingUnderlag > 0 ? "negative" : "neutral"}
-                />
-                <StatCard
-                    label="Totalt belopp"
-                    value={formatCurrency(stats.totalAmount)}
-                    icon={Banknote}
-                />
-            </StatCardGrid>
+            {/* Compact Stats Row */}
+            <div className="flex flex-wrap items-center gap-4 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
+                <div className="flex items-center gap-2">
+                    <FileCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm"><span className="font-semibold tabular-nums">{stats.total}</span> verifikationer</span>
+                </div>
+                <div className="h-4 w-px bg-border hidden sm:block" />
+                <div className="flex items-center gap-2">
+                    <Banknote className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-sm font-semibold tabular-nums">{formatCurrency(stats.totalAmount)}</span>
+                </div>
+                <div className="h-4 w-px bg-border hidden sm:block" />
+                <div className="flex items-center gap-2">
+                    <Link2 className="h-4 w-4 text-green-600 dark:text-green-400" />
+                    <span className="text-sm"><span className="font-semibold tabular-nums">{stats.withTransaction}</span> kopplade</span>
+                </div>
+                {stats.missingUnderlag > 0 && (
+                    <>
+                        <div className="h-4 w-px bg-border hidden sm:block" />
+                        <div className="flex items-center gap-2 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
+                            <AlertTriangle className="h-3.5 w-3.5" />
+                            <span className="text-sm font-medium">{stats.missingUnderlag} saknar underlag</span>
+                        </div>
+                    </>
+                )}
+            </div>
 
             {/* Create Dialog */}
             <VerifikationDialog
