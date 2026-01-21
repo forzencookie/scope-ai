@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { useState, useMemo } from "react"
-import { formatDateLong, cn } from "@/lib/utils"
+import { formatDateLong, formatDate, cn } from "@/lib/utils"
 import {
   Vote,
   Calendar,
@@ -12,7 +12,6 @@ import {
   Download,
   CheckCircle,
   Clock,
-  AlertCircle,
   Sparkles,
   MapPin,
   User,
@@ -21,16 +20,16 @@ import {
   Send,
   MessageSquare,
   HandHeart,
-  FileCheck,
   UserCheck,
-  Megaphone,
+  AlertCircle,
+  ChevronRight,
+  FileCheck,
+  ClipboardList,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Input } from "@/components/ui/input"
 import { SearchBar } from "@/components/ui/search-bar"
-import { Textarea } from "@/components/ui/textarea"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+import { FilterButton } from "@/components/ui/filter-button"
 import {
   Card,
   CardContent,
@@ -45,43 +44,20 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+  GridTableHeader,
+  GridTableRow,
+  GridTableRows,
+} from "@/components/ui/grid-table"
 import { MotionDialog } from "./dialogs/motion"
 import { PlanMeetingDialog } from "./dialogs/mote"
 import { SendNoticeDialog } from "./dialogs/kallelse"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { type MeetingStatus } from "@/lib/status-types"
-import { mockMembers } from "@/data/ownership"
-import { Progress } from "@/components/ui/progress"
+import { mockMembers, mockGeneralMeetings as mockAnnualMeetings, type AnnualMeeting } from "@/data/ownership"
+import { useCompliance } from "@/hooks/use-compliance"
 
-// Mock data for Förening annual meetings
-interface ForeningMeeting {
-  id: string
-  year: number
-  date: string
-  location: string
-  type: 'ordinarie' | 'extra'
-  attendeesCount: number
-  votingMembersCount: number
-  chairperson: string
-  secretary: string
-  decisions: ForeningDecision[]
-  motions: Motion[]
-  status: 'kallad' | 'genomförd' | 'protokoll signerat'
-  documentUrl?: string
-}
-
-interface ForeningDecision {
-  id: string
-  title: string
-  description?: string
-  decision: string
-  votingResult?: {
-    for: number
-    against: number
-    abstained: number
-  }
-}
-
+// Motion type
 interface Motion {
   id: string
   title: string
@@ -92,80 +68,58 @@ interface Motion {
   status: 'mottagen' | 'behandlad' | 'godkänd' | 'avslagen'
 }
 
-const mockForeningMeetings: ForeningMeeting[] = [
-  {
-    id: 'fm-1',
-    year: 2024,
-    date: '2024-03-15',
-    location: 'Föreningslokalen, Storgatan 1',
-    type: 'ordinarie',
-    attendeesCount: 35,
-    votingMembersCount: 33,
-    chairperson: 'Anna Andersson',
-    secretary: 'Maria Svensson',
-    decisions: [
-      { id: 'fd-1', title: 'Godkännande av verksamhetsberättelse', decision: 'Årsmötet godkände verksamhetsberättelsen för 2023' },
-      { id: 'fd-2', title: 'Fastställande av bokslut', decision: 'Årsmötet fastställde bokslutet med ett överskott på 15 000 kr' },
-      { id: 'fd-3', title: 'Ansvarsfrihet för styrelsen', decision: 'Årsmötet beviljade styrelsen ansvarsfrihet' },
-      { id: 'fd-4', title: 'Medlemsavgift 2025', decision: 'Årsmötet beslutade att behålla medlemsavgiften på 500 kr/år', votingResult: { for: 28, against: 3, abstained: 2 } },
-      { id: 'fd-5', title: 'Val av styrelse', decision: 'Anna Andersson omvaldes som ordförande. Erik Eriksson omvaldes som kassör.' },
-    ],
-    motions: [
-      { id: 'mo-1', title: 'Fler aktiviteter för unga', submittedBy: 'Lisa Lindgren', submittedDate: '2024-02-01', description: 'Förslag om att anordna minst 4 aktiviteter per år riktade till yngre medlemmar.', boardResponse: 'Styrelsen ställer sig positiv och föreslår bifall.', status: 'godkänd' },
-    ],
-    status: 'protokoll signerat',
-  },
-  {
-    id: 'fm-2',
-    year: 2025,
-    date: '2025-03-20',
-    location: 'Föreningslokalen, Storgatan 1',
-    type: 'ordinarie',
-    attendeesCount: 0,
-    votingMembersCount: 0,
-    chairperson: '',
-    secretary: '',
-    decisions: [],
-    motions: [
-      { id: 'mo-2', title: 'Höjd medlemsavgift för stödmedlemmar', submittedBy: 'Erik Eriksson', submittedDate: '2025-01-15', description: 'Förslag om att höja avgiften för stödmedlemmar från 200 kr till 300 kr.', status: 'mottagen' },
-      { id: 'mo-3', title: 'Ny hemsida', submittedBy: 'Sofia Berg', submittedDate: '2025-02-01', description: 'Förslag om att föreningen ska investera i en modern hemsida med medlemsportal.', boardResponse: 'Styrelsen föreslår att frågan utreds och återkommer med kostnadsförslag.', status: 'behandlad' },
-      { id: 'mo-4', title: 'Miljöpolicy', submittedBy: 'Anna Andersson', submittedDate: '2025-02-10', description: 'Förslag om att föreningen ska anta en miljöpolicy.', status: 'mottagen' },
-    ],
-    status: 'kallad',
-  },
+// Standard agenda for annual meeting
+const standardAgenda = [
+  'Mötets öppnande',
+  'Val av mötesordförande',
+  'Val av mötessekreterare',
+  'Val av justerare tillika rösträknare',
+  'Godkännande av dagordning',
+  'Fråga om mötet är stadgeenligt utlyst',
+  'Fastställande av röstlängd',
+  'Verksamhetsberättelse',
+  'Ekonomisk redovisning',
+  'Revisionsberättelse',
+  'Fråga om ansvarsfrihet för styrelsen',
+  'Beslut om medlemsavgifter',
+  'Behandling av inkomna motioner',
+  'Val av ordförande',
+  'Val av övriga styrelseledamöter',
+  'Val av revisorer',
+  'Val av valberedning',
+  'Övriga frågor',
+  'Mötets avslutande',
 ]
-
-import { useCompliance } from "@/hooks/use-compliance"
 
 export function Arsmote() {
   const { documents: realDocuments, isLoadingDocuments, addDocument } = useCompliance()
 
   const [searchQuery, setSearchQuery] = useState("")
+  const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [showCreateDialog, setShowCreateDialog] = useState(false)
   const [showMotionDialog, setShowMotionDialog] = useState(false)
   const [showSendNoticeDialog, setShowSendNoticeDialog] = useState(false)
-  const [selectedMeeting, setSelectedMeeting] = useState<ForeningMeeting | null>(null)
-  const [noticeMeeting, setNoticeMeeting] = useState<ForeningMeeting | null>(null)
+  const [selectedMeeting, setSelectedMeeting] = useState<AnnualMeeting | null>(null)
+  const [noticeMeeting, setNoticeMeeting] = useState<AnnualMeeting | null>(null)
 
   // Get voting-eligible members
   const votingMembers = useMemo(() => {
     return mockMembers.filter(m => m.status === 'aktiv' && m.currentYearFeePaid)
   }, [])
 
-  // Map real documents to ForeningMeeting format
+  // Map real documents to AnnualMeeting format or use mock data
   const meetings = useMemo(() => {
-    return (realDocuments || [])
+    const realMeetings = (realDocuments || [])
       .filter(doc => doc.type === 'general_meeting_minutes')
-      .map((doc, idx) => {
-        let content = {
+      .map((doc) => {
+        let content: Partial<AnnualMeeting> = {
           year: new Date(doc.date).getFullYear(),
           location: 'Ej angivet',
-          chairperson: 'Ej angivet',
-          secretary: 'Ej angivet',
+          chairperson: '',
+          secretary: '',
           attendeesCount: 0,
-          votingMembersCount: 0,
-          decisions: [] as ForeningDecision[],
-          motions: [] as Motion[],
+          decisions: [],
+          motions: [],
           type: 'ordinarie' as const
         }
 
@@ -179,46 +133,86 @@ export function Arsmote() {
         return {
           id: doc.id,
           date: doc.date,
-          status: (doc.status === 'signed' ? 'protokoll signerat' : (doc.status === 'archived' ? 'genomförd' : 'kallad')) as ForeningMeeting['status'],
+          status: (doc.status === 'signed' ? 'protokoll signerat' : (doc.status === 'archived' ? 'genomförd' : 'planerad')) as AnnualMeeting['status'],
           ...content
-        }
+        } as AnnualMeeting
       })
+
+    // Return real meetings if we have them, otherwise use mock data
+    return realMeetings.length > 0 ? realMeetings : mockAnnualMeetings
   }, [realDocuments])
 
   // Calculate stats
   const stats = useMemo(() => {
-    const upcoming = meetings.filter(m => m.status === 'kallad').length
-    const completed = meetings.filter(m => m.status === 'protokoll signerat').length
-    const nextMeeting = meetings.find(m => m.status === 'kallad')
-    const pendingMotions = nextMeeting?.motions.filter((m: any) => m.status === 'mottagen').length || 0
+    const now = new Date()
+    const upcomingMeetings = meetings.filter(m => m.status === 'planerad' || m.status === 'kallad')
+    const completedMeetings = meetings.filter(m => m.status === 'protokoll signerat')
+    const nextMeeting = upcomingMeetings.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())[0]
+
+    const allMotions = meetings.flatMap(m => m.motions || [])
+    const pendingMotions = allMotions.filter((m: Motion) => m.status === 'mottagen').length
+    const totalMotions = nextMeeting?.motions?.length || 0
 
     const daysUntilNext = nextMeeting
-      ? Math.ceil((new Date(nextMeeting.date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24))
+      ? Math.ceil((new Date(nextMeeting.date).getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
       : null
 
-    return { upcoming, completed, nextMeeting, daysUntilNext, pendingMotions, votingMembersCount: votingMembers.length }
+    // Preparation checklist progress
+    const preparationItems = nextMeeting ? [
+      { label: 'Datum bestämt', done: !!nextMeeting.date },
+      { label: 'Lokal bokad', done: !!nextMeeting.location && nextMeeting.location !== 'Ej angivet' },
+      { label: 'Kallelse skickad', done: nextMeeting.status === 'kallad' },
+      { label: 'Motioner behandlade', done: pendingMotions === 0 && totalMotions > 0 },
+      { label: 'Dagordning klar', done: true }, // Assume standard agenda
+    ] : []
+
+    const prepProgress = preparationItems.length > 0
+      ? Math.round((preparationItems.filter(i => i.done).length / preparationItems.length) * 100)
+      : 0
+
+    return {
+      upcomingCount: upcomingMeetings.length,
+      completedCount: completedMeetings.length,
+      nextMeeting,
+      daysUntilNext,
+      pendingMotions,
+      totalMotions,
+      votingMembersCount: votingMembers.length,
+      preparationItems,
+      prepProgress
+    }
   }, [meetings, votingMembers])
 
   // Filter meetings
   const filteredMeetings = useMemo(() => {
-    if (!searchQuery) return meetings
-    const query = searchQuery.toLowerCase()
-    return meetings.filter(m =>
-      m.decisions.some((d: any) =>
-        d.title.toLowerCase().includes(query) ||
-        d.decision.toLowerCase().includes(query)
-      ) ||
-      m.motions.some((mo: any) =>
-        mo.title.toLowerCase().includes(query) ||
-        mo.description.toLowerCase().includes(query)
-      ) ||
-      m.location.toLowerCase().includes(query) ||
-      m.year.toString().includes(query)
-    )
-  }, [meetings, searchQuery])
+    let result = meetings
 
-  const getMeetingStatusLabel = (status: ForeningMeeting['status']): MeetingStatus => {
-    const labels: Record<ForeningMeeting['status'], MeetingStatus> = {
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      result = result.filter(m =>
+        (m.decisions || []).some((d: any) =>
+          d.title?.toLowerCase().includes(query) ||
+          d.decision?.toLowerCase().includes(query)
+        ) ||
+        (m.motions || []).some((mo: any) =>
+          mo.title?.toLowerCase().includes(query) ||
+          mo.description?.toLowerCase().includes(query)
+        ) ||
+        m.location?.toLowerCase().includes(query) ||
+        m.year?.toString().includes(query)
+      )
+    }
+
+    if (statusFilter) {
+      result = result.filter(m => m.status === statusFilter)
+    }
+
+    return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [meetings, searchQuery, statusFilter])
+
+  const getMeetingStatusLabel = (status: AnnualMeeting['status']): MeetingStatus => {
+    const labels: Record<AnnualMeeting['status'], MeetingStatus> = {
+      'planerad': 'Planerad',
       'kallad': 'Kallad',
       'genomförd': 'Genomförd',
       'protokoll signerat': 'Signerat',
@@ -231,38 +225,15 @@ export function Arsmote() {
       case 'mottagen':
         return <Badge variant="outline">Mottagen</Badge>
       case 'behandlad':
-        return <Badge variant="secondary">Behandlad av styrelsen</Badge>
+        return <Badge variant="secondary">Behandlad</Badge>
       case 'godkänd':
-        return <Badge className="bg-green-100 text-green-800">Godkänd</Badge>
+        return <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">Godkänd</Badge>
       case 'avslagen':
         return <Badge variant="destructive">Avslagen</Badge>
     }
   }
 
-  // Standard agenda for annual meeting
-  const standardAgenda = [
-    'Mötets öppnande',
-    'Val av mötesordförande',
-    'Val av mötessekreterare',
-    'Val av justerare tillika rösträknare',
-    'Godkännande av dagordning',
-    'Fråga om mötet är stadgeenligt utlyst',
-    'Fastställande av röstlängd',
-    'Verksamhetsberättelse',
-    'Ekonomisk redovisning',
-    'Revisionsberättelse',
-    'Fråga om ansvarsfrihet för styrelsen',
-    'Beslut om medlemsavgifter',
-    'Behandling av inkomna motioner',
-    'Val av ordförande',
-    'Val av övriga styrelseledamöter',
-    'Val av revisorer',
-    'Val av valberedning',
-    'Övriga frågor',
-    'Mötets avslutande',
-  ]
-
-  const handleOpenNotice = (meeting: ForeningMeeting) => {
+  const handleOpenNotice = (meeting: AnnualMeeting) => {
     setNoticeMeeting(meeting)
     setShowSendNoticeDialog(true)
   }
@@ -270,212 +241,288 @@ export function Arsmote() {
   if (isLoadingDocuments) {
     return (
       <div className="space-y-6">
-        <div className="grid gap-4 grid-cols-2 md:grid-cols-4">
-          {Array.from({ length: 4 }).map((_, i) => (
-            <Card key={i} className="h-24 bg-muted animate-pulse" />
+        <div className="rounded-xl border bg-muted/20 p-5 h-48 animate-pulse" />
+        <div className="border-b-2 border-border/60" />
+        <div className="grid gap-4 grid-cols-1">
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="h-20 bg-muted animate-pulse rounded-lg" />
           ))}
         </div>
-        <div className="border-b-2 border-border/60" />
-        <Card className="h-96 bg-muted animate-pulse" />
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Stats Overview */}
-      <StatCardGrid columns={4}>
-        <StatCard
-          label="Nästa årsmöte"
-          value={stats.nextMeeting ? formatDateLong(stats.nextMeeting.date) : 'Ej planerad'}
-          subtitle={stats.daysUntilNext ? `${stats.daysUntilNext} dagar kvar` : 'Inget årsmöte planerat'}
-          headerIcon={Calendar}
-        />
-        <StatCard
-          label="Röstberättigade"
-          value={stats.votingMembersCount.toString()}
-          subtitle="medlemmar med betald avgift"
-          headerIcon={UserCheck}
-        />
-        <StatCard
-          label="Inkomna motioner"
-          value={(stats.nextMeeting?.motions.length || 0).toString()}
-          subtitle={`${stats.pendingMotions} inväntar styrelsens svar`}
-          headerIcon={MessageSquare}
-        />
-        <StatCard
-          label="Genomförda"
-          value={stats.completed.toString()}
-          subtitle="årsmöten med signerat protokoll"
-          headerIcon={CheckCircle}
-        />
-      </StatCardGrid>
+      {/* Page Heading */}
+      <div className="flex flex-col gap-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-bold tracking-tight">Årsmöte</h2>
+            <p className="text-muted-foreground mt-1">
+              Planera, dokumentera och förvalta föreningens årsmöten.
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setShowMotionDialog(true)}>
+              <MessageSquare className="h-4 w-4 mr-2" />
+              Ny motion
+            </Button>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Planera årsmöte
+            </Button>
+          </div>
+        </div>
+      </div>
+
+      {/* Meeting Preparation Dashboard */}
+      <div className="rounded-xl border bg-muted/20 p-5">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left: Next Meeting & Preparation Progress */}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <HandHeart className="h-5 w-5 text-muted-foreground" />
+              <h3 className="font-semibold">
+                {stats.nextMeeting
+                  ? `Nästa årsmöte: ${formatDateLong(stats.nextMeeting.date)}`
+                  : 'Inget årsmöte planerat'
+                }
+              </h3>
+              {stats.nextMeeting && (
+                <AppStatusBadge status={getMeetingStatusLabel(stats.nextMeeting.status)} size="sm" />
+              )}
+            </div>
+
+            {stats.nextMeeting ? (
+              <>
+                {/* Preparation Progress */}
+                <div className="mb-4">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-sm text-muted-foreground">
+                      Förberedelser
+                    </span>
+                    <span className="text-sm font-medium">
+                      {stats.prepProgress}%
+                    </span>
+                  </div>
+                  <div className="h-3 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all duration-500",
+                        stats.prepProgress === 100
+                          ? "bg-green-500"
+                          : stats.prepProgress >= 60
+                            ? "bg-foreground/80"
+                            : "bg-amber-500"
+                      )}
+                      style={{ width: `${stats.prepProgress}%` }}
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2 mt-3">
+                    {stats.preparationItems.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className={cn(
+                          "flex items-center gap-1.5 text-xs px-2 py-1 rounded-full",
+                          item.done
+                            ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                            : "bg-muted text-muted-foreground"
+                        )}
+                      >
+                        {item.done ? (
+                          <CheckCircle className="h-3 w-3" />
+                        ) : (
+                          <Clock className="h-3 w-3" />
+                        )}
+                        {item.label}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Meeting Info */}
+                <div className="flex items-center gap-4 pt-3 border-t border-border/50 text-sm">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5" />
+                    {stats.nextMeeting.location || 'Lokal ej angiven'}
+                  </div>
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    {stats.totalMotions} motioner
+                  </div>
+                  {stats.daysUntilNext && stats.daysUntilNext > 0 && (
+                    <div className="flex items-center gap-1.5 font-medium">
+                      <Calendar className="h-3.5 w-3.5" />
+                      {stats.daysUntilNext} dagar kvar
+                    </div>
+                  )}
+                </div>
+              </>
+            ) : (
+              <div className="text-sm text-muted-foreground">
+                <p className="mb-3">Planera ett årsmöte för att komma igång med förberedelserna.</p>
+                <Button size="sm" onClick={() => setShowCreateDialog(true)}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Planera årsmöte
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Right: Key Metrics Grid */}
+          <div className="grid grid-cols-2 gap-3 lg:w-auto lg:min-w-[280px]">
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <UserCheck className="h-4 w-4 text-muted-foreground mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{stats.votingMembersCount}</p>
+              <p className="text-xs text-muted-foreground">Röstberättigade</p>
+            </div>
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <MessageSquare className="h-4 w-4 text-muted-foreground mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{stats.pendingMotions}</p>
+              <p className="text-xs text-muted-foreground">Väntande motioner</p>
+            </div>
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <FileCheck className="h-4 w-4 text-muted-foreground mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{stats.completedCount}</p>
+              <p className="text-xs text-muted-foreground">Genomförda</p>
+            </div>
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <ClipboardList className="h-4 w-4 text-muted-foreground mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{standardAgenda.length}</p>
+              <p className="text-xs text-muted-foreground">Dagordningspunkter</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Section Separator */}
       <div className="border-b-2 border-border/60" />
 
-      {/* Upcoming Meeting Alert */}
-      {stats.nextMeeting && stats.daysUntilNext && stats.daysUntilNext > 0 && stats.daysUntilNext <= 60 && (
-        <Card className="border-rose-200 bg-rose-50 dark:border-rose-900 dark:bg-rose-950">
-          <CardHeader className="pb-3">
-            <div className="flex items-start justify-between">
-              <div>
-                <CardTitle className="flex items-center gap-2 text-rose-800 dark:text-rose-200">
-                  <HandHeart className="h-5 w-5" />
-                  Kommande årsmöte
-                </CardTitle>
-                <CardDescription className="text-rose-700 dark:text-rose-300">
-                  Ordinarie årsmöte planerat {formatDateLong(stats.nextMeeting.date)}
-                </CardDescription>
-              </div>
-              <Button variant="outline" onClick={() => handleOpenNotice(stats.nextMeeting!)}>
-                <Send className="h-4 w-4 mr-2" />
-                Skicka kallelse
-              </Button>
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-3">
-              <div className="flex items-center justify-between text-sm">
-                <span className="text-rose-700 dark:text-rose-300">
-                  {stats.daysUntilNext <= 14
-                    ? 'Kallelse ska vara skickad enligt stadgarna!'
-                    : 'Motioner kan lämnas in av medlemmar'}
-                </span>
-                <span className="font-medium text-rose-800 dark:text-rose-200">
-                  {stats.daysUntilNext} dagar kvar
-                </span>
-              </div>
-              <Progress
-                value={Math.max(0, 100 - (stats.daysUntilNext / 60 * 100))}
-                className="h-2"
-              />
-              <div className="flex items-center gap-4 text-sm text-rose-700 dark:text-rose-300">
-                <span className="flex items-center gap-1">
-                  <MessageSquare className="h-3 w-3" />
-                  {stats.nextMeeting.motions.length} motioner
-                </span>
-                <span className="flex items-center gap-1">
-                  <Users className="h-3 w-3" />
-                  {stats.votingMembersCount} röstberättigade
-                </span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {/* Actions Bar */}
       <div className="flex items-center gap-3">
         <SearchBar
-          placeholder="Sök i årsmöten och motioner..."
+          placeholder="Sök i årsmöten, motioner..."
           value={searchQuery}
           onChange={setSearchQuery}
-          className="w-64"
+          className="w-80"
         />
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <FilterButton
+              label={
+                statusFilter === 'planerad' ? 'Planerade' :
+                  statusFilter === 'kallad' ? 'Kallade' :
+                    statusFilter === 'genomförd' ? 'Genomförda' :
+                      statusFilter === 'protokoll signerat' ? 'Signerade' :
+                        'Alla status'
+              }
+              isActive={!!statusFilter}
+            />
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setStatusFilter(null)}>Alla status</DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => setStatusFilter('planerad')}>
+              <Clock className="h-4 w-4 mr-2" />
+              Planerade
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter('kallad')}>
+              <Send className="h-4 w-4 mr-2" />
+              Kallade
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter('genomförd')}>
+              <CheckCircle className="h-4 w-4 mr-2" />
+              Genomförda
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setStatusFilter('protokoll signerat')}>
+              <FileText className="h-4 w-4 mr-2" />
+              Signerade
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
         <div className="ml-auto flex items-center gap-2">
-          {/* New Motion */}
-          <Button variant="outline" onClick={() => setShowMotionDialog(true)}>
-            <MessageSquare className="h-4 w-4 mr-2" />
-            Ny motion
-          </Button>
-          <MotionDialog
-            open={showMotionDialog}
-            onOpenChange={setShowMotionDialog}
-            onSubmit={(data) => {
-              // Handle submission logic here if needed
-              console.log("Motion submitted", data)
-            }}
-          />
-
-          {/* Plan Meeting */}
-          <Button onClick={() => setShowCreateDialog(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Planera årsmöte
-          </Button>
-          <PlanMeetingDialog
-            open={showCreateDialog}
-            onOpenChange={setShowCreateDialog}
-            type="annual"
-            defaultAgenda={standardAgenda}
-            onSubmit={(data) => {
-              addDocument({
-                type: 'general_meeting_minutes',
-                title: `${data.type === 'extra' ? 'Extra årsmöte' : 'Ordinarie årsmöte'} ${data.year}`,
-                date: data.date,
-                content: JSON.stringify({
-                  year: parseInt(data.year),
-                  location: data.location,
-                  type: data.type,
-                  decisions: [],
-                  motions: [],
-                  attendeesCount: 0,
-                  votingMembersCount: 0
-                }),
-                status: 'draft',
-                source: 'manual'
-              })
-              setShowCreateDialog(false)
-            }}
-          />
-
-          {/* Send Notice Dialog */}
-          <SendNoticeDialog
-            open={showSendNoticeDialog}
-            onOpenChange={setShowSendNoticeDialog}
-            variant="association"
-            recipientCount={mockMembers.filter(m => m.status === 'aktiv').length}
-            meeting={noticeMeeting || undefined}
-            onSubmit={() => console.log("Notice prepared")}
-          />
-
-          <Button variant="outline" size="sm">
+          <Button variant="outline" size="sm" className="h-8">
             <Download className="h-4 w-4 mr-2" />
             Exportera
           </Button>
         </div>
       </div>
 
-      {/* Meetings List */}
-      <div className="space-y-4">
-        {filteredMeetings.map((meeting) => (
-          <Card
-            key={meeting.id}
-            className={cn(
-              "cursor-pointer transition-all hover:shadow-md",
-              selectedMeeting?.id === meeting.id && "ring-2 ring-primary"
-            )}
-            onClick={() => setSelectedMeeting(selectedMeeting?.id === meeting.id ? null : meeting)}
-          >
-            <CardHeader className="pb-3">
-              <div className="flex items-start justify-between">
-                <div className="space-y-1">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <HandHeart className="h-5 w-5 text-rose-600" />
-                    {meeting.type === 'ordinarie' ? 'Ordinarie årsmöte' : 'Extra årsmöte'} {meeting.year}
-                  </CardTitle>
-                  <CardDescription className="flex items-center gap-4">
-                    <span className="flex items-center gap-1">
-                      <Calendar className="h-3 w-3" />
-                      {formatDateLong(meeting.date)}
-                    </span>
-                    <span className="flex items-center gap-1">
-                      <MapPin className="h-3 w-3" />
-                      {meeting.location}
-                    </span>
-                    {meeting.attendeesCount > 0 && (
-                      <span className="flex items-center gap-1">
-                        <Users className="h-3 w-3" />
-                        {meeting.attendeesCount} närvarande
-                      </span>
-                    )}
-                  </CardDescription>
+      {/* Meetings Table */}
+      <div className="overflow-x-auto pb-4 -mx-2">
+        <div className="min-w-[800px] px-2">
+          <GridTableHeader
+            minWidth="0"
+            columns={[
+              { label: "År", icon: Calendar, span: 1 },
+              { label: "Typ", span: 2 },
+              { label: "Datum & Plats", span: 3 },
+              { label: "Motioner", icon: MessageSquare, span: 1 },
+              { label: "Beslut", icon: Gavel, span: 1 },
+              { label: "Närvarande", icon: Users, span: 1 },
+              { label: "Status", span: 2 },
+              { label: "", span: 1 },
+            ]}
+          />
+          <GridTableRows>
+            {filteredMeetings.map((meeting) => (
+              <GridTableRow
+                key={meeting.id}
+                minWidth="0"
+                className={cn(
+                  "cursor-pointer",
+                  selectedMeeting?.id === meeting.id && "bg-primary/5"
+                )}
+                onClick={() => setSelectedMeeting(selectedMeeting?.id === meeting.id ? null : meeting)}
+              >
+                {/* År */}
+                <div className="col-span-1 font-bold text-lg">
+                  {meeting.year}
                 </div>
-                <div className="flex items-center gap-2">
+
+                {/* Typ */}
+                <div className="col-span-2">
+                  <Badge variant={meeting.type === 'extra' ? 'secondary' : 'default'}>
+                    <HandHeart className="h-3 w-3 mr-1" />
+                    {meeting.type === 'ordinarie' ? 'Ordinarie' : 'Extra'}
+                  </Badge>
+                </div>
+
+                {/* Datum & Plats */}
+                <div className="col-span-3">
+                  <div className="font-medium text-sm">{formatDateLong(meeting.date)}</div>
+                  <div className="text-xs text-muted-foreground flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {meeting.location || 'Ej angiven'}
+                  </div>
+                </div>
+
+                {/* Motioner */}
+                <div className="col-span-1 tabular-nums">
+                  {(meeting.motions || []).length}
+                </div>
+
+                {/* Beslut */}
+                <div className="col-span-1 tabular-nums">
+                  {(meeting.decisions || []).length}
+                </div>
+
+                {/* Närvarande */}
+                <div className="col-span-1 tabular-nums">
+                  {meeting.attendeesCount || '-'}
+                </div>
+
+                {/* Status */}
+                <div className="col-span-2">
                   <AppStatusBadge status={getMeetingStatusLabel(meeting.status)} showIcon />
+                </div>
+
+                {/* Actions */}
+                <div className="col-span-1 flex justify-end" onClick={(e) => e.stopPropagation()}>
                   <DropdownMenu>
-                    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                    <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="h-8 w-8">
                         <MoreHorizontal className="h-4 w-4" />
                       </Button>
@@ -488,7 +535,7 @@ export function Arsmote() {
                         Ladda ned PDF
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
-                      {meeting.status === 'kallad' && (
+                      {(meeting.status === 'planerad' || meeting.status === 'kallad') && (
                         <DropdownMenuItem onClick={() => handleOpenNotice(meeting)}>
                           <Send className="h-4 w-4 mr-2" />
                           Skicka kallelse
@@ -507,153 +554,221 @@ export function Arsmote() {
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>
-              </div>
-            </CardHeader>
-
-            {/* Expanded content */}
-            {selectedMeeting?.id === meeting.id && (
-              <CardContent className="pt-0">
-                <div className="border-t pt-4 space-y-4">
-                  {/* Meeting details */}
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Ordförande:</span>
-                      <span className="font-medium">{meeting.chairperson || 'Ej vald'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <User className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Sekreterare:</span>
-                      <span className="font-medium">{meeting.secretary || 'Ej vald'}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Närvarande:</span>
-                      <span className="font-medium">{meeting.attendeesCount || 0} st</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <UserCheck className="h-4 w-4 text-muted-foreground" />
-                      <span className="text-muted-foreground">Röstande:</span>
-                      <span className="font-medium">{meeting.votingMembersCount || 0} st</span>
-                    </div>
-                  </div>
-
-                  {/* Motions */}
-                  {meeting.motions.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <MessageSquare className="h-4 w-4" />
-                        Motioner ({meeting.motions.length} st)
-                      </h4>
-                      <div className="space-y-2">
-                        {meeting.motions.map((motion: any) => (
-                          <div
-                            key={motion.id}
-                            className="p-3 bg-muted rounded-lg space-y-2"
-                          >
-                            <div className="flex items-start justify-between">
-                              <div>
-                                <p className="font-medium text-sm">{motion.title}</p>
-                                <p className="text-xs text-muted-foreground">
-                                  Inlämnad av {motion.submittedBy} • {formatDateLong(motion.submittedDate)}
-                                </p>
-                              </div>
-                              {getMotionStatusBadge(motion.status)}
-                            </div>
-                            <p className="text-sm text-muted-foreground">{motion.description}</p>
-                            {motion.boardResponse && (
-                              <div className="pt-2 border-t">
-                                <p className="text-xs font-medium text-muted-foreground">Styrelsens yttrande:</p>
-                                <p className="text-sm">{motion.boardResponse}</p>
-                              </div>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Decisions */}
-                  {meeting.decisions.length > 0 && (
-                    <div className="space-y-3">
-                      <h4 className="font-medium flex items-center gap-2">
-                        <Gavel className="h-4 w-4" />
-                        Beslut ({meeting.decisions.length} st)
-                      </h4>
-                      <div className="space-y-2">
-                        {meeting.decisions.map((decision: any, index: number) => (
-                          <div
-                            key={decision.id}
-                            className="flex items-start gap-3 p-3 bg-muted rounded-lg"
-                          >
-                            <span className="text-muted-foreground font-mono text-sm">
-                              §{index + 1}
-                            </span>
-                            <div className="space-y-1 flex-1">
-                              <p className="font-medium text-sm">{decision.title}</p>
-                              <p className="text-sm text-muted-foreground">{decision.decision}</p>
-                              {decision.votingResult && (
-                                <div className="flex gap-3 text-xs pt-1">
-                                  <span className="text-green-600 dark:text-green-500/70">
-                                    För: {decision.votingResult.for}
-                                  </span>
-                                  <span className="text-red-600 dark:text-red-500/70">
-                                    Emot: {decision.votingResult.against}
-                                  </span>
-                                  <span className="text-muted-foreground">
-                                    Avstod: {decision.votingResult.abstained}
-                                  </span>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Pending meeting info */}
-                  {meeting.status === 'kallad' && (
-                    <Card className="bg-muted/50">
-                      <CardContent className="pt-4">
-                        <div className="flex items-start gap-2">
-                          <Sparkles className="h-4 w-4 mt-0.5 text-primary" />
-                          <div className="text-sm">
-                            <p className="font-medium">AI-assistans tillgänglig</p>
-                            <p className="text-muted-foreground">
-                              När årsmötet genomförts kan AI hjälpa till att generera protokoll
-                              baserat på dagordningen, motioner och fattade beslut.
-                            </p>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  )}
-                </div>
-              </CardContent>
-            )}
-          </Card>
-        ))}
-
-        {/* Empty state */}
-        {filteredMeetings.length === 0 && (
-          <Card className="py-12">
-            <CardContent className="text-center">
-              <HandHeart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium mb-2">Inga årsmöten</h3>
-              <p className="text-muted-foreground mb-4">
-                {searchQuery ? 'Inga årsmöten matchade din sökning' : 'Planera ditt första årsmöte'}
-              </p>
-              <Button onClick={() => setShowCreateDialog(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Planera årsmöte
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+              </GridTableRow>
+            ))}
+          </GridTableRows>
+        </div>
       </div>
 
+      {/* Expanded Meeting Details */}
+      {selectedMeeting && (
+        <Card className="border-primary/20">
+          <CardHeader className="pb-3">
+            <div className="flex items-start justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <HandHeart className="h-5 w-5 text-rose-600" />
+                  {selectedMeeting.type === 'ordinarie' ? 'Ordinarie årsmöte' : 'Extra årsmöte'} {selectedMeeting.year}
+                </CardTitle>
+                <CardDescription className="flex items-center gap-4 mt-1">
+                  <span className="flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
+                    {formatDateLong(selectedMeeting.date)}
+                  </span>
+                  <span className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {selectedMeeting.location}
+                  </span>
+                </CardDescription>
+              </div>
+              <Button variant="ghost" size="sm" onClick={() => setSelectedMeeting(null)}>
+                Stäng
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Meeting details */}
+              {(selectedMeeting.chairperson || selectedMeeting.secretary) && (
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm p-3 bg-muted/50 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Ordförande:</span>
+                    <span className="font-medium">{selectedMeeting.chairperson || 'Ej vald'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Sekreterare:</span>
+                    <span className="font-medium">{selectedMeeting.secretary || 'Ej vald'}</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Users className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Närvarande:</span>
+                    <span className="font-medium">{selectedMeeting.attendeesCount || 0} st</span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <UserCheck className="h-4 w-4 text-muted-foreground" />
+                    <span className="text-muted-foreground">Röstande:</span>
+                    <span className="font-medium">{(selectedMeeting as any).votingMembersCount || selectedMeeting.attendeesCount || 0} st</span>
+                  </div>
+                </div>
+              )}
 
+              {/* Motions */}
+              {(selectedMeeting.motions || []).length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4" />
+                    Motioner ({selectedMeeting.motions.length} st)
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedMeeting.motions.map((motion: Motion) => (
+                      <div
+                        key={motion.id}
+                        className="p-3 bg-muted/50 rounded-lg space-y-2"
+                      >
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-medium text-sm">{motion.title}</p>
+                            <p className="text-xs text-muted-foreground">
+                              Inlämnad av {motion.submittedBy} • {formatDate(motion.submittedDate)}
+                            </p>
+                          </div>
+                          {getMotionStatusBadge(motion.status)}
+                        </div>
+                        <p className="text-sm text-muted-foreground">{motion.description}</p>
+                        {motion.boardResponse && (
+                          <div className="pt-2 border-t">
+                            <p className="text-xs font-medium text-muted-foreground">Styrelsens yttrande:</p>
+                            <p className="text-sm">{motion.boardResponse}</p>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Decisions */}
+              {(selectedMeeting.decisions || []).length > 0 && (
+                <div className="space-y-3">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Gavel className="h-4 w-4" />
+                    Beslut ({selectedMeeting.decisions.length} st)
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedMeeting.decisions.map((decision: any, index: number) => (
+                      <div
+                        key={decision.id}
+                        className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"
+                      >
+                        <span className="text-muted-foreground font-mono text-sm">
+                          §{index + 1}
+                        </span>
+                        <div className="space-y-1 flex-1">
+                          <p className="font-medium text-sm">{decision.title}</p>
+                          <p className="text-sm text-muted-foreground">{decision.decision}</p>
+                          {decision.votingResult && (
+                            <div className="flex gap-3 text-xs pt-1">
+                              <span className="text-green-600 dark:text-green-500/70">
+                                För: {decision.votingResult.for}
+                              </span>
+                              <span className="text-red-600 dark:text-red-500/70">
+                                Emot: {decision.votingResult.against}
+                              </span>
+                              <span className="text-muted-foreground">
+                                Avstod: {decision.votingResult.abstained}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Pending meeting info */}
+              {(selectedMeeting.status === 'planerad' || selectedMeeting.status === 'kallad') && (
+                <Card className="bg-purple-50/50 dark:bg-purple-950/20 border-0">
+                  <CardContent className="pt-4">
+                    <div className="flex items-start gap-2">
+                      <Sparkles className="h-4 w-4 mt-0.5 text-purple-600" />
+                      <div className="text-sm">
+                        <p className="font-medium">AI-assistans tillgänglig</p>
+                        <p className="text-muted-foreground">
+                          När årsmötet genomförts kan AI hjälpa till att generera protokoll
+                          baserat på dagordningen, motioner och fattade beslut.
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Empty state */}
+      {filteredMeetings.length === 0 && (
+        <Card className="py-12">
+          <CardContent className="text-center">
+            <HandHeart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+            <h3 className="text-lg font-medium mb-2">Inga årsmöten</h3>
+            <p className="text-muted-foreground mb-4">
+              {searchQuery ? 'Inga årsmöten matchade din sökning' : 'Planera ditt första årsmöte'}
+            </p>
+            <Button onClick={() => setShowCreateDialog(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Planera årsmöte
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Dialogs */}
+      <MotionDialog
+        open={showMotionDialog}
+        onOpenChange={setShowMotionDialog}
+        onSubmit={(data) => {
+          console.log("Motion submitted", data)
+        }}
+      />
+
+      <PlanMeetingDialog
+        open={showCreateDialog}
+        onOpenChange={setShowCreateDialog}
+        type="annual"
+        defaultAgenda={standardAgenda}
+        onSubmit={(data) => {
+          addDocument({
+            type: 'general_meeting_minutes',
+            title: `${data.type === 'extra' ? 'Extra årsmöte' : 'Ordinarie årsmöte'} ${data.year}`,
+            date: data.date,
+            content: JSON.stringify({
+              year: parseInt(data.year),
+              location: data.location,
+              type: data.type,
+              decisions: [],
+              motions: [],
+              attendeesCount: 0
+            }),
+            status: 'draft',
+            source: 'manual'
+          })
+          setShowCreateDialog(false)
+        }}
+      />
+
+      <SendNoticeDialog
+        open={showSendNoticeDialog}
+        onOpenChange={setShowSendNoticeDialog}
+        variant="association"
+        recipientCount={mockMembers.filter(m => m.status === 'aktiv').length}
+        meeting={noticeMeeting || undefined}
+        onSubmit={() => console.log("Notice prepared")}
+      />
     </div>
   )
 }
