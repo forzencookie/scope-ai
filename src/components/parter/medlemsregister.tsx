@@ -336,33 +336,92 @@ export function Medlemsregister() {
           </div>
         </div>
       </div>
-      {/* Stats Overview */}
-      <StatCardGrid columns={4}>
-        <StatCard
-          label="Totalt medlemmar"
-          value={displayStats.totalMembers.toString()}
-          subtitle={`${displayStats.boardMembers} med styrelseuppdrag`}
-          headerIcon={Users}
-        />
-        <StatCard
-          label="Aktiva medlemmar"
-          value={displayStats.activeMembers.toString()}
-          subtitle={`${displayStats.pendingMembers} vilande`}
-          headerIcon={UserCheck}
-        />
-        <StatCard
-          label="Förväntade avgifter"
-          value={formatCurrency(displayStats.totalFees)}
-          subtitle="innevarande år"
-          headerIcon={CreditCard}
-        />
-        <StatCard
-          label="Obetalda avgifter"
-          value={formatCurrency(displayStats.unpaidFees)}
-          subtitle={`${displayStats.unpaidCount} medlemmar`}
-          headerIcon={Clock}
-        />
-      </StatCardGrid>
+      {/* Membership Health Dashboard */}
+      <div className="rounded-xl border bg-gradient-to-br from-sky-50 via-blue-50 to-indigo-50 dark:from-sky-950/30 dark:via-blue-950/30 dark:to-indigo-950/30 p-5">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left: Fee Collection Progress */}
+          <div className="flex-1">
+            <div className="flex items-center gap-2 mb-3">
+              <CreditCard className="h-5 w-5 text-blue-600 dark:text-blue-400" />
+              <h3 className="font-semibold">Avgiftsinsamling {new Date().getFullYear()}</h3>
+            </div>
+
+            {/* Progress Bar */}
+            <div className="mb-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <span className="text-sm text-muted-foreground">
+                  {displayStats.totalMembers - displayStats.unpaidCount} av {displayStats.totalMembers} har betalt
+                </span>
+                <span className="text-sm font-medium">
+                  {displayStats.totalMembers > 0
+                    ? Math.round(((displayStats.totalMembers - displayStats.unpaidCount) / displayStats.totalMembers) * 100)
+                    : 0}%
+                </span>
+              </div>
+              <div className="h-3 rounded-full bg-blue-100 dark:bg-blue-900/50 overflow-hidden">
+                <div
+                  className="h-full bg-gradient-to-r from-blue-500 to-indigo-500 rounded-full transition-all duration-500"
+                  style={{
+                    width: displayStats.totalMembers > 0
+                      ? `${((displayStats.totalMembers - displayStats.unpaidCount) / displayStats.totalMembers) * 100}%`
+                      : '0%'
+                  }}
+                />
+              </div>
+              <div className="flex justify-between mt-2 text-sm">
+                <span className="text-green-600 dark:text-green-400 font-medium">
+                  {formatCurrency(displayStats.totalFees - displayStats.unpaidFees)} inbetalt
+                </span>
+                {displayStats.unpaidFees > 0 && (
+                  <span className="text-amber-600 dark:text-amber-400">
+                    {formatCurrency(displayStats.unpaidFees)} kvar att samla in
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Member Status Visual Breakdown */}
+            <div className="flex items-center gap-4 pt-3 border-t border-blue-200/50 dark:border-blue-800/50">
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-green-500" />
+                <span className="text-sm">{displayStats.activeMembers} aktiva</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-amber-500" />
+                <span className="text-sm">{displayStats.pendingMembers} vilande</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="h-3 w-3 rounded-full bg-slate-400" />
+                <span className="text-sm">{displayStats.boardMembers} i styrelsen</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Right: Key Metrics Grid */}
+          <div className="grid grid-cols-2 gap-3 lg:w-auto lg:min-w-[280px]">
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <Users className="h-4 w-4 text-blue-500 mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{displayStats.totalMembers}</p>
+              <p className="text-xs text-muted-foreground">Medlemmar</p>
+            </div>
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <UserCheck className="h-4 w-4 text-green-500 mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{displayStats.activeMembers}</p>
+              <p className="text-xs text-muted-foreground">Aktiva</p>
+            </div>
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <CreditCard className="h-4 w-4 text-indigo-500 mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums">{formatCurrency(displayStats.totalFees)}</p>
+              <p className="text-xs text-muted-foreground">Avgifter</p>
+            </div>
+            <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
+              <Clock className="h-4 w-4 text-amber-500 mb-1.5" />
+              <p className="text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-400">{displayStats.unpaidCount}</p>
+              <p className="text-xs text-muted-foreground">Obetalda</p>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Section Separator */}
       <div className="border-b-2 border-border/60" />
