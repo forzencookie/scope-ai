@@ -239,9 +239,10 @@ function ParterPageContent() {
                     </div>
                 </div>
 
-                {/* Tab Content */}
-                <main className="flex-1 flex flex-col p-6">
-                    <div className="max-w-6xl w-full">
+                {/* Tab Content - Two Column Layout */}
+                <main className="flex-1 flex gap-6 p-6">
+                    {/* Main Content */}
+                    <div className="flex-1 min-w-0 max-w-6xl">
                         {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
                         {!['aktiebok', 'styrelseprotokoll', 'bolagsstamma'].includes(currentTab) && (
                             <div className="pb-6">
@@ -273,6 +274,9 @@ function ParterPageContent() {
                         {currentTab === 'firmatecknare' && <LazyFirmatecknare />}
                         {currentTab === 'myndigheter' && <LazyMyndigheter />}
                     </div>
+
+                    {/* Right Sidebar - Activity Panel */}
+                    <div id="page-right-sidebar" className="hidden xl:block w-80 shrink-0" />
                 </main>
             </div>
         </TooltipProvider>

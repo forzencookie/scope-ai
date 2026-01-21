@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { useState, useMemo, useEffect } from "react"
+import { createPortal } from "react-dom"
 import { formatCurrency, formatDate } from "@/lib/utils"
 import {
   Users,
@@ -87,6 +88,63 @@ const getMembershipChangeTypeLabel = (changeType: MembershipChange['changeType']
     'rollbyte': 'Rollbyte',
   }
   return labels[changeType]
+}
+
+// Component that renders into the right sidebar via portal
+function RightSidebarContent({
+  changes,
+  getMembershipChangeTypeLabel,
+  formatDate
+}: {
+  changes: MembershipChange[]
+  getMembershipChangeTypeLabel: (changeType: MembershipChange['changeType']) => MembershipChangeType
+  formatDate: (date: string) => string
+}) {
+  const [sidebarElement, setSidebarElement] = useState<HTMLElement | null>(null)
+
+  useEffect(() => {
+    // Find the sidebar slot and update state
+    const el = document.getElementById('page-right-sidebar')
+    setSidebarElement(el)
+  }, [])
+
+  const content = (
+    <Card className="sticky top-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-base">Senaste aktivitet</CardTitle>
+        <CardDescription className="text-xs">
+          Medlemsändringar och händelser
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-0">
+        <div className="space-y-3">
+          {changes.map((change) => {
+            const changeLabel = getMembershipChangeTypeLabel(change.changeType)
+            return (
+              <div key={change.id} className="flex items-start gap-3 p-2 rounded-lg bg-muted/50">
+                <AppStatusBadge status={changeLabel} size="sm" />
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium text-sm truncate">{change.memberName}</p>
+                  <p className="text-xs text-muted-foreground truncate">{change.details}</p>
+                </div>
+                <div className="text-xs text-muted-foreground shrink-0">
+                  {formatDate(change.date)}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </CardContent>
+    </Card>
+  )
+
+  // If sidebar slot exists and is visible, portal content there
+  if (sidebarElement) {
+    return createPortal(content, sidebarElement)
+  }
+
+  // Fallback: render inline (for smaller screens or if slot not found)
+  return content
 }
 
 export function Medlemsregister() {
@@ -605,34 +663,8 @@ export function Medlemsregister() {
         </GridTableRows>
       </div>
 
-      {/* Recent Changes */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Senaste aktivitet</CardTitle>
-          <CardDescription>
-            Medlemsändringar och händelser
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {changes.map((change) => {
-              const changeLabel = getMembershipChangeTypeLabel(change.changeType)
-              return (
-                <div key={change.id} className="flex items-center gap-4 p-3 rounded-lg bg-muted/50">
-                  <AppStatusBadge status={changeLabel} showIcon />
-                  <div className="flex-1">
-                    <p className="font-medium text-sm">{change.memberName}</p>
-                    <p className="text-xs text-muted-foreground">{change.details}</p>
-                  </div>
-                  <div className="text-xs text-muted-foreground">
-                    {formatDate(change.date)}
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-        </CardContent>
-      </Card>
+      {/* Recent Changes - Rendered in right sidebar if available */}
+      <RightSidebarContent changes={changes} getMembershipChangeTypeLabel={getMembershipChangeTypeLabel} formatDate={formatDate} />
 
       {filteredMembers.length === 0 && (
         <div className="text-center py-12 text-muted-foreground">
