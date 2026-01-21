@@ -116,16 +116,39 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
             setShowHistory(false)
         }
 
+        // Handle focus input event from AI dialog edit button
+        const handleFocusInput = (e: Event) => {
+            const detail = (e as CustomEvent<{ prefill?: string }>).detail
+            setShowHistory(false)
+
+            // Set prefill value if provided
+            if (detail?.prefill) {
+                setTextareaValue(detail.prefill)
+            }
+
+            // Focus the textarea after a short delay to ensure DOM is ready
+            setTimeout(() => {
+                const textarea = document.querySelector('[data-ai-chat-input]') as HTMLTextAreaElement
+                if (textarea) {
+                    textarea.focus()
+                    // Move cursor to end
+                    textarea.setSelectionRange(textarea.value.length, textarea.value.length)
+                }
+            }, 100)
+        }
+
         window.addEventListener(AI_CHAT_EVENT, handleOpenAIChat)
         window.addEventListener("load-conversation", handleLoadConversation)
         window.addEventListener("ai-chat-show-history", handleShowHistory)
         window.addEventListener("ai-chat-new-conversation", handleNewConversation)
+        window.addEventListener("ai-chat-focus-input", handleFocusInput)
 
         return () => {
             window.removeEventListener(AI_CHAT_EVENT, handleOpenAIChat)
             window.removeEventListener("load-conversation", handleLoadConversation)
             window.removeEventListener("ai-chat-show-history", handleShowHistory)
             window.removeEventListener("ai-chat-new-conversation", handleNewConversation)
+            window.removeEventListener("ai-chat-focus-input", handleFocusInput)
         }
     }, [sendMessage, startNewConversation, loadConversation])
 
@@ -257,7 +280,7 @@ export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
                                     {/* Chest */}
                                     <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
                                     {/* Tail - wags when focused */}
-                                    <rect x="12" y="11" width="2" height="2" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-[wiggle_0.3s_ease-in-out_infinite]")} />
+                                    <rect x="12" y="11" width="2" height="2" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-[pixel-wiggle_0.3s_ease-in-out_infinite]")} />
                                     {/* Feet */}
                                     <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
                                     <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />

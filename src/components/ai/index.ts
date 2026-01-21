@@ -6,3 +6,20 @@ export { TaskChecklist, createTaskItems } from './task-checklist'
 export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type MentionCategory } from './mention-popover'
 export { ActivityCard, type ActivityCardProps, type ActivityChange } from './activity-card'
 export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './comparison-table'
+
+// AI Dialog Experience
+export { AIDialogOverlay } from './ai-dialog-overlay'
+export {
+    PixelDog,
+    PixelBear,
+    PixelGiraffe,
+    MascotCookingScene,
+    MascotCelebrationScene,
+    MascotPlayingScene,
+    MascotReadingScene,
+    MascotSearchingScene,
+    MascotErrorScene,
+    type SceneType,
+} from './pixel-mascots'
+export { CardRenderer, type CardRendererProps } from './card-renderer'
+export { AIHighlight, useAIHighlight } from './ai-highlight'

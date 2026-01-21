@@ -407,8 +407,8 @@ export function NavAIConversations() {
                   <rect x="4" y="10" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
                   {/* Chest */}
                   <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
-                  {/* Tail - wags on hover */}
-                  <rect x="12" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500 origin-left group-hover/dog:animate-[wiggle_0.3s_ease-in-out_infinite]" />
+                  {/* Tail - static */}
+                  <rect x="12" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500 origin-left" />
                   {/* Feet */}
                   <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
                   <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />

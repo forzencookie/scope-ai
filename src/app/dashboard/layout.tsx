@@ -14,6 +14,9 @@ import { LazyOnboardingWizard } from "@/components/shared"
 import { CompanyProvider } from "@/providers/company-provider"
 import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ModelProvider } from "@/providers/model-provider"
+import { AIDialogProvider } from "@/providers/ai-dialog-provider"
+import { AIDialogOverlay } from "@/components/ai"
+import { AuthGuard } from "@/components/auth/auth-guard"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw } from "lucide-react"
@@ -29,7 +32,7 @@ const navigationStore = {
 
     subscribe(listener: () => void) {
         this.listeners.add(listener)
-        return () => this.listeners.delete(listener)
+        return () => { this.listeners.delete(listener) }
     },
 
     notify() {
@@ -200,6 +203,24 @@ function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: Sideba
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding()
     const [sidebarMode, setSidebarMode] = useState<SidebarMode>("navigation")
+    const router = useRouter()
+
+    // Listen for AI navigation events
+    useEffect(() => {
+        const handleAINavigate = (e: CustomEvent<{ route: string; newTab?: boolean }>) => {
+            const { route, newTab } = e.detail
+            if (newTab) {
+                window.open(route, '_blank')
+            } else {
+                router.push(route)
+            }
+        }
+
+        window.addEventListener('ai-navigate', handleAINavigate as EventListener)
+        return () => {
+            window.removeEventListener('ai-navigate', handleAINavigate as EventListener)
+        }
+    }, [router])
 
     return (
         <>
@@ -219,8 +240,10 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 <div className="flex flex-1 w-full bg-sidebar">
                     <AppSidebar variant="inset" mode={sidebarMode} onModeChange={setSidebarMode} />
                     <SidebarInset>
-                        <div className="w-full h-full px-4 md:px-[5%]">
+                        <div className="relative w-full h-full px-4 md:px-[5%]">
                             {children}
+                            {/* AI Dialog Overlay - shows when AI is processing */}
+                            <AIDialogOverlay />
                         </div>
                     </SidebarInset>
                 </div>
@@ -241,17 +264,21 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     return (
-        <TextModeProvider>
-            <ModelProvider>
-                <CompanyProvider>
-                    <ToastProvider>
-                        <DashboardContent>
-                            {children}
-                        </DashboardContent>
-                    </ToastProvider>
-                </CompanyProvider>
-            </ModelProvider>
-        </TextModeProvider>
+        <AuthGuard>
+            <TextModeProvider>
+                <ModelProvider>
+                    <CompanyProvider>
+                        <AIDialogProvider>
+                            <ToastProvider>
+                                <DashboardContent>
+                                    {children}
+                                </DashboardContent>
+                            </ToastProvider>
+                        </AIDialogProvider>
+                    </CompanyProvider>
+                </ModelProvider>
+            </TextModeProvider>
+        </AuthGuard>
     )
 }
 

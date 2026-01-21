@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/sidebar"
 import { useCompany } from "@/providers/company-provider"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
+import { useAuth } from "@/hooks/use-auth"
 
 interface UserTeamSwitcherProps {
     user: { name: string; email: string; avatar: string }
@@ -45,7 +46,9 @@ export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
+    const { signOut } = useAuth()
     const [activeTeam, setActiveTeam] = React.useState(teams[0])
+    const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
     // Handle opening settings (pushes to history for back button support)
     const handleOpenSettings = React.useCallback(() => {
@@ -53,6 +56,27 @@ export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
         params.set("settings", "Konto") // Default tab
         router.push(`${pathname}?${params.toString()}`)
     }, [router, pathname, searchParams])
+
+    // Handle logout
+    const handleLogout = React.useCallback(async () => {
+        if (isLoggingOut) return
+        setIsLoggingOut(true)
+
+        try {
+            // Call both client-side signOut and server-side logout
+            await signOut()
+            await fetch('/api/auth/logout', { method: 'POST' })
+
+            // Redirect to login page
+            router.push('/login')
+        } catch (error) {
+            console.error('Logout error:', error)
+            // Still try to redirect even if there's an error
+            router.push('/login')
+        } finally {
+            setIsLoggingOut(false)
+        }
+    }, [signOut, router, isLoggingOut])
 
     if (!activeTeam) {
         return null
@@ -159,7 +183,10 @@ export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
                             <DropdownMenuItem onSelect={handleOpenSettings}><Settings className="mr-2 h-4 w-4" />Inställningar</DropdownMenuItem>
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
-                        <DropdownMenuItem><LogOut className="mr-2 h-4 w-4" />Logga ut</DropdownMenuItem>
+                        <DropdownMenuItem onSelect={handleLogout} disabled={isLoggingOut}>
+                            <LogOut className="mr-2 h-4 w-4" />
+                            {isLoggingOut ? 'Loggar ut...' : 'Logga ut'}
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </SidebarMenuItem>

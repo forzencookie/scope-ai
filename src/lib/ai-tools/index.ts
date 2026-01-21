@@ -88,3 +88,11 @@ export function getOpenAITools() {
     const { toolsToOpenAIFunctions } = require('./types')
     return toolsToOpenAIFunctions(aiToolRegistry.getAll())
 }
+
+/**
+ * Get all tools in Google Gemini format
+ */
+export function getGoogleTools() {
+    const { toolsToGoogleFunctions } = require('./types')
+    return toolsToGoogleFunctions(aiToolRegistry.getAll())
+}

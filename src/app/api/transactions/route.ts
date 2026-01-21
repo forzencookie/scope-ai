@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { db } from "@/lib/server-db"
+import { verifyAuth, ApiResponse } from "@/lib/api-auth"
 
 // Transaction type (simplified after bank API removal)
 interface BankTransaction {
@@ -42,10 +43,17 @@ function mapToAppTransaction(bankTx: BankTransaction, metadata: any = {}) {
 
 export async function GET(request: NextRequest) {
     try {
+        // Verify authentication
+        const auth = await verifyAuth(request)
+        if (!auth) {
+            return ApiResponse.unauthorized('Authentication required')
+        }
+
         const data = await db.get()
         const metadata: Record<string, any> = data.transactionMetadata || {}
 
         // Map BankTransactions to AppTransactions, overlaying metadata
+        // TODO: Filter by user ID when user_id column is properly used
         const transactions = data.transactions.map((tx: any) =>
             mapToAppTransaction(tx, metadata[tx.id] || {})
         )
@@ -57,9 +65,6 @@ export async function GET(request: NextRequest) {
         })
     } catch (error) {
         console.error('Transactions API error:', error)
-        return NextResponse.json(
-            { success: false, error: 'Failed to fetch transactions' },
-            { status: 500 }
-        )
+        return ApiResponse.serverError('Failed to fetch transactions')
     }
 }

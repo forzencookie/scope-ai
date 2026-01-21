@@ -58,3 +58,17 @@ export type {
     Invoice,
     Receipt,
 } from "./app-provider"
+
+// AI Dialog provider
+export {
+    AIDialogProvider,
+    useAIDialog,
+    useAIDialogOptional,
+} from "./ai-dialog-provider"
+
+export type {
+    AIDialogStatus,
+    AIDialogOutput,
+    AIDialogNavigation,
+    AIDialogDisplay,
+} from "./ai-dialog-provider"

@@ -248,6 +248,7 @@ export function ChatInput({
                 <div className="w-full">
                     <Textarea
                         ref={textareaRef}
+                        data-ai-chat-input
                         value={value}
                         onChange={handleInput}
                         onKeyDown={handleKeyDown}

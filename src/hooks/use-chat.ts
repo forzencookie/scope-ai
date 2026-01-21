@@ -10,6 +10,7 @@ import type { Message, Conversation } from '@/lib/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import { generateTitle, fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
 import { useModel } from '@/providers/model-provider'
+import { useRouter } from 'next/navigation'
 
 interface UseChatOptions {
     /** Initial conversation ID to load */
@@ -30,6 +31,7 @@ interface SendMessageOptions {
 }
 
 export function useChat(options: UseChatOptions = {}) {
+    const router = useRouter()
     const { modelId } = useModel()
     const [conversations, setConversations] = useState<Conversation[]>([])
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(
@@ -195,6 +197,7 @@ export function useChat(options: UseChatOptions = {}) {
         }
 
         setIsLoading(true)
+        window.dispatchEvent(new CustomEvent('ai-dialog-start', { detail: { contentType: 'default' } }))
 
         try {
             // Convert files to base64 for display and API
@@ -272,6 +275,19 @@ export function useChat(options: UseChatOptions = {}) {
                         }
                         : c
                 ))
+
+                // Dispatch completion event
+                window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
+                    detail: {
+                        contentType: data.display?.component || 'json',
+                        title: data.display?.title || 'Klar',
+                        content: data.content,
+                        data: data,
+                        display: data.display,
+                        navigation: data.navigation,
+                        highlightId: data.toolResults?.[0]?.result?.id
+                    }
+                }))
                 return
             }
 
@@ -282,6 +298,7 @@ export function useChat(options: UseChatOptions = {}) {
             if (reader) {
                 let fullContent = ''
                 let buffer = ''
+                let lastData: any = null // Capture data for completion event
 
                 while (true) {
                     const { done, value } = await reader.read()
@@ -302,6 +319,12 @@ export function useChat(options: UseChatOptions = {}) {
                                 fullContent += contentDelta
                             } else if (line.startsWith('D:')) {
                                 const data = JSON.parse(line.slice(2))
+                                lastData = data // Store for completion
+
+                                // Handle immediate navigation
+                                if (data.navigation) {
+                                    router.push(data.navigation.route)
+                                }
 
                                 setConversations(prev => prev.map(c =>
                                     c.id === conversationId
@@ -340,9 +363,61 @@ export function useChat(options: UseChatOptions = {}) {
                             : c
                     ))
                 }
+
+                // Check if the response contains error indicators
+                const isErrorResponse = fullContent.includes('Ett fel uppstod') ||
+                    fullContent.includes('fel uppstod vid generering') ||
+                    fullContent.includes('error') && fullContent.length < 100
+
+                // Check if there's structured output that warrants showing the dialog
+                const hasStructuredOutput = lastData && (
+                    lastData.display ||
+                    lastData.navigation ||
+                    lastData.toolResults?.length > 0 ||
+                    lastData.confirmationRequired
+                )
+
+                // Dispatch appropriate event
+                if (isErrorResponse) {
+                    window.dispatchEvent(new CustomEvent('ai-dialog-error', {
+                        detail: {
+                            contentType: 'error',
+                            title: 'Fel uppstod',
+                            content: fullContent,
+                        }
+                    }))
+                } else if (hasStructuredOutput) {
+                    // Only show dialog for tool calls / structured output
+                    window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
+                        detail: {
+                            contentType: lastData?.display?.component || (lastData?.confirmationRequired ? 'confirmation' : 'action'),
+                            title: lastData?.display?.title || (lastData?.confirmationRequired ? 'Bekräfta åtgärd' : 'Åtgärd slutförd'),
+                            content: fullContent,
+                            data: lastData,
+                            display: lastData?.display,
+                            navigation: lastData?.navigation,
+                            confirmationRequired: lastData?.confirmationRequired,
+                            highlightId: lastData?.toolResults?.[0]?.result?.id
+                        }
+                    }))
+                } else {
+                    // Plain text response - just hide the dialog, don't show complete state
+                    window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
+                }
             }
         } catch (error) {
             console.error('SendMessage error:', error)
+            const errorMessage = 'Ett fel uppstod. Försök igen.'
+
+            // Dispatch error event
+            window.dispatchEvent(new CustomEvent('ai-dialog-error', {
+                detail: {
+                    contentType: 'error',
+                    title: 'Fel uppstod',
+                    content: errorMessage,
+                }
+            }))
+
             setConversations(prev => prev.map(c =>
                 c.id === conversationId
                     ? {

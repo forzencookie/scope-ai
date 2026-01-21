@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { AlertCircle, RefreshCw, FileText, X } from "lucide-react"
+import { AlertCircle, RefreshCw, FileText, X, Image as ImageIcon } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import {
@@ -17,6 +17,52 @@ import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import type { Message } from "@/lib/chat-types"
 import { useEffect, useRef, useState } from "react"
+
+// Attachment preview with image error fallback
+function AttachmentPreview({ attachment }: { attachment: any }) {
+    const [imageError, setImageError] = useState(false)
+    const isImage = attachment.type?.startsWith('image/')
+
+    // Determine the image source
+    const getImageSrc = () => {
+        if (attachment.url) return attachment.url
+        if (attachment.data && attachment.type) {
+            return `data:${attachment.type};base64,${attachment.data}`
+        }
+        if (attachment.content) return attachment.content
+        return null
+    }
+
+    const imageSrc = isImage ? getImageSrc() : null
+    const showImage = isImage && imageSrc && !imageError
+
+    return (
+        <div className="flex items-center gap-2 bg-muted/60 rounded-lg p-2 pr-3 text-xs max-w-[200px]">
+            {showImage ? (
+                <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
+                    <img
+                        src={imageSrc}
+                        alt={attachment.name || 'Bild'}
+                        className="w-full h-full object-cover"
+                        onError={() => setImageError(true)}
+                    />
+                </div>
+            ) : (
+                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
+                    {isImage ? (
+                        <ImageIcon className="h-5 w-5 text-muted-foreground" />
+                    ) : (
+                        <FileText className="h-5 w-5 text-muted-foreground" />
+                    )}
+                </div>
+            )}
+            <div className="flex flex-col min-w-0">
+                <span className="font-medium truncate max-w-[100px]">{attachment.name || 'Fil'}</span>
+                <span className="text-muted-foreground">Bifogad fil</span>
+            </div>
+        </div>
+    )
+}
 
 // Fun Swedish completion phrases
 const COMPLETION_PHRASES = [
@@ -229,28 +275,7 @@ export function ChatMessageList({
                             {message.attachments && message.attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 justify-end">
                                     {message.attachments.map((att: any, i: number) => (
-                                        <div
-                                            key={i}
-                                            className="flex items-center gap-2 bg-muted/60 rounded-lg p-2 pr-3 text-xs max-w-[200px]"
-                                        >
-                                            {att.type?.startsWith('image/') ? (
-                                                <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
-                                                    <img
-                                                        src={att.url || att.content} // Handle both url and base64 content
-                                                        alt={att.name || 'Bild'}
-                                                        className="w-full h-full object-cover"
-                                                    />
-                                                </div>
-                                            ) : (
-                                                <div className="w-10 h-10 rounded bg-muted flex items-center justify-center flex-shrink-0">
-                                                    <FileText className="h-5 w-5 text-muted-foreground" />
-                                                </div>
-                                            )}
-                                            <div className="flex flex-col min-w-0">
-                                                <span className="font-medium truncate max-w-[100px]">{att.name || 'Fil'}</span>
-                                                <span className="text-muted-foreground">Bifogad fil</span>
-                                            </div>
-                                        </div>
+                                        <AttachmentPreview key={i} attachment={att} />
                                     ))}
                                 </div>
                             )}

@@ -236,6 +236,70 @@ export function toolsToOpenAIFunctions(tools: AITool[]): ReturnType<typeof toolT
  */
 export type ToolParams<T extends AITool> = T extends AITool<infer P, unknown> ? P : never
 
+// =============================================================================
+// Google Gemini Function Calling Conversion
+// =============================================================================
+
+/**
+ * Convert an AITool to Google Gemini function declaration format
+ */
+export function toolToGoogleFunction(tool: AITool): {
+    name: string
+    description: string
+    parameters: {
+        type: string
+        properties: Record<string, any>
+        required?: string[]
+    }
+} {
+    // Map JSON schema types to Google types (uppercase)
+    const mapType = (type: string): string => {
+        const t = type.toLowerCase()
+        if (t === 'string') return 'STRING'
+        if (t === 'number') return 'NUMBER'
+        if (t === 'integer') return 'INTEGER'
+        if (t === 'boolean') return 'BOOLEAN'
+        if (t === 'array') return 'ARRAY'
+        if (t === 'object') return 'OBJECT'
+        return 'STRING' // Default
+    }
+
+    const mapProperties = (props: Record<string, any>): Record<string, any> => {
+        const result: Record<string, any> = {}
+        for (const [key, value] of Object.entries(props)) {
+            result[key] = {
+                type: mapType(value.type),
+                description: value.description,
+                enum: value.enum,
+            }
+            if (value.items) {
+                result[key].items = { type: mapType(value.items.type) }
+            }
+            if (value.properties) {
+                result[key].properties = mapProperties(value.properties)
+            }
+        }
+        return result
+    }
+
+    return {
+        name: tool.name,
+        description: tool.description,
+        parameters: {
+            type: 'OBJECT',
+            properties: mapProperties(tool.parameters.properties),
+            required: tool.parameters.required
+        }
+    }
+}
+
+/**
+ * Convert multiple tools to Google format
+ */
+export function toolsToGoogleFunctions(tools: AITool[]) {
+    return tools.map(toolToGoogleFunction)
+}
+
 /**
  * Extract the result type from a tool
  */
