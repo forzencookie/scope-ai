@@ -109,7 +109,7 @@ function RightSidebarContent({
   }, [])
 
   const content = (
-    <Card className="sticky top-6">
+    <Card className="h-full border-l rounded-none border-y-0 border-r-0 bg-muted/10">
       <CardHeader className="pb-3">
         <CardTitle className="text-base">Senaste aktivitet</CardTitle>
         <CardDescription className="text-xs">
