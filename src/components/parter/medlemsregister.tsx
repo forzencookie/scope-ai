@@ -103,9 +103,20 @@ function RightSidebarContent({
   const [sidebarElement, setSidebarElement] = useState<HTMLElement | null>(null)
 
   useEffect(() => {
-    // Find the sidebar slot and update state
-    const el = document.getElementById('page-right-sidebar')
-    setSidebarElement(el)
+    // Find the sidebar slot and update state, but only if we are on desktop
+    const checkSidebar = () => {
+      const el = document.getElementById('page-right-sidebar')
+      // Check if element exists AND is visible (display != none)
+      if (el && window.getComputedStyle(el).display !== 'none') {
+        setSidebarElement(el)
+      } else {
+        setSidebarElement(null)
+      }
+    }
+
+    checkSidebar()
+    window.addEventListener('resize', checkSidebar)
+    return () => window.removeEventListener('resize', checkSidebar)
   }, [])
 
   const content = (
@@ -537,7 +548,7 @@ export function Medlemsregister() {
 
       {/* Members List */}
       {/* Members List */}
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto pb-4">
         <GridTableHeader
           className="min-w-[800px]"
           columns={[
