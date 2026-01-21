@@ -220,70 +220,27 @@ export function LonesbeskContent() {
                     </div>
                 </div>
 
-                {/* Payroll Run Status Hero */}
-                <div className="rounded-xl border bg-gradient-to-br from-rose-50 via-pink-50 to-fuchsia-50 dark:from-rose-950/30 dark:via-pink-950/30 dark:to-fuchsia-950/30 p-5">
-                    <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-6">
-                        {/* Left: Status Stepper */}
-                        <div className="flex-1">
-                            <div className="flex items-center gap-2 mb-4">
-                                <Calendar className="h-5 w-5 text-rose-600 dark:text-rose-400" />
-                                <h3 className="font-semibold">Lönekörning {stats.currentPeriod}</h3>
-                                <span className="text-sm text-muted-foreground">• {stats.employeeCount} anställda</span>
-                            </div>
-
-                            {/* Progress Stepper */}
-                            <div className="flex items-center gap-0">
-                                {[
-                                    { label: 'Utkast', status: 'done' },
-                                    { label: 'Godkänd', status: 'current' },
-                                    { label: 'Skickad', status: 'pending' },
-                                    { label: 'Betald', status: 'pending' },
-                                ].map((step, index, arr) => (
-                                    <div key={step.label} className="flex items-center">
-                                        <div className="flex flex-col items-center">
-                                            <div className={cn(
-                                                "h-8 w-8 rounded-full flex items-center justify-center text-xs font-medium border-2 transition-all",
-                                                step.status === 'done' && "bg-rose-500 border-rose-500 text-white",
-                                                step.status === 'current' && "bg-rose-100 dark:bg-rose-900/50 border-rose-500 text-rose-600 dark:text-rose-400 ring-4 ring-rose-200/50 dark:ring-rose-900/30",
-                                                step.status === 'pending' && "bg-muted border-border text-muted-foreground"
-                                            )}>
-                                                {step.status === 'done' ? (
-                                                    <CheckCircle2 className="h-4 w-4" />
-                                                ) : (
-                                                    index + 1
-                                                )}
-                                            </div>
-                                            <span className={cn(
-                                                "text-xs mt-1.5 whitespace-nowrap",
-                                                step.status === 'current' ? "font-medium text-rose-600 dark:text-rose-400" : "text-muted-foreground"
-                                            )}>
-                                                {step.label}
-                                            </span>
-                                        </div>
-                                        {index < arr.length - 1 && (
-                                            <div className={cn(
-                                                "h-0.5 w-12 sm:w-16 mx-1 -mt-5",
-                                                step.status === 'done' ? "bg-rose-500" : "bg-border"
-                                            )} />
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Right: Key Metrics */}
-                        <div className="grid grid-cols-2 gap-3 lg:w-auto lg:min-w-[260px]">
-                            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-                                <Banknote className="h-4 w-4 text-rose-500 mb-1" />
-                                <p className="text-xl font-bold tabular-nums">{formatCurrency(stats.totalGross)}</p>
-                                <p className="text-xs text-muted-foreground">Bruttolön</p>
-                            </div>
-                            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-                                <Wallet className="h-4 w-4 text-fuchsia-500 mb-1" />
-                                <p className="text-xl font-bold tabular-nums text-red-600 dark:text-red-400">{formatCurrency(stats.totalTax)}</p>
-                                <p className="text-xs text-muted-foreground">Skatt</p>
-                            </div>
-                        </div>
+                {/* Payroll Period Summary */}
+                <div className="flex flex-wrap items-center gap-4 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
+                    <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-semibold">{stats.currentPeriod}</span>
+                    </div>
+                    <div className="h-4 w-px bg-border hidden sm:block" />
+                    <div className="flex items-center gap-2">
+                        <span className="text-sm"><span className="font-semibold tabular-nums">{stats.employeeCount}</span> anställda</span>
+                    </div>
+                    <div className="h-4 w-px bg-border hidden sm:block" />
+                    <div className="flex items-center gap-2">
+                        <Banknote className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-sm font-semibold tabular-nums">{formatCurrency(stats.totalGross)}</span>
+                        <span className="text-sm text-muted-foreground">brutto</span>
+                    </div>
+                    <div className="h-4 w-px bg-border hidden sm:block" />
+                    <div className="flex items-center gap-2">
+                        <Wallet className="h-4 w-4 text-red-500" />
+                        <span className="text-sm font-semibold tabular-nums text-red-600 dark:text-red-400">{formatCurrency(stats.totalTax)}</span>
+                        <span className="text-sm text-muted-foreground">skatt</span>
                     </div>
                 </div>
 
