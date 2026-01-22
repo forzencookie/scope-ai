@@ -1,5 +1,6 @@
 "use client"
 
+import { useState, useEffect, useMemo } from "react"
 import { useVerifications } from "./use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { createClient } from "@/lib/supabase/client"
@@ -37,17 +38,32 @@ export function useMonthClosing() {
         async function loadPeriods() {
             setIsLoading(true)
             try {
+                // Fetch ONLY monthly periods from the consolidated table
                 const { data, error } = await supabase
-                    .from('month_closings')
+                    .from('financial_periods')
                     .select('*')
-                    .eq('company_id', company.id)
+                    .eq('type', 'monthly')
 
                 if (isMounted) {
                     if (!error && data) {
-                        setPeriods(data.map(p => ({
-                            ...p,
-                            checks: p.checks || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false }
-                        })))
+                        setPeriods(data.map(p => {
+                            // Map 2024-M01 -> year 2024, month 1
+                            const parts = p.id.split('-M')
+                            const year = parseInt(parts[0])
+                            const month = parseInt(parts[1])
+
+                            return {
+                                id: p.id,
+                                year,
+                                month,
+                                // status in DB is 'open', 'closed', 'submitted'
+                                // we map 'closed' to 'locked' for our UI
+                                status: p.status === 'closed' ? 'locked' : (p.status as PeriodStatus),
+                                checks: p.reconciliation_checks || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false },
+                                locked_at: p.locked_at,
+                                locked_by: p.locked_by
+                            }
+                        }))
                     }
                     setIsLoading(false)
                 }
@@ -80,6 +96,7 @@ export function useMonthClosing() {
 
         const current = getPeriod(year, month)
         const updated = { ...current, ...updates }
+        const periodId = `${year}-M${month.toString().padStart(2, '0')}`
 
         // Optimistic UI
         setPeriods(prev => {
@@ -93,23 +110,27 @@ export function useMonthClosing() {
             }
         })
 
-        // Persist to Supabase
+        // Persist to financial_periods
         try {
+            // Map our UI 'locked' back to DB 'closed'
+            const dbStatus = updated.status === 'locked' ? 'closed' : updated.status
+
             const { error } = await supabase
-                .from('month_closings')
+                .from('financial_periods')
                 .upsert({
+                    id: periodId,
                     company_id: company.id,
-                    year,
-                    month,
-                    status: updated.status,
-                    checks: updated.checks,
+                    type: 'monthly',
+                    start_date: `${year}-${month.toString().padStart(2, '0')}-01`,
+                    end_date: `${year}-${month.toString().padStart(2, '0')}-28`, // simplified
+                    status: dbStatus,
+                    reconciliation_checks: updated.checks,
                     locked_at: updated.locked_at,
                     locked_by: updated.locked_by
-                }, { onConflict: 'company_id,year,month' })
+                }, { onConflict: 'id' })
 
             if (error) {
                 console.error("Failed to save period:", error)
-                // Rollback could be implemented here
             }
         } catch (err) {
             console.error("Upsert error:", err)
