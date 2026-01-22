@@ -82,11 +82,15 @@ export function useChat(options: UseChatOptions = {}) {
     // Start new conversation
     const startNewConversation = useCallback(() => {
         setCurrentConversationId(null)
+        // Hide any open AI dialog
+        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
     }, [])
 
     // Load a conversation
     const loadConversation = useCallback((conversationId: string) => {
         setCurrentConversationId(conversationId)
+        // Hide any open AI dialog
+        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
     }, [])
 
     // Delete a conversation
@@ -197,6 +201,7 @@ export function useChat(options: UseChatOptions = {}) {
         }
 
         setIsLoading(true)
+        // Show thinking dialog while AI is processing
         window.dispatchEvent(new CustomEvent('ai-dialog-start', { detail: { contentType: 'default' } }))
 
         try {
@@ -209,12 +214,23 @@ export function useChat(options: UseChatOptions = {}) {
                 }))
             )
 
+            // === AUTO-INJECT CONTEXT FOR IMAGES ===
+            // Simple hint for images - let the system prompt guide the conversational approach
+            let enhancedContent = messageContent
+            const hasImages = files.some(f => f.type.startsWith('image/'))
+
+            if (hasImages && !messageContent.trim()) {
+                // User sent only an image with no text - give a simple hint
+                enhancedContent = '[Användaren har skickat en bild. Beskriv vad du ser och fråga vad de vill göra.]'
+            }
+            // === END AUTO-INJECT ===
+
             // Add user message if not retry/confirmation
             if (!retryMessageId) {
                 const userMessage: Message = {
                     id: crypto.randomUUID(),
                     role: 'user',
-                    content: messageContent,
+                    content: messageContent, // Keep original for display
                     attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
                     mentions: mentions.length > 0 ? mentions : undefined
                 }
@@ -233,13 +249,28 @@ export function useChat(options: UseChatOptions = {}) {
             // Convert files for API
             const attachments = await Promise.all(files.map(fileToBase64))
 
+            // Build messages for API, using enhancedContent for the last user message
+            const messagesForAPI = updatedMessages
+                .filter(m => {
+                    // Include user messages with content OR attachments
+                    if (m.role === 'user' && (m.content || m.attachments?.length)) return true
+                    // Only include assistant messages with actual text content
+                    if (m.role === 'assistant' && m.content && typeof m.content === 'string' && m.content.trim()) return true
+                    return false
+                })
+                .map((m, index, arr) => {
+                    // For the last user message, use enhancedContent (which has the hint for image-only messages)
+                    if (m.role === 'user' && index === arr.length - 1) {
+                        return { role: m.role, content: enhancedContent || m.content || '' }
+                    }
+                    return { role: m.role, content: m.content || '' }
+                })
+
             const response = await fetch('/api/chat', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
-                    messages: updatedMessages
-                        .filter(m => m.role === 'user' || (m.role === 'assistant' && (m.content || m.display || m.confirmationRequired)))
-                        .map(m => ({ role: m.role, content: m.content })),
+                    messages: messagesForAPI,
                     confirmationId,
                     attachments: attachments.length > 0 ? attachments : undefined,
                     mentions: mentions.length > 0 ? mentions : undefined,
@@ -370,6 +401,7 @@ export function useChat(options: UseChatOptions = {}) {
                     fullContent.includes('error') && fullContent.length < 100
 
                 // Check if there's structured output that warrants showing the dialog
+                // The dialog ONLY shows when AI uses tools/structured output
                 const hasStructuredOutput = lastData && (
                     lastData.display ||
                     lastData.navigation ||
@@ -387,7 +419,8 @@ export function useChat(options: UseChatOptions = {}) {
                         }
                     }))
                 } else if (hasStructuredOutput) {
-                    // Only show dialog for tool calls / structured output
+                    // Show confirmation dialog for tool calls / structured output
+                    // This is when AI decides to output structured data (receipts, confirmations, etc.)
                     window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
                         detail: {
                             contentType: lastData?.display?.component || (lastData?.confirmationRequired ? 'confirmation' : 'action'),
@@ -401,7 +434,7 @@ export function useChat(options: UseChatOptions = {}) {
                         }
                     }))
                 } else {
-                    // Plain text response - just hide the dialog, don't show complete state
+                    // Plain text response - hide thinking dialog, text appears in chat
                     window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
                 }
             }

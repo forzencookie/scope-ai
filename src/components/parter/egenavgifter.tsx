@@ -64,18 +64,50 @@ interface MonthlyData {
   egenavgifter: number
 }
 
+import { useVerifications } from "@/hooks/use-verifications"
+
 export function EgenavgifterCalculator() {
+  const { verifications } = useVerifications()
   const [annualProfit, setAnnualProfit] = useState<number>(500000)
   const [isReduced, setIsReduced] = useState(false)
   const [includeKarensReduction, setIncludeKarensReduction] = useState(false)
   const [showBreakdown, setShowBreakdown] = useState(false)
+
+  // Calculate Real Profit from Ledger (YTD)
+  const realProfit = useMemo(() => {
+    let revenue = 0
+    let expenses = 0
+
+    verifications.forEach(v => {
+      v.rows.forEach(r => {
+        const acc = parseInt(r.account)
+        // Revenue: Class 3 (3000-3999) - Credit increases revenue (Negative balance in BAS usually, but let's assume Credit positive for result calc here)
+        // Actually in standard accounting: 
+        // Revenue (Credit) is negative sign in DB often, but here we sum Credits.
+        // Expenses (Debit) is positive.
+        // Result = Revenue (Credit) - Expenses (Debit).
+
+        // Let's stick to: Revenue accounts (3xxx). Expenses (4xxx-7xxx).
+        if (acc >= 3000 && acc <= 3999) {
+          revenue += (r.credit - r.debit) // Net Credit
+        } else if (acc >= 4000 && acc <= 7999) {
+          expenses += (r.debit - r.credit) // Net Debit
+        }
+      })
+    })
+
+    return revenue - expenses
+  }, [verifications])
+
+  // Effect to auto-set profit if it's the first load and we have data? 
+  // Maybe better to just let user click "Hämta från bokföring" to avoid jumping values.
 
   // Calculate egenavgifter using the function from ownership.ts
   const result: EgenavgifterCalculation = useMemo(() => {
     return calculateEgenavgifter(annualProfit)
   }, [annualProfit])
 
-  // Calculate with current settings
+  // ... rest of memo ...
   const calculation = useMemo(() => {
     let rate = isReduced ? TAX_RATES.reducedRate : TAX_RATES.fullRate
     if (includeKarensReduction && !isReduced) {
@@ -102,7 +134,7 @@ export function EgenavgifterCalculator() {
     }
   }, [annualProfit, isReduced, includeKarensReduction])
 
-  // Monthly trend data (mock)
+  // ... (monthlyData memo and formatPercent similar) ...
   const monthlyData: MonthlyData[] = useMemo(() => {
     const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
     const monthlyProfit = annualProfit / 12
@@ -137,6 +169,16 @@ export function EgenavgifterCalculator() {
                 Beräkna och planera dina egenavgifter och skatter.
               </p>
             </div>
+            {realProfit !== 0 && (
+              <Button
+                variant="outline"
+                onClick={() => setAnnualProfit(realProfit)}
+                className="gap-2"
+              >
+                <TrendingUp className="h-4 w-4" />
+                Använd bokfört resultat ({formatCurrency(realProfit)})
+              </Button>
+            )}
           </div>
         </div>
         {/* Stats Overview */}

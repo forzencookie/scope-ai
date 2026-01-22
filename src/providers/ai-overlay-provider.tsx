@@ -41,6 +41,16 @@ export interface AIDialogOutput {
     navigation?: AIDialogNavigation
     /** Structured display for card rendering */
     display?: AIDialogDisplay
+    /** Confirmation request for write actions */
+    confirmationRequired?: {
+        id: string
+        title: string
+        description?: string
+        summary: Array<{ label: string; value: string }>
+        warnings?: string[]
+        action?: unknown
+        requireCheckbox?: boolean
+    }
 }
 
 // Map content types to scene types

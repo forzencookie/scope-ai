@@ -14,8 +14,8 @@ import { LazyOnboardingWizard } from "@/components/shared"
 import { CompanyProvider } from "@/providers/company-provider"
 import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ModelProvider } from "@/providers/model-provider"
-import { AIDialogProvider } from "@/providers/ai-dialog-provider"
-import { AIDialogOverlay } from "@/components/ai"
+import { AIDialogProvider } from "@/providers/ai-overlay-provider"
+import { AIOverlay } from "@/components/ai"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
@@ -242,8 +242,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     <SidebarInset>
                         <div className="relative w-full h-full px-4 md:px-[5%]">
                             {children}
-                            {/* AI Dialog Overlay - shows when AI is processing */}
-                            <AIDialogOverlay />
+                            {/* AI Overlay - shows when AI is processing */}
+                            <AIOverlay />
                         </div>
                     </SidebarInset>
                 </div>

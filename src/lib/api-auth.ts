@@ -93,6 +93,7 @@ export async function isAdmin(userId: string): Promise<boolean> {
     try {
         const supabase = await createServerSupabaseClient()
         const { data: profile } = await supabase
+            // @ts-ignore
             .from('profiles')
             .select('role')
             .eq('id', userId)

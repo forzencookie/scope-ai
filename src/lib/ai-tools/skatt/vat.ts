@@ -5,11 +5,21 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { vatService, type VATDeclaration } from '@/lib/services/vat-service'
+import { mockVatReport } from '@/data/mock-data'
 
 // =============================================================================
 // VAT Read Tools
 // =============================================================================
+
+interface VATDeclaration {
+    id: string
+    period: string
+    outputVat: number
+    inputVat: number
+    netVat: number
+    dueDate: string
+    status: string
+}
 
 export const getVatReportTool = defineTool<{ period?: string }, VATDeclaration[]>({
     name: 'get_vat_report',
@@ -23,19 +33,20 @@ export const getVatReportTool = defineTool<{ period?: string }, VATDeclaration[]
         },
     },
     execute: async (params) => {
-        let periods = await vatService.getDeclarations()
-
-        if (params.period) {
-            periods = periods.filter(p => p.period.toLowerCase().includes(params.period!.toLowerCase()))
+        // Use mock data
+        const vatData: VATDeclaration = {
+            id: 'vat-1',
+            period: mockVatReport.period,
+            outputVat: mockVatReport.salesVat,
+            inputVat: mockVatReport.purchaseVat,
+            netVat: mockVatReport.vatToPay,
+            dueDate: mockVatReport.dueDate,
+            status: mockVatReport.status,
         }
 
-        const upcoming = periods.find(p => p.status === 'upcoming')
-
-        let message = `Hittade ${periods.length} momsperioder.`
-        if (upcoming) {
-            const action = upcoming.netVat > 0 ? 'betala' : 'få tillbaka'
-            message += ` Nästa period (${upcoming.period}): ${Math.abs(upcoming.netVat).toLocaleString('sv-SE')} kr att ${action}, deadline ${upcoming.dueDate}.`
-        }
+        const periods = [vatData]
+        const action = vatData.netVat > 0 ? 'betala' : 'få tillbaka'
+        const message = `Moms för ${vatData.period}: ${vatData.netVat.toLocaleString('sv-SE')} kr att ${action}. Deadline: ${vatData.dueDate}.`
 
         return {
             success: true,
@@ -43,7 +54,15 @@ export const getVatReportTool = defineTool<{ period?: string }, VATDeclaration[]
             message,
             display: {
                 component: 'VatSummary',
-                props: { periods },
+                props: {
+                    periods,
+                    summary: {
+                        outputVat: vatData.outputVat,
+                        inputVat: vatData.inputVat,
+                        netVat: vatData.netVat,
+                        dueDate: vatData.dueDate,
+                    }
+                },
                 title: 'Momsdeklaration',
                 fullViewRoute: '/dashboard/skatt?tab=momsdeklaration',
             },
@@ -72,17 +91,15 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
         required: ['period'],
     },
     execute: async (params) => {
-        const periods = await vatService.getDeclarations()
-        const periodData = periods.find(p => p.period.toLowerCase().includes(params.period.toLowerCase()))
-
+        // Use mock data
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Skicka momsdeklaration',
             description: `Momsdeklaration för ${params.period}`,
             summary: [
                 { label: 'Period', value: params.period },
-                { label: 'Utgående moms', value: periodData ? `${periodData.outputVat.toLocaleString('sv-SE')} kr` : 'N/A' },
-                { label: 'Ingående moms', value: periodData ? `${periodData.inputVat.toLocaleString('sv-SE')} kr` : 'N/A' },
-                { label: 'Att betala/få', value: periodData ? `${periodData.netVat.toLocaleString('sv-SE')} kr` : 'N/A' },
+                { label: 'Utgående moms', value: `${mockVatReport.salesVat.toLocaleString('sv-SE')} kr` },
+                { label: 'Ingående moms', value: `${mockVatReport.purchaseVat.toLocaleString('sv-SE')} kr` },
+                { label: 'Att betala', value: `${mockVatReport.vatToPay.toLocaleString('sv-SE')} kr` },
             ],
             action: { toolName: 'submit_vat_declaration', params },
             requireCheckbox: true,

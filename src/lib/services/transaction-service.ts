@@ -43,11 +43,11 @@ export const transactionService = {
 
         if (error) throw error
 
-        // Return mock data if no real data exists
+        // Return empty array if no real data exists
         if (!data || data.length === 0) {
             return {
-                transactions: mockTransactions as Transaction[],
-                totalCount: mockTransactions.length
+                transactions: [],
+                totalCount: 0
             }
         }
 
@@ -86,8 +86,12 @@ export const transactionService = {
         const { data, error } = await supabase.rpc('get_transaction_stats')
 
         if (error || !data || data.totalCount === 0) {
-            // Return mock stats when no real data
-            return mockTransactionStats
+            return {
+                income: 0,
+                expenses: 0,
+                pending: 0,
+                totalCount: 0
+            }
         }
 
         return {

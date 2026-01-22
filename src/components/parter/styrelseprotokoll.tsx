@@ -116,7 +116,7 @@ export function Styrelseprotokoll() {
 
     // Use mock data as fallback when no real data exists
     if (realMeetings.length === 0) {
-      return mockBoardMeetings
+      return []
     }
 
     return realMeetings

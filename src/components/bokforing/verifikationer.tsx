@@ -1,6 +1,7 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
+import { useSearchParams, useRouter } from "next/navigation"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Separator } from "@/components/ui/separator"
 import { CategoryBadge, AmountText, RowCheckbox } from "@/components/ui/table-shell"
@@ -72,13 +73,29 @@ interface Verification {
 export function VerifikationerTable() {
     const toast = useToast()
     const { transactions, isLoading } = useTransactions()
-    const [classFilter, setClassFilter] = useState<AccountClass | "all">("all")
+    const searchParams = useSearchParams()
+    const router = useRouter()
+    const accountParam = searchParams.get("account")
+
+    const [classFilter, setClassFilter] = useState<AccountClass | "all Glad">("all")
     const [statusFilter, setStatusFilter] = useState<string | null>(null)
     const [filterDropdownOpen, setFilterDropdownOpen] = useState(false)
     const [searchQuery, setSearchQuery] = useState("")
     const [selectedVerifikation, setSelectedVerifikation] = useState<Verification | null>(null)
     const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
     const [createDialogOpen, setCreateDialogOpen] = useState(false)
+
+    // Helper to update filter via URL
+    const setAccountFilter = useCallback((account: string | null) => {
+        const params = new URLSearchParams(searchParams.toString())
+        if (account) {
+            params.set("account", account)
+        } else {
+            params.delete("account")
+        }
+        router.push(`/dashboard/bokforing?${params.toString()}`, { scroll: false })
+    }, [searchParams, router])
+
 
     // Derive verifications from actual booked transactions
     const verifikationer = useMemo(() => {
@@ -115,6 +132,12 @@ export function VerifikationerTable() {
     const filteredVerifikationer = useMemo(() => {
         let result = [...verifikationer]
 
+        // 1. Account drill-down (Strict filter from URL)
+        if (accountParam) {
+            result = result.filter(v => v.konto === accountParam)
+        }
+
+        // 2. Search query (Fuzzy)
         if (searchQuery) {
             const query = searchQuery.toLowerCase()
             result = result.filter(v =>
@@ -125,13 +148,15 @@ export function VerifikationerTable() {
             )
         }
 
-        if (classFilter !== "all") {
+        // 3. Class filter (1xxx, 3xxx etc)
+        if (classFilter !== "all" && !accountParam) { // Disable class filter if specific account is selected
             const classPrefix = String(classFilter)
             result = result.filter(v => v.konto.startsWith(classPrefix))
         }
 
         return result
-    }, [searchQuery, classFilter, verifikationer])
+    }, [searchQuery, classFilter, verifikationer, accountParam])
+
 
     // Calculate stats for stat cards
     const stats = useMemo(() => {
@@ -197,8 +222,14 @@ export function VerifikationerTable() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Verifikationer</h2>
-                        <p className="text-muted-foreground">Se alla bokförda transaktioner och verifikationer.</p>
+                        <h2 className="text-2xl font-bold tracking-tight">
+                            {accountParam ? `Huvudbok: ${accountParam}` : "Verifikationer"}
+                        </h2>
+                        <p className="text-muted-foreground">
+                            {accountParam
+                                ? `Systematisk översikt för konto ${accountParam} (${filteredVerifikationer[0]?.kontoName || 'Laddar...'})`
+                                : "Se alla bokförda transaktioner och verifikationer."}
+                        </p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button size="sm" className="h-8 w-full sm:w-auto px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
@@ -208,6 +239,22 @@ export function VerifikationerTable() {
                     </div>
                 </div>
             </div>
+
+            {/* Active Account Filter Badge */}
+            {accountParam && (
+                <div className="flex items-center gap-2 p-2 px-3 rounded-lg bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-100 dark:border-indigo-900 animate-in fade-in slide-in-from-top-1">
+                    <CreditCard className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                    <span className="text-sm font-medium text-indigo-900 dark:text-indigo-300">
+                        Filtrerat på konto: <span className="font-bold underline tabular-nums">{accountParam}</span>
+                    </span>
+                    <button
+                        onClick={() => setAccountFilter(null)}
+                        className="ml-auto text-indigo-500 hover:text-indigo-700 transition-colors"
+                    >
+                        <X className="h-4 w-4" />
+                    </button>
+                </div>
+            )}
 
             {/* Compact Stats Row */}
             <div className="flex flex-wrap items-center gap-4 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
@@ -424,10 +471,16 @@ export function VerifikationerTable() {
                                         {v.date}
                                     </div>
                                     <div className="col-span-2">
-                                        <div className="flex flex-col">
-                                            <span className="tabular-nums font-medium">{v.konto}</span>
-                                            <span className="text-xs text-muted-foreground truncate">{v.kontoName}</span>
-                                        </div>
+                                        <button
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setAccountFilter(v.konto);
+                                            }}
+                                            className="flex flex-col items-start hover:bg-muted/50 p-1 -m-1 rounded transition-colors text-left"
+                                        >
+                                            <span className="tabular-nums font-medium text-primary hover:underline">{v.konto}</span>
+                                            <span className="text-xs text-muted-foreground truncate max-w-full">{v.kontoName}</span>
+                                        </button>
                                     </div>
                                     <div className="col-span-4 font-medium truncate">
                                         {v.description}

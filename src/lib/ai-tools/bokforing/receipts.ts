@@ -5,6 +5,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
+import { mockReceipts } from '@/data/mock-data'
 
 // =============================================================================
 // Receipt Tools
@@ -25,7 +26,7 @@ interface Receipt {
     amount: string
     category: string
     status: string
-    attachment?: string
+    attachment?: string | null
     attachmentUrl?: string
 }
 
@@ -45,37 +46,34 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
         },
     },
     execute: async (params) => {
-        let receipts: Receipt[] = []
-
-        try {
-            const response = await fetch('/api/receipts/processed', { cache: 'no-store' })
-            if (response.ok) {
-                const data = await response.json()
-                receipts = data.receipts || []
-            }
-        } catch (error) {
-            console.error('Failed to fetch receipts:', error)
-        }
-
-        let filtered = [...receipts]
+        // Use mock data
+        let receipts: Receipt[] = mockReceipts.map(r => ({
+            id: r.id,
+            supplier: r.supplier,
+            date: r.date,
+            amount: r.amount,
+            category: r.category,
+            status: r.status,
+            attachment: r.attachment,
+        }))
 
         if (params.supplier) {
             const query = params.supplier.toLowerCase()
-            filtered = filtered.filter(r => r.supplier?.toLowerCase().includes(query))
+            receipts = receipts.filter(r => r.supplier?.toLowerCase().includes(query))
         }
 
         if (params.status) {
-            filtered = filtered.filter(r => r.status?.toLowerCase() === params.status!.toLowerCase())
+            receipts = receipts.filter(r => r.status?.toLowerCase() === params.status!.toLowerCase())
         }
 
         const limit = params.limit || 10
-        const data = filtered.slice(0, limit)
+        const data = receipts.slice(0, limit)
 
         return {
             success: true,
             data,
-            message: filtered.length > 0
-                ? `Hittade ${filtered.length} kvitton, visar ${data.length}.`
+            message: receipts.length > 0
+                ? `Hittade ${receipts.length} kvitton, visar ${data.length}.`
                 : 'Inga kvitton hittades.',
             display: {
                 component: 'ReceiptsTable',

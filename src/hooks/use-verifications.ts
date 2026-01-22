@@ -89,17 +89,15 @@ export function useVerifications() {
             const response = await fetch('/api/verifications')
             if (!response.ok) throw new Error('Failed to fetch')
             const data = await response.json()
-            
-            // Use mock data if real data is empty (Demo Mode)
-            if (!data.verifications || data.verifications.length === 0) {
-                setVerifications(MOCK_VERIFICATIONS)
+
+            if (!data.verifications) {
+                setVerifications([])
             } else {
                 setVerifications(data.verifications)
             }
         } catch (err) {
             console.error(err)
-            // On error also fallback to mock data for robustness during dev
-            setVerifications(MOCK_VERIFICATIONS)
+            setVerifications([])
             // setError('Failed to load verifications') // Don't show error if we fallback
         } finally {
             setIsLoading(false)

@@ -108,6 +108,35 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    // For protected routes, verify the user still exists in the database
+    // This catches deleted users whose JWT hasn't expired yet
+    if (isProtectedRoute && isAuthenticated && user) {
+        try {
+            const { count } = await supabase
+                .from('profiles')
+                .select('*', { count: 'exact', head: true })
+                .eq('id', user.id)
+
+            if (count === 0) {
+                // User was deleted from database - clear session and redirect
+                response.cookies.delete('sb-access-token')
+                response.cookies.delete('sb-refresh-token')
+                // Also try to delete the project-specific cookies
+                const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1]
+                if (projectRef) {
+                    response.cookies.delete(`sb-${projectRef}-auth-token`)
+                }
+
+                const loginUrl = new URL('/login', request.url)
+                loginUrl.searchParams.set('error', 'account_deleted')
+                return NextResponse.redirect(loginUrl)
+            }
+        } catch (e) {
+            // If profiles table doesn't exist, skip this check
+            console.warn('Could not verify user exists in profiles:', e)
+        }
+    }
+
     // Redirect unauthenticated users away from protected routes
     if (isProtectedRoute && !isAuthenticated) {
         const loginUrl = new URL('/login', request.url)

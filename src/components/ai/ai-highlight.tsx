@@ -6,7 +6,7 @@
  */
 
 import { motion, AnimatePresence } from "framer-motion"
-import { useAIDialogOptional } from "@/providers/ai-dialog-provider"
+import { useAIDialogOptional } from "@/providers/ai-overlay-provider"
 import { cn } from "@/lib/utils"
 import type { ReactNode } from "react"
 

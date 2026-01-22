@@ -68,6 +68,83 @@ export function ChatInput({
     const [isExpanded, setIsExpanded] = useState(false)
     const [isMentionOpen, setIsMentionOpen] = useState(false)
     const [isDragging, setIsDragging] = useState(false)
+    const [isListening, setIsListening] = useState(false)
+    const [isTranscribing, setIsTranscribing] = useState(false)
+
+    // Audio recording for Whisper
+    const mediaRecorderRef = useRef<MediaRecorder | null>(null)
+    const audioChunksRef = useRef<Blob[]>([])
+
+    const startListening = useCallback(async () => {
+        try {
+            const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+
+            const mediaRecorder = new MediaRecorder(stream, {
+                mimeType: MediaRecorder.isTypeSupported('audio/webm') ? 'audio/webm' : 'audio/mp4'
+            })
+
+            audioChunksRef.current = []
+
+            mediaRecorder.ondataavailable = (event) => {
+                if (event.data.size > 0) {
+                    audioChunksRef.current.push(event.data)
+                }
+            }
+
+            mediaRecorder.onstop = async () => {
+                // Stop all tracks
+                stream.getTracks().forEach(track => track.stop())
+
+                if (audioChunksRef.current.length === 0) return
+
+                setIsTranscribing(true)
+
+                try {
+                    // Create audio blob
+                    const audioBlob = new Blob(audioChunksRef.current, {
+                        type: mediaRecorder.mimeType
+                    })
+
+                    // Send to Whisper API
+                    const formData = new FormData()
+                    formData.append('audio', audioBlob, 'recording.webm')
+
+                    const response = await fetch('/api/transcribe', {
+                        method: 'POST',
+                        body: formData,
+                    })
+
+                    if (response.ok) {
+                        const data = await response.json()
+                        if (data.text) {
+                            // Append transcribed text to input
+                            onChange(value + (value ? ' ' : '') + data.text.trim())
+                        }
+                    } else {
+                        console.error('Transcription failed')
+                    }
+                } catch (error) {
+                    console.error('Transcription error:', error)
+                } finally {
+                    setIsTranscribing(false)
+                }
+            }
+
+            mediaRecorderRef.current = mediaRecorder
+            mediaRecorder.start()
+            setIsListening(true)
+
+        } catch (error) {
+            console.error('Microphone access error:', error)
+        }
+    }, [onChange, value])
+
+    const stopListening = useCallback(() => {
+        if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
+            mediaRecorderRef.current.stop()
+            setIsListening(false)
+        }
+    }, [])
 
     // Create stable preview URLs for attached files
     const filePreviewUrls = useMemo(() => {
@@ -83,6 +160,13 @@ export function ChatInput({
             filePreviewUrls.forEach(({ url }) => URL.revokeObjectURL(url))
         }
     }, [filePreviewUrls])
+
+    // Reset file input when files are cleared externally (e.g., new conversation)
+    useEffect(() => {
+        if (files.length === 0 && fileInputRef.current) {
+            fileInputRef.current.value = ''
+        }
+    }, [files.length])
 
     // Auto-resize textarea
     const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
@@ -116,12 +200,14 @@ export function ChatInput({
 
     // File upload handlers
     const handleFileSelect = useCallback((fileList: FileList | null) => {
-        if (!fileList) return
+        if (!fileList || fileList.length === 0) return
         const newFiles = Array.from(fileList).filter(file => {
             const allowedTypes = ['image/', 'application/pdf', 'text/', 'application/json']
             return allowedTypes.some(type => file.type.startsWith(type))
         })
-        onFilesChange([...files, ...newFiles].slice(0, 5)) // Max 5 files
+        if (newFiles.length > 0) {
+            onFilesChange([...files, ...newFiles].slice(0, 5)) // Max 5 files
+        }
     }, [files, onFilesChange])
 
     const removeFile = useCallback((index: number) => {
@@ -153,14 +239,19 @@ export function ChatInput({
 
     return (
         <div className="w-full max-w-2xl mx-auto">
-            {/* Hidden file input */}
+            {/* Hidden file input - key ensures it re-initializes properly */}
             <input
+                key="file-input"
                 ref={fileInputRef}
                 type="file"
                 multiple
                 accept="image/*,.pdf,.txt,.json,.csv"
                 className="hidden"
-                onChange={(e) => handleFileSelect(e.target.files)}
+                onChange={(e) => {
+                    handleFileSelect(e.target.files)
+                    // Reset immediately after selection to allow same file
+                    e.target.value = ''
+                }}
             />
 
             {/* Input container */}
@@ -298,10 +389,23 @@ export function ChatInput({
                         <Button
                             variant="ghost"
                             size="icon"
-                            className="h-7 w-7 rounded-md hover:bg-muted/60 text-muted-foreground hover:text-foreground"
-                            aria-label="Röstinmatning"
+                            className={cn(
+                                "h-7 w-7 rounded-md hover:bg-muted/60",
+                                isListening
+                                    ? "text-red-500 hover:text-red-600 animate-pulse"
+                                    : isTranscribing
+                                        ? "text-amber-500 animate-pulse"
+                                        : "text-muted-foreground hover:text-foreground"
+                            )}
+                            aria-label={isListening ? "Stoppa inspelning" : isTranscribing ? "Transkriberar..." : "Röstinmatning"}
+                            onClick={isListening ? stopListening : startListening}
+                            disabled={isTranscribing}
                         >
-                            <Mic className="h-4 w-4" />
+                            {isTranscribing ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <Mic className="h-4 w-4" />
+                            )}
                         </Button>
                         <Button
                             size="icon"

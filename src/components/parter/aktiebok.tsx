@@ -103,64 +103,25 @@ export function Aktiebok() {
   const [txFrom, setTxFrom] = useState("")
   const [txShareClass, setTxShareClass] = useState<'A' | 'B'>('B')
 
-  // Fetch stats from server
-  const [stats, setStats] = useState({
-    totalShares: 0,
-    totalVotes: 0,
-    totalValue: 0,
-    shareholderCount: 0
-  })
-  const [statsError, setStatsError] = useState<string | null>(null)
-  const [isLoadingStats, setIsLoadingStats] = useState(true)
+  const { verifications } = useVerifications()
 
-  useEffect(() => {
-    let isMounted = true
-
-    async function fetchStats() {
-      setIsLoadingStats(true)
-      setStatsError(null)
-
-      try {
-        const { supabase } = await import('@/lib/supabase')
-        const { data, error } = await supabase.rpc('get_shareholder_stats') as {
-          data: { totalShares?: number; totalVotes?: number; shareholderCount?: number } | null;
-          error: any;
-        }
-
-        if (!isMounted) return
-
-        if (error) {
-          console.error('Failed to fetch shareholder stats:', error)
-          setStatsError('Kunde inte hämta aktieägarstatistik')
-        } else if (data) {
-          setStats({
-            totalShares: Number(data.totalShares) || 0,
-            totalVotes: Number(data.totalVotes) || 0,
-            totalValue: 0,
-            shareholderCount: Number(data.shareholderCount) || 0
-          })
-        }
-      } catch (err) {
-        if (isMounted) {
-          console.error('Failed to fetch shareholder stats:', err)
-          setStatsError('Kunde inte hämta aktieägarstatistik')
-        }
-      } finally {
-        if (isMounted) {
-          setIsLoadingStats(false)
-        }
-      }
+  // Removed RPC stats fetching. 
+  // Derive stats from realShareholders directly.
+  const stats = useMemo(() => {
+    const s = realShareholders || []
+    return {
+      totalShares: s.reduce((sum, sh) => sum + (sh.shares_count || 0), 0),
+      totalVotes: s.reduce((sum, sh) => sum + ((sh.shares_count || 0) * (sh.share_class === 'A' ? 10 : 1)), 0),
+      shareholderCount: s.length,
+      totalValue: 0 // Not tracked yet
     }
-
-    fetchStats()
-
-    return () => {
-      isMounted = false
-    }
-  }, []) // Run once on mount
+  }, [realShareholders])
 
   // Map real shareholders to component format
   const shareholders = useMemo(() => {
+    // Recalculate percentages based on live total
+    const total = stats.totalShares || 1
+
     return (realShareholders || []).map(s => ({
       id: s.id,
       name: s.name,
@@ -168,16 +129,44 @@ export function Aktiebok() {
       type: 'person' as const, // Default for now
       shares: s.shares_count,
       shareClass: s.share_class || 'B',
-      ownershipPercentage: s.shares_percentage,
-      acquisitionDate: '2024-01-01', // Mock for now
-      acquisitionPrice: s.shares_count * 100, // Mock for now
+      ownershipPercentage: Math.round((s.shares_count / total) * 100),
+      acquisitionDate: '2024-01-01', // Placeholder
+      acquisitionPrice: 0,
       votes: s.shares_count * (s.share_class === 'A' ? 10 : 1),
-      votesPercentage: s.shares_percentage // This should ideally be recalculated based on total votes, but simplified for now
+      votesPercentage: 0 // Simplified
     }))
-  }, [realShareholders])
+  }, [realShareholders, stats.totalShares])
 
-  // Mock transactions for now until we have a real transactions table in DB
-  const [transactions, setTransactions] = useState<ShareTransaction[]>(mockShareTransactions)
+  // Derive transactions from Ledger (Real Data)
+  const transactions = useMemo<ShareTransaction[]>(() => {
+    return verifications
+      .filter(v => v.sourceType === 'equity_issue' || v.description.toLowerCase().includes('nyemission'))
+      .map(v => {
+        // Parse details from verification if possible (Amount from row 1930 usually)
+        const amountRow = v.rows.find(r => r.account === '1930')
+        const total = amountRow ? amountRow.debit : 0
+
+        // Try to extract share count from desc "Nyemission X aktier"
+        const match = v.description.match(/(\d+) aktier/)
+        const shares = match ? parseInt(match[1]) : 0
+        const price = shares > 0 ? total / shares : 0
+        const nameMatch = v.description.match(/till (.+)$/)
+        const toName = nameMatch ? nameMatch[1] : "Okänd"
+
+        return {
+          id: v.id,
+          date: v.date,
+          type: 'Nyemission',
+          fromShareholder: 'Bolaget',
+          toShareholder: toName,
+          shares: shares,
+          shareClass: 'B', // Assumption
+          pricePerShare: price,
+          totalPrice: total
+        }
+      })
+      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+  }, [verifications])
 
   // Filter shareholders
   const filteredShareholders = useMemo(() => {
@@ -201,9 +190,7 @@ export function Aktiebok() {
       )
     }
 
-    return result.sort((a, b) =>
-      new Date(b.date).getTime() - new Date(a.date).getTime()
-    )
+    return result
   }, [transactions, searchQuery])
 
   const getTransactionTypeLabel = (type: string): StockTransactionType => {

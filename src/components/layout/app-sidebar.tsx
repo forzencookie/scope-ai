@@ -24,10 +24,10 @@ import { SettingsDialog } from "../settings"
 import { cn } from "@/lib/utils"
 import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
 import { AI_CHAT_EVENT } from "@/lib/ai-context"
+import { useAuth } from "@/hooks/use-auth"
 
 // Import data from the data layer
 import {
-  mockUser,
   mockTeams,
   navBokforing,
   navRapporter,
@@ -68,6 +68,14 @@ export function AppSidebar({
   const searchParams = useSearchParams()
   const settingsParam = searchParams?.get("settings")
   const { state, toggleSidebar } = useSidebar()
+  const { user } = useAuth()
+
+  // Build user object from auth, with fallbacks
+  const currentUser = {
+    name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Användare',
+    email: user?.email || '',
+    avatar: user?.user_metadata?.avatar_url || '',
+  }
 
   // Sidebar mode state (internal state for uncontrolled)
   const [internalMode, setInternalMode] = React.useState<SidebarMode>("navigation")
@@ -257,7 +265,7 @@ export function AppSidebar({
 
         {sidebarMode === "navigation" && (
           <SidebarFooter>
-            <UserTeamSwitcher user={mockUser} teams={mockTeams} />
+            <UserTeamSwitcher user={currentUser} teams={mockTeams} />
           </SidebarFooter>
         )}
 

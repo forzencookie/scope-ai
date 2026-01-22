@@ -67,21 +67,9 @@ export const invoiceService = {
 
         if (error) throw error
 
-        // Return mock data if no real data exists
+        // Return empty if no real data exists
         if (!data || data.length === 0) {
-            const customerMocks = mockInvoices.filter(i => i.type === 'customer').map(i => ({
-                id: i.id,
-                invoiceNumber: i.number,
-                customer: i.customer,
-                email: undefined,
-                amount: i.amount,
-                vatAmount: i.amount * 0.25,
-                totalAmount: i.amount * 1.25,
-                issueDate: i.date,
-                dueDate: i.dueDate,
-                status: i.status
-            }))
-            return { invoices: customerMocks as CustomerInvoice[], totalCount: customerMocks.length }
+            return { invoices: [], totalCount: 0 }
         }
 
         // Map snake_case DB columns to camelCase for UI
@@ -129,21 +117,9 @@ export const invoiceService = {
 
         if (error) throw error
 
-        // Return mock data if no real data exists
+        // Return empty if no real data exists
         if (!data || data.length === 0) {
-            const supplierMocks = mockInvoices.filter(i => i.type === 'supplier').map(i => ({
-                id: i.id,
-                invoiceNumber: i.number,
-                supplierName: i.customer,
-                amount: i.amount,
-                vatAmount: i.amount * 0.25,
-                totalAmount: i.amount * 1.25,
-                invoiceDate: i.date,
-                dueDate: i.dueDate,
-                status: i.status as SupplierInvoice['status'],
-                currency: 'SEK'
-            }))
-            return { invoices: supplierMocks as SupplierInvoice[], totalCount: supplierMocks.length }
+            return { invoices: [], totalCount: 0 }
         }
 
         // Map snake_case DB columns to camelCase for UI
@@ -173,13 +149,12 @@ export const invoiceService = {
         const { data, error } = await supabase.rpc('get_invoice_stats')
 
         if (error || !data || (data.incomingTotal === 0 && data.outgoingTotal === 0)) {
-            // Return mock stats when no real data
             return {
-                incomingTotal: mockInvoiceStats.totalOutstanding,
-                outgoingTotal: 17000,
-                overdueCount: mockInvoiceStats.overdueCount,
-                overdueAmount: 4500,
-                paidAmount: mockInvoiceStats.paidThisMonth
+                incomingTotal: 0,
+                outgoingTotal: 0,
+                overdueCount: 0,
+                overdueAmount: 0,
+                paidAmount: 0
             }
         }
 

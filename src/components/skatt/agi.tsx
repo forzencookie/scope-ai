@@ -41,7 +41,7 @@ import { BulkActionToolbar, type BulkAction } from "../shared/bulk-action-toolba
 import { termExplanations } from "./constants"
 import { agiReports as initialAgiReports } from "@/components/loner/constants"
 import { submitToSkatteverket, type SkatteverketResponse } from "@/services/myndigheter-client"
-import { taxService, type AgiStats } from "@/lib/services/tax-service"
+
 
 type AGIReport = typeof initialAgiReports[0]
 
@@ -204,53 +204,35 @@ export function AGIContent() {
         },
     ]
 
-    const [stats, setStats] = useState<{
-        nextPeriod: string,
-        deadline: string,
-        tax: number,
-        contributions: number,
-        totalSalary: number,
-        employees: number
-    }>({
-        nextPeriod: "Laddar...",
-        deadline: "",
-        tax: 0,
-        contributions: 0,
-        totalSalary: 0,
-        employees: 0,
-    })
+    // Stats derived from calculated reports
+    const stats = useMemo(() => {
+        // Find "current" period for stats - usually the one with the closest due date or just the latest one
+        // AGI reports are monthly. Finding the one for "Next Deadline" (usually previous month's operations)
 
-    useEffect(() => {
-        const loadStats = async () => {
-            // Default to previous month (standard AGI workflow)
-            const today = new Date()
-            const targetDate = subMonths(today, 1) // e.g., if Jan, target Dec
-            const year = getYear(targetDate)
-            const month = getMonth(targetDate) + 1 // 1-indexed for SQL
+        // Simple heuristic: First "Pending" report, or just the first report in the list (most recent)
+        // agiReportsState is sorted by date descending.
+        const targetReport = agiReportsState[0]
 
-            const periodName = format(targetDate, "MMMM yyyy", { locale: sv })
-            const capitalizedPeriod = periodName.charAt(0).toUpperCase() + periodName.slice(1)
-
-            // Deadline is 12th of the month AFTER the target month (which is current month usually)
-            // But if today > 12th, maybe looking at next one? 
-            // Standard: You declare previous month. Deadline is 12th of current month.
-            const deadlineDate = new Date(getYear(today), getMonth(today), 12)
-            const deadlineStr = format(deadlineDate, "d MMM yyyy", { locale: sv })
-
-            const data = await taxService.getAgiStats(year, month)
-
-            setStats({
-                nextPeriod: capitalizedPeriod,
-                deadline: `Deadline: ${deadlineStr}`,
-                tax: data.tax,
-                contributions: data.contributions,
-                totalSalary: data.totalSalary,
-                employees: 0, // SQL doesn't return count yet accurately, or set to 0. AGI stats usually focused on money.
-                // If we want employee count, we need it in RPC return. My SQL had logic for it but commented it falls back.
-            })
+        if (targetReport) {
+            return {
+                nextPeriod: targetReport.period,
+                deadline: `Deadline: ${targetReport.dueDate}`,
+                tax: targetReport.tax,
+                contributions: targetReport.contributions,
+                totalSalary: targetReport.totalSalary,
+                employees: targetReport.employees
+            }
         }
-        loadStats()
-    }, []) // Run once on mount
+
+        return {
+            nextPeriod: "Ingen data",
+            deadline: "",
+            tax: 0,
+            contributions: 0,
+            totalSalary: 0,
+            employees: 0,
+        }
+    }, [agiReportsState])
     // Filter reports based on search and status
     const filteredReports = useMemo(() => {
         return agiReportsState.filter(report => {

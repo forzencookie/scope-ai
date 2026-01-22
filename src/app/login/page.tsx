@@ -249,7 +249,7 @@ function LoginContent() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="h-11 rounded-xl border-stone-200 bg-stone-50"
+                  className="h-11 rounded-xl border-stone-200 bg-stone-50 text-stone-900"
                 />
               </div>
 
@@ -264,7 +264,7 @@ function LoginContent() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="h-11 rounded-xl border-stone-200 bg-stone-50 pr-10"
+                    className="h-11 rounded-xl border-stone-200 bg-stone-50 text-stone-900 pr-10"
                   />
                   <button
                     type="button"

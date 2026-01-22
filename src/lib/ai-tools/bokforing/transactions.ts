@@ -5,6 +5,7 @@
  */
 
 import { defineTool } from '../registry'
+import { db } from '@/lib/server-db'
 import type { Transaction } from '@/types'
 
 // =============================================================================
@@ -34,7 +35,7 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
             },
             month: {
                 type: 'string',
-                description: 'Månad att filtrera på (t.ex. "januari", "februari")',
+                description: 'Månad att filtrera på (t.ex. "januari", "februari", "2024-01")',
             },
             year: {
                 type: 'number',
@@ -56,45 +57,65 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
         },
     },
     execute: async (params) => {
-        let transactions: Transaction[] = []
+        // Convert month/year/dates
+        let startDate: string | undefined
+        let endDate: string | undefined
 
-        try {
-            const response = await fetch('/api/transactions', { cache: 'no-store' })
-            if (response.ok) {
-                const data = await response.json()
-                transactions = data.transactions || []
+        // Handle year-only or month+year
+        const year = params.year || new Date().getFullYear()
+
+        if (params.month) {
+            const monthMap: Record<string, number> = {
+                'januari': 0, 'jan': 0, '01': 0,
+                'februari': 1, 'feb': 1, '02': 1,
+                'mars': 2, 'mar': 2, '03': 2,
+                'april': 3, 'apr': 3, '04': 3,
+                'maj': 4, '05': 4,
+                'juni': 5, 'jun': 5, '06': 5,
+                'juli': 6, 'jul': 6, '07': 6,
+                'augusti': 7, 'aug': 7, '08': 7,
+                'september': 8, 'sep': 8, '09': 8,
+                'oktober': 9, 'okt': 9, '10': 9,
+                'november': 10, 'nov': 10, '11': 10,
+                'december': 11, 'dec': 11, '12': 11
             }
-        } catch (error) {
-            console.error('Failed to fetch transactions:', error)
+
+            let monthIndex = monthMap[params.month.toLowerCase()]
+            // If month not found but it looks like a number
+            if (monthIndex === undefined && !isNaN(parseInt(params.month))) {
+                monthIndex = parseInt(params.month) - 1
+            }
+
+            if (monthIndex !== undefined) {
+                const start = new Date(year, monthIndex, 1)
+                const end = new Date(year, monthIndex + 1, 0)
+                // Format as YYYY-MM-DD
+                startDate = start.toISOString().split('T')[0]
+                endDate = end.toISOString().split('T')[0]
+            }
+        } else if (params.year) {
+            startDate = `${year}-01-01`
+            endDate = `${year}-12-31`
         }
 
-        let filtered = [...transactions]
-
-        if (params.minAmount !== undefined) {
-            filtered = filtered.filter(t => {
-                const amount = typeof t.amountValue === 'number' ? t.amountValue : 0
-                return Math.abs(amount) >= params.minAmount!
-            })
-        }
-        if (params.maxAmount !== undefined) {
-            filtered = filtered.filter(t => {
-                const amount = typeof t.amountValue === 'number' ? t.amountValue : 0
-                return Math.abs(amount) <= params.maxAmount!
-            })
-        }
-
-        const limit = params.limit || 10
-        const data = filtered.slice(0, limit)
+        const transactions = await db.getTransactions({
+            limit: params.limit || 10,
+            startDate,
+            endDate,
+            minAmount: params.minAmount,
+            maxAmount: params.maxAmount,
+            status: params.status
+        })
 
         return {
             success: true,
-            data,
-            message: filtered.length > 0
-                ? `Hittade ${filtered.length} transaktioner, visar ${data.length}.`
-                : 'Inga transaktioner hittades.',
+            data: transactions as any,
+            message: transactions.length > 0
+                ? `Hittade ${transactions.length} transaktioner.`
+                : 'Inga transaktioner hittades för den valda perioden.',
             display: {
                 component: 'TransactionsTable',
-                props: { transactions: data },
+                props: { transactions: transactions },
                 title: 'Transaktioner',
                 fullViewRoute: '/dashboard/bokforing?tab=verifikationer',
             },

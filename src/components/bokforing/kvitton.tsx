@@ -68,7 +68,7 @@ export function ReceiptsTable() {
     const { company } = useCompany()
     const isInvoiceMethod = company?.accountingMethod === 'invoice'
     const [receipts, setReceipts] = useState<Receipt[]>([])
-    const [receiptStats, setReceiptStats] = useState<ReceiptStats | null>(null)
+    // receiptStats state removed
     const [isLoading, setIsLoading] = useState(true)
 
     // ... (rest of state)
@@ -95,14 +95,11 @@ export function ReceiptsTable() {
     // Fetch receipts using receiptService for single source of truth
     const fetchReceipts = useCallback(async () => {
         try {
-            // Parallel fetch: receipts list and stats
-            const [listData, statsData] = await Promise.all([
-                receiptService.getReceipts(),
-                receiptService.getStats()
-            ])
+            // Fetch receipts list only. Stats are derived.
+            // Removed getStats call to ensure single source of truth
+            const listData = await receiptService.getReceipts()
 
             setReceipts(listData.receipts as any) // Service Receipt type compatible with component Receipt
-            setReceiptStats(statsData)
         } catch (error) {
             console.error('Failed to fetch receipts:', error)
             setReceipts([])
@@ -134,24 +131,37 @@ export function ReceiptsTable() {
         [tableData, receipts]
     )
 
-    // Stats from DB aggregations via receiptService
+    // Stats - Calculated Client-Side from Data
     const stats = useMemo(() => {
-        if (receiptStats) {
-            return {
-                total: receiptStats.total,
-                matchedCount: receiptStats.matchedCount,
-                unmatchedCount: receiptStats.unmatchedCount,
-                totalAmount: receiptStats.totalAmount
-            }
+        // Safe parsing of amount string or number
+        const parse = (val: string | number) => {
+            if (typeof val === 'number') return val
+            return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0
         }
-        // Fallback while loading
+
+        const total = receipts.length
+
+        // Count matched/processed vs pending
+        // Adjust status checks based on RECEIPT_STATUSES definition in your codebase
+        const matched = receipts.filter(r =>
+            r.status === RECEIPT_STATUSES.MATCHED ||
+            r.status === RECEIPT_STATUSES.PROCESSED ||
+            r.status === 'bokford' // Check if 'bokford' is a used string literal
+        )
+        const matchedCount = matched.length
+
+        const unmatched = receipts.filter(r => r.status === RECEIPT_STATUSES.PENDING || r.status === RECEIPT_STATUSES.REVIEW)
+        const unmatchedCount = unmatched.length
+
+        const totalAmount = receipts.reduce((sum, r) => sum + parse(r.amount), 0)
+
         return {
-            total: 0,
-            matchedCount: 0,
-            unmatchedCount: 0,
-            totalAmount: 0
+            total,
+            matchedCount,
+            unmatchedCount,
+            totalAmount
         }
-    }, [receiptStats])
+    }, [receipts])
 
     // Bulk selection
     const bulkSelection = useBulkSelection(filteredReceipts)

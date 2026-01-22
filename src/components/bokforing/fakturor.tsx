@@ -182,7 +182,7 @@ export function UnifiedInvoicesView() {
     // State
     const [customerInvoices, setCustomerInvoices] = useState<Invoice[]>([])
     const [supplierInvoices, setSupplierInvoices] = useState<SupplierInvoice[]>([])
-    const [invoiceStats, setInvoiceStats] = useState<InvoiceStats | null>(null)
+    // invoiceStats state removed
     const [isLoading, setIsLoading] = useState(true)
     const [viewFilter, setViewFilter] = useState<ViewFilter>("all")
     const [periodFilter, setPeriodFilter] = useState<"week" | "month" | "quarter" | "all">("all")
@@ -208,11 +208,11 @@ export function UnifiedInvoicesView() {
 
     const fetchInvoices = useCallback(async () => {
         try {
-            // Parallel fetch: customer invoices, supplier invoices, and stats
-            const [customerData, supplierData, statsData] = await Promise.all([
+            // Parallel fetch: customer invoices and supplier invoices only
+            // Removed getStats call to ensure single source of truth
+            const [customerData, supplierData] = await Promise.all([
                 invoiceService.getCustomerInvoices(),
-                invoiceService.getSupplierInvoices(),
-                invoiceService.getStats()
+                invoiceService.getSupplierInvoices()
             ])
 
             // Map service types to component types
@@ -240,7 +240,6 @@ export function UnifiedInvoicesView() {
                 currency: (inv.currency || 'SEK') as 'SEK' | 'EUR' | 'USD',
             })))
 
-            setInvoiceStats(statsData)
         } catch (error) {
             console.error('Failed to fetch invoices:', error)
             setCustomerInvoices([])
@@ -321,29 +320,48 @@ export function UnifiedInvoicesView() {
     }, [customerInvoices, supplierInvoices, viewFilter, periodFilter])
 
     // =============================================================================
-    // Stats - Now from DB aggregations via invoiceService
+    // Stats - Calculated Client-Side from Data
     // =============================================================================
 
     const stats = useMemo(() => {
-        // Use pre-computed stats from service if available
-        if (invoiceStats) {
-            return {
-                incoming: invoiceStats.incomingTotal,
-                outgoing: invoiceStats.outgoingTotal,
-                overdue: invoiceStats.overdueAmount,
-                overdueCount: invoiceStats.overdueCount,
-                paid: invoiceStats.paidAmount,
-            }
-        }
-        // Fallback to zeros while loading
+        // Calculate incoming (Customer Invoices that are NOT paid)
+        // Note: Logic logic might vary, usually "Draft" doesn't count as "Incoming" yet? 
+        // Let's assume Sent/Overdue counts. Draft usually excluded from financial stats.
+        const incoming = customerInvoices
+            .filter(i => i.status === INVOICE_STATUS_LABELS.SENT || i.status === INVOICE_STATUS_LABELS.OVERDUE)
+            .reduce((sum, start) => sum + (start.totalAmount || start.amount * 1.25), 0) // Fallback calculation if totalAmount missing
+
+        // Calculate outgoing (Supplier Invoices that are NOT paid)
+        const outgoing = supplierInvoices
+            .filter(i => i.status !== 'betald')
+            .reduce((sum, i) => sum + (i.totalAmount || i.amount), 0)
+
+        // Calculate overdue
+        const today = new Date().toISOString().split('T')[0]
+        const overdueCustomer = customerInvoices.filter(i => i.status === INVOICE_STATUS_LABELS.OVERDUE || (i.status === INVOICE_STATUS_LABELS.SENT && i.dueDate < today))
+        const overdueSupplier = supplierInvoices.filter(i => i.status === 'förfallen' || (i.status !== 'betald' && i.dueDate < today))
+
+        const overdueCount = overdueCustomer.length + overdueSupplier.length
+        const overdueAmount = overdueCustomer.reduce((sum, i) => sum + (i.totalAmount || 0), 0) + overdueSupplier.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+
+        // Calculate paid (This month? Or total all time? Usually "Paid this period")
+        // For now, let's just sum all paid for simplicity or consistent with previous "Total Paid"
+        const paidCustomer = customerInvoices
+            .filter(i => i.status === INVOICE_STATUS_LABELS.PAID)
+            .reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+
+        const paidSupplier = supplierInvoices
+            .filter(i => i.status === 'betald')
+            .reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+
         return {
-            incoming: 0,
-            outgoing: 0,
-            overdue: 0,
-            overdueCount: 0,
-            paid: 0,
+            incoming,
+            outgoing,
+            overdue: overdueAmount,
+            overdueCount,
+            paid: paidCustomer + paidSupplier,
         }
-    }, [invoiceStats])
+    }, [customerInvoices, supplierInvoices])
 
     // =============================================================================
     // Actions

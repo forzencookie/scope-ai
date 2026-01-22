@@ -8,6 +8,7 @@ import {
 import { cn, formatCurrency } from "@/lib/utils"
 import { SectionCard } from "@/components/ui/section-card"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useRouter } from "next/navigation"
 import { FileBarChart, Scale, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"
 
@@ -18,6 +19,7 @@ import { useFinancialReports } from "@/hooks/use-financial-reports"
 export function ResultatrakningContent() {
     const { companyType } = useCompany()
     const navigateToAI = useNavigateToAIChat()
+    const router = useRouter()
     const { incomeStatementSections, isLoading } = useFinancialReports()
 
     if (isLoading) {
@@ -62,8 +64,15 @@ export function ResultatrakningContent() {
                             key={section.title}
                             title={section.title}
                             items={section.items.map(item => ({
+                                id: item.id,
                                 label: item.label,
                                 value: item.value,
+                                onClick: item.id ? () => {
+                                    const params = new URLSearchParams()
+                                    params.set("tab", "verifikationer")
+                                    params.set("account", item.id!)
+                                    router.push(`/dashboard/bokforing?${params.toString()}`)
+                                } : undefined
                             }))}
                             total={section.total}
                             defaultOpen={idx < 3}
@@ -83,6 +92,7 @@ export function ResultatrakningContent() {
 export function BalansrakningContent() {
     const { companyType } = useCompany()
     const navigateToAI = useNavigateToAIChat()
+    const router = useRouter()
     const { balanceSheetSections, isLoading } = useFinancialReports()
 
     if (isLoading) {
@@ -132,8 +142,15 @@ export function BalansrakningContent() {
                             key={section.title}
                             title={section.title}
                             items={section.items.map(item => ({
+                                id: item.id,
                                 label: item.label,
                                 value: item.value,
+                                onClick: item.id ? () => {
+                                    const params = new URLSearchParams()
+                                    params.set("tab", "verifikationer")
+                                    params.set("account", item.id!)
+                                    router.push(`/dashboard/bokforing?${params.toString()}`)
+                                } : undefined
                             }))}
                             total={section.total}
                             defaultOpen={true}

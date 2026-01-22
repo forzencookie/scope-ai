@@ -7,8 +7,8 @@ export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type M
 export { ActivityCard, type ActivityCardProps, type ActivityChange } from './activity-card'
 export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './comparison-table'
 
-// AI Dialog Experience
-export { AIDialogOverlay } from './ai-dialog-overlay'
+// AI Overlay Experience
+export { AIOverlay } from './ai-overlay'
 export {
     PixelDog,
     PixelBear,

@@ -31,7 +31,7 @@ import { inventarieService, type Inventarie, type InventarieStats } from "@/lib/
 export function InventarierTable() {
     const { text } = useTextMode()
     const [inventarier, setInventarier] = useState<Inventarie[]>([])
-    const [stats, setStats] = useState<InventarieStats | null>(null)
+    // stats state removed
     const [isLoading, setIsLoading] = useState(true)
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [newAsset, setNewAsset] = useState<Partial<Inventarie>>({
@@ -41,12 +41,10 @@ export function InventarierTable() {
     // Fetch inventarier using service for single source of truth
     const fetchInventarier = useCallback(async () => {
         try {
-            const [listData, statsData] = await Promise.all([
-                inventarieService.getInventarier(),
-                inventarieService.getStats()
-            ])
+            // Fetch list only. Stats are derived.
+            // Removed getStats call.
+            const listData = await inventarieService.getInventarier()
             setInventarier(listData.inventarier)
-            setStats(statsData)
         } catch (error) {
             console.error('Failed to fetch inventarier:', error)
             setInventarier([])
@@ -81,9 +79,12 @@ export function InventarierTable() {
 
     const selection = useBulkSelection(inventarier)
 
-    // Calculate category breakdown
-    const categoryBreakdown = useMemo(() => {
+    // Calculate category breakdown & stats
+    const stats = useMemo(() => {
         const breakdown: Record<string, { count: number; value: number; icon: typeof Monitor }> = {}
+        let totalInkopsvarde = 0
+        let totalCount = 0
+        const categories = new Set<string>()
 
         // Category to icon mapping
         const iconMap: Record<string, typeof Monitor> = {
@@ -100,12 +101,21 @@ export function InventarierTable() {
             }
             breakdown[cat].count++
             breakdown[cat].value += item.inkopspris
+
+            totalInkopsvarde += item.inkopspris
+            totalCount++
+            categories.add(cat)
         })
 
-        return breakdown
+        return {
+            breakdown,
+            totalInkopsvarde,
+            totalCount,
+            kategorier: categories.size
+        }
     }, [inventarier])
 
-    const totalValue = stats?.totalInkopsvarde || 0
+    const totalValue = stats.totalInkopsvarde
 
     return (
         <div className="space-y-6">
@@ -213,15 +223,15 @@ export function InventarierTable() {
                             <p className="text-sm text-muted-foreground">Totalt tillgångsvärde</p>
                             <p className="text-3xl font-bold tabular-nums">{formatCurrency(totalValue)}</p>
                             <p className="text-sm text-muted-foreground">
-                                {stats?.totalCount || 0} tillgångar i {stats?.kategorier || 0} kategorier
+                                {stats.totalCount} tillgångar i {stats.kategorier} kategorier
                             </p>
                         </div>
                     </div>
 
                     {/* Category Breakdown */}
-                    {Object.keys(categoryBreakdown).length > 0 && (
+                    {Object.keys(stats.breakdown).length > 0 && (
                         <div className="flex flex-wrap gap-3">
-                            {Object.entries(categoryBreakdown).map(([category, data]) => {
+                            {Object.entries(stats.breakdown).map(([category, data]) => {
                                 const Icon = data.icon
                                 const percentage = totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0
 
@@ -252,11 +262,11 @@ export function InventarierTable() {
                 </div>
 
                 {/* Value Distribution Bar */}
-                {Object.keys(categoryBreakdown).length > 1 && (
+                {Object.keys(stats.breakdown).length > 1 && (
                     <div className="mt-4 pt-4 border-t">
                         <p className="text-xs text-muted-foreground mb-2">Värdefördelning</p>
                         <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                            {Object.entries(categoryBreakdown).map(([category, data], index) => {
+                            {Object.entries(stats.breakdown).map(([category, data], index) => {
                                 const percentage = totalValue > 0 ? (data.value / totalValue) * 100 : 0
                                 const colors = [
                                     'bg-slate-500',

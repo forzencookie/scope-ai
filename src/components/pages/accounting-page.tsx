@@ -11,6 +11,7 @@ import {
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
+import { MonthClosing } from "@/components/bokforing/month-closing"
 import {
     BookOpen,
     Receipt,
@@ -21,7 +22,11 @@ import {
     Plus,
     X,
     Loader2,
+    Lock,
 } from "lucide-react"
+
+
+
 import { Button } from "@/components/ui/button"
 
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
@@ -61,6 +66,13 @@ const allTabs = [
         labelAvancerad: "Kvitton",
         color: "bg-amber-500",
         feature: null, // Available to all
+    },
+    {
+        id: "bokslut",
+        labelEnkel: "Månadsavslut",
+        labelAvancerad: "Månadsavslut",
+        color: "bg-rose-500",
+        feature: null,
     },
 
     {
@@ -349,6 +361,10 @@ function AccountingPageContent() {
 
                         {currentTab === "inventarier" && (
                             <LazyInventarierTable />
+                        )}
+
+                        {currentTab === "bokslut" && (
+                            <MonthClosing />
                         )}
 
                         {currentTab === "verifikationer" && (

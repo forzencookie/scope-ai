@@ -20,7 +20,3 @@ export * from "./calendar-processor"
 
 // Simulator services - for testing/demo
 export * from "./myndigheter-client"
-
-// Bank utilities - internal/testing only (no external bank API integration yet)
-export * as BankSimulator from "./bank-client"
-

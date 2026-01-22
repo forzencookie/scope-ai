@@ -2,7 +2,7 @@
 
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { AlertCircle, RefreshCw, FileText, X, Image as ImageIcon } from "lucide-react"
+import { AlertCircle, RefreshCw, FileText, Image as ImageIcon } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import {
@@ -16,7 +16,7 @@ import { ComparisonTable } from "@/components/ai/comparison-table"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import type { Message } from "@/lib/chat-types"
-import { useEffect, useRef, useState } from "react"
+import { useState } from "react"
 
 // Attachment preview with image error fallback
 function AttachmentPreview({ attachment }: { attachment: any }) {
@@ -64,35 +64,6 @@ function AttachmentPreview({ attachment }: { attachment: any }) {
     )
 }
 
-// Fun Swedish completion phrases
-const COMPLETION_PHRASES = [
-    "Kokt!",
-    "Bryggd!",
-    "Serverat!",
-    "Klart!",
-    "Fixat!"
-]
-
-// Pixel checkmark for completion
-function PixelCheck() {
-    return (
-        <svg
-            width="12"
-            height="12"
-            viewBox="0 0 8 8"
-            shapeRendering="crispEdges"
-            className="inline-block mr-1"
-        >
-            <rect x="1" y="4" width="1" height="1" className="fill-emerald-500" />
-            <rect x="2" y="5" width="1" height="1" className="fill-emerald-500" />
-            <rect x="3" y="6" width="1" height="1" className="fill-emerald-500" />
-            <rect x="4" y="5" width="1" height="1" className="fill-emerald-500" />
-            <rect x="5" y="4" width="1" height="1" className="fill-emerald-500" />
-            <rect x="6" y="3" width="1" height="1" className="fill-emerald-500" />
-            <rect x="7" y="2" width="1" height="1" className="fill-emerald-500" />
-        </svg>
-    )
-}
 
 interface ChatMessageListProps {
     messages: Message[]
@@ -100,7 +71,6 @@ interface ChatMessageListProps {
     onRetry: (messageId: string) => void
     onConfirm: (confirmationId: string) => void
     onCancelConfirmation: (messageId: string) => void
-    onRegenerate: () => void
 }
 
 export function ChatMessageList({
@@ -109,32 +79,9 @@ export function ChatMessageList({
     onRetry,
     onConfirm,
     onCancelConfirmation,
-    onRegenerate
 }: ChatMessageListProps) {
     // Only used to check if a message is last
     const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null
-
-    // Track completion state for fun message
-    const [showCompletion, setShowCompletion] = useState(false)
-    const [completionPhrase, setCompletionPhrase] = useState("")
-    const wasLoadingRef = useRef(false)
-
-    // Detect when loading finishes to show completion message
-    useEffect(() => {
-        if (wasLoadingRef.current && !isLoading && messages.length > 0) {
-            const lastMsg = messages[messages.length - 1]
-            if (lastMsg.role === 'assistant' && lastMsg.content && !lastMsg.error) {
-                // Pick a random completion phrase
-                const phrase = COMPLETION_PHRASES[Math.floor(Math.random() * COMPLETION_PHRASES.length)]
-                setCompletionPhrase(phrase)
-                setShowCompletion(true)
-                // Hide after 2 seconds
-                const timer = setTimeout(() => setShowCompletion(false), 2000)
-                return () => clearTimeout(timer)
-            }
-        }
-        wasLoadingRef.current = isLoading
-    }, [isLoading, messages])
 
     // Helper component for AI messages
     const AIMessageContent = ({ message, isLast }: { message: Message; isLast: boolean }) => {
@@ -165,19 +112,21 @@ export function ChatMessageList({
                     </div>
                 )}
 
-                {/* Confirmation Card */}
+                {/* Confirmation Card - Only show on mobile, desktop uses dialog overlay */}
                 {message.confirmationRequired && (
-                    <ConfirmationCard
-                        confirmation={message.confirmationRequired as any}
-                        isLoading={isLoading && isLast}
-                        onConfirm={() => onConfirm(message.confirmationRequired!.id)}
-                        onCancel={() => onCancelConfirmation(message.id)}
-                    />
+                    <div className="md:hidden">
+                        <ConfirmationCard
+                            confirmation={message.confirmationRequired as any}
+                            isLoading={isLoading && isLast}
+                            onConfirm={() => onConfirm(message.confirmationRequired!.id)}
+                            onCancel={() => onCancelConfirmation(message.id)}
+                        />
+                    </div>
                 )}
 
-                {/* Display Cards */}
+                {/* Display Cards - Only show on mobile, desktop uses dialog overlay */}
                 {message.display && (
-                    <div className="my-2">
+                    <div className="my-2 md:hidden">
                         {message.display.type === 'ReceiptCard' && (
                             <ReceiptCard receipt={message.display.data.receipt || message.display.data} />
                         )}
@@ -289,30 +238,6 @@ export function ChatMessageList({
                         </div>
                     )}
 
-                    {/* Completion badge and Regenerate button for last assistant message */}
-                    {message.role === 'assistant' &&
-                        message.id === lastMessageId &&
-                        !isLoading &&
-                        message.content &&
-                        !message.error && (
-                            <div className="flex items-center gap-2 self-start ml-1">
-                                {showCompletion && (
-                                    <span className="text-xs text-emerald-600 dark:text-emerald-400 flex items-center animate-in fade-in slide-in-from-left-2 duration-300">
-                                        <PixelCheck />
-                                        {completionPhrase}
-                                    </span>
-                                )}
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
-                                    className="h-7 gap-1 text-xs text-muted-foreground hover:text-foreground"
-                                    onClick={onRegenerate}
-                                >
-                                    <RefreshCw className="h-3 w-3" />
-                                    Generera nytt svar
-                                </Button>
-                            </div>
-                        )}
                 </div>
             ))}
         </div>

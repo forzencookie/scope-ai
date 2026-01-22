@@ -21,16 +21,27 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/components/ui/toast"
 // import { employees } from "./constants"
 
+import { useVerifications } from "@/hooks/use-verifications"
+
 export function TeamTab() {
     const { success } = useToast()
+    const { verifications, addVerification } = useVerifications()
     const [employees, setEmployees] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [reportDialogOpen, setReportDialogOpen] = useState(false)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
     const [reportType, setReportType] = useState<'time' | 'expense' | 'mileage'>('time')
 
+    // Form state
+    const [amount, setAmount] = useState("")
+    const [km, setKm] = useState("")
+    const [desc, setDesc] = useState("")
+    const [hours, setHours] = useState("")
+
     // Fetch real employees
-    useMemo(() => {
+    // ... existing memo logic ... 
+    // Simplified fetch to effect for clarity as memo implies sync return usually but here it had async inside.
+    useEffect(() => {
         const fetchEmployees = async () => {
             setIsLoading(true)
             try {
@@ -48,10 +59,78 @@ export function TeamTab() {
         fetchEmployees()
     }, [])
 
-    // Mock reporting
-    const handleReport = () => {
-        success("Rapport sparad", "Tid och utlägg har registrerats för lönekörningen.")
+    // Match employees to ledger balances (Account 2820 - Kortfristiga skulder till anställda)
+    // We assume 2820 Credit = Debt to Employee. Debit = Payment.
+    const employeeBalances = useMemo(() => {
+        const balances: Record<string, number> = {}
+        const mileage: Record<string, number> = {} // In KR
+
+        verifications.forEach(v => {
+            v.rows.forEach(r => {
+                // Check if row relates to an employee via Description or sub-account logic?
+                // Logic: If Account is 2820, look for employee name in description or assume we need better tagging.
+                // For this demo upgrade, we will match strict Name strings in description "Utlägg [Name]"
+                const emp = employees.find(e => v.description.includes(e.name) || r.description.includes(e.name))
+                if (emp) {
+                    if (r.account === '2820') {
+                        balances[emp.id] = (balances[emp.id] || 0) + (r.credit - r.debit)
+                    }
+                    if (r.account === '7330' && r.debit > 0) {
+                        mileage[emp.id] = (mileage[emp.id] || 0) + r.debit
+                    }
+                }
+            })
+        })
+        return { balances, mileage }
+    }, [verifications, employees])
+
+    // Real reporting to Ledger
+    const handleReport = async () => {
+        const emp = employees.find(e => e.id === selectedEmployee)
+        if (!emp) return
+
+        if (reportType === 'expense') {
+            const val = parseFloat(amount)
+            if (!val) return
+
+            await addVerification({
+                date: new Date().toISOString().split('T')[0],
+                description: `Utlägg ${emp.name} - ${desc}`,
+                sourceType: 'manual', // or expense
+                rows: [
+                    { account: "4000", description: desc || "Utlägg", debit: val, credit: 0 },
+                    { account: "2820", description: `Skuld till ${emp.name}`, debit: 0, credit: val }
+                ]
+            })
+            success("Utlägg sparat", `Bokfört ${val} kr på 4000/2820`)
+        } else if (reportType === 'mileage') {
+            const dist = parseFloat(km)
+            if (!dist) return
+            const rate = 25 // 2024 rate usually 25 kr/mil
+            const val = dist * rate // Assuming input is Mil? Or KM? Usually Mil in Sweden business. Let's assume Mil (10km).
+            // If KM: 2.5 kr/km (25kr/mil). 
+            // Let's assume input is KM for better granularity. 25 kr/mil = 2.5 kr/km.
+            const krVal = dist * 2.5
+
+            await addVerification({
+                date: new Date().toISOString().split('T')[0],
+                description: `Milersättning ${emp.name} - ${desc}`,
+                sourceType: 'manual',
+                rows: [
+                    { account: "7330", description: `${dist} km bilersättning`, debit: krVal, credit: 0 },
+                    { account: "2820", description: `Skuld till ${emp.name}`, debit: 0, credit: krVal }
+                ]
+            })
+            success("Resa sparad", `Bokfört ${krVal} kr (${dist} km)`)
+        } else {
+            // Time is not financial yet. Just toast.
+            success("Tidrapport sparad", "Tid har registrerats (Bokförs vid lönekörning)")
+        }
+
         setReportDialogOpen(false)
+        setAmount("")
+        setKm("")
+        setDesc("")
     }
 
     return (
@@ -59,7 +138,7 @@ export function TeamTab() {
             <div className="flex items-center justify-between">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">Team & Rapportering</h2>
-                    <p className="text-muted-foreground">Hantera anställda och rapportera tid inför lön.</p>
+                    <p className="text-muted-foreground">Hantera anställda, utlägg och milersättning.</p>
                 </div>
                 <Button>
                     <Plus className="h-4 w-4 mr-2" />
@@ -68,7 +147,7 @@ export function TeamTab() {
             </div>
 
             {/* Empty State */}
-            {employees.length === 0 ? (
+            {employees.length === 0 && !isLoading ? (
                 <div className="flex flex-col items-center justify-center py-16 px-4">
                     <div className="w-16 h-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
                         <Users className="h-8 w-8 text-muted-foreground" />
@@ -100,15 +179,19 @@ export function TeamTab() {
                                 <div className="grid grid-cols-2 gap-2 text-sm">
                                     <div className="flex flex-col gap-1 p-2 rounded-md bg-muted/40">
                                         <span className="text-muted-foreground text-xs flex items-center gap-1">
-                                            <Clock className="h-3 w-3" /> Tidssaldo
+                                            <Wallet className="h-3 w-3" /> Utläggskuld
                                         </span>
-                                        <span className="font-medium">0 tim</span>
+                                        <span className={cn("font-medium", (employeeBalances.balances[emp.id] || 0) > 0 ? "text-red-600" : "")}>
+                                            {formatCurrency(employeeBalances.balances[emp.id] || 0)}
+                                        </span>
                                     </div>
                                     <div className="flex flex-col gap-1 p-2 rounded-md bg-muted/40">
                                         <span className="text-muted-foreground text-xs flex items-center gap-1">
-                                            <Car className="h-3 w-3" /> Resor (km)
+                                            <Car className="h-3 w-3" /> Resor (kr)
                                         </span>
-                                        <span className="font-medium">0 km</span>
+                                        <span className="font-medium">
+                                            {formatCurrency(employeeBalances.mileage[emp.id] || 0)}
+                                        </span>
                                     </div>
                                 </div>
 
@@ -135,7 +218,7 @@ export function TeamTab() {
                     <DialogHeader>
                         <DialogTitle>Rapportera för {employees.find(e => e.id === selectedEmployee)?.name}</DialogTitle>
                         <DialogDescription>
-                            Registrera tid, frånvaro eller utlägg.
+                            Registrera tid, milersättning eller utlägg.
                         </DialogDescription>
                     </DialogHeader>
 
@@ -158,37 +241,52 @@ export function TeamTab() {
                                 {reportType === 'time' && (
                                     <div className="grid gap-2">
                                         <Label>Antal timmar</Label>
-                                        <Input type="number" placeholder="8" />
+                                        <Input
+                                            type="number"
+                                            placeholder="8"
+                                            value={hours}
+                                            onChange={(e) => setHours(e.target.value)}
+                                        />
                                     </div>
                                 )}
                                 {reportType === 'mileage' && (
                                     <div className="grid gap-2">
                                         <Label>Antal km</Label>
-                                        <Input type="number" placeholder="0" />
+                                        <Input
+                                            type="number"
+                                            placeholder="0"
+                                            value={km}
+                                            onChange={(e) => setKm(e.target.value)}
+                                        />
                                     </div>
                                 )}
                                 {reportType === 'expense' && (
                                     <div className="grid gap-2">
                                         <Label>Belopp (SEK)</Label>
-                                        <Input type="number" placeholder="0" />
+                                        <Input
+                                            type="number"
+                                            placeholder="0"
+                                            value={amount}
+                                            onChange={(e) => setAmount(e.target.value)}
+                                        />
                                     </div>
                                 )}
                             </div>
 
                             <div className="grid gap-2">
                                 <Label>Beskrivning</Label>
-                                <Textarea placeholder={
-                                    reportType === 'time' ? "T.ex. VAB, Sjukdom eller Övertid" :
-                                        reportType === 'mileage' ? "T.ex. Kundbesök Göteborg" :
-                                            "Vad avser utlägget?"
-                                } />
+                                <Textarea
+                                    placeholder={reportType === 'mileage' ? "Resa till..." : "Avser..."}
+                                    value={desc}
+                                    onChange={(e) => setDesc(e.target.value)}
+                                />
                             </div>
                         </div>
                     </Tabs>
 
                     <DialogFooter>
                         <Button variant="outline" onClick={() => setReportDialogOpen(false)}>Avbryt</Button>
-                        <Button onClick={handleReport}>Spara rapport</Button>
+                        <Button onClick={handleReport}>Spara till bokföring</Button>
                     </DialogFooter>
                 </DialogContent>
             </Dialog>

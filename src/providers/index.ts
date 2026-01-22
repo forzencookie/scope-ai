@@ -59,16 +59,23 @@ export type {
     Receipt,
 } from "./app-provider"
 
-// AI Dialog provider
+// AI Overlay provider
 export {
-    AIDialogProvider,
-    useAIDialog,
-    useAIDialogOptional,
-} from "./ai-dialog-provider"
+    AIDialogProvider as AIOverlayProvider,
+    AIDialogProvider, // Keep legacy export
+    useAIDialog as useAIOverlay,
+    useAIDialog, // Keep legacy export
+    useAIDialogOptional as useAIOverlayOptional,
+    useAIDialogOptional, // Keep legacy export
+} from "./ai-overlay-provider"
 
 export type {
-    AIDialogStatus,
-    AIDialogOutput,
-    AIDialogNavigation,
-    AIDialogDisplay,
-} from "./ai-dialog-provider"
+    AIDialogStatus as AIOverlayStatus,
+    AIDialogStatus, // Keep legacy export
+    AIDialogOutput as AIOverlayOutput,
+    AIDialogOutput, // Keep legacy export
+    AIDialogNavigation as AIOverlayNavigation,
+    AIDialogNavigation, // Keep legacy export
+    AIDialogDisplay as AIOverlayDisplay,
+    AIDialogDisplay, // Keep legacy export
+} from "./ai-overlay-provider"

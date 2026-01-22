@@ -5,7 +5,7 @@
  * Listens to the AI dialog provider for highlight state
  */
 
-import { useAIDialogOptional } from "@/providers/ai-dialog-provider"
+import { useAIDialogOptional } from "@/providers/ai-overlay-provider"
 import { useCallback, useMemo } from "react"
 
 /**

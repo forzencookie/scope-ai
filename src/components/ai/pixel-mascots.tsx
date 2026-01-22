@@ -17,6 +17,14 @@ interface MascotProps {
 // Pixel Dog - Based on existing sidebar design
 // ============================================================================
 
+// Pixel-perfect rendering styles for crisp animations
+const pixelPerfectStyle = {
+    imageRendering: 'pixelated' as const,
+    WebkitFontSmoothing: 'none' as const,
+    transform: 'translateZ(0)', // GPU acceleration
+    willChange: 'transform',
+}
+
 export function PixelDog({ className, size = 64 }: MascotProps) {
     return (
         <motion.svg
@@ -25,6 +33,7 @@ export function PixelDog({ className, size = 64 }: MascotProps) {
             viewBox="0 0 16 16"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
             animate={{ y: [0, -2, 0] }}
             transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
         >
@@ -77,6 +86,7 @@ export function PixelBear({ className, size = 64 }: MascotProps) {
             viewBox="0 0 16 16"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
             animate={{ y: [0, -2, 0] }}
             transition={{ duration: 0.9, repeat: Infinity, ease: "easeInOut", delay: 0.2 }}
         >
@@ -128,6 +138,7 @@ export function PixelGiraffe({ className, size = 64 }: MascotProps) {
             viewBox="0 0 16 18"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
             animate={{ y: [0, -2, 0] }}
             transition={{ duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.4 }}
         >
@@ -160,15 +171,11 @@ export function PixelGiraffe({ className, size = 64 }: MascotProps) {
             <rect x="4" y="12" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
             <rect x="7" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500" />
             <rect x="5" y="14" width="1" height="1" className="fill-amber-600 dark:fill-amber-500" />
-            {/* Tail */}
-            <motion.g
-                animate={{ rotate: [-20, 20, -20] }}
-                transition={{ duration: 0.6, repeat: Infinity }}
-                style={{ originX: "11px", originY: "12px" }}
-            >
+            {/* Tail - static to avoid detachment during parent animation */}
+            <g>
                 <rect x="11" y="12" width="1" height="2" className="fill-amber-400 dark:fill-amber-300" />
                 <rect x="12" y="13" width="1" height="2" className="fill-amber-700 dark:fill-amber-600" />
-            </motion.g>
+            </g>
             {/* Legs */}
             <rect x="4" y="15" width="2" height="3" className="fill-amber-500 dark:fill-amber-400" />
             <rect x="8" y="15" width="2" height="3" className="fill-amber-500 dark:fill-amber-400" />
@@ -287,32 +294,176 @@ export function MascotCookingScene({ className }: CookingSceneProps) {
 }
 
 // ============================================================================
+// Static Mascot Variants - For confirmation dialogs (no animation)
+// ============================================================================
+
+export function PixelDogStatic({ className, size = 64 }: MascotProps) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 16 16"
+            shapeRendering="crispEdges"
+            className={cn("", className)}
+            style={pixelPerfectStyle}
+        >
+            {/* Ears - floppy dog ears */}
+            <rect x="2" y="3" width="3" height="2" className="fill-amber-600 dark:fill-amber-500" />
+            <rect x="11" y="3" width="3" height="2" className="fill-amber-600 dark:fill-amber-500" />
+            {/* Head */}
+            <rect x="3" y="4" width="10" height="6" className="fill-amber-400 dark:fill-amber-300" />
+            {/* Face markings */}
+            <rect x="5" y="5" width="6" height="4" className="fill-amber-100 dark:fill-amber-50" />
+            {/* Happy closed eyes (^ ^) */}
+            <rect x="5" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            <rect x="6" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            <rect x="7" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            <rect x="9" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            <rect x="10" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            <rect x="11" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            {/* Nose */}
+            <rect x="7" y="8" width="2" height="1" className="fill-gray-800 dark:fill-gray-900" />
+            {/* Tongue */}
+            <rect x="7" y="9" width="2" height="1" className="fill-pink-400" />
+            {/* Body */}
+            <rect x="4" y="10" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
+            {/* Chest */}
+            <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
+            {/* Tail - static */}
+            <rect x="12" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500" />
+            {/* Feet */}
+            <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+            <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+        </svg>
+    )
+}
+
+export function PixelBearStatic({ className, size = 64 }: MascotProps) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 16 16"
+            shapeRendering="crispEdges"
+            className={cn("", className)}
+            style={pixelPerfectStyle}
+        >
+            {/* Ears */}
+            <rect x="2" y="1" width="3" height="3" className="fill-amber-700 dark:fill-amber-600" />
+            <rect x="11" y="1" width="3" height="3" className="fill-amber-700 dark:fill-amber-600" />
+            {/* Inner ears */}
+            <rect x="3" y="2" width="1" height="1" className="fill-amber-500 dark:fill-amber-400" />
+            <rect x="12" y="2" width="1" height="1" className="fill-amber-500 dark:fill-amber-400" />
+            {/* Head */}
+            <rect x="3" y="3" width="10" height="7" className="fill-amber-700 dark:fill-amber-600" />
+            {/* Face/snout area */}
+            <rect x="5" y="5" width="6" height="4" className="fill-amber-500 dark:fill-amber-400" />
+            {/* Eyes - happy */}
+            <rect x="5" y="5" width="1" height="1" className="fill-gray-800" />
+            <rect x="6" y="4" width="1" height="1" className="fill-gray-800" />
+            <rect x="9" y="4" width="1" height="1" className="fill-gray-800" />
+            <rect x="10" y="5" width="1" height="1" className="fill-gray-800" />
+            {/* Nose */}
+            <rect x="7" y="6" width="2" height="2" className="fill-gray-900" />
+            {/* Mouth */}
+            <rect x="7" y="8" width="2" height="1" className="fill-amber-400 dark:fill-amber-300" />
+            {/* Body */}
+            <rect x="4" y="10" width="8" height="4" className="fill-amber-700 dark:fill-amber-600" />
+            {/* Belly */}
+            <rect x="5" y="10" width="6" height="3" className="fill-amber-500 dark:fill-amber-400" />
+            {/* Arms - static, attached to body */}
+            <rect x="2" y="10" width="2" height="3" className="fill-amber-700 dark:fill-amber-600" />
+            <rect x="12" y="10" width="2" height="3" className="fill-amber-700 dark:fill-amber-600" />
+            {/* Paws */}
+            <rect x="2" y="13" width="2" height="1" className="fill-amber-800 dark:fill-amber-700" />
+            <rect x="12" y="13" width="2" height="1" className="fill-amber-800 dark:fill-amber-700" />
+            {/* Feet */}
+            <rect x="4" y="14" width="3" height="2" className="fill-amber-800 dark:fill-amber-700" />
+            <rect x="9" y="14" width="3" height="2" className="fill-amber-800 dark:fill-amber-700" />
+        </svg>
+    )
+}
+
+export function PixelGiraffeStatic({ className, size = 64 }: MascotProps) {
+    return (
+        <svg
+            width={size}
+            height={size}
+            viewBox="0 0 16 18"
+            shapeRendering="crispEdges"
+            className={cn("", className)}
+            style={pixelPerfectStyle}
+        >
+            {/* Horns/ossicones */}
+            <rect x="4" y="0" width="1" height="2" className="fill-amber-700 dark:fill-amber-600" />
+            <rect x="4" y="0" width="2" height="1" className="fill-amber-500 dark:fill-amber-400" />
+            <rect x="8" y="0" width="1" height="2" className="fill-amber-700 dark:fill-amber-600" />
+            <rect x="7" y="0" width="2" height="1" className="fill-amber-500 dark:fill-amber-400" />
+            {/* Head */}
+            <rect x="3" y="2" width="7" height="4" className="fill-amber-400 dark:fill-amber-300" />
+            {/* Face */}
+            <rect x="4" y="4" width="5" height="2" className="fill-amber-200 dark:fill-amber-100" />
+            {/* Eyes - happy */}
+            <rect x="4" y="3" width="1" height="1" className="fill-gray-800" />
+            <rect x="5" y="2" width="1" height="1" className="fill-gray-800" />
+            <rect x="7" y="2" width="1" height="1" className="fill-gray-800" />
+            <rect x="8" y="3" width="1" height="1" className="fill-gray-800" />
+            {/* Snout spot */}
+            <rect x="5" y="4" width="3" height="1" className="fill-amber-100 dark:fill-amber-50" />
+            {/* Nose */}
+            <rect x="6" y="5" width="1" height="1" className="fill-gray-800" />
+            {/* Long neck */}
+            <rect x="5" y="6" width="4" height="5" className="fill-amber-400 dark:fill-amber-300" />
+            {/* Neck spots */}
+            <rect x="6" y="7" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+            <rect x="5" y="9" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+            {/* Body */}
+            <rect x="3" y="11" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
+            {/* Body spots */}
+            <rect x="4" y="12" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
+            <rect x="7" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500" />
+            <rect x="5" y="14" width="1" height="1" className="fill-amber-600 dark:fill-amber-500" />
+            {/* Tail - static */}
+            <g>
+                <rect x="11" y="12" width="1" height="2" className="fill-amber-400 dark:fill-amber-300" />
+                <rect x="12" y="13" width="1" height="2" className="fill-amber-700 dark:fill-amber-600" />
+            </g>
+            {/* Legs */}
+            <rect x="4" y="15" width="2" height="3" className="fill-amber-500 dark:fill-amber-400" />
+            <rect x="8" y="15" width="2" height="3" className="fill-amber-500 dark:fill-amber-400" />
+            {/* Hooves */}
+            <rect x="4" y="17" width="2" height="1" className="fill-amber-700 dark:fill-amber-600" />
+            <rect x="8" y="17" width="2" height="1" className="fill-amber-700 dark:fill-amber-600" />
+        </svg>
+    )
+}
+
+// ============================================================================
+// Static Celebration Scene - For confirmation dialogs (no animation)
+// ============================================================================
+
+export function MascotCelebrationSceneStatic({ className }: CookingSceneProps) {
+    return (
+        <div className={cn("flex items-end justify-center gap-6", className)}>
+            {/* Static mascots - no animation */}
+            <PixelGiraffeStatic size={72} />
+            <PixelDogStatic size={56} />
+            <PixelBearStatic size={56} />
+        </div>
+    )
+}
+
+// ============================================================================
 // Celebration Scene - Mascots celebrating completion
 // ============================================================================
 
 export function MascotCelebrationScene({ className }: CookingSceneProps) {
     return (
         <div className={cn("flex items-end justify-center gap-6", className)}>
-            <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity }}
-            >
-                <PixelGiraffe size={72} />
-            </motion.div>
-
-            <motion.div
-                animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 0.4, repeat: Infinity, delay: 0.1 }}
-            >
-                <PixelDog size={56} />
-            </motion.div>
-
-            <motion.div
-                animate={{ y: [0, -8, 0] }}
-                transition={{ duration: 0.5, repeat: Infinity, delay: 0.2 }}
-            >
-                <PixelBear size={56} />
-            </motion.div>
+            {/* Mascots - they have internal bounce animations */}
+            <PixelGiraffe size={72} />
+            <PixelDog size={56} />
+            <PixelBear size={56} />
 
             {/* Sparkles */}
             <motion.div
@@ -356,6 +507,7 @@ function PixelBall({ className, size = 16 }: MascotProps) {
             viewBox="0 0 8 8"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
         >
             {/* Ball - red with white highlight */}
             <rect x="2" y="0" width="4" height="1" className="fill-red-500" />
@@ -387,7 +539,7 @@ export function MascotPlayingScene({ className }: CookingSceneProps) {
                 </motion.div>
             </motion.div>
 
-            {/* Bouncing ball - arc motion */}
+            {/* Bouncing ball - arc motion, no rotation for pixel clarity */}
             <motion.div
                 className="absolute"
                 initial={{ x: 0, y: 0 }}
@@ -402,12 +554,7 @@ export function MascotPlayingScene({ className }: CookingSceneProps) {
                 }}
                 style={{ left: "30%", top: "20%" }}
             >
-                <motion.div
-                    animate={{ rotate: [0, 360] }}
-                    transition={{ duration: 0.5, repeat: Infinity, ease: "linear" }}
-                >
-                    <PixelBall size={20} />
-                </motion.div>
+                <PixelBall size={20} />
             </motion.div>
 
             {/* Dog in the middle - jumping to catch */}
@@ -453,6 +600,7 @@ function PixelDocument({ className, size = 24 }: MascotProps) {
             viewBox="0 0 10 12"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
         >
             {/* Paper */}
             <rect x="0" y="0" width="10" height="12" className="fill-white dark:fill-gray-100" />
@@ -556,6 +704,7 @@ function PixelMagnifyingGlass({ className, size = 24 }: MascotProps) {
             viewBox="0 0 12 12"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
         >
             {/* Glass frame */}
             <rect x="2" y="0" width="6" height="1" className="fill-gray-600 dark:fill-gray-500" />
@@ -683,6 +832,7 @@ export function PixelDogConfused({ className, size = 64 }: MascotProps) {
             viewBox="0 0 16 16"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
         >
             {/* Ears - drooped floppy */}
             <rect x="2" y="4" width="3" height="2" className="fill-amber-600 dark:fill-amber-500" />
@@ -722,6 +872,7 @@ export function PixelBearConfused({ className, size = 64 }: MascotProps) {
             viewBox="0 0 16 16"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
         >
             {/* Ears */}
             <rect x="2" y="1" width="3" height="3" className="fill-amber-700 dark:fill-amber-600" />
@@ -765,6 +916,7 @@ export function PixelGiraffeConfused({ className, size = 64 }: MascotProps) {
             viewBox="0 0 16 18"
             shapeRendering="crispEdges"
             className={cn("", className)}
+            style={pixelPerfectStyle}
         >
             {/* Horns/ossicones */}
             <rect x="4" y="0" width="1" height="2" className="fill-amber-700 dark:fill-amber-600" />
@@ -828,9 +980,9 @@ export function MascotErrorScene({ className }: CookingSceneProps) {
                 >
                     <PixelGiraffeConfused size={72} />
                 </motion.div>
-                {/* Question mark */}
+                {/* Question mark - positioned above giraffe's head */}
                 <motion.div
-                    className="absolute -top-4 -right-1 text-2xl font-bold text-amber-500"
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-xl font-bold text-amber-500"
                     animate={{ y: [0, -3, 0], opacity: [0.7, 1, 0.7] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
                 >
@@ -850,17 +1002,17 @@ export function MascotErrorScene({ className }: CookingSceneProps) {
                 >
                     <PixelDogConfused size={56} />
                 </motion.div>
-                {/* Exclamation/question mark */}
+                {/* Exclamation/question mark - centered above dog */}
                 <motion.div
-                    className="absolute -top-5 left-1/2 -translate-x-1/2 text-2xl font-bold text-red-500"
-                    animate={{ scale: [1, 1.2, 1], opacity: [0.7, 1, 0.7] }}
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-xl font-bold text-red-500"
+                    animate={{ scale: [1, 1.15, 1], opacity: [0.7, 1, 0.7] }}
                     transition={{ duration: 1, repeat: Infinity, ease: "easeInOut", delay: 0.3 }}
                 >
                     !?
                 </motion.div>
             </motion.div>
 
-            {/* Lion on the right - shrugging */}
+            {/* Bear on the right - shrugging */}
             <motion.div
                 initial={{ opacity: 0, x: 20 }}
                 animate={{ opacity: 1, x: 0 }}
@@ -873,9 +1025,9 @@ export function MascotErrorScene({ className }: CookingSceneProps) {
                 >
                     <PixelBearConfused size={56} />
                 </motion.div>
-                {/* Question mark */}
+                {/* Question mark - positioned above bear's head */}
                 <motion.div
-                    className="absolute -top-4 -left-1 text-2xl font-bold text-amber-500"
+                    className="absolute -top-6 left-1/2 -translate-x-1/2 text-xl font-bold text-amber-500"
                     animate={{ y: [0, -3, 0], opacity: [0.7, 1, 0.7] }}
                     transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut", delay: 0.7 }}
                 >

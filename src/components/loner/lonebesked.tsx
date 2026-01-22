@@ -43,7 +43,7 @@ import { AppStatusBadge } from "@/components/ui/status-badge"
 import { PayslipDetailsDialog } from "./dialogs/spec"
 import { PayslipCreateDialog } from "./dialogs/lonebesked"
 import { generatePayslipPDF } from "@/lib/pdf-generator"
-import { payrollService, type PayrollStats } from "@/lib/services/payroll-service"
+
 
 type Payslip = {
     id: string | number
@@ -106,20 +106,31 @@ export function LonesbeskContent() {
     }
 
     // Calculate stats from payslips data
-    const [stats, setStats] = useState<PayrollStats>({
-        currentPeriod: "Laddar...",
-        employeeCount: 0,
-        totalGross: 0,
-        totalTax: 0
-    })
-
-    useEffect(() => {
-        const loadStats = async () => {
-            const data = await payrollService.getStats()
-            setStats(data)
+    const stats = useMemo(() => {
+        if (!allPayslips.length) {
+            return {
+                currentPeriod: "Ingen period",
+                employeeCount: 0,
+                totalGross: 0,
+                totalTax: 0
+            }
         }
-        loadStats()
-    }, [allPayslips]) // Reload if payslips change (e.g. after add)
+
+        // Assume the period of the first payslip is the "Current" one for the view
+        // Or group by them. For "Lönekörning", typically you view one period.
+        const periods = Array.from(new Set(allPayslips.map(p => p.period)))
+        const currentPeriod = periods[0] || "Okänd period"
+
+        // Filter for this period
+        const periodSlips = allPayslips.filter(p => p.period === currentPeriod)
+
+        return {
+            currentPeriod,
+            employeeCount: periodSlips.length,
+            totalGross: periodSlips.reduce((sum, p) => sum + p.grossSalary, 0),
+            totalTax: periodSlips.reduce((sum, p) => sum + p.tax, 0)
+        }
+    }, [allPayslips])
 
     /*
     const filteredPayslips = useMemo(() => {

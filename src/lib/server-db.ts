@@ -111,6 +111,83 @@ export const db = {
         return newMeta;
     },
 
+    getTransactions: async (filters: {
+        limit?: number,
+        startDate?: string,
+        endDate?: string,
+        minAmount?: number,
+        maxAmount?: number,
+        status?: string
+    } = {}) => {
+        const supabase = getSupabaseAdmin();
+        let query = supabase.from('transactions').select('*').order('date', { ascending: false });
+
+        if (filters.startDate) query = query.gte('date', filters.startDate);
+        if (filters.endDate) query = query.lte('date', filters.endDate);
+        if (filters.minAmount !== undefined) query = query.gte('amount', filters.minAmount); // Note: Simple check, handling negative amounts (expenses) complexity might be needed if user means absolute magnitude
+        if (filters.status) query = query.eq('status', filters.status);
+
+        if (filters.limit) query = query.limit(filters.limit);
+
+        const { data, error } = await query;
+        if (error) console.error("Supabase Error (getTransactions):", error);
+        return data || [];
+    },
+
+    getCustomerInvoices: async (filters: {
+        limit?: number,
+        status?: string,
+        customer?: string
+    } = {}) => {
+        const supabase = getSupabaseAdmin();
+        // Note: 'invoices' table is for customer invoices
+        let query = supabase.from('invoices').select('*').order('due_date', { ascending: true });
+
+        if (filters.status) query = query.eq('status', filters.status);
+        if (filters.customer) query = query.ilike('customer_name', `%${filters.customer}%`);
+
+        if (filters.limit) query = query.limit(filters.limit);
+
+        const { data, error } = await query;
+        if (error) console.error("Supabase Error (getCustomerInvoices):", error);
+
+        // Map snake_case to CamelCase if needed by frontend/AI, but generally tools should adapt. 
+        // For consistency with existing codebase, let's map it.
+        return (data || []).map(i => ({
+            ...i,
+            customerName: i.customer_name,
+            invoiceNumber: i.invoice_number,
+            totalAmount: i.total_amount,
+            dueDate: i.due_date
+        }));
+    },
+
+    getSupplierInvoices: async (filters: {
+        limit?: number,
+        status?: string,
+        supplier?: string
+    } = {}) => {
+        const supabase = getSupabaseAdmin();
+        let query = supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true });
+
+        if (filters.status) query = query.eq('status', filters.status);
+        if (filters.supplier) query = query.ilike('supplier_name', `%${filters.supplier}%`);
+
+        if (filters.limit) query = query.limit(filters.limit);
+
+        const { data, error } = await query;
+        if (error) console.error("Supabase Error (getSupplierInvoices):", error);
+
+        return (data || []).map(i => ({
+            ...i,
+            supplierName: i.supplier_name,
+            invoiceNumber: i.invoice_number,
+            totalAmount: i.total_amount,
+            dueDate: i.due_date,
+            invoiceDate: i.issue_date
+        }));
+    },
+
     // Receipts
     addReceipt: async (receipt: any) => {
         const supabase = getSupabaseAdmin();

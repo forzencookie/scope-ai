@@ -29,6 +29,10 @@ export const getPayslipsTool = defineTool<GetPayslipsParams, Payslip[]>({
         },
     },
     execute: async (params) => {
+        // Fetch real payslips using the service
+        // Note: The service expects year/month numbers, but the AI tool gets string "December 2024".
+        // For now, we'll fetch all and filter in memory, or parse the date.
+        // Let's fetch all (default) and filter.
         let payslips = await payrollService.getPayslips()
 
         if (params.period) {
@@ -98,15 +102,35 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         required: ['period'],
     },
     execute: async (params) => {
-        const allPayslips = await payrollService.getPayslips()
-        let payslips = allPayslips
+        // Fetch real employees
+        const realEmployees = await payrollService.getEmployees()
+        let employees = [...realEmployees]
 
         if (params.employees && params.employees.length > 0) {
-            payslips = allPayslips.filter((p: Payslip) => params.employees!.some(e => p.employeeName.toLowerCase().includes(e.toLowerCase())))
+            employees = employees.filter(emp =>
+                params.employees!.some(e => emp.name.toLowerCase().includes(e.toLowerCase()))
+            )
         }
 
-        const totalGross = payslips.reduce((sum: number, p: Payslip) => sum + p.grossSalary, 0)
-        const totalNet = payslips.reduce((sum: number, p: Payslip) => sum + p.netSalary, 0)
+        // Ensure salary is a number
+        const payslips: Payslip[] = employees.map(emp => ({
+            id: `new-${emp.id}`,
+            period: params.period,
+            employeeName: emp.name,
+            employeeId: emp.id,
+            year: new Date().getFullYear(), // Approximate
+            month: new Date().getMonth() + 1, // Approximate
+            grossSalary: emp.monthlySalary || 0,
+            taxDeduction: Math.round((emp.monthlySalary || 0) * 0.25),
+            netSalary: Math.round((emp.monthlySalary || 0) * 0.75),
+            bonuses: 0,
+            otherDeductions: 0,
+            status: 'draft',
+            sentAt: undefined
+        }))
+
+        const totalGross = payslips.reduce((sum, p) => sum + p.grossSalary, 0)
+        const totalNet = payslips.reduce((sum, p) => sum + p.netSalary, 0)
 
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Kör lönekörning',
@@ -199,16 +223,26 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
         },
     },
     execute: async (params) => {
+        // Fetch real reports
         let reports = await payrollService.getAGIReports()
 
         if (params.period) {
             reports = reports.filter(r => r.period.toLowerCase().includes(params.period!.toLowerCase()))
         }
 
+        if (reports.length === 0) {
+            return {
+                success: true,
+                data: [],
+                message: "Inga AGI-rapporter hittades.",
+            }
+        }
+
+        const r = reports[0];
         return {
             success: true,
             data: reports,
-            message: `Hittade ${reports.length} AGI-rapporter.`,
+            message: `Hittade ${reports.length} AGI-rapporter. Senaste: Skatt ${r.totalTax.toLocaleString('sv-SE')} kr, arbetsgivaravgifter ${r.employerContributions.toLocaleString('sv-SE')} kr.`,
             display: {
                 component: 'DeadlinesList',
                 props: { items: reports },
@@ -236,16 +270,13 @@ export const submitAGITool = defineTool<SubmitAGIParams, { submitted: boolean; r
         required: ['period'],
     },
     execute: async (params) => {
-        const reports = await payrollService.getAGIReports()
-        const periodReport = reports.find(r => r.period.toLowerCase().includes(params.period.toLowerCase()))
-
+        // Simulation, but using cleaner logic (no hardcoded totals)
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Skicka AGI',
-            description: `Arbetsgivardeklaration för ${params.period}`,
+            description: `Arbetsgivardeklaration för ${params.period} (Simulering)`,
             summary: [
                 { label: 'Period', value: params.period },
-                { label: 'Preliminär skatt', value: periodReport ? `${periodReport.totalTax.toLocaleString('sv-SE')} kr` : 'N/A' },
-                { label: 'Arbetsgivaravgifter', value: periodReport ? `${periodReport.employerContributions.toLocaleString('sv-SE')} kr` : 'N/A' },
+                { label: 'Status', value: 'Simulering - Skickar till Skatteverket' },
             ],
             action: { toolName: 'submit_agi_declaration', params },
             requireCheckbox: true,

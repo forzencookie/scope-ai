@@ -16,6 +16,7 @@ export interface CollapsibleTableItem {
     value: number     // Numerical amount
     indent?: boolean  // Visual indentation
     sublabel?: string // Optional secondary text
+    onClick?: () => void // Optional click handler
 }
 
 // ==========================================
@@ -100,9 +101,12 @@ export function CollapsibleTableRow({ item, className, children, neutral = false
             <div
                 className={cn(
                     "flex items-start justify-between py-3 px-2 -mx-2 rounded-md transition-colors",
-                    hasChildren ? "cursor-pointer hover:bg-muted/30" : "hover:bg-muted/30"
+                    (hasChildren || item.onClick) ? "cursor-pointer hover:bg-muted/30" : "hover:bg-muted/30"
                 )}
-                onClick={() => hasChildren && setIsOpen(!isOpen)}
+                onClick={() => {
+                    if (hasChildren) setIsOpen(!isOpen)
+                    if (item.onClick) item.onClick()
+                }}
             >
                 <div className="flex items-start gap-3">
                     {/* Toggle Icon or Spacer */}
@@ -120,7 +124,9 @@ export function CollapsibleTableRow({ item, className, children, neutral = false
                         </span>
                     )}
                     <div className={cn("text-sm", item.indent && "pl-4")}>
-                        <span>{item.label}</span>
+                        <span className={cn(item.onClick && "text-primary hover:underline font-medium")}>
+                            {item.label}
+                        </span>
                         {item.sublabel && (
                             <p className="text-xs text-muted-foreground">{item.sublabel}</p>
                         )}

@@ -43,7 +43,7 @@ import { useVerifications } from "@/hooks/use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
-import { taxService, type VatStats } from "@/lib/services/tax-service"
+
 
 export function MomsdeklarationContent() {
     const router = useRouter()
@@ -118,59 +118,30 @@ export function MomsdeklarationContent() {
     }, [vatPeriodsState])
 
     // Calculate stats from the active period (Q4 2024 or upcoming)
-    const [stats, setStats] = useState<{
-        nextPeriod: string,
-        deadline: string,
-        salesVat: number,
-        inputVat: number,
-        netVat: number,
-        fullReport?: VatReport
-    }>({
-        nextPeriod: "Laddar...",
-        deadline: "",
-        salesVat: 0,
-        inputVat: 0,
-        netVat: 0,
-    })
+    const stats = useMemo(() => {
+        // Find upcoming or open period from our calculated state
+        const upcomingReport = vatPeriodsState.find(p => p.status === 'upcoming' || p.status === 'open') || vatPeriodsState[0]
 
-    useEffect(() => {
-        const loadStats = async () => {
-            // Import tax period helper for fallback
-            const { getNextVatPeriod } = await import('@/lib/tax-periods')
-            const vatFrequency = company?.vatFrequency || 'quarterly'
-            const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
-
-            // If DB periods available, use them
-            if (!isLoading && periods.length > 0) {
-                const upcomingPeriod = periods.find(p => p.status === 'open' || p.status === 'upcoming') || periods[0]
-
-                if (upcomingPeriod && upcomingPeriod.start_date && upcomingPeriod.end_date) {
-                    const rpcStats = await taxService.getVatStats(upcomingPeriod.start_date, upcomingPeriod.end_date)
-
-                    setStats({
-                        nextPeriod: upcomingPeriod.name,
-                        deadline: upcomingPeriod.due_date ? `Deadline: ${upcomingPeriod.due_date}` : "Datum saknas",
-                        salesVat: rpcStats.salesVat,
-                        inputVat: rpcStats.inputVat,
-                        netVat: rpcStats.netVat,
-                        fullReport: vatPeriodsState.find(p => p.periodId === upcomingPeriod.id)
-                    })
-                    return
-                }
+        if (upcomingReport) {
+            return {
+                nextPeriod: upcomingReport.period,
+                deadline: `Deadline: ${upcomingReport.dueDate || "Datum saknas"}`,
+                salesVat: upcomingReport.salesVat,
+                inputVat: upcomingReport.inputVat,
+                netVat: upcomingReport.netVat,
+                fullReport: upcomingReport
             }
-
-            // Fallback: Use onboarding-driven calculation
-            const calculatedPeriod = getNextVatPeriod(vatFrequency, fiscalYearEnd)
-            setStats({
-                nextPeriod: calculatedPeriod.periodName,
-                deadline: `Deadline: ${calculatedPeriod.deadline}`,
-                salesVat: 0,
-                inputVat: 0,
-                netVat: 0,
-            })
         }
-        loadStats()
-    }, [periods, isLoading, company?.vatFrequency, company?.fiscalYearEnd])
+
+        // Fallback if no periods found (Empty state)
+        return {
+            nextPeriod: "Ingen period",
+            deadline: "",
+            salesVat: 0,
+            inputVat: 0,
+            netVat: 0,
+        }
+    }, [vatPeriodsState])
 
     // Filter periods - use stateful vatPeriods for updates to persist
     const filteredPeriods = useMemo(() => {
@@ -385,44 +356,44 @@ export function MomsdeklarationContent() {
 
                     {/* GridTable Rows */}
                     <GridTableRows>
-                    {filteredPeriods.map((item) => (
-                        <GridTableRow
-                            key={item.period}
-                            onClick={() => setSelectedReport(item)}
-                            selected={selection.isSelected(item.period)}
-                        >
-                            <div style={{ gridColumn: 'span 2' }} className="font-medium">
-                                {item.period}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
-                                {item.dueDate}
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
-                                {item.salesVat.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
-                                {item.inputVat.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums font-medium">
-                                {item.netVat.toLocaleString("sv-SE")} kr
-                            </div>
-                            <div style={{ gridColumn: 'span 1' }}>
-                                <AppStatusBadge
-                                    status={item.status === "upcoming" ? "Kommande" : "Inskickad"}
-                                />
-                            </div>
-                            <div
-                                style={{ gridColumn: 'span 1' }}
-                                className="flex justify-end"
-                                onClick={(e) => e.stopPropagation()}
+                        {filteredPeriods.map((item) => (
+                            <GridTableRow
+                                key={item.period}
+                                onClick={() => setSelectedReport(item)}
+                                selected={selection.isSelected(item.period)}
                             >
-                                <Checkbox
-                                    checked={selection.isSelected(item.period)}
-                                    onCheckedChange={() => selection.toggleItem(item.period)}
-                                />
-                            </div>
-                        </GridTableRow>
-                    ))}
+                                <div style={{ gridColumn: 'span 2' }} className="font-medium">
+                                    {item.period}
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
+                                    {item.dueDate}
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                    {item.salesVat.toLocaleString("sv-SE")} kr
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                                    {item.inputVat.toLocaleString("sv-SE")} kr
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums font-medium">
+                                    {item.netVat.toLocaleString("sv-SE")} kr
+                                </div>
+                                <div style={{ gridColumn: 'span 1' }}>
+                                    <AppStatusBadge
+                                        status={item.status === "upcoming" ? "Kommande" : "Inskickad"}
+                                    />
+                                </div>
+                                <div
+                                    style={{ gridColumn: 'span 1' }}
+                                    className="flex justify-end"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <Checkbox
+                                        checked={selection.isSelected(item.period)}
+                                        onCheckedChange={() => selection.toggleItem(item.period)}
+                                    />
+                                </div>
+                            </GridTableRow>
+                        ))}
                     </GridTableRows>
                 </div>
 

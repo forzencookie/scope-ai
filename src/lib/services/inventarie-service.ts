@@ -48,11 +48,11 @@ export const inventarieService = {
 
         if (error) throw error
 
-        // Return mock data if no real data exists
+        // Return empty if no real data exists
         if (!data || data.length === 0) {
             return {
-                inventarier: mockInventarier as Inventarie[],
-                totalCount: mockInventarier.length
+                inventarier: [],
+                totalCount: 0
             }
         }
 
@@ -80,8 +80,11 @@ export const inventarieService = {
         const { data, error } = await supabase.rpc('get_inventory_stats')
 
         if (error || !data || data.totalCount === 0) {
-            // Return mock stats when no real data
-            return mockInventarieStats
+            return {
+                totalCount: 0,
+                totalInkopsvarde: 0,
+                kategorier: 0
+            }
         }
 
         return {

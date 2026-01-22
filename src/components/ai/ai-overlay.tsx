@@ -1,15 +1,16 @@
 "use client"
 
 /**
- * AI Dialog Overlay - Full-screen overlay for AI processing
+ * AI Overlay - Full-screen overlay for AI processing
  * Shows animated mascots while thinking, output preview when complete
  */
 
 import { motion, AnimatePresence } from "framer-motion"
-import { useAIDialogOptional } from "@/providers/ai-dialog-provider"
+import { useAIDialogOptional } from "@/providers/ai-overlay-provider"
 import {
     MascotCookingScene,
     MascotCelebrationScene,
+    MascotCelebrationSceneStatic,
     MascotPlayingScene,
     MascotReadingScene,
     MascotSearchingScene,
@@ -22,11 +23,11 @@ import { Button } from "@/components/ui/button"
 import { Check, Pencil, X, Sparkles, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-interface AIDialogOverlayProps {
+interface AIOverlayProps {
     className?: string
 }
 
-export function AIDialogOverlay({ className }: AIDialogOverlayProps) {
+export function AIOverlay({ className }: AIOverlayProps) {
     const context = useAIDialogOptional()
 
     // Don't render if no context or hidden/mobile
@@ -106,6 +107,9 @@ const SCENE_MESSAGES: Record<SceneType, string[]> = {
         "Utforskar möjligheter...",
         "Nästan klart...",
     ],
+    error: [
+        "Något gick fel...",
+    ],
 }
 
 // ============================================================================
@@ -126,8 +130,8 @@ function ThinkingState({ sceneType }: ThinkingStateProps) {
             animate={{ opacity: 1, y: 0 }}
             className="flex flex-col items-center gap-8"
         >
-            {/* Dynamic mascot scene */}
-            <SceneComponent className="scale-125" />
+            {/* Dynamic mascot scene - no CSS scale to preserve pixel clarity */}
+            <SceneComponent />
 
             {/* Animated message */}
             <div className="flex flex-col items-center gap-2 mt-8">
@@ -231,23 +235,44 @@ interface CompleteStateProps {
 }
 
 function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProps) {
-    const hasStructuredOutput = !!output.display
-    const hasNavigation = !!output.navigation
     const hasConfirmation = !!output.confirmationRequired
 
+    // If there's a confirmation, just show the card directly - no extra wrapper
+    if (hasConfirmation) {
+        return (
+            <motion.div
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="flex flex-col items-center gap-4 max-w-md w-full px-4"
+            >
+                {/* Static mascots */}
+                <MascotCelebrationSceneStatic className="scale-75" />
+
+                {/* Just the confirmation card */}
+                <ConfirmationCard
+                    confirmation={output.confirmationRequired as any}
+                    isLoading={false}
+                    onConfirm={onAccept}
+                    onCancel={onCancel}
+                />
+            </motion.div>
+        )
+    }
+
+    // For other structured output (non-confirmation)
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-6 max-w-2xl w-full px-4"
         >
-            {/* Mini celebration */}
+            {/* Mini celebration - using static mascots (no animation) */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className="flex flex-col items-center gap-2 mb-2"
             >
-                <MascotCelebrationScene className="scale-100" />
+                <MascotCelebrationSceneStatic className="scale-100" />
             </motion.div>
 
             {/* Output card */}
@@ -268,16 +293,9 @@ function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProp
                     </span>
                 </div>
 
-                {/* Content preview - use CardRenderer or ConfirmationCard */}
+                {/* Content preview */}
                 <div className="p-4 max-h-[400px] overflow-y-auto">
-                    {hasConfirmation ? (
-                        <ConfirmationCard
-                            confirmation={output.confirmationRequired as any}
-                            isLoading={false}
-                            onConfirm={onAccept}
-                            onCancel={onCancel}
-                        />
-                    ) : hasStructuredOutput ? (
+                    {output.display ? (
                         <CardRenderer display={output.display!} />
                     ) : (
                         output.content
@@ -285,7 +303,7 @@ function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProp
                 </div>
 
                 {/* Navigation hint */}
-                {hasNavigation && (
+                {output.navigation && (
                     <div className="px-4 py-3 border-t bg-muted/30 flex items-center gap-2 text-sm text-muted-foreground">
                         <ArrowRight className="h-4 w-4" />
                         <span>Kommer visas i: <strong className="text-foreground">{output.navigation!.label || output.navigation!.route}</strong></span>

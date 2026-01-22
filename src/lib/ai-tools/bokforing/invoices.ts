@@ -104,6 +104,10 @@ export interface GetInvoicesParams {
     customer?: string
 }
 
+import { db } from '@/lib/server-db'
+
+// ... (keep existing interfaces)
+
 export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, any[]>({
     name: 'get_customer_invoices',
     description: 'Hämta kundfakturor. Kan filtreras på status eller kund.',
@@ -119,35 +123,29 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, any[]>({
     },
     execute: async (params) => {
         try {
-            const response = await fetch('/api/invoices', { cache: 'no-store' })
-            if (response.ok) {
-                const data = await response.json()
-                let invoices = data.invoices || []
+            const invoices = await db.getCustomerInvoices({
+                limit: params.limit,
+                status: params.status,
+                customer: params.customer
+            })
 
-                if (params.status) invoices = invoices.filter((i: any) => i.status === params.status)
-                if (params.customer) invoices = invoices.filter((i: any) => i.customerName?.toLowerCase().includes(params.customer!.toLowerCase()))
+            const totalAmount = invoices.reduce((sum: number, i: any) => sum + (i.totalAmount || 0), 0)
 
-                const limit = params.limit || 10
-                const displayInvoices = invoices.slice(0, limit)
-                const totalAmount = invoices.reduce((sum: number, i: any) => sum + (i.totalAmount || 0), 0)
-
-                return {
-                    success: true,
-                    data: displayInvoices,
-                    message: `Hittade ${invoices.length} kundfakturor på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`,
-                    display: {
-                        component: 'InvoicesTable' as any,
-                        props: { invoices: displayInvoices },
-                        title: 'Kundfakturor',
-                        fullViewRoute: '/dashboard/bokforing?tab=kundfakturor',
-                    },
-                }
+            return {
+                success: true,
+                data: invoices,
+                message: `Hittade ${invoices.length} kundfakturor på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`,
+                display: {
+                    component: 'InvoicesTable' as any,
+                    props: { invoices: invoices },
+                    title: 'Kundfakturor',
+                    fullViewRoute: '/dashboard/bokforing?tab=kundfakturor',
+                },
             }
         } catch (error) {
             console.error('Failed to fetch invoices:', error)
+            return { success: false, error: 'Kunde inte hämta kundfakturor.' }
         }
-
-        return { success: false, error: 'Kunde inte hämta kundfakturor.' }
     },
 })
 
@@ -172,35 +170,29 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, any
     },
     execute: async (params) => {
         try {
-            const response = await fetch('/api/supplier-invoices', { cache: 'no-store' })
-            if (response.ok) {
-                const data = await response.json()
-                let invoices = data.invoices || []
+            const invoices = await db.getSupplierInvoices({
+                limit: params.limit,
+                status: params.status,
+                supplier: params.supplier
+            })
 
-                if (params.status) invoices = invoices.filter((i: any) => i.status === params.status)
-                if (params.supplier) invoices = invoices.filter((i: any) => i.supplierName?.toLowerCase().includes(params.supplier!.toLowerCase()))
+            const totalAmount = invoices.reduce((sum: number, i: any) => sum + (i.totalAmount || 0), 0)
 
-                const limit = params.limit || 10
-                const displayInvoices = invoices.slice(0, limit)
-                const totalAmount = invoices.reduce((sum: number, i: any) => sum + (i.totalAmount || 0), 0)
-
-                return {
-                    success: true,
-                    data: displayInvoices,
-                    message: `Hittade ${invoices.length} leverantörsfakturor på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`,
-                    display: {
-                        component: 'SupplierInvoicesTable' as any,
-                        props: { invoices: displayInvoices },
-                        title: 'Leverantörsfakturor',
-                        fullViewRoute: '/dashboard/bokforing?tab=leverantorsfakturor',
-                    },
-                }
+            return {
+                success: true,
+                data: invoices,
+                message: `Hittade ${invoices.length} leverantörsfakturor på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`,
+                display: {
+                    component: 'SupplierInvoicesTable' as any,
+                    props: { invoices: invoices },
+                    title: 'Leverantörsfakturor',
+                    fullViewRoute: '/dashboard/bokforing?tab=leverantorsfakturor',
+                },
             }
         } catch (error) {
             console.error('Failed to fetch supplier invoices:', error)
+            return { success: false, error: 'Kunde inte hämta leverantörsfakturor.' }
         }
-
-        return { success: false, error: 'Kunde inte hämta leverantörsfakturor.' }
     },
 })
 

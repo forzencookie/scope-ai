@@ -59,11 +59,11 @@ export const receiptService = {
 
         if (error) throw error
 
-        // Return mock data if no real data exists
+        // Return empty if no real data exists
         if (!data || data.length === 0) {
             return {
-                receipts: mockReceipts as Receipt[],
-                totalCount: mockReceipts.length
+                receipts: [],
+                totalCount: 0
             }
         }
 
@@ -94,8 +94,12 @@ export const receiptService = {
         const { data, error } = await supabase.rpc('get_receipt_stats')
 
         if (error || !data || data.total === 0) {
-            // Return mock stats when no real data
-            return mockReceiptStats
+            return {
+                total: 0,
+                matchedCount: 0,
+                unmatchedCount: 0,
+                totalAmount: 0
+            }
         }
 
         return {

@@ -14,7 +14,7 @@ interface CorporateContextType {
 const CorporateContext = React.createContext<CorporateContextType | undefined>(undefined)
 
 export function CorporateProvider({ children }: { children: React.ReactNode }) {
-    const [meetings, setMeetings] = React.useState<GeneralMeeting[]>(mockGeneralMeetings)
+    const [meetings, setMeetings] = React.useState<GeneralMeeting[]>([])
 
     const addMeeting = React.useCallback((meeting: Omit<GeneralMeeting, "id">) => {
         const newMeeting: GeneralMeeting = {

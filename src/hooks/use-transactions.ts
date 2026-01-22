@@ -52,15 +52,15 @@ export function useTransactions() {
         const response = await transactionService.getTransactionsWithAI(userId)
         if (!response.success) throw new Error(response.error || "Failed to fetch transactions")
 
-        // Return mock data if no real data exists (for demo purposes)
+        // Return empty if no real data exists
         if (!response.data || response.data.length === 0) {
-          return MOCK_TRANSACTIONS
+          return []
         }
 
         return response.data
       } else {
-        // Return mock data for unauthenticated/demo state
-        return MOCK_TRANSACTIONS
+        // Return empty for unauthenticated state
+        return []
       }
 
     },

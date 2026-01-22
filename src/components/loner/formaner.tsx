@@ -21,7 +21,7 @@ import { BenefitDetailsDialog, getBenefitIcon } from "./dialogs/forman"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { ChevronDown, ChevronRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { benefitService, type BenefitStats } from "@/lib/services/benefit-service"
+
 
 const MAX_VISIBLE_BENEFITS = 5
 
@@ -170,17 +170,13 @@ export function BenefitsTab() {
     const currentYear = new Date().getFullYear()
 
     // Stats state
-    const [stats, setStats] = useState<BenefitStats>({
-        totalCost: 0,
-        employeesWithBenefits: 0,
-        totalEmployees: 10,
-        unusedPotential: 0,
-        totalBenefits: 0,
-        activeBenefits: 0
-    })
+    // State for employee count (real data)
+    const [employeeCount, setEmployeeCount] = useState(0)
+
+    // Stats state - removed, replaced by calculated vars
+    // const [stats, setStats] = ...
 
     // CONSOLIDATED: Single useEffect for all initial data fetching
-    // This prevents duplicate API calls that were happening with separate useEffects
     useEffect(() => {
         let isMounted = true
 
@@ -189,16 +185,20 @@ export function BenefitsTab() {
             setError(null)
 
             try {
-                const [allBenefits, unusedSuggestions, statsData] = await Promise.all([
+                const [allBenefits, unusedSuggestions, empRes] = await Promise.all([
                     listAvailableBenefits('AB'),
                     suggestUnusedBenefits('Demo Anställd', currentYear, 'AB'),
-                    benefitService.getStats(currentYear)
+                    fetch('/api/employees')
                 ])
+
+                const empData = await empRes.json()
+                const realCount = empData.employees?.length || 0
 
                 if (isMounted) {
                     setBenefits(allBenefits)
                     setSuggestions(unusedSuggestions)
-                    setStats(statsData)
+                    setEmployeeCount(realCount)
+                    // Remove setting stats here
                 }
             } catch (err) {
                 if (isMounted) {
@@ -218,6 +218,28 @@ export function BenefitsTab() {
             isMounted = false
         }
     }, [currentYear])
+
+    // Derived Stats
+    const stats = useMemo(() => {
+        // Calculate from assignedBenefits (Local state)
+        const totalCost = assignedBenefits.reduce((sum, b) => sum + (b.amount || 0), 0)
+        const uniqueEmployees = new Set(assignedBenefits.map(b => b.employeeName)).size
+        const activeBenefits = assignedBenefits.length
+
+        // Unused potential: Rough estimate based on max amounts? 
+        // Or just leave as 0 since we don't have full allowance tracking per employee here easily without more logic.
+        // Let's assume 0 for now to be safe/clean.
+        const unusedPotential = 0
+
+        return {
+            totalCost,
+            employeesWithBenefits: uniqueEmployees,
+            totalEmployees: employeeCount,
+            unusedPotential,
+            totalBenefits: activeBenefits,
+            activeBenefits
+        }
+    }, [assignedBenefits, employeeCount])
 
     // Derived for UI
     const coveragePercent = stats.totalEmployees > 0

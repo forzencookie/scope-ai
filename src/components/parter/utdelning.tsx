@@ -140,6 +140,25 @@ export function UtdelningContent() {
 
     const [useAIRecommendation, setUseAIRecommendation] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
+    const { verifications } = useVerifications()
+
+    // Calculate total salary basis from Ledger (Group 70-76 typically)
+    const salaryBasis = useMemo(() => {
+        let total = 0
+        verifications.forEach(v => {
+            v.rows.forEach(r => {
+                const acc = parseInt(r.account)
+                // 7000-7699 represents personnel costs (Salaries, Benefits etc that count for Löneunderlag)
+                // Excluding 77xx (Pensions) and 78xx (Social fees) usually? 
+                // For simplicity/safety, let's include 7000-7299 (Salaries).
+                if (acc >= 7000 && acc <= 7299) {
+                    total += r.debit // Salaries are Debit
+                }
+            })
+        })
+        return total
+    }, [verifications])
+
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
     // Derive dividend history from real documents
@@ -347,8 +366,8 @@ export function UtdelningContent() {
                     <div className="space-y-4">
                         <div>
                             <label className="text-sm text-muted-foreground">Löneunderlag</label>
-                            <p className="text-lg font-semibold">1 020 000 kr</p>
-                            <p className="text-xs text-muted-foreground">Kontrolluppgiftsbaserat</p>
+                            <p className="text-lg font-semibold">{formatCurrency(salaryBasis)}</p>
+                            <p className="text-xs text-muted-foreground">Baserat på bokförda löner (70-72)</p>
                         </div>
                         <div>
                             <label className="text-sm text-muted-foreground">Sparat utdelningsutrymme</label>
