@@ -1,29 +1,21 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, memo } from "react"
 import {
-    ArrowRightLeft,
-    X,
     Plus,
-    Banknote,
     Building2,
     Calendar,
+    Banknote,
     CheckCircle2,
     CreditCard,
-    TrendingUp,
-    TrendingDown,
-    Clock,
-    BookOpen,
+    ArrowRightLeft,
     SlidersHorizontal,
-    Search,
-    AlertCircle,
-    ChevronRight,
+    X,
 } from "lucide-react"
-import { cn, formatCurrency } from "@/lib/utils"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
-import { FilterButton } from "@/components/ui/filter-button"
-import { TRANSACTION_STATUSES, type TransactionStatus, type Transaction, type TransactionWithAI } from "@/types"
+import { TRANSACTION_STATUSES, type TransactionWithAI } from "@/types"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -34,74 +26,22 @@ import {
     DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
-
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import { SectionCard } from "@/components/ui/section-card"
 import { BulkActionToolbar, useBulkSelection, type BulkAction } from "@/components/shared/bulk-action-toolbar"
 import { useTableFilter, useTableSort, commonSortHandlers } from "@/hooks/use-table"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-
-import { NewTransactionDialog } from "./dialogs/ny-transaktion"
-import { BookingDialog, type BookingData } from "./dialogs/bokforing"
+import { NewTransactionDialog } from "../dialogs/ny-transaktion"
+import { BookingDialog, type BookingData } from "../dialogs/bokforing"
 import { Checkbox } from "@/components/ui/checkbox"
+import { BookOpen } from "lucide-react"
 
-// =============================================================================
-// TransactionsEmptyState
-// =============================================================================
+// New components
+import { TransactionsTableProps } from "./transaktioner/types"
+import { StatusHero } from "./transaktioner/components/StatusHero"
+import { StatsOverview } from "./transaktioner/components/StatsOverview"
 
-interface TransactionsEmptyStateProps {
-    hasFilters: boolean
-    onAddTransaction: () => void
-}
-
-function TransactionsEmptyState({ hasFilters, onAddTransaction }: TransactionsEmptyStateProps) {
-    return (
-        <tr className="h-[200px]">
-            <td colSpan={6} className="text-center">
-                <div className="flex flex-col items-center justify-center py-8">
-                    <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                        {hasFilters ? (
-                            <Search className="h-8 w-8 text-muted-foreground/50" />
-                        ) : (
-                            <ArrowRightLeft className="h-8 w-8 text-muted-foreground/50" />
-                        )}
-                    </div>
-                    <p className="font-medium text-foreground mb-1">
-                        {hasFilters ? "Inga transaktioner matchar din sökning" : "Här är det tomt — ännu!"}
-                    </p>
-                    <p className="text-sm text-muted-foreground mb-4">
-                        {hasFilters
-                            ? "Försök med andra söktermer eller avaktivera något filter"
-                            : "Koppla din bank så börjar vi jobba — du kommer älska hur enkelt det blir"}
-                    </p>
-                    {!hasFilters && (
-                        <Button size="sm" onClick={onAddTransaction}>
-                            <Plus className="h-3.5 w-3.5 mr-1" />
-                            Lägg till transaktion
-                        </Button>
-                    )}
-                </div>
-            </td>
-        </tr>
-    )
-}
-
-// =============================================================================
-// TransactionsTable
-// =============================================================================
-
-import type { TransactionStats } from "@/lib/services/transaction-service"
-
-interface TransactionsTableProps {
-    title?: string
-    subtitle?: string
-    transactions?: TransactionWithAI[]
-    stats?: TransactionStats
-    onTransactionBooked?: (transactionId: string, bookingData: BookingData) => void
-}
-
-export function TransactionsTable({
+// Memoized to prevent unnecessary re-renders when parent state changes
+export const TransactionsTable = memo(function TransactionsTable({
     title,
     subtitle,
     transactions = [],
@@ -127,10 +67,6 @@ export function TransactionsTable({
             name: (a, b) => a.name.localeCompare(b.name)
         }
     })
-
-    const handleSortChange = useCallback((newSortBy: "date" | "amount" | "name") => {
-        sort.toggleSort(newSortBy)
-    }, [sort])
 
     const filteredTransactions = useMemo(() => {
         const filtered = filter.filterItems(transactions)
@@ -181,12 +117,6 @@ export function TransactionsTable({
         return { income, expenses, pending, totalCount: transactions.length }
     }, [transactions, externalStats])
 
-    // Get transactions ready to book (have documentation)
-    const transactionsToBook = useMemo(() =>
-        transactions.filter(t => t.status === TRANSACTION_STATUSES.TO_RECORD),
-        [transactions]
-    )
-
     // Handle booking button click from bulk action
     const handleBulkBooking = useCallback((ids: string[]) => {
         const selected = transactions.filter(t => ids.includes(t.id))
@@ -224,72 +154,18 @@ export function TransactionsTable({
                 </div>
             </div>
 
-            {/* Hero Action Card - Pending Review */}
-            {stats.pending > 0 ? (
-                <div className="rounded-xl border-2 border-amber-200 dark:border-amber-900/50 bg-gradient-to-r from-amber-50 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/30 p-5">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="h-12 w-12 rounded-full bg-amber-100 dark:bg-amber-900/50 flex items-center justify-center shrink-0">
-                                <AlertCircle className="h-6 w-6 text-amber-600 dark:text-amber-400" />
-                            </div>
-                            <div>
-                                <div className="flex items-baseline gap-2">
-                                    <span className="text-3xl font-bold text-amber-700 dark:text-amber-300">{stats.pending}</span>
-                                    <span className="text-amber-600 dark:text-amber-400 font-medium">transaktioner att granska</span>
-                                </div>
-                                <p className="text-sm text-amber-600/80 dark:text-amber-400/70 mt-0.5">
-                                    Kräver kvitto eller bokföring innan periodbokslut
-                                </p>
-                            </div>
-                        </div>
-                        <Button
-                            variant="outline"
-                            className="border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/50 shrink-0"
-                            onClick={() => filter.setStatusFilter([TRANSACTION_STATUSES.TO_RECORD, TRANSACTION_STATUSES.MISSING_DOCUMENTATION])}
-                        >
-                            Visa alla
-                            <ChevronRight className="h-4 w-4 ml-1" />
-                        </Button>
-                    </div>
-                </div>
-            ) : (
-                <div className="rounded-xl border-2 border-green-200 dark:border-green-900/50 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-5">
-                    <div className="flex items-center gap-4">
-                        <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                            <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                        </div>
-                        <div>
-                            <span className="text-lg font-semibold text-green-700 dark:text-green-300">Allt är i ordning!</span>
-                            <p className="text-sm text-green-600/80 dark:text-green-400/70">Alla transaktioner är granskade och bokförda</p>
-                        </div>
-                    </div>
-                </div>
-            )}
+            {/* Status Hero */}
+            <StatusHero
+                pendingCount={stats.pending}
+                onViewPending={() => filter.setStatusFilter([TRANSACTION_STATUSES.TO_RECORD, TRANSACTION_STATUSES.MISSING_DOCUMENTATION])}
+            />
 
-            {/* Secondary Stats */}
-            <div className="grid grid-cols-3 gap-4">
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <ArrowRightLeft className="h-5 w-5 text-muted-foreground" />
-                    <div>
-                        <p className="text-2xl font-bold tabular-nums">{stats.totalCount}</p>
-                        <p className="text-xs text-muted-foreground">{text.stats.totalTransactions}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <TrendingUp className="h-5 w-5 text-green-600 dark:text-green-400" />
-                    <div>
-                        <p className="text-2xl font-bold tabular-nums text-green-600 dark:text-green-400">{formatCurrency(stats.income)}</p>
-                        <p className="text-xs text-muted-foreground">{text.stats.income}</p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
-                    <TrendingDown className="h-5 w-5 text-red-600 dark:text-red-400" />
-                    <div>
-                        <p className="text-2xl font-bold tabular-nums text-red-600 dark:text-red-400">{formatCurrency(stats.expenses)}</p>
-                        <p className="text-xs text-muted-foreground">{text.stats.expenses}</p>
-                    </div>
-                </div>
-            </div>
+            {/* Stats Overview */}
+            <StatsOverview
+                totalCount={stats.totalCount}
+                income={stats.income}
+                expenses={stats.expenses}
+            />
 
             <NewTransactionDialog
                 open={newTransactionDialogOpen}
@@ -468,4 +344,6 @@ export function TransactionsTable({
             />
         </div>
     )
-}
+})
+
+TransactionsTable.displayName = 'TransactionsTable'

@@ -34,18 +34,20 @@ const defaultState = {
 // ============================================================================
 
 export const db = {
-    get: async () => {
+    get: async (options?: { limit?: number }) => {
         // Build the full "SimulatedDB" object by querying all tables
-        // This is inefficient but maintains compatibility with the existing "load everything" pattern
+        // PERFORMANCE: Added default pagination limits to prevent loading entire database
         const supabase = getSupabaseAdmin();
+        const defaultLimit = options?.limit ?? 20; // Default to 20 records per table to optimize initial load
+
         // @ts-ignore
         const [tx, rc, si, ver] = await Promise.all([
-            supabase.from('transactions').select('*').order('occurred_at', { ascending: false }),
-            supabase.from('receipts').select('*').order('captured_at', { ascending: false }),
+            supabase.from('transactions').select('*').order('occurred_at', { ascending: false }).limit(defaultLimit),
+            supabase.from('receipts').select('*').order('captured_at', { ascending: false }).limit(defaultLimit),
             // @ts-ignore
-            supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }),
+            supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }).limit(defaultLimit),
             // @ts-ignore
-            supabase.from('verifications').select('*').order('date', { ascending: false })
+            supabase.from('verifications').select('*').order('date', { ascending: false }).limit(defaultLimit)
         ]);
 
         return {
@@ -280,9 +282,12 @@ export const db = {
         return data || verification;
     },
 
-    getVerifications: async () => {
+    getVerifications: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        const { data } = await supabase.from('verifications').select('*').order('created_at', { ascending: false });
+        let query = supabase.from('verifications').select('*').order('created_at', { ascending: false });
+        if (limit) query = query.limit(limit);
+        else query = query.limit(50); // Default pagination
+        const { data } = await query;
         return data || [];
     },
 
@@ -294,12 +299,13 @@ export const db = {
     },
 
     // Inbox
-    getInboxItems: async () => {
+    getInboxItems: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase
             .from('inbox_items')
             .select('*')
-            .order('created_at', { ascending: false });
+            .order('created_at', { ascending: false })
+            .limit(limit ?? 50); // Default pagination
         if (error) console.error('getInboxItems error:', error);
         return (data || []).map((row: any) => ({
             id: row.id,
@@ -416,17 +422,42 @@ export const db = {
     },
 
     // Employees
-    getEmployees: async () => {
+    getEmployees: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('employees').select('*').order('name');
+        let query = supabase.from('employees').select('*').order('name');
+        if (limit) query = query.limit(limit);
+        else query = query.limit(100); // Default pagination for employees
+        const { data, error } = await query;
         if (error) console.error("Supabase Error (getEmployees):", error);
         return data || [];
     },
 
-    // Payslips
-    getPayslips: async () => {
+    addEmployee: async (employee: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('payslips').select('*, employees(*)').order('created_at', { ascending: false });
+        const { data, error } = await supabase.from('employees').insert({
+            name: employee.name,
+            role: employee.role,
+            email: employee.email,
+            salary: employee.salary,
+            status: employee.status || 'active',
+            employment_date: employee.employment_date || new Date().toISOString().split('T')[0]
+        }).select().single();
+
+        if (error) {
+            console.error("Supabase Error (addEmployee):", error);
+            throw new Error(`Failed to add employee: ${error.message}`);
+        }
+        return data;
+    },
+
+
+    // Payslips
+    getPayslips: async (limit?: number) => {
+        const supabase = getSupabaseAdmin();
+        let query = supabase.from('payslips').select('*, employees(*)').order('created_at', { ascending: false });
+        if (limit) query = query.limit(limit);
+        else query = query.limit(50); // Default pagination
+        const { data, error } = await query;
         if (error) console.error("Supabase Error (getPayslips):", error);
         return data || [];
     },
@@ -451,9 +482,12 @@ export const db = {
     },
 
     // Corporate Compliance
-    getCorporateDocuments: async () => {
+    getCorporateDocuments: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        const { data } = await supabase.from('corporate_documents').select('*').order('date', { ascending: false });
+        let query = supabase.from('corporate_documents').select('*').order('date', { ascending: false });
+        if (limit) query = query.limit(limit);
+        else query = query.limit(50); // Default pagination
+        const { data } = await query;
         return data || [];
     },
 
@@ -474,9 +508,12 @@ export const db = {
         return data || doc;
     },
 
-    getShareholders: async () => {
+    getShareholders: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        const { data } = await supabase.from('shareholders').select('*').order('shares_count', { ascending: false });
+        let query = supabase.from('shareholders').select('*').order('shares_count', { ascending: false });
+        if (limit) query = query.limit(limit);
+        else query = query.limit(100); // Default pagination
+        const { data } = await query;
         return data || [];
     },
 
@@ -504,6 +541,51 @@ export const db = {
     },
 
     // ============================================================================
+    // Planning & Roadmaps
+    // ============================================================================
+
+    getRoadmaps: async (userId: string) => {
+        const supabase = getSupabaseAdmin();
+        // Get active roadmaps with their steps
+        const { data, error } = await supabase
+            .from('roadmaps')
+            .select('*, steps:roadmap_steps(*)')
+            .eq('user_id', userId)
+            .eq('status', 'active')
+            .order('created_at', { ascending: false });
+
+        if (error) console.error("Supabase Error (getRoadmaps):", error);
+        return data || [];
+    },
+
+    // ============================================================================
+    // KPI / Status Aggregation (for AI Context)
+    // ============================================================================
+
+    getCompanyKPIs: async () => {
+        // Simplified KPI fetcher for AI context
+        // In a real app, this would do proper aggregation queries
+        const supabase = getSupabaseAdmin();
+
+        // Parallel queries for speed
+        // @ts-ignore
+        const [tx, invoices, inbox] = await Promise.all([
+            supabase.from('transactions').select('amount, status').limit(100), // Last 100 tx
+            // @ts-ignore
+            supabase.from('supplier_invoices').select('amount, due_date, status').eq('status', 'unpaid'),
+            supabase.from('inbox_items').select('count', { count: 'exact', head: true }).eq('read', false)
+        ]);
+
+        return {
+            recent_transactions_count: tx.data?.length || 0,
+            unpaid_invoices_count: invoices.data?.length || 0,
+            unread_inbox_count: inbox.count || 0,
+            last_sync: new Date().toISOString()
+        };
+    },
+
+
+    // ============================================================================
     // Chat Persistence
     // ============================================================================
 
@@ -517,10 +599,11 @@ export const db = {
         return data;
     },
 
-    getConversations: async (userId?: string) => {
+    getConversations: async (userId?: string, limit?: number) => {
         const supabase = getSupabaseAdmin();
         let query = supabase.from('conversations').select('*').order('updated_at', { ascending: false });
         if (userId) query = query.eq('user_id', userId);
+        query = query.limit(limit ?? 50); // Default pagination for conversations
         const { data, error } = await query;
         if (error) console.error("Supabase Error (getConversations):", error);
         return data || [];

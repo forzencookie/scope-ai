@@ -40,6 +40,7 @@ export type CorporateActionType =
     | 'capital_change'    // Kapitalförändring
     | 'authority_filing'  // Myndighetsanmälan
     | 'statute_change'    // Bolagsordningsändring
+    | 'roadmap'           // Färdplan/Planering
 
 /**
  * Actor who triggered the event
@@ -230,4 +231,5 @@ export const corporateActionTypeMeta: Record<CorporateActionType, {
     capital_change: { label: 'Kapitalförändring', icon: 'TrendingUp' },
     authority_filing: { label: 'Myndighetsanmälan', icon: 'Building2' },
     statute_change: { label: 'Bolagsordningsändring', icon: 'FileText' },
+    roadmap: { label: 'Ny färdplan', icon: 'Map' },
 }

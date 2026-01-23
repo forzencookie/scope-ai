@@ -99,19 +99,36 @@ export interface AIToolResult<T = unknown> {
 export interface AIDisplayInstruction {
     /** Component type to render */
     component:
+    // Tables
     | 'TransactionsTable'
     | 'ReceiptsTable'
     | 'PayslipsTable'
+    | 'EmployeeList'
+    | 'DeadlinesList'
+    // Summaries
     | 'VatSummary'
     | 'BalanceSheet'
     | 'IncomeStatement'
-    | 'EmployeeList'
-    | 'InvoicePreview'
-    | 'DeadlinesList'
     | 'CompanyStats'
+    // Cards (simple previews)
     | 'ReceiptCard'
     | 'TransactionCard'
     | 'TaskChecklist'
+    | 'InvoicePreview'
+    // Document Previews (PDF-ready, sendable)
+    | 'PayslipPreview'
+    | 'BoardMinutesPreview'
+    | 'ShareRegisterPreview'
+    | 'FinancialReportPreview'
+    | 'DividendPreview'
+    | 'MeetingMinutesPreview'
+    // Form Previews (Authority submissions)
+    | 'VATFormPreview'
+    | 'AGIFormPreview'
+    | 'TaxDeclarationPreview'
+    | 'K10FormPreview'
+    | 'NEFormPreview'
+    | 'AnnualReportPreview'
 
     /** Props to pass to the component */
     props: Record<string, unknown>

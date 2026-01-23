@@ -1,6 +1,6 @@
 // ============================================
 // useEvents Hook
-// React hook for accessing event timeline
+// React hook for accessing event timeline via Supabase
 // ============================================
 
 'use client'
@@ -29,9 +29,9 @@ export interface UseEventsReturn {
     /** Update filters */
     setFilters: (filters: EventFilters) => void
     /** Refresh events from storage */
-    refresh: () => void
+    refresh: () => Promise<void>
     /** Emit a new event */
-    emit: (input: CreateEventInput) => HändelseEvent
+    emit: (input: CreateEventInput) => Promise<HändelseEvent | null>
     /** Convenience: emit AI event */
     emitAI: typeof emitAIEvent
     /** Convenience: emit user event */
@@ -40,6 +40,10 @@ export interface UseEventsReturn {
     emitSystem: typeof emitSystemEvent
     /** Convenience: emit authority event */
     emitAuthority: typeof emitAuthorityEvent
+    /** Loading state */
+    isLoading: boolean
+    /** Error state */
+    error: Error | null
 }
 
 /**
@@ -51,12 +55,26 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
         ai: 0, user: 0, system: 0, document: 0, authority: 0,
     })
     const [filters, setFilters] = useState<EventFilters>(initialFilters || {})
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
 
     // Load events
-    const refresh = useCallback(() => {
-        const allEvents = getEvents(filters)
-        setEvents(allEvents)
-        setCountsBySource(getEventCountsBySource())
+    const refresh = useCallback(async () => {
+        setIsLoading(true)
+        setError(null)
+        try {
+            const [allEvents, counts] = await Promise.all([
+                getEvents(filters),
+                getEventCountsBySource()
+            ])
+            setEvents(allEvents)
+            setCountsBySource(counts)
+        } catch (err) {
+            console.error('Failed to fetch events:', err)
+            setError(err instanceof Error ? err : new Error('Failed to fetch events'))
+        } finally {
+            setIsLoading(false)
+        }
     }, [filters])
 
     // Initial load and when filters change
@@ -64,7 +82,7 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
         refresh()
     }, [refresh])
 
-    // Listen for new events
+    // Listen for new events (realtime or local optimistics)
     useEffect(() => {
         const handleNewEvent = () => {
             refresh()
@@ -75,8 +93,8 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
     }, [refresh])
 
     // Emit wrapper that also refreshes
-    const emit = useCallback((input: CreateEventInput) => {
-        const event = emitEvent(input)
+    const emit = useCallback(async (input: CreateEventInput) => {
+        const event = await emitEvent(input)
         // The custom event listener will trigger refresh
         return event
     }, [])
@@ -93,24 +111,34 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
         emitUser: emitUserEvent,
         emitSystem: emitSystemEvent,
         emitAuthority: emitAuthorityEvent,
+        isLoading,
+        error
     }
 }
 
 /**
- * Get a single event by ID
+ * Get a single event by ID (helper, though in a real app might use a separate service call)
  */
-export function useEvent(id: string): HändelseEvent | null {
+export function useEvent(id: string): { event: HändelseEvent | null, isLoading: boolean } {
     const [event, setEvent] = useState<HändelseEvent | null>(null)
+    const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
-        const events = getEvents()
-        const found = events.find(e => e.id === id)
-        setEvent(found || null)
+        // Quick improvement: fetch single event from DB instead of filtering all
+        // For now, reusing getEvents for simplicity of migration
+        async function fetchEvent() {
+            setIsLoading(true)
+            const events = await getEvents()
+            const found = events.find(e => e.id === id)
+            setEvent(found || null)
+            setIsLoading(false)
+        }
+
+        fetchEvent()
     }, [id])
 
-    return event
+    return { event, isLoading }
 }
 
 // Re-export types for convenience
 export type { CreateEventInput } from '@/types/events'
-

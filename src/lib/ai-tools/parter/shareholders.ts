@@ -28,9 +28,25 @@ export const getShareholdersTool = defineTool<Record<string, never>, any[]>({
                     data: shareholders,
                     message: `Aktieboken innehåller ${shareholders.length} aktieägare.`,
                     display: {
-                        component: 'ShareholderList' as any,
-                        props: { shareholders },
-                        title: 'Aktiebok',
+                        component: 'ShareRegisterPreview',
+                        title: 'Utdrag ur Aktiebok',
+                        props: {
+                            data: {
+                                companyName: "Din Företag AB",
+                                orgNumber: "556123-4567",
+                                date: new Date().toISOString().split('T')[0],
+                                totalShares: shareholders.reduce((sum: number, s: any) => sum + (s.sharesCount || 0), 0),
+                                totalCapital: shareholders.reduce((sum: number, s: any) => sum + (s.sharesCount || 0), 0) * 100, // Mock quota value
+                                shareholders: shareholders.map((s: any) => ({
+                                    ...s,
+                                    personalOrOrgNumber: s.ssnOrgNr,
+                                    shareCount: s.sharesCount,
+                                    shareClass: s.shareClass || 'A',
+                                    votingRights: s.shareClass === 'A' ? 10 : 1,
+                                    acquisitionDate: "2024-01-01" // Mock
+                                }))
+                            }
+                        },
                         fullViewRoute: '/dashboard/parter?tab=aktiebok',
                     },
                 }

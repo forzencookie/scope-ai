@@ -1,24 +1,15 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo, useEffect, useCallback } from "react"
+import { useState, useMemo, useEffect, useCallback, memo } from "react"
 import {
     Plus,
     FileText,
-    Clock,
-    AlertTriangle,
-    TrendingUp,
-    CheckCircle2,
-    Eye,
-    Banknote,
     Calendar,
     ChevronDown,
-    Send,
-    Mail,
     ArrowDownLeft,
     ArrowUpRight,
 } from "lucide-react"
-import { cn, formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { FilterTabs } from "@/components/ui/filter-tabs"
@@ -30,152 +21,24 @@ import {
     DropdownMenu,
     DropdownMenuTrigger,
     DropdownMenuContent,
-    DropdownMenuLabel,
     DropdownMenuItem,
+    DropdownMenuLabel,
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
-import { KanbanBoard, KanbanColumn, KanbanCard } from "@/components/shared/kanban"
-import { InvoiceCreateDialog } from "./dialogs/faktura"
-import { SupplierInvoiceDialog } from "./dialogs/leverantor"
-import { invoiceService, type InvoiceStats } from "@/lib/services/invoice-service"
+import { KanbanBoard, KanbanColumn } from "@/components/shared/kanban"
+import { InvoiceCreateDialog } from "../dialogs/faktura"
+import { SupplierInvoiceDialog } from "../dialogs/leverantor"
+import { invoiceService } from "@/lib/services/invoice-service"
 
-// =============================================================================
-// Types
-// =============================================================================
+// Imported newly created components
+import { UnifiedInvoice, ViewFilter, PeriodFilter } from "./fakturor/types"
+import { UNIFIED_COLUMNS, CUSTOMER_COLUMNS, SUPPLIER_COLUMNS } from "./fakturor/constants"
+import { InvoicesEmptyState } from "./fakturor/components/InvoicesEmptyState"
+import { InvoiceSummaryBar } from "./fakturor/components/InvoiceSummaryBar"
+import { InvoiceCard } from "./fakturor/components/InvoiceCard"
 
-type InvoiceDirection = "in" | "out"
-type ViewFilter = "all" | "kundfakturor" | "leverantorsfakturor"
-
-interface UnifiedInvoice {
-    id: string
-    direction: InvoiceDirection
-    number: string
-    counterparty: string
-    amount: number
-    vatAmount?: number
-    totalAmount: number
-    dueDate: string
-    issueDate: string
-    status: string
-    // Original data for actions
-    originalCustomerInvoice?: Invoice
-    originalSupplierInvoice?: SupplierInvoice
-}
-
-// =============================================================================
-// Column Configurations
-// =============================================================================
-
-// Unified columns for mixed view
-const UNIFIED_COLUMNS = [
-    { id: "pending", title: "Att hantera", statuses: [INVOICE_STATUS_LABELS.SENT, "mottagen", "attesterad"] },
-    { id: "overdue", title: "Förfallna", statuses: [INVOICE_STATUS_LABELS.OVERDUE, "förfallen"] },
-    { id: "paid", title: "Betalda", statuses: [INVOICE_STATUS_LABELS.PAID, "betald"] },
-    { id: "draft", title: "Utkast", statuses: [INVOICE_STATUS_LABELS.DRAFT] },
-]
-
-// Customer invoice columns
-const CUSTOMER_COLUMNS = [
-    { id: "draft", title: "Utkast", status: INVOICE_STATUS_LABELS.DRAFT },
-    { id: "sent", title: "Skickade", status: INVOICE_STATUS_LABELS.SENT },
-    { id: "overdue", title: "Förfallna", status: INVOICE_STATUS_LABELS.OVERDUE },
-    { id: "paid", title: "Betalda", status: INVOICE_STATUS_LABELS.PAID },
-]
-
-// Supplier invoice columns
-const SUPPLIER_COLUMNS = [
-    { id: "mottagen", title: "Mottagna", status: "mottagen" },
-    { id: "attesterad", title: "Attesterade", status: "attesterad" },
-    { id: "forfallen", title: "Förfallna", status: "förfallen" },
-    { id: "betald", title: "Betalda", status: "betald" },
-]
-
-// =============================================================================
-// Empty State Component
-// =============================================================================
-
-function InvoicesEmptyState({ hasFilters }: { hasFilters: boolean }) {
-    return (
-        <div className="flex flex-col items-center justify-center py-12 text-center">
-            <div className="h-16 w-16 rounded-full bg-muted/50 flex items-center justify-center mb-4">
-                <FileText className="h-8 w-8 text-muted-foreground/50" />
-            </div>
-            <h3 className="font-medium text-lg text-foreground mb-1">
-                {hasFilters ? "Inga fakturor matchar filtret" : "Inga fakturor än"}
-            </h3>
-            <p className="text-sm text-muted-foreground max-w-sm">
-                {hasFilters
-                    ? "Prova att ändra dina filter eller söktermer för att hitta vad du letar efter."
-                    : "Här samlas alla dina kund- och leverantörsfakturor när du börjar skapa dem."}
-            </p>
-        </div>
-    )
-}
-
-// =============================================================================
-// Compact Summary Bar Component
-// =============================================================================
-
-function InvoiceSummaryBar({
-    incoming,
-    outgoing,
-    overdueCount,
-}: {
-    incoming: number
-    outgoing: number
-    overdueCount: number
-}) {
-    return (
-        <div className="flex items-center gap-6 py-3 px-4 bg-muted/30 rounded-lg border border-border/40">
-            {/* Incoming */}
-            <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-md bg-green-500/10 flex items-center justify-center">
-                    <ArrowDownLeft className="h-3.5 w-3.5 text-green-500" />
-                </div>
-                <div>
-                    <span className="text-xs text-muted-foreground">Att få</span>
-                    <p className="text-sm font-semibold tabular-nums">{formatCurrency(incoming)}</p>
-                </div>
-            </div>
-
-            <div className="h-8 w-px bg-border/60" />
-
-            {/* Outgoing */}
-            <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-md bg-red-500/10 flex items-center justify-center">
-                    <ArrowUpRight className="h-3.5 w-3.5 text-red-500" />
-                </div>
-                <div>
-                    <span className="text-xs text-muted-foreground">Att betala</span>
-                    <p className="text-sm font-semibold tabular-nums">{formatCurrency(outgoing)}</p>
-                </div>
-            </div>
-
-            {/* Overdue warning - only show if there are overdue invoices */}
-            {overdueCount > 0 && (
-                <>
-                    <div className="h-8 w-px bg-border/60" />
-                    <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-md bg-amber-500/10 flex items-center justify-center">
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                        </div>
-                        <div>
-                            <span className="text-xs text-muted-foreground">Förfallna</span>
-                            <p className="text-sm font-semibold">{overdueCount} st</p>
-                        </div>
-                    </div>
-                </>
-            )}
-        </div>
-    )
-}
-
-
-// =============================================================================
-// Main Component
-// =============================================================================
-
-export function UnifiedInvoicesView() {
+// Memoized to prevent unnecessary re-renders when parent state changes
+export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const { text } = useTextMode()
     const toast = useToast()
 
@@ -185,37 +48,21 @@ export function UnifiedInvoicesView() {
     // invoiceStats state removed
     const [isLoading, setIsLoading] = useState(true)
     const [viewFilter, setViewFilter] = useState<ViewFilter>("all")
-    const [periodFilter, setPeriodFilter] = useState<"week" | "month" | "quarter" | "all">("all")
+    const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all")
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false)
     const [supplierDialogOpen, setSupplierDialogOpen] = useState(false)
 
-    const periodLabels = {
-        week: "Denna vecka",
-        month: "Denna månad",
-        quarter: "Detta kvartal",
-        all: "Alla"
-    }
-
-    const viewFilterLabels: Record<ViewFilter, string> = {
-        all: "Alla fakturor",
-        kundfakturor: "Kundfakturor",
-        leverantorsfakturor: "Leverantörsfakturor"
-    }
-
     // =============================================================================
-    // Data Fetching - Using invoiceService for single source of truth
+    // Data Fetching
     // =============================================================================
 
     const fetchInvoices = useCallback(async () => {
         try {
-            // Parallel fetch: customer invoices and supplier invoices only
-            // Removed getStats call to ensure single source of truth
             const [customerData, supplierData] = await Promise.all([
                 invoiceService.getCustomerInvoices(),
                 invoiceService.getSupplierInvoices()
             ])
 
-            // Map service types to component types
             setCustomerInvoices(customerData.invoices.map(inv => ({
                 id: inv.id,
                 customer: inv.customer,
@@ -224,7 +71,7 @@ export function UnifiedInvoicesView() {
                 dueDate: inv.dueDate,
                 amount: inv.amount,
                 vatAmount: inv.vatAmount,
-                status: inv.status as any, // Service returns string, component expects InvoiceStatus union
+                status: inv.status as any,
             })))
 
             setSupplierInvoices(supplierData.invoices.map(inv => ({
@@ -232,7 +79,7 @@ export function UnifiedInvoicesView() {
                 invoiceNumber: inv.invoiceNumber,
                 supplierName: inv.supplierName,
                 amount: inv.amount,
-                vatAmount: inv.vatAmount ?? 0, // Default to 0 for type compatibility
+                vatAmount: inv.vatAmount ?? 0,
                 totalAmount: inv.totalAmount,
                 dueDate: inv.dueDate,
                 invoiceDate: inv.invoiceDate,
@@ -320,23 +167,18 @@ export function UnifiedInvoicesView() {
     }, [customerInvoices, supplierInvoices, viewFilter, periodFilter])
 
     // =============================================================================
-    // Stats - Calculated Client-Side from Data
+    // Stats
     // =============================================================================
 
     const stats = useMemo(() => {
-        // Calculate incoming (Customer Invoices that are NOT paid)
-        // Note: Logic logic might vary, usually "Draft" doesn't count as "Incoming" yet? 
-        // Let's assume Sent/Overdue counts. Draft usually excluded from financial stats.
         const incoming = customerInvoices
             .filter(i => i.status === INVOICE_STATUS_LABELS.SENT || i.status === INVOICE_STATUS_LABELS.OVERDUE)
-            .reduce((sum, start) => sum + (start.totalAmount || start.amount * 1.25), 0) // Fallback calculation if totalAmount missing
+            .reduce((sum, start) => sum + (start.totalAmount || start.amount * 1.25), 0)
 
-        // Calculate outgoing (Supplier Invoices that are NOT paid)
         const outgoing = supplierInvoices
             .filter(i => i.status !== 'betald')
             .reduce((sum, i) => sum + (i.totalAmount || i.amount), 0)
 
-        // Calculate overdue
         const today = new Date().toISOString().split('T')[0]
         const overdueCustomer = customerInvoices.filter(i => i.status === INVOICE_STATUS_LABELS.OVERDUE || (i.status === INVOICE_STATUS_LABELS.SENT && i.dueDate < today))
         const overdueSupplier = supplierInvoices.filter(i => i.status === 'förfallen' || (i.status !== 'betald' && i.dueDate < today))
@@ -344,8 +186,6 @@ export function UnifiedInvoicesView() {
         const overdueCount = overdueCustomer.length + overdueSupplier.length
         const overdueAmount = overdueCustomer.reduce((sum, i) => sum + (i.totalAmount || 0), 0) + overdueSupplier.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
-        // Calculate paid (This month? Or total all time? Usually "Paid this period")
-        // For now, let's just sum all paid for simplicity or consistent with previous "Total Paid"
         const paidCustomer = customerInvoices
             .filter(i => i.status === INVOICE_STATUS_LABELS.PAID)
             .reduce((sum, i) => sum + (i.totalAmount || 0), 0)
@@ -428,87 +268,19 @@ export function UnifiedInvoicesView() {
     }
 
     // =============================================================================
-    // Render Helpers
+    // Render
     // =============================================================================
 
-    const renderInvoiceCard = (invoice: UnifiedInvoice) => {
-        const isCustomer = invoice.direction === "in"
-        const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
-
-        return (
-            <KanbanCard
-                key={invoice.id}
-                title={
-                    <span className="flex items-center gap-1.5">
-                        <DirectionIcon className={cn(
-                            "h-3.5 w-3.5",
-                            isCustomer ? "text-green-600" : "text-red-600"
-                        )} />
-                        {invoice.number}
-                    </span>
-                }
-                subtitle={invoice.counterparty}
-                amount={isCustomer ? invoice.totalAmount : -invoice.totalAmount}
-                date={invoice.dueDate}
-                isOverdue={invoice.status === INVOICE_STATUS_LABELS.OVERDUE || invoice.status === "förfallen"}
-            >
-                <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
-                <DropdownMenuItem>
-                    <Eye className="h-3.5 w-3.5 mr-2" />
-                    Visa detaljer
-                </DropdownMenuItem>
-
-                {/* Customer invoice actions */}
-                {isCustomer && invoice.originalCustomerInvoice && (
-                    <>
-                        {invoice.status === INVOICE_STATUS_LABELS.DRAFT && (
-                            <DropdownMenuItem onClick={() => handleSendInvoice(invoice.originalCustomerInvoice!.id)}>
-                                <Send className="h-3.5 w-3.5 mr-2" />
-                                Skicka faktura
-                            </DropdownMenuItem>
-                        )}
-                        {(invoice.status === INVOICE_STATUS_LABELS.SENT || invoice.status === INVOICE_STATUS_LABELS.OVERDUE) && (
-                            <>
-                                <DropdownMenuItem onClick={() => handleMarkCustomerPaid(invoice.originalCustomerInvoice!.id)}>
-                                    <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                                    Markera betald
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
-                                    <Mail className="h-3.5 w-3.5 mr-2" />
-                                    Skicka påminnelse
-                                </DropdownMenuItem>
-                            </>
-                        )}
-                    </>
-                )}
-
-                {/* Supplier invoice actions */}
-                {!isCustomer && invoice.originalSupplierInvoice && (
-                    <>
-                        {invoice.status === "mottagen" && (
-                            <DropdownMenuItem onClick={() => handleApproveSupplier(invoice.originalSupplierInvoice!.id)}>
-                                <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                                Attestera
-                            </DropdownMenuItem>
-                        )}
-                        {invoice.status === "attesterad" && (
-                            <DropdownMenuItem onClick={() => handleMarkSupplierPaid(invoice.originalSupplierInvoice!.id)}>
-                                <Banknote className="h-3.5 w-3.5 mr-2" />
-                                Markera betald
-                            </DropdownMenuItem>
-                        )}
-                    </>
-                )}
-
-                <DropdownMenuSeparator />
-                <DropdownMenuItem className="text-red-600">Radera</DropdownMenuItem>
-            </KanbanCard>
-        )
-    }
-
-    // =============================================================================
-    // Kanban View Renderers
-    // =============================================================================
+    const renderCard = (invoice: UnifiedInvoice) => (
+        <InvoiceCard
+            key={invoice.id}
+            invoice={invoice}
+            onSend={handleSendInvoice}
+            onMarkCustomerPaid={handleMarkCustomerPaid}
+            onApproveSupplier={handleApproveSupplier}
+            onMarkSupplierPaid={handleMarkSupplierPaid}
+        />
+    )
 
     const renderUnifiedKanban = () => (
         <KanbanBoard>
@@ -522,7 +294,7 @@ export function UnifiedInvoicesView() {
                         title={column.title}
                         count={columnInvoices.length}
                     >
-                        {columnInvoices.map(renderInvoiceCard)}
+                        {columnInvoices.map(renderCard)}
                     </KanbanColumn>
                 )
             })}
@@ -542,7 +314,7 @@ export function UnifiedInvoicesView() {
                         count={columnInvoices.length}
                         onAddNew={column.id === "draft" ? () => setCustomerDialogOpen(true) : undefined}
                     >
-                        {columnInvoices.map(renderInvoiceCard)}
+                        {columnInvoices.map(renderCard)}
                     </KanbanColumn>
                 )
             })}
@@ -562,16 +334,12 @@ export function UnifiedInvoicesView() {
                         count={columnInvoices.length}
                         onAddNew={column.id === "mottagen" ? () => setSupplierDialogOpen(true) : undefined}
                     >
-                        {columnInvoices.map(renderInvoiceCard)}
+                        {columnInvoices.map(renderCard)}
                     </KanbanColumn>
                 )
             })}
         </KanbanBoard>
     )
-
-    // =============================================================================
-    // Main Render
-    // =============================================================================
 
     return (
         <div className="w-full space-y-6">
@@ -644,8 +412,7 @@ export function UnifiedInvoicesView() {
                 </div>
             </div>
 
-
-            {/* Kanban - Different views based on filter */}
+            {/* Kanban */}
             {viewFilter === "all" && renderUnifiedKanban()}
             {viewFilter === "kundfakturor" && renderCustomerKanban()}
             {viewFilter === "leverantorsfakturor" && renderSupplierKanban()}
@@ -667,4 +434,6 @@ export function UnifiedInvoicesView() {
             />
         </div>
     )
-}
+})
+
+UnifiedInvoicesView.displayName = 'UnifiedInvoicesView'

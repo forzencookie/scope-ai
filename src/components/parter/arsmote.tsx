@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo } from "react"
+import { useState, useMemo, memo } from "react"
 import { formatDateLong, formatDate, cn } from "@/lib/utils"
 import {
   Vote,
@@ -91,7 +91,8 @@ const standardAgenda = [
   'Mötets avslutande',
 ]
 
-export function Arsmote() {
+// Memoized to prevent unnecessary re-renders
+export const Arsmote = memo(function Arsmote() {
   const { documents: realDocuments, isLoadingDocuments, addDocument } = useCompliance()
 
   const [searchQuery, setSearchQuery] = useState("")
@@ -756,4 +757,6 @@ export function Arsmote() {
       />
     </div>
   )
-}
+})
+
+Arsmote.displayName = 'Arsmote'

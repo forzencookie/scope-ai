@@ -33,10 +33,12 @@ import {
     countEventsByQuarter,
     filterEventsByQuarter,
     type Quarter,
+    RoadmapView,
 } from "@/components/handelser"
+import { Map } from "lucide-react"
 
 // View types
-type ViewType = "folders" | "timeline" | "calendar"
+type ViewType = "folders" | "timeline" | "calendar" | "roadmap"
 
 // Available years for the dropdown
 const currentYear = new Date().getFullYear()
@@ -44,7 +46,7 @@ const availableYears = [currentYear, currentYear - 1, currentYear - 2]
 
 function HandelserPageContent() {
     const lastUpdated = useLastUpdated()
-    const { events, countsBySource, emitAI, emitUser, emitSystem } = useEvents()
+    const { events, countsBySource, emitAI, emitUser, emitSystem, isLoading } = useEvents()
 
     // View state
     const [activeView, setActiveView] = useState<ViewType>("folders")
@@ -115,24 +117,22 @@ function HandelserPageContent() {
         setActiveView("folders")
     }, [])
 
-    // Seed with demo events on first mount if empty
+    // Seed with demo events on first mount if empty AND not loading
     useEffect(() => {
-        if (events.length === 0) {
-            setTimeout(() => {
-                emitAI('classified', 'AI klassificerade 12 transaktioner', 'bokföring', {
-                    metadata: { count: 12, confidence: 0.94 }
-                })
-            }, 100)
-            setTimeout(() => {
-                emitUser('submitted', 'Du skickade momsdeklaration Q4', 'skatt', {
-                    relatedTo: [{ type: 'declaration', id: 'moms-q4', label: 'Momsdeklaration Q4 2024' }]
-                })
-            }, 200)
-            setTimeout(() => {
-                emitSystem('closed', 'Räkenskapsåret 2024 stängdes', 'system')
-            }, 300)
+        if (!isLoading && events.length === 0) {
+            // Only seed if we're sure it's empty after trying to load
+
+            // NOTE: In production/Supabase mode, we might want to disable auto-seeding
+            // or perform it via a proper seed script. Keeping minimal generic seed for non-empty feel if truly empty.
+            /*
+           setTimeout(() => {
+               emitAI('classified', 'AI klassificerade 12 transaktioner', 'bokföring', {
+                   metadata: { count: 12, confidence: 0.94 }
+               })
+           }, 100)
+           */
         }
-    }, []) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [isLoading, events.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Source filter buttons
     const filterButtons: { source: EventSource | null; label: string }[] = [
@@ -149,6 +149,7 @@ function HandelserPageContent() {
         { id: "folders", label: "Mappar", icon: FolderOpen },
         { id: "timeline", label: "Tidslinje", icon: List },
         { id: "calendar", label: "Kalender", icon: Calendar },
+        { id: "roadmap", label: "Planering", icon: Map },
     ]
 
     return (
@@ -415,6 +416,11 @@ function HandelserPageContent() {
                                 setCalendarMonth(m)
                             }}
                         />
+                    )}
+
+                    {/* Roadmap View */}
+                    {activeView === "roadmap" && (
+                        <RoadmapView onCreateNew={() => setWizardOpen(true)} />
                     )}
                 </div>
             </div>

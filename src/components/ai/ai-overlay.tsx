@@ -236,9 +236,10 @@ interface CompleteStateProps {
 
 function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProps) {
     const hasConfirmation = !!output.confirmationRequired
+    const hasRichPreview = output.display?.component?.includes('Preview')
 
-    // If there's a confirmation, just show the card directly - no extra wrapper
-    if (hasConfirmation) {
+    // If there's a confirmation AND NO rich preview, show the simple card directly
+    if (hasConfirmation && !hasRichPreview) {
         return (
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
@@ -259,7 +260,7 @@ function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProp
         )
     }
 
-    // For other structured output (non-confirmation)
+    // For other structured output (non-confirmation OR rich preview confirmation)
     return (
         <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
@@ -342,7 +343,7 @@ function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProp
                     className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
                 >
                     <Check className="h-4 w-4" />
-                    Acceptera
+                    {hasConfirmation ? "Godkänn" : "Acceptera"}
                 </Button>
             </motion.div>
 

@@ -1,61 +1,25 @@
 "use client"
 
 import * as React from "react"
-import { useState, useMemo, useEffect, useCallback } from "react"
-import {
-    Calendar,
-    Search,
-    SlidersHorizontal,
-    Tag,
-    FileText,
-    Paperclip,
-    MoreHorizontal,
-    UploadCloud,
-    Building2,
-    X,
-    Banknote,
-    CheckCircle2,
-    Clock,
-    Link2,
-    BookOpen,
-    Plus,
-} from "lucide-react"
-import { cn, parseAmount, formatCurrency } from "@/lib/utils"
+import { useState, useMemo, useEffect, useCallback, memo } from "react"
+import { UploadCloud, Trash2, Download, Archive, BookOpen } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { InputGroup, InputGroupAddon, InputGroupInput, InputGroupText } from "@/components/ui/input-group"
-import { CategoryBadge, AmountText } from "@/components/ui/table-shell"
 import { SearchBar } from "@/components/ui/search-bar"
-
-import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import { AppStatusBadge } from "@/components/ui/status-badge"
-import { UnderlagDialog } from "./dialogs/underlag"
-import {
-    type ReceiptStatus,
-    RECEIPT_STATUSES
-} from "@/lib/status-types"
+import { UnderlagDialog } from "../dialogs/underlag"
+import { type ReceiptStatus, RECEIPT_STATUSES } from "@/lib/status-types"
 import { type Receipt } from "@/data/receipts"
-import { getReceiptIconForCategory, getReceiptIconColorForCategory } from "@/services/receipt-processor"
 import { useCompany } from "@/providers/company-provider"
 import { useTableData, commonSortHandlers } from "@/hooks/use-table"
 import { useTextMode } from "@/providers/text-mode-provider"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuLabel,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-    DropdownMenuCheckboxItem,
-} from "@/components/ui/dropdown-menu"
-
 import { useToast } from "@/components/ui/toast"
-import { Checkbox } from "@/components/ui/checkbox"
-import { BulkActionToolbar, useBulkSelection, type BulkAction } from "../shared/bulk-action-toolbar"
+import { BulkActionToolbar, useBulkSelection, type BulkAction } from "@/components/shared/bulk-action-toolbar"
 import { DeleteConfirmDialog, useDeleteConfirmation } from "@/components/shared/delete-confirm-dialog"
-import { Trash2, Download, Archive } from "lucide-react"
-import { BookingDialog, type BookingData } from "./dialogs/bokforing"
-import { receiptService, type ReceiptStats } from "@/lib/services/receipt-service"
+import { BookingDialog, type BookingData } from "../dialogs/bokforing"
+import { receiptService } from "@/lib/services/receipt-service"
+
+// New components
+import { ReceiptsDashboard } from "./kvitton/components/ReceiptsDashboard"
+import { ReceiptsGrid } from "./kvitton/components/ReceiptsGrid"
 
 // Sort handlers specific to receipts
 const receiptSortHandlers = {
@@ -63,19 +27,13 @@ const receiptSortHandlers = {
     amount: commonSortHandlers.amount as (a: Receipt, b: Receipt) => number,
 }
 
-export function ReceiptsTable() {
+// Memoized to prevent unnecessary re-renders when parent state changes
+export const ReceiptsTable = memo(function ReceiptsTable() {
     const { text } = useTextMode()
     const { company } = useCompany()
     const isInvoiceMethod = company?.accountingMethod === 'invoice'
     const [receipts, setReceipts] = useState<Receipt[]>([])
-    // receiptStats state removed
     const [isLoading, setIsLoading] = useState(true)
-
-    // ... (rest of state)
-
-    // ... (rest of state)
-
-    // ... (rest of component)
 
     // Dialog states
     const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
@@ -92,14 +50,11 @@ export function ReceiptsTable() {
     // Toast notifications
     const toast = useToast()
 
-    // Fetch receipts using receiptService for single source of truth
+    // Fetch receipts
     const fetchReceipts = useCallback(async () => {
         try {
-            // Fetch receipts list only. Stats are derived.
-            // Removed getStats call to ensure single source of truth
             const listData = await receiptService.getReceipts()
-
-            setReceipts(listData.receipts as any) // Service Receipt type compatible with component Receipt
+            setReceipts(listData.receipts as any)
         } catch (error) {
             console.error('Failed to fetch receipts:', error)
             setReceipts([])
@@ -108,12 +63,11 @@ export function ReceiptsTable() {
         }
     }, [])
 
-    // Initial fetch
     useEffect(() => {
         fetchReceipts()
     }, [fetchReceipts])
 
-    // Use the unified table data hook for filtering and sorting
+    // Table data
     const tableData = useTableData<Receipt>({
         filter: {
             searchFields: ['supplier', 'category'],
@@ -125,15 +79,13 @@ export function ReceiptsTable() {
         },
     })
 
-    // Process receipts through filter and sort
     const filteredReceipts = useMemo(() =>
         tableData.processItems(receipts),
         [tableData, receipts]
     )
 
-    // Stats - Calculated Client-Side from Data
+    // Stats
     const stats = useMemo(() => {
-        // Safe parsing of amount string or number
         const parse = (val: string | number) => {
             if (typeof val === 'number') return val
             return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0
@@ -141,12 +93,10 @@ export function ReceiptsTable() {
 
         const total = receipts.length
 
-        // Count matched/processed vs pending
-        // Adjust status checks based on RECEIPT_STATUSES definition in your codebase
         const matched = receipts.filter(r =>
             r.status === RECEIPT_STATUSES.MATCHED ||
             r.status === RECEIPT_STATUSES.PROCESSED ||
-            r.status === 'bokford' // Check if 'bokford' is a used string literal
+            r.status === 'bokford'
         )
         const matchedCount = matched.length
 
@@ -224,9 +174,8 @@ export function ReceiptsTable() {
 
     const handleBook = async (bookingData: BookingData) => {
         try {
-            // Optimistically update status
             setReceipts(prev => prev.map(r =>
-                r.id === bookingData.entityId ? { ...r, status: RECEIPT_STATUSES.PROCESSED } : r // Or 'Bokförd' if status allows
+                r.id === bookingData.entityId ? { ...r, status: RECEIPT_STATUSES.PROCESSED } : r
             ))
 
             await fetch(`/api/receipts/${bookingData.entityId}/book`, {
@@ -238,7 +187,6 @@ export function ReceiptsTable() {
             setBookingDialogOpen(false)
             setSelectedReceiptForBooking(null)
 
-            // Clear selection if needed
             if (bulkSelection.isSelected(bookingData.entityId)) {
                 bulkSelection.toggleItem(bookingData.entityId)
             }
@@ -251,7 +199,6 @@ export function ReceiptsTable() {
     }
 
     const handleBulkBooking = (ids: string[]) => {
-        // Only support booking the first selected for now via the dialog
         const firstId = ids[0]
         const receipt = receipts.find(r => r.id === firstId)
         if (receipt) openBookingDialog(receipt)
@@ -305,7 +252,6 @@ export function ReceiptsTable() {
 
     return (
         <div className="w-full space-y-6">
-            {/* Page Heading */}
             <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
                 <div>
                     <h2 className="text-2xl font-bold tracking-tight">{text.receipts.title}</h2>
@@ -317,99 +263,16 @@ export function ReceiptsTable() {
                 </Button>
             </div>
 
-            {/* Unified Dashboard Card (Medlemsregister style) */}
-            <div className="rounded-xl border bg-muted/20 p-5">
-                <div className="flex flex-col lg:flex-row gap-6">
-                    {/* Left: AI Matching Progress */}
-                    <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-3">
-                            <Link2 className="h-5 w-5 text-muted-foreground" />
-                            <h3 className="font-semibold">AI-matchning</h3>
-                        </div>
+            <ReceiptsDashboard
+                stats={stats}
+                onViewUnmatched={() => tableData.setStatusFilter([RECEIPT_STATUSES.PENDING])}
+            />
 
-                        {/* Progress Bar */}
-                        <div className="mb-4">
-                            <div className="flex items-center justify-between mb-1.5">
-                                <span className="text-sm text-muted-foreground">
-                                    {stats.matchedCount} av {stats.total} matchade
-                                </span>
-                                <span className="text-sm font-medium">
-                                    {stats.total > 0
-                                        ? Math.round((stats.matchedCount / stats.total) * 100)
-                                        : 0}%
-                                </span>
-                            </div>
-                            <div className="h-3 rounded-full bg-muted overflow-hidden">
-                                <div
-                                    className="h-full bg-foreground/80 rounded-full transition-all duration-500"
-                                    style={{
-                                        width: stats.total > 0
-                                            ? `${(stats.matchedCount / stats.total) * 100}%`
-                                            : '0%'
-                                    }}
-                                />
-                            </div>
-                            <div className="flex justify-between mt-2 text-sm">
-                                <span className="font-medium">
-                                    {formatCurrency(stats.totalAmount)} totalt
-                                </span>
-                                {stats.unmatchedCount > 0 && (
-                                    <button
-                                        className="text-muted-foreground hover:text-foreground transition-colors"
-                                        onClick={() => tableData.setStatusFilter([RECEIPT_STATUSES.PENDING])}
-                                    >
-                                        {stats.unmatchedCount} omatchade →
-                                    </button>
-                                )}
-                            </div>
-                        </div>
-
-                        {/* Status Breakdown */}
-                        <div className="flex items-center gap-4 pt-3 border-t border-border/50">
-                            <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-foreground" />
-                                <span className="text-sm">{stats.matchedCount} matchade</span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <div className="h-3 w-3 rounded-full bg-foreground/50" />
-                                <span className="text-sm">{stats.unmatchedCount} omatchade</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Right: Key Metrics Grid */}
-                    <div className="grid grid-cols-2 gap-3 lg:w-auto lg:min-w-[280px]">
-                        <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-                            <FileText className="h-4 w-4 text-muted-foreground mb-1.5" />
-                            <p className="text-2xl font-bold tabular-nums">{stats.total}</p>
-                            <p className="text-xs text-muted-foreground">Totalt</p>
-                        </div>
-                        <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-                            <CheckCircle2 className="h-4 w-4 text-muted-foreground mb-1.5" />
-                            <p className="text-2xl font-bold tabular-nums">{stats.matchedCount}</p>
-                            <p className="text-xs text-muted-foreground">Matchade</p>
-                        </div>
-                        <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-                            <Banknote className="h-4 w-4 text-muted-foreground mb-1.5" />
-                            <p className="text-2xl font-bold tabular-nums">{formatCurrency(stats.totalAmount)}</p>
-                            <p className="text-xs text-muted-foreground">Belopp</p>
-                        </div>
-                        <div className="flex flex-col p-3.5 rounded-lg bg-background/60 border border-border/50">
-                            <Clock className="h-4 w-4 text-muted-foreground mb-1.5" />
-                            <p className="text-2xl font-bold tabular-nums">{stats.unmatchedCount}</p>
-                            <p className="text-xs text-muted-foreground">Omatchade</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            {/* Delete Confirmation Dialog */}
             <DeleteConfirmDialog
                 {...deleteConfirmation.dialogProps}
                 onConfirm={handleConfirmDelete}
             />
 
-            {/* Upload/Create Dialog */}
             <UnderlagDialog
                 open={uploadDialogOpen}
                 onOpenChange={setUploadDialogOpen}
@@ -417,7 +280,6 @@ export function ReceiptsTable() {
                 onSave={handleSaveReceipt}
             />
 
-            {/* Details Dialog */}
             <UnderlagDialog
                 open={detailsDialogOpen}
                 onOpenChange={setDetailsDialogOpen}
@@ -425,7 +287,6 @@ export function ReceiptsTable() {
                 receipt={selectedReceipt || undefined}
             />
 
-            {/* Booking Dialog */}
             <BookingDialog
                 open={bookingDialogOpen}
                 onOpenChange={setBookingDialogOpen}
@@ -441,11 +302,9 @@ export function ReceiptsTable() {
                 onBook={handleBook}
             />
 
-            {/* Table Section */}
             <div>
                 <div className="border-b-2 border-border/60" />
 
-                {/* Sub-header with title and actions */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3">
                     <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.receipts.allReceipts}</h3>
                     <div className="flex items-center gap-2">
@@ -454,121 +313,22 @@ export function ReceiptsTable() {
                             value={tableData.searchQuery}
                             onChange={tableData.setSearchQuery}
                         />
-                        {/* Filter could go here if needed */}
                     </div>
                 </div>
 
-                <div className="w-full overflow-x-auto pb-2">
-                    <div className="min-w-[800px] px-2">
-                        {/* GridTable Header */}
-                        <GridTableHeader
-                            columns={[
-                                { label: text.receipts.supplier, icon: Building2, span: 3 },
-                                { label: text.labels.date, icon: Calendar, span: 2 },
-                                { label: text.receipts.category, icon: Tag, span: 2 },
-                                { label: text.labels.amount, icon: Banknote, span: 2, align: "right" },
-                                { label: text.labels.status, icon: CheckCircle2, span: 2, align: "center" },
-                            ]}
-                            trailing={
-                                <div className="flex items-center justify-end gap-3">
-                                    <Paperclip className="h-3 w-3" />
-                                    <Checkbox
-                                        checked={bulkSelection.allSelected && filteredReceipts.length > 0}
-                                        onCheckedChange={bulkSelection.toggleAll}
-                                        aria-label={text.actions.selectAll}
-                                    />
-                                </div>
-                            }
-                        />
-
-                        {/* GridTable Rows */}
-                        <GridTableRows>
-                            {filteredReceipts.map((receipt) => (
-                                <GridTableRow
-                                    key={receipt.id}
-                                    selected={bulkSelection.isSelected(receipt.id)}
-                                    className="group"
-                                >
-                                    <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
-                                        {receipt.supplier}
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground text-sm truncate">
-                                        {receipt.date}
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }}>
-                                        <CategoryBadge>
-                                            {receipt.category}
-                                        </CategoryBadge>
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }} className="text-right truncate">
-                                        <AmountText value={parseAmount(receipt.amount)} />
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
-                                        <AppStatusBadge
-                                            status={receipt.status}
-                                            size="sm"
-                                        />
-                                    </div>
-                                    <div style={{ gridColumn: 'span 1' }} className="flex items-center justify-end gap-2">
-                                        {receipt.attachment && (
-                                            <div className="text-muted-foreground bg-muted p-1 rounded-sm" title={receipt.attachment}>
-                                                <Paperclip className="h-3 w-3" />
-                                            </div>
-                                        )}
-                                        <DropdownMenu>
-                                            <DropdownMenuTrigger asChild>
-                                                <Button variant="ghost" className="h-6 w-6 p-0 opacity-0 group-hover:opacity-100 transition-opacity" >
-                                                    <span className="sr-only">{text.actions.openMenu}</span>
-                                                    <MoreHorizontal className="h-4 w-4" />
-                                                </Button>
-                                            </DropdownMenuTrigger>
-                                            <DropdownMenuContent align="end">
-                                                <DropdownMenuLabel>{text.labels.actions}</DropdownMenuLabel>
-                                                <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
-                                                    {text.actions.viewDetails}
-                                                </DropdownMenuItem>
-                                                <DropdownMenuItem onClick={() => handleViewDetails(receipt)}>
-                                                    {text.actions.edit}
-                                                </DropdownMenuItem>
-                                                {isInvoiceMethod && (
-                                                    <DropdownMenuItem onClick={() => openBookingDialog(receipt)}>
-                                                        <BookOpen className="h-4 w-4 mr-2" />
-                                                        Bokför
-                                                    </DropdownMenuItem>
-                                                )}
-                                                <DropdownMenuSeparator />
-                                                <DropdownMenuItem className="text-red-600" onClick={() => handleDeleteClick(receipt.id)}>
-                                                    {text.actions.delete}
-                                                </DropdownMenuItem>
-                                            </DropdownMenuContent>
-                                        </DropdownMenu>
-                                        <Checkbox
-                                            checked={bulkSelection.isSelected(receipt.id)}
-                                            onCheckedChange={() => bulkSelection.toggleItem(receipt.id)}
-                                            aria-label={`${text.actions.select} ${receipt.supplier}`}
-                                        />
-                                    </div>
-                                </GridTableRow>
-                            ))}
-                            {filteredReceipts.length === 0 && (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    <p>{tableData.searchQuery || tableData.statusFilter.length > 0
-                                        ? text.errors.noMatchingReceipts
-                                        : text.receipts.empty}</p>
-                                </div>
-                            )}
-                        </GridTableRows>
-
-                        <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={() => setUploadDialogOpen(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            {text.receipts.upload}
-                        </Button>
-                    </div>
-                </div>
+                <ReceiptsGrid
+                    receipts={filteredReceipts}
+                    text={text}
+                    selection={bulkSelection}
+                    onViewDetails={handleViewDetails}
+                    onDelete={handleDeleteClick}
+                    onBook={openBookingDialog}
+                    onUpload={() => setUploadDialogOpen(true)}
+                    isInvoiceMethod={isInvoiceMethod}
+                    hasActiveFilters={Boolean(tableData.searchQuery || tableData.statusFilter.length > 0)}
+                />
             </div>
 
-            {/* Bulk Action Toolbar */}
             <BulkActionToolbar
                 selectedCount={bulkSelection.selectedCount}
                 selectedIds={bulkSelection.selectedIds}
@@ -577,4 +337,6 @@ export function ReceiptsTable() {
             />
         </div>
     )
-}
+})
+
+ReceiptsTable.displayName = 'ReceiptsTable'

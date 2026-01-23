@@ -1,6 +1,6 @@
 // ============================================
 // Händelser Event Service
-// Manages event emission and storage
+// Manages event emission and storage via Supabase
 // ============================================
 
 import type {
@@ -10,187 +10,157 @@ import type {
     EventSource,
     EventCategory,
 } from '@/types/events'
-
-// Storage key for localStorage
-const STORAGE_KEY = 'scope_events'
+import { getSupabaseClient } from '@/lib/supabase'
 
 /**
- * Generate a UUID for events
+ * Map DB result to HändelseEvent
  */
-function generateId(): string {
-    return crypto.randomUUID?.() ||
-        `${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
-}
-
-/**
- * Generate a simple hash for event integrity
- */
-function generateHash(event: Omit<HändelseEvent, 'hash'>): string {
-    const content = JSON.stringify({
-        id: event.id,
-        timestamp: event.timestamp,
-        source: event.source,
-        category: event.category,
-        action: event.action,
-        title: event.title,
-        previousHash: event.previousHash,
-    })
-    // Simple hash for demo - in production use crypto.subtle.digest
-    let hash = 0
-    for (let i = 0; i < content.length; i++) {
-        const char = content.charCodeAt(i)
-        hash = ((hash << 5) - hash) + char
-        hash = hash & hash
+function mapDtoToEvent(dto: any): HändelseEvent {
+    return {
+        id: dto.id,
+        timestamp: new Date(dto.timestamp),
+        source: dto.source,
+        category: dto.category,
+        action: dto.action,
+        title: dto.title,
+        actor: {
+            type: dto.actor_type,
+            id: dto.actor_id,
+            name: dto.actor_name,
+        },
+        description: dto.description || undefined,
+        metadata: dto.metadata || undefined,
+        relatedTo: dto.related_to || undefined,
+        status: dto.status || undefined,
+        corporateActionType: dto.corporate_action_type || undefined,
+        proof: dto.proof || undefined,
+        hash: dto.hash || undefined,
+        previousHash: dto.previous_hash || undefined,
     }
-    return Math.abs(hash).toString(16).padStart(8, '0')
 }
 
 /**
  * Get all events from storage
  */
-export function getEventsFromStorage(): HändelseEvent[] {
-    if (typeof window === 'undefined') return []
+export async function getEvents(filters?: EventFilters): Promise<HändelseEvent[]> {
+    const supabase = getSupabaseClient()
 
-    try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (!stored) return []
+    let query = supabase
+        .from('events')
+        .select('*')
+        .order('timestamp', { ascending: false })
 
-        const events = JSON.parse(stored) as HändelseEvent[]
-        // Convert timestamps back to Date objects
-        return events.map(e => ({
-            ...e,
-            timestamp: new Date(e.timestamp),
-        }))
-    } catch {
+    if (filters) {
+        if (filters.source) {
+            const sources = Array.isArray(filters.source) ? filters.source : [filters.source]
+            query = query.in('source', sources)
+        }
+        if (filters.category) {
+            const categories = Array.isArray(filters.category) ? filters.category : [filters.category]
+            query = query.in('category', categories)
+        }
+        if (filters.dateFrom) {
+            query = query.gte('timestamp', filters.dateFrom.toISOString())
+        }
+        if (filters.dateTo) {
+            query = query.lte('timestamp', filters.dateTo.toISOString())
+        }
+        if (filters.search) {
+            query = query.ilike('title', `%${filters.search}%`)
+        }
+        if (filters.relatedToId) {
+            // JSONB containment search for related_to array
+            query = query.contains('related_to', [{ id: filters.relatedToId }])
+        }
+    }
+
+    const { data, error } = await query
+
+    if (error) {
+        console.error('Error fetching events:', error)
         return []
     }
-}
 
-/**
- * Save events to storage
- */
-function saveEventsToStorage(events: HändelseEvent[]): void {
-    if (typeof window === 'undefined') return
-
-    try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(events))
-    } catch (error) {
-        console.error('Failed to save events:', error)
-    }
-}
-
-/**
- * Emit a new event to the timeline
- */
-export function emitEvent(input: CreateEventInput): HändelseEvent {
-    const events = getEventsFromStorage()
-    const previousHash = events.length > 0 ? events[0].hash : undefined
-
-    const eventWithoutHash: Omit<HändelseEvent, 'hash'> = {
-        id: generateId(),
-        timestamp: new Date(),
-        ...input,
-        previousHash,
-    }
-
-    const event: HändelseEvent = {
-        ...eventWithoutHash,
-        hash: generateHash(eventWithoutHash),
-    }
-
-    // Add to beginning (most recent first)
-    const updatedEvents = [event, ...events]
-
-    // Keep max 500 events
-    if (updatedEvents.length > 500) {
-        updatedEvents.length = 500
-    }
-
-    saveEventsToStorage(updatedEvents)
-
-    // Dispatch custom event for real-time updates
-    if (typeof window !== 'undefined') {
-        window.dispatchEvent(new CustomEvent('händelse', { detail: event }))
-    }
-
-    return event
-}
-
-/**
- * Get events with optional filters
- */
-export function getEvents(filters?: EventFilters): HändelseEvent[] {
-    let events = getEventsFromStorage()
-
-    if (!filters) return events
-
-    // Filter by source
-    if (filters.source) {
-        const sources = Array.isArray(filters.source) ? filters.source : [filters.source]
-        events = events.filter(e => sources.includes(e.source))
-    }
-
-    // Filter by category
-    if (filters.category) {
-        const categories = Array.isArray(filters.category) ? filters.category : [filters.category]
-        events = events.filter(e => categories.includes(e.category))
-    }
-
-    // Filter by date range
-    if (filters.dateFrom) {
-        events = events.filter(e => e.timestamp >= filters.dateFrom!)
-    }
-    if (filters.dateTo) {
-        events = events.filter(e => e.timestamp <= filters.dateTo!)
-    }
-
-    // Filter by search text
-    if (filters.search) {
-        const search = filters.search.toLowerCase()
-        events = events.filter(e =>
-            e.title.toLowerCase().includes(search) ||
-            e.description?.toLowerCase().includes(search) ||
-            e.action.toLowerCase().includes(search)
-        )
-    }
-
-    // Filter by related entity
-    if (filters.relatedToId) {
-        events = events.filter(e =>
-            e.relatedTo?.some(r => r.id === filters.relatedToId)
-        )
-    }
-
-    return events
+    return (data || []).map(mapDtoToEvent)
 }
 
 /**
  * Get event counts by source
  */
-export function getEventCountsBySource(): Record<EventSource, number> {
-    const events = getEventsFromStorage()
+export async function getEventCountsBySource(): Promise<Record<EventSource, number>> {
+    const supabase = getSupabaseClient()
     const counts: Record<EventSource, number> = {
-        ai: 0,
-        user: 0,
-        system: 0,
-        document: 0,
-        authority: 0,
+        ai: 0, user: 0, system: 0, document: 0, authority: 0,
     }
 
-    for (const event of events) {
-        counts[event.source]++
-    }
+    // We can't easily do a single group-by count with the JS client without RPC or raw sql,
+    // so for now we might just fetch counts or all metadata. 
+    // For scalability, we should use an RPC function or distinct count queries.
+    // Let's do a simple grouping if the dataset isn't huge, or separate count queries.
+    // A simple approach for now:
+
+    // Parallelize count queries for known sources
+    const sources: EventSource[] = ['ai', 'user', 'system', 'document', 'authority']
+
+    await Promise.all(sources.map(async (source) => {
+        const { count } = await supabase
+            .from('events')
+            .select('*', { count: 'exact', head: true })
+            .eq('source', source)
+
+        counts[source] = count || 0
+    }))
 
     return counts
 }
 
 /**
- * Clear all events (for testing)
+ * Emit a new event to the timeline
  */
-export function clearEvents(): void {
-    if (typeof window === 'undefined') return
-    localStorage.removeItem(STORAGE_KEY)
+export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent | null> {
+    const supabase = getSupabaseClient()
+
+    // For hash linking, we'd ideally fetch the last event server-side or via a function.
+    // For now, let's omit the hash chaining in the client-side code or implement a basic version.
+
+    const dbPayload = {
+        timestamp: new Date().toISOString(),
+        source: input.source,
+        category: input.category,
+        action: input.action,
+        title: input.title,
+        actor_type: input.actor.type,
+        actor_id: input.actor.id,
+        actor_name: input.actor.name,
+        description: input.description,
+        metadata: input.metadata,
+        related_to: input.relatedTo,
+        status: input.status,
+        corporate_action_type: input.corporateActionType,
+        proof: input.proof,
+    }
+
+    const { data, error } = await supabase
+        .from('events')
+        .insert(dbPayload)
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error creating event:', error)
+        return null
+    }
+
+    // Trigger local update if needed
+    if (typeof window !== 'undefined') {
+        const event = mapDtoToEvent(data)
+        window.dispatchEvent(new CustomEvent('händelse', { detail: event }))
+        return event
+    }
+
+    return mapDtoToEvent(data)
 }
+
 
 // ============================================
 // Convenience functions for common events
@@ -199,7 +169,7 @@ export function clearEvents(): void {
 /**
  * Emit an AI action event
  */
-export function emitAIEvent(
+export async function emitAIEvent(
     action: string,
     title: string,
     category: EventCategory,
@@ -208,7 +178,7 @@ export function emitAIEvent(
         relatedTo?: HändelseEvent['relatedTo']
         metadata?: Record<string, unknown>
     }
-): HändelseEvent {
+): Promise<HändelseEvent | null> {
     return emitEvent({
         source: 'ai',
         category,
@@ -222,7 +192,7 @@ export function emitAIEvent(
 /**
  * Emit a user action event
  */
-export function emitUserEvent(
+export async function emitUserEvent(
     action: string,
     title: string,
     category: EventCategory,
@@ -231,7 +201,7 @@ export function emitUserEvent(
         relatedTo?: HändelseEvent['relatedTo']
         metadata?: Record<string, unknown>
     }
-): HändelseEvent {
+): Promise<HändelseEvent | null> {
     return emitEvent({
         source: 'user',
         category,
@@ -245,7 +215,7 @@ export function emitUserEvent(
 /**
  * Emit a system event
  */
-export function emitSystemEvent(
+export async function emitSystemEvent(
     action: string,
     title: string,
     category: EventCategory = 'system',
@@ -253,7 +223,7 @@ export function emitSystemEvent(
         description?: string
         metadata?: Record<string, unknown>
     }
-): HändelseEvent {
+): Promise<HändelseEvent | null> {
     return emitEvent({
         source: 'system',
         category,
@@ -267,7 +237,7 @@ export function emitSystemEvent(
 /**
  * Emit an authority event (Skatteverket, Bolagsverket, etc.)
  */
-export function emitAuthorityEvent(
+export async function emitAuthorityEvent(
     action: string,
     title: string,
     authority: string,
@@ -277,7 +247,7 @@ export function emitAuthorityEvent(
         proof?: HändelseEvent['proof']
         relatedTo?: HändelseEvent['relatedTo']
     }
-): HändelseEvent {
+): Promise<HändelseEvent | null> {
     return emitEvent({
         source: 'authority',
         category,

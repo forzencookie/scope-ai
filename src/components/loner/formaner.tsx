@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useMemo } from "react"
 import { Gift, Check, ArrowRight, Banknote, Plus } from "lucide-react"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
@@ -292,14 +292,7 @@ export function BenefitsTab() {
         // The useEffect will run again with the same currentYear
         setBenefits([])
         setSuggestions([])
-        setStats({
-            totalCost: 0,
-            employeesWithBenefits: 0,
-            totalEmployees: 10,
-            unusedPotential: 0,
-            totalBenefits: 0,
-            activeBenefits: 0
-        })
+        // Removed setStats call as stats are derived via useMemo
         setError(null)
         setIsLoading(true)
         // Force re-run by calling the effect directly isn't possible,
@@ -453,4 +446,3 @@ export function BenefitsTab() {
         </SectionErrorBoundary>
     )
 }
-

@@ -105,11 +105,29 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
             requireCheckbox: true,
         }
 
+        // Transform mock data to VATDeclarationData
+        const vatData = {
+            period: params.period,
+            sales25: 100000, // Mock
+            vat25: mockVatReport.salesVat,
+            purchasesDomestic: 50000, // Mock
+            vatDomestic: mockVatReport.purchaseVat,
+            totalOutputVAT: mockVatReport.salesVat,
+            totalInputVAT: mockVatReport.purchaseVat,
+            netVAT: mockVatReport.vatToPay,
+        }
+
         return {
             success: true,
             data: { submitted: false, referenceNumber: '' },
             message: `Momsdeklaration för ${params.period} förberedd för inskickning.`,
             confirmationRequired: confirmationRequest,
+            display: {
+                component: 'VATFormPreview',
+                props: { data: vatData },
+                title: 'Momsdeklaration',
+                fullViewRoute: '/dashboard/skatt?tab=momsdeklaration',
+            },
         }
     },
 })

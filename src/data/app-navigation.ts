@@ -26,6 +26,7 @@ import {
     Gift,
     Send,
     Coins,
+    Calendar,
 } from "lucide-react"
 import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
@@ -289,6 +290,12 @@ export const navAgare: NavItem[] = [
 // ============================================
 
 export const navSettings: NavItem[] = [
+    {
+        title: "Händelser",
+        titleEnkel: "Händelser",
+        url: "/dashboard/handelser",
+        icon: Calendar,
+    },
     {
         title: "Inställningar",
         titleEnkel: "Inställningar",

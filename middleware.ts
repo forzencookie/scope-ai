@@ -87,7 +87,7 @@ export async function middleware(request: NextRequest) {
         // Check if user has admin role
         // Note: profiles table must exist for this to work
         try {
-            const { data: profile } = await supabase
+            const { data: profile } = await (supabase as any)
                 .from('profiles')
                 .select('role')
                 .eq('id', user!.id)
@@ -112,7 +112,7 @@ export async function middleware(request: NextRequest) {
     // This catches deleted users whose JWT hasn't expired yet
     if (isProtectedRoute && isAuthenticated && user) {
         try {
-            const { count } = await supabase
+            const { count } = await (supabase as any)
                 .from('profiles')
                 .select('*', { count: 'exact', head: true })
                 .eq('id', user.id)

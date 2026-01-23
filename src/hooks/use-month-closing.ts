@@ -3,7 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useVerifications } from "./use-verifications"
 import { useCompany } from "@/providers/company-provider"
-import { createClient } from "@/lib/supabase/client"
+import { getSupabaseClient } from "@/lib/supabase"
 
 export type PeriodStatus = 'open' | 'review' | 'locked'
 
@@ -22,7 +22,7 @@ export interface MonthStatus {
     locked_by?: string
 }
 
-const supabase = createClient()
+const supabase = getSupabaseClient()
 
 export function useMonthClosing() {
     const { verifications } = useVerifications()

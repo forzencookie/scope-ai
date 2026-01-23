@@ -106,7 +106,88 @@ export const registerDividendTool = defineTool<RegisterDividendParams, any>({
     },
 })
 
+
+
+export interface DraftBoardMinutesParams {
+    type: 'board_meeting' | 'annual_general_meeting'
+    date?: string
+    decisions?: string[]
+}
+
+export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
+    name: 'draft_board_minutes',
+    description: 'Skapa ett utkast till styrelseprotokoll eller stämmoprotokoll.',
+    category: 'write',
+    requiresConfirmation: false, // We use the preview as "drafting" step
+    parameters: {
+        type: 'object',
+        properties: {
+            type: { type: 'string', enum: ['board_meeting', 'annual_general_meeting'], description: 'Typ av möte' },
+            date: { type: 'string', description: 'Datum för mötet (YYYY-MM-DD)' },
+            decisions: { type: 'array', items: { type: 'string' }, description: 'Lista på beslut som fattades' },
+        },
+        required: ['type'],
+    },
+    execute: async (params) => {
+        // Mock data for preview
+        const boardMinutesData = {
+            companyName: "Din Företag AB",
+            meetingType: params.type === 'annual_general_meeting' ? "Årsstämma" : "Styrelsemöte",
+            meetingNumber: "1/2026",
+            date: params.date || new Date().toISOString().split('T')[0],
+            time: "10:00 - 11:30",
+            location: "Huvudkontoret",
+            attendees: [
+                { name: "Anna Andersson", role: "Chairman", present: true },
+                { name: "Erik Eriksson", role: "Member", present: true },
+                { name: "Lars Larsson", role: "Secretary", present: true },
+            ],
+            agenda: [
+                "Mötets öppnande",
+                "Val av ordförande och sekreterare",
+                "Fastställande av dagordning",
+                "Genomgång av föregående protokoll",
+                "Beslutsärenden",
+                "Mötets avslutande"
+            ],
+            decisions: params.decisions?.map((d, i) => ({
+                id: `d-${i}`,
+                paragraph: `§${i + 5}`,
+                title: "Beslut",
+                description: d,
+                decision: d,
+                type: "decision"
+            })) || [
+                    {
+                        id: "d-1",
+                        paragraph: "§5",
+                        title: "Beslut om firmateckning",
+                        description: "Styrelsen diskuterade bolagets firmateckning.",
+                        decision: "Styrelsen beslutar att firman tecknas av styrelsen gemensamt.",
+                        type: "decision"
+                    }
+                ],
+            signatures: [
+                { role: "Ordförande", name: "Anna Andersson" },
+                { role: "Sekreterare", name: "Lars Larsson" }
+            ]
+        }
+
+        return {
+            success: true,
+            data: boardMinutesData,
+            message: `Utkast till ${boardMinutesData.meetingType} skapat.`,
+            display: {
+                component: "BoardMinutesPreview",
+                title: "Protokollutkast",
+                props: { data: boardMinutesData }
+            }
+        }
+    }
+})
+
 export const complianceTools = [
     getComplianceDocsTool,
     registerDividendTool,
+    draftBoardMinutesTool,
 ]

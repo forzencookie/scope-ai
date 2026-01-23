@@ -699,6 +699,71 @@ export async function POST(request: NextRequest) {
             return m
         })
 
+        // === CONTEXT INJECTION ===
+        // Fetch active roadmaps and KPIs to inject into the system prompt
+        // This gives the AI "Long Term Memory" about the company status
+        try {
+            const [activeRoadmaps, kpis] = await Promise.all([
+                db.getRoadmaps(userId),
+                db.getCompanyKPIs()
+            ]);
+
+            // Construct Context Block
+            let contextBlock = `\n\n## LIVE COMPANY STATUS (Auto-Injected)\n`;
+
+            // 1. KPIs
+            contextBlock += `**KPIs:**\n`;
+            contextBlock += `- Unpaid Invoices: ${kpis.unpaid_invoices_count}\n`;
+            contextBlock += `- Unread Inbox: ${kpis.unread_inbox_count}\n`;
+
+            // 2. Roadmaps
+            if (activeRoadmaps && activeRoadmaps.length > 0) {
+                contextBlock += `\n**Active Logical Plans (Roadmaps):**\n`;
+                activeRoadmaps.forEach((r: any) => {
+                    const steps = r.steps?.sort((a: any, b: any) => a.order_index - b.order_index);
+                    const pendingSteps = steps?.filter((s: any) => s.status !== 'completed').slice(0, 3); // Showing next 3 pending steps
+                    const completedCount = steps?.filter((s: any) => s.status === 'completed').length || 0;
+
+                    contextBlock += `- Plan: "${r.title}" (${completedCount}/${steps?.length || 0} done)\n`;
+                    if (pendingSteps && pendingSteps.length > 0) {
+                        contextBlock += `  Next steps:\n`;
+                        pendingSteps.forEach((s: any) => {
+                            contextBlock += `  * [ ] ${s.title}\n`;
+                        });
+                    }
+                });
+            } else {
+                contextBlock += `\n(No active roadmaps found. You can suggest creating one if the user's goal is complex.)\n`;
+            }
+
+            // Prepend to the first user message or append to system prompt
+            // Strategy: Append to system prompt for every request so it's fresh
+            // Since SYSTEM_PROMPT is const, we'll modify the messages array for OpenAI/Anthropic/Google
+
+            // We'll wrap this logic in the provider handlers or just pre-process messages?
+            // Easier: Attach it to the LAST user message as hidden context if it's not too long.
+            // OR: Prepend to the first system message. 
+
+            // Let's modify the SYSTEM_PROMPT passed to handlers. 
+            // Since we can't easily change the const SYSTEM_PROMPT, we'll handle it inside the provider calls 
+            // by passing an `extendedSystemPrompt` or appending to the first message.
+
+            // NOTE: For simplicity in this codebase, I will append it to the last user message as a "System Note".
+            const lastMsg = messagesForAI[messagesForAI.length - 1];
+            if (lastMsg.role === 'user') {
+                const contextinjection = `\n\n[SYSTEM NOTE: ${contextBlock}]`;
+
+                if (Array.isArray(lastMsg.content)) {
+                    lastMsg.content.push({ type: 'text', text: contextinjection });
+                } else {
+                    lastMsg.content += contextinjection;
+                }
+            }
+
+        } catch (ctxError) {
+            console.warn('Failed to inject context:', ctxError);
+        }
+
         // Create Stream
         const stream = new ReadableStream({
             async start(controller) {

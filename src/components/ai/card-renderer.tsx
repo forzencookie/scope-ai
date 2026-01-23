@@ -8,6 +8,20 @@
 import { ActivityCard, type ActivityCardProps } from "./activity-card"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Receipt, FileText, CreditCard, Calculator } from "lucide-react"
+import dynamic from "next/dynamic"
+
+// Lazy-load heavier preview components
+const PayslipPreview = dynamic(() => import("./previews/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })), { ssr: false })
+const VATFormPreview = dynamic(() => import("./previews/forms/vat-form-preview").then(m => ({ default: m.VATFormPreview })), { ssr: false })
+const AGIFormPreview = dynamic(() => import("./previews/forms/agi-form-preview").then(m => ({ default: m.AGIFormPreview })), { ssr: false })
+const K10FormPreview = dynamic(() => import("./previews/forms/k10-form-preview").then(m => ({ default: m.K10FormPreview })), { ssr: false })
+const TaxDeclarationPreview = dynamic(() => import("./previews/forms/tax-declaration-preview").then(m => ({ default: m.TaxDeclarationPreview })), { ssr: false })
+
+const BoardMinutesPreview = dynamic(() => import("./previews/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
+const FinancialReportPreview = dynamic(() => import("./previews/documents/financial-report-preview").then(m => ({ default: m.FinancialReportPreview })), { ssr: false })
+const ShareRegisterPreview = dynamic(() => import("./previews/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
+const AnnualReportPreview = dynamic(() => import("./previews/documents/annual-report-preview").then(m => ({ default: m.AnnualReportPreview })), { ssr: false })
+const RoadmapPreview = dynamic(() => import("./previews/roadmap-preview").then(m => ({ default: m.RoadmapPreview })), { ssr: false })
 
 // ============================================================================
 // Types
@@ -135,11 +149,11 @@ function InvoiceCard({ invoice }: InvoiceCardProps) {
                     <span className={cn(
                         "text-xs px-2 py-0.5 rounded-full",
                         invoice.status === "paid" ? "bg-green-500/10 text-green-600" :
-                        invoice.status === "overdue" ? "bg-red-500/10 text-red-600" :
-                        "bg-yellow-500/10 text-yellow-600"
+                            invoice.status === "overdue" ? "bg-red-500/10 text-red-600" :
+                                "bg-yellow-500/10 text-yellow-600"
                     )}>
                         {invoice.status === "paid" ? "Betald" :
-                         invoice.status === "overdue" ? "Förfallen" : "Väntar"}
+                            invoice.status === "overdue" ? "Förfallen" : "Väntar"}
                     </span>
                 </div>
             </div>
@@ -252,8 +266,27 @@ function GenericListCard({ title, items }: GenericListCardProps) {
 // Main CardRenderer
 // ============================================================================
 
+// Helper to download text files (XML/SRU)
+function downloadTextFile(content: string, filename: string) {
+    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    link.href = url
+    link.download = filename
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+}
+
+// Import generators (dynamically to avoid large bundle if possible, but static for now for type safety)
+import { generateVATSru, generateINK2Sru } from "@/lib/exports/sru-generator"
+import { generateAGIXML } from "@/lib/exports/agi-generator"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { generateXBRL } from "@/lib/exports/xbrl-generator"
+
 export function CardRenderer({ display, className }: CardRendererProps) {
     const { type, data, component, props, title } = display
+    const cardData = (data || props) as any
 
     // Determine which card to render based on type or component
     const cardType = type || component || ""
@@ -261,30 +294,202 @@ export function CardRenderer({ display, className }: CardRendererProps) {
     switch (cardType.toLowerCase()) {
         case "receiptcard":
         case "receipt":
-            return <ReceiptCard receipt={(data || props) as ReceiptCardProps["receipt"]} />
+            return <ReceiptCard receipt={cardData} />
 
         case "transactioncard":
         case "transaction":
-            return <TransactionCard transaction={(data || props) as TransactionCardProps["transaction"]} />
+            return <TransactionCard transaction={cardData} />
 
         case "invoicecard":
         case "invoice":
-            return <InvoiceCard invoice={(data || props) as InvoiceCardProps["invoice"]} />
+            return <InvoiceCard invoice={cardData} />
 
         case "taskchecklist":
         case "checklist":
-            return <TaskChecklist {...((data || props) as TaskChecklistProps)} />
+            return <TaskChecklist {...cardData} />
 
         case "activitycard":
         case "activity":
-            return <ActivityCard {...((data || props) as ActivityCardProps)} />
+            return <ActivityCard {...cardData} />
 
         case "summarycard":
         case "summary":
         case "calculation":
         case "salarycalculation":
         case "k10summary":
-            return <SummaryCard {...((data || props) as SummaryCardProps)} title={title || "Sammanfattning"} />
+            return <SummaryCard {...cardData} title={title || "Sammanfattning"} />
+
+        // Document Previews (PDF-ready, sendable)
+        case "payslippreview":
+        case "lonebesked":
+            return <PayslipPreview
+                {...cardData}
+                actions={{
+                    onDownload: () => downloadElementAsPDF({
+                        fileName: `lonebesked-${cardData.period || 'okand'}`,
+                        format: 'a4'
+                    })
+                }}
+            />
+
+        // Form Previews (Authority submissions)
+        case "vatformpreview":
+        case "momsredovisning":
+        case "vat":
+            return <VATFormPreview
+                {...cardData}
+                actions={{
+                    onExportXML: () => {
+                        // Transform data to SRU format
+                        const sru = generateVATSru({
+                            orgNumber: "556123-4567", // Should come from context/props
+                            period: cardData.data?.period || "2024",
+                            vatData: {
+                                '10': cardData.data?.sales25 || 0,
+                                '48': cardData.data?.vat25 || 0,
+                                '49': cardData.data?.netVAT || 0
+                            },
+                            contact: {
+                                name: "Admin",
+                                phone: "070-0000000",
+                                email: "admin@company.com"
+                            }
+                        })
+                        downloadTextFile(sru, `moms-${cardData.data?.period}.sru`)
+                    }
+                }}
+            />
+
+        case "agiformpreview":
+        case "agi":
+        case "arbetsgivardeklaration":
+            return <AGIFormPreview
+                {...cardData}
+                actions={{
+                    onExportXML: () => {
+                        const xml = generateAGIXML({
+                            period: cardData.data?.period || "2024-01",
+                            submissionId: `AGI-${Date.now()}`,
+                            employer: {
+                                orgNumber: "556123-4567",
+                                name: "Mitt Företag AB",
+                                contactName: "Admin",
+                                phone: "070-1234567",
+                                email: "admin@foretaget.se"
+                            },
+                            employees: [], // In real app, map this from cardData.data.employees
+                            deductions: {}
+                        })
+                        downloadTextFile(xml, `agi-${cardData.data?.period}.xml`)
+                    }
+                }}
+            />
+
+        case "boardminutespreview":
+        case "styrelseprotokoll":
+        case "protocol":
+        case "meeting":
+            return <BoardMinutesPreview
+                {...cardData}
+                actions={{
+                    onDownload: () => downloadElementAsPDF({
+                        fileName: `protokoll-${cardData.data?.date || 'datum'}`,
+                        format: 'a4'
+                    })
+                }}
+            />
+
+        case "financialreportpreview":
+        case "financialreport":
+        case "resultat":
+        case "balans":
+        case "resultatbalans":
+            return <FinancialReportPreview
+                {...cardData}
+                actions={{
+                    onDownload: () => downloadElementAsPDF({
+                        fileName: `rapport-${cardData.data?.period}`,
+                        orientation: 'landscape' // Financial reports are wide
+                    })
+                }}
+            />
+
+        case "shareregisterpreview":
+        case "shareregister":
+        case "aktiebok":
+        case "shares":
+            return <ShareRegisterPreview
+                {...cardData}
+                actions={{
+                    onDownload: () => downloadElementAsPDF({
+                        fileName: `aktiebok-${new Date().toISOString().split('T')[0]}`,
+                        format: 'a4'
+                    })
+                }}
+            />
+
+        case "k10formpreview":
+        case "k10":
+            return <K10FormPreview
+                {...cardData}
+                actions={{
+                    onExportXML: () => {
+                        // K10 is often just SRU attached to INK1
+                        downloadTextFile("SRU CONTENT FOR K10...", "k10.sru")
+                    }
+                }}
+            />
+
+        case "taxdeclarationpreview":
+        case "taxdeclaration":
+        case "inkomstdeklaration":
+        case "ink2":
+            return <TaxDeclarationPreview
+                {...cardData}
+                actions={{
+                    onExportXML: () => {
+                        const sru = generateINK2Sru({
+                            orgNumber: "556123-4567",
+                            period: cardData.data?.period || "2024",
+                            taxData: {}, // Map from cardData
+                            contact: { name: "Admin", phone: "070", email: "admin@test" }
+                        })
+                        downloadTextFile(sru, "ink2.sru")
+                    }
+                }}
+            />
+
+        case "annualreportpreview":
+        case "annualreport":
+        case "arsredovisning":
+            return <AnnualReportPreview
+                {...cardData}
+                actions={{
+                    onDownload: () => downloadElementAsPDF({
+                        fileName: `arsredovisning-${cardData.data?.period}`,
+                        format: 'a4'
+                    }),
+                    onSend: () => {
+                        const xbrl = generateXBRL({
+                            company: { name: "Test AB", orgNumber: "556000-0000" },
+                            period: {
+                                currentStart: "2024-01-01", currentEnd: "2024-12-31",
+                                previousStart: "2023-01-01", previousEnd: "2023-12-31"
+                            },
+                            values: { netTurnover: 0, profitAfterFin: 0, equity: 0, solidity: 0 }
+                        })
+                        downloadTextFile(xbrl, `arsredovisning-${cardData.data?.period}.xbrl`)
+                    }
+                }}
+            />
+
+        case "roadmappreview":
+        case "roadmap":
+        case "plan":
+        case "planering":
+            return <RoadmapPreview
+                data={cardData}
+            />
 
         case "genericlist":
         case "list":
