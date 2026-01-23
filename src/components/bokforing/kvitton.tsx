@@ -2,119 +2,53 @@
 
 import * as React from "react"
 import { useState, useMemo, useEffect, useCallback, memo } from "react"
-import { UploadCloud, Trash2, Download, Archive, BookOpen } from "lucide-react"
+import { UploadCloud, Trash2, Download, Archive, BookOpen, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { UnderlagDialog } from "../dialogs/underlag"
 import { type ReceiptStatus, RECEIPT_STATUSES } from "@/lib/status-types"
-import { type Receipt } from "@/data/receipts"
+import { type Receipt } from "@/lib/services/receipt-service"
 import { useCompany } from "@/providers/company-provider"
-import { useTableData, commonSortHandlers } from "@/hooks/use-table"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, useBulkSelection, type BulkAction } from "@/components/shared/bulk-action-toolbar"
 import { DeleteConfirmDialog, useDeleteConfirmation } from "@/components/shared/delete-confirm-dialog"
 import { BookingDialog, type BookingData } from "../dialogs/bokforing"
 import { receiptService } from "@/lib/services/receipt-service"
+import { useReceiptsPaginated, useReceiptStats } from "@/hooks/use-receipts"
 
 // New components
 import { ReceiptsDashboard } from "./kvitton/components/ReceiptsDashboard"
 import { ReceiptsGrid } from "./kvitton/components/ReceiptsGrid"
 
-// Sort handlers specific to receipts
-const receiptSortHandlers = {
-    date: commonSortHandlers.date as (a: Receipt, b: Receipt) => number,
-    amount: commonSortHandlers.amount as (a: Receipt, b: Receipt) => number,
-}
 
 // Memoized to prevent unnecessary re-renders when parent state changes
 export const ReceiptsTable = memo(function ReceiptsTable() {
     const { text } = useTextMode()
     const { company } = useCompany()
     const isInvoiceMethod = company?.accountingMethod === 'invoice'
-    const [receipts, setReceipts] = useState<Receipt[]>([])
-    const [isLoading, setIsLoading] = useState(true)
+    // Use paginated receipts hook
+    const {
+        receipts,
+        isLoading,
+        error: fetchError,
+        page,
+        setPage,
+        pageSize,
+        totalCount,
+        searchQuery,
+        setSearchQuery,
+        statusFilter,
+        setStatusFilter,
+        refetch: fetchReceipts
+    } = useReceiptsPaginated(20)
 
-    // Dialog states
-    const [uploadDialogOpen, setUploadDialogOpen] = useState(false)
-    const [selectedReceipt, setSelectedReceipt] = useState<Receipt | null>(null)
-    const [detailsDialogOpen, setDetailsDialogOpen] = useState(false)
-
-    // Delete confirmation using shared hook
-    const deleteConfirmation = useDeleteConfirmation()
-
-    // Booking states
-    const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
-    const [selectedReceiptForBooking, setSelectedReceiptForBooking] = useState<Receipt | null>(null)
-
-    // Toast notifications
-    const toast = useToast()
-
-    // Fetch receipts
-    const fetchReceipts = useCallback(async () => {
-        try {
-            const listData = await receiptService.getReceipts()
-            setReceipts(listData.receipts as any)
-        } catch (error) {
-            console.error('Failed to fetch receipts:', error)
-            setReceipts([])
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        fetchReceipts()
-    }, [fetchReceipts])
-
-    // Table data
-    const tableData = useTableData<Receipt>({
-        filter: {
-            searchFields: ['supplier', 'category'],
-        },
-        sort: {
-            initialSortBy: 'date',
-            initialSortOrder: 'desc',
-            sortHandlers: receiptSortHandlers,
-        },
-    })
-
-    const filteredReceipts = useMemo(() =>
-        tableData.processItems(receipts),
-        [tableData, receipts]
-    )
-
-    // Stats
-    const stats = useMemo(() => {
-        const parse = (val: string | number) => {
-            if (typeof val === 'number') return val
-            return parseFloat(val.replace(/[^0-9.-]+/g, "")) || 0
-        }
-
-        const total = receipts.length
-
-        const matched = receipts.filter(r =>
-            r.status === RECEIPT_STATUSES.MATCHED ||
-            r.status === RECEIPT_STATUSES.PROCESSED ||
-            r.status === 'bokford'
-        )
-        const matchedCount = matched.length
-
-        const unmatched = receipts.filter(r => r.status === RECEIPT_STATUSES.PENDING || r.status === RECEIPT_STATUSES.REVIEW)
-        const unmatchedCount = unmatched.length
-
-        const totalAmount = receipts.reduce((sum, r) => sum + parse(r.amount), 0)
-
-        return {
-            total,
-            matchedCount,
-            unmatchedCount,
-            totalAmount
-        }
-    }, [receipts])
+    // Use server-side stats
+    const { stats: fetchedStats } = useReceiptStats()
+    const stats = fetchedStats || { total: 0, matchedCount: 0, unmatchedCount: 0, totalAmount: 0 }
 
     // Bulk selection
-    const bulkSelection = useBulkSelection(filteredReceipts)
+    const bulkSelection = useBulkSelection(receipts)
 
     const handleDeleteClick = (id: string) => {
         deleteConfirmation.requestDelete(id)
@@ -124,7 +58,7 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
         const id = deleteConfirmation.confirmDelete()
         if (id) {
             const receipt = receipts.find(r => r.id === id)
-            setReceipts(prev => prev.filter(r => r.id !== id))
+            fetchReceipts()
             toast.success("Underlag raderat", `${receipt?.supplier || 'Underlaget'} har raderats`)
         }
     }
@@ -157,7 +91,7 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
             const result = await response.json()
 
             if (result.success && result.receipt) {
-                setReceipts(prev => [result.receipt, ...prev])
+                fetchReceipts()
                 toast.success("Underlag sparat", `${result.receipt.supplier} har lagts till`)
             }
         } catch (error) {
@@ -174,15 +108,13 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
 
     const handleBook = async (bookingData: BookingData) => {
         try {
-            setReceipts(prev => prev.map(r =>
-                r.id === bookingData.entityId ? { ...r, status: RECEIPT_STATUSES.PROCESSED } : r
-            ))
-
             await fetch(`/api/receipts/${bookingData.entityId}/book`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(bookingData)
             })
+
+            fetchReceipts()
 
             setBookingDialogOpen(false)
             setSelectedReceiptForBooking(null)
@@ -223,7 +155,7 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
                 icon: Trash2,
                 variant: "destructive",
                 onClick: (ids) => {
-                    setReceipts(prev => prev.filter(r => !ids.includes(r.id)))
+                    fetchReceipts()
                     toast.success(text.receipts.receiptsDeleted, `${ids.length} ${text.receipts.receiptsDeletedDesc}`)
                     bulkSelection.clearSelection()
                 },
@@ -265,7 +197,7 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
 
             <ReceiptsDashboard
                 stats={stats}
-                onViewUnmatched={() => tableData.setStatusFilter([RECEIPT_STATUSES.PENDING])}
+                onViewUnmatched={() => setStatusFilter([RECEIPT_STATUSES.PENDING])}
             />
 
             <DeleteConfirmDialog
@@ -310,14 +242,14 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
                     <div className="flex items-center gap-2">
                         <SearchBar
                             placeholder={text.actions.search}
-                            value={tableData.searchQuery}
-                            onChange={tableData.setSearchQuery}
+                            value={searchQuery}
+                            onChange={setSearchQuery}
                         />
                     </div>
                 </div>
 
                 <ReceiptsGrid
-                    receipts={filteredReceipts}
+                    receipts={receipts}
                     text={text}
                     selection={bulkSelection}
                     onViewDetails={handleViewDetails}
@@ -325,8 +257,37 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
                     onBook={openBookingDialog}
                     onUpload={() => setUploadDialogOpen(true)}
                     isInvoiceMethod={isInvoiceMethod}
-                    hasActiveFilters={Boolean(tableData.searchQuery || tableData.statusFilter.length > 0)}
+                    hasActiveFilters={Boolean(searchQuery || statusFilter.length > 0)}
                 />
+
+                {/* Pagination Footer */}
+                {totalCount > pageSize && (
+                    <div className="flex items-center justify-between px-2 py-4 mt-2 border-t border-border/40">
+                        <div className="text-sm text-muted-foreground">
+                            Visar {Math.min((page - 1) * pageSize + 1, totalCount)}-{Math.min(page * pageSize, totalCount)} av {totalCount} kvitton
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(page - 1)}
+                                disabled={page <= 1 || isLoading}
+                            >
+                                <ChevronLeft className="h-4 w-4 mr-2" />
+                                Föregående
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(page + 1)}
+                                disabled={page * pageSize >= totalCount || isLoading}
+                            >
+                                Nästa
+                                <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
             </div>
 
             <BulkActionToolbar

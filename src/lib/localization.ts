@@ -256,7 +256,7 @@ export const NAV = {
     BOOKKEEPING: "Bokföring",
     REPORTS: "Rapporter",
     SETTINGS: "Inställningar",
-    INBOX: "Inkorg",
+
     PAYROLL: "Lön",
     INTEGRATIONS: "Integrationer",
     TEAM: "Team",

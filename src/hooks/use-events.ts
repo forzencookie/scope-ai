@@ -63,11 +63,11 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
         setIsLoading(true)
         setError(null)
         try {
-            const [allEvents, counts] = await Promise.all([
+            const [eventsData, counts] = await Promise.all([
                 getEvents(filters),
                 getEventCountsBySource()
             ])
-            setEvents(allEvents)
+            setEvents(eventsData.events)
             setCountsBySource(counts)
         } catch (err) {
             console.error('Failed to fetch events:', err)
@@ -117,6 +117,55 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
 }
 
 /**
+ * Hook for paginated events (Timeline View)
+ */
+export function useEventsPaginated(pageSize: number = 20, initialFilters?: EventFilters) {
+    const [page, setPage] = useState(1)
+    const [filters, setFilters] = useState<EventFilters>(initialFilters || {})
+    const [events, setEvents] = useState<HändelseEvent[]>([])
+    const [totalCount, setTotalCount] = useState(0)
+    const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<Error | null>(null)
+
+    const refresh = useCallback(async () => {
+        setIsLoading(true)
+        try {
+            const offset = (page - 1) * pageSize
+            const { events, totalCount } = await getEvents({ ...filters, limit: pageSize, offset })
+            setEvents(events)
+            setTotalCount(totalCount)
+        } catch (err) {
+            console.error('Failed to fetch paginated events:', err)
+            setError(err instanceof Error ? err : new Error('Failed to fetch events'))
+        } finally {
+            setIsLoading(false)
+        }
+    }, [page, pageSize, filters])
+
+    useEffect(() => {
+        refresh()
+    }, [refresh])
+
+    // Reset page when filters change (deep comparison or simple dependency)
+    useEffect(() => {
+        setPage(1)
+    }, [filters.source, filters.category, filters.search, filters.dateFrom, filters.dateTo])
+
+    return {
+        events,
+        totalCount,
+        page,
+        setPage,
+        pageSize,
+        filters,
+        setFilters,
+        isLoading,
+        error,
+        refresh
+    }
+}
+
+/**
  * Get a single event by ID (helper, though in a real app might use a separate service call)
  */
 export function useEvent(id: string): { event: HändelseEvent | null, isLoading: boolean } {
@@ -128,8 +177,8 @@ export function useEvent(id: string): { event: HändelseEvent | null, isLoading:
         // For now, reusing getEvents for simplicity of migration
         async function fetchEvent() {
             setIsLoading(true)
-            const events = await getEvents()
-            const found = events.find(e => e.id === id)
+            const eventsData = await getEvents()
+            const found = eventsData.events.find(e => e.id === id)
             setEvent(found || null)
             setIsLoading(false)
         }

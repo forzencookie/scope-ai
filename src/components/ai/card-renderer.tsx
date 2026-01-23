@@ -22,6 +22,8 @@ const FinancialReportPreview = dynamic(() => import("./previews/documents/financ
 const ShareRegisterPreview = dynamic(() => import("./previews/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
 const AnnualReportPreview = dynamic(() => import("./previews/documents/annual-report-preview").then(m => ({ default: m.AnnualReportPreview })), { ssr: false })
 const RoadmapPreview = dynamic(() => import("./previews/roadmap-preview").then(m => ({ default: m.RoadmapPreview })), { ssr: false })
+const EmployeePreview = dynamic(() => import("./previews/employee-preview").then(m => ({ default: m.EmployeePreview })), { ssr: false })
+const VerificationPreview = dynamic(() => import("./previews/bokforing/verification-preview").then(m => ({ default: m.VerificationPreview })), { ssr: false })
 
 // ============================================================================
 // Types
@@ -488,6 +490,20 @@ export function CardRenderer({ display, className }: CardRendererProps) {
         case "plan":
         case "planering":
             return <RoadmapPreview
+                data={cardData}
+            />
+
+        case "employeepreview":
+        case "employee":
+        case "newemployee":
+            return <EmployeePreview 
+                data={cardData}
+            />
+
+        case "verificationpreview":
+        case "verification":
+            // @ts-ignore
+            return <VerificationPreview
                 data={cardData}
             />
 

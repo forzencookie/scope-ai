@@ -75,115 +75,115 @@ export const LazyUnifiedInvoicesView = createLazyComponent(
 
 // --- Skatt ---
 export const LazyMomsdeklaration = createLazyComponent(
-    () => import("@/components/skatt").then(m => ({ default: m.MomsdeklarationContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.MomsdeklarationContent })),
     "Laddar momsdeklaration..."
 )
 
 export const LazyInkomstdeklaration = createLazyComponent(
-    () => import("@/components/skatt").then(m => ({ default: m.InkomstdeklarationContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.InkomstdeklarationContent })),
     "Laddar inkomstdeklaration..."
 )
 
 export const LazyAGI = createLazyComponent(
-    () => import("@/components/skatt").then(m => ({ default: m.AGIContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.AGIContent })),
     "Laddar arbetsgivardeklaration..."
 )
 
 export const LazyArsredovisning = createLazyComponent(
-    () => import("@/components/skatt").then(m => ({ default: m.ArsredovisningContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.ArsredovisningContent })),
     "Laddar årsredovisning..."
 )
 
 export const LazyArsbokslut = createLazyComponent(
-    () => import("@/components/skatt").then(m => ({ default: m.ArsbokslutContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.ArsbokslutContent })),
     "Laddar årsbokslut..."
 )
 
 export const LazyK10 = createLazyComponent(
-    () => import("@/components/skatt").then(m => ({ default: m.K10Content })),
+    () => import("@/components/rapporter").then(m => ({ default: m.K10Content })),
     "Laddar K10..."
 )
 
 // --- Rapporter ---
 export const LazyResultatrakning = createLazyComponent(
-    () => import("@/components/rapporter/resultat-balans").then(m => ({ default: m.ResultatrakningContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.ResultatrakningContent })),
     "Laddar resultaträkning..."
 )
 
 export const LazyBalansrakning = createLazyComponent(
-    () => import("@/components/rapporter/resultat-balans").then(m => ({ default: m.BalansrakningContent })),
+    () => import("@/components/rapporter").then(m => ({ default: m.BalansrakningContent })),
     "Laddar balansräkning..."
 )
 
 // --- Löner ---
 export const LazyLonebesked = createLazyComponent(
-    () => import("@/components/loner").then(m => ({ default: m.LonesbeskContent })),
+    () => import("@/components/loner/payslips").then(m => ({ default: m.LonesbeskContent })),
     "Laddar lönebesked..."
 )
 
 export const LazyTeamTab = createLazyComponent(
-    () => import("@/components/loner/personal-lista").then(m => ({ default: m.TeamTab })),
+    () => import("@/components/loner/team"),
     "Laddar personal..."
 )
 
 export const LazyBenefitsTab = createLazyComponent(
-    () => import("@/components/loner/formaner").then(m => ({ default: m.BenefitsTab })),
+    () => import("@/components/loner/benefits").then(m => ({ default: m.BenefitsTab })),
     "Laddar förmåner..."
 )
 
-// --- Parter ---
+// --- Ägare & Styrning ---
 export const LazyUtdelning = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.UtdelningContent })),
+    () => import("@/components/agare").then(m => ({ default: m.UtdelningContent })),
     "Laddar utdelning..."
 )
 
 export const LazyAktiebok = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Aktiebok })),
+    () => import("@/components/agare").then(m => ({ default: m.Aktiebok })),
     "Laddar aktiebok..."
 )
 
 export const LazyDelagare = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Delagare })),
+    () => import("@/components/agare").then(m => ({ default: m.Delagare })),
     "Laddar delägare..."
 )
 
 export const LazyMedlemsregister = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Medlemsregister })),
+    () => import("@/components/agare").then(m => ({ default: m.Medlemsregister })),
     "Laddar medlemsregister..."
 )
 
 export const LazyStyrelseprotokoll = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Styrelseprotokoll })),
+    () => import("@/components/agare").then(m => ({ default: m.Styrelseprotokoll })),
     "Laddar styrelseprotokoll..."
 )
 
 export const LazyBolagsstamma = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Bolagsstamma })),
+    () => import("@/components/agare").then(m => ({ default: m.Bolagsstamma })),
     "Laddar bolagsstämma..."
 )
 
 export const LazyArsmote = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Arsmote })),
+    () => import("@/components/agare").then(m => ({ default: m.Arsmote })),
     "Laddar årsmöte..."
 )
 
 export const LazyFirmatecknare = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Firmatecknare })),
+    () => import("@/components/agare").then(m => ({ default: m.Firmatecknare })),
     "Laddar firmatecknare..."
 )
 
 export const LazyMyndigheter = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Myndigheter })),
+    () => import("@/components/agare").then(m => ({ default: m.Myndigheter })),
     "Laddar myndigheter..."
 )
 
 export const LazyEgenavgifter = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Egenavgifter })),
+    () => import("@/components/agare").then(m => ({ default: m.Egenavgifter })),
     "Laddar egenavgifter..."
 )
 
 export const LazyDelagaruttag = createLazyComponent(
-    () => import("@/components/parter").then(m => ({ default: m.Delagaruttag })),
+    () => import("@/components/agare").then(m => ({ default: m.Delagaruttag })),
     "Laddar delägaruttag..."
 )
 

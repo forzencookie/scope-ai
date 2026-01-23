@@ -65,9 +65,12 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
             t.status === TRANSACTION_STATUS_LABELS.RECORDED
         )
 
+         // Optimization: Create a lookup map for accounts to avoid O(N) search per row
+        const accountMap = new Map<string, any>();
+        basAccounts.forEach(a => accountMap.set(a.number, a));
+
         return bookedTransactions.map(t => {
-            const accountInfo = basAccounts.find(a => a.number === t.account) ||
-                basAccounts.find(a => a.number === t.category)
+            const accountInfo = accountMap.get(t.account) || accountMap.get(t.category);
 
             return {
                 id: t.id,

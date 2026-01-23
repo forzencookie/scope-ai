@@ -21,7 +21,7 @@ const SEARCH_ITEMS: SearchItem[] = [
     { label: "Rapporter", href: "/dashboard/rapporter", keywords: ["reports", "resultat", "balans"] },
     { label: "Moms", href: "/dashboard/rapporter?tab=moms", keywords: ["vat", "skatt"] },
     { label: "Löner", href: "/dashboard/loner", keywords: ["payroll", "anställda", "lön"] },
-    { label: "Inkorg", href: "/dashboard/inkorg", keywords: ["inbox", "meddelanden", "kivra"] },
+
     { label: "Ägare & Styrning", href: "/dashboard/agare", keywords: ["aktieägare", "styrelse", "bolagsstämma"] },
     { label: "Inställningar", href: "/dashboard/installningar", keywords: ["settings", "konto", "profil"] },
 ]

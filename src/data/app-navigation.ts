@@ -68,17 +68,7 @@ export const mockTeams: Team[] = [
 // Platform Navigation (Core)
 // ============================================
 
-/*
-export const navPlatform: NavItem[] = [
-    {
-        title: "Inkorg",
-        titleEnkel: "Inkorg",
-        url: "/dashboard/inkorg",
-        icon: Mail,
-        isActive: true,
-    },
-]
-*/
+
 
 // ============================================
 // Feature-based Navigation Modules
@@ -236,13 +226,13 @@ export const navAgare: NavItem[] = [
         icon: Coins,
         featureKey: "utdelning",
     },
-    {
-        title: "Ägarinfo",
-        titleEnkel: "Ägarinfo",
-        url: "/dashboard/agare?tab=agarinfo",
-        icon: Building2,
-        featureKey: "agarinfo",
-    },
+    // {
+    //     title: "Ägarinfo",
+    //     titleEnkel: "Ägarinfo",
+    //     url: "/dashboard/agare?tab=agarinfo",
+    //     icon: Building2,
+    //     featureKey: "agarinfo",
+    // },
     {
         title: "Medlemsregister",
         titleEnkel: "Medlemmar",

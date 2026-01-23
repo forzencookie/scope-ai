@@ -5,25 +5,14 @@ import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
 import type { TransactionWithAI } from "@/types"
 import {
-    Tooltip,
-    TooltipContent,
     TooltipProvider,
     TooltipTrigger,
 } from "@/components/ui/tooltip"
 import { cn } from "@/lib/utils"
 import { MonthClosing } from "@/components/bokforing/month-closing"
-import {
-    BookOpen,
-    Receipt,
-    ClipboardCheck,
-    FileText,
-    List,
-    Monitor,
-    Plus,
-    X,
-    Loader2,
-    Lock,
-} from "lucide-react"
+import { Loader2 } from "lucide-react"
+
+import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 
 
 
@@ -43,6 +32,8 @@ import {
 } from "@/components/shared"
 import { VerifikationerTable } from "@/components/bokforing/verifikationer"
 import { useTextMode } from "@/providers/text-mode-provider"
+
+import { useTransactionsPaginated } from "@/hooks/use-transactions"
 
 // Tab configuration with feature requirements and translations
 const allTabs = [
@@ -101,47 +92,35 @@ function AccountingPageContent() {
     const currentTab = paramTab || "transaktioner"
 
     // State for transactions and UI
-    const [apiTransactions, setApiTransactions] = useState<TransactionWithAI[]>([])
+    // Use paginated hook
+    const {
+        transactions,
+        isLoading,
+        error: fetchError,
+        page,
+        setPage,
+        total,
+        pageSize,
+        refetch: handleRefresh
+    } = useTransactionsPaginated(50) // Default 50 items per page
+
     const [transactionStats, setTransactionStats] = useState<TransactionStats | undefined>()
-    const [isLoading, setIsLoading] = useState(true)
-    const [fetchError, setFetchError] = useState<string | null>(null)
-    const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
-    const [showAllTabs, setShowAllTabs] = useState(false)
 
-    const fetchTransactions = useCallback(async (isMounted: { current: boolean }) => {
-        setFetchError(null)
-        try {
-            // Fetch stats and list in parallel using the service
-            const [listData, statsData] = await Promise.all([
-                transactionService.getTransactions({ limit: 50 }),
-                transactionService.getStats()
-            ])
-
-            if (isMounted.current) {
-                setApiTransactions(listData.transactions as TransactionWithAI[])
-                setTransactionStats(statsData)
-            }
-        } catch (error) {
-            console.error('Failed to fetch transactions:', error)
-            if (isMounted.current) {
-                setFetchError('Kunde inte hämta transaktioner. Försök igen.')
-            }
-        } finally {
-            if (isMounted.current) {
-                setIsLoading(false)
-                setLastRefresh(new Date())
-            }
+    // Fetch stats separately (could be moved to a hook too)
+    useEffect(() => {
+        const fetchStats = async () => {
+            const statsData = await transactionService.getStats()
+            setTransactionStats(statsData)
         }
+        fetchStats()
     }, [])
 
-    // Initial fetch with cleanup
+    const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
+
+    // Update last refresh when transactions update
     useEffect(() => {
-        const isMounted = { current: true }
-        fetchTransactions(isMounted)
-        return () => {
-            isMounted.current = false
-        }
-    }, [fetchTransactions])
+        setLastRefresh(new Date())
+    }, [transactions])
 
     // Auto-refresh every 5 seconds when on transactions tab
     useEffect(() => {
@@ -149,11 +128,7 @@ function AccountingPageContent() {
     }, [currentTab])
 
     // Manual refresh function
-    const handleRefresh = useCallback(() => {
-        setIsLoading(true)
-        const isMounted = { current: true }
-        fetchTransactions(isMounted)
-    }, [fetchTransactions])
+    // handleRefresh is now from the hook
 
     // Listen for global refresh event from toolbar
     useEffect(() => {
@@ -162,8 +137,8 @@ function AccountingPageContent() {
         return () => window.removeEventListener("page-refresh", onPageRefresh)
     }, [handleRefresh])
 
-    // Use only API transactions (no mock data)
-    const transactions = apiTransactions
+    // Use only api transactions (no mock data)
+    // const transactions = apiTransactions // Already destructured from hook
 
     // Handle transaction booking - update the transaction status
     const handleTransactionBooked = useCallback(async (transactionId: string, bookingData: { category: string; debitAccount: string; creditAccount: string; description?: string }) => {
@@ -176,18 +151,13 @@ function AccountingPageContent() {
 
             if (!response.ok) throw new Error('Failed to book')
 
-            setApiTransactions(prev =>
-                prev.map(t =>
-                    t.id === transactionId
-                        ? {
-                            ...t,
-                            status: TRANSACTION_STATUS_LABELS.RECORDED,
-                            category: bookingData.category,
-                            account: `${bookingData.debitAccount} / ${bookingData.creditAccount}`,
-                        }
-                        : t
-                )
-            )
+            /* 
+            // NOTE: Optimistic updates are handled internally by the hook or we rely on re-fetch
+            // But for now, since we don't have a setTransactions exposed from the hook easily for this specific mutation,
+            // we will just trigger a refresh or let the hook handle it if we switch to Mutation hook later.
+            // For immediate feedback, we can relay on the toast.
+             */
+            handleRefresh()
             toast.success('Transaktion bokförd', `Bokförd på konto ${bookingData.debitAccount}`)
         } catch (err) {
             console.error(err)
@@ -201,14 +171,19 @@ function AccountingPageContent() {
     // Text mode for Enkel/Avancerad labels
     const { isEnkel } = useTextMode()
 
-    // Filter tabs based on available features
+    // Filter tabs based on available features AND map to PageTabsLayout format
     const tabs = useMemo(() => {
-        return allTabs.filter(tab => {
-            if (!tab.feature) return true
-            if (tab.feature === 'verifikationer') return hasVerifikationer
-            return true
-        })
-    }, [hasVerifikationer])
+        return allTabs
+            .filter(tab => {
+                if (!tab.feature) return true
+                if (tab.feature === 'verifikationer') return hasVerifikationer
+                return true
+            })
+            .map(tab => ({
+                ...tab,
+                label: isEnkel ? tab.labelEnkel : tab.labelAvancerad
+            }))
+    }, [hasVerifikationer, isEnkel])
 
     // Helper to get the correct label based on mode
     const getTabLabel = (tab: typeof allTabs[0]) => {
@@ -228,108 +203,14 @@ function AccountingPageContent() {
             <div className="flex flex-col min-h-svh">
                 {/* Tab Content */}
                 <div className="px-6 pt-6">
-                    <div className="w-full">
-                        {/* Tabs - Show max 4 visible (since we reduced count), rest in overflow */}
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
-                            {tabs.slice(0, 4).map((tab) => {
-                                const isActive = currentTab === tab.id
-
-
-                                return (
-                                    <Tooltip key={tab.id}>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                onClick={() => setCurrentTab(tab.id)}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                                                    isActive
-                                                        ? "text-primary"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                                )}
-                                            >
-                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
-                                                {isActive && <span>{getTabLabel(tab)}</span>}
-                                            </button>
-                                        </TooltipTrigger>
-                                        {!isActive && (
-                                            <TooltipContent side="bottom">
-                                                <p>{getTabLabel(tab)}</p>
-                                            </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                )
-                            })}
-
-                            {/* Overflow tabs - toggle expand */}
-                            {tabs.length > 4 && !showAllTabs && (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <button
-                                            onClick={() => setShowAllTabs(true)}
-                                            className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                        >
-                                            <Plus className="h-4 w-4" />
-                                        </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom">
-                                        <p>Visa fler ({tabs.length - 4})</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            )}
-
-                            {/* Expanded tabs (5+) */}
-                            {showAllTabs && tabs.slice(4).map((tab) => {
-                                const isActive = currentTab === tab.id
-
-
-                                return (
-                                    <Tooltip key={tab.id}>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                onClick={() => setCurrentTab(tab.id)}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                                                    isActive
-                                                        ? "text-primary"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                                )}
-                                            >
-                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
-                                                {isActive && <span>{getTabLabel(tab)}</span>}
-                                            </button>
-                                        </TooltipTrigger>
-                                        {!isActive && (
-                                            <TooltipContent side="bottom">
-                                                <p>{getTabLabel(tab)}</p>
-                                            </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                )
-                            })}
-
-                            {/* Collapse button when expanded */}
-                            {showAllTabs && tabs.length > 4 && (
-                                <Tooltip>
-                                    <TooltipTrigger asChild>
-                                        <button
-                                            onClick={() => setShowAllTabs(false)}
-                                            className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                        >
-                                            <X className="h-3.5 w-3.5" />
-                                        </button>
-                                    </TooltipTrigger>
-                                    <TooltipContent side="bottom">
-                                        <p>Dölj</p>
-                                    </TooltipContent>
-                                </Tooltip>
-                            )}
-
-                            {/* Last updated */}
-                            <div className="ml-auto text-sm text-muted-foreground">
-                                Senast uppdaterad: {lastRefresh.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}
-                            </div>
-                        </div>
-                    </div>
+                    <PageTabsLayout
+                        tabs={tabs}
+                        currentTab={currentTab}
+                        onTabChange={setCurrentTab}
+                        lastUpdated={
+                            <span>Senaste uppdaterad: {lastRefresh.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
+                        }
+                    />
                 </div>
 
                 <main className="flex-1 flex flex-col p-6">
@@ -348,6 +229,10 @@ function AccountingPageContent() {
                                         transactions={transactions}
                                         stats={transactionStats}
                                         onTransactionBooked={handleTransactionBooked}
+                                        page={page}
+                                        pageSize={pageSize}
+                                        total={total}
+                                        onPageChange={setPage}
                                     />
                                 </SectionErrorBoundary>
                             )

@@ -45,11 +45,13 @@ export const invoiceService = {
     async getCustomerInvoices({
         limit = 50,
         offset = 0,
-        status
+        status,
+        startDate
     }: {
         limit?: number
         offset?: number
         status?: string
+        startDate?: string
     } = {}) {
         const supabase = getSupabaseClient()
 
@@ -61,6 +63,10 @@ export const invoiceService = {
 
         if (status) {
             query = query.eq('status', status)
+        }
+
+        if (startDate) {
+            query = query.gte('issue_date', startDate)
         }
 
         const { data, error, count } = await query
@@ -95,11 +101,13 @@ export const invoiceService = {
     async getSupplierInvoices({
         limit = 50,
         offset = 0,
-        status
+        status,
+        startDate
     }: {
         limit?: number
         offset?: number
         status?: string
+        startDate?: string
     } = {}) {
         const supabase = getSupabaseClient()
 
@@ -111,6 +119,10 @@ export const invoiceService = {
 
         if (status) {
             query = query.eq('status', status)
+        }
+
+        if (startDate) {
+            query = query.gte('invoice_date', startDate)
         }
 
         const { data, error, count } = await query

@@ -32,12 +32,14 @@ export const receiptService = {
         limit = 50,
         offset = 0,
         search = '',
-        statuses = []
+        statuses = [],
+        startDate
     }: {
         limit?: number
         offset?: number
         search?: string
         statuses?: string[]
+        startDate?: string
     } = {}) {
         const supabase = getSupabaseClient()
 
@@ -53,6 +55,10 @@ export const receiptService = {
 
         if (statuses.length > 0) {
             query = query.in('status', statuses)
+        }
+
+        if (startDate) {
+            query = query.gte('date', startDate)
         }
 
         const { data, error, count } = await query

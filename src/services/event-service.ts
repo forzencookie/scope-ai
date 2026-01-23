@@ -42,15 +42,19 @@ function mapDtoToEvent(dto: any): HändelseEvent {
 /**
  * Get all events from storage
  */
-export async function getEvents(filters?: EventFilters): Promise<HändelseEvent[]> {
+export async function getEvents(filters?: EventFilters & { limit?: number; offset?: number }): Promise<{ events: HändelseEvent[]; totalCount: number }> {
     const supabase = getSupabaseClient()
 
     let query = supabase
         .from('events')
-        .select('*')
+        .select('*', { count: 'exact' })
         .order('timestamp', { ascending: false })
 
     if (filters) {
+        if (filters.limit) {
+            const offset = filters.offset || 0
+            query = query.range(offset, offset + filters.limit - 1)
+        }
         if (filters.source) {
             const sources = Array.isArray(filters.source) ? filters.source : [filters.source]
             query = query.in('source', sources)
@@ -74,14 +78,17 @@ export async function getEvents(filters?: EventFilters): Promise<HändelseEvent[
         }
     }
 
-    const { data, error } = await query
+    const { data, error, count } = await query
 
     if (error) {
         console.error('Error fetching events:', error)
-        return []
+        return { events: [], totalCount: 0 }
     }
 
-    return (data || []).map(mapDtoToEvent)
+    return {
+        events: (data || []).map(mapDtoToEvent),
+        totalCount: count || 0
+    }
 }
 
 /**

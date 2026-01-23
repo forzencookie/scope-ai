@@ -17,6 +17,7 @@ import { PiggyBank, Loader2 } from "lucide-react"
 // Import constants from payroll components
 import { allTabs } from "@/components/loner/constants"
 import { useLastUpdated } from "@/hooks/use-last-updated"
+import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 
 // Lazy loaded tab components
 import {
@@ -52,46 +53,19 @@ function PayrollPageContent() {
         router.push(`/dashboard/loner?tab=${tab}`, { scroll: false })
     }, [router])
 
+
+
     return (
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
                 {/* Tabs with preload on hover */}
                 <div className="px-6 pt-6">
-                    <div className="w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60">
-                            {tabs.map((tab) => {
-                                const isActive = currentTab === tab.id
-
-                                return (
-                                    <Tooltip key={tab.id}>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                onClick={() => setCurrentTab(tab.id)}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all",
-                                                    isActive
-                                                        ? "bg-primary/5 text-primary"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                                )}
-                                            >
-                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
-                                                {isActive && <span>{tab.label}</span>}
-                                            </button>
-                                        </TooltipTrigger>
-                                        {!isActive && (
-                                            <TooltipContent side="bottom">
-                                                <p>{tab.label}</p>
-                                            </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                )
-                            })}
-
-                            <div className="ml-auto text-sm text-muted-foreground">
-                                {lastUpdated}
-                            </div>
-                        </div>
-                    </div>
+                    <PageTabsLayout
+                        tabs={tabs}
+                        currentTab={currentTab}
+                        onTabChange={setCurrentTab}
+                        lastUpdated={lastUpdated}
+                    />
                 </div>
 
                 {/* Tab Content */}

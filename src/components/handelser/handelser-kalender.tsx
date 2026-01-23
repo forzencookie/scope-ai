@@ -34,6 +34,17 @@ export function EventsCalendar({
         const firstDay = new Date(year, month, 1)
         const lastDay = new Date(year, month + 1, 0)
 
+        // Optimization: Create a hash map for events by date to avoid nested loop O(N*M)
+        const eventsByDate = new Map<string, HändelseEvent[]>();
+        
+        events.forEach(e => {
+            const dateKey = `${e.timestamp.getFullYear()}-${e.timestamp.getMonth()}-${e.timestamp.getDate()}`;
+            if (!eventsByDate.has(dateKey)) {
+                eventsByDate.set(dateKey, []);
+            }
+            eventsByDate.get(dateKey)!.push(e);
+        });
+
         // Adjust for Monday start (getDay(): 0=Sun, 1=Mon, etc.)
         let startOffset = firstDay.getDay() - 1
         if (startOffset < 0) startOffset = 6
@@ -48,14 +59,10 @@ export function EventsCalendar({
         // Days of the month
         for (let d = 1; d <= lastDay.getDate(); d++) {
             const date = new Date(year, month, d)
-            const dayEvents = events.filter((e) => {
-                const eDate = e.timestamp
-                return (
-                    eDate.getFullYear() === year &&
-                    eDate.getMonth() === month &&
-                    eDate.getDate() === d
-                )
-            })
+            const dateKey = `${year}-${month}-${d}`;
+            // Constant time lookup
+            const dayEvents = eventsByDate.get(dateKey) || [];
+            
             days.push({ date, events: dayEvents })
         }
 

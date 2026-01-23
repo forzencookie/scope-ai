@@ -12,8 +12,12 @@
 // Types
 // ============================================================================
 
-import { type Verification } from "@/hooks/use-verifications"
 import { getYear, parseISO, isWithinInterval } from "date-fns"
+
+export interface AccountBalance {
+  account: string;
+  balance: number;
+}
 
 /**
  * Raw VAT period - "naked"
@@ -195,51 +199,7 @@ export const FinancialReportProcessor = {
    * Calculate Income Statement (Resultaträkning) from verifications
    * Focuses on account classes 3, 4, 5, 6, 7, 8
    */
-  calculateIncomeStatement(verifications: Verification[], year: number = new Date().getFullYear()): ProcessedFinancialItem[] {
-    const startDate = new Date(year, 0, 1)
-    const endDate = new Date(year, 11, 31)
-
-    let revenue = 0
-    let costs = 0
-    let personnelCosts = 0
-    let otherExpenses = 0
-    let depreciation = 0
-    let financialItems = 0
-    let tax = 0
-
-    verifications.forEach(v => {
-      const vDate = parseISO(v.date)
-      if (vDate >= startDate && vDate <= endDate) {
-        v.rows.forEach(row => {
-          const acc = parseInt(row.account)
-          const netAmount = row.credit - row.debit // Income is credit > debit
-
-          if (acc >= 3000 && acc <= 3999) revenue += netAmount
-          else if (acc >= 4000 && acc <= 4999) costs += (row.debit - row.credit) // Expense is debit > credit
-          else if (acc >= 5000 && acc <= 6999) otherExpenses += (row.debit - row.credit)
-          else if (acc >= 7000 && acc <= 7699) personnelCosts += (row.debit - row.credit)
-          else if (acc >= 7700 && acc <= 7999) depreciation += (row.debit - row.credit)
-          else if (acc >= 8000 && acc <= 8899) financialItems += (row.debit - row.credit) // Usually expense? Check BAS. 8300 is income, 8400 expense. 
-          // Let's simplified: 8xxx Net Result (Income - Expense)
-          // If 8xxx is mostly financial expenses, calculate net.
-          else if (acc >= 8900 && acc <= 8999) tax += (row.debit - row.credit)
-        })
-      }
-    })
-
-    // Financial items are tricky. 83xx = Net Income (Credit), 84xx = Interest (Debit). 
-    // Let's refine financial items loop for accuracy if needed, but for now simple summation:
-    // We want (Financial Income - Financial Expense). 
-    // If we processed as (Debit - Credit) above, then Income is negative, Expense is positive.
-    // So `financialItems` = Net Expense. 
-    // Let's flip it for "Result" calculation.
-
-    // Actually, let's restart the financial calc loop part implicitly:
-    // Better: Calculate everything as 'Result Contribution' (Credit - Debit).
-    // Revenue (3xxx): Credit - Debit (Positive)
-    // Expenses (4-7xxx): Credit - Debit (Negative)
-    // Financial (8xxx): Credit - Debit (Mixed)
-
+  calculateIncomeStatement(balances: AccountBalance[]): ProcessedFinancialItem[] {
     let totalRevenue = 0
     let totalDirectCosts = 0 // 4xxx
     let totalPersonnel = 0 // 7xxx
@@ -248,22 +208,17 @@ export const FinancialReportProcessor = {
     let totalFinancial = 0 // 8xxx
     let totalTax = 0 // 89xx
 
-    verifications.forEach(v => {
-      const vDate = parseISO(v.date)
-      if (vDate >= startDate && vDate <= endDate) {
-        v.rows.forEach(row => {
-          const acc = parseInt(row.account)
-          const amount = row.credit - row.debit // Result impact (Positive = Income/Profit, Negative = Expense/Loss)
+    balances.forEach(b => {
+      const acc = parseInt(b.account)
+      const amount = b.balance // Positive = Income/Profit (Credit > Debit), Negative = Expense/Loss
 
-          if (acc >= 3000 && acc <= 3999) totalRevenue += amount
-          else if (acc >= 4000 && acc <= 4999) totalDirectCosts += amount
-          else if (acc >= 5000 && acc <= 6999) totalOtherExternal += amount
-          else if (acc >= 7000 && acc <= 7699) totalPersonnel += amount
-          else if (acc >= 7700 && acc <= 7999) totalDepreciation += amount
-          else if (acc >= 8000 && acc <= 8899) totalFinancial += amount
-          else if (acc >= 8900 && acc <= 8999) totalTax += amount
-        })
-      }
+      if (acc >= 3000 && acc <= 3999) totalRevenue += amount
+      else if (acc >= 4000 && acc <= 4999) totalDirectCosts += amount
+      else if (acc >= 5000 && acc <= 6999) totalOtherExternal += amount
+      else if (acc >= 7000 && acc <= 7699) totalPersonnel += amount
+      else if (acc >= 7700 && acc <= 7999) totalDepreciation += amount
+      else if (acc >= 8000 && acc <= 8899) totalFinancial += amount
+      else if (acc >= 8900 && acc <= 8999) totalTax += amount
     })
 
     const grossProfit = totalRevenue + totalDirectCosts
@@ -294,10 +249,7 @@ export const FinancialReportProcessor = {
    * Focuses on account classes 1 (Assets) and 2 (Equity/Liabilities)
    * Accumulates ALL TIME transactions up to reporting date.
    */
-  calculateBalanceSheet(verifications: Verification[], dateStr?: string): ProcessedFinancialItem[] {
-    // Default to "today" if no date
-    const targetDate = dateStr ? parseISO(dateStr) : new Date()
-
+  calculateBalanceSheet(balances: AccountBalance[]): ProcessedFinancialItem[] {
     let assetsFixed = 0 // 10xx - 13xx
     let assetsCurrent = 0 // 14xx - 19xx
     let equity = 0 // 20xx
@@ -305,28 +257,22 @@ export const FinancialReportProcessor = {
     let liabilitiesShort = 0 // 24xx - 29xx
     let untaxedReserves = 0 // 21xx
 
-    // 22xx is Distributions/Provisions, group with Long Term usually or separate. Let's group Short/Long based on standard.
+    balances.forEach(b => {
+      const acc = parseInt(b.account)
+      // Balance sheet balances from RPC. 
+      // Assets: Usually Debit > Credit (Negative in our credit-debit logic?). 
+      // Wait, RPC returns SUM(credit - debit).
+      // So Assets will be NEGATIVE. Liabilities POSITIVE.
+      // Let's flip signs for display where needed.
 
-    verifications.forEach(v => {
-      const vDate = parseISO(v.date)
-      // Balance sheet includes everything up to date
-      if (vDate <= targetDate) {
-        v.rows.forEach(row => {
-          const acc = parseInt(row.account)
-          // Assets: Normal balance Debit (Debit +, Credit -)
-          const assetAmount = row.debit - row.credit
+      const balance = b.balance
 
-          // Liabilities/Equity: Normal balance Credit (Credit +, Debit -)
-          const liabilityAmount = row.credit - row.debit
-
-          if (acc >= 1000 && acc <= 1399) assetsFixed += assetAmount
-          else if (acc >= 1400 && acc <= 1999) assetsCurrent += assetAmount
-          else if (acc >= 2000 && acc <= 2099) equity += liabilityAmount
-          else if (acc >= 2100 && acc <= 2199) untaxedReserves += liabilityAmount
-          else if (acc >= 2300 && acc <= 2399) liabilitiesLong += liabilityAmount
-          else if (acc >= 2400 && acc <= 2999) liabilitiesShort += liabilityAmount // Includes VAT (26xx), Tax (27xx), Suppliers (2440)
-        })
-      }
+      if (acc >= 1000 && acc <= 1399) assetsFixed += -balance // Flip to positive for asset
+      else if (acc >= 1400 && acc <= 1999) assetsCurrent += -balance // Flip to positive for asset
+      else if (acc >= 2000 && acc <= 2099) equity += balance
+      else if (acc >= 2100 && acc <= 2199) untaxedReserves += balance
+      else if (acc >= 2300 && acc <= 2399) liabilitiesLong += balance
+      else if (acc >= 2400 && acc <= 2999) liabilitiesShort += balance
     })
 
     // Calculate Current Year Result (This is often part of Equity in computer generated reports)
@@ -370,22 +316,11 @@ export const FinancialReportProcessor = {
    * Calculate Income Statement as sections for CollapsibleTableSection
    * Groups items by account to allow drill-down
    */
-  calculateIncomeStatementSections(verifications: Verification[], year: number = new Date().getFullYear()): FinancialSection[] {
-    const startDate = new Date(year, 0, 1)
-    const endDate = new Date(year, 11, 31)
-
-    // Account mapping for grouping
+  calculateIncomeStatementSections(balances: AccountBalance[]): FinancialSection[] {
     const accountBalances: Record<string, number> = {}
 
-    verifications.forEach(v => {
-      const vDate = parseISO(v.date)
-      if (vDate >= startDate && vDate <= endDate) {
-        v.rows.forEach(row => {
-          const acc = row.account
-          const impact = row.credit - row.debit // Result impact
-          accountBalances[acc] = (accountBalances[acc] || 0) + impact
-        })
-      }
+    balances.forEach(b => {
+      accountBalances[b.account] = b.balance
     })
 
     const getItemsInRange = (start: number, end: number) => {
@@ -473,18 +408,16 @@ export const FinancialReportProcessor = {
   /**
    * Calculate Balance Sheet as sections for CollapsibleTableSection
    */
-  calculateBalanceSheetSections(verifications: Verification[], dateStr?: string): FinancialSection[] {
-    const targetDate = dateStr ? parseISO(dateStr) : new Date()
+  calculateBalanceSheetSections(balances: AccountBalance[]): FinancialSection[] {
     const accountBalances: Record<string, number> = {}
 
-    verifications.forEach(v => {
-      const vDate = parseISO(v.date)
-      if (vDate <= targetDate) {
-        v.rows.forEach(row => {
-          const acc = row.account
-          const impact = row.debit - row.credit // Asset side (Debit is positive)
-          accountBalances[acc] = (accountBalances[acc] || 0) + impact
-        })
+    balances.forEach(b => {
+      const acc = parseInt(b.account)
+      // Assets need flipping to be positive
+      if (acc < 2000) {
+        accountBalances[b.account] = -b.balance
+      } else {
+        accountBalances[b.account] = b.balance
       }
     })
 

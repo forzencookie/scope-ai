@@ -9,6 +9,8 @@ import {
     ChevronDown,
     ArrowDownLeft,
     ArrowUpRight,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
@@ -26,9 +28,10 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { KanbanBoard, KanbanColumn } from "@/components/shared/kanban"
-import { InvoiceCreateDialog } from "../dialogs/faktura"
-import { SupplierInvoiceDialog } from "../dialogs/leverantor"
+import { InvoiceCreateDialog } from "./dialogs/faktura"
+import { SupplierInvoiceDialog } from "./dialogs/leverantor"
 import { invoiceService } from "@/lib/services/invoice-service"
+import { useInvoicesPaginated } from "@/hooks/use-invoices"
 
 // Imported newly created components
 import { UnifiedInvoice, ViewFilter, PeriodFilter } from "./fakturor/types"
@@ -37,134 +40,75 @@ import { InvoicesEmptyState } from "./fakturor/components/InvoicesEmptyState"
 import { InvoiceSummaryBar } from "./fakturor/components/InvoiceSummaryBar"
 import { InvoiceCard } from "./fakturor/components/InvoiceCard"
 
+import { mapCustomerInvoices, mapSupplierInvoices, mapToUnifiedInvoices } from "./fakturor/mappers"
+
 // Memoized to prevent unnecessary re-renders when parent state changes
 export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const { text } = useTextMode()
     const toast = useToast()
 
     // State
-    const [customerInvoices, setCustomerInvoices] = useState<Invoice[]>([])
-    const [supplierInvoices, setSupplierInvoices] = useState<SupplierInvoice[]>([])
-    // invoiceStats state removed
-    const [isLoading, setIsLoading] = useState(true)
     const [viewFilter, setViewFilter] = useState<ViewFilter>("all")
+
+    // Calculate start date based on period filter
+    const startDate = useMemo(() => {
+        const now = new Date()
+        switch (periodFilter) {
+            case "week": {
+                const start = new Date(now)
+                start.setDate(now.getDate() - 7)
+                return start.toISOString().split('T')[0]
+            }
+            case "month": {
+                const start = new Date(now.getFullYear(), now.getMonth(), 1)
+                return start.toISOString().split('T')[0]
+            }
+            case "quarter": {
+                const quarterMonth = Math.floor(now.getMonth() / 3) * 3
+                const start = new Date(now.getFullYear(), quarterMonth, 1)
+                return start.toISOString().split('T')[0]
+            }
+            default:
+                return undefined
+        }
+    }, [periodFilter])
+
+    // Use paginated hook
+    const {
+        customerInvoices: apiCustomerInvoices,
+        supplierInvoices: apiSupplierInvoices,
+        isLoading,
+        error: fetchError,
+        page,
+        setPage,
+        pageSize,
+        totalCustomerCount,
+        totalSupplierCount,
+        refetch: fetchInvoices
+    } = useInvoicesPaginated(25, viewFilter, startDate) // Show 25 of each per page
+
+    // Map service types to component types
+    const customerInvoices = useMemo<Invoice[]>(() => 
+        mapCustomerInvoices(apiCustomerInvoices), 
+    [apiCustomerInvoices])
+
+    const supplierInvoices = useMemo<SupplierInvoice[]>(() => 
+        mapSupplierInvoices(apiSupplierInvoices), 
+    [apiSupplierInvoices])
+
+    // Update the hook's view filter when local view filter changes
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all")
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false)
     const [supplierDialogOpen, setSupplierDialogOpen] = useState(false)
 
     // =============================================================================
-    // Data Fetching
-    // =============================================================================
-
-    const fetchInvoices = useCallback(async () => {
-        try {
-            const [customerData, supplierData] = await Promise.all([
-                invoiceService.getCustomerInvoices(),
-                invoiceService.getSupplierInvoices()
-            ])
-
-            setCustomerInvoices(customerData.invoices.map(inv => ({
-                id: inv.id,
-                customer: inv.customer,
-                email: inv.email,
-                issueDate: inv.issueDate,
-                dueDate: inv.dueDate,
-                amount: inv.amount,
-                vatAmount: inv.vatAmount,
-                status: inv.status as any,
-            })))
-
-            setSupplierInvoices(supplierData.invoices.map(inv => ({
-                id: inv.id,
-                invoiceNumber: inv.invoiceNumber,
-                supplierName: inv.supplierName,
-                amount: inv.amount,
-                vatAmount: inv.vatAmount ?? 0,
-                totalAmount: inv.totalAmount,
-                dueDate: inv.dueDate,
-                invoiceDate: inv.invoiceDate,
-                status: inv.status,
-                currency: (inv.currency || 'SEK') as 'SEK' | 'EUR' | 'USD',
-            })))
-
-        } catch (error) {
-            console.error('Failed to fetch invoices:', error)
-            setCustomerInvoices([])
-            setSupplierInvoices([])
-        }
-    }, [])
-
-    useEffect(() => {
-        setIsLoading(true)
-        fetchInvoices().finally(() => setIsLoading(false))
-    }, [fetchInvoices])
-
-    // =============================================================================
     // Unified Invoice List
     // =============================================================================
 
-    const unifiedInvoices = useMemo<UnifiedInvoice[]>(() => {
-        const customer: UnifiedInvoice[] = customerInvoices.map(inv => ({
-            id: `c-${inv.id}`,
-            direction: "in" as const,
-            number: inv.id,
-            counterparty: inv.customer,
-            amount: inv.amount,
-            vatAmount: inv.vatAmount,
-            totalAmount: inv.amount + (inv.vatAmount || 0),
-            dueDate: inv.dueDate,
-            issueDate: inv.issueDate,
-            status: inv.status,
-            originalCustomerInvoice: inv,
-        }))
+    const unifiedInvoices = useMemo<UnifiedInvoice[]>(() => 
+        mapToUnifiedInvoices(customerInvoices, supplierInvoices), 
+    [customerInvoices, supplierInvoices])
 
-        const supplier: UnifiedInvoice[] = supplierInvoices.map(inv => ({
-            id: `s-${inv.id}`,
-            direction: "out" as const,
-            number: inv.invoiceNumber || inv.id,
-            counterparty: inv.supplierName,
-            amount: inv.amount,
-            vatAmount: inv.vatAmount,
-            totalAmount: inv.totalAmount || inv.amount,
-            dueDate: inv.dueDate,
-            issueDate: inv.invoiceDate,
-            status: inv.status,
-            originalSupplierInvoice: inv,
-        }))
-
-        let result = [...customer, ...supplier]
-
-        // Apply view filter
-        if (viewFilter === "kundfakturor") {
-            result = result.filter(inv => inv.direction === "in")
-        } else if (viewFilter === "leverantorsfakturor") {
-            result = result.filter(inv => inv.direction === "out")
-        }
-
-        // Apply period filter
-        if (periodFilter !== "all") {
-            const now = new Date()
-            let startDate: Date
-            switch (periodFilter) {
-                case "week":
-                    startDate = new Date(now)
-                    startDate.setDate(now.getDate() - 7)
-                    break
-                case "month":
-                    startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-                    break
-                case "quarter":
-                    const quarterMonth = Math.floor(now.getMonth() / 3) * 3
-                    startDate = new Date(now.getFullYear(), quarterMonth, 1)
-                    break
-                default:
-                    startDate = new Date(0)
-            }
-            result = result.filter(inv => new Date(inv.issueDate) >= startDate)
-        }
-
-        return result
-    }, [customerInvoices, supplierInvoices, viewFilter, periodFilter])
 
     // =============================================================================
     // Stats
@@ -173,7 +117,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const stats = useMemo(() => {
         const incoming = customerInvoices
             .filter(i => i.status === INVOICE_STATUS_LABELS.SENT || i.status === INVOICE_STATUS_LABELS.OVERDUE)
-            .reduce((sum, start) => sum + (start.totalAmount || start.amount * 1.25), 0)
+            .reduce((sum, start) => sum + (start.amount + (start.vatAmount || 0)), 0)
 
         const outgoing = supplierInvoices
             .filter(i => i.status !== 'betald')
@@ -184,11 +128,11 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         const overdueSupplier = supplierInvoices.filter(i => i.status === 'förfallen' || (i.status !== 'betald' && i.dueDate < today))
 
         const overdueCount = overdueCustomer.length + overdueSupplier.length
-        const overdueAmount = overdueCustomer.reduce((sum, i) => sum + (i.totalAmount || 0), 0) + overdueSupplier.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+        const overdueAmount = overdueCustomer.reduce((sum, i) => sum + (i.amount + (i.vatAmount || 0)), 0) + overdueSupplier.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
         const paidCustomer = customerInvoices
             .filter(i => i.status === INVOICE_STATUS_LABELS.PAID)
-            .reduce((sum, i) => sum + (i.totalAmount || 0), 0)
+            .reduce((sum, i) => sum + (i.amount + (i.vatAmount || 0)), 0)
 
         const paidSupplier = supplierInvoices
             .filter(i => i.status === 'betald')
@@ -210,9 +154,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const handleSendInvoice = async (id: string) => {
         try {
             await fetch(`/api/invoices/${id}/book`, { method: "POST" })
-            setCustomerInvoices(prev => prev.map(inv =>
-                inv.id === id ? { ...inv, status: INVOICE_STATUS_LABELS.SENT } : inv
-            ))
+            fetchInvoices()
             toast.success("Faktura skickad!", "Fakturan har bokförts och skickats")
         } catch {
             toast.error("Kunde inte skicka faktura", "Ett fel uppstod")
@@ -222,9 +164,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const handleMarkCustomerPaid = async (id: string) => {
         try {
             await fetch(`/api/invoices/${id}/pay`, { method: "POST" })
-            setCustomerInvoices(prev => prev.map(inv =>
-                inv.id === id ? { ...inv, status: INVOICE_STATUS_LABELS.PAID } : inv
-            ))
+            fetchInvoices()
             toast.success("Betalning registrerad!", "Fakturan har markerats som betald")
         } catch {
             toast.error("Kunde inte registrera betalning", "Ett fel uppstod")
@@ -238,9 +178,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "Attesterad" })
             })
-            setSupplierInvoices(prev => prev.map(inv =>
-                inv.id === id ? { ...inv, status: "attesterad" as const } : inv
-            ))
+            fetchInvoices()
             toast.success("Faktura attesterad", "Fakturan har godkänts för betalning")
         } catch {
             toast.error("Kunde inte attestera", "Ett fel uppstod")
@@ -254,9 +192,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ status: "Betald" })
             })
-            setSupplierInvoices(prev => prev.map(inv =>
-                inv.id === id ? { ...inv, status: "betald" as const } : inv
-            ))
+            fetchInvoices()
             toast.success("Betalning registrerad", "Fakturan har markerats som betald")
         } catch {
             toast.error("Kunde inte registrera betalning", "Ett fel uppstod")
@@ -264,7 +200,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     }
 
     const handleInvoiceCreated = (newInvoice: Invoice) => {
-        setCustomerInvoices(prev => [newInvoice, ...prev])
+        fetchInvoices()
     }
 
     // =============================================================================
@@ -418,8 +354,52 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
             {viewFilter === "leverantorsfakturor" && renderSupplierKanban()}
 
             {unifiedInvoices.length === 0 && (
-                <InvoicesEmptyState hasFilters={viewFilter !== "all" || periodFilter !== "all"} />
+                <InvoicesEmptyState hasFilters={viewFilter !== "all"} />
             )}
+
+            {/* Pagination Footer */}
+            {((viewFilter === 'kundfakturor' && totalCustomerCount > pageSize) ||
+                (viewFilter === 'leverantorsfakturor' && totalSupplierCount > pageSize) ||
+                (viewFilter === 'all' && (totalCustomerCount > pageSize || totalSupplierCount > pageSize))) && (
+                    <div className="flex items-center justify-between px-2 py-4 mt-6 border-t border-border/40">
+                        <div className="text-sm text-muted-foreground">
+                            {viewFilter === 'all' && (
+                                <span>Visar sida {page} av fakturor</span>
+                            )}
+                            {viewFilter === 'kundfakturor' && (
+                                <span>Visar {Math.min((page - 1) * pageSize + 1, totalCustomerCount)}-{Math.min(page * pageSize, totalCustomerCount)} av {totalCustomerCount} kundfakturor</span>
+                            )}
+                            {viewFilter === 'leverantorsfakturor' && (
+                                <span>Visar {Math.min((page - 1) * pageSize + 1, totalSupplierCount)}-{Math.min(page * pageSize, totalSupplierCount)} av {totalSupplierCount} leverantörsfakturor</span>
+                            )}
+                        </div>
+                        <div className="flex items-center space-x-2">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(page - 1)}
+                                disabled={page <= 1 || isLoading}
+                            >
+                                <ChevronLeft className="h-4 w-4 mr-2" />
+                                Föregående
+                            </Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => setPage(page + 1)}
+                                disabled={
+                                    (viewFilter === 'kundfakturor' && page * pageSize >= totalCustomerCount) ||
+                                    (viewFilter === 'leverantorsfakturor' && page * pageSize >= totalSupplierCount) ||
+                                    (viewFilter === 'all' && page * pageSize >= Math.max(totalCustomerCount, totalSupplierCount)) ||
+                                    isLoading
+                                }
+                            >
+                                Nästa
+                                <ChevronRight className="h-4 w-4 ml-2" />
+                            </Button>
+                        </div>
+                    </div>
+                )}
 
             {/* Dialogs */}
             <InvoiceCreateDialog

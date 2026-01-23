@@ -8,6 +8,12 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export function parseAmount(amount: string | number): number {
+    if (typeof amount === 'number') return amount
+    const cleaned = amount.replace(/[^\d,.-]/g, '').replace(',', '.')
+    return parseFloat(cleaned) || 0
+}
+
 /** Maximum delay to prevent accidental long waits */
 const MAX_DELAY_MS = 30000
 

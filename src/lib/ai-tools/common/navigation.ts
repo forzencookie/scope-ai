@@ -25,11 +25,7 @@ const ROUTES: Record<string, RouteInfo> = {
         label: 'Startsidan',
         aliases: ['start', 'hem', 'home', 'översikt', 'huvudsidan'],
     },
-    inbox: {
-        path: '/dashboard/inkorg',
-        label: 'Inkorg',
-        aliases: ['inkorg', 'meddelanden', 'mail', 'email'],
-    },
+
 
     // -------------------------------------------------------------------------
     // Bokföring (Accounting)

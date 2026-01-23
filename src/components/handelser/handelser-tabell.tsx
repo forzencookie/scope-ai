@@ -12,6 +12,8 @@ import type { HändelseEvent } from "@/types/events"
 import { eventSourceMeta, eventStatusMeta } from "@/types/events"
 import { cn } from "@/lib/utils"
 
+import { formatDate } from "@/lib/formatters"
+
 interface EventsTableProps {
     events: HändelseEvent[]
     onEventClick?: (event: HändelseEvent) => void
@@ -71,7 +73,7 @@ export function EventsTable({ events, onEventClick }: EventsTableProps) {
                                 className="cursor-pointer"
                             >
                                 <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
-                                    {event.timestamp.toLocaleDateString("sv-SE")}
+                                    {formatDate(event.timestamp)}
                                 </div>
                                 <div style={{ gridColumn: 'span 4' }} className="font-medium">
                                     {event.title}

@@ -22,10 +22,11 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useLastUpdated } from "@/hooks/use-last-updated"
-import { useEvents } from "@/hooks/use-events"
+import { useLastUpdated } from "@/hooks/use-last-updated"
+import { useEvents, useEventsPaginated } from "@/hooks/use-events"
 import { eventSourceMeta, eventStatusMeta, type EventSource, type CorporateActionType } from "@/types/events"
 import { cn } from "@/lib/utils"
-import { ActionWizard } from "@/components/parter"
+import { ActionWizard } from "@/components/agare"
 import {
     EventsFolderView,
     EventsTable,
@@ -44,9 +45,12 @@ type ViewType = "folders" | "timeline" | "calendar" | "roadmap"
 const currentYear = new Date().getFullYear()
 const availableYears = [currentYear, currentYear - 1, currentYear - 2]
 
+const availableYears = [currentYear, currentYear - 1, currentYear - 2]
+
 function HandelserPageContent() {
     const lastUpdated = useLastUpdated()
-    const { events, countsBySource, emitAI, emitUser, emitSystem, isLoading } = useEvents()
+    // Keep useEvents for Folders (needs counts) and Calendar
+    const { events: allEvents, countsBySource, emitAI, emitUser, emitSystem, isLoading: isGlobalLoading } = useEvents()
 
     // View state
     const [activeView, setActiveView] = useState<ViewType>("folders")
@@ -66,10 +70,50 @@ function HandelserPageContent() {
         })
     }
 
-    // Filter events by year (and optionally quarter)
+    // Calculate variables for pagination hook
+    const paginationFilters = useMemo(() => {
+        const filters: any = {}
+
+        // Source filter
+        if (activeFilter) {
+            filters.source = activeFilter
+        }
+
+        // Search (not implemented in UI but supported by hook)
+        // filters.search = searchQuery
+
+        // Date filters
+        if (selectedQuarter) {
+            // Quarter specific filtering
+            const quarterMap: Record<Quarter, number> = {
+                "Q1": 0, "Q2": 3, "Q3": 6, "Q4": 9
+            }
+            const startMonth = quarterMap[selectedQuarter]
+            filters.dateFrom = new Date(selectedYear, startMonth, 1)
+            filters.dateTo = new Date(selectedYear, startMonth + 3, 0, 23, 59, 59)
+        } else {
+            // Full year filtering
+            filters.dateFrom = new Date(selectedYear, 0, 1)
+            filters.dateTo = new Date(selectedYear, 11, 31, 23, 59, 59)
+        }
+
+        return filters
+    }, [selectedYear, selectedQuarter, activeFilter])
+
+    // Paginated events for Timeline view
+    const {
+        events: paginatedEvents,
+        totalCount: paginatedTotalCount,
+        page,
+        setPage,
+        pageSize,
+        isLoading: isPaginationLoading
+    } = useEventsPaginated(25, paginationFilters)
+
+    // Filter events by year (and optionally quarter) for Calendar/Folders
     const yearEvents = useMemo(() => {
-        return events.filter(e => e.timestamp.getFullYear() === selectedYear)
-    }, [events, selectedYear])
+        return allEvents.filter(e => e.timestamp.getFullYear() === selectedYear)
+    }, [allEvents, selectedYear])
 
     const quarterEvents = useMemo(() => {
         if (!selectedQuarter) return yearEvents
@@ -88,17 +132,17 @@ function HandelserPageContent() {
         return countEventsByQuarter(events, selectedYear)
     }, [events, selectedYear])
 
-    // Group events by date for timeline view
-    const groupedEvents = useMemo(() => {
-        return filteredEvents.reduce((groups, event) => {
+    // Group paginated events by date for timeline view
+    const groupedPaginatedEvents = useMemo(() => {
+        return paginatedEvents.reduce((groups, event) => {
             const date = event.timestamp.toLocaleDateString('sv-SE')
             if (!groups[date]) {
                 groups[date] = []
             }
             groups[date].push(event)
             return groups
-        }, {} as Record<string, typeof events>)
-    }, [filteredEvents])
+        }, {} as Record<string, typeof paginatedEvents>)
+    }, [paginatedEvents])
 
     const dateLabels: Record<string, string> = {
         [new Date().toLocaleDateString('sv-SE')]: 'Idag',
@@ -118,8 +162,9 @@ function HandelserPageContent() {
     }, [])
 
     // Seed with demo events on first mount if empty AND not loading
+    // Seed with demo events on first mount if empty AND not loading
     useEffect(() => {
-        if (!isLoading && events.length === 0) {
+        if (!isGlobalLoading && allEvents.length === 0) {
             // Only seed if we're sure it's empty after trying to load
 
             // NOTE: In production/Supabase mode, we might want to disable auto-seeding
@@ -265,7 +310,7 @@ function HandelserPageContent() {
                                         {selectedQuarter ? `${selectedQuarter} ${selectedYear}` : 'Tidslinje'}
                                     </span>
                                     <span className="text-sm text-muted-foreground">
-                                        ({filteredEvents.length} händelser)
+                                        ({paginatedTotalCount} händelser)
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-2">
@@ -291,7 +336,7 @@ function HandelserPageContent() {
                                 <div className="flex gap-2 pb-2 overflow-x-auto">
                                     {filterButtons.map(({ source, label }) => {
                                         const isActive = activeFilter === source
-                                        const count = source ? countsBySource[source] : filteredEvents.length
+                                        const count = source ? countsBySource[source] : paginatedTotalCount
                                         return (
                                             <Button
                                                 key={source ?? 'all'}
@@ -314,8 +359,8 @@ function HandelserPageContent() {
                             )}
 
                             {/* Grouped timeline */}
-                            {Object.entries(groupedEvents).length > 0 ? (
-                                Object.entries(groupedEvents).map(([date, dateEvents]) => (
+                            {Object.entries(groupedPaginatedEvents).length > 0 ? (
+                                Object.entries(groupedPaginatedEvents).map(([date, dateEvents]) => (
                                     <div key={date} className="space-y-2">
                                         <div className="text-xs font-medium text-muted-foreground uppercase tracking-wider pt-2">
                                             {dateLabels[date] || date}
@@ -394,12 +439,31 @@ function HandelserPageContent() {
                                 </Card>
                             )}
 
-                            {filteredEvents.length > 0 && (
-                                <div className="text-center py-4">
-                                    <button className="text-sm text-muted-foreground hover:text-foreground transition-colors">
-                                        <History className="h-4 w-4 inline mr-1.5" />
-                                        Visa äldre händelser
-                                    </button>
+                            {paginatedTotalCount > pageSize && (
+                                <div className="flex items-center justify-between px-2 py-4 mt-6 border-t border-border/40">
+                                    <div className="text-sm text-muted-foreground">
+                                        Visar {Math.min((page - 1) * pageSize + 1, paginatedTotalCount)}-{Math.min(page * pageSize, paginatedTotalCount)} av {paginatedTotalCount} händelser
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setPage(page - 1)}
+                                            disabled={page <= 1 || isPaginationLoading}
+                                        >
+                                            <ChevronLeft className="h-4 w-4 mr-2" />
+                                            Föregående
+                                        </Button>
+                                        <Button
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() => setPage(page + 1)}
+                                            disabled={page * pageSize >= paginatedTotalCount || isPaginationLoading}
+                                        >
+                                            Nästa
+                                            <ChevronDown className="h-4 w-4 ml-2 rotate-[-90deg]" />
+                                        </Button>
+                                    </div>
                                 </div>
                             )}
                         </>

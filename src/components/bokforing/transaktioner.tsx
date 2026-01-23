@@ -11,8 +11,10 @@ import {
     ArrowRightLeft,
     SlidersHorizontal,
     X,
+    ChevronLeft,
+    ChevronRight,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, parseAmount } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { TRANSACTION_STATUSES, type TransactionWithAI } from "@/types"
@@ -46,7 +48,12 @@ export const TransactionsTable = memo(function TransactionsTable({
     subtitle,
     transactions = [],
     stats: externalStats,
+    stats: externalStats,
     onTransactionBooked,
+    page = 1,
+    pageSize = 20,
+    total = 0,
+    onPageChange,
 }: TransactionsTableProps) {
     const { text } = useTextMode()
     const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
@@ -93,12 +100,6 @@ export const TransactionsTable = memo(function TransactionsTable({
     // Use external stats if provided, otherwise calculate locally (fallback)
     const stats = useMemo(() => {
         if (externalStats) return externalStats
-
-        const parseAmount = (amount: string | number) => {
-            if (typeof amount === 'number') return amount
-            const cleaned = amount.replace(/[^\d,.-]/g, '').replace(',', '.')
-            return parseFloat(cleaned) || 0
-        }
 
         const income = transactions
             .filter(t => parseAmount(t.amount) > 0)
@@ -317,6 +318,35 @@ export const TransactionsTable = memo(function TransactionsTable({
                     </div>
                 </div>
             </div>
+
+            {/* Pagination */}
+            {onPageChange && total > pageSize && (
+                <div className="flex items-center justify-between px-2 py-4">
+                    <div className="text-sm text-muted-foreground">
+                        Visar {Math.min((page - 1) * pageSize + 1, total)} till {Math.min(page * pageSize, total)} av {total} transaktioner
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onPageChange(page - 1)}
+                            disabled={page <= 1}
+                        >
+                            <ChevronLeft className="h-4 w-4 mr-2" />
+                            Föregående
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => onPageChange(page + 1)}
+                            disabled={page * pageSize >= total}
+                        >
+                            Nästa
+                            <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
+                    </div>
+                </div>
+            )}
 
             {/* Bulk Action Toolbar - appears when items are selected */}
             <BulkActionToolbar

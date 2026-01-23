@@ -291,6 +291,7 @@ export interface Invoice {
   dueDate: string
   amount: number       // Net amount (ex. VAT)
   vatAmount?: number   // VAT amount
+  totalAmount?: number // Total amount (including VAT)
   vatRate?: number     // VAT rate (25, 12, 6, 0)
   status: InvoiceStatus
 }

@@ -12,7 +12,7 @@ export const common = {
 }
 
 export const nav = {
-    inbox: { enkel: "Inkorg", avancerad: "Inkorg" },
+
     aiRobot: { enkel: "AI-hjälpen", avancerad: "AI Robot" },
     events: { enkel: "Nyheter", avancerad: "Händelser" },
     bookkeeping: { enkel: "Min bokföring", avancerad: "Bokföring" },

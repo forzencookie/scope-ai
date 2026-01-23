@@ -2,7 +2,7 @@
 
 import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
-import { IntegrationLogos } from "@/components/settings/integration-logos"
+import { IntegrationLogos } from "@/components/installningar/integration-logos"
 
 export function IntegrationMesh() {
     const integrations: { name: keyof typeof IntegrationLogos; angle: number }[] = [

@@ -1,17 +1,10 @@
 "use client"
 
-import { useState, useEffect, useCallback, useMemo } from "react"
-import { Plus, Package, Calendar, Tag, Banknote, Clock, Monitor, Armchair, Car, Wrench } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { useState, useEffect } from "react"
+import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
-import {
-    GridTableHeader,
-    GridTableRows,
-    GridTableRow,
-} from "@/components/ui/grid-table"
 import {
     Dialog,
     DialogContent,
@@ -22,46 +15,65 @@ import {
     DialogTrigger,
 } from "@/components/ui/dialog"
 import { Label } from "@/components/ui/label"
-
-import { formatCurrency } from "@/lib/utils"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { useTextMode } from "@/providers/text-mode-provider"
-import { inventarieService, type Inventarie, type InventarieStats } from "@/lib/services/inventarie-service"
+import { type Inventarie } from "@/lib/services/inventarie-service"
+
+// Custom Hook & Components
+import { useInventarier } from "@/hooks/use-inventarier"
+import { useVerifications } from "@/hooks/use-verifications"
+import { useToast } from "@/components/ui/toast"
+import { InventarierStats } from "./inventarier/stats"
+import { InventarierGrid } from "./inventarier/grid"
+import { Calculator } from "lucide-react"
 
 export function InventarierTable() {
     const { text } = useTextMode()
-    const [inventarier, setInventarier] = useState<Inventarie[]>([])
-    // stats state removed
-    const [isLoading, setIsLoading] = useState(true)
+    const { inventarier, isLoading, stats, fetchInventarier, addInventarie } = useInventarier()
+    const { addVerification } = useVerifications()
+    const { toast } = useToast()
     const [isDialogOpen, setIsDialogOpen] = useState(false)
     const [newAsset, setNewAsset] = useState<Partial<Inventarie>>({
         livslangdAr: 5
     })
 
-    // Fetch inventarier using service for single source of truth
-    const fetchInventarier = useCallback(async () => {
-        try {
-            // Fetch list only. Stats are derived.
-            // Removed getStats call.
-            const listData = await inventarieService.getInventarier()
-            setInventarier(listData.inventarier)
-        } catch (error) {
-            console.error('Failed to fetch inventarier:', error)
-            setInventarier([])
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
+    // Initial fetch
     useEffect(() => {
         fetchInventarier()
     }, [fetchInventarier])
+
+    const handleDepreciate = async () => {
+        // Simple straight-line depreciation (monthly)
+        const totalMonthly = inventarier.reduce((acc, curr) => {
+            if (!curr.livslangdAr || curr.status === 'såld' || curr.status === 'avskriven') return acc;
+            const monthly = curr.inkopspris / (curr.livslangdAr * 12);
+            return acc + monthly;
+        }, 0);
+
+        if (totalMonthly <= 0) {
+            toast({ title: "Inget att skriva av", description: "Inga aktiva inventarier hittades.", variant: "destructive" });
+            return;
+        }
+
+        const amount = Math.round(totalMonthly);
+
+        await addVerification({
+            date: new Date().toISOString().split('T')[0],
+            description: `Månatlig avskrivning inventarier`,
+            sourceType: 'generated',
+            rows: [
+                { account: '7832', debit: amount, credit: 0, description: 'Avskrivning inventarier' },
+                { account: '1229', debit: 0, credit: amount, description: 'Ack. avskrivning inv.' }
+            ]
+        });
+
+        toast({ title: "Bokfört", description: `Avskrivning på ${amount} kr har bokförts.` });
+    }
 
     const handleAddAsset = async () => {
         if (!newAsset.namn || !newAsset.inkopspris) return
 
         try {
-            await inventarieService.addInventarie({
+            await addInventarie({
                 namn: newAsset.namn,
                 kategori: newAsset.kategori || 'Inventarier',
                 inkopsdatum: newAsset.inkopsdatum || new Date().toISOString().split('T')[0],
@@ -70,56 +82,16 @@ export function InventarierTable() {
             })
             setIsDialogOpen(false)
             setNewAsset({ livslangdAr: 5 })
-            // Refresh data
-            fetchInventarier()
         } catch (error) {
-            console.error('Failed to add inventarie:', error)
+            // Error handled in hook (logged)
         }
     }
 
     const selection = useBulkSelection(inventarier)
 
-    // Calculate category breakdown & stats
-    const stats = useMemo(() => {
-        const breakdown: Record<string, { count: number; value: number; icon: typeof Monitor }> = {}
-        let totalInkopsvarde = 0
-        let totalCount = 0
-        const categories = new Set<string>()
-
-        // Category to icon mapping
-        const iconMap: Record<string, typeof Monitor> = {
-            'Datorer': Monitor,
-            'Inventarier': Armchair,
-            'Fordon': Car,
-            'Verktyg': Wrench,
-        }
-
-        inventarier.forEach(item => {
-            const cat = item.kategori || 'Övrigt'
-            if (!breakdown[cat]) {
-                breakdown[cat] = { count: 0, value: 0, icon: iconMap[cat] || Package }
-            }
-            breakdown[cat].count++
-            breakdown[cat].value += item.inkopspris
-
-            totalInkopsvarde += item.inkopspris
-            totalCount++
-            categories.add(cat)
-        })
-
-        return {
-            breakdown,
-            totalInkopsvarde,
-            totalCount,
-            kategorier: categories.size
-        }
-    }, [inventarier])
-
-    const totalValue = stats.totalInkopsvarde
-
     return (
         <div className="space-y-6">
-            {/* Header Section (Moved to Top) */}
+            {/* Header Section */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
                 <div className="space-y-1">
                     <h2 className="text-2xl font-bold tracking-tight">Tillgångar</h2>
@@ -127,14 +99,19 @@ export function InventarierTable() {
                         Datorer, möbler och andra saker du äger.
                     </p>
                 </div>
-                <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                    <DialogTrigger asChild>
-                        <Button className="gap-2">
-                            <Plus className="h-4 w-4" />
-                            Lägg till
-                        </Button>
-                    </DialogTrigger>
-                    <DialogContent>
+                <div className="flex gap-2">
+                    <Button variant="outline" className="gap-2" onClick={handleDepreciate}>
+                        <Calculator className="h-4 w-4" />
+                        Bokför avskrivning
+                    </Button>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                        <DialogTrigger asChild>
+                            <Button className="gap-2">
+                                <Plus className="h-4 w-4" />
+                                Lägg till
+                            </Button>
+                        </DialogTrigger>
+                        <DialogContent>
                         <DialogHeader>
                             <DialogTitle>{text.assets.newAsset}</DialogTitle>
                             <DialogDescription>
@@ -211,83 +188,8 @@ export function InventarierTable() {
                 </Dialog>
             </div>
 
-            {/* Asset Value Overview */}
-            <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/40 dark:to-zinc-950/40 p-5">
-                <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
-                    {/* Total Value Section */}
-                    <div className="flex items-center gap-4">
-                        <div className="h-14 w-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
-                            <Package className="h-7 w-7 text-slate-600 dark:text-slate-400" />
-                        </div>
-                        <div>
-                            <p className="text-sm text-muted-foreground">Totalt tillgångsvärde</p>
-                            <p className="text-3xl font-bold tabular-nums">{formatCurrency(totalValue)}</p>
-                            <p className="text-sm text-muted-foreground">
-                                {stats.totalCount} tillgångar i {stats.kategorier} kategorier
-                            </p>
-                        </div>
-                    </div>
-
-                    {/* Category Breakdown */}
-                    {Object.keys(stats.breakdown).length > 0 && (
-                        <div className="flex flex-wrap gap-3">
-                            {Object.entries(stats.breakdown).map(([category, data]) => {
-                                const Icon = data.icon
-                                const percentage = totalValue > 0 ? Math.round((data.value / totalValue) * 100) : 0
-
-                                return (
-                                    <div
-                                        key={category}
-                                        className="flex items-center gap-3 px-4 py-3 rounded-lg bg-background border border-border/50 min-w-[140px]"
-                                    >
-                                        <div className={cn(
-                                            "h-9 w-9 rounded-lg flex items-center justify-center",
-                                            "bg-muted"
-                                        )}>
-                                            <Icon className="h-4 w-4 text-muted-foreground" />
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <p className="text-sm font-medium truncate">{category}</p>
-                                            <div className="flex items-center gap-2">
-                                                <span className="text-xs text-muted-foreground">{data.count} st</span>
-                                                <span className="text-xs text-muted-foreground">•</span>
-                                                <span className="text-xs font-medium">{percentage}%</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                )
-                            })}
-                        </div>
-                    )}
-                </div>
-
-                {/* Value Distribution Bar */}
-                {Object.keys(stats.breakdown).length > 1 && (
-                    <div className="mt-4 pt-4 border-t">
-                        <p className="text-xs text-muted-foreground mb-2">Värdefördelning</p>
-                        <div className="h-2 rounded-full bg-muted overflow-hidden flex">
-                            {Object.entries(stats.breakdown).map(([category, data], index) => {
-                                const percentage = totalValue > 0 ? (data.value / totalValue) * 100 : 0
-                                const colors = [
-                                    'bg-slate-500',
-                                    'bg-blue-500',
-                                    'bg-emerald-500',
-                                    'bg-amber-500',
-                                    'bg-violet-500',
-                                ]
-                                return (
-                                    <div
-                                        key={category}
-                                        className={cn("h-full transition-all", colors[index % colors.length])}
-                                        style={{ width: `${percentage}%` }}
-                                        title={`${category}: ${formatCurrency(data.value)}`}
-                                    />
-                                )
-                            })}
-                        </div>
-                    </div>
-                )}
-            </div>
+            {/* Stats Component */}
+            <InventarierStats stats={stats} />
 
             {/* Table Section */}
             <div>
@@ -297,80 +199,11 @@ export function InventarierTable() {
                     <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">Inventarieförteckning</h3>
                 </div>
 
-
-                <div className="w-full overflow-x-auto pb-2">
-                    <div className="min-w-[800px] px-2">
-                        <GridTableHeader
-                            gridCols={14}
-                            columns={[
-                                { label: "Namn", icon: Tag, span: 4 },
-                                { label: "Kategori", span: 2 },
-                                { label: "Inköpsdatum", icon: Calendar, span: 2 },
-                                { label: "Inköpspris", icon: Banknote, span: 3 },
-                                { label: "Livslängd", icon: Clock, span: 2 },
-                            ]}
-                            trailing={
-                                <Checkbox
-                                    checked={selection.allSelected && inventarier.length > 0}
-                                    onCheckedChange={selection.toggleAll}
-                                    className="mr-2"
-                                />
-                            }
-                        />
-
-                        <GridTableRows>
-                            {inventarier.map((item) => (
-                                <GridTableRow
-                                    key={item.id}
-                                    gridCols={14}
-                                    selected={selection.isSelected(item.id)}
-                                    onClick={() => selection.toggleItem(item.id)}
-                                    className="cursor-pointer group"
-                                >
-                                    <div style={{ gridColumn: 'span 4' }} className="font-medium truncate">
-                                        {item.namn}
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate">
-                                        {item.kategori}
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground tabular-nums truncate">
-                                        {item.inkopsdatum}
-                                    </div>
-                                    <div style={{ gridColumn: 'span 3' }} className="font-mono font-medium truncate">
-                                        {formatCurrency(item.inkopspris)}
-                                    </div>
-                                    <div style={{ gridColumn: 'span 2' }} className="flex items-center h-8 truncate">
-                                        <span className="text-muted-foreground">{item.livslangdAr} år</span>
-                                    </div>
-                                    <div
-                                        style={{ gridColumn: 'span 1' }}
-                                        className="flex justify-end items-center opacity-0 group-hover:opacity-100 transition-opacity"
-                                        onClick={(e) => e.stopPropagation()}
-                                    >
-                                        <Checkbox
-                                            checked={selection.isSelected(item.id)}
-                                            onCheckedChange={() => selection.toggleItem(item.id)}
-                                            className="mr-2"
-                                        />
-                                    </div>
-                                </GridTableRow>
-                            ))}
-
-                            {inventarier.length === 0 && !isLoading && (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <Package className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                                    <p>Inga tillgångar registrerade än</p>
-                                </div>
-                            )}
-
-                            {isLoading && (
-                                <div className="text-center py-12 text-muted-foreground">
-                                    <p>Laddar...</p>
-                                </div>
-                            )}
-                        </GridTableRows>
-                    </div>
-                </div>
+                <InventarierGrid
+                    inventarier={inventarier}
+                    isLoading={isLoading}
+                    selection={selection}
+                />
             </div>
         </div>
     )

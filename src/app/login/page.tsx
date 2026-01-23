@@ -73,7 +73,7 @@ function LoginContent() {
 
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      router.push('/dashboard/inkorg')
+      router.push('/dashboard')
     }
   }, [isAuthenticated, authLoading, router])
 
@@ -93,7 +93,7 @@ function LoginContent() {
       if (error) {
         setError(error.message)
       } else {
-        router.push('/dashboard/inkorg')
+        router.push('/dashboard')
       }
     } catch {
       setError('Ett oväntat fel inträffade. Försök igen.')
@@ -179,17 +179,7 @@ function LoginContent() {
                 </div>
               </div>
 
-              {/* Right Card: INKORG (30% width) */}
-              <div className="col-span-3 bg-stone-50 border border-stone-200 rounded-xl p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <svg className="w-4 h-4 text-stone-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-                  </svg>
-                  <span className="text-xs font-mono text-stone-600 uppercase">Inkorg</span>
-                </div>
-                <div className="text-2xl font-bold text-stone-900">3 nya</div>
-                <div className="text-xs text-stone-500">Väntar på granskning</div>
-              </div>
+
             </div>
           </div>
         </div>

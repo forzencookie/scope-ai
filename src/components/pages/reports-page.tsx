@@ -19,6 +19,7 @@ import {
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
 import { useLastUpdated } from "@/hooks/use-last-updated"
+import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 
 // Lazy loaded tab content components
 import {
@@ -68,46 +69,19 @@ function ReportsPageContent() {
         router.push(`/dashboard/rapporter?tab=${tab}`, { scroll: false })
     }, [router])
 
+
+
     return (
         <TooltipProvider delayDuration={400}>
             <div className="flex flex-col min-h-svh">
                 {/* Tabs */}
                 <div className="px-6 pt-6">
-                    <div className="w-full">
-                        <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 overflow-x-auto scrollbar-hide">
-                            {availableTabs.map((tab) => {
-                                const isActive = currentTab === tab.id
-
-                                return (
-                                    <Tooltip key={tab.id}>
-                                        <TooltipTrigger asChild>
-                                            <button
-                                                onClick={() => setCurrentTab(tab.id)}
-                                                className={cn(
-                                                    "flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all whitespace-nowrap",
-                                                    isActive
-                                                        ? "text-primary"
-                                                        : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                                )}
-                                            >
-                                                <div className={cn("h-2 w-2 rounded-full", tab.color)} />
-                                                {isActive && <span>{tab.label}</span>}
-                                            </button>
-                                        </TooltipTrigger>
-                                        {!isActive && (
-                                            <TooltipContent side="bottom">
-                                                <p>{tab.label}</p>
-                                            </TooltipContent>
-                                        )}
-                                    </Tooltip>
-                                )
-                            })}
-
-                            <div className="ml-auto text-sm text-muted-foreground pl-4">
-                                {lastUpdated}
-                            </div>
-                        </div>
-                    </div>
+                    <PageTabsLayout
+                        tabs={availableTabs}
+                        currentTab={currentTab}
+                        onTabChange={setCurrentTab}
+                        lastUpdated={lastUpdated}
+                    />
                 </div>
 
                 {/* Tab Content */}

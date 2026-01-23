@@ -8,6 +8,11 @@ export interface TransactionsTableProps {
     transactions?: TransactionWithAI[]
     stats?: TransactionStats
     onTransactionBooked?: (transactionId: string, bookingData: BookingData) => void
+    // Pagination support
+    page?: number
+    pageSize?: number
+    total?: number
+    onPageChange?: (page: number) => void
 }
 
 export interface TransactionsEmptyStateProps {
