@@ -21,10 +21,13 @@ CREATE TABLE IF NOT EXISTS corporate_documents (
 CREATE TABLE IF NOT EXISTS shareholders (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     created_at TIMESTAMPTZ DEFAULT now(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    user_id UUID REFERENCES auth.users(id),
+    company_id TEXT REFERENCES companies(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     ssn_org_nr TEXT, -- personal number or org number
-    shares_count INTEGER NOT NULL DEFAULT 0,
-    shares_percentage NUMERIC(5,2),
+    shares INTEGER NOT NULL DEFAULT 0,
+    share_percentage NUMERIC(5,2),
     voting_power NUMERIC(5,2),
     metadata JSONB DEFAULT '{}'::jsonb
 );

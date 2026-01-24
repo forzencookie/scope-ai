@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { MeetingStats } from "./meeting-stats"
 import { UpcomingAlert } from "./upcoming-alert"
-import { MeetingList } from "./meeting-list"
+import { GeneralMeetingsGrid } from "./general-meetings-grid"
 import { useGeneralMeetings } from "./use-general-meetings"
 import { PlanMeetingDialog } from "../dialogs/mote"
 import { SendNoticeDialog } from "../dialogs/kallelse"
@@ -60,7 +60,7 @@ export function Bolagsstamma() {
          />
       </div>
 
-      <MeetingList 
+      <GeneralMeetingsGrid 
          meetings={filteredMeetings} 
          expandedId={expandedId}
          onToggleExpand={(id) => setExpandedId(prev => prev === id ? null : id)}

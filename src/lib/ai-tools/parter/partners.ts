@@ -28,7 +28,7 @@ export const getPartnersTool = defineTool<Record<string, never>, any[]>({
                     data: data,
                     message: `Hittade ${data.partnerCount || 0} delägare.`,
                     display: {
-                        component: 'PartnerList' as any,
+                        component: 'PartnersGrid' as any,
                         props: { stats: data },
                         title: 'Delägare',
                         fullViewRoute: '/dashboard/agare?tab=delagare',

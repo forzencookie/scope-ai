@@ -28,7 +28,7 @@ import { KanbanBoard, KanbanColumn } from "@/components/shared/kanban"
 import { InvoiceCreateDialog } from "../dialogs/faktura"
 import { SupplierInvoiceDialog } from "../dialogs/leverantor"
 import { InvoicesEmptyState } from "./components/InvoicesEmptyState"
-import { InvoiceSummaryBar } from "./components/InvoiceSummaryBar"
+import { InvoicesStats } from "./components/invoices-stats"
 import { InvoiceCard } from "./components/InvoiceCard"
 
 // Constants & Types
@@ -166,7 +166,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
 
             {/* Summary Bar + Filters in one row */}
             <div className="flex items-center justify-between gap-4 flex-wrap">
-                <InvoiceSummaryBar
+                <InvoicesStats
                     incoming={stats.incoming}
                     outgoing={stats.outgoing}
                     overdueCount={stats.overdueCount}

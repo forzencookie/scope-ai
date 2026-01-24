@@ -27,6 +27,17 @@ CREATE TABLE IF NOT EXISTS shareholders (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Fix for existing table without user_id
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'shareholders' AND column_name = 'user_id') THEN
+        ALTER TABLE shareholders ADD COLUMN user_id UUID REFERENCES auth.users(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'shareholders' AND column_name = 'company_id') THEN
+        ALTER TABLE shareholders ADD COLUMN company_id TEXT REFERENCES companies(id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
 ALTER TABLE shareholders ENABLE ROW LEVEL SECURITY;
 
 -- RLS based on user_id (Standard pattern)

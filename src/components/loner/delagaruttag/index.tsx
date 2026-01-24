@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { LegalInfoCard } from "@/components/ui/legal-info-card"
 import { WithdrawalStats } from "./withdrawal-stats"
-import { WithdrawalList } from "./withdrawal-list"
+import { WithdrawalsGrid } from "./withdrawals-grid"
 import { NewWithdrawalDialog } from "./new-withdrawal-dialog"
 import { useOwnerWithdrawals } from "./use-owner-withdrawals"
 import { usePartners } from "@/hooks/use-partners"
@@ -96,7 +96,7 @@ export function DelagaruttagManager() {
                         </div>
                     </div>
 
-                    <WithdrawalList withdrawals={filteredWithdrawals} />
+                    <WithdrawalsGrid withdrawals={filteredWithdrawals} />
                 </main>
 
                 <div className="space-y-6">

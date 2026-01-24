@@ -38,7 +38,7 @@ import { useMembers, type Member } from "@/hooks/use-members"
 // Components
 import { RightSidebarContent } from "./medlemsregister/right-sidebar-content"
 import { useMemberStats } from "./medlemsregister/use-member-stats"
-import { MemberStatsGrid } from "./medlemsregister/member-stats-grid"
+import { MembersStats } from "./medlemsregister/members-stats"
 import { AddMemberDialog } from "./medlemsregister/add-member-dialog"
 
 // Helper to convert member status to centralized status type
@@ -133,7 +133,7 @@ export function Medlemsregister() {
         </div>
       </div>
 
-      <MemberStatsGrid stats={stats} />
+      <MembersStats stats={stats} />
 
       {/* Actions Bar */}
       <div className="flex items-center gap-3">

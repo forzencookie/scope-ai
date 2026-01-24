@@ -22,19 +22,19 @@ import { Card } from "@/components/ui/card"
 
 // Types & Hooks
 import { BoardMeeting } from "@/types/board-meeting"
-import { useBoardMinutes } from "./styrelseprotokoll/use-board-minutes"
+import { useBoardMinutes } from "@/components/agare/styrelseprotokoll/use-board-minutes"
 
 // Sub-components
-import { BoardHeroCard } from "./styrelseprotokoll/board-hero-card"
-import { BoardMeetingList } from "./styrelseprotokoll/board-meeting-list"
-import { BoardMeetingDetails } from "./styrelseprotokoll/board-meeting-details"
+import { BoardMeetingsStats } from "@/components/agare/styrelseprotokoll/board-meetings-stats"
+import { BoardMeetingsGrid } from "@/components/agare/styrelseprotokoll/board-meetings-grid"
+import { BoardMeetingDetails } from "@/components/agare/styrelseprotokoll/board-meeting-details"
 
 // Dialogs (We reuse the PlanMeetingDialog from arsmote folder or common dialogs if available, assuming PlanMeetingDialog handles board meetings via 'type' prop or we keep it simple for now)
 // Actually, in the original file, it imported `Dialog` directly but didn't seem to fully implement the create logic beyond `setShowCreateDialog`. 
 // I will check if `PlanMeetingDialog` exists in `dialogs/mote` as imported in `arsmote.tsx`. 
 // Based on imports in arsmote.tsx: import { PlanMeetingDialog } from "./dialogs/mote"
 // Let's assume we can reuse it or need to bring it in.
-import { PlanMeetingDialog } from "./dialogs/mote" 
+import { PlanMeetingDialog } from "@/components/agare/dialogs/mote" 
 
 type StatusFilter = 'all' | 'planerad' | 'genomförd' | 'protokoll signerat'
 
@@ -151,7 +151,7 @@ export function Styrelseprotokoll() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Hero Card: Next/Latest Meeting */}
         <div className="md:col-span-8">
-           <BoardHeroCard 
+           <BoardMeetingsStats 
               heroData={heroMeeting}
               onClick={setSelectedMeeting}
            />
@@ -212,7 +212,7 @@ export function Styrelseprotokoll() {
       </div>
 
       {/* Meetings List */}
-      <BoardMeetingList 
+      <BoardMeetingsGrid 
          years={sortedYears}
          meetingsByYear={meetingsByYear}
          collapsedYears={collapsedYears}

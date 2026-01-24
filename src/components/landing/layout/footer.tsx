@@ -28,21 +28,39 @@ export function Footer() {
         </div>
 
         {[
-          { title: "Produkt", links: ["Plattform", "Funktioner", "Priser", "API"] },
-          { title: "Företag", links: ["Om oss", "Karriär", "Blogg", "Kontakt"] },
-          { title: "Juridik", links: ["Integritetspolicy", "Villkor", "Säkerhet", "GDPR"] },
+          { 
+            title: "Produkt", 
+            links: [
+              { label: "Funktioner", href: "/funktioner" },
+              { label: "Priser", href: "/priser" }
+            ] 
+          },
+          { 
+            title: "Företag", 
+            links: [
+              { label: "Om oss", href: "/om-oss" },
+              { label: "Kontakt", href: "/kontakt" }
+            ] 
+          },
+          { 
+            title: "Juridik", 
+            links: [
+              { label: "Integritetspolicy", href: "/integritetspolicy" },
+              { label: "Villkor", href: "/villkor" }
+            ] 
+          },
         ].map((col) => (
           <nav key={col.title} aria-labelledby={`footer-${col.title.toLowerCase()}`}>
             <h4 id={`footer-${col.title.toLowerCase()}`} className="text-stone-900 font-medium mb-6">{col.title}</h4>
             <ul className="space-y-4 text-sm">
               {col.links.map(link => (
-                <li key={link}>
+                <li key={link.label}>
                   <Link
-                    href="#"
+                    href={link.href}
                     className="hover:text-stone-900 transition-colors"
-                    aria-label={`${link} - ${col.title}`}
+                    aria-label={`${link.label} - ${col.title}`}
                   >
-                    {link}
+                    {link.label}
                   </Link>
                 </li>
               ))}

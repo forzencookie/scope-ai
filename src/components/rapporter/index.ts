@@ -3,7 +3,8 @@
 // ============================================
 
 // Financial Reports
-export { ResultatrakningContent, BalansrakningContent } from './resultat-balans'
+export { ResultatrakningContent } from './resultatrakning'
+export { BalansrakningContent } from './balansrakning'
 
 // Tax (Skatt) Components
 export { MomsdeklarationContent } from './moms'

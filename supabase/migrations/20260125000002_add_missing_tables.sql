@@ -129,6 +129,18 @@ CREATE TABLE IF NOT EXISTS integrations (
     UNIQUE(user_id, service)
 );
 
+-- Fix: Ensure service column exists if table was created by previous migration
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'integrations' AND column_name = 'service') THEN
+        ALTER TABLE integrations ADD COLUMN service TEXT;
+        -- Migrate data if needed
+        IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'integrations' AND column_name = 'integration_id') THEN
+             EXECUTE 'UPDATE integrations SET service = integration_id WHERE service IS NULL';
+        END IF;
+    END IF;
+END $$;
+
 ALTER TABLE integrations ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can manage own integrations" ON integrations FOR ALL
@@ -171,6 +183,17 @@ CREATE TABLE IF NOT EXISTS partners (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Fix: Ensure user_id/company_id columns exist if table was created by previous migration
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'partners' AND column_name = 'user_id') THEN
+        ALTER TABLE partners ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'partners' AND column_name = 'company_id') THEN
+        ALTER TABLE partners ADD COLUMN company_id TEXT REFERENCES companies(id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
 ALTER TABLE partners ENABLE ROW LEVEL SECURITY;
 
 CREATE POLICY "Users can manage own partners" ON partners FOR ALL
@@ -211,15 +234,28 @@ CREATE TABLE IF NOT EXISTS members (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Safely add columns if missing (drift handling)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'members' AND column_name = 'user_id') THEN
+        ALTER TABLE members ADD COLUMN user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE;
+    END IF;
+    
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'members' AND column_name = 'company_id') THEN
+        ALTER TABLE members ADD COLUMN company_id TEXT REFERENCES companies(id) ON DELETE CASCADE;
+    END IF;
+END $$;
+
 ALTER TABLE members ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage own members" ON members;
 CREATE POLICY "Users can manage own members" ON members FOR ALL
     USING (user_id = (select auth.uid()))
     WITH CHECK (user_id = (select auth.uid()));
 
-CREATE INDEX idx_members_user ON members(user_id);
-CREATE INDEX idx_members_company ON members(company_id);
-CREATE INDEX idx_members_status ON members(status);
+CREATE INDEX IF NOT EXISTS idx_members_user ON members(user_id);
+CREATE INDEX IF NOT EXISTS idx_members_company ON members(company_id);
+CREATE INDEX IF NOT EXISTS idx_members_status ON members(status);
 
 -- 7. NOTIFICATIONS - User notifications
 CREATE TABLE IF NOT EXISTS notifications (
@@ -297,12 +333,13 @@ CREATE TABLE IF NOT EXISTS inventarier (
 
 ALTER TABLE inventarier ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage own inventarier" ON inventarier;
 CREATE POLICY "Users can manage own inventarier" ON inventarier FOR ALL
     USING (user_id = (select auth.uid()))
     WITH CHECK (user_id = (select auth.uid()));
 
-CREATE INDEX idx_inventarier_user ON inventarier(user_id);
-CREATE INDEX idx_inventarier_status ON inventarier(status);
+CREATE INDEX IF NOT EXISTS idx_inventarier_user ON inventarier(user_id);
+CREATE INDEX IF NOT EXISTS idx_inventarier_status ON inventarier(status);
 
 -- 9. SHARETRANSACTIONS - Share transfer history (for AB)
 CREATE TABLE IF NOT EXISTS sharetransactions (
@@ -332,12 +369,13 @@ CREATE TABLE IF NOT EXISTS sharetransactions (
 
 ALTER TABLE sharetransactions ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage own sharetransactions" ON sharetransactions;
 CREATE POLICY "Users can manage own sharetransactions" ON sharetransactions FOR ALL
     USING (user_id = (select auth.uid()))
     WITH CHECK (user_id = (select auth.uid()));
 
-CREATE INDEX idx_sharetransactions_user ON sharetransactions(user_id);
-CREATE INDEX idx_sharetransactions_date ON sharetransactions(transaction_date);
+CREATE INDEX IF NOT EXISTS idx_sharetransactions_user ON sharetransactions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sharetransactions_date ON sharetransactions(transaction_date);
 
 -- 10. TAXCALENDAR - Tax deadlines and reminders
 CREATE TABLE IF NOT EXISTS taxcalendar (
@@ -370,13 +408,14 @@ CREATE TABLE IF NOT EXISTS taxcalendar (
 
 ALTER TABLE taxcalendar ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage own taxcalendar" ON taxcalendar;
 CREATE POLICY "Users can manage own taxcalendar" ON taxcalendar FOR ALL
     USING (user_id = (select auth.uid()))
     WITH CHECK (user_id = (select auth.uid()));
 
-CREATE INDEX idx_taxcalendar_user ON taxcalendar(user_id);
-CREATE INDEX idx_taxcalendar_due ON taxcalendar(due_date);
-CREATE INDEX idx_taxcalendar_status ON taxcalendar(status) WHERE status = 'pending';
+CREATE INDEX IF NOT EXISTS idx_taxcalendar_user ON taxcalendar(user_id);
+CREATE INDEX IF NOT EXISTS idx_taxcalendar_due ON taxcalendar(due_date);
+CREATE INDEX IF NOT EXISTS idx_taxcalendar_status ON taxcalendar(status) WHERE status = 'pending';
 
 -- 11. SETTINGS - User/company preferences
 CREATE TABLE IF NOT EXISTS settings (
@@ -398,12 +437,13 @@ CREATE TABLE IF NOT EXISTS settings (
 
 ALTER TABLE settings ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Users can manage own settings" ON settings;
 CREATE POLICY "Users can manage own settings" ON settings FOR ALL
     USING (user_id = (select auth.uid()))
     WITH CHECK (user_id = (select auth.uid()));
 
-CREATE INDEX idx_settings_user ON settings(user_id);
-CREATE INDEX idx_settings_key ON settings(key);
+CREATE INDEX IF NOT EXISTS idx_settings_user ON settings(user_id);
+CREATE INDEX IF NOT EXISTS idx_settings_key ON settings(key);
 
 -- Add update triggers for all new tables
 CREATE OR REPLACE FUNCTION update_updated_at_column()

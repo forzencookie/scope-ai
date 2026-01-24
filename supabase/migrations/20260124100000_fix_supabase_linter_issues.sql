@@ -101,6 +101,16 @@ CREATE POLICY "Admins can view audit logs"
     );
 
 -- events (has user_id)
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'user_id') THEN
+        ALTER TABLE events ADD COLUMN user_id UUID REFERENCES auth.users(id);
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'events' AND column_name = 'company_id') THEN
+        ALTER TABLE events ADD COLUMN company_id TEXT;
+    END IF;
+END $$;
+
 DROP POLICY IF EXISTS "Enable insert access for authenticated users" ON public.events;
 DROP POLICY IF EXISTS "Enable read access for own events" ON public.events;
 DROP POLICY IF EXISTS "Users can read own events" ON public.events;
@@ -156,7 +166,12 @@ CREATE INDEX IF NOT EXISTS idx_payslips_employee_id ON public.payslips(employee_
 CREATE INDEX IF NOT EXISTS idx_supplier_invoices_user_id ON public.supplier_invoices(user_id);
 
 -- transactions
-CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON public.transactions(category_id);
+DO $$
+BEGIN
+    IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'transactions' AND column_name = 'category_id') THEN
+        CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON public.transactions(category_id);
+    END IF;
+END $$;
 
 -- =============================================
 -- PART 3: Unused indexes (optional cleanup)

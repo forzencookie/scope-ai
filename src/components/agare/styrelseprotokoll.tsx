@@ -25,8 +25,8 @@ import { BoardMeeting } from "@/types/board-meeting"
 import { useBoardMinutes } from "./styrelseprotokoll/use-board-minutes"
 
 // Sub-components
-import { BoardHeroCard } from "./styrelseprotokoll/board-hero-card"
-import { BoardMeetingList } from "./styrelseprotokoll/board-meeting-list"
+import { BoardMeetingsStats } from "./styrelseprotokoll/board-meetings-stats"
+import { BoardMeetingsGrid } from "./styrelseprotokoll/board-meetings-grid"
 import { BoardMeetingDetails } from "./styrelseprotokoll/board-meeting-details"
 
 // Dialogs (We reuse the PlanMeetingDialog from arsmote folder or common dialogs if available, assuming PlanMeetingDialog handles board meetings via 'type' prop or we keep it simple for now)
@@ -151,7 +151,7 @@ export function Styrelseprotokoll() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Hero Card: Next/Latest Meeting */}
         <div className="md:col-span-8">
-           <BoardHeroCard 
+           <BoardMeetingsStats 
               heroData={heroMeeting}
               onClick={setSelectedMeeting}
            />
@@ -212,7 +212,7 @@ export function Styrelseprotokoll() {
       </div>
 
       {/* Meetings List */}
-      <BoardMeetingList 
+      <BoardMeetingsGrid 
          years={sortedYears}
          meetingsByYear={meetingsByYear}
          collapsedYears={collapsedYears}

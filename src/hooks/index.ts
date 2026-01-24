@@ -55,3 +55,6 @@ export {
     invalidateTransactions,
 } from "./use-query-data"
 
+// Agent Chat Hook
+export { useAgentChat } from "./use-agent-chat"
+export type { UseAgentChatReturn } from "./use-agent-chat"

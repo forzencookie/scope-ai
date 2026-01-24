@@ -17,10 +17,23 @@ CREATE TABLE IF NOT EXISTS public.financial_periods (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
--- 2. Ensure tax_reports has period_id for linkage
+-- 2. Ensure tax_reports table exists first (Fix for broken migration chain)
+CREATE TABLE IF NOT EXISTS public.tax_reports (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    type TEXT NOT NULL,
+    status TEXT DEFAULT 'pending',
+    data JSONB DEFAULT '{}'::jsonb,
+    generated_at TIMESTAMPTZ DEFAULT NOW(),
+    user_id UUID REFERENCES auth.users(id),
+    company_id UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- 3. Ensure tax_reports has period_id for linkage
 ALTER TABLE public.tax_reports ADD COLUMN IF NOT EXISTS period_id TEXT REFERENCES public.financial_periods(id);
 
--- 3. Seed initial periods for 2024 (Quarterly)
+-- 4. Seed initial periods for 2024 (Quarterly)
 INSERT INTO public.financial_periods (id, name, type, start_date, end_date, status)
 VALUES 
     ('2024-Q1', 'Q1 2024', 'quarterly', '2024-01-01', '2024-03-31', 'submitted'),

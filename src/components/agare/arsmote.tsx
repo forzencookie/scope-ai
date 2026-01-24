@@ -31,7 +31,7 @@ import { SendNoticeDialog } from "./dialogs/kallelse"
 
 // Components
 import { NextMeetingCard } from "./arsmote/next-meeting-card"
-import { MeetingList } from "./arsmote/meeting-list"
+import { AnnualMeetingsGrid } from "./arsmote/annual-meetings-grid"
 import { MeetingDetails } from "./arsmote/meeting-details"
 import { useArsmoteStats } from "./arsmote/use-arsmote-stats"
 
@@ -216,7 +216,7 @@ export const Arsmote = memo(function Arsmote() {
       </div>
 
       {/* Meetings Table */}
-      <MeetingList
+      <AnnualMeetingsGrid
         meetings={filteredMeetings}
         selectedMeetingId={selectedMeeting?.id || null}
         onSelectMeeting={setSelectedMeeting}

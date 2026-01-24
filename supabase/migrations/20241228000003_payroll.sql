@@ -18,6 +18,28 @@ CREATE TABLE IF NOT EXISTS public.employees (
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
 
+-- Fix: Create missing benefits tables referenced later
+CREATE TABLE IF NOT EXISTS public.benefits (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    name TEXT NOT NULL,
+    type TEXT,
+    taxable_amount DECIMAL(15,2),
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    user_id UUID REFERENCES auth.users(id),
+    company_id UUID
+);
+
+CREATE TABLE IF NOT EXISTS public.employee_benefits (
+    id TEXT PRIMARY KEY DEFAULT gen_random_uuid()::text,
+    employee_id UUID REFERENCES public.employees(id),
+    benefit_id TEXT REFERENCES public.benefits(id),
+    user_id UUID REFERENCES auth.users(id),
+    company_id UUID,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW()
+);
+
 -- 2. Create payslips table
 CREATE TABLE IF NOT EXISTS public.payslips (
     id TEXT PRIMARY KEY, -- e.g. 'LB-202412-001'

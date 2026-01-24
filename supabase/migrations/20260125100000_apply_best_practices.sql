@@ -48,7 +48,7 @@ ON verifications(user_id, date DESC);
 
 -- Tax reports indexes
 CREATE INDEX IF NOT EXISTS idx_taxreports_user_period 
-ON taxreports(user_id, type, period);
+ON taxreports(user_id, type, period_id);
 
 -- Events indexes (already exists but verify)
 CREATE INDEX IF NOT EXISTS idx_events_user_timestamp 
@@ -68,7 +68,7 @@ ON shareholders(user_id, company_id);
 
 -- Company meetings indexes
 CREATE INDEX IF NOT EXISTS idx_companymeetings_user_date 
-ON companymeetings(user_id, meeting_date DESC);
+ON companymeetings(user_id, date DESC);
 
 -- K10 declarations indexes
 CREATE INDEX IF NOT EXISTS idx_k10declarations_user_year 

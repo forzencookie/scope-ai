@@ -4,9 +4,9 @@
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { PartnerCapitalOverview } from "./partner-capital-overview"
-import { PartnerList } from "./partner-list"
-import { RecentWithdrawals } from "./recent-withdrawals"
+import { PartnersStats } from "./partners-stats"
+import { PartnersGrid } from "./partners-grid"
+import { RecentWithdrawalsGrid } from "./recent-withdrawals-grid"
 import { AddPartnerDialog } from "./add-partner-dialog"
 import { usePartnerManagement } from "./use-partner-management"
 import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card'
@@ -60,7 +60,7 @@ export function Delagare() {
                 </div>
             </div>
 
-            <PartnerCapitalOverview 
+            <PartnersStats 
                 stats={stats} 
                 enrichedPartners={partners} 
                 totalWithdrawals={stats.totalWithdrawals}
@@ -68,14 +68,14 @@ export function Delagare() {
             
             <div className="border-b-2 border-border/60" />
 
-            <PartnerList 
+            <PartnersGrid 
                 partners={filteredPartners} 
                 showKommanditdelägare={showKommanditdelägare}
                 onSearchChange={setPartnerSearch}
                 searchValue={partnerSearch} 
             />
 
-            <RecentWithdrawals />
+            <RecentWithdrawalsGrid />
 
             <LegalInfoCard
                 items={companyType === 'hb' ? legalInfoContent.hb : legalInfoContent.kb}

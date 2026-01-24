@@ -32,7 +32,7 @@ SELECT add_user_id_if_missing('k10_declarations');
 SELECT add_user_id_if_missing('ne_appendices');
 SELECT add_user_id_if_missing('annual_closings');
 SELECT add_user_id_if_missing('annual_reports');
-SELECT add_user_id_if_missing('month_closings');
+-- SELECT add_user_id_if_missing('month_closings'); -- Dropped in previous migration
 SELECT add_user_id_if_missing('financial_periods');
 
 -- Accounting
@@ -70,7 +70,7 @@ DECLARE
     tables_to_secure TEXT[] := ARRAY[
         'tax_reports', 'agi_reports', 'vat_declarations', 'income_declarations',
         'k10_declarations', 'ne_appendices', 'annual_closings', 'annual_reports',
-        'month_closings', 'financial_periods', 'verifications', 'assets',
+        'financial_periods', 'verifications', 'assets',
         'companies', 'company_meetings', 'board_minutes', 'employees',
         'benefits', 'employee_benefits', 'inbox_items', 'events', 'ai_logs'
     ];

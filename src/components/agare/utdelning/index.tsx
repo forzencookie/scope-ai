@@ -1,7 +1,7 @@
 "use client"
 
 import { useDividendLogic } from "./use-dividend-logic"
-import { IntroStats } from "./intro-stats"
+import { UtdelningStats } from "./utdelning-stats"
 import { RulesCard } from "./rules-card"
 import { DividendCalculator } from "./dividend-calculator"
 import { DividendHistoryCard } from "./dividend-history-card"
@@ -22,7 +22,7 @@ export function UtdelningContent() {
                 </div>
             </div>
 
-            <IntroStats stats={stats} />
+            <UtdelningStats stats={stats} />
             
             <RulesCard />
 

@@ -9,8 +9,8 @@ import { NewTransactionDialog } from "../dialogs/ny-transaktion"
 import { BookingDialog } from "../dialogs/bokforing"
 
 // Components
-import { StatusHero } from "./components/StatusHero"
-import { StatsOverview } from "./components/StatsOverview"
+import { TransactionsStatusCard } from "./components/transactions-status-card"
+import { TransactionsStats } from "./components/transactions-stats"
 import { TransactionFilters } from "./components/transaction-filters"
 import { TransactionsTableGrid } from "./components/transactions-table-grid"
 
@@ -69,13 +69,13 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
             </div>
 
             {/* Status Hero */}
-            <StatusHero
+            <TransactionsStatusCard
                 pendingCount={stats.pending}
                 onViewPending={() => filter.setStatusFilter([TRANSACTION_STATUSES.TO_RECORD, TRANSACTION_STATUSES.MISSING_DOCUMENTATION])}
             />
 
             {/* Stats Overview */}
-            <StatsOverview
+            <TransactionsStats
                 totalCount={stats.totalCount}
                 income={stats.income}
                 expenses={stats.expenses}

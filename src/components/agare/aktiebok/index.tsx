@@ -19,7 +19,7 @@ import {
 import { useTextMode } from "@/providers/text-mode-provider"
 
 // Sub-components
-import { OwnershipOverview } from "./components/OwnershipOverview"
+import { AktiebokStats } from "./components/aktiebok-stats"
 import { ShareholdersGrid } from "./components/ShareholdersGrid"
 import { TransactionsGrid } from "./components/TransactionsGrid"
 import { TransactionDialog } from "./components/TransactionDialog"
@@ -86,7 +86,7 @@ export function Aktiebok() {
                 </div>
             </div>
 
-            <OwnershipOverview stats={stats} shareholders={shareholders} />
+            <AktiebokStats stats={stats} shareholders={shareholders} />
 
             {/* Shareholders Table */}
             {activeTab === 'owners' && (

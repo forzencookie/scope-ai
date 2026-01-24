@@ -23,7 +23,7 @@ import { BulkActionToolbar, type BulkAction } from "@/components/shared/bulk-act
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
 
 import { usePayslipsLogic } from "./use-payslips-logic"
-import { SummaryStrip } from "./summary-strip"
+import { PayslipsStats } from "./payslips-stats"
 import { PayslipsTable } from "./payslips-table"
 
 // Dialogs
@@ -116,7 +116,7 @@ export function LonesbeskContent() {
                 </div>
 
                 {/* Payroll Period Summary */}
-                {!isLoading && <SummaryStrip stats={stats} />}
+                {!isLoading && <PayslipsStats stats={stats} />}
 
                 {/* Section Separator */}
                 <div className="border-b-2 border-border/60" />
