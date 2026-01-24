@@ -91,9 +91,9 @@ export function TableToolbar({
     }
 
     return (
-        <div className={cn("flex items-center gap-2", className)}>
+        <div className={cn("flex flex-wrap items-center gap-2", className)}>
             {/* Search Input */}
-            <InputGroup className="w-56">
+            <InputGroup className="w-full sm:w-56">
                 <InputGroupAddon>
                     <InputGroupText>
                         <Search className="h-4 w-4" />

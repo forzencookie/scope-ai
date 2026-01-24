@@ -1,5 +1,5 @@
-// @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
-import { getSupabaseClient } from '../supabase'
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+import { getSupabaseClient } from '@/lib/database/supabase'
 import { INVOICE_STATUS_LABELS } from '@/lib/localization'
 
 // Types matching schema.sql
@@ -159,7 +159,21 @@ export const invoiceService = {
 
         const { data, error } = await supabase.rpc('get_invoice_stats')
 
-        if (error || !data || (data.incomingTotal === 0 && data.outgoingTotal === 0)) {
+        if (error) {
+            console.error('get_invoice_stats error:', error)
+            return {
+                incomingTotal: 0,
+                outgoingTotal: 0,
+                overdueCount: 0,
+                overdueAmount: 0,
+                paidAmount: 0
+            }
+        }
+
+        // Handle array return (RETURNS TABLE)
+        const stats = Array.isArray(data) ? data[0] : data
+
+        if (!stats) {
             return {
                 incomingTotal: 0,
                 outgoingTotal: 0,
@@ -170,11 +184,11 @@ export const invoiceService = {
         }
 
         return {
-            incomingTotal: Number(data.incomingTotal),
-            outgoingTotal: Number(data.outgoingTotal),
-            overdueCount: Number(data.overdueCount),
-            overdueAmount: Number(data.overdueAmount),
-            paidAmount: Number(data.paidAmount)
+            incomingTotal: 0, // Not currently returned by RPC (would be supplier invoices)
+            outgoingTotal: Number(stats.total_amount || 0),
+            overdueCount: Number(stats.overdue_count || 0),
+            overdueAmount: 0, // Not returned by RPC
+            paidAmount: Number(stats.paid_amount || 0)
         }
     },
 

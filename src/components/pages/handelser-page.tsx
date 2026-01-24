@@ -198,26 +198,27 @@ function HandelserPageContent() {
     return (
         <div className="flex flex-col min-h-svh">
             {/* Page Heading */}
-            <div className="px-6 pt-6">
-                <div className="max-w-4xl w-full flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-semibold flex items-center gap-2">
-                            <div className="flex items-center justify-center w-7 h-7 rounded-md bg-sky-100 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400">
+            <div className="px-4 md:px-6 pt-6">
+                <div className="max-w-4xl w-full flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                        <h2 className="text-lg sm:text-xl font-semibold flex items-center gap-2">
+                            <div className="flex items-center justify-center w-7 h-7 rounded-md bg-sky-100 text-sky-600 dark:bg-sky-950/50 dark:text-sky-400 shrink-0">
                                 <Calendar className="h-4 w-4" />
                             </div>
                             Händelser
                         </h2>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs sm:text-sm text-muted-foreground hidden sm:block">
                             Arkiv över företagshändelser — organiserat per kvartal.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         {/* Year Dropdown */}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="gap-1.5">
                                     <Calendar className="h-4 w-4" />
-                                    {selectedYear}
+                                    <span className="hidden sm:inline">{selectedYear}</span>
+                                    <span className="sm:hidden">{selectedYear}</span>
                                     <ChevronDown className="h-3 w-3" />
                                 </Button>
                             </DropdownMenuTrigger>
@@ -438,19 +439,19 @@ function HandelserPageContent() {
                             )}
 
                             {paginatedTotalCount > pageSize && (
-                                <div className="flex items-center justify-between px-2 py-4 mt-6 border-t border-border/40">
-                                    <div className="text-sm text-muted-foreground">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-2 py-4 mt-6 border-t border-border/40">
+                                    <div className="text-xs sm:text-sm text-muted-foreground text-center sm:text-left">
                                         Visar {Math.min((page - 1) * pageSize + 1, paginatedTotalCount)}-{Math.min(page * pageSize, paginatedTotalCount)} av {paginatedTotalCount} händelser
                                     </div>
-                                    <div className="flex items-center space-x-2">
+                                    <div className="flex items-center justify-center sm:justify-end space-x-2">
                                         <Button
                                             variant="outline"
                                             size="sm"
                                             onClick={() => setPage(page - 1)}
                                             disabled={page <= 1 || isPaginationLoading}
                                         >
-                                            <ChevronLeft className="h-4 w-4 mr-2" />
-                                            Föregående
+                                            <ChevronLeft className="h-4 w-4 sm:mr-2" />
+                                            <span className="hidden sm:inline">Föregående</span>
                                         </Button>
                                         <Button
                                             variant="outline"
@@ -458,8 +459,8 @@ function HandelserPageContent() {
                                             onClick={() => setPage(page + 1)}
                                             disabled={page * pageSize >= paginatedTotalCount || isPaginationLoading}
                                         >
-                                            Nästa
-                                            <ChevronDown className="h-4 w-4 ml-2 rotate-[-90deg]" />
+                                            <span className="hidden sm:inline">Nästa</span>
+                                            <ChevronDown className="h-4 w-4 sm:ml-2 rotate-[-90deg]" />
                                         </Button>
                                     </div>
                                 </div>

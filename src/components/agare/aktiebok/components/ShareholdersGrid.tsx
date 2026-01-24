@@ -25,14 +25,15 @@ interface ShareholdersGridProps {
 
 export function ShareholdersGrid({ shareholders }: ShareholdersGridProps) {
     return (
-        <div>
-            <GridTableHeader
-                columns={[
-                    { label: 'Aktieägare', icon: User, span: 3 },
-                    { label: 'Typ', icon: Building2, span: 2 },
-                    { label: 'Aktier', icon: Hash, span: 2, align: 'right' },
-                    { label: 'Ägarandel', icon: Percent, span: 1, align: 'right' },
-                    { label: 'Röster', icon: Vote, span: 2, align: 'right' },
+        <div className="w-full overflow-x-auto pb-2">
+            <div className="min-w-[800px]">
+                <GridTableHeader
+                    columns={[
+                        { label: 'Aktieägare', icon: User, span: 3 },
+                        { label: 'Typ', icon: Building2, span: 2 },
+                        { label: 'Aktier', icon: Hash, span: 2, align: 'right' },
+                        { label: 'Ägarandel', icon: Percent, span: 1, align: 'right' },
+                        { label: 'Röster', icon: Vote, span: 2, align: 'right' },
                     { label: 'Anskaffning', icon: Calendar, span: 1, align: 'right' },
                     { label: '', span: 1 }, // Actions
                 ]}
@@ -119,6 +120,7 @@ export function ShareholdersGrid({ shareholders }: ShareholdersGridProps) {
                     </GridTableRow>
                 ))}
             </GridTableRows>
+            </div>
         </div>
     )
 }

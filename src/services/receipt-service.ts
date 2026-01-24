@@ -1,5 +1,5 @@
-// @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
-import { getSupabaseClient } from '../supabase'
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+import { getSupabaseClient } from '@/lib/database/supabase'
 import { RECEIPT_STATUSES, type ReceiptStatus } from '@/lib/status-types'
 
 // Type matching schema.sql and existing Receipt type from @/types

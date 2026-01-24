@@ -19,7 +19,7 @@ export const getPartnersTool = defineTool<Record<string, never>, any[]>({
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
-            const { supabase } = await import('@/lib/supabase')
+            const { supabase } = await import('@/lib/database/supabase')
             const { data, error } = await supabase.rpc('get_partner_stats')
 
             if (!error && data) {
@@ -51,7 +51,7 @@ export const getMembersTool = defineTool<Record<string, never>, any[]>({
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
-            const { supabase } = await import('@/lib/supabase')
+            const { supabase } = await import('@/lib/database/supabase')
             const { data, error } = await supabase.rpc('get_member_stats')
 
             if (!error && data) {

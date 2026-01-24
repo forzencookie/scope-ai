@@ -1,5 +1,5 @@
-// @ts-nocheck
-import { getSupabaseClient } from '../supabase'
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export type Benefit = {
     id: string
@@ -52,12 +52,12 @@ export const benefitService = {
         }
 
         return {
-            totalCost: Number(data.totalCost) || 0,
-            employeesWithBenefits: Number(data.employeesWithBenefits) || 0,
-            totalEmployees: Number(data.totalEmployees) || 10,
-            unusedPotential: Number(data.unusedPotential) || 0,
-            totalBenefits: Number(data.totalBenefits) || 0,
-            activeBenefits: Number(data.activeBenefits) || 0,
+            totalCost: Number(data.totalValue || data.totalCost || 0),
+            employeesWithBenefits: Number(data.employeesWithBenefits || 0),
+            totalEmployees: Number(data.totalEmployees || 10),
+            unusedPotential: Number(data.unusedPotential || 0),
+            totalBenefits: Number(data.totalBenefits || 0),
+            activeBenefits: Number(data.activeBenefits || 0),
         }
     },
 

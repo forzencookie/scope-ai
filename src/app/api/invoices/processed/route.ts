@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Processed Invoices API
  * 
@@ -23,14 +22,11 @@ export async function GET() {
         // Transform to NakedInvoice format for processor
         const nakedInvoices: NakedInvoice[] = dbInvoices.map(inv => ({
             id: inv.id,
-            supplier: inv.supplier_name || 'Unknown',
+            customerName: inv.supplier_name || 'Unknown',
             invoiceNumber: inv.invoice_number || '',
             amount: inv.total_amount || 0,
-            vatAmount: inv.vat_amount || 0,
+            issueDate: inv.issue_date || inv.created_at || '',
             dueDate: inv.due_date || '',
-            ocr: inv.ocr || '',
-            bankgiro: inv.bankgiro || '',
-            status: inv.status || 'pending',
         }));
 
         const processedInvoices = processInvoices(nakedInvoices);

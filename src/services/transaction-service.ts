@@ -1,5 +1,5 @@
-// @ts-nocheck
-import { getSupabaseClient } from '../supabase'
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+import { getSupabaseClient } from '@/lib/database/supabase'
 import { Transaction, TransactionStatus } from '@/types'
 
 export type TransactionStats = {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Processed Supplier Invoices API
  * 
@@ -25,12 +24,10 @@ export async function GET() {
     const nakedInvoices: NakedSupplierInvoice[] = dbInvoices.map(i => ({
       id: i.id,
       invoiceNumber: i.invoice_number || '',
-      supplierName: i.supplier_name,
-      amount: Number(i.amount) || 0,
-      totalAmount: Number(i.total_amount) || 0,
+      supplierName: i.supplier_name || 'Unknown',
+      amount: Number(i.amount ?? i.total_amount) || 0,
+      issueDate: i.issue_date || i.created_at || '',
       dueDate: i.due_date || '',
-      invoiceDate: i.issue_date || '',
-      status: i.status || 'mottagen',
       ocrNumber: i.ocr || undefined,
     }))
 

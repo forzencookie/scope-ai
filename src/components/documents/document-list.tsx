@@ -138,13 +138,13 @@ export function DocumentList({
         <div className="space-y-4">
             {/* Header */}
             {showCreateButton && (
-                <div className="flex items-center justify-between">
-                    <p className="text-sm text-muted-foreground">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <p className="text-xs sm:text-sm text-muted-foreground">
                         Dokument kopplade till bolagsåtgärder och styrelsebeslut.
                     </p>
-                    <Button size="sm" className="gap-1.5">
+                    <Button size="sm" className="gap-1.5 w-full sm:w-auto">
                         <Plus className="h-4 w-4" />
-                        Nytt dokument
+                        <span>Nytt dokument</span>
                     </Button>
                 </div>
             )}

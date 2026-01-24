@@ -9,8 +9,8 @@
 // @ts-nocheck - Supabase types need regeneration after migration runs
 // TODO: Run `npx supabase gen types typescript` after applying migration
 
-import { getSupabaseAdmin } from './supabase'
-import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './ai-models'
+import { getSupabaseAdmin } from './database/supabase'
+import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './ai/models'
 
 // ============================================================================
 // Types

@@ -1,4 +1,4 @@
-// @ts-nocheck - Supabase types don't include new tables yet, will regenerate after schema update
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 /**
  * Periodiseringsfonder Data Layer
  * 

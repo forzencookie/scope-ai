@@ -1,4 +1,4 @@
-// @ts-nocheck - Supabase types don't include new tables yet
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 /**
  * Investments Data Layer
  * 

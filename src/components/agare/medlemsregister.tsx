@@ -112,22 +112,22 @@ export function Medlemsregister() {
         formatDate={formatDate}
       />
 
-      <div className="flex flex-col gap-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold tracking-tight">Medlemsregister</h2>
-            <p className="text-muted-foreground mt-1">
+      <div className="flex flex-col gap-4 md:gap-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Medlemsregister</h2>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
               Hantera medlemmar, medlemsavgifter och roller.
             </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline">
-              <Download className="h-4 w-4 mr-2" />
-              Exportera lista
+          <div className="flex items-center gap-2 shrink-0">
+            <Button variant="outline" size="sm">
+              <Download className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Exportera lista</span>
             </Button>
-            <Button onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Lägg till medlem
+            <Button size="sm" onClick={() => setShowAddDialog(true)}>
+              <Plus className="h-4 w-4 sm:mr-2" />
+              <span className="hidden sm:inline">Lägg till medlem</span>
             </Button>
           </div>
         </div>
@@ -136,7 +136,7 @@ export function Medlemsregister() {
       <MembersStats stats={stats} />
 
       {/* Actions Bar */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 md:gap-3">
         <SearchBar
           placeholder="Sök medlem..."
           value={searchQuery}

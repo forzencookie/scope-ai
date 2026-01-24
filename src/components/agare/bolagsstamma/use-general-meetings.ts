@@ -69,7 +69,7 @@ export function useGeneralMeetings() {
 
   useEffect(() => {
     async function fetchStats() {
-      const { supabase } = await import('@/lib/supabase')
+      const { supabase } = await import('@/lib/database/supabase')
       const { data, error } = await supabase.rpc('get_meeting_stats', { meeting_type: 'general_meeting_minutes' })
 
       if (!error && data) {

@@ -68,7 +68,7 @@ export async function getOrCreateCustomer(
     email: string,
     name?: string
 ): Promise<string> {
-    const { getSupabaseAdmin } = await import('./supabase')
+    const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()
 
     // Check if user already has a Stripe customer ID
@@ -187,7 +187,7 @@ export async function updateUserTier(
     userId: string,
     tier: 'free' | 'pro' | 'enterprise'
 ): Promise<void> {
-    const { getSupabaseAdmin } = await import('./supabase')
+    const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()
 
     await supabase
@@ -203,7 +203,7 @@ export async function updateUserTier(
  * Get user ID from Stripe customer ID
  */
 export async function getUserIdFromCustomer(customerId: string): Promise<string | null> {
-    const { getSupabaseAdmin } = await import('./supabase')
+    const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()
 
     const { data } = await supabase

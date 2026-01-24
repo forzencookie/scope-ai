@@ -27,7 +27,7 @@ export function SearchBar({
   const isLarge = size === 'lg'
 
   return (
-    <div className={cn("relative w-56", className)}>
+    <div className={cn("relative w-full sm:w-56", className)}>
       <Search className={cn(
         "absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground",
         isLarge ? "h-5 w-5 left-4" : "h-4 w-4"

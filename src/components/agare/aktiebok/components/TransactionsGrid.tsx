@@ -11,18 +11,19 @@ interface TransactionsGridProps {
 
 export function TransactionsGrid({ transactions, getTransactionTypeLabel }: TransactionsGridProps) {
     return (
-        <div>
-            <GridTableHeader
-                columns={[
-                    { label: "Datum", icon: Calendar, span: 2 },
-                    { label: "Typ", icon: CheckCircle2, span: 2 },
-                    { label: "Från", icon: User, span: 2 },
-                    { label: "Till", icon: User, span: 2 },
-                    { label: "Aktier", icon: Hash, span: 2, align: 'right' },
-                    { label: "Pris/aktie", icon: Banknote, span: 1, align: 'right' },
-                    { label: "Totalt", icon: Banknote, span: 1, align: 'right' },
-                ]}
-            />
+        <div className="w-full overflow-x-auto pb-2">
+            <div className="min-w-[700px]">
+                <GridTableHeader
+                    columns={[
+                        { label: "Datum", icon: Calendar, span: 2 },
+                        { label: "Typ", icon: CheckCircle2, span: 2 },
+                        { label: "Från", icon: User, span: 2 },
+                        { label: "Till", icon: User, span: 2 },
+                        { label: "Aktier", icon: Hash, span: 2, align: 'right' },
+                        { label: "Pris/aktie", icon: Banknote, span: 1, align: 'right' },
+                        { label: "Totalt", icon: Banknote, span: 1, align: 'right' },
+                    ]}
+                />
             <GridTableRows>
                 {transactions.map((tx) => (
                     <GridTableRow key={tx.id}>
@@ -64,6 +65,7 @@ export function TransactionsGrid({ transactions, getTransactionTypeLabel }: Tran
                     </GridTableRow>
                 ))}
             </GridTableRows>
+            </div>
         </div>
     )
 }

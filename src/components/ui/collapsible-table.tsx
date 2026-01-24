@@ -25,7 +25,7 @@ export interface CollapsibleTableItem {
 
 export function CollapsibleTableContainer({ children, className }: { children: ReactNode; className?: string }) {
     return (
-        <div className={cn("max-w-6xl w-full space-y-6", className)}>
+        <div className={cn("w-full space-y-4 md:space-y-6", className)}>
             {children}
         </div>
     )
@@ -69,12 +69,12 @@ interface CollapsibleTableHeaderProps {
 
 export function CollapsibleTableHeader({ title, subtitle, children }: CollapsibleTableHeaderProps) {
     return (
-        <div className="flex items-center justify-between pt-2">
-            <div>
-                <h2 className="text-xl font-semibold tracking-tight">{title}</h2>
-                {subtitle && <p className="text-sm text-muted-foreground">{subtitle}</p>}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 pt-2">
+            <div className="min-w-0">
+                <h2 className="text-lg sm:text-xl font-semibold tracking-tight truncate">{title}</h2>
+                {subtitle && <p className="text-xs sm:text-sm text-muted-foreground">{subtitle}</p>}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 shrink-0">
                 {children}
             </div>
         </div>

@@ -1,5 +1,5 @@
-// @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
-import { getSupabaseClient } from '../supabase'
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 // Types matching schema.sql inventarier table
 export type Inventarie = {
@@ -79,7 +79,15 @@ export const inventarieService = {
 
         const { data, error } = await supabase.rpc('get_inventory_stats')
 
-        if (error || !data || data.totalCount === 0) {
+        if (error) {
+            console.error('get_inventory_stats error:', error)
+            return { totalCount: 0, totalInkopsvarde: 0, kategorier: 0 }
+        }
+
+        // Handle array return (RETURNS TABLE)
+        const stats = Array.isArray(data) ? data[0] : data
+
+        if (!stats) {
             return {
                 totalCount: 0,
                 totalInkopsvarde: 0,
@@ -88,9 +96,9 @@ export const inventarieService = {
         }
 
         return {
-            totalCount: Number(data.totalCount),
-            totalInkopsvarde: Number(data.totalInkopsvarde),
-            kategorier: Number(data.kategorier)
+            totalCount: Number(stats.total_items || 0),
+            totalInkopsvarde: Number(stats.total_value || 0),
+            kategorier: Number(stats.active_items || 0)
         }
     },
 

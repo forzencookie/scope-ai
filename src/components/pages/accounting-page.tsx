@@ -13,8 +13,8 @@ import { MonthClosing } from "@/components/bokforing/month-closing"
 import { Loader2 } from "lucide-react"
 
 import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
-
-
+import { PageSidebarSlot } from "@/components/shared/page-sidebar"
+import { TransactionsSidebar } from "@/components/bokforing/transactions-sidebar"
 
 import { Button } from "@/components/ui/button"
 
@@ -214,47 +214,57 @@ function AccountingPageContent() {
                 </div>
 
                 <main className="flex-1 flex flex-col p-6">
-                    <div className="max-w-6xl w-full space-y-6">
-                        {/* Content */}
-                        {currentTab === "transaktioner" && (
-                            fetchError ? (
-                                <DataErrorState
-                                    message={fetchError}
-                                    onRetry={handleRefresh}
-                                />
-                            ) : (
-                                <SectionErrorBoundary sectionName="Transaktioner">
-                                    <LazyTransactionsTable
-                                        title="Transaktioner"
-                                        transactions={transactions}
-                                        stats={transactionStats}
-                                        onTransactionBooked={handleTransactionBooked}
-                                        page={page}
-                                        pageSize={pageSize}
-                                        total={total}
-                                        onPageChange={setPage}
+                    <div className="flex gap-6">
+                        <div className="flex-1 max-w-6xl space-y-6">
+                            {/* Content */}
+                            {currentTab === "transaktioner" && (
+                                fetchError ? (
+                                    <DataErrorState
+                                        message={fetchError}
+                                        onRetry={handleRefresh}
                                     />
-                                </SectionErrorBoundary>
-                            )
-                        )}
-                        {currentTab === "fakturor" && (
-                            <LazyUnifiedInvoicesView />
-                        )}
-                        {currentTab === "kvitton" && (
-                            <LazyReceiptsTable />
-                        )}
+                                ) : (
+                                    <SectionErrorBoundary sectionName="Transaktioner">
+                                        <LazyTransactionsTable
+                                            title="Transaktioner"
+                                            transactions={transactions}
+                                            stats={transactionStats}
+                                            onTransactionBooked={handleTransactionBooked}
+                                            page={page}
+                                            pageSize={pageSize}
+                                            total={total}
+                                            onPageChange={setPage}
+                                        />
+                                        {/* Sidebar widgets - portals to PageSidebarSlot on xl+ */}
+                                        <TransactionsSidebar 
+                                            transactions={transactions}
+                                            stats={transactionStats}
+                                        />
+                                    </SectionErrorBoundary>
+                                )
+                            )}
+                            {currentTab === "fakturor" && (
+                                <LazyUnifiedInvoicesView />
+                            )}
+                            {currentTab === "kvitton" && (
+                                <LazyReceiptsTable />
+                            )}
 
-                        {currentTab === "inventarier" && (
-                            <LazyInventarierTable />
-                        )}
+                            {currentTab === "inventarier" && (
+                                <LazyInventarierTable />
+                            )}
 
-                        {currentTab === "bokslut" && (
-                            <MonthClosing />
-                        )}
+                            {currentTab === "bokslut" && (
+                                <MonthClosing />
+                            )}
 
-                        {currentTab === "verifikationer" && (
-                            <VerifikationerTable />
-                        )}
+                            {currentTab === "verifikationer" && (
+                                <VerifikationerTable />
+                            )}
+                        </div>
+                        
+                        {/* Right sidebar slot for contextual widgets */}
+                        <PageSidebarSlot className="hidden xl:block w-80 shrink-0 space-y-4" />
                     </div>
                 </main>
             </div>

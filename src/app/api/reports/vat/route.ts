@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - TODO: Fix after regenerating Supabase types
 /**
  * VAT Reports API
  * 

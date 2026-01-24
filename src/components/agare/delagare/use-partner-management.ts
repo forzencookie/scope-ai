@@ -49,7 +49,7 @@ export function usePartnerManagement() {
 
   useEffect(() => {
     async function fetchStats() {
-      const { supabase } = await import('@/lib/supabase')
+      const { supabase } = await import('@/lib/database/supabase')
       const { data, error } = await supabase.rpc('get_partner_stats')
 
       if (!error && data) {

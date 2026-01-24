@@ -6,15 +6,15 @@
  * Includes catalog of all Swedish benefits and assignment tracking.
  */
 
-import { getSupabaseClient, isSupabaseConfigured } from './supabase'
+import { getSupabaseClient, isSupabaseConfigured } from './database/supabase'
 import type {
     FormanCatalogItem,
     EmployeeBenefit,
     AssignBenefitInput,
     BenefitTaxImpact,
     BenefitCategory,
-} from './ai-tool-types'
-import { formanerCatalog } from './ai-tool-mock-data' // Static reference catalog as fallback
+} from './ai/tool-types'
+import { formanerCatalog } from './ai/tool-mock-data' // Static reference catalog as fallback
 
 // =============================================================================
 // Catalog Operations

@@ -15,7 +15,7 @@ export function useMemberStats() {
 
   useEffect(() => {
     async function fetchStats() {
-      const { supabase } = await import('@/lib/supabase')
+      const { supabase } = await import('@/lib/database/supabase')
       const { data, error } = await supabase.rpc('get_member_stats')
 
       if (!error && data) {

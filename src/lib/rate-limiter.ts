@@ -18,7 +18,7 @@
  * ```
  */
 
-import { supabase } from './supabase'
+import { supabase } from './database/supabase'
 
 // ============================================================================
 // Types

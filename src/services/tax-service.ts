@@ -1,5 +1,5 @@
-// @ts-nocheck
-import { getSupabaseClient } from '../supabase'
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export type VatStats = {
     salesVat: number
@@ -29,10 +29,11 @@ export const taxService = {
             return { salesVat: 0, inputVat: 0, netVat: 0 }
         }
 
+        // RPC returns JSON object, but keys might differ
         return {
-            salesVat: Number(data.salesVat) || 0,
-            inputVat: Number(data.inputVat) || 0,
-            netVat: Number(data.netVat) || 0
+            salesVat: Number(data.outputVat || data.salesVat || 0),
+            inputVat: Number(data.inputVat || 0),
+            netVat: Number(data.netVat || 0)
         }
     },
 

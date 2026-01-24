@@ -115,9 +115,9 @@ export function PageTabsLayout({
                         </Tooltip>
                     )}
 
-                    {/* Footer / Last Updated */}
+                    {/* Footer / Last Updated - hidden on mobile */}
                     {lastUpdated && (
-                        <div className="ml-auto text-sm text-muted-foreground pl-4 whitespace-nowrap">
+                        <div className="hidden sm:block ml-auto text-xs sm:text-sm text-muted-foreground pl-4 whitespace-nowrap">
                             {lastUpdated}
                         </div>
                     )}

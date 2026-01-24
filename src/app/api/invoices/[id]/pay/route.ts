@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Invoice Payment API
  * 
@@ -50,17 +49,17 @@ export async function POST(
         // Create Bank Transaction
         const transaction = await userDb.transactions.create({
             id: `TX-PAY-${Date.now()}`,
-            date: new Date().toISOString().split('T')[0],
+            occurred_at: new Date().toISOString(),
             description: `Inbetalning ${id}`,
             amount: total,
-            currency: 'SEK',
             status: 'Bokförd'
         });
 
         return NextResponse.json({ success: true, verification, transaction });
 
-    } catch (error) {
+    } catch (error: unknown) {
         console.error("Payment error:", error);
-        return NextResponse.json({ error: "Failed to pay invoice" }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'Failed to pay invoice';
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

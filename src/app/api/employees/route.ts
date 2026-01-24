@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Employees API
  * 
@@ -39,17 +38,17 @@ export async function POST(req: Request) {
 
         const body = await req.json();
 
-        if (!body.name || !body.role) {
-            return NextResponse.json({ error: "Name and role are required" }, { status: 400 });
+        if (!body.name) {
+            return NextResponse.json({ error: "Name is required" }, { status: 400 });
         }
 
         const employee = await userDb.employees.create({
             name: body.name,
-            role: body.role,
-            email: body.email,
-            salary: Number(body.salary) || 0,
+            role: body.role || null,
+            email: body.email || null,
+            monthly_salary: Number(body.salary) || 0,
             status: body.status || 'active',
-            employment_date: body.employment_date || new Date().toISOString().split('T')[0]
+            start_date: body.employment_date || new Date().toISOString().split('T')[0]
         });
 
         if (!employee) {

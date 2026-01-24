@@ -1,4 +1,4 @@
-// @ts-nocheck
+// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 /**
  * Complete INK2 SRU Processor
  * Calculates all INK2/INK2R/INK2S fields from accounting data

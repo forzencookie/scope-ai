@@ -49,21 +49,21 @@ export function Aktiebok() {
     } = useAktiebokLogic()
 
     return (
-        <div className="space-y-6">
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Aktiebok</h2>
-                        <p className="text-muted-foreground mt-1">
+        <div className="space-y-4 md:space-y-6">
+            <div className="flex flex-col gap-4 md:gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                    <div className="min-w-0">
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">Aktiebok</h2>
+                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
                             Digital aktiebok med historik över ägarförändringar och transaktioner.
                         </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 shrink-0">
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
-                                <Button>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Åtgärder
+                                <Button size="sm">
+                                    <Plus className="h-4 w-4 sm:mr-2" />
+                                    <span className="hidden sm:inline">Åtgärder</span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -90,24 +90,25 @@ export function Aktiebok() {
 
             {/* Shareholders Table */}
             {activeTab === 'owners' && (
-                <div className="space-y-4 pt-8 border-t-2 border-border/60">
-                    <div className="flex items-center justify-between px-1">
-                        <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.owners?.shareholdersTable || "Aktieägare"}</h2>
+                <div className="space-y-4 pt-6 md:pt-8 border-t-2 border-border/60">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
+                        <h2 className="text-sm md:text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.owners?.shareholdersTable || "Aktieägare"}</h2>
                         <div className="flex items-center gap-2">
                             <SearchBar
                                 placeholder={text.owners?.searchOwners || "Sök ägare..."}
                                 value={searchQuery}
                                 onChange={setSearchQuery}
+                                className="flex-1 sm:flex-none"
                             />
 
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="h-8"
+                                className="h-8 shrink-0"
                                 onClick={() => setActiveTab('transactions')}
                             >
-                                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                                Transaktioner
+                                <ArrowRightLeft className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Transaktioner</span>
                             </Button>
                         </div>
                     </div>
