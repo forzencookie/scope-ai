@@ -5,7 +5,7 @@ import { useBulkSelection, BulkAction } from "@/components/shared/bulk-action-to
 import { useDeleteConfirmation } from "@/components/shared/delete-confirm-dialog"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
-import { type Receipt } from "@/lib/services/receipt-service"
+import { type Receipt } from '@/services/receipt-service'
 import { type BookingData } from "../dialogs/bokforing"
 import { BookOpen, Trash2, Archive, Download } from "lucide-react"
 import { RECEIPT_STATUSES } from "@/lib/status-types"

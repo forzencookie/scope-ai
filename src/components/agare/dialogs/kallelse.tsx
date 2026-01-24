@@ -20,7 +20,7 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import { generateAnnualMeetingNoticePDF, type MeetingData } from "@/lib/pdf-generator"
+import { generateAnnualMeetingNoticePDF, type MeetingData } from "@/lib/generators/pdf-generator"
 import { useToast } from "@/components/ui/toast"
 
 export type NoticeVariant = "association" | "corporate"

@@ -6,7 +6,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { createUserScopedDb } from '@/lib/user-scoped-db'
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 function getOpenAIClient() {
     return new OpenAI({

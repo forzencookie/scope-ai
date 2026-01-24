@@ -94,6 +94,38 @@ export function parseAmount(amount: string | number): number {
 }
 
 /**
+ * Ensure a value is a safe, displayable number
+ * Returns fallback (default 0) for NaN, Infinity, undefined, null
+ * @example safeNumber(NaN) => 0
+ * @example safeNumber(undefined) => 0
+ * @example safeNumber(null, 100) => 100
+ * @example safeNumber(42) => 42
+ */
+export function safeNumber(value: unknown, fallback: number = 0): number {
+  if (value === null || value === undefined) return fallback
+  const num = typeof value === 'number' ? value : Number(value)
+  return Number.isFinite(num) ? num : fallback
+}
+
+/**
+ * Format a number for display with locale formatting
+ * Handles NaN/Infinity/undefined/null gracefully
+ * @example formatNumber(1234.56) => "1 234,56"
+ * @example formatNumber(NaN) => "0"
+ * @example formatNumber(undefined, "—") => "—"
+ */
+export function formatNumber(
+  value: unknown,
+  fallback: string = "0",
+  locale: string = "sv-SE"
+): string {
+  if (value === null || value === undefined) return fallback
+  const num = typeof value === 'number' ? value : Number(value)
+  if (!Number.isFinite(num)) return fallback
+  return num.toLocaleString(locale)
+}
+
+/**
  * Parse date string to Date object
  * Returns null for invalid dates instead of Invalid Date
  */

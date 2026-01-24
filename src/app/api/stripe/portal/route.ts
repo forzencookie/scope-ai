@@ -2,7 +2,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import { createPortalSession } from '@/lib/stripe'
-import { getSupabaseAdmin } from '@/lib/supabase'
+import { getSupabaseAdmin } from '@/lib/database/supabase'
 
 /**
  * POST /api/stripe/portal

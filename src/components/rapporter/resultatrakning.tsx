@@ -6,7 +6,7 @@ import {
     CollapsibleTableSection,
 } from "@/components/ui/collapsible-table"
 import { SectionCard } from "@/components/ui/section-card"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useRouter } from "next/navigation"
 import { FileBarChart, Loader2 } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"

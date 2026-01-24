@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../supabase'
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 // ==========================================
 // Inkomstdeklaration (Income Tax Declaration)

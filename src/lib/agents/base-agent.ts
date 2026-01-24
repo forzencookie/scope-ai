@@ -17,7 +17,7 @@ import type {
     AgentConfirmation,
 } from './types'
 import { aiToolRegistry } from '../ai-tools/registry'
-import { getModelById, DEFAULT_MODEL_ID } from '../ai-models'
+import { getModelById, DEFAULT_MODEL_ID } from '../ai/models'
 import { 
     callLLM, 
     callLLMWithTools, 

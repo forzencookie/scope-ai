@@ -8,8 +8,8 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateChatMessages, validateJsonBody } from '@/lib/validation'
-import { createUserScopedDb, type UserScopedDb } from '@/lib/user-scoped-db'
-import { getModelById, DEFAULT_MODEL_ID } from '@/lib/ai-models'
+import { createUserScopedDb, type UserScopedDb } from '@/lib/database/user-scoped-db'
+import { getModelById, DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import { authorizeModel, logUnauthorizedModelAccess, trackUsage } from '@/lib/model-auth'
 

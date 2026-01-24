@@ -98,20 +98,25 @@ export const receiptService = {
 
         const { data, error } = await supabase.rpc('get_receipt_stats')
 
-        if (error || !data || data.total === 0) {
-            return {
-                total: 0,
-                matchedCount: 0,
-                unmatchedCount: 0,
-                totalAmount: 0
-            }
+        if (error) {
+            console.error('get_receipt_stats error:', error)
+            return { total: 0, matchedCount: 0, unmatchedCount: 0, totalAmount: 0 }
         }
 
+        // RPC returns array because of RETURNS TABLE
+        const stats = Array.isArray(data) ? data[0] : data
+
+        if (!stats) {
+            return { total: 0, matchedCount: 0, unmatchedCount: 0, totalAmount: 0 }
+        }
+
+        // Note: The RPC function doesn't currently return totalAmount
+        // So we default it to 0 for now to avoid NaN
         return {
-            total: Number(data.total),
-            matchedCount: Number(data.matchedCount),
-            unmatchedCount: Number(data.unmatchedCount),
-            totalAmount: Number(data.totalAmount)
+            total: Number(stats.total_receipts || 0),
+            matchedCount: Number(stats.processed_receipts || 0),
+            unmatchedCount: Number(stats.pending_receipts || 0),
+            totalAmount: 0 // Will need to update RPC if we want this value
         }
     },
 

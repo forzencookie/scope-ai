@@ -4,7 +4,7 @@
 import { useState, useEffect } from "react"
 import { useVerifications } from "./use-verifications"
 import { useCompany } from "@/providers/company-provider"
-import { getSupabaseClient } from "@/lib/supabase"
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export type PeriodStatus = 'open' | 'review' | 'locked'
 

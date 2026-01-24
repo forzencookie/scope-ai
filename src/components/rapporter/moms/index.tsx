@@ -20,7 +20,7 @@ import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
 import { MomsWizardDialog } from "../dialogs/assistent"
 import { MomsDetailDialog } from "../dialogs/moms"
 import { useTextMode } from "@/providers/text-mode-provider"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useToast } from "@/components/ui/toast"
 
 // Logic

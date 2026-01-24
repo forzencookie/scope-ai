@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { type Invoice } from "@/types"
-import { invoiceService, type CustomerInvoice, type SupplierInvoice } from "@/lib/services/invoice-service"
+import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoice-service'
 import { useAsync } from "./use-async"
 
 export function useInvoices() {

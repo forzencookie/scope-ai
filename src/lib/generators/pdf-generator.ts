@@ -1,5 +1,5 @@
 import jsPDF from 'jspdf';
-import { formatCurrency, formatDateLong } from './utils';
+import { formatCurrency, formatDateLong } from '@/lib/utils';
 
 // Define a type for Payslip if not already available globally
 export interface PayslipData {

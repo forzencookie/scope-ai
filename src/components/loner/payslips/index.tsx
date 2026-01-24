@@ -20,7 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, type BulkAction } from "@/components/shared/bulk-action-toolbar"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 import { usePayslipsLogic } from "./use-payslips-logic"
 import { PayslipsStats } from "./payslips-stats"

@@ -6,7 +6,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { payrollService, type Payslip, type Employee, type AGIReport } from '@/lib/services/payroll-service'
+import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll-service'
 
 // =============================================================================
 // Payslip Tools

@@ -6,7 +6,7 @@
  * Based on the official momsdeklaration format.
  */
 
-import { VatReport } from "./vat-processor"
+import { VatReport } from "@/services/processors/vat-processor"
 
 /**
  * Company information required for VAT declaration

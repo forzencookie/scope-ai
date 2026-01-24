@@ -1,5 +1,5 @@
 import { FileText, Vote, Users } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, formatNumber } from "@/lib/utils"
 // Need to import ShareholderDisplay, stats...
 import { AktiebokStats as AktiebokStatsType, ShareholderDisplay } from "../types"
 
@@ -74,17 +74,17 @@ export function AktiebokStats({ stats, shareholders }: AktiebokStatsProps) {
                 <div className="flex-1 grid grid-cols-3 gap-4">
                     <div className="flex flex-col justify-center p-4 rounded-lg bg-background/60 border border-border/50">
                         <FileText className="h-5 w-5 text-indigo-500 mb-2" />
-                        <p className="text-2xl font-bold tabular-nums">{stats.totalShares.toLocaleString('sv-SE')}</p>
+                        <p className="text-2xl font-bold tabular-nums">{formatNumber(stats.totalShares)}</p>
                         <p className="text-xs text-muted-foreground">Totalt aktier</p>
                     </div>
                     <div className="flex flex-col justify-center p-4 rounded-lg bg-background/60 border border-border/50">
                         <Vote className="h-5 w-5 text-violet-500 mb-2" />
-                        <p className="text-2xl font-bold tabular-nums">{stats.totalVotes.toLocaleString('sv-SE')}</p>
+                        <p className="text-2xl font-bold tabular-nums">{formatNumber(stats.totalVotes)}</p>
                         <p className="text-xs text-muted-foreground">Totalt röster</p>
                     </div>
                     <div className="flex flex-col justify-center p-4 rounded-lg bg-background/60 border border-border/50">
                         <Users className="h-5 w-5 text-purple-500 mb-2" />
-                        <p className="text-2xl font-bold tabular-nums">{stats.shareholderCount}</p>
+                        <p className="text-2xl font-bold tabular-nums">{formatNumber(stats.shareholderCount)}</p>
                         <p className="text-xs text-muted-foreground">Aktieägare</p>
                     </div>
                 </div>

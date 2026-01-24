@@ -4,7 +4,7 @@ import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
-import { type Inventarie } from "@/lib/services/inventarie-service"
+import { type Inventarie } from '@/services/inventarie-service'
 
 export function useInventarierLogic() {
     const { text } = useTextMode()

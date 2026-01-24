@@ -19,7 +19,7 @@ import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import { Button } from "@/components/ui/button"
 
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
-import { transactionService, type TransactionStats } from "@/lib/services/transaction-service"
+import { transactionService, type TransactionStats } from '@/services/transaction-service'
 import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
 import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 

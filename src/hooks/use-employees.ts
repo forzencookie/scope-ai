@@ -1,7 +1,7 @@
 // @ts-nocheck
 
 import { useState, useEffect, useCallback } from "react"
-import { getSupabaseClient } from "@/lib/supabase"
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export interface Employee {
     id: string

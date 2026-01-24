@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
-import { DEFAULT_MODEL_ID, getModelById, type AIModel } from "@/lib/ai-models"
+import { DEFAULT_MODEL_ID, getModelById, type AIModel } from "@/lib/ai/models"
 
 // ============================================================================
 // Types

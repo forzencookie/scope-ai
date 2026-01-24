@@ -12,7 +12,7 @@ import {
     listShareHoldings,
     listCryptoHoldings,
     getInvestmentSummary,
-} from '@/services/processors/investments'
+} from '@/services/processors/investments-processor'
 
 // =============================================================================
 // Investment Tools

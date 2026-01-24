@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/toast"
 import { SectionCard } from "@/components/ui/section-card"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 // Logic
 import { useK10Calculation } from "./use-k10-calculation"

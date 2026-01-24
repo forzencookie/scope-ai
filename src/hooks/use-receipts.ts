@@ -1,6 +1,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { receiptService, type Receipt } from "@/lib/services/receipt-service"
+import { receiptService, type Receipt } from '@/services/receipt-service'
 import { useAsync } from "./use-async"
 
 export function useReceiptsPaginated(

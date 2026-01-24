@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn, safeNumber, formatNumber } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { 
   Coffee, Tag, Package, Monitor, Plane, Building2, Fuel, Smartphone, Phone, 
@@ -85,9 +85,10 @@ export function CategoryBadge({
 }
 
 export function AmountText({ value, suffix = " kr" }: { value: number; suffix?: string }) {
-  const isPositive = value >= 0
+  const safeValue = safeNumber(value)
+  const isPositive = safeValue >= 0
   return (
-    <span className={cn("font-medium", isPositive && "text-green-600 dark:text-green-500/80")}>{`${isPositive ? "+" : ""}${value.toLocaleString()}${suffix}`}</span>
+    <span className={cn("font-medium", isPositive && "text-green-600 dark:text-green-500/80")}>{`${isPositive ? "+" : ""}${formatNumber(safeValue)}${suffix}`}</span>
   )
 }
 

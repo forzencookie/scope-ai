@@ -26,7 +26,7 @@ import {
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useToast } from "@/components/ui/toast"
 
 

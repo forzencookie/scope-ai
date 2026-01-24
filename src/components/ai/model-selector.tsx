@@ -11,7 +11,7 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useModel } from "@/providers/model-provider"
-import { AI_MODELS } from "@/lib/ai-models"
+import { AI_MODELS } from "@/lib/ai/models"
 import { cn } from "@/lib/utils"
 
 export function ModelSelector() {

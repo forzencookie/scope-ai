@@ -28,7 +28,7 @@ import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
 
 import { useCompany } from "@/providers/company-provider"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 export function ArsredovisningContent() {
     const router = useRouter()

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { parseSIE } from "@/lib/sie-parser"
-import { createUserScopedDb } from "@/lib/user-scoped-db"
+import { parseSIE } from '@/lib/parsers/sie-parser'
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 import { randomUUID } from "crypto"
 
 export async function POST(req: NextRequest) {

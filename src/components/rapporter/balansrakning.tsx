@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/collapsible-table"
 import { cn } from "@/lib/utils"
 import { SectionCard } from "@/components/ui/section-card"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useRouter } from "next/navigation"
 import { Scale, Loader2, CheckCircle2, XCircle } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"

@@ -4,8 +4,7 @@
 import { User, Calendar, Trash2 } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
-import { EmployeeBenefit } from "@/lib/ai-tool-types"
-import { FormanCatalogItem } from "@/lib/ai-tool-types"
+import { EmployeeBenefit, FormanCatalogItem } from "@/lib/ai/tool-types"
 
 interface EmployeeListProps {
     benefit: FormanCatalogItem

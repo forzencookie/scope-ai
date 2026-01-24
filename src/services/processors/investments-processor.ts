@@ -10,7 +10,7 @@
  * DRY: Shared utilities for all investment types
  */
 
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
+import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
 import type {
     Property,
     CreatePropertyInput,

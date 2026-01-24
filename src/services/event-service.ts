@@ -11,7 +11,7 @@ import type {
     EventSource,
     EventCategory,
 } from '@/types/events'
-import { getSupabaseClient } from '@/lib/supabase'
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 /**
  * Map DB result to HändelseEvent

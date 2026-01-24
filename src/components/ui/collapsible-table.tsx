@@ -2,7 +2,7 @@
 
 import { ReactNode, useState } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn, safeNumber, formatNumber } from "@/lib/utils"
 
 // ==========================================
 // Collapsible Table Components
@@ -36,7 +36,8 @@ export function CollapsibleTableContainer({ children, className }: { children: R
 // ==========================================
 
 export function CollapsibleTableBadge({ value, className }: { value: number; className?: string }) {
-    const roundedValue = Math.round(value) === 0 ? 0 : Math.round(value)
+    const safeValue = safeNumber(value)
+    const roundedValue = Math.round(safeValue) === 0 ? 0 : Math.round(safeValue)
 
     if (roundedValue === 0) return (
         <span className={cn("font-medium text-sm tabular-nums px-2 py-0.5 rounded-sm shrink-0 text-muted-foreground bg-muted/50", className)}>
@@ -51,7 +52,7 @@ export function CollapsibleTableBadge({ value, className }: { value: number; cla
             roundedValue < 0 && "text-red-600 dark:text-red-400 bg-red-100 dark:bg-red-950/50",
             className
         )}>
-            {roundedValue > 0 && "+"}{roundedValue.toLocaleString('sv-SE')} kr
+            {roundedValue > 0 && "+"}{formatNumber(roundedValue)} kr
         </span>
     )
 }
@@ -93,7 +94,8 @@ interface CollapsibleTableRowProps {
 
 export function CollapsibleTableRow({ item, className, children, neutral = false }: CollapsibleTableRowProps) {
     const [isOpen, setIsOpen] = useState(false)
-    const roundedValue = Math.round(item.value) === 0 ? 0 : Math.round(item.value)
+    const safeValue = safeNumber(item.value)
+    const roundedValue = Math.round(safeValue) === 0 ? 0 : Math.round(safeValue)
     const hasChildren = !!children
 
     return (
@@ -141,8 +143,7 @@ export function CollapsibleTableRow({ item, className, children, neutral = false
                             : roundedValue < 0
                                 ? "text-red-600 dark:text-red-400"
                                 : "text-muted-foreground"
-                )}>
-                    {roundedValue.toLocaleString('sv-SE')} kr
+                )}>n                    {formatNumber(roundedValue)} kr
                 </span>
             </div>
 
@@ -179,8 +180,8 @@ export function CollapsibleTableSection({
 }: CollapsibleTableSectionProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen)
 
-    // Auto-calculate total if not provided
-    const displayTotal = total !== undefined ? total : items.reduce((sum, item) => sum + item.value, 0)
+    // Auto-calculate total if not provided, using safeNumber for each item
+    const displayTotal = safeNumber(total !== undefined ? total : items.reduce((sum, item) => sum + safeNumber(item.value), 0))
 
     if (items.length === 0) return null
 
@@ -204,7 +205,7 @@ export function CollapsibleTableSection({
                     {!hideTotalHeader && (
                         neutral ? (
                             <span className="font-medium text-sm tabular-nums text-foreground">
-                                {displayTotal.toLocaleString('sv-SE')} kr
+                                {formatNumber(displayTotal)} kr
                             </span>
                         ) : (
                             <CollapsibleTableBadge value={displayTotal} />

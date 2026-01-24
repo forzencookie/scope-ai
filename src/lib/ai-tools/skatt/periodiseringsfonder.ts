@@ -13,7 +13,7 @@ import {
     dissolvePeriodiseringsfond,
     getExpiringFonder,
     calculateTaxSavings,
-} from '@/services/processors/periodiseringsfonder'
+} from '@/services/processors/periodiseringsfonder-processor'
 
 // =============================================================================
 // Periodiseringsfonder Tools

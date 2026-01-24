@@ -13,8 +13,8 @@ import { NextResponse } from "next/server"
 import {
   processTransactions,
   type NakedTransaction,
-} from "@/services/transaction-processor"
-import { createUserScopedDb } from "@/lib/user-scoped-db"
+} from "@/services/processors/transaction-processor"
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 /**
  * GET /api/transactions/processed

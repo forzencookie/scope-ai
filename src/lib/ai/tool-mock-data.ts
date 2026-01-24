@@ -11,7 +11,7 @@ import type {
     Property,
     ShareHolding,
     CryptoHolding,
-} from './ai-tool-types'
+} from './tool-types'
 
 // =============================================================================
 // Periodiseringsfonder Mock Data

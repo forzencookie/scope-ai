@@ -41,7 +41,7 @@ import {
     resetPassword,
     updatePassword,
     onAuthStateChange,
-} from '../supabase-auth'
+} from '../database/supabase-auth'
 
 describe('Supabase Auth Functions', () => {
     const mockUser = {

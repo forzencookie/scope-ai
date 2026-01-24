@@ -1,5 +1,5 @@
 import { FileCheck, Banknote, Link2, AlertTriangle } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, cn } from "@/lib/utils"
 import { VerificationStats } from "../types"
 
 interface VerifikationerStatsProps {
@@ -8,30 +8,46 @@ interface VerifikationerStatsProps {
 
 export function VerifikationerStats({ stats }: VerifikationerStatsProps) {
     return (
-        <div className="flex flex-wrap items-center gap-4 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
-            <div className="flex items-center gap-2">
-                <FileCheck className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm"><span className="font-semibold tabular-nums">{stats.total}</span> verifikationer</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <FileCheck className="h-5 w-5 text-muted-foreground" />
+                <div>
+                    <p className="text-2xl font-bold tabular-nums">{stats.total}</p>
+                    <p className="text-xs text-muted-foreground">Antal verifikationer</p>
+                </div>
             </div>
-            <div className="h-4 w-px bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-                <Banknote className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold tabular-nums">{formatCurrency(stats.totalAmount)}</span>
+
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <Banknote className="h-5 w-5 text-muted-foreground" />
+                <div>
+                    <p className="text-2xl font-bold tabular-nums">{formatCurrency(stats.totalAmount)}</p>
+                    <p className="text-xs text-muted-foreground">Omslutning</p>
+                </div>
             </div>
-            <div className="h-4 w-px bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-green-600 dark:text-green-400" />
-                <span className="text-sm"><span className="font-semibold tabular-nums">{stats.withTransaction}</span> kopplade</span>
+
+            <div className={cn(
+                "flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50 transition-colors",
+                stats.missingUnderlag > 0 && "border-amber-200/50 bg-amber-50/50 dark:bg-amber-950/20"
+            )}>
+                {stats.missingUnderlag > 0 ? (
+                    <AlertTriangle className="h-5 w-5 text-amber-500" />
+                ) : (
+                    <Link2 className="h-5 w-5 text-green-600 dark:text-green-400" />
+                )}
+                <div>
+                    {stats.missingUnderlag > 0 ? (
+                        <>
+                            <p className="text-2xl font-bold tabular-nums text-amber-600 dark:text-amber-500">{stats.missingUnderlag}</p>
+                            <p className="text-xs text-amber-600/80 dark:text-amber-500/70">Saknar underlag</p>
+                        </>
+                    ) : (
+                        <>
+                            <p className="text-2xl font-bold tabular-nums">{stats.withTransaction}</p>
+                            <p className="text-xs text-muted-foreground">Kopplade</p>
+                        </>
+                    )}
+                </div>
             </div>
-            {stats.missingUnderlag > 0 && (
-                <>
-                    <div className="h-4 w-px bg-border hidden sm:block" />
-                    <div className="flex items-center gap-2 px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/30 text-amber-700 dark:text-amber-400">
-                        <AlertTriangle className="h-3.5 w-3.5" />
-                        <span className="text-sm font-medium">{stats.missingUnderlag} saknar underlag</span>
-                    </div>
-                </>
-            )}
         </div>
     )
 }

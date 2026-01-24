@@ -6,8 +6,8 @@
  */
 
 import { NextResponse } from "next/server"
-import { processSupplierInvoices, type NakedSupplierInvoice } from "@/services/invoice-processor"
-import { createUserScopedDb } from "@/lib/user-scoped-db"
+import { processSupplierInvoices, type NakedSupplierInvoice } from "@/services/processors/invoice-processor"
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 export async function GET() {
   try {

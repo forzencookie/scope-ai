@@ -86,20 +86,23 @@ export const transactionService = {
 
         const { data, error } = await supabase.rpc('get_transaction_stats')
 
-        if (error || !data || data.totalCount === 0) {
-            return {
-                income: 0,
-                expenses: 0,
-                pending: 0,
-                totalCount: 0
-            }
+        if (error) {
+            console.error('get_transaction_stats error:', error)
+            return { income: 0, expenses: 0, pending: 0, totalCount: 0 }
+        }
+
+        // RPC returns an array because it's defined as RETURNS TABLE
+        const stats = Array.isArray(data) ? data[0] : data
+
+        if (!stats) {
+            return { income: 0, expenses: 0, pending: 0, totalCount: 0 }
         }
 
         return {
-            income: Number(data.income),
-            expenses: Number(data.expenses),
-            pending: Number(data.pending),
-            totalCount: Number(data.totalCount)
+            income: Number(stats.total_income || 0),
+            expenses: Number(stats.total_expenses || 0),
+            pending: Number(stats.pending_count || 0),
+            totalCount: Number(stats.total_transactions || 0)
         }
     },
 

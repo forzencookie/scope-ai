@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react"
 import { ChevronDown, ChevronRight } from "lucide-react"
-import type { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai-tool-types"
+import type { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai/tool-types"
 import { BenefitRow } from "./benefit-row"
 
 interface BenefitSectionProps {

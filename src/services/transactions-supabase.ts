@@ -14,7 +14,7 @@ import type {
 } from "@/types"
 import type { TransactionStatus } from "@/lib/status-types"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
-import { supabase } from "@/lib/supabase"
+import { supabase } from "@/lib/database/supabase"
 import type { Tables } from "@/types/supabase"
 
 // ============================================

@@ -40,14 +40,12 @@ export function TransactionsStatusCard({ pendingCount, onViewPending }: Transact
     }
 
     return (
-        <div className="rounded-xl border-2 border-green-200 dark:border-green-900/50 bg-gradient-to-r from-green-50 to-emerald-50 dark:from-green-950/30 dark:to-emerald-950/30 p-5">
+        <div className="rounded-xl border border-border/50 bg-muted/30 p-5">
             <div className="flex items-center gap-4">
-                <div className="h-12 w-12 rounded-full bg-green-100 dark:bg-green-900/50 flex items-center justify-center">
-                    <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-400" />
-                </div>
+                <CheckCircle2 className="h-6 w-6 text-green-600 dark:text-green-500/70" />
                 <div>
-                    <span className="text-lg font-semibold text-green-700 dark:text-green-300">Allt är i ordning!</span>
-                    <p className="text-sm text-green-600/80 dark:text-green-400/70">Alla transaktioner är granskade och bokförda</p>
+                    <span className="text-lg font-semibold">Allt är i ordning!</span>
+                    <p className="text-sm text-muted-foreground">Alla transaktioner är granskade och bokförda</p>
                 </div>
             </div>
         </div>

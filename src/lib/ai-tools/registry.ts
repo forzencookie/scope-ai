@@ -6,7 +6,7 @@
  */
 
 import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, AIConfirmationRequest } from './types'
-import { db } from '../server-db'
+import { db } from '../database/server-db'
 
 // Re-export types that tools may need
 export type { AIConfirmationRequest } from './types'

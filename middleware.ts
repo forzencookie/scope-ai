@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createMiddlewareSupabaseClient } from '@/lib/supabase-server'
+import { createMiddlewareSupabaseClient } from '@/lib/database/supabase-server'
 
 /**
  * Protected routes that require authentication

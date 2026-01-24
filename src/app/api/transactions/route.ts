@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server"
-import { createUserScopedDb } from "@/lib/user-scoped-db"
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 // Helper to format transaction for frontend
 function formatTransaction(tx: Record<string, unknown>) {

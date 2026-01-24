@@ -24,7 +24,7 @@ import {
 import { SettingsDialog } from "@/components/installningar/settings-dialog"
 import { cn } from "@/lib/utils"
 import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
-import { AI_CHAT_EVENT } from "@/lib/ai-context"
+import { AI_CHAT_EVENT } from "@/lib/ai/context"
 import { useAuth } from "@/hooks/use-auth"
 
 // Import data from the data layer

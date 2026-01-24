@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { listAvailableBenefits, assignBenefit, suggestUnusedBenefits } from "@/lib/formaner"
-import type { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai-tool-types"
+import type { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai/tool-types"
 
 export function useBenefitsLogic() {
     const [benefits, setBenefits] = useState<FormanCatalogItem[]>([])

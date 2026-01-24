@@ -34,7 +34,7 @@ import {
 import { SectionCard } from "@/components/ui/section-card"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { useVerifications } from "@/hooks/use-verifications"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)

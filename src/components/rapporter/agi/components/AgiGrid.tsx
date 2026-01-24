@@ -12,7 +12,7 @@ import {
 import { ArrowRight, Download, Send } from "lucide-react"
 import { AGIReport } from "../use-employer-declaration"
 import { useToast } from "@/components/ui/toast"
-import { generateAgiXML } from "@/lib/agi-generator"
+import { generateAgiXML } from "@/lib/generators/agi-generator"
 import { useCompany } from "@/providers/company-provider"
 
 interface AgiGridProps {

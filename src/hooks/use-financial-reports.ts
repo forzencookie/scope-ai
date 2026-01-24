@@ -1,8 +1,8 @@
 // @ts-nocheck
 
 import { useMemo, useState, useEffect } from "react"
-import { getSupabaseClient } from "@/lib/supabase"
-import { FinancialReportProcessor, FinancialSection, AccountBalance } from "@/services/reports-processor"
+import { getSupabaseClient } from '@/lib/database/supabase'
+import { FinancialReportProcessor, FinancialSection, AccountBalance } from "@/services/processors/reports-processor"
 
 export function useFinancialReports() {
     const [balances, setBalances] = useState<AccountBalance[]>([])

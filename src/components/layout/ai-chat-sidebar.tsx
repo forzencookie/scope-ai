@@ -19,7 +19,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { type SidebarMode } from "./app-sidebar"
-import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai-context"
+import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
 
 interface AIChatSidebarProps {
     mode?: SidebarMode

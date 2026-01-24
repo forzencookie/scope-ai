@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useCallback, useMemo } from "react"
-import { inventarieService, type Inventarie } from "@/lib/services/inventarie-service"
+import { inventarieService, type Inventarie } from '@/services/inventarie-service'
 import { Monitor, Armchair, Car, Wrench, Package } from "lucide-react"
 
 export function useInventarier() {

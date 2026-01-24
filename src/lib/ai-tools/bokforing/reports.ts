@@ -9,7 +9,7 @@ import {
     generateMockIncomeStatement,
     generateMockBalanceSheet,
     type ProcessedFinancialItem,
-} from '@/services/reports-processor'
+} from '@/services/processors/reports-processor'
 
 // =============================================================================
 // Financial Statement Tools

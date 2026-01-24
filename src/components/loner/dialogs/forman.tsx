@@ -4,7 +4,7 @@
 import { useState } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { StatusBadge } from "@/components/ui/status-badge"
-import { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai-tool-types"
+import { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai/tool-types"
 import { getFormType, getBenefitIcon } from "./forman/constants" // Assuming relative path
 import { EmployeeList } from "./forman/EmployeeList"
 import { AllowanceForm } from "./forman/forms/AllowanceForm"

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserScopedDb } from "@/lib/user-scoped-db"
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 import type { BookingData } from '@/components/bokforing/dialogs/bokforing'
 
 export async function POST(

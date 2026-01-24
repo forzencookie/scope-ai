@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from "@/lib/user-scoped-db"
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 export async function PATCH(
     request: NextRequest,

@@ -32,10 +32,10 @@ import {
     type CollapsibleTableItem
 } from "@/components/ui/collapsible-table"
 import { useVerifications } from "@/hooks/use-verifications"
-import { Ink2Processor, type Ink2FormField } from "@/services/processors/ink2-processor"
+import { Ink2Processor, type Ink2FormField } from "@/services/processors/inkomstdeklaration-processor"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
-import { cn } from "@/lib/utils"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"
+import { cn, formatNumber } from "@/lib/utils"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 import { SectionCard } from "@/components/ui/section-card"
 import { SRUPreviewDialog } from "./dialogs/sru"
@@ -206,7 +206,7 @@ export function InkomstdeklarationContent() {
                     />
                     <StatCard
                         label="Bokfört resultat"
-                        value={`${stats.result.toLocaleString('sv-SE')} kr`}
+                        value={`${formatNumber(stats.result)} kr`}
                         subtitle="Före skattemässiga justeringar"
                         headerIcon={TrendingUp}
                     />

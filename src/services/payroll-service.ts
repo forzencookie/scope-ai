@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '../supabase'
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export type PayrollStats = {
     currentPeriod: string

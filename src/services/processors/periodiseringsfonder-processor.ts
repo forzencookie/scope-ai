@@ -6,7 +6,7 @@
  * AI tools call these functions to manage periodiseringsfonder.
  */
 
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/supabase'
+import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
 import type { Periodiseringsfond, CreatePeriodiseringsfondInput, TaxSavingsCalculation } from './ai-tool-types'
 
 // =============================================================================

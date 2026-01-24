@@ -8,7 +8,7 @@ import {
     GridTableRow,
 } from "@/components/ui/grid-table"
 import { formatCurrency } from "@/lib/utils"
-import { type Inventarie } from "@/lib/services/inventarie-service"
+import { type Inventarie } from '@/services/inventarie-service'
 import { type useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 
 interface InventarierGridProps {
