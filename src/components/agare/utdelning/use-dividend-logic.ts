@@ -6,7 +6,7 @@ import { useToast } from "@/components/ui/toast"
 export function useDividendLogic() {
     const { verifications, addVerification } = useVerifications()
     const { documents: realDocuments, addDocument } = useCompliance()
-    const { toast } = useToast()
+    const toast = useToast()
 
     // Calculate Salaries Basis from Ledger
     const salaryBasis = useMemo(() => {

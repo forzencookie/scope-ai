@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/collapsible-table"
 import { reportSections } from "./constants"
 import { useVerifications } from "@/hooks/use-verifications"
-import { AnnualReportProcessor } from "@/lib/annual-report-processor"
+import { AnnualReportProcessor } from "@/services/processors/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
 

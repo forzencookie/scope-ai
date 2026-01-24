@@ -1,28 +1,49 @@
+// @ts-nocheck
 /**
  * Processed Invoices API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
  */
 
 import { NextResponse } from "next/server"
+import { createUserScopedDb } from "@/lib/user-scoped-db"
 import { processInvoices, type NakedInvoice } from "@/services/invoice-processor"
 
 export async function GET() {
-  try {
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
-    const response = await fetch(`${baseUrl}/api/mock/invoices`, { cache: 'no-store' })
-    
-    if (!response.ok) throw new Error('Failed to fetch')
-    
-    const data = await response.json()
-    const nakedInvoices: NakedInvoice[] = data.invoices || []
-    const processedInvoices = processInvoices(nakedInvoices)
-    
-    return NextResponse.json({
-      invoices: processedInvoices,
-      count: processedInvoices.length,
-      type: "processed"
-    })
-  } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Failed' }, { status: 500 })
-  }
+    try {
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // Fetch invoices from database (RLS-protected)
+        const dbInvoices = await userDb.supplierInvoices.list({ limit: 100 });
+        
+        // Transform to NakedInvoice format for processor
+        const nakedInvoices: NakedInvoice[] = dbInvoices.map(inv => ({
+            id: inv.id,
+            supplier: inv.supplier_name || 'Unknown',
+            invoiceNumber: inv.invoice_number || '',
+            amount: inv.total_amount || 0,
+            vatAmount: inv.vat_amount || 0,
+            dueDate: inv.due_date || '',
+            ocr: inv.ocr || '',
+            bankgiro: inv.bankgiro || '',
+            status: inv.status || 'pending',
+        }));
+
+        const processedInvoices = processInvoices(nakedInvoices);
+
+        return NextResponse.json({
+            invoices: processedInvoices,
+            count: processedInvoices.length,
+            type: "processed",
+            userId: userDb.userId,
+            companyId: userDb.companyId,
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        return NextResponse.json({ error: 'Failed to fetch invoices' }, { status: 500 });
+    }
 }

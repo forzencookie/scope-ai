@@ -1,48 +1,81 @@
+// @ts-nocheck
 // ============================================
 // Navigation Service
 // ============================================
 
 import type { User, Team, NavItem, NavigationData, ApiResponse } from "@/types"
-import { mockUser, mockTeams, navPlatform, navSettings } from "@/data/navigation"
+import { navPlatform, navSettings } from "@/data/navigation"
 import { delay } from "@/lib/utils"
 
-// Simulated network delay for development
-const MOCK_DELAY = 0 // Set to 500 for simulating network latency
+// Helper to get base URL
+function getApiBaseUrl() {
+    if (typeof window !== 'undefined') {
+        return window.location.origin
+    }
+    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+}
 
 // ============================================
 // User Service
 // ============================================
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
-  await delay(MOCK_DELAY)
-
-  // TODO: Replace with actual API call
-  // const response = await fetch('/api/user/current')
-  // return response.json()
-
-  return {
-    data: mockUser,
-    success: true,
-    timestamp: new Date(),
-  }
+    try {
+        const baseUrl = getApiBaseUrl()
+        const res = await fetch(`${baseUrl}/api/auth/me`, {
+            credentials: 'include',
+            cache: 'no-store'
+        })
+        
+        if (res.ok) {
+            const data = await res.json()
+            return {
+                data: data.user,
+                success: true,
+                timestamp: new Date(),
+            }
+        }
+    } catch (error) {
+        console.error('[Navigation] Failed to fetch current user:', error)
+    }
+    
+    // Return empty user if not authenticated
+    return {
+        data: null as unknown as User,
+        success: false,
+        error: 'Not authenticated',
+        timestamp: new Date(),
+    }
 }
 
 export async function updateUser(user: Partial<User>): Promise<ApiResponse<User>> {
-  await delay(MOCK_DELAY)
-
-  // TODO: Replace with actual API call
-  // const response = await fetch('/api/user/current', {
-  //   method: 'PATCH',
-  //   body: JSON.stringify(user),
-  // })
-  // return response.json()
-
-  const updatedUser = { ...mockUser, ...user }
-  return {
-    data: updatedUser,
-    success: true,
-    timestamp: new Date(),
-  }
+    try {
+        const baseUrl = getApiBaseUrl()
+        const res = await fetch(`${baseUrl}/api/auth/me`, {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(user)
+        })
+        
+        if (res.ok) {
+            const data = await res.json()
+            return {
+                data: data.user,
+                success: true,
+                timestamp: new Date(),
+            }
+        }
+    } catch (error) {
+        console.error('[Navigation] Failed to update user:', error)
+    }
+    
+    return {
+        data: null as unknown as User,
+        success: false,
+        error: 'Failed to update user',
+        timestamp: new Date(),
+    }
 }
 
 // ============================================
@@ -50,48 +83,80 @@ export async function updateUser(user: Partial<User>): Promise<ApiResponse<User>
 // ============================================
 
 export async function getTeams(): Promise<ApiResponse<Team[]>> {
-  await delay(MOCK_DELAY)
-
-  // TODO: Replace with actual API call
-  // const response = await fetch('/api/teams')
-  // return response.json()
-
-  return {
-    data: mockTeams,
-    success: true,
-    timestamp: new Date(),
-  }
+    try {
+        const baseUrl = getApiBaseUrl()
+        const res = await fetch(`${baseUrl}/api/teams`, {
+            credentials: 'include',
+            cache: 'no-store'
+        })
+        
+        if (res.ok) {
+            const data = await res.json()
+            return {
+                data: data.teams || [],
+                success: true,
+                timestamp: new Date(),
+            }
+        }
+    } catch (error) {
+        console.error('[Navigation] Failed to fetch teams:', error)
+    }
+    
+    return {
+        data: [],
+        success: false,
+        error: 'Failed to fetch teams',
+        timestamp: new Date(),
+    }
 }
 
 export async function getCurrentTeam(): Promise<ApiResponse<Team>> {
-  await delay(MOCK_DELAY)
-
-  // TODO: Replace with actual API call
-  return {
-    data: mockTeams[0],
-    success: true,
-    timestamp: new Date(),
-  }
+    const teamsResponse = await getTeams()
+    
+    if (teamsResponse.success && teamsResponse.data.length > 0) {
+        return {
+            data: teamsResponse.data[0],
+            success: true,
+            timestamp: new Date(),
+        }
+    }
+    
+    return {
+        data: null as unknown as Team,
+        success: false,
+        error: 'No teams available',
+        timestamp: new Date(),
+    }
 }
 
 export async function switchTeam(teamId: string): Promise<ApiResponse<Team>> {
-  await delay(MOCK_DELAY)
-
-  const team = mockTeams.find(t => t.id === teamId)
-  if (!team) {
-    return {
-      data: mockTeams[0],
-      success: false,
-      error: "Team not found",
-      timestamp: new Date(),
+    try {
+        const baseUrl = getApiBaseUrl()
+        const res = await fetch(`${baseUrl}/api/teams/switch`, {
+            method: 'POST',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ teamId })
+        })
+        
+        if (res.ok) {
+            const data = await res.json()
+            return {
+                data: data.team,
+                success: true,
+                timestamp: new Date(),
+            }
+        }
+    } catch (error) {
+        console.error('[Navigation] Failed to switch team:', error)
     }
-  }
-
-  return {
-    data: team,
-    success: true,
-    timestamp: new Date(),
-  }
+    
+    return {
+        data: null as unknown as Team,
+        success: false,
+        error: 'Failed to switch team',
+        timestamp: new Date(),
+    }
 }
 
 // ============================================

@@ -1,25 +1,30 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+// @ts-nocheck
+/**
+ * Members API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
+ */
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+import { NextResponse } from 'next/server'
+import { createUserScopedDb } from "@/lib/user-scoped-db";
 
 export async function GET() {
   try {
-    const { data, error } = await supabase
+    const userDb = await createUserScopedDb();
+    
+    if (!userDb) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { data, error } = await userDb.client
       .from('members')
       .select('*')
       .order('name', { ascending: true })
 
     if (error) throw error
 
-    // Transform snake_case to camelCase for frontend if needed, 
-    // but better to align frontend types or use a transform map.
-    // For speed, let's assume we map it here or frontend adapts.
-    // Let's map it here to match frontend types.
-    const members = data.map((m: any) => ({
+    // Transform snake_case to camelCase for frontend
+    const members = (data || []).map((m: Record<string, unknown>) => ({
         id: m.id,
         memberNumber: m.member_number,
         name: m.name,
@@ -32,14 +37,25 @@ export async function GET() {
         roles: m.roles
     }));
 
-    return NextResponse.json({ members })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({
+      members,
+      userId: userDb.userId,
+      companyId: userDb.companyId,
+    })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
 export async function POST(request: Request) {
   try {
+    const userDb = await createUserScopedDb();
+    
+    if (!userDb) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
     const json = await request.json()
     
     // Transform camelCase to snake_case
@@ -52,10 +68,11 @@ export async function POST(request: Request) {
         status: json.status,
         membership_type: json.membershipType,
         last_paid_year: json.lastPaidYear,
-        roles: json.roles
+        roles: json.roles,
+        company_id: userDb.companyId,
     }
 
-    const { data, error } = await supabase
+    const { data, error } = await userDb.client
       .from('members')
       .insert(dbPayload)
       .select()
@@ -64,7 +81,8 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ member: data })
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

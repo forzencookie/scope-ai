@@ -1,5 +1,11 @@
+/**
+ * Transaction Update API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
+ */
+
 import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/server-db"
+import { createUserScopedDb } from "@/lib/user-scoped-db"
 
 export async function PATCH(
     request: NextRequest,
@@ -7,20 +13,28 @@ export async function PATCH(
 ) {
     const { id } = await params
     try {
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await request.json()
 
-        // Validate body (simple check)
         if (!body || typeof body !== 'object') {
             return NextResponse.json({ success: false, error: 'Invalid body' }, { status: 400 })
         }
 
-        // Update metadata in server-db
-        // This merges with existing metadata
-        const updatedMetadata = db.updateTransactionMetadata(id, body)
+        // Update transaction via RLS-protected client
+        const updated = await userDb.transactions.update(id, body)
+
+        if (!updated) {
+            return NextResponse.json({ success: false, error: 'Transaction not found or update failed' }, { status: 404 })
+        }
 
         return NextResponse.json({
             success: true,
-            data: updatedMetadata
+            data: updated
         })
     } catch (error) {
         console.error(`Failed to update transaction ${id}:`, error)

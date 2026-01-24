@@ -33,7 +33,7 @@ import {
     DialogDescription,
 } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { VatReport, recalculateVatReport } from "@/lib/vat-processor"
+import { VatReport, recalculateVatReport } from "@/services/processors/vat-processor"
 import { downloadVatXML, defaultCompanyInfo } from "@/lib/vat-xml-export"
 import { useToast } from "@/components/ui/toast"
 

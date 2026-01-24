@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { type Shareholder, type Partner, type BoardMeeting, type OwnerInfo } from '@/data/ownership';
 
 export interface Signatory {

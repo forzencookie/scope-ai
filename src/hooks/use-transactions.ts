@@ -11,8 +11,6 @@ import { useAuth } from "./use-auth"
 import {
   deleteStoredTransaction,
 } from "@/lib/demo-storage"
-import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
-import { allTransactions as MOCK_TRANSACTIONS } from "@/lib/transaction-data"
 
 // ============================================
 // Service Selection Helper
@@ -165,6 +163,7 @@ export function useTransactionsPaginated(initialPageSize: number = 20) {
   )
 
   // Reset page when filters change
+  // eslint-disable-next-line
   useEffect(() => { setPage(1) }, [filters])
 
   const nextPage = useCallback(() => { if (hasMore) setPage(p => p + 1) }, [hasMore])

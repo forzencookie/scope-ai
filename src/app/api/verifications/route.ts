@@ -1,12 +1,26 @@
+/**
+ * Verifications API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
+ */
 
 import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/server-db";
+import { createUserScopedDb } from "@/lib/user-scoped-db";
 
 export async function GET() {
     try {
-        const data = await db.get();
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const verifications = await userDb.verifications.list({ limit: 200 });
+        
         return NextResponse.json({
-            verifications: data.verifications || []
+            verifications,
+            userId: userDb.userId,
+            companyId: userDb.companyId,
         });
     } catch (error) {
         console.error("Failed to fetch verifications:", error);
@@ -16,17 +30,24 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
 
-        // Auto-assign ID if not present is handled by addVerification
-        const verification = {
+        const saved = await userDb.verifications.create({
             date: body.date || new Date().toISOString().split('T')[0],
             description: body.description,
-            rows: body.rows, // Expects [{ account, description, debit, credit }]
-            sourceType: body.sourceType || 'manual'
-        };
+            rows: body.rows,
+        });
 
-        const saved = await db.addVerification(verification);
+        if (!saved) {
+            return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+        }
+
         return NextResponse.json({ success: true, verification: saved });
     } catch (error) {
         console.error("Failed to create verification:", error);

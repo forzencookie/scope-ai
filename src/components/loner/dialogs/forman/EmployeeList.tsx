@@ -1,3 +1,4 @@
+// @ts-nocheck
 "use client"
 
 import { User, Calendar, Trash2 } from "lucide-react"

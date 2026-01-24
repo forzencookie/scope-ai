@@ -1,6 +1,5 @@
-import { useState, useCallback, useEffect } from "react"
 import { useAsync, useAsyncMutation } from "./use-async"
-import { type Partner, type PartnerWithdrawal } from "@/data/ownership"
+import { type Partner } from "@/data/ownership"
 
 export function usePartners() {
     
@@ -26,7 +25,7 @@ export function usePartners() {
             if (!res.ok) return [];
             const json = await res.json();
             return json.partners as Partner[];
-         } catch(e) {
+         } catch {
              console.warn("Partners API missing, return empty");
              return [];
          }

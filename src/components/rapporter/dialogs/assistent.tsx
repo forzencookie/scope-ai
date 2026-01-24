@@ -9,7 +9,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
-import { VatProcessor, type VatReport } from "@/lib/vat-processor"
+import { VatProcessor, type VatReport } from "@/services/processors/vat-processor"
 import { cn } from "@/lib/utils"
 import { Bot, User, Send, CheckCircle2 } from "lucide-react"
 

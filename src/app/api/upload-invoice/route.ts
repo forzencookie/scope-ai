@@ -1,14 +1,27 @@
+/**
+ * Invoice Upload API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
+ */
+
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { db } from '@/lib/server-db'
-import type { InboxItem } from '@/types'
+import { createUserScopedDb } from '@/lib/user-scoped-db'
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-})
+function getOpenAIClient() {
+    return new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+    })
+}
 
 export async function POST(request: NextRequest) {
     try {
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const formData = await request.formData()
         const file = formData.get('file') as File
 
@@ -34,6 +47,7 @@ export async function POST(request: NextRequest) {
         console.log('[Upload] Using GPT Vision to read invoice...')
 
         // Use GPT Vision to extract invoice data
+        const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
             model: 'gpt-4o',
             messages: [
@@ -79,21 +93,17 @@ Format it as a readable email body.`
         console.log('[Upload] Detected sender:', sender)
 
         // Create inbox item with extracted text (formatted as email)
-        const newItem: InboxItem = {
-            id: `upload-${Date.now()}`,
+        const newItem = await userDb.inboxItems.create({
             sender: sender,
             title: `Uploaded: ${file.name}`,
             description: extractedText,
             date: new Date().toLocaleDateString('sv-SE'),
-            timestamp: new Date(),
             category: 'other',
             read: false,
             starred: false,
-        }
+        })
 
-        await db.addInboxItem(newItem)
-
-        console.log('[Upload] Created inbox item:', newItem.id)
+        console.log('[Upload] Created inbox item:', newItem?.id)
 
         return NextResponse.json({ success: true, item: newItem })
     } catch (error) {

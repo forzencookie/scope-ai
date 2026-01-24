@@ -12,10 +12,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    timeout: 30000,
-})
+function getOpenAIClient() {
+    return new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        timeout: 30000,
+    })
+}
 
 export interface FieldConfidence {
     value: string | number
@@ -55,6 +57,7 @@ export async function POST(request: NextRequest) {
         const dataUrl = `data:${mimeType};base64,${base64}`
 
         // Call OpenAI Vision API
+        const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
             model: 'gpt-4o',
             messages: [
@@ -134,20 +137,28 @@ Swedish receipt hints:
     } catch (error) {
         console.error('[Receipt OCR Error]', error)
 
-        // Return mock data for development/demo if OpenAI fails
-        const mockData: ExtractedReceiptData = {
-            supplier: { value: 'Demo Leverantör AB', confidence: 50 },
-            date: { value: new Date().toISOString().split('T')[0], confidence: 50 },
-            amount: { value: Math.floor(Math.random() * 1000) + 100, confidence: 50 },
-            category: { value: 'Övriga kostnader', confidence: 50 },
-            overallConfidence: 50,
-            rawText: 'Mock data - OpenAI API error'
+        // In production, return an error; in development, provide fallback
+        if (process.env.NODE_ENV === 'production') {
+            return NextResponse.json({
+                success: false,
+                error: 'Failed to extract receipt data. Please try again.'
+            }, { status: 500 })
+        }
+
+        // Development fallback with placeholder data
+        const fallbackData: ExtractedReceiptData = {
+            supplier: { value: 'Okänd leverantör', confidence: 0 },
+            date: { value: new Date().toISOString().split('T')[0], confidence: 0 },
+            amount: { value: 0, confidence: 0 },
+            category: { value: 'Övriga kostnader', confidence: 0 },
+            overallConfidence: 0,
+            rawText: 'Could not extract - API error'
         }
 
         return NextResponse.json({
             success: true,
-            data: mockData,
-            warning: 'Using mock data due to API error'
+            data: fallbackData,
+            warning: 'Extraction failed - using placeholder data'
         })
     }
 }

@@ -11,7 +11,7 @@ const NAME_REGEX = /till (.+)$/;
 
 export function useAktiebokLogic() {
   const { addVerification } = useVerifications()
-  const { toast } = useToast()
+  const toast = useToast()
   const { shareholders: realShareholders, addShareholder } = useCompliance()
   const { verifications } = useVerifications()
 
@@ -110,7 +110,7 @@ export function useAktiebokLogic() {
 
   const handleSaveTransaction = async () => {
     if (!txTo || !txShares || !txPrice) {
-      toast({ title: "Uppgifter saknas", description: "Fyll i alla obligatoriska fält.", variant: "destructive" })
+      toast.error("Uppgifter saknas", "Fyll i alla obligatoriska fält.")
       return
     }
 
@@ -147,7 +147,7 @@ export function useAktiebokLogic() {
       // Since useCompliance logic handles fetches, we rely on verification + backend handling or direct mutation.
       // Assuming addVerification triggers refetch or separate call needed.
 
-      toast({ title: "Transaktion registrerad", description: `Nyemission registrerad för ${txTo}` })
+      toast.success("Transaktion registrerad", `Nyemission registrerad för ${txTo}`)
       setShowAddDialog(false)
       
       // Reset form
@@ -156,7 +156,7 @@ export function useAktiebokLogic() {
       setTxPrice("")
     } catch (error) {
       console.error(error)
-      toast({ title: "Ett fel uppstod", description: "Kunde inte spara transaktionen", variant: "destructive" })
+      toast.error("Ett fel uppstod", "Kunde inte spara transaktionen")
     }
   }
 

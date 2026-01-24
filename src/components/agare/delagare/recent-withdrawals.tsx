@@ -7,7 +7,7 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { formatCurrency } from "@/lib/utils"
-import { useOwnerWithdrawals } from "../delagaruttag/use-owner-withdrawals"
+import { useOwnerWithdrawals } from "@/components/loner/delagaruttag/use-owner-withdrawals"
 
 export function RecentWithdrawals() {
     const { withdrawals } = useOwnerWithdrawals()

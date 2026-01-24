@@ -1,11 +1,13 @@
 import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-  timeout: 30000,
-  maxRetries: 2,
-})
+function getOpenAIClient() {
+  return new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+    timeout: 30000,
+    maxRetries: 2,
+  })
+}
 
 const SYSTEM_PROMPT = `Du är en bokföringsassistent. Prata naturligt och kortfattat, som en kollega - inte formellt.
 
@@ -76,6 +78,7 @@ export async function POST(request: NextRequest) {
       })),
     ]
 
+    const openai = getOpenAIClient()
     const stream = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: chatMessages,

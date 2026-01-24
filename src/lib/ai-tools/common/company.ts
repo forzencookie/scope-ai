@@ -2,17 +2,15 @@
  * Common AI Tools - Company
  *
  * Tools for company information and settings.
+ * These tools fetch data from authenticated API endpoints.
  */
 
 import { defineTool } from '../registry'
-import {
-    generateMockEmployees,
-    generateMockAGIReports,
-} from '@/services/payroll-processor'
-import {
-    generateMockIncomeStatement,
-    generateMockVATPeriods,
-} from '@/services/reports-processor'
+
+// Helper to get base URL for API calls
+function getBaseUrl() {
+    return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+}
 
 // =============================================================================
 // Company Info Tool
@@ -79,25 +77,64 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        const income = generateMockIncomeStatement()
-        const employees = generateMockEmployees()
-        const vat = generateMockVATPeriods()
-        const agi = generateMockAGIReports()
+        const baseUrl = getBaseUrl()
+        
+        // Fetch real data from API endpoints (these respect RLS)
+        let employeeCount = 0
+        let pendingVat = 0
+        let upcomingDeadlines = 0
+        let revenue = 0
+        let expenses = 0
+        let profit = 0
 
-        const revenue = income.find(i => i.label === 'Rörelseintäkter')?.value || 0
-        const expenses = income.find(i => i.label === 'Rörelsekostnader')?.value || 0
-        const profit = income.find(i => i.label === 'Årets resultat')?.value || 0
+        try {
+            // Fetch employees
+            const empRes = await fetch(`${baseUrl}/api/employees`, { 
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            if (empRes.ok) {
+                const empData = await empRes.json()
+                employeeCount = empData.employees?.length || 0
+            }
 
-        const upcomingVat = vat.find(p => p.status === 'Kommande')
-        const pendingAgi = agi.filter(r => r.status !== 'Inskickad').length
+            // Fetch transactions to calculate revenue/expenses
+            const txRes = await fetch(`${baseUrl}/api/transactions`, {
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            if (txRes.ok) {
+                const txData = await txRes.json()
+                const transactions = txData.transactions || []
+                revenue = transactions
+                    .filter((t: any) => (t.amount || 0) > 0)
+                    .reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
+                expenses = transactions
+                    .filter((t: any) => (t.amount || 0) < 0)
+                    .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
+                profit = revenue - expenses
+            }
+
+            // Fetch compliance deadlines
+            const compRes = await fetch(`${baseUrl}/api/compliance`, {
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            if (compRes.ok) {
+                const compData = await compRes.json()
+                upcomingDeadlines = compData.upcoming?.length || 0
+            }
+        } catch (error) {
+            console.error('[AI Tool] Failed to fetch company stats:', error)
+        }
 
         const stats: CompanyStats = {
             totalRevenue: revenue,
-            totalExpenses: Math.abs(expenses),
+            totalExpenses: expenses,
             netProfit: profit,
-            employeeCount: employees.length,
-            pendingVat: upcomingVat?.netVat || 0,
-            upcomingDeadlines: pendingAgi + (upcomingVat ? 1 : 0),
+            employeeCount,
+            pendingVat,
+            upcomingDeadlines,
         }
 
         return {

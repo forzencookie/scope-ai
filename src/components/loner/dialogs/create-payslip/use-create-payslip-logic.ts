@@ -38,7 +38,7 @@ export function useCreatePayslipLogic({
     onPayslipCreated,
     currentPeriod
 }: PayslipCreateDialogProps) {
-    const { toast } = useToast()
+    const toast = useToast()
     const { addVerification } = useVerifications()
 
     const [employees, setEmployees] = useState<any[]>([])
@@ -175,13 +175,13 @@ export function useCreatePayslipLogic({
                 ],
             })
 
-            toast({ title: "Lönebesked skapat!", description: `${selectedEmp.name}s lön för ${currentPeriod} har registrerats`, variant: "default" })
+            toast.success("Lönebesked skapat!", `${selectedEmp.name}s lön för ${currentPeriod} har registrerats`)
             onPayslipCreated(saved.payslip)
             onOpenChange(false)
             resetDialog()
         } catch (error) {
             console.error(error)
-            toast({ title: "Kunde inte skapa lönebesked", description: "Ett fel uppstod", variant: "destructive" })
+            toast.error("Kunde inte skapa lönebesked", "Ett fel uppstod")
             setIsCreating(false)
         }
     }

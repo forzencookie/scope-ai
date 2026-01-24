@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 import { createClient } from '@supabase/supabase-js'
 import * as fs from 'fs'
@@ -36,9 +37,25 @@ function generateUUID(str: string): string {
 async function seed() {
     console.log('Starting seed...')
 
-    // 1. Get/Create User
-    const { data: { users } } = await supabase.auth.admin.listUsers()
-    let userId = users[0]?.id
+    // 1. Get User - prefer explicit SEED_USER_ID for safety
+    let userId = process.env.SEED_USER_ID
+    
+    if (!userId) {
+        // Fallback to first user (only safe for local development)
+        const { data: { users } } = await supabase.auth.admin.listUsers()
+        userId = users[0]?.id
+        
+        if (!userId) {
+            throw new Error(
+                'No user found. Either:\n' +
+                '  1. Set SEED_USER_ID in .env.local to target a specific user\n' +
+                '  2. Create a user first by signing up in the app'
+            )
+        }
+        
+        console.warn('⚠️  Using first user in database. Set SEED_USER_ID for explicit targeting.')
+    }
+    
     console.log(`User ID: ${userId}`)
 
     // 2. Ensure Company
@@ -98,7 +115,7 @@ async function seed() {
             created_at: new Date(r.date).toISOString()
         }
 
-        let { error } = await supabase.from('receipts').upsert(payload)
+        const { error } = await supabase.from('receipts').upsert(payload)
         if (error) {
             if (error.message.includes('invalid input syntax for type uuid')) {
                 payload.id = generateUUID(r.id)

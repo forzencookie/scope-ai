@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react"
+import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 
 export interface FilterConfig<T> {
     /** Fields to search within when filtering */
@@ -47,7 +47,9 @@ export function useTableFilter<T extends object>(
 
     // Store config in ref to avoid stale closures without causing re-renders
     const configRef = useRef(config)
-    configRef.current = config
+    useEffect(() => {
+        configRef.current = config
+    })
 
     const toggleStatusFilter = useCallback((status: string) => {
         setStatusFilter(prev =>

@@ -14,7 +14,7 @@ import {
 import { useVerifications } from "@/hooks/use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { generateSRUFiles } from "@/lib/sru-generator"
-import { INK2SRUProcessor, type CompanyInfo } from "@/lib/ink2-sru-processor"
+import { INK2SRUProcessor, type CompanyInfo } from "@/services/processors/ink2-sru-processor"
 import type { SRUPackage, SRUSenderInfo, TaxPeriod } from "@/types/sru"
 
 interface SRUPreviewDialogProps {

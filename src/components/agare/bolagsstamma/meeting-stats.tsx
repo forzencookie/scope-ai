@@ -16,32 +16,32 @@ export function MeetingStats({ stats }: MeetingStatsProps) {
     return (
         <StatCardGrid>
             <StatCard
-                title="Kommande stämmor"
+                label="Kommande stämmor"
                 value={stats.upcoming}
-                icon={Calendar}
-                description="Planerade möten"
+                headerIcon={Calendar}
+                subtitle="Planerade möten"
             />
             <StatCard
-                title="Genomförda"
+                label="Genomförda"
                 value={stats.completed}
-                icon={CheckCircle}
-                description="Signerade protokoll"
+                headerIcon={CheckCircle}
+                subtitle="Signerade protokoll"
             />
             <StatCard
-                title="Beslut totalt"
+                label="Beslut totalt"
                 value={stats.totalDecisions}
-                icon={Gavel}
-                description="Fattade beslut i år"
+                headerIcon={Gavel}
+                subtitle="Fattade beslut i år"
             />
             <StatCard
-                title="Nästa stämma"
+                label="Nästa stämma"
                 value={stats.daysUntilNext !== null ? `${stats.daysUntilNext} dagar` : "Ingen planerad"}
-                icon={Clock}
-                description={stats.nextMeeting
+                headerIcon={Clock}
+                subtitle={stats.nextMeeting
                     ? `Datum: ${formatDateLong(stats.nextMeeting.date || "")}`
                     : "Kalla till stämma"}
-                trend={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "down" : "neutral"}
-                trendLabel={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "Snart dags" : ""}
+                change={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "Snart dags" : undefined}
+                changeType={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "negative" : "neutral"}
             />
         </StatCardGrid>
     )

@@ -32,7 +32,7 @@ import {
     type CollapsibleTableItem
 } from "@/components/ui/collapsible-table"
 import { useVerifications } from "@/hooks/use-verifications"
-import { Ink2Processor, type Ink2FormField } from "@/lib/ink2-processor"
+import { Ink2Processor, type Ink2FormField } from "@/services/processors/ink2-processor"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { cn } from "@/lib/utils"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai-context"

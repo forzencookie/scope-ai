@@ -71,6 +71,12 @@ export const mockTeams: Team[] = [
 
 
 // ============================================
+// Platform Navigation (combined)
+// ============================================
+
+export const navPlatform: NavItem[] = []  // Platform-level nav items (populated dynamically or kept empty)
+
+// ============================================
 // Feature-based Navigation Modules
 // ============================================
 

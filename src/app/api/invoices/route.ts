@@ -1,19 +1,28 @@
-
-import { NextRequest, NextResponse } from "next/server";
-import { db } from "@/lib/server-db";
-
 /**
  * Customer Invoices API
  * 
- * GET: Fetches invoices from Supabase
- * POST: Creates invoice from dashboard UI
+ * Security: Uses user-scoped DB access with RLS enforcement
  */
+
+import { NextRequest, NextResponse } from "next/server";
+import { createUserScopedDb } from "@/lib/user-scoped-db";
 
 export async function GET() {
     try {
-        const data = await db.get();
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        // For now, customer invoices uses supplierInvoices
+        // TODO: Create separate customer_invoices table accessor
+        const invoices = await userDb.supplierInvoices.list({ limit: 100 });
+        
         return NextResponse.json({
-            invoices: data.invoices || []
+            invoices,
+            userId: userDb.userId,
+            companyId: userDb.companyId,
         });
     } catch (error) {
         console.error("Failed to fetch invoices:", error);
@@ -23,21 +32,25 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const body = await req.json();
 
         if (!body.customer || !body.amount) {
             return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
         }
 
+        // TODO: Create proper customer_invoices accessor
         const newInvoice = {
             ...body,
             id: body.id || `FAK-${Date.now()}`,
             status: body.status || 'Utkast',
             createdAt: new Date().toISOString()
         };
-
-        // TODO: Add db.addInvoice when customer invoices table is created in Supabase
-        // await db.addInvoice(newInvoice);
 
         return NextResponse.json({
             success: true,

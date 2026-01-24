@@ -68,8 +68,18 @@ export function Bolagsstamma() {
          searchQuery={searchQuery}
       />
       
-      <PlanMeetingDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
-      <SendNoticeDialog open={showSendNoticeDialog} onOpenChange={setShowSendNoticeDialog} />
+      <PlanMeetingDialog 
+        open={showCreateDialog} 
+        onOpenChange={setShowCreateDialog}
+        type="general"
+        defaultAgenda={["Fastställande av dagordning", "Val av ordförande", "Val av protokollförare"]}
+      />
+      <SendNoticeDialog 
+        open={showSendNoticeDialog} 
+        onOpenChange={setShowSendNoticeDialog}
+        variant="corporate"
+        recipientCount={2}
+      />
     </div>
   )
 }

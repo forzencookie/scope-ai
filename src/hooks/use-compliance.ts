@@ -3,7 +3,6 @@
 import { useState, useCallback } from "react"
 import { useAsync, useAsyncMutation } from "./use-async"
 import { useAuth } from "./use-auth"
-import { mockShareholders as ownershipMockShareholders } from "@/data/ownership"
 
 export interface CorporateDocument {
     id: string

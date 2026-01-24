@@ -17,6 +17,16 @@ import {
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { formatDateLong, cn } from "@/lib/utils"
 import { type GeneralMeeting } from "@/data/ownership"
+import { type MeetingStatus } from "@/lib/status-types"
+
+const mapMeetingStatus = (status: GeneralMeeting['status']): MeetingStatus => {
+    switch (status) {
+        case 'kallad': return 'Kallad'
+        case 'genomförd': return 'Genomförd'
+        case 'protokoll signerat': return 'Signerat'
+        default: return 'Planerad'
+    }
+}
 
 interface MeetingCardProps {
     meeting: GeneralMeeting
@@ -37,7 +47,7 @@ export function MeetingCard({ meeting, isExpanded, onToggleExpand, children }: M
             <CardHeader className="pb-3">
                 <div className="flex justify-between items-start">
                     <div className="space-y-1">
-                        <AppStatusBadge status={meeting.status} />
+                        <AppStatusBadge status={mapMeetingStatus(meeting.status)} />
                         <CardTitle className="text-lg mt-2 flex items-center gap-2">
                             {meeting.type === 'ordinarie' ? 'Årsstämma' : 'Extra Bolagsstämma'} {meeting.year}
                         </CardTitle>

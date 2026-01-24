@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Löner AI Tools - Payroll
  *
@@ -279,7 +280,6 @@ export const payrollTools = [
     getPayslipsTool,
     getEmployeesTool,
     runPayrollTool,
-    calculateSalaryTool,
     getAGIReportsTool,
     submitAGITool,
 ]

@@ -1,70 +1,53 @@
-import { NextRequest, NextResponse } from "next/server"
-import { db } from "@/lib/server-db"
-import { verifyAuth, ApiResponse } from "@/lib/api-auth"
+/**
+ * Transactions API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
+ */
 
-// Transaction type (simplified after bank API removal)
-interface BankTransaction {
-    id: string
-    description: string
-    amount: number
-    date: string
-    timestamp: string
-}
+import { NextResponse } from "next/server"
+import { createUserScopedDb } from "@/lib/user-scoped-db"
 
-// Helper to map BankTransaction to our App's Transaction type
-function mapToAppTransaction(bankTx: BankTransaction, metadata: any = {}) {
-    const isExpense = bankTx.amount < 0
-    const absAmount = Math.abs(bankTx.amount)
-
-    // Default values
-    const defaultStatus = 'Att bokföra'
-    const defaultCategory = 'Okategoriserad'
-    const defaultAccount = ''
+// Helper to format transaction for frontend
+function formatTransaction(tx: Record<string, unknown>) {
+    const amount = Number(tx.amount) || 0
+    const isExpense = amount < 0
+    const absAmount = Math.abs(amount)
 
     return {
-        id: bankTx.id,
-        name: metadata.description || bankTx.description, // User might rename description
-        date: bankTx.date,
-        timestamp: new Date(bankTx.timestamp),
+        id: tx.id,
+        name: tx.description || '',
+        date: tx.date || tx.occurred_at,
+        timestamp: tx.created_at,
         amount: `${isExpense ? '-' : ''}${absAmount.toLocaleString('sv-SE', { minimumFractionDigits: 2 })} kr`,
-        amountValue: bankTx.amount,
-        status: metadata.status || defaultStatus,
-        category: metadata.category || defaultCategory,
-        account: metadata.account || defaultAccount,
+        amountValue: amount,
+        status: tx.status || 'Att bokföra',
+        category: tx.category || 'Okategoriserad',
+        account: tx.account || '',
         iconName: 'Banknote',
         iconColor: 'bg-gray-100 text-gray-600',
-        description: bankTx.description,
-        // Add AI fields if available
-        aiSuggestion: undefined,
-        isAIApproved: false,
-        ...metadata // Allow specific overrides
+        description: tx.description,
     }
 }
 
-export async function GET(request: NextRequest) {
+export async function GET() {
     try {
-        // Verify authentication
-        const auth = await verifyAuth(request)
-        if (!auth) {
-            return ApiResponse.unauthorized('Authentication required')
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const data = await db.get()
-        const metadata: Record<string, any> = data.transactionMetadata || {}
-
-        // Map BankTransactions to AppTransactions, overlaying metadata
-        // TODO: Filter by user ID when user_id column is properly used
-        const transactions = data.transactions.map((tx: any) =>
-            mapToAppTransaction(tx, metadata[tx.id] || {})
-        )
+        const transactions = await userDb.transactions.list({ limit: 200 });
 
         return NextResponse.json({
             success: true,
-            data: transactions,
+            data: transactions.map(formatTransaction),
+            userId: userDb.userId,
+            companyId: userDb.companyId,
             timestamp: new Date()
         })
     } catch (error) {
         console.error('Transactions API error:', error)
-        return ApiResponse.serverError('Failed to fetch transactions')
+        return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 })
     }
 }

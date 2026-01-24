@@ -1,5 +1,5 @@
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { receiptService, type Receipt } from "@/lib/services/receipt-service"
 import { useAsync } from "./use-async"
 
@@ -8,16 +8,26 @@ export function useReceiptsPaginated(
     startDate?: string
 ) {
     const [page, setPage] = useState(1)
-    const [searchQuery, setSearchQuery] = useState("")
-    const [statusFilter, setStatusFilter] = useState<string[]>([])
+    const [searchQuery, _setSearchQuery] = useState("")
+    const [statusFilter, _setStatusFilter] = useState<string[]>([])
 
     // Total count for pagination
     const [totalCount, setTotalCount] = useState(0)
 
-    // Reset page when filters change
+    const setSearchQuery = useCallback((value: string | ((prev: string) => string)) => {
+        _setSearchQuery(value)
+        setPage(1)
+    }, [])
+
+    const setStatusFilter = useCallback((value: string[] | ((prev: string[]) => string[])) => {
+        _setStatusFilter(value)
+        setPage(1)
+    }, [])
+
+    // Reset page when startDate prop changes
     useEffect(() => {
         setPage(1)
-    }, [searchQuery, statusFilter, startDate])
+    }, [startDate])
 
     const {
         data: receipts,

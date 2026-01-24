@@ -1,30 +1,30 @@
 "use client"
 
 import React from "react"
-import { SceneType, SceneProps } from "./types"
-import { MascotCookingScene } from "./cooking"
-import { MascotPlayingScene } from "./playing"
-import { MascotReadingScene } from "./reading"
-import { MascotSearchingScene } from "./searching"
-import { MascotErrorScene } from "./error"
+import { SceneType, SceneProps } from "./mascots/types"
+import { MascotCookingScene } from "./mascots/cooking"
+import { MascotPlayingScene } from "./mascots/playing"
+import { MascotReadingScene } from "./mascots/reading"
+import { MascotSearchingScene } from "./mascots/searching"
+import { MascotErrorScene } from "./mascots/error"
 
 // Re-export types
-export type { MascotProps } from "./types"
-export type { SceneType, SceneProps } from "./types"
+export type { MascotProps } from "./mascots/types"
+export type { SceneType, SceneProps } from "./mascots/types"
 
 // Re-export mascots
-export * from "./dog"
-export * from "./bear"
-export * from "./giraffe"
-export * from "./common"
+export * from "./mascots/dog"
+export * from "./mascots/bear"
+export * from "./mascots/giraffe"
+export * from "./mascots/common"
 
 // Re-export scenes
-export * from "./cooking"
-export * from "./celebration"
-export * from "./playing"
-export * from "./reading"
-export * from "./searching"
-export * from "./error"
+export * from "./mascots/cooking"
+export * from "./mascots/celebration"
+export * from "./mascots/playing"
+export * from "./mascots/reading"
+export * from "./mascots/searching"
+export * from "./mascots/error"
 
 export const SCENE_COMPONENTS: Record<SceneType, React.ComponentType<SceneProps>> = {
     cooking: MascotCookingScene,

@@ -161,11 +161,8 @@ export function LonesbeskContent() {
                                 <DropdownMenuTrigger asChild>
                                     <FilterButton
                                         label="Status"
-                                        hasFilter={statusFilter.length > 0}
-                                        onClear={(e) => {
-                                            e.stopPropagation()
-                                            setStatusFilter([])
-                                        }}
+                                        isActive={statusFilter.length > 0}
+                                        activeCount={statusFilter.length}
                                     />
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-[180px]">

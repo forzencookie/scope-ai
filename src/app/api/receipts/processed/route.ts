@@ -1,55 +1,31 @@
 /**
  * Processed Receipts API
  *
- * GET: Fetches receipts from Supabase (read-only)
- * Writes go through /api/receive
+ * GET: Fetches receipts from Supabase with RLS enforcement
  *
- * Security: Filters by authenticated user's company
+ * Security: Uses user-scoped DB access - RLS automatically filters
  */
 
-import { NextRequest, NextResponse } from "next/server"
-import { verifyAuth } from "@/lib/api-auth"
-import { getSupabaseAdmin } from "@/lib/supabase"
+import { NextResponse } from "next/server"
+import { createUserScopedDb } from "@/lib/user-scoped-db"
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
-    // Verify authentication
-    const auth = await verifyAuth(request)
-    if (!auth) {
+    // Get user-scoped database access (enforces RLS)
+    const userDb = await createUserScopedDb()
+    
+    if (!userDb) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabase = getSupabaseAdmin()
-
-    // Get user's company_id for scoping
-    const { data: user } = await supabase.auth.admin.getUserById(auth.userId)
-    const companyId = user?.user?.user_metadata?.company_id
-
-    // Fetch receipts scoped to user's company
-    let query = supabase
-      .from('receipts')
-      .select('*')
-      .order('captured_at', { ascending: false })
-
-    // If user has a company, filter by it
-    if (companyId) {
-      query = query.eq('company_id', companyId)
-    } else {
-      // Fallback: filter by created_by user
-      query = query.eq('created_by', auth.userId)
-    }
-
-    const { data: receipts, error } = await query
-
-    if (error) {
-      console.error('Error fetching receipts:', error)
-      return NextResponse.json({ error: 'Failed to fetch receipts' }, { status: 500 })
-    }
+    // Fetch receipts - RLS automatically filters by user's company
+    const receipts = await userDb.receipts.list({ limit: 100 })
 
     return NextResponse.json({
-      receipts: receipts?.map(r => ({ ...r, attachmentUrl: r.image_url })) || [],
-      count: receipts?.length || 0,
-      type: "processed"
+      receipts: receipts.map(r => ({ ...r, attachmentUrl: r.image_url })),
+      count: receipts.length,
+      userId: userDb.userId,
+      companyId: userDb.companyId,
     })
 
   } catch (error) {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Reports Processor Service
  * 

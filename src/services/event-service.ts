@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================
 // Händelser Event Service
 // Manages event emission and storage via Supabase

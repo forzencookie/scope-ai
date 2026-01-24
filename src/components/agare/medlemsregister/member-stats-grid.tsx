@@ -24,30 +24,30 @@ export function MemberStatsGrid({ stats }: MemberStatsProps) {
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
-        title="Medlemmar"
+        label="Medlemmar"
         value={stats.totalMembers.toString()}
-        icon={Users}
-        description={`Varav ${stats.boardMembers} i styrelsen`}
-        trend={{ value: 5, label: "från förra månaden", direction: "up" }}
+        headerIcon={Users}
+        subtitle={`Varav ${stats.boardMembers} i styrelsen`}
+        change="+5"
+        changeType="positive"
       />
       <StatCard
-        title="Aktiva"
+        label="Aktiva"
         value={stats.activeMembers.toString()}
-        icon={UserCheck}
-        description={`${stats.pendingMembers} nya ansökningar`}
+        headerIcon={UserCheck}
+        subtitle={`${stats.pendingMembers} nya ansökningar`}
       />
       <StatCard
-        title="Inbetalda avgifter"
+        label="Inbetalda avgifter"
         value={formatCurrency(stats.totalFees)}
-        icon={CreditCard}
-        description="För innevarande år"
+        headerIcon={CreditCard}
+        subtitle="För innevarande år"
       />
       <StatCard
-        title="Obetalda avgifter"
+        label="Obetalda avgifter"
         value={formatCurrency(stats.unpaidFees)}
-        icon={UserX}
-        description={`${stats.unpaidCount} st förfallna`}
-        status="danger"
+        headerIcon={UserX}
+        subtitle={`${stats.unpaidCount} st förfallna`}
       />
     </div>
   )

@@ -1,6 +1,5 @@
 // @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
 import { getSupabaseClient } from '../supabase'
-import { mockInventarier, mockInventarieStats } from '@/data/mock-data'
 
 // Types matching schema.sql inventarier table
 export type Inventarie = {
@@ -11,6 +10,7 @@ export type Inventarie = {
     inkopspris: number
     livslangdAr: number
     anteckningar?: string
+    status?: 'aktiv' | 'såld' | 'avskriven'
 }
 
 export type InventarieStats = {

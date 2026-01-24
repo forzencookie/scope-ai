@@ -76,7 +76,9 @@ export const db = {
         };
     },
 
-    set: (data: any) => {
+    set: (_data: any) => {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const _ = _data;
         // No-op: We don't overwrite the whole DB anymore
         console.warn("db.set() called but ignored in Supabase mode");
     },
@@ -84,7 +86,7 @@ export const db = {
     // Transactions
     addTransaction: async (tx: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('transactions').insert({
+        const { error } = await supabase.from('transactions').insert({
             id: tx.id,
             date: tx.date,
             description: tx.description,
@@ -234,7 +236,7 @@ export const db = {
         const supabase = getSupabaseAdmin();
         // Map frontend CamelCase to DB snake_case
         // @ts-ignore
-        const { data, error } = await supabase.from('supplier_invoices').insert({
+        const { error } = await supabase.from('supplier_invoices').insert({
             id: invoice.id,
             invoice_number: invoice.invoiceNumber,
             supplier_name: invoice.supplierName, // or .supplier
@@ -246,7 +248,12 @@ export const db = {
             status: invoice.status,
             ocr: invoice.ocr || invoice.ocrNumber
         }).select().single();
-        console.log(error)
+        
+        if (error) {
+            console.error('Error adding supplier invoice:', error);
+            throw error;
+        }
+
         return invoice;
     },
 
@@ -256,7 +263,11 @@ export const db = {
         const dbUpdates: any = {};
         if (updates.status) dbUpdates.status = updates.status;
 
-        await supabase.from('supplier_invoices').update(dbUpdates).eq('id', id);
+        const { error } = await supabase.from('supplier_invoices').update(dbUpdates).eq('id', id);
+        if (error) {
+            console.error('Error updating supplier invoice:', error);
+            throw error;
+        }
         return { id, ...updates };
     },
 
@@ -272,12 +283,17 @@ export const db = {
         }
 
         // @ts-ignore
-        const { data, error } = await supabase.from('verifications').insert({
+        const { error } = await supabase.from('verifications').insert({
             id,
             date: verification.date,
             description: verification.description,
             rows: verification.rows
         }).select().single();
+
+        if (error) {
+            console.error('Error adding verification:', error);
+            throw error;
+        }
 
         return data || verification;
     },

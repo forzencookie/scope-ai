@@ -11,16 +11,34 @@
 import Stripe from 'stripe'
 
 // ============================================================================
-// Client Initialization
+// Client Initialization (Lazy)
 // ============================================================================
 
-if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn('[Stripe] STRIPE_SECRET_KEY not set - payment features disabled')
+let stripeInstance: Stripe | null = null
+
+export function getStripe(): Stripe {
+    if (!stripeInstance) {
+        if (!process.env.STRIPE_SECRET_KEY) {
+            console.warn('[Stripe] STRIPE_SECRET_KEY not set - payment features disabled')
+            throw new Error('Stripe is not configured')
+        }
+        stripeInstance = new Stripe(process.env.STRIPE_SECRET_KEY, {
+            typescript: true,
+        })
+    }
+    return stripeInstance
 }
 
-export const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
-    typescript: true,
-})
+// Legacy export for backward compatibility (deprecated)
+export const stripe = {
+    get customers() { return getStripe().customers },
+    get subscriptions() { return getStripe().subscriptions },
+    get checkout() { return getStripe().checkout },
+    get billingPortal() { return getStripe().billingPortal },
+    get webhooks() { return getStripe().webhooks },
+    constructEvent: (...args: Parameters<Stripe['webhooks']['constructEvent']>) => 
+        getStripe().webhooks.constructEvent(...args),
+}
 
 // ============================================================================
 // Price IDs (set in environment variables)

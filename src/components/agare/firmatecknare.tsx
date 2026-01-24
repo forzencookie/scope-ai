@@ -71,7 +71,7 @@ export function Firmatecknare() {
                     since: m.joinDate
                 }))
         }, 
-        ef: { owner: { name: company.contactPerson || 'Ägare' } }
+        ef: { owner: { name: company?.contactPerson || 'Ägare' } }
     }), [partners, members, company]);
 
     // Derive signatories from real ownership data based on company type

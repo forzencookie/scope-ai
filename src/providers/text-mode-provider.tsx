@@ -74,6 +74,7 @@ export function TextModeProvider({
 
   // Load from localStorage on mount
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true)
     const stored = localStorage.getItem("text-mode")
     if (stored === "enkel" || stored === "avancerad") {

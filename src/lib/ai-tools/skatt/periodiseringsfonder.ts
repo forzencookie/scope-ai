@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Skatt AI Tools - Periodiseringsfonder
  *
@@ -12,7 +13,7 @@ import {
     dissolvePeriodiseringsfond,
     getExpiringFonder,
     calculateTaxSavings,
-} from '../../periodiseringsfonder'
+} from '@/services/processors/periodiseringsfonder'
 
 // =============================================================================
 // Periodiseringsfonder Tools

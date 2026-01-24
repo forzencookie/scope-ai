@@ -42,7 +42,7 @@ export function generateAGIXML(data: AGIXMLParams): string {
     // Helper for XML escaping (basic)
     const esc = (str: string) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <eAGI xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/info/1.0"
  xmlns:ai="http://xmls.skatteverket.se/se/skatteverket/ai/komponent/info/1.0">
   <Avsandare>

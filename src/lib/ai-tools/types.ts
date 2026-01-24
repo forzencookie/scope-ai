@@ -105,6 +105,8 @@ export interface AIDisplayInstruction {
     | 'PayslipsTable'
     | 'EmployeeList'
     | 'DeadlinesList'
+    | 'InvoicesTable'
+    | 'SupplierInvoicesTable'
     // Summaries
     | 'VatSummary'
     | 'BalanceSheet'

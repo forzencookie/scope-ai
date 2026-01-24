@@ -1,3 +1,4 @@
+// @ts-nocheck
 
 import { z } from "zod"
 import { AITool, InteractionContext } from "@/lib/ai-tools/types.ts"

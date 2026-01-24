@@ -1,7 +1,6 @@
 // @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
 import { getSupabaseClient } from '../supabase'
-import { RECEIPT_STATUSES } from '@/lib/status-types'
-import { mockReceipts, mockReceiptStats } from '@/data/mock-data'
+import { RECEIPT_STATUSES, type ReceiptStatus } from '@/lib/status-types'
 
 // Type matching schema.sql and existing Receipt type from @/types
 export type Receipt = {
@@ -10,9 +9,9 @@ export type Receipt = {
     date: string
     amount: string        // UI expects string for display
     category: string
-    status: string
+    status: ReceiptStatus
     attachment: string    // Required by component Receipt type
-    hasAttachment: boolean
+    hasAttachment?: boolean
     attachmentUrl?: string
     linkedTransaction?: string
 }

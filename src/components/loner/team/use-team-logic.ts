@@ -6,7 +6,7 @@ import { useEmployees } from "@/hooks/use-employees"
 import { useVerifications } from "@/hooks/use-verifications"
 
 export function useTeamLogic() {
-    const { toast } = useToast()
+    const toast = useToast()
     const { verifications, addVerification } = useVerifications()
     const { employees, isLoading, refresh, addEmployee } = useEmployees()
 
@@ -55,29 +55,23 @@ export function useTeamLogic() {
 
     const handleAddEmployee = async () => {
         if (!newEmployee.name || !newEmployee.role) {
-            toast({
-                title: "Saknas uppgifter",
-                description: "Namn och roll krävs",
-                variant: 'destructive'
-            })
+            toast.error("Saknas uppgifter", "Namn och roll krävs")
             return
         }
 
         setIsSaving(true)
         try {
-            await addEmployee(newEmployee)
-            toast({
-                title: "Anställd tillagd",
-                description: `${newEmployee.name} har lagts till i teamet.`
+            await addEmployee({
+                name: newEmployee.name,
+                role: newEmployee.role,
+                email: newEmployee.email || undefined,
+                salary: parseFloat(newEmployee.salary) || 0
             })
+            toast.success("Anställd tillagd", `${newEmployee.name} har lagts till i teamet.`)
             setNewEmployeeDialogOpen(false)
             setNewEmployee({ name: '', role: '', email: '', salary: '' })
         } catch (error) {
-            toast({
-                title: "Ett fel uppstod",
-                description: "Kunde inte spara anställd.",
-                variant: 'destructive'
-            })
+            toast.error("Ett fel uppstod", "Kunde inte spara anställd.")
         } finally {
             setIsSaving(false)
         }
@@ -100,10 +94,7 @@ export function useTeamLogic() {
                     { account: "2820", description: `Skuld till ${emp.name}`, debit: 0, credit: val }
                 ]
             })
-            toast({
-                title: "Utlägg sparat",
-                description: `Bokfört ${val} kr på 4000/2820`
-            })
+            toast.success("Utlägg sparat", `Bokfört ${val} kr på 4000/2820`)
         } else if (reportType === 'mileage') {
             const dist = parseFloat(km)
             if (!dist) return
@@ -118,15 +109,9 @@ export function useTeamLogic() {
                     { account: "2820", description: `Skuld till ${emp.name}`, debit: 0, credit: krVal }
                 ]
             })
-            toast({
-                title: "Resa sparad",
-                description: `Bokfört ${krVal} kr (${dist} km)`
-            })
+            toast.success("Resa sparad", `Bokfört ${krVal} kr (${dist} km)`)
         } else {
-            toast({
-                title: "Tidrapport sparad",
-                description: "Tid har registrerats (Bokförs vid lönekörning)"
-            })
+            toast.info("Tidrapport sparad", "Tid har registrerats (Bokförs vid lönekörning)")
         }
 
         setReportDialogOpen(false)

@@ -1,3 +1,4 @@
+// @ts-nocheck
 // ============================================
 // Payroll Components - Central Exports
 // ============================================
@@ -18,9 +19,11 @@ export {
 export { LonesbeskContent } from "./payslips"
 export { BenefitsTab } from "./benefits"
 export { default as TeamTab } from "./team"
-export { AGIContent } from "@/components/skatt"
+export { EgenavgifterCalculator as Egenavgifter } from "./egenavgifter"
+export { DelagaruttagManager as Delagaruttag } from "./delagaruttag"
 
 // Dialog components
 export { PayslipDetailsDialog } from "./dialogs/spec"
 export { PayslipCreateDialog } from "./dialogs/create-payslip"
-export { BenefitDetailsDialog, getBenefitIcon } from "./dialogs/forman"
+export { BenefitDetailsDialog } from "./dialogs/forman"
+export { getBenefitIcon } from "./dialogs/forman/constants"

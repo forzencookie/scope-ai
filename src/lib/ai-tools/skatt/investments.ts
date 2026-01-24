@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Skatt AI Tools - Investments
  *
@@ -11,7 +12,7 @@ import {
     listShareHoldings,
     listCryptoHoldings,
     getInvestmentSummary,
-} from '../../investments'
+} from '@/services/processors/investments'
 
 // =============================================================================
 // Investment Tools

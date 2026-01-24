@@ -5,7 +5,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { mockReceipts } from '@/data/mock-data'
+import { receiptService } from '@/lib/services/receipt-service'
 
 // =============================================================================
 // Receipt Tools
@@ -46,8 +46,23 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
         },
     },
     execute: async (params) => {
-        // Use mock data
-        let receipts: Receipt[] = mockReceipts.map(r => ({
+        const { receipts } = await receiptService.getReceipts({
+            limit: params.limit,
+            statuses: params.status ? [params.status] : undefined,
+            search: params.supplier
+        })
+
+        let filtered = receipts
+
+        // Filter by amount locally since service doesn't support it yet
+        if (params.minAmount) {
+            filtered = filtered.filter(r => parseFloat(r.amount) >= params.minAmount!)
+        }
+        if (params.maxAmount) {
+            filtered = filtered.filter(r => parseFloat(r.amount) <= params.maxAmount!)
+        }
+
+        const data: Receipt[] = filtered.map(r => ({
             id: r.id,
             supplier: r.supplier,
             date: r.date,
@@ -55,25 +70,14 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
             category: r.category,
             status: r.status,
             attachment: r.attachment,
+            attachmentUrl: r.attachmentUrl
         }))
-
-        if (params.supplier) {
-            const query = params.supplier.toLowerCase()
-            receipts = receipts.filter(r => r.supplier?.toLowerCase().includes(query))
-        }
-
-        if (params.status) {
-            receipts = receipts.filter(r => r.status?.toLowerCase() === params.status!.toLowerCase())
-        }
-
-        const limit = params.limit || 10
-        const data = receipts.slice(0, limit)
 
         return {
             success: true,
             data,
-            message: receipts.length > 0
-                ? `Hittade ${receipts.length} kvitton, visar ${data.length}.`
+            message: data.length > 0
+                ? `Hittade ${data.length} kvitton.`
                 : 'Inga kvitton hittades.',
             display: {
                 component: 'ReceiptsTable',
@@ -94,7 +98,17 @@ export interface CreateReceiptParams {
     vatRate?: number
 }
 
-export const createReceiptTool = defineTool<CreateReceiptParams, any>({
+export interface CreatedReceipt {
+    id: string
+    supplier: string
+    amount: number
+    date?: string
+    category?: string
+    description?: string
+    vatRate?: number
+}
+
+export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>({
     name: 'create_receipt',
     description: 'Registrera ett nytt kvitto. Kräver bekräftelse.',
     category: 'write',

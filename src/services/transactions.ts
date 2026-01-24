@@ -64,7 +64,10 @@ export async function getTransactions(_userId?: string): Promise<ApiResponse<Tra
   return { ...response, data: [] };
 }
 
-export async function getTransactionsWithAI(_userId?: string): Promise<ApiResponse<TransactionWithAI[]>> {
+export async function getTransactionsWithAI(
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _userId?: string
+): Promise<ApiResponse<TransactionWithAI[]>> {
   try {
     const res = await fetch('/api/transactions/processed', { cache: 'no-store' });
     const json = await res.json();
@@ -275,7 +278,11 @@ export async function updateTransaction(
   }
 }
 
-export async function deleteTransaction(id: string, _userId?: string): Promise<ApiResponse<boolean>> {
+export async function deleteTransaction(
+  id: string,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  _userId?: string
+): Promise<ApiResponse<boolean>> {
   try {
     const res = await fetch(`/api/transactions/${id}`, {
       method: 'DELETE',
@@ -299,28 +306,25 @@ export async function bulkUpdateStatus(
   ids: string[],
   status: TransactionStatus
 ): Promise<ApiResponse<TransactionWithAI[]>> {
-  const results: TransactionWithAI[] = [];
-
-  // Sequential for simplicity in MVP, could be parallelized
-  for (const id of ids) {
-    const res = await updateTransactionStatus(id, _userId, status);
-    if (res.success && res.data) {
-      results.push(res.data);
-    }
-  }
+  // Parallel execution for performance
+  const promises = ids.map(id => updateTransactionStatus(id, _userId, status));
+  const responses = await Promise.all(promises);
+  
+  const results = responses
+    .filter(res => res.success && res.data)
+    .map(res => res.data!);
 
   return successResponse(results);
 }
 
 export async function bulkApproveAISuggestions(ids: string[]): Promise<ApiResponse<TransactionWithAI[]>> {
-  const results: TransactionWithAI[] = [];
-
-  for (const id of ids) {
-    const res = await approveAISuggestion(id);
-    if (res.success && res.data) {
-      results.push(res.data);
-    }
-  }
+  // Parallel execution for performance
+  const promises = ids.map(id => approveAISuggestion(id));
+  const responses = await Promise.all(promises);
+  
+  const results = responses
+    .filter(res => res.success && res.data)
+    .map(res => res.data!);
 
   return successResponse(results);
 }
@@ -352,6 +356,7 @@ export async function getTransactionStats(_userId?: string): Promise<ApiResponse
 
     return successResponse(stats);
   } catch (err) {
+    console.error('Failed to calculate transaction stats:', err);
     return errorResponse('Failed to calculate stats', {
       total: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0
     });

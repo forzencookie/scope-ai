@@ -178,12 +178,12 @@ export const LazyMyndigheter = createLazyComponent(
 )
 
 export const LazyEgenavgifter = createLazyComponent(
-    () => import("@/components/agare").then(m => ({ default: m.Egenavgifter })),
+    () => import("@/components/loner").then(m => ({ default: m.Egenavgifter })),
     "Laddar egenavgifter..."
 )
 
 export const LazyDelagaruttag = createLazyComponent(
-    () => import("@/components/agare").then(m => ({ default: m.Delagaruttag })),
+    () => import("@/components/loner").then(m => ({ default: m.Delagaruttag })),
     "Laddar delägaruttag..."
 )
 

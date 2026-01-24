@@ -1,5 +1,4 @@
 import { getSupabaseClient } from '../supabase'
-import { mockEmployees, mockPayrollStats, mockPayrollRuns } from '@/data/mock-data'
 
 export type PayrollStats = {
     currentPeriod: string

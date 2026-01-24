@@ -1,7 +1,6 @@
 // @ts-nocheck - Supabase types are stale, tables exist in schema.sql but need regeneration
 import { getSupabaseClient } from '../supabase'
 import { INVOICE_STATUS_LABELS } from '@/lib/localization'
-import { mockInvoices, mockInvoiceStats } from '@/data/mock-data'
 
 // Types matching schema.sql
 export type CustomerInvoice = {

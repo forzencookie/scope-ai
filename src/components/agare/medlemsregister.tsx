@@ -31,7 +31,7 @@ import {
 import { cn } from "@/lib/utils"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { type MembershipStatus, type MembershipChangeType } from "@/lib/status-types"
-import { mockMembershipChanges, type MembershipChange } from "@/data/ownership"
+import { type MembershipChange } from "@/data/ownership"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useMembers, type Member } from "@/hooks/use-members"
 
@@ -66,8 +66,8 @@ export function Medlemsregister() {
   const { members } = useMembers()
   const stats = useMemberStats()
   
-  // Local state
-  const [changes] = useState<MembershipChange[]>(mockMembershipChanges)
+  // Local state - membership changes should be fetched from API when available
+  const [changes] = useState<MembershipChange[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)

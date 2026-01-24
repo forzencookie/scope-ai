@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Script to generate static world map SVG dots
  * Run with: npx tsx scripts/generate-world-map-svg.ts

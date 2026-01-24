@@ -1,12 +1,20 @@
-import { NextResponse } from 'next/server'
-import { db } from '@/lib/server-db'
+/**
+ * Transaction Import API
+ * 
+ * Security: Uses user-scoped DB access with RLS enforcement
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { createUserScopedDb } from '@/lib/user-scoped-db'
 import { randomUUID } from 'crypto'
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY,
-    timeout: 30000,
-})
+function getOpenAIClient() {
+    return new OpenAI({
+        apiKey: process.env.OPENAI_API_KEY,
+        timeout: 30000,
+    })
+}
 
 interface ZRapportData {
     date: string
@@ -19,6 +27,7 @@ interface ZRapportData {
 
 async function parseZRapport(base64Data: string): Promise<ZRapportData | null> {
     try {
+        const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
             model: 'gpt-4o-mini',
             messages: [
@@ -90,8 +99,14 @@ function parseCSV(text: string): CSVRow[] {
     return rows
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
     try {
+        const userDb = await createUserScopedDb();
+        
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
         const formData = await request.formData()
         const file = formData.get('file') as File
         const type = formData.get('type') as string
@@ -117,33 +132,27 @@ export async function POST(request: Request) {
             const baseId = `zr-${Date.now()}`
 
             if (data.cashAmount > 0) {
-                const cashTx = {
+                const cashTx = await userDb.transactions.create({
                     id: `${baseId}-cash`,
-                    name: 'Kontantförsäljning (Z-rapport)',
+                    description: 'Kontantförsäljning (Z-rapport)',
                     amount: data.cashAmount,
-                    date: data.date,
-                    account: 'foretagskonto',
+                    occurred_at: data.date,
                     status: 'pending',
                     source: 'z-rapport',
-                    vatAmount: Math.round(data.vatAmount * (data.cashAmount / data.totalSales))
-                }
-                await db.addTransaction(cashTx)
-                createdTransactions.push(cashTx)
+                })
+                if (cashTx) createdTransactions.push(cashTx)
             }
 
             if (data.cardAmount > 0) {
-                const cardTx = {
+                const cardTx = await userDb.transactions.create({
                     id: `${baseId}-card`,
-                    name: 'Kortförsäljning (Z-rapport)',
+                    description: 'Kortförsäljning (Z-rapport)',
                     amount: data.cardAmount,
-                    date: data.date,
-                    account: 'foretagskonto',
+                    occurred_at: data.date,
                     status: 'pending',
                     source: 'z-rapport',
-                    vatAmount: Math.round(data.vatAmount * (data.cardAmount / data.totalSales))
-                }
-                await db.addTransaction(cardTx)
-                createdTransactions.push(cardTx)
+                })
+                if (cardTx) createdTransactions.push(cardTx)
             }
 
         } else if (type === 'csv') {
@@ -152,17 +161,15 @@ export async function POST(request: Request) {
             const rows = parseCSV(text)
 
             for (const row of rows) {
-                const tx = {
+                const tx = await userDb.transactions.create({
                     id: randomUUID(),
-                    name: row.description,
+                    description: row.description,
                     amount: row.amount,
-                    date: row.date,
-                    account: row.account || 'foretagskonto',
+                    occurred_at: row.date,
                     status: 'pending',
-                    source: 'csv-import'
-                }
-                await db.addTransaction(tx)
-                createdTransactions.push(tx)
+                    source: 'csv-import',
+                })
+                if (tx) createdTransactions.push(tx)
             }
         } else {
             return NextResponse.json({ error: 'Unknown import type' }, { status: 400 })

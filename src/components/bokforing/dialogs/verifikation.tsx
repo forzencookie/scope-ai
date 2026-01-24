@@ -62,25 +62,18 @@ interface VerifikationDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onVerifikationCreated?: (transactionId: string, underlagId: string, underlagType: string) => void
+    /** Pass transactions from parent - fetched from API */
+    transactions?: Transaction[]
+    /** Pass underlag (receipts, invoices) from parent - fetched from API */
+    underlag?: Underlag[]
 }
-
-// Mock data (temporary)
-const getMockTransactions = (): Transaction[] => [
-    { id: "TXN-001", date: "2024-12-10", description: "Swish från kund", amount: 1500, status: "Verifierad" },
-    { id: "TXN-002", date: "2024-12-08", description: "Kortköp Clas Ohlson", amount: -450, status: "Verifierad" },
-    { id: "TXN-003", date: "2024-12-05", description: "Bankgiro ut", amount: -2500, status: "Verifierad" },
-]
-
-const getMockUnderlag = (): Underlag[] => [
-    { id: "REC-001", type: "kvitto", supplier: "Clas Ohlson", date: "2024-12-08", amount: "450 kr", status: "Verifierad" },
-    { id: "INV-001", type: "kundfaktura", supplier: "Kund AB", date: "2024-12-10", amount: "1 500 kr", status: "Verifierad" },
-    { id: "SUP-001", type: "leverantorsfaktura", supplier: "Leverantör AB", date: "2024-12-05", amount: "2 500 kr", status: "Verifierad" },
-]
 
 export function VerifikationDialog({
     open,
     onOpenChange,
-    onVerifikationCreated
+    onVerifikationCreated,
+    transactions: externalTransactions = [],
+    underlag: externalUnderlag = []
 }: VerifikationDialogProps) {
     const [activeTab, setActiveTab] = useState<"manual" | "ai">("manual")
     const [aiState, setAiState] = useState<'idle' | 'processing' | 'preview'>('idle')
@@ -91,8 +84,9 @@ export function VerifikationDialog({
     const [selectedUnderlagType, setSelectedUnderlagType] = useState<string>("")
     const [selectedUnderlag, setSelectedUnderlag] = useState<string>("")
 
-    const transactions = useMemo(() => getMockTransactions(), [])
-    const allUnderlag = useMemo(() => getMockUnderlag(), [])
+    // Use external data passed from parent (which fetches from API)
+    const transactions = useMemo(() => externalTransactions, [externalTransactions])
+    const allUnderlag = useMemo(() => externalUnderlag, [externalUnderlag])
 
     const filteredUnderlag = useMemo(() => {
         if (!selectedUnderlagType) return []
@@ -100,15 +94,51 @@ export function VerifikationDialog({
     }, [selectedUnderlagType, allUnderlag])
 
     const runAiMatching = async () => {
-        setAiState('processing')
-        await new Promise(resolve => setTimeout(resolve, 3000))
+        if (transactions.length === 0 || allUnderlag.length === 0) {
+            // No data to match
+            setAiState('preview')
+            setMatchedPairs([])
+            return
+        }
 
-        // Mock matches
-        setMatchedPairs([
-            { transaction: transactions[0], underlag: allUnderlag[1], confidence: 95 },
-            { transaction: transactions[1], underlag: allUnderlag[0], confidence: 92 },
-            { transaction: transactions[2], underlag: allUnderlag[2], confidence: 88 },
-        ])
+        setAiState('processing')
+        
+        // Simple matching algorithm based on amount and date proximity
+        const matches: MatchedPair[] = []
+        const usedUnderlag = new Set<string>()
+
+        for (const tx of transactions) {
+            const txAmount = Math.abs(tx.amount)
+            
+            // Find best matching underlag
+            let bestMatch: { underlag: Underlag; confidence: number } | null = null
+            
+            for (const u of allUnderlag) {
+                if (usedUnderlag.has(u.id)) continue
+                
+                // Parse underlag amount (remove currency formatting)
+                const uAmount = parseFloat(u.amount.replace(/[^0-9.-]/g, '')) || 0
+                
+                // Calculate confidence based on amount match
+                const amountDiff = Math.abs(txAmount - uAmount)
+                const amountConfidence = Math.max(0, 100 - (amountDiff / txAmount) * 100)
+                
+                if (amountConfidence > 70 && (!bestMatch || amountConfidence > bestMatch.confidence)) {
+                    bestMatch = { underlag: u, confidence: Math.round(amountConfidence) }
+                }
+            }
+            
+            if (bestMatch) {
+                matches.push({
+                    transaction: tx,
+                    underlag: bestMatch.underlag,
+                    confidence: bestMatch.confidence
+                })
+                usedUnderlag.add(bestMatch.underlag.id)
+            }
+        }
+
+        setMatchedPairs(matches)
         setAiState('preview')
     }
 

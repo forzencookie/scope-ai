@@ -43,12 +43,15 @@ export function useTableData<T extends object>(
     const filterResult = useTableFilter<T>(config.filter)
     const sortResult = useTableSort<T>(config.sort)
 
+    const { filterItems } = filterResult
+    const { sortItems } = sortResult
+
     const processItems = useMemo(() => {
         return (items: T[]): T[] => {
-            const filtered = filterResult.filterItems(items)
-            return sortResult.sortItems(filtered)
+            const filtered = filterItems(items)
+            return sortItems(filtered)
         }
-    }, [filterResult.filterItems, sortResult.sortItems])
+    }, [filterItems, sortItems])
 
     return {
         ...filterResult,

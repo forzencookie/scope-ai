@@ -126,7 +126,6 @@ export function BenefitsTab() {
                             <div className="flex items-center justify-between px-1">
                                 <h2 className="font-medium">Tillgängliga Förmåner</h2>
                                 <SearchBar
-                                    id="benefits-search"
                                     placeholder="Sök förmåner..."
                                     value={searchQuery}
                                     onChange={setSearchQuery}

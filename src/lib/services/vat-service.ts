@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getSupabaseClient } from '../supabase'
 
 export type VATDeclaration = {

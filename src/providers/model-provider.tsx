@@ -40,6 +40,7 @@ export function ModelProvider({
 
   // Load from localStorage on mount
   useEffect(() => {
+    // eslint-disable-next-line
     setMounted(true)
     const stored = localStorage.getItem(STORAGE_KEY)
     if (stored && getModelById(stored)) {

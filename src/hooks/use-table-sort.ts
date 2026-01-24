@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef } from "react"
+import { useState, useCallback, useRef, useEffect } from "react"
 import { parseAmount as utilParseAmount, parseDateSafe } from "@/lib/utils"
 import { compareValues } from "@/lib/compare"
 
@@ -54,7 +54,9 @@ export function useTableSort<T extends object>(
 
     // Store config in ref to avoid stale closures
     const configRef = useRef(config)
-    configRef.current = config
+    useEffect(() => {
+        configRef.current = config
+    })
 
     const toggleSort = useCallback((field: keyof T) => {
         if (field === sortBy) {

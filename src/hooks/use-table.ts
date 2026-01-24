@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useRef } from "react"
+import { useState, useMemo, useCallback, useRef, useEffect } from "react"
 import { parseAmount as utilParseAmount, parseDateSafe } from "@/lib/utils"
 import { compareValues } from "@/lib/compare"
 
@@ -82,7 +82,9 @@ export function useTableFilter<T extends object>(
     )
 
     const configRef = useRef(config)
-    configRef.current = config
+    useEffect(() => {
+        configRef.current = config
+    })
 
     const toggleStatusFilter = useCallback((status: string) => {
         setStatusFilter(prev =>
@@ -168,7 +170,9 @@ export function useTableSort<T extends object>(
     )
 
     const configRef = useRef(config)
-    configRef.current = config
+    useEffect(() => {
+        configRef.current = config
+    })
 
     const toggleSort = useCallback((field: keyof T) => {
         if (field === sortBy) {
@@ -233,12 +237,15 @@ export function useTableData<T extends object>(
     const filterResult = useTableFilter<T>(config.filter)
     const sortResult = useTableSort<T>(config.sort)
 
+    const { filterItems } = filterResult
+    const { sortItems } = sortResult
+
     const processItems = useMemo(() => {
         return (items: T[]): T[] => {
-            const filtered = filterResult.filterItems(items)
-            return sortResult.sortItems(filtered)
+            const filtered = filterItems(items)
+            return sortItems(filtered)
         }
-    }, [filterResult.filterItems, sortResult.sortItems])
+    }, [filterItems, sortItems])
 
     return {
         ...filterResult,

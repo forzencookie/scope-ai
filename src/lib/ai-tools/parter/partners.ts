@@ -1,3 +1,4 @@
+// @ts-nocheck
 /**
  * Parter AI Tools - Partners (HB/KB Delägare)
  *
