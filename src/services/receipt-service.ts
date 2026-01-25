@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { RECEIPT_STATUSES, type ReceiptStatus } from '@/lib/status-types'
 
@@ -45,11 +44,11 @@ export const receiptService = {
         let query = supabase
             .from('receipts')
             .select('*', { count: 'exact' })
-            .order('date', { ascending: false })
+            .order('captured_at', { ascending: false })
             .range(offset, offset + limit - 1)
 
         if (search) {
-            query = query.or(`supplier.ilike.%${search}%,category.ilike.%${search}%`)
+            query = query.or(`merchant.ilike.%${search}%,description.ilike.%${search}%`)
         }
 
         if (statuses.length > 0) {
@@ -57,7 +56,7 @@ export const receiptService = {
         }
 
         if (startDate) {
-            query = query.gte('date', startDate)
+            query = query.gte('captured_at', startDate)
         }
 
         const { data, error, count } = await query
@@ -73,17 +72,18 @@ export const receiptService = {
         }
 
         // Map DB columns to UI Receipt type
-        const receipts: Receipt[] = (data || []).map(row => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const receipts: Receipt[] = (data || []).map((row: any) => ({
             id: row.id,
-            supplier: row.supplier,
-            date: row.date,
-            amount: String(row.amount),  // UI expects string
-            category: row.category || 'Övrigt',
-            status: row.status || RECEIPT_STATUSES.PENDING,
-            attachment: row.image_url || '', // Map image_url to attachment
-            hasAttachment: !!row.image_url,
-            attachmentUrl: row.image_url,
-            linkedTransaction: row.linked_transaction_id
+            supplier: row.merchant || 'Unknown',
+            date: row.captured_at,
+            amount: String(row.amount_value || row.amount || '0'),  // UI expects string
+            category: row.category_id || 'Övrigt', // category is likely category_id, need join? For now just ID.
+            status: (row.status as ReceiptStatus) || RECEIPT_STATUSES.PENDING,
+            attachment: row.url || '', // image_url might be 'url'
+            hasAttachment: !!row.url,
+            attachmentUrl: row.url,
+            linkedTransaction: row.transaction_id
         }))
 
         return { receipts, totalCount: count || 0 }

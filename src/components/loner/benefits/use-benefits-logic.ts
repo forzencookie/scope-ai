@@ -135,6 +135,7 @@ export function useBenefitsLogic() {
         setSearchQuery,
         groupedBenefits,
         assignedBenefits,
+        suggestions,
         
         // Interactive
         selectedBenefit,

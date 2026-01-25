@@ -143,7 +143,7 @@ export function SignUpForm() {
       <div className="text-center space-y-2">
         <h3 className="text-lg font-semibold">Check your email</h3>
         <p className="text-sm text-muted-foreground">
-          We've sent you a confirmation link to {email}
+          We&apos;ve sent you a confirmation link to {email}
         </p>
       </div>
     )

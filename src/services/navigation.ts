@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 // ============================================
 // Navigation Service
 // ============================================
@@ -6,6 +5,8 @@
 import type { User, Team, NavItem, NavigationData, ApiResponse } from "@/types"
 import { navPlatform, navSettings } from "@/data/navigation"
 import { delay } from "@/lib/utils"
+
+const MOCK_DELAY = 500
 
 // Helper to get base URL
 function getApiBaseUrl() {
@@ -26,7 +27,7 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
             credentials: 'include',
             cache: 'no-store'
         })
-        
+
         if (res.ok) {
             const data = await res.json()
             return {
@@ -38,7 +39,7 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
     } catch (error) {
         console.error('[Navigation] Failed to fetch current user:', error)
     }
-    
+
     // Return empty user if not authenticated
     return {
         data: null as unknown as User,
@@ -57,7 +58,7 @@ export async function updateUser(user: Partial<User>): Promise<ApiResponse<User>
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(user)
         })
-        
+
         if (res.ok) {
             const data = await res.json()
             return {
@@ -69,7 +70,7 @@ export async function updateUser(user: Partial<User>): Promise<ApiResponse<User>
     } catch (error) {
         console.error('[Navigation] Failed to update user:', error)
     }
-    
+
     return {
         data: null as unknown as User,
         success: false,
@@ -89,7 +90,7 @@ export async function getTeams(): Promise<ApiResponse<Team[]>> {
             credentials: 'include',
             cache: 'no-store'
         })
-        
+
         if (res.ok) {
             const data = await res.json()
             return {
@@ -101,7 +102,7 @@ export async function getTeams(): Promise<ApiResponse<Team[]>> {
     } catch (error) {
         console.error('[Navigation] Failed to fetch teams:', error)
     }
-    
+
     return {
         data: [],
         success: false,
@@ -112,15 +113,15 @@ export async function getTeams(): Promise<ApiResponse<Team[]>> {
 
 export async function getCurrentTeam(): Promise<ApiResponse<Team>> {
     const teamsResponse = await getTeams()
-    
-    if (teamsResponse.success && teamsResponse.data.length > 0) {
+
+    if (teamsResponse.success && teamsResponse.data && teamsResponse.data.length > 0) {
         return {
             data: teamsResponse.data[0],
             success: true,
             timestamp: new Date(),
         }
     }
-    
+
     return {
         data: null as unknown as Team,
         success: false,
@@ -138,7 +139,7 @@ export async function switchTeam(teamId: string): Promise<ApiResponse<Team>> {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ teamId })
         })
-        
+
         if (res.ok) {
             const data = await res.json()
             return {
@@ -150,7 +151,7 @@ export async function switchTeam(teamId: string): Promise<ApiResponse<Team>> {
     } catch (error) {
         console.error('[Navigation] Failed to switch team:', error)
     }
-    
+
     return {
         data: null as unknown as Team,
         success: false,
@@ -164,34 +165,34 @@ export async function switchTeam(teamId: string): Promise<ApiResponse<Team>> {
 // ============================================
 
 export async function getNavigation(): Promise<ApiResponse<NavigationData>> {
-  await delay(MOCK_DELAY)
+    await delay(MOCK_DELAY)
 
-  // TODO: Replace with actual API call
-  // Navigation items could be dynamic based on user permissions
-  // const response = await fetch('/api/navigation')
-  // return response.json()
+    // TODO: Replace with actual API call
+    // Navigation items could be dynamic based on user permissions
+    // const response = await fetch('/api/navigation')
+    // return response.json()
 
-  return {
-    data: {
-      navPlatform,
-      navSettings,
-    },
-    success: true,
-    timestamp: new Date(),
-  }
+    return {
+        data: {
+            navPlatform,
+            navSettings,
+        },
+        success: true,
+        timestamp: new Date(),
+    }
 }
 
 export async function getNavigationBySection(section: "platform" | "settings"): Promise<ApiResponse<NavItem[]>> {
-  await delay(MOCK_DELAY)
+    await delay(MOCK_DELAY)
 
-  const sectionMap = {
-    platform: navPlatform,
-    settings: navSettings,
-  }
+    const sectionMap = {
+        platform: navPlatform,
+        settings: navSettings,
+    }
 
-  return {
-    data: sectionMap[section],
-    success: true,
-    timestamp: new Date(),
-  }
+    return {
+        data: sectionMap[section],
+        success: true,
+        timestamp: new Date(),
+    }
 }

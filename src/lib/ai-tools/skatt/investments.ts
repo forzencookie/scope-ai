@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Skatt AI Tools - Investments
  *

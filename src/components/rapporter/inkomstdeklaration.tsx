@@ -178,20 +178,21 @@ export function InkomstdeklarationContent() {
 
     return (
 
-        <main className="flex-1 flex flex-col p-6">
-            <div className="max-w-6xl w-full space-y-6">
+        <main className="flex-1 flex flex-col p-4 md:p-6">
+            <div className="max-w-6xl w-full space-y-4 md:space-y-6">
                 {/* Page Heading */}
                 {/* Page Heading */}
-                <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-bold tracking-tight">Inkomstdeklaration</h2>
-                            <p className="text-muted-foreground mt-1">Sammanställ INK2-deklaration baserat på bokföringen.</p>
+                <div className="flex flex-col gap-4 md:gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+                        <div className="min-w-0">
+                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Inkomstdeklaration</h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Sammanställ INK2-deklaration baserat på bokföringen.</p>
                         </div>
-                        <div className="flex items-center gap-2">
-                            <Button onClick={handleSend}>
-                                <Send className="h-4 w-4 mr-2" />
-                                Skicka till Skatteverket
+                        <div className="flex items-center gap-2 shrink-0">
+                            <Button size="sm" onClick={handleSend} className="w-full sm:w-auto">
+                                <Send className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Skicka till Skatteverket</span>
+                                <span className="sm:hidden">Skicka</span>
                             </Button>
                         </div>
                     </div>

@@ -36,7 +36,6 @@ export function LonesbeskContent() {
     
     const {
         // State
-        allPayslips,
         filteredPayslips,
         isLoading,
         selectedIds,
@@ -101,7 +100,7 @@ export function LonesbeskContent() {
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                            <h2 className="text-2xl font-bold tracking-tight">Lönekörning</h2>
+                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Lönekörning</h2>
                             <p className="text-muted-foreground mt-1">
                                 Hantera löner och lönespecifikationer för dina anställda.
                             </p>
@@ -109,7 +108,7 @@ export function LonesbeskContent() {
                         <div className="flex items-center gap-2">
                             <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
                                 <Plus className="h-4 w-4 mr-2" />
-                                Ny lönekörning
+                                <span className="sm:inline">Ny lönekörning</span>
                             </Button>
                         </div>
                     </div>

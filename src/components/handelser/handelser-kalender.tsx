@@ -129,7 +129,7 @@ export function EventsCalendar({
                         <div
                             key={idx}
                             className={cn(
-                                "min-h-[80px] p-1 rounded-lg border border-transparent",
+                                "min-h-[64px] sm:min-h-[96px] p-1 rounded-lg border border-transparent",
                                 cell.date && "hover:border-border/60 hover:bg-muted/30 transition-colors",
                                 isToday(cell.date) && "bg-primary/5 border-primary/30"
                             )}

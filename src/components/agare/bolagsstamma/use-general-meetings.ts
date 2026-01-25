@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useMemo, useState, useEffect } from "react"
 import { useCompliance } from "@/hooks/use-compliance"
 import { type GeneralMeeting, type GeneralMeetingDecision } from "@/data/ownership"
@@ -34,7 +33,7 @@ export function useGeneralMeetings() {
           const parsed = JSON.parse(doc.content)
           if (parsed && typeof parsed === 'object') {
             content = { ...content, ...parsed }
-             // Safety: Ensure arrays are actual arrays to prevent render crashes
+            // Safety: Ensure arrays are actual arrays to prevent render crashes
             if (!Array.isArray(content.decisions)) content.decisions = [];
           }
         } catch (e) {
@@ -43,8 +42,8 @@ export function useGeneralMeetings() {
 
         // Apply booked status override
         const decisionsWithStatus = content.decisions.map((d: GeneralMeetingDecision) => ({
-             ...d,
-             booked: d.booked || bookedDecisions.includes(d.id || `${doc.id}-${d.title}`) 
+          ...d,
+          booked: d.booked || bookedDecisions.includes(d.id || `${doc.id}-${d.title}`)
         }))
 
         return {
@@ -70,15 +69,16 @@ export function useGeneralMeetings() {
   useEffect(() => {
     async function fetchStats() {
       const { supabase } = await import('@/lib/database/supabase')
-      const { data, error } = await supabase.rpc('get_meeting_stats', { meeting_type: 'general_meeting_minutes' })
+      const { data, error } = await supabase.rpc('get_meeting_stats')
 
-      if (!error && data) {
+      if (!error && data && data[0]) {
+        const stats = data[0]
         setServerStats({
-          upcoming: Number(data.planned) || 0, // 'planned' in RPC maps to 'upcoming/kallad'
-          completed: Number(data.signed) || 0, // 'signed' maps to 'completed' here
-          totalDecisions: Number(data.totalDecisions) || 0,
-          nextMeetingDate: data.nextMeeting || null,
-          daysUntilNext: data.daysUntilNext
+          upcoming: stats.upcoming_meetings || 0,
+          completed: stats.held_meetings || 0,
+          totalDecisions: 0, // Not available in current RPC
+          nextMeetingDate: null, // Not available
+          daysUntilNext: null
         })
       }
     }
@@ -124,10 +124,10 @@ export function useGeneralMeetings() {
     })
 
     setBookedDecisions(prev => [...prev, decision.id || `${meeting.id}-${decision.title}`])
-    
+
     toast.success(
-        "Utdelning bokförd",
-        `Bokfört ${decision.amount} kr som skuld till aktieägare.`
+      "Utdelning bokförd",
+      `Bokfört ${decision.amount} kr som skuld till aktieägare.`
     )
   }
 

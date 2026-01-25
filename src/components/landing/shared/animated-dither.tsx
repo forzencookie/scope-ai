@@ -13,12 +13,23 @@ const generateDotsData = (count: number, seed: number) => {
         const y = 50 + Math.sin(angle) * radius
         const size = 2 + Math.sin(i * 0.7) * 1.5
         const opacity = 0.3 + Math.cos(i * 0.4) * 0.2
-        return { x, y, size, opacity, delay: i * 0.02 }
+        // Use pseudo-random based on index for stability
+        const randomDuration = (Math.sin(i * 7919) * 0.5 + 0.5) * 2
+        return { x, y, size, opacity, delay: i * 0.02, randomDuration }
     })
 }
 
 const leftDotsData = generateDotsData(80, 0)
 const rightDotsData = generateDotsData(60, Math.PI)
+
+const floatingParticlesData = Array.from({ length: 20 }, (_, i) => ({
+    left: 15 + (Math.sin(i * 12.3) * 0.5 + 0.5) * 70,
+    top: 10 + (Math.cos(i * 23.4) * 0.5 + 0.5) * 80,
+    opacity: 0.05 + (Math.sin(i * 34.5) * 0.5 + 0.5) * 0.1,
+    x: (Math.cos(i * 45.6) * 0.5 + 0.5) * 10 - 5,
+    duration: 5 + (Math.sin(i * 56.7) * 0.5 + 0.5) * 5,
+    delay: i * 0.3
+}))
 
 // 1. Static version for mobile (CSS rotation only, no individual dot animations)
 function StaticDitherArt() {
@@ -111,7 +122,7 @@ function OrganicDitherArt() {
                             transition={{
                                 opacity: { duration: 0.5, delay: dot.delay },
                                 scale: {
-                                    duration: 3 + Math.random() * 2,
+                                    duration: 3 + dot.randomDuration,
                                     repeat: Infinity,
                                     delay: dot.delay
                                 }
@@ -153,7 +164,7 @@ function OrganicDitherArt() {
                             transition={{
                                 opacity: { duration: 0.5, delay: dot.delay + 0.5 },
                                 scale: {
-                                    duration: 4 + Math.random() * 2,
+                                    duration: 4 + dot.randomDuration,
                                     repeat: Infinity,
                                     delay: dot.delay
                                 }
@@ -164,24 +175,24 @@ function OrganicDitherArt() {
             </motion.div>
 
             {/* Floating particles in the middle (Original logic) */}
-            {Array.from({ length: 20 }).map((_, i) => (
+            {floatingParticlesData.map((particle, i) => (
                 <motion.div
                     key={i}
                     className="absolute w-1.5 h-1.5 rounded-full bg-violet-400"
                     style={{
-                        left: `${15 + Math.random() * 70}%`,
-                        top: `${10 + Math.random() * 80}%`,
-                        opacity: 0.05 + Math.random() * 0.1,
+                        left: `${particle.left}%`,
+                        top: `${particle.top}%`,
+                        opacity: particle.opacity,
                     }}
                     animate={{
                         y: [0, -20, 0],
-                        x: [0, Math.random() * 10 - 5, 0],
+                        x: [0, particle.x, 0],
                         scale: [1, 1.5, 1],
                     }}
                     transition={{
-                        duration: 5 + Math.random() * 5,
+                        duration: particle.duration,
                         repeat: Infinity,
-                        delay: i * 0.3,
+                        delay: particle.delay,
                     }}
                 />
             ))}
@@ -195,7 +206,7 @@ export function AnimatedDitherArt() {
     const [isDesktop, setIsDesktop] = useState(true)
 
     useEffect(() => {
-        setMounted(true)
+        setTimeout(() => setMounted(true), 0)
 
         const checkViewport = () => {
             // 768px is standard tablet/mobile breakpoint

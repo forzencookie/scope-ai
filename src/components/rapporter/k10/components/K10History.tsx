@@ -24,35 +24,39 @@ export function K10History({ onExport }: K10HistoryProps) {
                 </Button>
             </div>
 
-            <GridTableHeader
-                columns={[
-                    { label: "År", icon: Calendar, span: 2 },
-                    { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3 },
-                    { label: "Utnyttjat", icon: Percent, align: "right", span: 3 },
-                    { label: "Sparat", icon: Calculator, align: "right", span: 2 },
-                    { label: "Status", align: "center", span: 2 },
-                ]}
-            />
+            <div className="w-full overflow-x-auto pb-4 -mx-2">
+                <div className="min-w-[800px] px-2">
+                    <GridTableHeader
+                        columns={[
+                            { label: "År", icon: Calendar, span: 2 },
+                            { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3 },
+                            { label: "Utnyttjat", icon: Percent, align: "right", span: 3 },
+                            { label: "Sparat", icon: Calculator, align: "right", span: 2 },
+                            { label: "Status", align: "center", span: 2 },
+                        ]}
+                    />
 
-            <GridTableRows>
-                {displayedHistory.map((k10) => (
-                    <GridTableRow key={k10.year}>
-                        <div style={{ gridColumn: 'span 2' }} className="font-medium text-sm">{k10.year}</div>
-                        <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums">
-                            {formatCurrency(k10.gransbelopp)}
-                        </div>
-                        <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums">
-                            {formatCurrency(k10.usedAmount)}
-                        </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-right font-medium text-sm tabular-nums text-green-600 dark:text-green-400">
-                            +{formatCurrency(k10.savedAmount)}
-                        </div>
-                        <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
-                            <AppStatusBadge status={k10.status === "submitted" ? "Inskickad" : "Utkast"} />
-                        </div>
-                    </GridTableRow>
-                ))}
-            </GridTableRows>
+                    <GridTableRows>
+                        {displayedHistory.map((k10) => (
+                            <GridTableRow key={k10.year}>
+                                <div style={{ gridColumn: 'span 2' }} className="font-medium text-sm">{k10.year}</div>
+                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums">
+                                    {formatCurrency(k10.gransbelopp)}
+                                </div>
+                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums">
+                                    {formatCurrency(k10.usedAmount)}
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="text-right font-medium text-sm tabular-nums text-green-600 dark:text-green-400">
+                                    +{formatCurrency(k10.savedAmount)}
+                                </div>
+                                <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
+                                    <AppStatusBadge status={k10.status === "submitted" ? "Inskickad" : "Utkast"} />
+                                </div>
+                            </GridTableRow>
+                        ))}
+                    </GridTableRows>
+                </div>
+            </div>
 
             {k10Declarations.length > 5 && (
                 <div className="flex justify-center py-2 border-t border-border/40">

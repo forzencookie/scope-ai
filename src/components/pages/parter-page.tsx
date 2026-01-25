@@ -1,17 +1,13 @@
-// @ts-nocheck
 'use client';
 
 import { useCallback, Suspense, useMemo } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import {
-    Tooltip,
-    TooltipContent,
     TooltipProvider,
-    TooltipTrigger,
 } from '@/components/ui/tooltip';
-import { cn } from '@/lib/utils';
+import { LegalInfoCard } from '@/components/ui/legal-info-card';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card';
+import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import { useCompany } from '@/providers/company-provider';
 import {
     LazyAktiebok,
@@ -108,7 +104,7 @@ const tabHeaders: Record<string, { title: string; description: string }> = {
 function ParterPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const { companyType, company, hasFeature } = useCompany();
+    const { companyType, hasFeature } = useCompany();
     const lastUpdated = useLastUpdated();
 
     // Filter tabs based on available features for the current company type
@@ -169,6 +165,7 @@ function ParterPageContent() {
                         {currentTab === 'delagare' && <LazyDelagare />}
                         {currentTab === 'utdelning' && <LazyUtdelning />}
                         {currentTab === 'agarinfo' && (
+                            isEF ? <EnskildFirmaOwnerInfo /> : (
                             <div className="space-y-6">
                                 <Card>
                                     <CardHeader>
@@ -180,6 +177,7 @@ function ParterPageContent() {
                                     </CardContent>
                                 </Card>
                             </div>
+                            )
                         )}
                         {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
                         {currentTab === 'styrelseprotokoll' && <LazyStyrelseprotokoll />}
@@ -200,6 +198,8 @@ function ParterPageContent() {
 // EF: Simple owner information card
 function EnskildFirmaOwnerInfo() {
     const { company } = useCompany();
+
+    const _ownerName = company.name; // In EF, company name is often owner name or includes it
 
     return (
         <div className="space-y-6">

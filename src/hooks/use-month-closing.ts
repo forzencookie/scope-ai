@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { useState, useEffect } from "react"
@@ -39,7 +38,7 @@ export function useMonthClosing() {
             try {
                 // Fetch ONLY monthly periods from the consolidated table
                 const { data, error } = await supabase
-                    .from('financial_periods')
+                    .from('financialperiods')
                     .select('*')
                     .eq('type', 'monthly')
 
@@ -58,9 +57,9 @@ export function useMonthClosing() {
                                 // status in DB is 'open', 'closed', 'submitted'
                                 // we map 'closed' to 'locked' for our UI
                                 status: p.status === 'closed' ? 'locked' : (p.status as PeriodStatus),
-                                checks: p.reconciliation_checks || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false },
-                                locked_at: p.locked_at,
-                                locked_by: p.locked_by
+                                checks: (p.reconciliation_checks as unknown as { bankReconciled: boolean, vatReported: boolean, declarationsDone: boolean, allCategorized: boolean }) || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false },
+                                locked_at: p.locked_at || undefined,
+                                locked_by: p.locked_by || undefined
                             }
                         }))
                     }
@@ -113,11 +112,12 @@ export function useMonthClosing() {
             const dbStatus = updated.status === 'locked' ? 'closed' : updated.status
 
             const { error } = await supabase
-                .from('financial_periods')
+                .from('financialperiods')
                 .upsert({
                     id: periodId,
                     company_id: company.id,
                     type: 'monthly',
+                    name: `Månadsbokslut ${year}-${month}`,
                     start_date: `${year}-${month.toString().padStart(2, '0')}-01`,
                     end_date: `${year}-${month.toString().padStart(2, '0')}-28`, // simplified
                     status: dbStatus,

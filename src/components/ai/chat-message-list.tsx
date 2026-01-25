@@ -71,6 +71,7 @@ interface ChatMessageListProps {
     onRetry: (messageId: string) => void
     onConfirm: (confirmationId: string) => void
     onCancelConfirmation: (messageId: string) => void
+    onRegenerate?: () => void
 }
 
 export function ChatMessageList({
@@ -79,6 +80,7 @@ export function ChatMessageList({
     onRetry,
     onConfirm,
     onCancelConfirmation,
+    onRegenerate,
 }: ChatMessageListProps) {
     // Only used to check if a message is last
     const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null

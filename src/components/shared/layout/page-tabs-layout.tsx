@@ -38,7 +38,7 @@ export function PageTabsLayout({
     // Helper to render a single tab button
     const renderTabButton = (tab: TabConfig) => {
         const isActive = currentTab === tab.id
-        const Icon = tab.icon
+        const Icon = tab.icon as any
 
         return (
             <Tooltip key={tab.id}>

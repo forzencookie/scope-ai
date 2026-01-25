@@ -1,4 +1,4 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Periodiseringsfonder Data Layer
  * 
@@ -24,7 +24,7 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .select('*')
         .order('year', { ascending: false })
 
@@ -52,7 +52,7 @@ export async function createPeriodiseringsfond(
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .insert({
             year: input.year,
             amount: input.amount,
@@ -60,7 +60,7 @@ export async function createPeriodiseringsfond(
             notes: input.notes,
             status: 'active',
             dissolved_amount: 0,
-        })
+        } as any)
         .select()
         .single()
 
@@ -86,11 +86,14 @@ export async function dissolvePeriodiseringsfond(
     const supabase = getSupabaseClient()
 
     // First get the current fond
-    const { data: existing } = await supabase
-        .from('periodiseringsfonder')
+    const { data: existingData } = await supabase
+        .from('periodiseringsfonder' as any)
         .select('*')
         .eq('id', id)
         .single()
+
+    // Explicitly cast to any to avoid type confusion between DB row and domain model
+    const existing = existingData as any
 
     if (!existing) return null
 
@@ -99,12 +102,12 @@ export async function dissolvePeriodiseringsfond(
     const newStatus = newDissolvedAmount >= existing.amount ? 'dissolved' : 'partially_dissolved'
 
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .update({
             dissolved_amount: newDissolvedAmount,
             status: newStatus,
             updated_at: new Date().toISOString(),
-        })
+        } as any)
         .eq('id', id)
         .select()
         .single()
@@ -130,7 +133,7 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .select('*')
         .eq('status', 'active')
         .lte('expires_at', futureDate.toISOString().split('T')[0])
@@ -160,7 +163,7 @@ export function calculateTaxSavings(
 ): TaxSavingsCalculation {
     // AB: Max 25% of profit, taxed at 20.6%
     // EF/Enskild: Max 30% of profit, taxed at marginal income tax
-    const maxPercentage = companyType === 'AB' ? 0.25 : 0.30
+    const _maxPercentage = companyType === 'AB' ? 0.25 : 0.30
     const taxRate = companyType === 'AB' ? 0.206 : 0.32 // Approximate marginal rate for EF
 
     const taxSaved = amount * taxRate

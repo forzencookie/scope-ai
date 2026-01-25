@@ -68,7 +68,7 @@ ON shareholders(user_id, company_id);
 
 -- Company meetings indexes
 CREATE INDEX IF NOT EXISTS idx_companymeetings_user_date 
-ON companymeetings(user_id, date DESC);
+ON companymeetings(user_id, meeting_date DESC);
 
 -- K10 declarations indexes
 CREATE INDEX IF NOT EXISTS idx_k10declarations_user_year 
@@ -568,6 +568,9 @@ END $$;
 -- ============================================================================
 
 -- Update get_shareholder_stats function
+DROP FUNCTION IF EXISTS get_shareholder_stats();
+DROP FUNCTION IF EXISTS get_shareholder_stats(text);
+
 CREATE OR REPLACE FUNCTION get_shareholder_stats(p_user_id UUID DEFAULT NULL)
 RETURNS TABLE (
   total_shareholders BIGINT,
@@ -596,6 +599,9 @@ END;
 $$;
 
 -- Update get_meeting_stats function  
+DROP FUNCTION IF EXISTS get_meeting_stats();
+DROP FUNCTION IF EXISTS get_meeting_stats(text);
+
 CREATE OR REPLACE FUNCTION get_meeting_stats(p_user_id UUID DEFAULT NULL)
 RETURNS TABLE (
   total_meetings BIGINT,
@@ -624,6 +630,8 @@ END;
 $$;
 
 -- Update get_invoice_stats function
+DROP FUNCTION IF EXISTS get_invoice_stats();
+
 CREATE OR REPLACE FUNCTION get_invoice_stats(p_user_id UUID DEFAULT NULL)
 RETURNS TABLE (
   total_invoices BIGINT,

@@ -159,7 +159,7 @@ async function classifyWithAnthropic(
     message: string,
     context: AgentContext,
     model: string,
-    signal: AbortSignal
+    _signal: AbortSignal
 ): Promise<ClassificationResult> {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
     const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
@@ -186,7 +186,7 @@ async function classifyWithGoogle(
     message: string,
     context: AgentContext,
     model: string,
-    signal: AbortSignal
+    _signal: AbortSignal
 ): Promise<ClassificationResult> {
     const { GoogleGenerativeAI } = await import('@google/generative-ai')
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '')

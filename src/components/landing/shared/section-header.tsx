@@ -1,7 +1,7 @@
 "use client"
 
 import { motion } from "framer-motion"
-import { LucideIcon, Sparkles } from "lucide-react"
+import { LucideIcon } from "lucide-react"
 
 interface SectionHeaderProps {
     badge?: string
@@ -17,8 +17,6 @@ export function SectionHeader({
     badge,
     title,
     description,
-    icon: Icon = Sparkles,
-    statusDot,
     align = "center",
     className = ""
 }: SectionHeaderProps) {

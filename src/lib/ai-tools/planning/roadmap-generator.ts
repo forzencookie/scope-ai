@@ -1,4 +1,3 @@
-// @ts-nocheck
 
 import { z } from "zod"
 import { createRoadmap } from "@/services/roadmap-service"
@@ -12,7 +11,7 @@ export const generateRoadmapTool = {
         steps: z.array(z.object({
             title: z.string().describe("Title of the step"),
             description: z.string().describe("Detailed description of what to do in this step"),
-            metadata: z.record(z.any()).optional().describe("Metadata for the step, e.g., { action: 'register_company' } to link to specific app actions")
+            metadata: z.record(z.string(), z.any()).optional().describe("Metadata for the step, e.g., { action: 'register_company' } to link to specific app actions")
         })).describe("The generated steps for the roadmap")
     }),
     execute: async (args: { goal: string; context?: string; steps: any[] }) => {

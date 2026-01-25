@@ -83,7 +83,7 @@ export class HandelserAgent extends BaseAgent {
         )
     }
 
-    private async handleTimeline(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleTimeline(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📋 **Senaste händelser**\n\n' +
             '| Tid | Typ | Händelse |\n' +
@@ -97,7 +97,7 @@ export class HandelserAgent extends BaseAgent {
         )
     }
 
-    private async handleDividend(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleDividend(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '💰 **Utdelning**\n\n' +
             'För att besluta om utdelning behövs:\n\n' +
@@ -113,7 +113,7 @@ export class HandelserAgent extends BaseAgent {
         )
     }
 
-    private async handleRoadmap(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleRoadmap(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🗺️ **Roadmap**\n\n' +
             '**Q1 2026:**\n' +

@@ -160,6 +160,7 @@ export async function handleUserMessage(
  * Get agent by ID.
  */
 export function getAgent(id: string) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return agentRegistry.get(id as any)
 }
 

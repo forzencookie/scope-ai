@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types
 /**
  * Members API
  * 

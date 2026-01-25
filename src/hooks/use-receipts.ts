@@ -25,9 +25,18 @@ export function useReceiptsPaginated(
     }, [])
 
     // Reset page when startDate prop changes
-    useEffect(() => {
+    const [prevStartDate, setPrevStartDate] = useState(startDate)
+    if (startDate !== prevStartDate) {
+        setPrevStartDate(startDate)
         setPage(1)
+    }
+
+    /* 
+    // Old effect caused double render
+    useEffect(() => {
+        setPage(p => p !== 1 ? 1 : p)
     }, [startDate])
+    */
 
     const {
         data: receipts,

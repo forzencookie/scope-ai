@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 /**
  * Reports Processor Service
  * 
@@ -13,7 +12,8 @@
 // Types
 // ============================================================================
 
-import { getYear, parseISO, isWithinInterval } from "date-fns"
+// import { getYear, parseISO, isWithinInterval } from "date-fns"
+import { basAccounts } from "@/data/accounts"
 
 export interface AccountBalance {
   account: string;
@@ -350,10 +350,10 @@ export const FinancialReportProcessor = {
     const taxItems = getItemsInRange(8900, 8999)
 
     const totalRevenue = revenueItems.reduce((sum, item) => sum + item.value, 0)
-    const totalCosts = materialItems.reduce((sum, item) => sum + item.value, 0) +
-      otherExternalItems.reduce((sum, item) => sum + item.value, 0) +
-      personnelItems.reduce((sum, item) => sum + item.value, 0) +
-      depreciationItems.reduce((sum, item) => sum + item.value, 0)
+    // const totalCosts = materialItems.reduce((sum, item) => sum + item.value, 0) +
+    //   otherExternalItems.reduce((sum, item) => sum + item.value, 0) +
+    //   personnelItems.reduce((sum, item) => sum + item.value, 0) +
+    //   depreciationItems.reduce((sum, item) => sum + item.value, 0)
 
     // Financial math
     const ebitda = totalRevenue + materialItems.reduce((sum, i) => sum + i.value, 0) + otherExternalItems.reduce((sum, i) => sum + i.value, 0) + personnelItems.reduce((sum, i) => sum + i.value, 0)
@@ -446,11 +446,11 @@ export const FinancialReportProcessor = {
     const longLiabilities = getItemsInRange(2300, 2399, true)
     const shortLiabilities = getItemsInRange(2400, 2999, true)
 
-    const totalAssets = fixedAssets.reduce((sum, i) => sum + i.value, 0) + currentAssets.reduce((sum, i) => sum + i.value, 0)
-    const totalEqLiab = equityItems.reduce((sum, i) => sum + i.value, 0) +
-      untaxedItems.reduce((sum, i) => sum + i.value, 0) +
-      longLiabilities.reduce((sum, i) => sum + i.value, 0) +
-      shortLiabilities.reduce((sum, i) => sum + i.value, 0)
+    // const totalAssets = fixedAssets.reduce((sum, i) => sum + i.value, 0) + currentAssets.reduce((sum, i) => sum + i.value, 0)
+    // const totalEqLiab = equityItems.reduce((sum, i) => sum + i.value, 0) +
+    //   untaxedItems.reduce((sum, i) => sum + i.value, 0) +
+    //   longLiabilities.reduce((sum, i) => sum + i.value, 0) +
+    //   shortLiabilities.reduce((sum, i) => sum + i.value, 0)
 
     return [
       {

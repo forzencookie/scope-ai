@@ -1,4 +1,4 @@
-// @ts-nocheck - Supabase types don't include new tables yet, will regenerate after schema update
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Förmåner (Employee Benefits) Data Layer
  * 
@@ -31,7 +31,7 @@ export async function listAvailableBenefits(
     if (isSupabaseConfigured()) {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
-            .from('formaner_catalog')
+            .from('formaner_catalog' as any)
             .select('*')
             .order('name')
 
@@ -52,7 +52,7 @@ export async function getBenefitDetails(id: string): Promise<FormanCatalogItem |
     if (isSupabaseConfigured()) {
         const supabase = getSupabaseClient()
         const { data } = await supabase
-            .from('formaner_catalog')
+            .from('formaner_catalog' as any)
             .select('*')
             .eq('id', id)
             .single()
@@ -95,7 +95,7 @@ export async function assignBenefit(
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('employee_benefits')
+        .from('employee_benefits' as any)
         .insert({
             employee_name: input.employeeName,
             benefit_type: input.benefitType,
@@ -127,7 +127,7 @@ export async function getEmployeeBenefits(
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('employee_benefits')
+        .from('employee_benefits' as any)
         .select('*')
         .eq('employee_name', employeeName)
         .eq('year', year)

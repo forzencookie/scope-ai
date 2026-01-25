@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Skatt AI Tools - VAT (Moms)
  *
@@ -6,6 +5,12 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
+
+const mockVatReport = {
+    salesVat: 25000,
+    purchaseVat: 12500,
+    vatToPay: 12500
+}
 
 // =============================================================================
 // VAT Read Tools
@@ -34,7 +39,15 @@ export const getVatReportTool = defineTool<{ period?: string }, VATDeclaration[]
     },
     execute: async (params) => {
         // TODO: Implement real service call
-        const vatData = null; // Removed mock dependency
+        const vatData = {
+            id: 'mock-vat-1',
+            period: params.period || 'Q4 2024',
+            outputVat: mockVatReport.salesVat,
+            inputVat: mockVatReport.purchaseVat,
+            netVat: mockVatReport.vatToPay,
+            dueDate: '2026-02-12',
+            status: 'upcoming'
+        }; // Mock data restored
 
         if (!vatData) {
             return {

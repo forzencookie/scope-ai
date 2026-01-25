@@ -19,6 +19,7 @@ export function useAktiebokLogic() {
   const [searchQuery, setSearchQuery] = useState("")
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [activeTab, setActiveTab] = useState<'owners' | 'transactions'>('owners')
+  const [isSubmitting, setIsSubmitting] = useState(false)
 
   // Form State
   const [txType, setTxType] = useState<StockTransactionType>('Nyemission')
@@ -114,6 +115,8 @@ export function useAktiebokLogic() {
       return
     }
 
+    setIsSubmitting(true)
+
     const shares = parseInt(txShares)
     const price = parseFloat(txPrice)
     const total = shares * price
@@ -168,6 +171,7 @@ export function useAktiebokLogic() {
     searchQuery, setSearchQuery,
     showAddDialog, setShowAddDialog,
     activeTab, setActiveTab,
+    isSubmitting,
     
     // Form props
     txType, setTxType,

@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Bot, Send, User } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ChatMessage, AiDeduction } from "./use-create-payslip-logic"
+import { ChatMessage } from "./use-create-payslip-logic"
 
 interface StepAdjustmentsProps {
     selectedEmp: { name: string }

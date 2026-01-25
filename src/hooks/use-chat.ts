@@ -41,7 +41,7 @@ export function useChat(options: UseChatOptions = {}) {
 
     // Derived state
     const currentConversation = conversations.find(c => c.id === currentConversationId)
-    const messages = currentConversation?.messages || []
+    const messages = useMemo(() => currentConversation?.messages || [], [currentConversation])
 
     // Load conversations from Supabase on mount
     useEffect(() => {
@@ -50,9 +50,11 @@ export function useChat(options: UseChatOptions = {}) {
                 const res = await fetch('/api/chat/history')
                 if (res.ok) {
                     const data = await res.json()
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const mapped = data.map((conv: any) => ({
                         id: conv.id,
                         title: conv.title || 'Ny konversation',
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         messages: (conv.messages || []).map((m: any) => ({
                             id: m.id || crypto.randomUUID(),
                             role: m.role as 'user' | 'assistant',
@@ -329,6 +331,7 @@ export function useChat(options: UseChatOptions = {}) {
             if (reader) {
                 let fullContent = ''
                 let buffer = ''
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 let lastData: any = null // Capture data for completion event
 
                 while (true) {
@@ -466,7 +469,7 @@ export function useChat(options: UseChatOptions = {}) {
         } finally {
             setIsLoading(false)
         }
-    }, [messages, currentConversationId, isLoading, conversations, modelId])
+    }, [messages, currentConversationId, isLoading, conversations, modelId, router])
 
     // Regenerate last response
     const regenerateResponse = useCallback(() => {

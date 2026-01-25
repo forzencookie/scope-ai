@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Löner AI Tools - Payroll
  *
@@ -216,10 +215,10 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
         const agiData = {
             period: r.period,
             employeeCount: r.employeeCount || 0,
-            totalGrossPay: r.totalGrossPay || 0,
+            totalGrossPay: (r as any).totalGrossPay || 0,
             totalBenefits: 0, // Mock for now
             totalTaxDeduction: r.totalTax || 0,
-            employerFeeBasis: r.totalGrossPay || 0,
+            employerFeeBasis: (r as any).totalGrossPay || 0,
             totalEmployerFee: r.employerContributions || 0,
             // totalToPay calculated in component
         }

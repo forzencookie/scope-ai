@@ -9,7 +9,7 @@ import type {
     AgentDomain,
     AgentContext,
     Intent,
-    IntentCategory,
+
 } from '../types'
 
 // =============================================================================
@@ -225,7 +225,7 @@ export async function createWorkflowPlan(
  */
 function findMatchingTemplate(
     message: string,
-    intent: Intent
+    _intent: Intent
 ): typeof WORKFLOW_TEMPLATES[string] | null {
     const lowerMessage = message.toLowerCase()
 
@@ -255,7 +255,7 @@ function findMatchingTemplate(
 function generateDynamicPlan(
     message: string,
     intent: Intent,
-    context: AgentContext
+    _context: AgentContext
 ): WorkflowPlan {
     const steps: WorkflowStep[] = []
 

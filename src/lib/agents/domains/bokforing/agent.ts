@@ -13,7 +13,6 @@ import type {
     AgentDomain,
     AgentContext,
     AgentResponse,
-    Intent,
 } from '../../types'
 
 // =============================================================================
@@ -124,7 +123,7 @@ export class BokforingAgent extends BaseAgent {
         // Extract entities from context
         const entities = context.intent?.entities || []
         const amount = entities.find(e => e.type === 'amount')?.value
-        const account = entities.find(e => e.type === 'account')?.value
+        // const account = entities.find(e => e.type === 'account')?.value
 
         if (!amount) {
             return this.successResponse(
@@ -176,6 +175,7 @@ export class BokforingAgent extends BaseAgent {
             return this.errorResponse(result.error || 'Kunde inte hämta transaktioner')
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const transactions = result.result as any[]
 
         if (!transactions || transactions.length === 0) {
@@ -207,7 +207,8 @@ export class BokforingAgent extends BaseAgent {
         if (!result.success) {
             return this.errorResponse(result.error || 'Kunde inte hämta omatchade transaktioner')
         }
-
+        
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const unmatched = result.result as any[]
 
         if (!unmatched || unmatched.length === 0) {

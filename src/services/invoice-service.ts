@@ -1,6 +1,4 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 import { getSupabaseClient } from '@/lib/database/supabase'
-import { INVOICE_STATUS_LABELS } from '@/lib/localization'
 
 // Types matching schema.sql
 export type CustomerInvoice = {
@@ -55,7 +53,8 @@ export const invoiceService = {
         const supabase = getSupabaseClient()
 
         let query = supabase
-            .from('customer_invoices')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('customerinvoices' as any)
             .select('*', { count: 'exact' })
             .order('due_date', { ascending: true })
             .range(offset, offset + limit - 1)
@@ -65,7 +64,7 @@ export const invoiceService = {
         }
 
         if (startDate) {
-            query = query.gte('issue_date', startDate)
+            query = query.gte('invoice_date', startDate)
         }
 
         const { data, error, count } = await query
@@ -78,7 +77,8 @@ export const invoiceService = {
         }
 
         // Map snake_case DB columns to camelCase for UI
-        const invoices: CustomerInvoice[] = (data || []).map(row => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const invoices: CustomerInvoice[] = (data || []).map((row: any) => ({
             id: row.id,
             invoiceNumber: row.invoice_number || row.id,
             customer: row.customer_name,
@@ -86,7 +86,7 @@ export const invoiceService = {
             amount: Number(row.amount),
             vatAmount: row.vat_amount ? Number(row.vat_amount) : undefined,
             totalAmount: Number(row.total_amount),
-            issueDate: row.issue_date,
+            issueDate: row.invoice_date,
             dueDate: row.due_date,
             status: row.status
         }))
@@ -111,7 +111,8 @@ export const invoiceService = {
         const supabase = getSupabaseClient()
 
         let query = supabase
-            .from('supplier_invoices')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('supplierinvoices' as any)
             .select('*', { count: 'exact' })
             .order('due_date', { ascending: true })
             .range(offset, offset + limit - 1)
@@ -121,7 +122,7 @@ export const invoiceService = {
         }
 
         if (startDate) {
-            query = query.gte('invoice_date', startDate)
+            query = query.gte('created_at', startDate)
         }
 
         const { data, error, count } = await query
@@ -134,16 +135,17 @@ export const invoiceService = {
         }
 
         // Map snake_case DB columns to camelCase for UI
-        const invoices: SupplierInvoice[] = (data || []).map(row => ({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const invoices: SupplierInvoice[] = (data || []).map((row: any) => ({
             id: row.id,
-            invoiceNumber: row.invoice_number || row.id,
+            invoiceNumber: row.ocr || row.id, // using ocr as invoice number
             supplierName: row.supplier_name,
             amount: Number(row.amount),
-            vatAmount: row.vat_amount ? Number(row.vat_amount) : undefined,
-            totalAmount: Number(row.total_amount),
-            invoiceDate: row.issue_date,
+            vatAmount: 0, // Not currently in DB schema
+            totalAmount: Number(row.amount), // Assuming amount is total for now
+            invoiceDate: row.created_at || new Date().toISOString(),
             dueDate: row.due_date,
-            status: row.status,
+            status: (row.status as any),
             currency: 'SEK'
         }))
 
@@ -199,7 +201,7 @@ export const invoiceService = {
         const supabase = getSupabaseClient()
 
         const { error } = await supabase
-            .from('customer_invoices')
+            .from('customerinvoices')
             .update({ status })
             .eq('id', id)
 
@@ -214,7 +216,7 @@ export const invoiceService = {
         const supabase = getSupabaseClient()
 
         const { error } = await supabase
-            .from('supplier_invoices')
+            .from('supplierinvoices')
             .update({ status })
             .eq('id', id)
 

@@ -1,6 +1,5 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 import { getSupabaseClient } from '@/lib/database/supabase'
-import type { Roadmap, RoadmapStep, CreateRoadmapInput, UpdateRoadmapStepInput, RoadmapStatus } from '@/types/roadmap'
+import type { Roadmap, CreateRoadmapInput, UpdateRoadmapStepInput, RoadmapStatus } from '@/types/roadmap'
 
 // Local storage key for fallback/dev
 const STORAGE_KEY = 'scope_roadmaps'
@@ -22,7 +21,7 @@ function saveLocalRoadmaps(roadmaps: Roadmap[]) {
 
 export async function getRoadmaps(): Promise<Roadmap[]> {
     try {
-        const supabase = createClient()
+        const supabase = getSupabaseClient()
         const { data, error } = await supabase
             .from('roadmaps')
             .select('*, steps:roadmap_steps(*)')
@@ -39,7 +38,7 @@ export async function getRoadmaps(): Promise<Roadmap[]> {
 
 export async function getRoadmap(id: string): Promise<Roadmap | null> {
     try {
-        const supabase = createClient()
+        const supabase = getSupabaseClient()
         const { data, error } = await supabase
             .from('roadmaps')
             .select('*, steps:roadmap_steps(*)')
@@ -58,7 +57,7 @@ export async function getRoadmap(id: string): Promise<Roadmap | null> {
 
 export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap> {
     try {
-        const supabase = createClient()
+        const supabase = getSupabaseClient()
         const { data: userData } = await supabase.auth.getUser()
 
         if (!userData.user) {
@@ -123,7 +122,18 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
 
         if (stepsError) throw stepsError
 
-        return { ...roadmap, steps: steps || [] }
+        return {
+            ...roadmap,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            steps: (steps || []).map((s: any) => ({
+                ...s,
+                // Ensure mapping if needed, e.g. dates 
+                // DB usually returns strings, Type might expect Date or string.
+                // Assuming Type expects string for simplified usage here or exact match.
+                // If RoadmapStep equals DB Row, fine. If not, map.
+                // Safest to cast for now if structures are close.
+            })) as any
+        } as unknown as Roadmap
     } catch (error) {
         console.error('Error creating roadmap:', error)
         throw error
@@ -132,14 +142,14 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
 
 export async function updateRoadmapStatus(id: string, status: RoadmapStatus): Promise<void> {
     try {
-        const supabase = createClient()
+        const supabase = getSupabaseClient()
         const { error } = await supabase
             .from('roadmaps')
             .update({ status })
             .eq('id', id)
 
         if (error) throw error
-    } catch (error) {
+    } catch {
         // Fallback
         const roadmaps = getLocalRoadmaps()
         const index = roadmaps.findIndex(r => r.id === id)
@@ -153,14 +163,14 @@ export async function updateRoadmapStatus(id: string, status: RoadmapStatus): Pr
 
 export async function updateStep(stepId: string, updates: UpdateRoadmapStepInput): Promise<void> {
     try {
-        const supabase = createClient()
+        const supabase = getSupabaseClient()
         const { error } = await supabase
             .from('roadmap_steps')
             .update(updates)
             .eq('id', stepId)
 
         if (error) throw error
-    } catch (error) {
+    } catch {
         // Fallback
         const roadmaps = getLocalRoadmaps()
         let found = false

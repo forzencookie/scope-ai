@@ -17,7 +17,7 @@ export async function GET() {
 
         // Use raw client for tables not yet in typed accessors
         const { data: periods, error } = await userDb.client
-            .from('financial_periods')
+            .from('financialperiods')
             .select('*')
             .order('start_date', { ascending: false });
 

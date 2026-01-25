@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { cn } from "@/lib/utils"
 
 // === GEOMETRIC VARIATIONS ===
 
 // Variation 1: Orbital Cut - diagonal slice with floating inner element
-function OrbitalCut({ className }: { className?: string }) {
+export function OrbitalCut({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             <defs>
@@ -20,7 +19,7 @@ function OrbitalCut({ className }: { className?: string }) {
 }
 
 // Variation 2: Geometric Iris - Solid Aperture (High Contrast / Iconic)
-function GeometricIris({ className }: { className?: string }) {
+export function GeometricIris({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             {/* Background - using currentColor to inherit text color (e.g. violet) */}
@@ -45,7 +44,7 @@ function GeometricIris({ className }: { className?: string }) {
 }
 
 // Variation 3: Void Core - offset inner void creating tension
-function VoidCore({ className }: { className?: string }) {
+export function VoidCore({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             <defs>
@@ -60,7 +59,7 @@ function VoidCore({ className }: { className?: string }) {
 }
 
 // Original design
-function OriginalLogo({ className }: { className?: string }) {
+export function OriginalLogo({ className }: { className?: string }) {
     return (
         <div className={cn("bg-stone-900 rounded-full flex items-center justify-center shrink-0", className)}>
             <div className="w-[40%] h-[40%] bg-white rounded-[25%]" />
@@ -71,7 +70,7 @@ function OriginalLogo({ className }: { className?: string }) {
 // === BIRD VARIATIONS ===
 
 // Bird 1: Hummingbird - fast, precise, agile (side profile, minimalist)
-function Hummingbird({ className }: { className?: string }) {
+export function Hummingbird({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             <circle cx="50" cy="50" r="48" fill="#1c1917" />
@@ -90,7 +89,7 @@ function Hummingbird({ className }: { className?: string }) {
 }
 
 // Bird 2: Owl - wisdom, insight, seeing in the dark (Predator style - sharp & sleek)
-function Owl({ className }: { className?: string }) {
+export function Owl({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             {/* Face/Head Background (Squircle) */}
@@ -130,7 +129,7 @@ function Owl({ className }: { className?: string }) {
 }
 
 // Bird 3: Phoenix - rising, abstract, fiery curves
-function Phoenix({ className }: { className?: string }) {
+export function Phoenix({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             <circle cx="50" cy="50" r="48" fill="#1c1917" />
@@ -158,7 +157,7 @@ function Phoenix({ className }: { className?: string }) {
 }
 
 // Bird 4: Crane - elegant, balanced, Japanese style
-function Crane({ className }: { className?: string }) {
+export function Crane({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
             <circle cx="50" cy="50" r="48" fill="#1c1917" />
@@ -191,25 +190,10 @@ function Crane({ className }: { className?: string }) {
 // === CHANGE THIS TO SWITCH LOGO ===
 // Geometric: "original" | "orbital" | "lens" | "void"
 // Birds: "hummingbird" | "owl" | "phoenix" | "crane"
-const ACTIVE_LOGO = "lens"
+// const ACTIVE_LOGO = "lens"
+
 
 export function ScopeAILogo({ className }: { className?: string }) {
-    switch (ACTIVE_LOGO) {
-        case "orbital":
-            return <OrbitalCut className={className} />
-        case "lens":
-            return <GeometricIris className={className} />
-        case "void":
-            return <VoidCore className={className} />
-        case "hummingbird":
-            return <Hummingbird className={className} />
-        case "owl":
-            return <Owl className={className} />
-        case "phoenix":
-            return <Phoenix className={className} />
-        case "crane":
-            return <Crane className={className} />
-        default:
-            return <OriginalLogo className={className} />
-    }
+    // Only lens/original supported for now based on strict typing
+    return <GeometricIris className={className} />
 }

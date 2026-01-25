@@ -49,9 +49,11 @@ export async function POST(
         // Create Bank Transaction
         const transaction = await userDb.transactions.create({
             id: `TX-PAY-${Date.now()}`,
-            occurred_at: new Date().toISOString(),
+            date: new Date().toISOString(),
             description: `Inbetalning ${id}`,
-            amount: total,
+            name: `Inbetalning ${id}`,
+            amount: String(total),
+            amount_value: total,
             status: 'Bokförd'
         });
 

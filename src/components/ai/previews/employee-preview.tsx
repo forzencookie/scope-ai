@@ -1,4 +1,3 @@
-// @ts-nocheck
 
 import { UserPlus, Briefcase, Mail, Coins, Check, ArrowRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
@@ -18,7 +17,7 @@ interface EmployeePreviewProps {
 
 export function EmployeePreview({ data }: EmployeePreviewProps) {
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
-
+    const { addToast: toast } = useToast()
     const handleConfirm = async () => {
         setStatus('saving')
         try {

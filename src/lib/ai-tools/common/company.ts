@@ -48,6 +48,7 @@ export const getCompanyInfoTool = defineTool({
             data: company,
             message: `${company.name} (${company.orgNumber})`,
             display: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 component: 'CompanyInfoCard' as any,
                 props: { company },
                 title: 'Företagsinformation',
@@ -81,7 +82,7 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
         
         // Fetch real data from API endpoints (these respect RLS)
         let employeeCount = 0
-        let pendingVat = 0
+        const pendingVat = 0
         let upcomingDeadlines = 0
         let revenue = 0
         let expenses = 0
@@ -107,10 +108,14 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
                 const txData = await txRes.json()
                 const transactions = txData.transactions || []
                 revenue = transactions
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .filter((t: any) => (t.amount || 0) > 0)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
                 expenses = transactions
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .filter((t: any) => (t.amount || 0) < 0)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
                 profit = revenue - expenses
             }

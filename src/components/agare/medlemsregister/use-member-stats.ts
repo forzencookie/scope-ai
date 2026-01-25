@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { useState, useEffect, useMemo } from "react"
 import { useMembers, type Member } from "@/hooks/use-members"
 
@@ -19,14 +18,15 @@ export function useMemberStats() {
       const { data, error } = await supabase.rpc('get_member_stats')
 
       if (!error && data) {
+        const rpcStats = data as any
         setStats(prev => ({
           ...prev,
-          totalMembers: Number(data.totalMembers) || 0,
-          activeMembers: Number(data.activeMembers) || 0,
-          pendingMembers: Number(data.pendingMembers) || 0,
-          totalFees: Number(data.totalFees) || 0,
-          unpaidFees: Number(data.unpaidFees) || 0,
-          unpaidCount: Number(data.unpaidCount) || 0
+          totalMembers: Number(rpcStats.totalMembers) || 0,
+          activeMembers: Number(rpcStats.activeMembers) || 0,
+          pendingMembers: Number(rpcStats.pendingMembers) || 0,
+          totalFees: Number(rpcStats.totalFees) || 0,
+          unpaidFees: Number(rpcStats.unpaidFees) || 0,
+          unpaidCount: Number(rpcStats.unpaidCount) || 0
         }))
       }
     }

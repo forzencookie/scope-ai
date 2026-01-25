@@ -1,7 +1,7 @@
-// @ts-nocheck
+/* eslint-disable react-hooks/static-components */
 "use client"
 
-import { useState } from "react"
+import { useMemo } from "react"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogClose } from "@/components/ui/dialog"
 import { StatusBadge } from "@/components/ui/status-badge"
 import { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai/tool-types"
@@ -31,10 +31,13 @@ export function BenefitDetailsDialog({
     onAssign,
     assignedEmployees = []
 }: BenefitDetailsDialogProps) {
-    if (!benefit) return null
+    // Memoize the icon component to prevent re-creation on every render
+    // Use optional chaining for safe access before the null check
+    const benefitId = benefit?.id
+    const Icon = useMemo(() => benefitId ? getBenefitIcon(benefitId) : null, [benefitId])
+    const formType = useMemo(() => benefitId ? getFormType(benefitId) : null, [benefitId])
 
-    const Icon = getBenefitIcon(benefit.id)
-    const formType = getFormType(benefit.id)
+    if (!benefit || !Icon) return null
 
     const handleAssign = (employeeName: string, amount: number, metadata?: Record<string, unknown>) => {
         onAssign?.(employeeName, amount, metadata)
@@ -63,11 +66,12 @@ export function BenefitDetailsDialog({
                             <Icon className="h-6 w-6 text-primary" />
                         </div>
                         <div className="space-y-1">
-                            <DialogTitle className="text-xl">{benefit.title}</DialogTitle>
+                            <DialogTitle className="text-xl">{(benefit as any).title || benefit.name}</DialogTitle>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                                <StatusBadge status={benefit.taxFree ? 'success' : 'warning'}>
-                                    {benefit.taxFree ? 'Skattefri' : 'Skattepliktig'}
-                                </StatusBadge>
+                                <StatusBadge
+                                    variant={benefit.taxFree ? 'success' : 'warning'}
+                                    status={benefit.taxFree ? 'Skattefri' : 'Skattepliktig'}
+                                />
                                 <span>{benefit.category}</span>
                             </div>
                         </div>

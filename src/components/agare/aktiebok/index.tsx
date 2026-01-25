@@ -1,20 +1,19 @@
-// @ts-nocheck
 "use client"
 
 import {
-  Plus,
-  Download,
-  ArrowRightLeft,
-  Users
+    Plus,
+    Download,
+    ArrowRightLeft,
+    Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { useTextMode } from "@/providers/text-mode-provider"
 
@@ -36,7 +35,8 @@ export function Aktiebok() {
         searchQuery, setSearchQuery,
         showAddDialog, setShowAddDialog,
         activeTab, setActiveTab,
-        
+        isSubmitting,
+
         txType, setTxType,
         txDate, setTxDate,
         txShares, setTxShares,
@@ -44,7 +44,7 @@ export function Aktiebok() {
         txTo, setTxTo,
         txFrom, setTxFrom,
         txShareClass, setTxShareClass,
-        
+
         handleSaveTransaction
     } = useAktiebokLogic()
 
@@ -163,10 +163,10 @@ export function Aktiebok() {
 
                     <TransactionsGrid
                         transactions={filteredTransactions}
-                        getTransactionTypeLabel={(type: string) => 
-                            type === 'nyemission' ? 'Nyemission' : 
-                            type === 'köp' ? 'Köp' : 
-                            type.charAt(0).toUpperCase() + type.slice(1)
+                        getTransactionTypeLabel={(type: string) =>
+                            (type === 'nyemission' ? 'Nyemission' :
+                                type === 'köp' ? 'Köp' :
+                                    type.charAt(0).toUpperCase() + type.slice(1)) as StockTransactionType
                         }
                     />
                 </div>
@@ -191,6 +191,7 @@ export function Aktiebok() {
                 setTxPrice={setTxPrice}
                 shareholders={shareholders}
                 onSave={handleSaveTransaction}
+                isSubmitting={isSubmitting}
             />
         </div>
     )

@@ -119,6 +119,7 @@ export interface FinancialReportParams {
     comparisonPeriod?: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const generateFinancialReportTool = defineTool<FinancialReportParams, any>({
     name: 'generate_financial_report',
     description: 'Skapa en finansiell rapport (Resultat- och Balansräkning).',
@@ -141,6 +142,7 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, any
             type: (item.label === "Rörelsens intäkter" || item.label === "Summa rörelsens kostnader") ? "header" :
                 (item.label.includes("Summa") || item.label.includes("Resultat")) ? "sum" : "row",
             level: item.label.startsWith("  ") ? 1 : 0
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         })) as any[]
 
         const balanceSheet = generateMockBalanceSheet().map((item, i) => ({
@@ -148,6 +150,7 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, any
             label: item.label,
             amount: item.value,
             type: item.label.includes("Summa") ? "sum" : "row",
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         })) as any[]
 
         const reportData = {

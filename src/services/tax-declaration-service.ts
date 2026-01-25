@@ -18,7 +18,7 @@ export type IncomeDeclaration = {
 
 export async function getIncomeDeclarations(taxYear?: number): Promise<IncomeDeclaration[]> {
     const supabase = getSupabaseClient()
-    let query = supabase.from('income_declarations').select('*').order('tax_year', { ascending: false })
+    let query = supabase.from('incomedeclarations').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch income declarations:', error); return [] }
@@ -53,7 +53,7 @@ export type NEAppendix = {
 
 export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
     const supabase = getSupabaseClient()
-    let query = supabase.from('ne_appendices').select('*').order('tax_year', { ascending: false })
+    let query = supabase.from('neappendices').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch NE appendix:', error); return [] }
@@ -91,7 +91,7 @@ export type AnnualClosing = {
 
 export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClosing[]> {
     const supabase = getSupabaseClient()
-    let query = supabase.from('annual_closings').select('*').order('fiscal_year', { ascending: false })
+    let query = supabase.from('annualclosings').select('*').order('fiscal_year', { ascending: false })
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch annual closings:', error); return [] }
@@ -131,7 +131,7 @@ export type AnnualReport = {
 
 export async function getAnnualReports(fiscalYear?: number): Promise<AnnualReport[]> {
     const supabase = getSupabaseClient()
-    let query = supabase.from('annual_reports').select('*').order('fiscal_year', { ascending: false })
+    let query = supabase.from('annualreports').select('*').order('fiscal_year', { ascending: false })
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch annual reports:', error); return [] }

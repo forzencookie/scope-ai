@@ -73,7 +73,7 @@ export function useAgentChat(options: UseAgentChatOptions = {}) {
 
     // Derived state
     const currentConversation = state.conversations.find(c => c.id === state.currentConversationId)
-    const messages = currentConversation?.messages || []
+    const messages = useMemo(() => currentConversation?.messages || [], [currentConversation])
 
     // ==========================================================================
     // Load conversations on mount
@@ -84,9 +84,11 @@ export function useAgentChat(options: UseAgentChatOptions = {}) {
                 const res = await fetch('/api/chat/history')
                 if (res.ok) {
                     const data = await res.json()
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const mapped = data.map((conv: any) => ({
                         id: conv.id,
                         title: conv.title || 'Ny konversation',
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         messages: (conv.messages || []).map((m: any) => ({
                             id: m.id || crypto.randomUUID(),
                             role: m.role as 'user' | 'assistant',
@@ -325,7 +327,7 @@ export function useAgentChat(options: UseAgentChatOptions = {}) {
             // Build messages for API
             const messagesForAPI = updatedMessages
                 .filter(m => {
-                    if (m.role === 'user' && (m.content || (m as any).attachments?.length)) return true
+                    if (m.role === 'user' && (m.content || m.attachments?.length)) return true
                     if (m.role === 'assistant' && m.content?.trim()) return true
                     return false
                 })
@@ -365,6 +367,7 @@ export function useAgentChat(options: UseAgentChatOptions = {}) {
             if (reader) {
                 let fullContent = ''
                 let buffer = ''
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 let lastData: any = null
 
                 while (true) {
@@ -419,9 +422,9 @@ export function useAgentChat(options: UseAgentChatOptions = {}) {
                                                     msg.id === assistantMessageId
                                                         ? {
                                                             ...msg,
-                                                            display: data.display || (msg as any).display,
+                                                            display: data.display || msg.display,
                                                             confirmationRequired: data.confirmationRequired,
-                                                            toolResults: data.toolResults || (msg as any).toolResults,
+                                                            toolResults: data.toolResults || msg.toolResults,
                                                         }
                                                         : msg
                                                 )
@@ -476,7 +479,7 @@ export function useAgentChat(options: UseAgentChatOptions = {}) {
                                 }))
                             }
 
-                        } catch (parseError) {
+                        } catch {
                             console.warn('[AgentChat] Failed to parse stream line:', line)
                         }
                     }

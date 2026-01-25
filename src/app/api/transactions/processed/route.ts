@@ -39,9 +39,9 @@ export async function GET() {
       id: tx.id,
       name: tx.description || '',
       amount: typeof tx.amount === 'number' ? tx.amount : parseFloat(tx.amount || '0'),
-      date: tx.date || tx.occurred_at || new Date().toISOString(),
+      date: tx.date || new Date().toISOString(),
       account: tx.account || 'Företagskonto',
-      reference: tx.reference || undefined,
+      reference: undefined,
     }))
 
     // 4. Process (clothe) the naked transactions with AI, icons, status

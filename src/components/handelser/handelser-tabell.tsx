@@ -45,9 +45,10 @@ export function EventsTable({ events, onEventClick }: EventsTableProps) {
     }
 
     return (
-        <div className="w-full">
-            <GridTableHeader
-                columns={[
+        <div className="w-full overflow-x-auto pb-4 -mx-2">
+            <div className="min-w-[800px] px-2">
+                <GridTableHeader
+                    columns={[
                     { label: "Datum", icon: Calendar, span: 2 },
                     { label: "Händelse", icon: Activity, span: 4 },
                     { label: "Källa", icon: Tag, span: 2 },
@@ -107,7 +108,6 @@ export function EventsTable({ events, onEventClick }: EventsTableProps) {
                         )
                     })
                 )}
-            </GridTableRows>
-        </div>
+            </GridTableRows>            </div>        </div>
     )
 }

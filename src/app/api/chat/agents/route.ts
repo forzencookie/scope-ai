@@ -79,7 +79,8 @@ async function handleConfirmation(
     action: 'confirm' | 'cancel',
     context: AgentContext,
     controller: ReadableStreamDefaultController,
-    userDb: UserScopedDb | null
+    userDb: UserScopedDb | null,
+    userId: string
 ): Promise<string> {
     try {
         // Look up the pending confirmation from shared memory or database
@@ -109,7 +110,11 @@ async function handleConfirmation(
             return `Fel: Verktyget kunde inte hittas.`
         }
 
-        const result = await tool.execute(pendingConfirmation.toolParams)
+        const result = await tool.execute(pendingConfirmation.toolParams, {
+            userId,
+            companyId: userDb?.companyId || '',
+            userDb
+        })
 
         if (result.success) {
             streamText(controller, '\nKlart! ✅')
@@ -144,6 +149,7 @@ async function streamAgentResponse(
     controller: ReadableStreamDefaultController,
     userDb: UserScopedDb | null,
     conversationId: string | null,
+    userId: string,
     modelId?: string
 ): Promise<string> {
     let fullContent = ''
@@ -152,7 +158,7 @@ async function streamAgentResponse(
     let executionTimeMs = 0
     let targetDomain: AgentDomain = 'orchestrator'
     let intent: Awaited<ReturnType<typeof smartClassify>> | null = null
-    let toolsCalled: string[] = []
+    const toolsCalled: string[] = []
     let responseSuccess = true
     let errorMessage: string | undefined
     
@@ -217,10 +223,7 @@ async function streamAgentResponse(
                     conversation_id: conversationId,
                     role: 'assistant',
                     content: fullContent,
-                    metadata: {
-                        agent: targetDomain,
-                        intent: intent.category,
-                    }
+                    user_id: userId
                 })
             } catch (e) {
                 console.error('[AgentChat] Failed to save message:', e)
@@ -513,7 +516,8 @@ export async function POST(request: NextRequest) {
                             confirmationAction,
                             confirmContext,
                             controller,
-                            userDb
+                            userDb,
+                            userId
                         )
                     } catch (error) {
                         console.error('[AgentChat] Confirmation error:', error)
@@ -560,12 +564,7 @@ export async function POST(request: NextRequest) {
                 conversation_id: conversationId,
                 role: 'user',
                 content: latestContent,
-                metadata: {
-                    mentions: mentions || [],
-                    attachments: attachments?.map(a => ({ name: a.name, type: a.type })) || [],
-                    model: modelId,
-                    agentMode: true,
-                }
+                user_id: userId
             })
         }
 
@@ -622,6 +621,7 @@ export async function POST(request: NextRequest) {
                         controller,
                         userDb,
                         conversationId || null,
+                        userId,
                         modelId
                     )
                 } catch (error) {

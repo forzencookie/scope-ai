@@ -240,7 +240,7 @@ export class ReceiptAgent extends BaseAgent {
     /**
      * Handle general receipt questions.
      */
-    private async handleGeneral(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleGeneral(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📸 **Ladda upp ett kvitto** så analyserar jag det och föreslår bokföring!\n\n' +
             'Jag kan:\n' +
@@ -264,7 +264,7 @@ export class ReceiptAgent extends BaseAgent {
     /**
      * Extract data from receipt image.
      */
-    private async extractReceiptData(context: AgentContext): Promise<{
+    private async extractReceiptData(_context: AgentContext): Promise<{
         vendor: string
         total: number
         vat: number

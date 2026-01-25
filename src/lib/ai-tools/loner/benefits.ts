@@ -8,7 +8,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import {
     listAvailableBenefits,
     getBenefitDetails,
-    assignBenefit,
+    // assignBenefit,
     suggestUnusedBenefits,
 } from '../../formaner'
 

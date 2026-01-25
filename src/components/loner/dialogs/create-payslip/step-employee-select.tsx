@@ -6,6 +6,7 @@ import { User } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface StepEmployeeSelectProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     employees: any[]
     selectedEmployee: string | null
     setSelectedEmployee: (id: string) => void

@@ -37,6 +37,7 @@ interface TransactionDialogProps {
     setTxPrice: (val: string) => void
     shareholders: ShareholderDisplay[]
     onSave: () => void
+    isSubmitting?: boolean
 }
 
 export function TransactionDialog({
@@ -57,7 +58,8 @@ export function TransactionDialog({
     txPrice,
     setTxPrice,
     shareholders,
-    onSave
+    onSave,
+    isSubmitting = false
 }: TransactionDialogProps) {
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -152,11 +154,11 @@ export function TransactionDialog({
                     </div>
                 </div>
                 <DialogFooter>
-                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                    <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>
                         Avbryt
                     </Button>
-                    <Button onClick={onSave}>
-                        Spara transaktion
+                    <Button onClick={onSave} disabled={isSubmitting}>
+                        {isSubmitting ? "Sparar..." : "Spara transaktion"}
                     </Button>
                 </DialogFooter>
             </DialogContent>

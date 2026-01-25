@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ============================================
 // Core Types - Centralized Type Definitions
 // Single source of truth for all application types
@@ -17,12 +16,12 @@ export type { Tables, TablesInsert, TablesUpdate } from "./database"
 
 // Convenient table row types
 import type { Tables } from "./database"
-export type DbUser = Tables<"users">
+export type DbUser = Tables<"profiles">
 export type DbTransaction = Tables<"transactions">
-export type DbReceipt = Tables<"receipts">
+// export type DbReceipt = Tables<"receipts"> // Table missing in DB
 export type DbCategory = Tables<"categories">
-export type DbTaxReport = Tables<"tax_reports">
-export type DbAiLog = Tables<"ai_logs">
+export type DbTaxReport = Tables<"taxreports">
+export type DbAiLog = Tables<"ailogs">
 
 // ============================================
 // Bank Types (Simulator → Bank → Dashboard flow)
@@ -55,7 +54,7 @@ export type {
 } from "@/lib/company-types"
 
 // Import FeatureKey for use in this file
-import type { FeatureKey } from "@/lib/company-types"
+import type { FeatureKey, CompanyType } from "@/lib/company-types"
 
 // Re-export status constants for convenience
 export {

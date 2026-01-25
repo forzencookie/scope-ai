@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { type Shareholder, type Partner, type BoardMeeting, type OwnerInfo } from '@/data/ownership';
 
 export interface Signatory {
@@ -71,10 +70,10 @@ export function deriveSignatories(companyType: string, data: SignatoryData): Sig
     } else if (companyType === 'hb' || companyType === 'kb') {
         // For HB/KB: Komplementärer can sign
         const effectivePartners = companyType === 'kb'
-            ? ownerInfo.kb.partners || []
+            ? ownerInfo.partners || []
             : partners;
 
-        effectivePartners.forEach(p => {
+        effectivePartners.forEach((p: Partner) => {
             const canSignAlone = p.type === 'komplementär' && p.ownershipPercentage >= 50;
             result.push({
                 id: p.id,
@@ -88,8 +87,8 @@ export function deriveSignatories(companyType: string, data: SignatoryData): Sig
         });
     } else if (companyType === 'forening') {
         // For Förening: Board members from mockOwnerInfo
-        const foreningInfo = ownerInfo.forening;
-        foreningInfo.boardMembers?.forEach((member, idx) => {
+        const boardMembers = ownerInfo.boardMembers;
+        boardMembers?.forEach((member: { name: string; role: string; since: string }, idx: number) => {
             result.push({
                 id: `member-${idx}`,
                 name: member.name,
@@ -102,7 +101,7 @@ export function deriveSignatories(companyType: string, data: SignatoryData): Sig
         });
     } else if (companyType === 'ef') {
         // For EF: Only the owner can sign
-        const owner = ownerInfo.ef.owner;
+        const owner = ownerInfo.owner;
         if (owner) {
             result.push({
                 id: 'owner',

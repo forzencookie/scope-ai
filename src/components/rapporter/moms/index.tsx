@@ -57,8 +57,8 @@ export function MomsdeklarationContent() {
     } = useVatReport()
 
     return (
-        <main className="flex-1 flex flex-col p-6">
-            <div className="max-w-6xl w-full space-y-6">
+        <main className="flex-1 flex flex-col p-4 md:p-6">
+            <div className="w-full space-y-4 md:space-y-6">
                 {/* Page Heading */}
                 <div className="flex flex-col gap-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -107,7 +107,7 @@ export function MomsdeklarationContent() {
                             value={searchQuery}
                             onChange={setSearchQuery}
                             placeholder="Sök period..."
-                            className="w-48"
+                            className="w-full sm:w-48"
                         />
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>

@@ -85,8 +85,8 @@ export class ComplianceAgent extends BaseAgent {
         )
     }
 
-    private async handleDeadlines(message: string, context: AgentContext): Promise<AgentResponse> {
-        const now = new Date()
+    private async handleDeadlines(_message: string, _context: AgentContext): Promise<AgentResponse> {
+        // const now = new Date()
         
         return this.successResponse(
             '📅 **Kommande Deadlines**\n\n' +
@@ -100,7 +100,7 @@ export class ComplianceAgent extends BaseAgent {
         )
     }
 
-    private async handleAnnualMeeting(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleAnnualMeeting(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🏛️ **Årsstämma**\n\n' +
             'Årsstämman ska hållas senast 6 månader efter räkenskapsårets slut.\n\n' +
@@ -113,7 +113,7 @@ export class ComplianceAgent extends BaseAgent {
         )
     }
 
-    private async handleBoardChange(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleBoardChange(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '👥 **Styrelseändring**\n\n' +
             'För att ändra styrelsen behövs:\n\n' +

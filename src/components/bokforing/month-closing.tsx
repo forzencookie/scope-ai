@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { useState } from "react"
@@ -75,7 +74,7 @@ export function MonthClosing() {
                                     }
                                 </CardDescription>
                             </div>
-                            <Badge variant={isLocked ? "success" : "secondary"} className="text-sm px-3 py-1">
+                            <Badge variant={isLocked ? "default" : "secondary"} className="text-sm px-3 py-1">
                                 {isLocked ? "LÅST" : "ÖPPEN"}
                             </Badge>
                         </div>

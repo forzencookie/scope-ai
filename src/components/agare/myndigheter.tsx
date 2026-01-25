@@ -135,7 +135,7 @@ export function Myndigheter() {
                 {connections.map((connection) => {
                     const meta = authorityMeta[connection.authority];
                     const status = statusConfig[connection.status];
-                    const StatusIcon = status.icon;
+                    const StatusIcon = status?.icon as any;
                     // const AuthorityIcon = meta.icon; // Icon removed
 
                     return (
@@ -156,7 +156,7 @@ export function Myndigheter() {
                                         status.bgClass,
                                         status.colorClass
                                     )}>
-                                        <StatusIcon className="h-3 w-3" />
+                                        {(StatusIcon as any) ? <StatusIcon className="h-3 w-3" /> : null}
                                         {status.label}
                                     </div>
                                 </div>

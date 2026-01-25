@@ -31,18 +31,19 @@ export function Bolagsstamma() {
   }, [meetings, searchQuery])
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-6 pt-2">
-         <div className="flex items-center justify-between">
-           <div>
-             <h2 className="text-2xl font-bold tracking-tight">Bolagsstämma</h2>
-             <p className="text-muted-foreground mt-1">
+    <div className="space-y-4 md:space-y-6">
+      <div className="flex flex-col gap-4 md:gap-6 pt-2">
+         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
+           <div className="min-w-0">
+             <h2 className="text-xl md:text-2xl font-bold tracking-tight">Bolagsstämma</h2>
+             <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
                Protokoll, kallelser och beslut från bolagsstämmor.
              </p>
            </div>
-           <Button onClick={() => setShowCreateDialog(true)}>
-             <Plus className="h-4 w-4 mr-2" />
-             Planera stämma
+           <Button size="sm" onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
+             <Plus className="h-4 w-4 sm:mr-2" />
+             <span className="hidden sm:inline">Planera stämma</span>
+             <span className="sm:hidden">Planera</span>
            </Button>
          </div>
       </div>
@@ -51,12 +52,12 @@ export function Bolagsstamma() {
       
       <UpcomingAlert stats={stats} />
 
-      <div className="flex items-center justify-between gap-4">
+      <div className="flex flex-wrap items-center justify-between gap-3 md:gap-4">
          <SearchBar 
             placeholder="Sök på år, status eller beslut..." 
             value={searchQuery}
             onChange={setSearchQuery}
-            className="max-w-md bg-background"
+            className="w-full sm:max-w-md bg-background"
          />
       </div>
 

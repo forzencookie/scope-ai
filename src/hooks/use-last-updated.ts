@@ -7,15 +7,13 @@ import { useState, useEffect } from "react"
  * Returns a formatted Swedish string like "Senast uppdaterad: idag 14:32"
  */
 export function useLastUpdated(): string {
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const [formattedTime, setFormattedTime] = useState<string>("")
-
-  useEffect(() => {
-    // Set the timestamp when component mounts
-    const now = new Date()
-    setLastUpdated(now)
-    setFormattedTime(formatLastUpdated(now))
-  }, [])
+  const [formattedTime] = useState<string>(() => {
+      // Set the timestamp when component mounts
+      return formatLastUpdated(new Date())
+  })
+  
+  // Effect removed in favor of lazy initializer
+  // preventing double render
 
   return formattedTime
 }
@@ -54,31 +52,17 @@ export function formatLastUpdated(date: Date): string {
  * Returns just the formatted time string without "Senast uppdaterad:" prefix
  */
 export function useLastUpdatedTime(): { time: string; date: Date | null } {
-  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
-  const [formattedTime, setFormattedTime] = useState<string>("")
-
-  useEffect(() => {
+  // Use lazy initializer to set time on mount
+  const [mountTime] = useState<{ time: string; date: Date | null }>(() => {
     const now = new Date()
-    setLastUpdated(now)
-    
     const timeStr = now.toLocaleTimeString("sv-SE", { 
       hour: "2-digit", 
       minute: "2-digit" 
     })
-    
-    const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    const dateOnly = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-    
-    if (dateOnly.getTime() === today.getTime()) {
-      setFormattedTime(`idag ${timeStr}`)
-    } else {
-      const dateStr = now.toLocaleDateString("sv-SE", {
-        day: "numeric",
-        month: "short"
-      })
-      setFormattedTime(`${dateStr} ${timeStr}`)
-    }
-  }, [])
+    return { time: timeStr, date: now }
+  })
 
-  return { time: formattedTime, date: lastUpdated }
+  // Effect removed
+
+  return mountTime
 }

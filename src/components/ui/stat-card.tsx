@@ -51,7 +51,7 @@ export function StatCard({
     changeType,
     href,
     className,
-    variant = "bordered",
+    variant: _variant = "bordered",
     iconPosition = "right",
     iconClassName,
     headerIcon: HeaderIcon,
@@ -155,7 +155,7 @@ export function StatCardGrid({ children, columns = 3, className }: StatCardGridP
     return (
         <div
             className={cn(
-                "grid gap-4 grid-cols-2", // 2 columns on mobile
+                "grid gap-4 grid-cols-1 sm:grid-cols-2", // 1 col mobile, 2 cols tablet
                 columns === 2 && "md:grid-cols-2",
                 columns === 3 && "md:grid-cols-3",
                 columns === 4 && "md:grid-cols-4",

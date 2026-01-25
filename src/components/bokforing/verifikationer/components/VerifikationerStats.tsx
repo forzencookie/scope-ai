@@ -8,7 +8,7 @@ interface VerifikationerStatsProps {
 
 export function VerifikationerStats({ stats }: VerifikationerStatsProps) {
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
             <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
                 <FileCheck className="h-5 w-5 text-muted-foreground" />
                 <div>

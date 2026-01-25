@@ -16,6 +16,19 @@
 -- ============================================================================
 -- These tables have user_id as TEXT but should be UUID for proper FK to auth.users
 
+-- Drop policies on these tables first because they might reference the user_id column
+DO $$
+DECLARE
+  t text;
+  p_rec record;
+BEGIN
+  FOREACH t IN ARRAY ARRAY['agireports', 'annualclosings', 'annualreports', 'assets'] LOOP
+    FOR p_rec IN SELECT policyname FROM pg_policies WHERE tablename = t LOOP
+      EXECUTE format('DROP POLICY IF EXISTS %I ON %I', p_rec.policyname, t);
+    END LOOP;
+  END LOOP;
+END $$;
+
 -- agireports
 ALTER TABLE agireports 
   ALTER COLUMN user_id TYPE uuid USING user_id::uuid;
@@ -223,6 +236,9 @@ CREATE POLICY aiusage_service_all ON aiusage FOR ALL TO service_role
 -- PROFILES: Uses id, not user_id
 DROP POLICY IF EXISTS "Users can update own profile" ON profiles;
 DROP POLICY IF EXISTS "Users can view own profile" ON profiles;
+DROP POLICY IF EXISTS profiles_select ON profiles;
+DROP POLICY IF EXISTS profiles_update ON profiles;
+DROP POLICY IF EXISTS profiles_insert ON profiles;
 
 CREATE POLICY profiles_select ON profiles FOR SELECT TO authenticated 
   USING (id = (SELECT auth.uid()));
@@ -238,6 +254,8 @@ CREATE POLICY profiles_insert ON profiles FOR INSERT TO authenticated
 DROP POLICY IF EXISTS "Authenticated users can read categories" ON categories;
 DROP POLICY IF EXISTS "categories_admin_write" ON categories;
 DROP POLICY IF EXISTS "categories_select_policy" ON categories;
+DROP POLICY IF EXISTS categories_select ON categories;
+DROP POLICY IF EXISTS categories_admin_all ON categories;
 
 CREATE POLICY categories_select ON categories FOR SELECT TO authenticated 
   USING (true);
@@ -261,6 +279,8 @@ CREATE POLICY categories_admin_all ON categories FOR ALL TO authenticated
 -- SECURITY AUDIT LOG: Admins can view, service can insert
 DROP POLICY IF EXISTS "Admins can view audit logs" ON securityauditlog;
 DROP POLICY IF EXISTS "System can insert audit logs" ON securityauditlog;
+DROP POLICY IF EXISTS securityauditlog_admin_select ON securityauditlog;
+DROP POLICY IF EXISTS securityauditlog_service_insert ON securityauditlog;
 
 CREATE POLICY securityauditlog_admin_select ON securityauditlog FOR SELECT TO authenticated 
   USING (
@@ -279,6 +299,7 @@ DROP POLICY IF EXISTS ratelimits_select ON ratelimits;
 DROP POLICY IF EXISTS ratelimits_insert ON ratelimits;
 DROP POLICY IF EXISTS ratelimits_update ON ratelimits;
 DROP POLICY IF EXISTS ratelimits_delete ON ratelimits;
+DROP POLICY IF EXISTS ratelimits_service_all ON ratelimits;
 
 CREATE POLICY ratelimits_service_all ON ratelimits FOR ALL TO service_role 
   USING (true) WITH CHECK (true);
@@ -286,6 +307,8 @@ CREATE POLICY ratelimits_service_all ON ratelimits FOR ALL TO service_role
 -- RATE LIMITS SLIDING: Anon for rate limiting, service role for management
 DROP POLICY IF EXISTS "Anon rate limit access" ON ratelimitssliding;
 DROP POLICY IF EXISTS "Service role full access" ON ratelimitssliding;
+DROP POLICY IF EXISTS ratelimitssliding_anon_all ON ratelimitssliding;
+DROP POLICY IF EXISTS ratelimitssliding_service_all ON ratelimitssliding;
 
 CREATE POLICY ratelimitssliding_anon_all ON ratelimitssliding FOR ALL TO anon 
   USING (true) WITH CHECK (true);
@@ -380,6 +403,11 @@ END $$;
 
 DO $$
 BEGIN
+  -- Add status column if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'annualclosings' AND column_name = 'status') THEN
+    ALTER TABLE annualclosings ADD COLUMN status TEXT DEFAULT 'draft';
+  END IF;
+
   -- annualclosings status
   ALTER TABLE annualclosings ADD CONSTRAINT chk_annualclosings_status 
     CHECK (status IN ('draft', 'in_progress', 'completed', 'submitted'));
@@ -388,6 +416,11 @@ END $$;
 
 DO $$
 BEGIN
+  -- Add status column if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'annualreports' AND column_name = 'status') THEN
+    ALTER TABLE annualreports ADD COLUMN status TEXT DEFAULT 'draft';
+  END IF;
+
   -- annualreports status
   ALTER TABLE annualreports ADD CONSTRAINT chk_annualreports_status 
     CHECK (status IN ('draft', 'approved', 'submitted', 'filed'));
@@ -396,6 +429,11 @@ END $$;
 
 DO $$
 BEGIN
+  -- Add status column if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'assets' AND column_name = 'status') THEN
+    ALTER TABLE assets ADD COLUMN status TEXT DEFAULT 'active';
+  END IF;
+
   -- assets status
   ALTER TABLE assets ADD CONSTRAINT chk_assets_status 
     CHECK (status IN ('active', 'disposed', 'written_off'));
@@ -404,6 +442,11 @@ END $$;
 
 DO $$
 BEGIN
+  -- Add status column if it doesn't exist
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'bankconnections' AND column_name = 'status') THEN
+    ALTER TABLE bankconnections ADD COLUMN status TEXT DEFAULT 'active';
+  END IF;
+
   -- bankconnections status
   ALTER TABLE bankconnections ADD CONSTRAINT chk_bankconnections_status 
     CHECK (status IN ('active', 'inactive', 'error', 'expired'));
@@ -413,6 +456,11 @@ END $$;
 -- Numeric constraints
 DO $$
 BEGIN
+  -- Add depreciation_rate if not exists
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'assets' AND column_name = 'depreciation_rate') THEN
+    ALTER TABLE assets ADD COLUMN depreciation_rate NUMERIC DEFAULT 0;
+  END IF;
+
   -- assets depreciation_rate must be 0-100
   ALTER TABLE assets ADD CONSTRAINT chk_assets_depreciation_rate 
     CHECK (depreciation_rate >= 0 AND depreciation_rate <= 100);
@@ -421,6 +469,11 @@ END $$;
 
 DO $$
 BEGIN
+  -- Add purchase_value if not exists
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'assets' AND column_name = 'purchase_value') THEN
+    ALTER TABLE assets ADD COLUMN purchase_value NUMERIC DEFAULT 0;
+  END IF;
+
   -- assets purchase_value must be positive
   ALTER TABLE assets ADD CONSTRAINT chk_assets_purchase_value_positive 
     CHECK (purchase_value >= 0);
@@ -429,6 +482,18 @@ END $$;
 
 DO $$
 BEGIN
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'agireports' AND column_name = 'total_salary') THEN
+    ALTER TABLE agireports ADD COLUMN total_salary NUMERIC DEFAULT 0;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'agireports' AND column_name = 'total_tax') THEN
+    ALTER TABLE agireports ADD COLUMN total_tax NUMERIC DEFAULT 0;
+  END IF;
+  
+  IF NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'agireports' AND column_name = 'employer_contributions') THEN
+    ALTER TABLE agireports ADD COLUMN employer_contributions NUMERIC DEFAULT 0;
+  END IF;
+
   -- agireports totals must be non-negative
   ALTER TABLE agireports ADD CONSTRAINT chk_agireports_totals_positive 
     CHECK (total_salary >= 0 AND total_tax >= 0 AND employer_contributions >= 0);
@@ -453,11 +518,21 @@ CREATE INDEX IF NOT EXISTS idx_assets_user_status
   ON assets(user_id, status);
 
 -- Fiscal year queries
-CREATE INDEX IF NOT EXISTS idx_annualclosings_user_year 
-  ON annualclosings(user_id, fiscal_year);
+-- Use DO block to safely create index if column exists, checking for year or fiscal_year
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'annualclosings' AND column_name = 'year') THEN
+    CREATE INDEX IF NOT EXISTS idx_annualclosings_user_year ON annualclosings(user_id, year);
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'annualclosings' AND column_name = 'fiscal_year') THEN
+    CREATE INDEX IF NOT EXISTS idx_annualclosings_user_year ON annualclosings(user_id, fiscal_year);
+  END IF;
 
-CREATE INDEX IF NOT EXISTS idx_annualreports_user_year 
-  ON annualreports(user_id, fiscal_year);
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'annualreports' AND column_name = 'year') THEN
+    CREATE INDEX IF NOT EXISTS idx_annualreports_user_year ON annualreports(user_id, year);
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'annualreports' AND column_name = 'fiscal_year') THEN
+    CREATE INDEX IF NOT EXISTS idx_annualreports_user_year ON annualreports(user_id, fiscal_year);
+  END IF;
+END $$;
 
 -- Company + user queries (for multi-company support)
 CREATE INDEX IF NOT EXISTS idx_accountbalances_user_company 
@@ -479,11 +554,20 @@ CREATE INDEX IF NOT EXISTS idx_companymeetings_user_company
 CREATE INDEX IF NOT EXISTS idx_customerinvoices_user_due 
   ON customerinvoices(user_id, due_date);
 
-CREATE INDEX IF NOT EXISTS idx_transactions_user_occurred 
-  ON transactions(user_id, occurred_at);
+DO $$
+BEGIN
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'transactions' AND column_name = 'occurred_at') THEN
+     CREATE INDEX IF NOT EXISTS idx_transactions_user_occurred ON transactions(user_id, occurred_at);
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'transactions' AND column_name = 'timestamp') THEN
+     CREATE INDEX IF NOT EXISTS idx_transactions_user_occurred ON transactions(user_id, "timestamp");
+  END IF;
 
-CREATE INDEX IF NOT EXISTS idx_receipts_user_captured 
-  ON receipts(user_id, captured_at);
+  IF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'receipts' AND column_name = 'captured_at') THEN
+     CREATE INDEX IF NOT EXISTS idx_receipts_user_captured ON receipts(user_id, captured_at);
+  ELSIF EXISTS (SELECT 1 FROM information_schema.columns WHERE table_name = 'receipts' AND column_name = 'created_at') THEN
+     CREATE INDEX IF NOT EXISTS idx_receipts_user_captured ON receipts(user_id, created_at);
+  END IF;
+END $$;
 
 -- ============================================================================
 -- SECTION 10: ENABLE RLS ON ALL TABLES (if not already enabled)
@@ -561,6 +645,9 @@ GRANT ALL ON ratelimitssliding TO service_role;
 -- ============================================================================
 
 -- Recreate critical functions with proper security settings
+DROP FUNCTION IF EXISTS get_shareholder_stats(text);
+DROP FUNCTION IF EXISTS get_shareholder_stats();
+
 CREATE OR REPLACE FUNCTION get_shareholder_stats(p_company_id TEXT DEFAULT NULL)
 RETURNS TABLE (
   total_shareholders BIGINT,
@@ -583,6 +670,7 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS get_invoice_stats();
 CREATE OR REPLACE FUNCTION get_invoice_stats()
 RETURNS TABLE (
   total_invoices BIGINT,
@@ -606,6 +694,7 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS get_transaction_stats();
 CREATE OR REPLACE FUNCTION get_transaction_stats()
 RETURNS TABLE (
   total_transactions BIGINT,
@@ -629,6 +718,7 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS get_receipt_stats();
 CREATE OR REPLACE FUNCTION get_receipt_stats()
 RETURNS TABLE (
   total_receipts BIGINT,
@@ -650,6 +740,7 @@ BEGIN
 END;
 $$;
 
+DROP FUNCTION IF EXISTS get_inventory_stats();
 CREATE OR REPLACE FUNCTION get_inventory_stats()
 RETURNS TABLE (
   total_items BIGINT,
@@ -672,11 +763,11 @@ END;
 $$;
 
 -- Grant execute to authenticated
-GRANT EXECUTE ON FUNCTION get_shareholder_stats TO authenticated;
-GRANT EXECUTE ON FUNCTION get_invoice_stats TO authenticated;
-GRANT EXECUTE ON FUNCTION get_transaction_stats TO authenticated;
-GRANT EXECUTE ON FUNCTION get_receipt_stats TO authenticated;
-GRANT EXECUTE ON FUNCTION get_inventory_stats TO authenticated;
+GRANT EXECUTE ON FUNCTION get_shareholder_stats(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION get_invoice_stats() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_transaction_stats() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_receipt_stats() TO authenticated;
+GRANT EXECUTE ON FUNCTION get_inventory_stats() TO authenticated;
 
 -- ============================================================================
 -- VERIFICATION: Check RLS status

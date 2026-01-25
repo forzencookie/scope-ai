@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * VAT XML Export for Skatteverket
  * 

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import * as React from "react"
@@ -194,9 +193,9 @@ export function Styrelseprotokoll() {
       {/* Filter Bar */}
       <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
          <FilterTabs 
-            tabs={statusFilterOptions}
-            selectedTab={statusFilter}
-            onSelect={(v) => setStatusFilter(v as StatusFilter)}
+            options={statusFilterOptions}
+            value={statusFilter}
+            onChange={(v) => setStatusFilter(v as StatusFilter)}
          />
          <div className="flex items-center gap-2 w-full sm:w-auto">
             <SearchBar 

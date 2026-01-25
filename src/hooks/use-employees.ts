@@ -1,4 +1,3 @@
-// @ts-nocheck
 
 import { useState, useEffect, useCallback } from "react"
 import { getSupabaseClient } from '@/lib/database/supabase'
@@ -65,6 +64,7 @@ export function useEmployees() {
 
             return {
                 ...data,
+                salary: data.monthly_salary,
                 balance: 0,
                 mileage: 0
             } as Employee

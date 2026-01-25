@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Comprehensive mock data for all pages
  * Used as fallback when database returns empty results

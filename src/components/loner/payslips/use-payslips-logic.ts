@@ -31,6 +31,7 @@ export function usePayslipsLogic() {
             const data = await res.json()
             if (data.payslips) {
                 // Map DB format to UI format
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 setAllPayslips(data.payslips.map((p: any) => ({
                     id: p.id,
                     employee: p.employees?.name || 'Okänd anställd',
@@ -114,7 +115,7 @@ export function usePayslipsLogic() {
         }
     }
 
-    const handlePayslipCreated = (newPayslip: Payslip) => {
+    const handlePayslipCreated = () => {
         fetchPayslips()
     }
 

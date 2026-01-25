@@ -322,7 +322,7 @@ CREATE INDEX idx_k10_user ON k10_declarations(user_id);
 -- HELPER FUNCTIONS
 -- =====================================================
 
-CREATE OR REPLACE FUNCTION get_shareholder_stats(p_company_id TEXT)
+CREATE OR REPLACE FUNCTION get_shareholder_stats_v1(p_company_id TEXT)
 RETURNS JSON AS $$
 DECLARE
     result JSON;

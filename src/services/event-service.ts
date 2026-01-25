@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 // ============================================
 // Händelser Event Service
 // Manages event emission and storage via Supabase
@@ -16,6 +15,7 @@ import { getSupabaseClient } from '@/lib/database/supabase'
 /**
  * Map DB result to HändelseEvent
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function mapDtoToEvent(dto: any): HändelseEvent {
     return {
         id: dto.id,
@@ -47,7 +47,8 @@ export async function getEvents(filters?: EventFilters & { limit?: number; offse
     const supabase = getSupabaseClient()
 
     let query = supabase
-        .from('events')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('events' as any)
         .select('*', { count: 'exact' })
         .order('timestamp', { ascending: false })
 
@@ -112,7 +113,8 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
 
     await Promise.all(sources.map(async (source) => {
         const { count } = await supabase
-            .from('events')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('events' as any)
             .select('*', { count: 'exact', head: true })
             .eq('source', source)
 
@@ -149,7 +151,8 @@ export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent
     }
 
     const { data, error } = await supabase
-        .from('events')
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        .from('events' as any)
         .insert(dbPayload)
         .select()
         .single()

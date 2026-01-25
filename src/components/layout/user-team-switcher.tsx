@@ -13,7 +13,6 @@ import {
     DropdownMenuItem,
     DropdownMenuLabel,
     DropdownMenuSeparator,
-    DropdownMenuShortcut,
     DropdownMenuTrigger,
     DropdownMenuSub,
     DropdownMenuSubTrigger,
@@ -26,7 +25,6 @@ import {
     SidebarMenuItem,
     useSidebar,
 } from "@/components/ui/sidebar"
-import { useCompany } from "@/providers/company-provider"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 
@@ -41,7 +39,6 @@ interface UserTeamSwitcherProps {
 
 export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
     const { isMobile } = useSidebar()
-    const { companyTypeName } = useCompany()
     const { theme, setTheme } = useTheme()
     const router = useRouter()
     const pathname = usePathname()

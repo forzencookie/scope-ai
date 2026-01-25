@@ -9,13 +9,12 @@ import {
     Clock,
     X,
     User,
-    ChevronRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
-import type { SignatureRequest, SignatureStatus } from '@/types/documents';
+import type { SignatureRequest } from '@/types/documents';
 
 // Mock signatories for the flow
 interface SignatoryOption {

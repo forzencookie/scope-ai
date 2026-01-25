@@ -80,7 +80,7 @@ export class RapporterAgent extends BaseAgent {
         )
     }
 
-    private async handlePL(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handlePL(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📈 **Resultaträkning**\n\n' +
             'Jag förbereder resultaträkningen...\n\n' +
@@ -88,7 +88,7 @@ export class RapporterAgent extends BaseAgent {
         )
     }
 
-    private async handleBalance(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleBalance(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '⚖️ **Balansräkning**\n\n' +
             'Jag förbereder balansräkningen...\n\n' +
@@ -96,7 +96,7 @@ export class RapporterAgent extends BaseAgent {
         )
     }
 
-    private async handleComparison(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleComparison(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📊 **Periodjämförelse**\n\n' +
             'Vilka perioder vill du jämföra?\n' +

@@ -35,14 +35,14 @@ export function ResultatrakningContent() {
     }
 
     return (
-        <main className="flex-1 flex flex-col p-6">
+        <main className="flex-1 flex flex-col p-4 md:p-6">
             <CollapsibleTableContainer>
                 {/* Page Heading */}
-                <div className="flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <h2 className="text-2xl font-bold tracking-tight">Resultaträkning</h2>
-                            <p className="text-muted-foreground">Räkenskapsår {new Date().getFullYear()} • {companyType.toUpperCase()}</p>
+                <div className="flex flex-col gap-4 md:gap-6">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                        <div className="min-w-0">
+                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Resultaträkning</h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground">Räkenskapsår {new Date().getFullYear()} • {companyType.toUpperCase()}</p>
                         </div>
                     </div>
                 </div>

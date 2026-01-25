@@ -51,11 +51,11 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
     } = useReceiptsLogic()
 
     return (
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">{text.receipts.title || "Kvitton logg"}</h2>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">{text.receipts.title || "Kvitton logg"}</h2>
                     <p className="text-muted-foreground">{text.receipts.subtitle || "Ladda upp och hantera dina kvitton"}</p>
                 </div>
                 <Button className="gap-2 w-full sm:w-auto" onClick={() => setUploadDialogOpen(true)}>

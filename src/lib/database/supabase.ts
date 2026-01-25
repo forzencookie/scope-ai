@@ -1,6 +1,6 @@
 import { createClient, SupabaseClient } from '@supabase/supabase-js'
 import { createBrowserClient } from '@supabase/ssr'
-import type { Database } from '@/types/supabase'
+import type { Database } from '@/types/database'
 
 // Environment variables - validated lazily to prevent build-time crashes
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL ?? ''

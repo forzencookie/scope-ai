@@ -158,7 +158,7 @@ export function Firmatecknare() {
                 <CardContent className="py-4">
                     <p className="text-sm text-muted-foreground">
                         💡 Ändringar av firmatecknare måste registreras hos Bolagsverket.
-                        Använd "Ny åtgärd" under Händelser för att starta processen.
+                        Använd &quot;Ny åtgärd&quot; under Händelser för att starta processen.
                     </p>
                 </CardContent>
             </Card>

@@ -91,7 +91,7 @@ export class InstallningarAgent extends BaseAgent {
         )
     }
 
-    private async handleIntegrations(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleIntegrations(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🔌 **Integrationer**\n\n' +
             '**Tillgängliga:**\n' +
@@ -107,7 +107,7 @@ export class InstallningarAgent extends BaseAgent {
         )
     }
 
-    private async handleTeam(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleTeam(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '👥 **Team**\n\n' +
             '**Användare:**\n' +
@@ -121,7 +121,7 @@ export class InstallningarAgent extends BaseAgent {
         )
     }
 
-    private async handleBilling(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleBilling(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '💳 **Prenumeration**\n\n' +
             '**Din plan:** Pro\n' +
@@ -136,7 +136,7 @@ export class InstallningarAgent extends BaseAgent {
         )
     }
 
-    private async handlePreferences(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handlePreferences(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🎨 **Inställningar**\n\n' +
             '**Språk:** Svenska 🇸🇪\n' +

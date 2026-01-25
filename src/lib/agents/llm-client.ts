@@ -13,7 +13,7 @@
  * - Provider-agnostic interface
  */
 
-import type { AgentContext, AgentToolResult } from './types'
+import type { AgentToolResult } from './types'
 
 // =============================================================================
 // Types

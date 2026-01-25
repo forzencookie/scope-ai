@@ -45,7 +45,7 @@ export async function POST(req: Request) {
         const employee = await userDb.employees.create({
             name: body.name,
             role: body.role || null,
-            email: body.email || null,
+            // email: body.email || null, // Not in schema
             monthly_salary: Number(body.salary) || 0,
             status: body.status || 'active',
             start_date: body.employment_date || new Date().toISOString().split('T')[0]

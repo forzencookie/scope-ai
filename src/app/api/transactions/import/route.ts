@@ -135,8 +135,10 @@ export async function POST(request: NextRequest) {
                 const cashTx = await userDb.transactions.create({
                     id: `${baseId}-cash`,
                     description: 'Kontantförsäljning (Z-rapport)',
-                    amount: data.cashAmount,
-                    occurred_at: data.date,
+                    name: 'Kontantförsäljning (Z-rapport)',
+                    amount: String(data.cashAmount),
+                    amount_value: data.cashAmount,
+                    date: data.date,
                     status: 'pending',
                     source: 'z-rapport',
                 })
@@ -147,8 +149,10 @@ export async function POST(request: NextRequest) {
                 const cardTx = await userDb.transactions.create({
                     id: `${baseId}-card`,
                     description: 'Kortförsäljning (Z-rapport)',
-                    amount: data.cardAmount,
-                    occurred_at: data.date,
+                    name: 'Kortförsäljning (Z-rapport)',
+                    amount: String(data.cardAmount),
+                    amount_value: data.cardAmount,
+                    date: data.date,
                     status: 'pending',
                     source: 'z-rapport',
                 })
@@ -163,9 +167,11 @@ export async function POST(request: NextRequest) {
             for (const row of rows) {
                 const tx = await userDb.transactions.create({
                     id: randomUUID(),
+                    name: row.description,
                     description: row.description,
-                    amount: row.amount,
-                    occurred_at: row.date,
+                    amount: String(row.amount),
+                    amount_value: Number(row.amount),
+                    date: row.date,
                     status: 'pending',
                     source: 'csv-import',
                 })

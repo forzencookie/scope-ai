@@ -234,7 +234,7 @@ DROP INDEX IF EXISTS ai_usage_model_idx;
 -- =============================================
 
 -- get_meeting_stats (company_meetings has user_id)
-CREATE OR REPLACE FUNCTION get_meeting_stats(p_meeting_type TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION get_meeting_stats_v1(p_meeting_type TEXT DEFAULT NULL)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -353,7 +353,7 @@ END;
 $$;
 
 -- get_invoice_stats (uses customer_invoices table)
-CREATE OR REPLACE FUNCTION get_invoice_stats()
+CREATE OR REPLACE FUNCTION get_invoice_stats_v1()
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -417,12 +417,12 @@ $$;
 -- =============================================
 -- Done!
 -- =============================================
-COMMENT ON FUNCTION get_meeting_stats IS 'Get meeting statistics for the current user';
+COMMENT ON FUNCTION get_meeting_stats_v1 IS 'Get meeting statistics for the current user';
 COMMENT ON FUNCTION get_member_stats IS 'Get member statistics for the current user';
 COMMENT ON FUNCTION get_partner_stats IS 'Get partner statistics for the current user';
 COMMENT ON FUNCTION get_receipt_stats IS 'Get receipt statistics for the current user';
 COMMENT ON FUNCTION get_vat_stats IS 'Get VAT statistics for the current user';
 COMMENT ON FUNCTION get_agi_stats IS 'Get AGI (employer declaration) statistics for the current user';
-COMMENT ON FUNCTION get_invoice_stats IS 'Get invoice statistics for the current user';
+COMMENT ON FUNCTION get_invoice_stats_v1 IS 'Get invoice statistics for the current user';
 COMMENT ON FUNCTION get_payroll_stats IS 'Get payroll statistics for the current user';
 COMMENT ON FUNCTION get_benefit_stats IS 'Get benefit statistics for the current user';

@@ -3,12 +3,10 @@
 import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
-import type { TransactionWithAI } from "@/types"
+import type { TransactionStats } from '@/services/transaction-service'
 import {
     TooltipProvider,
-    TooltipTrigger,
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
 import { MonthClosing } from "@/components/bokforing/month-closing"
 import { Loader2 } from "lucide-react"
 
@@ -16,11 +14,7 @@ import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import { PageSidebarSlot } from "@/components/shared/page-sidebar"
 import { TransactionsSidebar } from "@/components/bokforing/transactions-sidebar"
 
-import { Button } from "@/components/ui/button"
-
-import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
-import { transactionService, type TransactionStats } from '@/services/transaction-service'
-import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
+import { DataErrorState } from "@/components/ui/data-error-state"
 import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 
 import { useFeature } from "@/providers/company-provider"
@@ -163,7 +157,7 @@ function AccountingPageContent() {
             console.error(err)
             toast.error('Fel vid bokföring', 'Kunde inte bokföra transaktionen')
         }
-    }, [toast])
+    }, [handleRefresh, toast])
 
     // Feature checks for conditional tabs
     const hasVerifikationer = useFeature('verifikationer')
@@ -185,18 +179,9 @@ function AccountingPageContent() {
             }))
     }, [hasVerifikationer, isEnkel])
 
-    // Helper to get the correct label based on mode
-    const getTabLabel = (tab: typeof allTabs[0]) => {
-        return isEnkel ? tab.labelEnkel : tab.labelAvancerad
-    }
-
     const setCurrentTab = useCallback((tab: string) => {
         router.push(`/dashboard/bokforing?tab=${tab}`, { scroll: false })
     }, [router])
-
-    // Get current tab label for breadcrumb
-    const currentTabData = tabs.find(t => t.id === currentTab)
-    const currentTabLabel = currentTabData ? getTabLabel(currentTabData) : (isEnkel ? "Pengar in & ut" : "Transaktioner")
 
     return (
         <TooltipProvider>

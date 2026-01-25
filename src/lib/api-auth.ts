@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from './database/supabase-server'
 import type { User } from '@supabase/supabase-js'

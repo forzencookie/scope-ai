@@ -59,7 +59,7 @@ describe('validateChatMessages', () => {
     it('should reject empty array', () => {
         const result = validateChatMessages([])
         expect(result.valid).toBe(false)
-        expect(result.error).toContain('at least one message')
+        expect(result.error).toContain('At least one message is required')
     })
 
     it('should reject messages with invalid role', () => {
@@ -96,7 +96,7 @@ describe('validateChatMessages', () => {
         ]
         const result = validateChatMessages(messages)
         expect(result.valid).toBe(false)
-        expect(result.error).toContain('too long')
+        expect(result.error).toContain('exceeds maximum length')
     })
 
     it('should reject too many messages', () => {

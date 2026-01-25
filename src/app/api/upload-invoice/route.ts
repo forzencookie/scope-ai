@@ -94,13 +94,13 @@ Format it as a readable email body.`
 
         // Create inbox item with extracted text (formatted as email)
         const newItem = await userDb.inboxItems.create({
-            sender: sender,
-            title: `Uploaded: ${file.name}`,
-            description: extractedText,
-            date: new Date().toLocaleDateString('sv-SE'),
-            category: 'other',
+            // sender: sender,
+            // title: `Uploaded: ${file.name}`,
+            // description: extractedText,
+            // date: new Date().toLocaleDateString('sv-SE'),
+            // category: 'other',
             read: false,
-            starred: false,
+            // starred: false,
         })
 
         console.log('[Upload] Created inbox item:', newItem?.id)

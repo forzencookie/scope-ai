@@ -96,7 +96,10 @@ describe('parseAmount', () => {
             expect(parseAmount('')).toBe(0)
             expect(parseAmount(null as unknown as string)).toBe(0)
             expect(parseAmount(undefined as unknown as string)).toBe(0)
-            expect(parseAmount(123 as unknown as string)).toBe(0)
+        })
+
+        it('should handle numbers passed as input', () => {
+            expect(parseAmount(123 as unknown as string)).toBe(123)
         })
 
         it('should parse simple numbers', () => {

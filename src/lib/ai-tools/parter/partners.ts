@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Parter AI Tools - Partners (HB/KB Delägare)
  *
@@ -11,7 +10,7 @@ import { defineTool } from '../registry'
 // Partner Tools
 // =============================================================================
 
-export const getPartnersTool = defineTool<Record<string, never>, any[]>({
+export const getPartnersTool = defineTool<Record<string, never>, any>({
     name: 'get_partners',
     description: 'Hämta alla delägare i handelsbolag eller kommanditbolag.',
     category: 'read',
@@ -26,7 +25,7 @@ export const getPartnersTool = defineTool<Record<string, never>, any[]>({
                 return {
                     success: true,
                     data: data,
-                    message: `Hittade ${data.partnerCount || 0} delägare.`,
+                    message: `Hittade ${(data as any).partnerCount || 0} delägare.`,
                     display: {
                         component: 'PartnersGrid' as any,
                         props: { stats: data },
@@ -43,7 +42,7 @@ export const getPartnersTool = defineTool<Record<string, never>, any[]>({
     },
 })
 
-export const getMembersTool = defineTool<Record<string, never>, any[]>({
+export const getMembersTool = defineTool<Record<string, never>, any>({
     name: 'get_members',
     description: 'Hämta alla medlemmar i ekonomisk förening.',
     category: 'read',
@@ -58,7 +57,7 @@ export const getMembersTool = defineTool<Record<string, never>, any[]>({
                 return {
                     success: true,
                     data: data,
-                    message: `Föreningen har ${data.totalMembers || 0} medlemmar, varav ${data.activeMembers || 0} aktiva.`,
+                    message: `Föreningen har ${(data as any).totalMembers || 0} medlemmar, varav ${(data as any).activeMembers || 0} aktiva.`,
                     display: {
                         component: 'MemberList' as any,
                         props: { stats: data },

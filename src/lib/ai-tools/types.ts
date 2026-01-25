@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * AI Tools Type System
  * 
@@ -16,6 +17,12 @@ export type FunctionParameters = {
         items?: { type: string }
     }>
     required?: string[]
+} | any // Allow Zod schemas or other validators
+
+export interface InteractionContext {
+    userId: string
+    companyId: string | null
+    [key: string]: any
 }
 
 // =============================================================================
@@ -51,7 +58,7 @@ export interface AITool<TParams = unknown, TResult = unknown> {
      * Execute the tool with the given parameters.
      * Returns a structured result.
      */
-    execute: (params: TParams) => Promise<AIToolResult<TResult>>
+    execute: (params: TParams, context: InteractionContext) => Promise<AIToolResult<TResult>>
 }
 
 // =============================================================================

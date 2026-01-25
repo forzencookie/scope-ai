@@ -59,7 +59,9 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
 
     return (
         <div className="rounded-md border bg-card">
-            <Table>
+            <div className="w-full overflow-x-auto">
+                <div className="min-w-[1000px]">
+                    <Table>
                 <TableHeader>
                     <TableRow>
                         <TableHead className="w-[50px]">
@@ -133,6 +135,8 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
                     )}
                 </TableBody>
             </Table>
+                </div>
+            </div>
         </div>
     )
 }

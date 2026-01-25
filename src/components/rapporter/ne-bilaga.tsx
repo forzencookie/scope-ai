@@ -167,12 +167,12 @@ export function NEBilagaContent() {
 
     return (
         <TooltipProvider>
-            <main className="flex-1 flex flex-col p-6">
-                <div className="max-w-6xl w-full space-y-6">
+            <main className="flex-1 flex flex-col p-4 md:p-6">
+                <div className="w-full space-y-4 md:space-y-6">
                     {/* Page Heading */}
-                    <div className="flex items-start justify-between gap-4">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>
-                            <h2 className="text-2xl font-bold tracking-tight">NE-bilaga</h2>
+                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">NE-bilaga</h2>
                             <p className="text-muted-foreground">Näringsverksamhet – Enskild firma. Bifogas till din personliga inkomstdeklaration.</p>
                         </div>
                     </div>

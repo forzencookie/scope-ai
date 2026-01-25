@@ -1,13 +1,9 @@
 import {
-    Banknote,
-    Calculator,
     Gift,
     Car,
     GraduationCap,
     Utensils,
     Dumbbell,
-    User,
-    Calendar,
     Fuel,
     type LucideIcon
 } from "lucide-react"

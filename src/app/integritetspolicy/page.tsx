@@ -84,7 +84,7 @@ const sections = [
                 <ul className="grid sm:grid-cols-2 gap-3 text-sm">
                     <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />
-                        All data krypteras ("at rest") och vid överföring.
+                        All data krypteras (&quot;at rest&quot;) och vid överföring.
                     </li>
                     <li className="flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-green-500" />

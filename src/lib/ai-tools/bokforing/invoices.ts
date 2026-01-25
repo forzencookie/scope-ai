@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Bokföring AI Tools - Invoices
  *
@@ -10,8 +9,8 @@ import type { AIDisplayInstruction } from '../types'
 import { headers } from 'next/headers'
 
 // Helper to get base URL for API calls
-function getBaseUrl(): string {
-    const headersList = headers()
+async function getBaseUrl(): Promise<string> {
+    const headersList = await headers()
     const host = headersList.get('host') || 'localhost:3000'
     const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http'
     return `${protocol}://${host}`
@@ -146,7 +145,7 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
     },
     execute: async (params) => {
         try {
-            const baseUrl = getBaseUrl()
+            const baseUrl = await getBaseUrl()
             const queryParams = new URLSearchParams()
             if (params.limit) queryParams.set('limit', params.limit.toString())
             if (params.status) queryParams.set('status', params.status)
@@ -206,7 +205,7 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Inv
     },
     execute: async (params) => {
         try {
-            const baseUrl = getBaseUrl()
+            const baseUrl = await getBaseUrl()
             const queryParams = new URLSearchParams()
             if (params.limit) queryParams.set('limit', params.limit.toString())
             if (params.status) queryParams.set('status', params.status)

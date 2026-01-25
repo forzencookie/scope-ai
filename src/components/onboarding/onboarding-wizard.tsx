@@ -4,14 +4,12 @@ import * as React from "react"
 import { useState, useEffect, useCallback } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import {
-  X,
   Check,
   ChevronRight,
   Building2,
   CreditCard,
   FileText,
   Users,
-  Sparkles,
   ArrowRight,
   ExternalLink,
   CheckCircle2,
@@ -175,7 +173,6 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
   const [showMoreBanks, setShowMoreBanks] = useState(false)
-
   const step = onboardingSteps[currentStep]
   const isLastStep = currentStep === onboardingSteps.length - 1
   const isFirstStep = currentStep === 0
@@ -583,7 +580,7 @@ export function useOnboarding() {
     // Check localStorage for permanent completion
     const completed = localStorage.getItem("scope-onboarding-completed")
     if (completed) {
-      setHasCompletedOnboarding(true)
+      setTimeout(() => setHasCompletedOnboarding(true), 0)
       return
     }
 
@@ -591,12 +588,12 @@ export function useOnboarding() {
     const shownThisSession = sessionStorage.getItem("scope-onboarding-shown")
     if (shownThisSession) {
       // Already shown this session, don't show again
-      setHasCompletedOnboarding(false)
+      setTimeout(() => setHasCompletedOnboarding(false), 0)
       return
     }
 
     // First time this session - show onboarding
-    setHasCompletedOnboarding(false)
+    setTimeout(() => setHasCompletedOnboarding(false), 0)
     sessionStorage.setItem("scope-onboarding-shown", "true")
     // Show onboarding after a short delay for smooth transition
     setTimeout(() => setShowOnboarding(true), 500)

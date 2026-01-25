@@ -41,7 +41,7 @@ export function useCreatePayslipLogic({
     const toast = useToast()
     const { addVerification } = useVerifications()
 
-    const [employees, setEmployees] = useState<any[]>([])
+    const [employees, setEmployees] = useState<Record<string, any>[]>([])
     const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
     const [step, setStep] = useState(1)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
@@ -60,6 +60,7 @@ export function useCreatePayslipLogic({
                 const res = await fetch('/api/employees')
                 const data = await res.json()
                 if (data.employees) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     setEmployees(data.employees.map((e: any) => ({
                         id: e.id,
                         name: e.name,

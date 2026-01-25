@@ -179,7 +179,7 @@ const ENTITY_PATTERNS: Record<IntentEntity['type'], RegExp[]> = {
  */
 export async function classifyIntent(
     message: string,
-    context: AgentContext
+    _context: AgentContext
 ): Promise<Intent> {
     const scores: Record<IntentCategory, number> = {
         RECEIPT: 0,
@@ -268,7 +268,7 @@ function extractEntities(message: string): IntentEntity[] {
 /**
  * Detect sub-intent (action type).
  */
-function detectSubIntent(message: string, category: IntentCategory): string {
+function detectSubIntent(message: string, _category: IntentCategory): string {
     const lowerMessage = message.toLowerCase()
 
     if (/skapa|ny|lägg till|create|add|new/.test(lowerMessage)) return 'create'
@@ -321,7 +321,7 @@ function getSuggestedAgents(scores: Record<IntentCategory, number>): AgentDomain
 export async function classifyIntentWithLLM(
     message: string,
     context: AgentContext,
-    model = 'gpt-4o-mini'
+    _model = 'gpt-4o-mini'
 ): Promise<Intent> {
     // For now, fall back to pattern matching
     // In production, this would call the LLM

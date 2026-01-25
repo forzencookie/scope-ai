@@ -1,7 +1,7 @@
-import { createServerClient, type CookieOptions } from '@supabase/ssr'
+import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
-import type { Database } from '@/types/supabase'
+import type { Database } from '@/types/database'
 
 /**
  * Create a Supabase client for Server Components and Route Handlers

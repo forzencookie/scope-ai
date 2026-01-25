@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types
 /**
  * VAT Reports API
  * 
@@ -63,7 +62,7 @@ export async function POST(req: NextRequest) {
         // If status is 'submitted', update the financial period status too
         if (report.status === 'submitted') {
             await userDb.client
-                .from('financial_periods')
+                .from('financialperiods')
                 .update({ status: 'submitted' })
                 .eq('id', report.period_id);
         }

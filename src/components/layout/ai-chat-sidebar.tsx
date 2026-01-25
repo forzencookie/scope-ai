@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { useRef, useEffect, useState, useCallback } from "react"
@@ -7,7 +6,7 @@ import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { type MentionItem } from "@/components/ai/mention-popover"
 import { getGreeting } from "@/lib/chat-utils"
-import { Plus, MessageSquare, Loader2 } from "lucide-react"
+import { Plus, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import {
@@ -26,7 +25,7 @@ interface AIChatSidebarProps {
     onModeChange?: (mode: SidebarMode) => void
 }
 
-export function AIChatSidebar({ mode, onModeChange }: AIChatSidebarProps) {
+export function AIChatSidebar({ }: AIChatSidebarProps) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
 

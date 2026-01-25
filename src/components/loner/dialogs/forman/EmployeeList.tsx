@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { User, Calendar, Trash2 } from "lucide-react"
@@ -39,7 +38,7 @@ export function EmployeeList({ benefit, assignedEmployees, onDelete }: EmployeeL
                 ) : (
                     employeesWithBenefit.map((employee, i) => {
                         const remaining = getRemainingAllowance(employee.employeeName)
-                        const metadata = employee.metadata || {}
+                        const metadata = (employee as unknown as { metadata: Record<string, any> }).metadata || {}
 
                         return (
                             <div key={i} className="flex items-start justify-between p-3 bg-muted/40 rounded-lg border hover:bg-muted/60 transition-colors group">
@@ -50,7 +49,7 @@ export function EmployeeList({ benefit, assignedEmployees, onDelete }: EmployeeL
                                     </div>
                                     <div className="text-sm text-muted-foreground pl-6">
                                         {formatCurrency(employee.amount)}
-                                        {benefit.period && <span className="text-xs ml-1">/{benefit.period}</span>}
+                                        {(benefit as unknown as { period?: string }).period && <span className="text-xs ml-1">/{(benefit as unknown as { period?: string }).period}</span>}
                                     </div>
 
                                     {/* Detailed Metadata Display */}

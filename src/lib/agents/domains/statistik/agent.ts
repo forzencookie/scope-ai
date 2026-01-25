@@ -96,7 +96,7 @@ export class StatistikAgent extends BaseAgent {
         )
     }
 
-    private async handleOverview(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleOverview(_message: string, _context: AgentContext): Promise<AgentResponse> {
         // In production, fetch real data
         return this.successResponse(
             '🏢 **Företagsöversikt**\n\n' +
@@ -112,7 +112,7 @@ export class StatistikAgent extends BaseAgent {
         )
     }
 
-    private async handleKPIs(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleKPIs(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📊 **Nyckeltal**\n\n' +
             '| Nyckeltal | Värde | Status |\n' +
@@ -126,7 +126,7 @@ export class StatistikAgent extends BaseAgent {
         )
     }
 
-    private async handleCostAnalysis(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleCostAnalysis(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '💸 **Kostnadsanalys**\n\n' +
             '**Top 5 kostnadsposter:**\n' +
@@ -140,7 +140,7 @@ export class StatistikAgent extends BaseAgent {
         )
     }
 
-    private async handleTrends(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleTrends(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📈 **Trender (senaste 6 mån)**\n\n' +
             'Intäkter: ↗️ +18% (stabil uppgång)\n' +

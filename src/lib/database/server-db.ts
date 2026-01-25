@@ -1,12 +1,10 @@
-// @ts-nocheck - Supabase types are stale, will regenerate after migration
 import { getSupabaseAdmin } from './supabase';
 // import { SimulatedDB } from './server-db-types'; // Removed: Missing file
 
 
 // Suppress type errors for now until Supabase types are regenerated
-// @ts-nocheck but cleaner
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
+// /* eslint-disable @typescript-eslint/ban-ts-comment */
 
 // We keep the SimulatedDB interface compatible for now, or use loose typing
 // as the frontend expects certain shapes.
@@ -40,13 +38,10 @@ export const db = {
         const supabase = getSupabaseAdmin();
         const defaultLimit = options?.limit ?? 20; // Default to 20 records per table to optimize initial load
 
-        // @ts-ignore
         const [tx, rc, si, ver] = await Promise.all([
             supabase.from('transactions').select('*').order('occurred_at', { ascending: false }).limit(defaultLimit),
             supabase.from('receipts').select('*').order('captured_at', { ascending: false }).limit(defaultLimit),
-            // @ts-ignore
-            supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }).limit(defaultLimit),
-            // @ts-ignore
+            supabase.from('supplierinvoices').select('*').order('due_date', { ascending: true }).limit(defaultLimit),
             supabase.from('verifications').select('*').order('date', { ascending: false }).limit(defaultLimit)
         ]);
 
@@ -67,7 +62,6 @@ export const db = {
             inbox: [],
             balances: defaultState.balances, // Still mocked for now
             transactionMetadata: {},
-            invoices: [],
             aiAuditLogs: [],
             financialPeriods: [],
             taxReports: [],
@@ -86,11 +80,13 @@ export const db = {
     // Transactions
     addTransaction: async (tx: any) => {
         const supabase = getSupabaseAdmin();
-        const { error } = await supabase.from('transactions').insert({
+        const { data, error } = await supabase.from('transactions').insert({
             id: tx.id,
             date: tx.date,
             description: tx.description,
-            amount: tx.amount,
+            name: tx.description || 'Transaction',
+            amount: String(tx.amount || 0),
+            amount_value: Number(tx.amount || 0),
             status: tx.status,
             category: tx.category,
             source: tx.source || 'manual',
@@ -105,7 +101,8 @@ export const db = {
         const supabase = getSupabaseAdmin();
         // First get existing meta
         const { data: existing } = await supabase.from('transactions').select('metadata').eq('id', id).single();
-        const newMeta = { ...(existing?.metadata || {}), ...metadata };
+        const existingMeta = (existing?.metadata as object) || {};
+        const newMeta = { ...existingMeta, ...metadata };
 
         await supabase.from('transactions').update({
             metadata: newMeta,
@@ -145,14 +142,14 @@ export const db = {
     } = {}) => {
         const supabase = getSupabaseAdmin();
         // Note: 'invoices' table is for customer invoices
-        let query = supabase.from('invoices').select('*').order('due_date', { ascending: true });
+        let query = supabase.from('customerinvoices').select('*').order('due_date', { ascending: true });
 
         if (filters.status) query = query.eq('status', filters.status);
         if (filters.customer) query = query.ilike('customer_name', `%${filters.customer}%`);
 
         if (filters.limit) query = query.limit(filters.limit);
 
-        const { data, error } = await query;
+        const { data, error } = await query as { data: any[]; error: any };
         if (error) console.error("Supabase Error (getCustomerInvoices):", error);
 
         // Map snake_case to CamelCase if needed by frontend/AI, but generally tools should adapt. 
@@ -172,14 +169,14 @@ export const db = {
         supplier?: string
     } = {}) => {
         const supabase = getSupabaseAdmin();
-        let query = supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true });
+        let query = supabase.from('supplierinvoices').select('*').order('due_date', { ascending: true });
 
         if (filters.status) query = query.eq('status', filters.status);
         if (filters.supplier) query = query.ilike('supplier_name', `%${filters.supplier}%`);
 
         if (filters.limit) query = query.limit(filters.limit);
 
-        const { data, error } = await query;
+        const { data, error } = await query as { data: any[]; error: any };
         if (error) console.error("Supabase Error (getSupplierInvoices):", error);
 
         return (data || []).map(i => ({
@@ -213,19 +210,18 @@ export const db = {
     // Invoices
     addInvoice: async (invoice: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('invoices').insert({
+        const { data, error } = await supabase.from('customerinvoices').insert({
             id: invoice.id,
             invoice_number: invoice.invoiceNumber,
             customer_name: invoice.customerName,
-            amount: invoice.amount,
-            vat_amount: invoice.vatAmount,
-            total_amount: invoice.totalAmount,
-            issue_date: invoice.issueDate || invoice.date,
+            subtotal: invoice.amount || 0,
+            vat_amount: invoice.vatAmount || 0,
+            total_amount: invoice.totalAmount || 0,
+            invoice_date: invoice.issueDate || invoice.date,
             due_date: invoice.dueDate,
             status: invoice.status || 'draft',
-            source: invoice.source || 'manual',
-            created_by: invoice.createdBy || invoice.created_by,
-            metadata: invoice
+            user_id: invoice.createdBy || invoice.created_by,
+            company_id: invoice.companyId || '00000000-0000-0000-0000-000000000000', // Fallback for strict typing
         }).select().single();
         if (error) console.error("Supabase Error (addInvoice):", error);
         return data || invoice;
@@ -235,8 +231,7 @@ export const db = {
     addSupplierInvoice: async (invoice: any) => {
         const supabase = getSupabaseAdmin();
         // Map frontend CamelCase to DB snake_case
-        // @ts-ignore
-        const { error } = await supabase.from('supplier_invoices').insert({
+        const { data, error } = await supabase.from('supplierinvoices').insert({
             id: invoice.id,
             invoice_number: invoice.invoiceNumber,
             supplier_name: invoice.supplierName, // or .supplier
@@ -248,7 +243,7 @@ export const db = {
             status: invoice.status,
             ocr: invoice.ocr || invoice.ocrNumber
         }).select().single();
-        
+
         if (error) {
             console.error('Error adding supplier invoice:', error);
             throw error;
@@ -263,7 +258,7 @@ export const db = {
         const dbUpdates: any = {};
         if (updates.status) dbUpdates.status = updates.status;
 
-        const { error } = await supabase.from('supplier_invoices').update(dbUpdates).eq('id', id);
+        const { error } = await supabase.from('supplierinvoices').update(dbUpdates).eq('id', id);
         if (error) {
             console.error('Error updating supplier invoice:', error);
             throw error;
@@ -282,12 +277,11 @@ export const db = {
             id = `A-${(count || 0) + 1}`;
         }
 
-        // @ts-ignore
-        const { error } = await supabase.from('verifications').insert({
+        const { data, error } = await supabase.from('verifications').insert({
             id,
             date: verification.date,
             description: verification.description,
-            rows: verification.rows
+            rows: verification.rows as any // Cast explicitly if type mismatch, but 'rows' is now in schema
         }).select().single();
 
         if (error) {
@@ -318,7 +312,7 @@ export const db = {
     getInboxItems: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase
-            .from('inbox_items')
+            .from('inboxitems')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(limit ?? 50); // Default pagination
@@ -338,7 +332,7 @@ export const db = {
 
     addInboxItem: async (item: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('inbox_items').insert({
+        const { data, error } = await supabase.from('inboxitems').insert({
             id: item.id || undefined,
             sender: item.sender,
             title: item.title,
@@ -359,14 +353,14 @@ export const db = {
         if (updates.starred !== undefined) dbUpdates.starred = updates.starred;
         if (updates.category !== undefined) dbUpdates.category = updates.category;
 
-        const { error } = await supabase.from('inbox_items').update(dbUpdates).eq('id', id);
+        const { error } = await supabase.from('inboxitems').update(dbUpdates).eq('id', id);
         if (error) console.error('updateInboxItem error:', error);
         return { id, ...updates };
     },
 
     clearInbox: async () => {
         const supabase = getSupabaseAdmin();
-        const { error } = await supabase.from('inbox_items').delete().neq('id', '00000000-0000-0000-0000-000000000000');
+        const { error } = await supabase.from('inboxitems').delete().neq('id', '00000000-0000-0000-0000-000000000000');
         if (error) console.error('clearInbox error:', error);
         return { success: !error };
     },
@@ -398,14 +392,14 @@ export const db = {
     // Financial Periods
     getFinancialPeriods: async () => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('financial_periods').select('*').order('start_date', { ascending: false });
+        const { data, error } = await supabase.from('financialperiods').select('*').order('start_date', { ascending: false });
         if (error) console.error("Supabase Error (getFinancialPeriods):", error);
         return data || [];
     },
 
     updateFinancialPeriodStatus: async (id: string, status: string) => {
         const supabase = getSupabaseAdmin();
-        const { error } = await supabase.from('financial_periods').update({ status }).eq('id', id);
+        const { error } = await supabase.from('financialperiods').update({ status }).eq('id', id);
         if (error) console.error("Supabase Error (updateFinancialPeriodStatus):", error);
         return { success: !error };
     },
@@ -413,8 +407,8 @@ export const db = {
     // Tax Reports (VAT etc)
     getTaxReports: async (type?: string) => {
         const supabase = getSupabaseAdmin();
-        let query = supabase.from('tax_reports').select('*').order('generated_at', { ascending: false });
-        if (type) query = query.eq('report_type', type);
+        let query = supabase.from('taxreports').select('*').order('generated_at', { ascending: false });
+        if (type) query = query.eq('type', type);
         const { data, error } = await query;
         if (error) console.error("Supabase Error (getTaxReports):", error);
         return data || [];
@@ -422,11 +416,11 @@ export const db = {
 
     upsertTaxReport: async (report: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('tax_reports').upsert({
+        const { data, error } = await supabase.from('taxreports').upsert({
             id: report.id || undefined,
             user_id: report.user_id,
             period_id: report.period_id,
-            report_type: report.report_type || 'vat',
+            type: report.report_type || 'vat',
             data: report.data,
             status: report.status || 'draft',
             period_start: report.period_start,
@@ -470,7 +464,7 @@ export const db = {
     // Payslips
     getPayslips: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        let query = supabase.from('payslips').select('*, employees(*)').order('created_at', { ascending: false });
+        let query = supabase.from('payslips' as any).select('*, employees(*)').order('created_at', { ascending: false });
         if (limit) query = query.limit(limit);
         else query = query.limit(50); // Default pagination
         const { data, error } = await query;
@@ -480,7 +474,7 @@ export const db = {
 
     addPayslip: async (payslip: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('payslips').insert({
+        const { data, error } = await supabase.from('payslips' as any).insert({
             id: payslip.id,
             employee_id: payslip.employee_id,
             period: payslip.period,
@@ -500,7 +494,7 @@ export const db = {
     // Corporate Compliance
     getCorporateDocuments: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        let query = supabase.from('corporate_documents').select('*').order('date', { ascending: false });
+        let query = supabase.from('corporate_documents' as any).select('*').order('date', { ascending: false });
         if (limit) query = query.limit(limit);
         else query = query.limit(50); // Default pagination
         const { data } = await query;
@@ -509,7 +503,7 @@ export const db = {
 
     addCorporateDocument: async (doc: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('corporate_documents').insert({
+        const { data, error } = await supabase.from('corporate_documents' as any).insert({
             id: doc.id || undefined,
             type: doc.type,
             title: doc.title,
@@ -526,7 +520,7 @@ export const db = {
 
     getShareholders: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
-        let query = supabase.from('shareholders').select('*').order('shares_count', { ascending: false });
+        let query = supabase.from('shareholders' as any).select('*').order('shares_count', { ascending: false });
         if (limit) query = query.limit(limit);
         else query = query.limit(100); // Default pagination
         const { data } = await query;
@@ -535,14 +529,14 @@ export const db = {
 
     updateShareholder: async (id: string, updates: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('shareholders').update(updates).eq('id', id).select().single();
+        const { data, error } = await supabase.from('shareholders' as any).update(updates).eq('id', id).select().single();
         if (error) console.error("Supabase Error (updateShareholder):", error);
         return data || { id, ...updates };
     },
 
     addShareholder: async (shareholder: any) => {
         const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('shareholders').insert({
+        const { data, error } = await supabase.from('shareholders' as any).insert({
             name: shareholder.name,
             ssn_org_nr: shareholder.ssn_org_nr || '',
             shares_count: shareholder.shares_count || 0,
@@ -564,7 +558,7 @@ export const db = {
         const supabase = getSupabaseAdmin();
         // Get active roadmaps with their steps
         const { data, error } = await supabase
-            .from('roadmaps')
+            .from('roadmaps' as any)
             .select('*, steps:roadmap_steps(*)')
             .eq('user_id', userId)
             .eq('status', 'active')
@@ -584,12 +578,10 @@ export const db = {
         const supabase = getSupabaseAdmin();
 
         // Parallel queries for speed
-        // @ts-ignore
         const [tx, invoices, inbox] = await Promise.all([
             supabase.from('transactions').select('amount, status').limit(100), // Last 100 tx
-            // @ts-ignore
-            supabase.from('supplier_invoices').select('amount, due_date, status').eq('status', 'unpaid'),
-            supabase.from('inbox_items').select('count', { count: 'exact', head: true }).eq('read', false)
+            supabase.from('supplierinvoices').select('amount, due_date, status').eq('status', 'unpaid'),
+            supabase.from('inboxitems').select('count', { count: 'exact', head: true }).eq('read', false)
         ]);
 
         return {
@@ -638,7 +630,8 @@ export const db = {
         content: string,
         tool_calls?: any,
         tool_results?: any,
-        metadata?: any
+        metadata?: any,
+        user_id: string
     }) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('messages').insert({
@@ -647,7 +640,7 @@ export const db = {
             content: message.content,
             tool_calls: message.tool_calls,
             tool_results: message.tool_results,
-            metadata: message.metadata
+            user_id: message.user_id
         }).select().single();
 
         // Update conversation timestamp

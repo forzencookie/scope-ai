@@ -88,6 +88,7 @@ export function useAsync<T>(
   // This ensures the async function has access to current closure values
   useEffect(() => {
     asyncFnRef.current = asyncFn
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [asyncFn, ...deps]) // Include asyncFn and spread deps for proper tracking
 
   const execute = useCallback(async () => {
@@ -185,11 +186,14 @@ export function useAsyncMutation<TInput, TResult>(
   
   // Store options in ref to keep execute stable
   const optionsRef = useRef(options)
-  optionsRef.current = options
   
   // Store mutationFn in ref to keep execute stable
   const mutationFnRef = useRef(mutationFn)
-  mutationFnRef.current = mutationFn
+
+  useEffect(() => {
+    optionsRef.current = options
+    mutationFnRef.current = mutationFn
+  }, [options, mutationFn])
 
   useEffect(() => {
     isMounted.current = true

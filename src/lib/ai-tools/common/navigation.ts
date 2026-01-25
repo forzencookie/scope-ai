@@ -323,7 +323,7 @@ export const navigateToTool = defineTool<NavigateToParams, { route: string }>({
                     info.label.toLowerCase().includes(params.page.toLowerCase().slice(0, 3)) ||
                     info.aliases.some(a => a.includes(params.page.toLowerCase().slice(0, 3)))
                 )
-                .map(([key, info]) => info.label)
+                .map(([_, info]) => info.label)
                 .slice(0, 3)
 
             const suggestionText = suggestions.length > 0

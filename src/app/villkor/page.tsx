@@ -20,7 +20,7 @@ export default function TermsPage() {
 
                             <h3>1. Tjänsten</h3>
                             <p>
-                                Scope AI tillhandahåller en molnbaserad bokföringstjänst som använder artificiell intelligens för att automatisera bokföringsprocesser. Tjänsten tillhandahålls "i befintligt skick".
+                                Scope AI tillhandahåller en molnbaserad bokföringstjänst som använder artificiell intelligens för att automatisera bokföringsprocesser. Tjänsten tillhandahålls &quot;i befintligt skick&quot;.
                             </p>
 
                             <h3>2. Användarkonto</h3>

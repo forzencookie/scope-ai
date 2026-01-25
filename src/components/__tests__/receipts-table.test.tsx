@@ -1,8 +1,7 @@
-// @ts-nocheck
 import { screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
 import { renderWithProviders } from "@/test-utils"
-import { ReceiptsTable } from "../bokforing/receipts-table"
+import { ReceiptsTable } from "../bokforing/kvitton"
 import { RECEIPT_STATUSES } from "@/lib/status-types"
 
 // Mock ResizeObserver

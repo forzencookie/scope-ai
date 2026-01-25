@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { Transaction, TransactionStatus } from '@/types'
 
@@ -32,7 +31,7 @@ export const transactionService = {
             .range(offset, offset + limit - 1)
 
         if (search) {
-            query = query.or(`description.ilike.%${search}%,merchant.ilike.%${search}%`)
+            query = query.or(`description.ilike.%${search}%,name.ilike.%${search}%`)
         }
 
         if (statuses.length > 0) {
@@ -52,17 +51,17 @@ export const transactionService = {
         }
 
         return {
-            transactions: (data || []).map(row => {
+            transactions: (data || []).map((row: any) => {
                 // Safe date parsing
-                const dateStr = row.occurred_at ? new Date(row.occurred_at).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
+                const dateStr = row.date ? new Date(row.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
 
                 return {
                     id: row.id,
-                    name: row.description || row.merchant || 'Unknown Transaction',
+                    name: row.name || row.description || 'Unknown Transaction',
                     date: dateStr,
-                    timestamp: row.occurred_at ? new Date(row.occurred_at) : new Date(),
-                    amount: row.amount.toString(), // UI expects string
-                    amountValue: row.amount, // UI expects number
+                    timestamp: row.date ? new Date(row.date) : new Date(),
+                    amount: row.amount_value?.toString() || row.amount || '0',
+                    amountValue: Number(row.amount_value || row.amount || 0),
                     status: (row.status as TransactionStatus) || 'pending',
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     account: (row.metadata as any)?.debit_account || 'Unknown',

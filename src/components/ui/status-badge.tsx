@@ -6,7 +6,6 @@ import {
     CheckCircle2,
     Clock,
     AlertCircle,
-    XCircle,
     BookOpen,
     type LucideIcon,
 } from "lucide-react"

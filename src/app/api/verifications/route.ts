@@ -10,13 +10,13 @@ import { createUserScopedDb } from '@/lib/database/user-scoped-db';
 export async function GET() {
     try {
         const userDb = await createUserScopedDb();
-        
+
         if (!userDb) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const verifications = await userDb.verifications.list({ limit: 200 });
-        
+
         return NextResponse.json({
             verifications,
             userId: userDb.userId,
@@ -31,7 +31,7 @@ export async function GET() {
 export async function POST(req: NextRequest) {
     try {
         const userDb = await createUserScopedDb();
-        
+
         if (!userDb) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -41,7 +41,6 @@ export async function POST(req: NextRequest) {
         const saved = await userDb.verifications.create({
             date: body.date || new Date().toISOString().split('T')[0],
             description: body.description,
-            rows: body.rows,
         });
 
         if (!saved) {

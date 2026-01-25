@@ -40,25 +40,25 @@ export function InventarierTable() {
     } = useInventarierLogic()
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-bold tracking-tight">Tillgångar</h2>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Tillgångar</h2>
                     <p className="text-muted-foreground">
                         Datorer, möbler och andra saker du äger.
                     </p>
                 </div>
-                <div className="flex gap-2">
-                    <Button variant="outline" className="gap-2" onClick={handleDepreciate}>
+                <div className="flex flex-col sm:flex-row gap-2">
+                    <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={handleDepreciate}>
                         <Calculator className="h-4 w-4" />
-                        Bokför avskrivning
+                        <span className="sm:inline">Bokför avskrivning</span>
                     </Button>
                     <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                         <DialogTrigger asChild>
-                            <Button className="gap-2">
+                            <Button className="gap-2 w-full sm:w-auto">
                                 <Plus className="h-4 w-4" />
-                                Ny tillgång
+                                <span className="sm:inline">Ny tillgång</span>
                             </Button>
                         </DialogTrigger>
                         <DialogContent>

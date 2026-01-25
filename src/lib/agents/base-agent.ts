@@ -17,7 +17,7 @@ import type {
     AgentConfirmation,
 } from './types'
 import { aiToolRegistry } from '../ai-tools/registry'
-import { getModelById, DEFAULT_MODEL_ID } from '../ai/models'
+// import { getModelById, DEFAULT_MODEL_ID } from '../ai/models'
 import { 
     callLLM, 
     callLLMWithTools, 
@@ -25,8 +25,8 @@ import {
     type LLMMessage, 
     type LLMToolDefinition,
     type LLMToolCall,
-    type LLMResponse,
-    type LLMStreamChunk,
+    // type LLMResponse,
+    // type LLMStreamChunk,
 } from './llm-client'
 
 // =============================================================================
@@ -218,7 +218,7 @@ export abstract class BaseAgent implements Agent {
      * Check if a memory key is relevant to this agent.
      * Override in subclasses for specific filtering.
      */
-    protected isRelevantMemoryKey(key: string): boolean {
+    protected isRelevantMemoryKey(_key: string): boolean {
         // Default: include everything
         return true
     }

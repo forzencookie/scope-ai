@@ -131,7 +131,7 @@ export default function AboutPage() {
                                     <div>
                                         <h3 className="text-xl font-bold mb-3">Kortsiktigt mål</h3>
                                         <p className="text-stone-600 leading-relaxed text-lg">
-                                            Just nu fokuserar vi på att hjälpa Sveriges företagare att skala genom smart automatisering. Vi vill sänka tröskeln för att starta eget genom att göra administrationen transparent och begriplig – en gradvis "microdosing" av företagande som stärker snarare än skrämmer.
+                                            Just nu fokuserar vi på att hjälpa Sveriges företagare att skala genom smart automatisering. Vi vill sänka tröskeln för att starta eget genom att göra administrationen transparent och begriplig – en gradvis &quot;microdosing&quot; av företagande som stärker snarare än skrämmer.
                                         </p>
                                     </div>
                                 </motion.div>

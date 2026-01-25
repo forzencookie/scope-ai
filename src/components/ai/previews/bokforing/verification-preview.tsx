@@ -1,4 +1,3 @@
-// @ts-nocheck
 
 import { Check, ArrowRight, FileText, AlertCircle } from "lucide-react"
 import { Card } from "@/components/ui/card"
@@ -25,6 +24,7 @@ interface VerificationPreviewProps {
 
 export function VerificationPreview({ data }: VerificationPreviewProps) {
     const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+    const { addToast: toast } = useToast()
 
     const totalDebit = data.rows.reduce((sum, row) => sum + (row.debit || 0), 0)
     const totalCredit = data.rows.reduce((sum, row) => sum + (row.credit || 0), 0)

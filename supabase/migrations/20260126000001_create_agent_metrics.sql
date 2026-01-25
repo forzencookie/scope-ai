@@ -1,3 +1,15 @@
+-- Create conversations table if it doesn't exist (required for agent_metrics)
+CREATE TABLE IF NOT EXISTS conversations (
+    id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+    user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
+    title TEXT,
+    created_at TIMESTAMPTZ DEFAULT NOW(),
+    updated_at TIMESTAMPTZ DEFAULT NOW(),
+    metadata JSONB DEFAULT '{}'::jsonb
+);
+
+CREATE INDEX IF NOT EXISTS idx_conversations_user_id ON conversations(user_id);
+
 -- Agent Metrics Table
 -- Tracks all agent interactions for analytics and debugging
 
@@ -6,7 +18,7 @@ CREATE TABLE IF NOT EXISTS agent_metrics (
     
     -- Request info
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-    company_id UUID REFERENCES companies(id) ON DELETE SET NULL,
+    company_id TEXT REFERENCES companies(id) ON DELETE SET NULL,
     conversation_id UUID REFERENCES conversations(id) ON DELETE SET NULL,
     
     -- Agent routing

@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ============================================
 // Navigation Hooks
 // ============================================
@@ -57,11 +56,14 @@ export function useTeams() {
         navigationService.getTeams(),
         navigationService.getCurrentTeam(),
       ])
-      
+
       if (currentResponse.success) {
-        setCurrentTeam(currentResponse.data)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setCurrentTeam((currentResponse.data as any) || null)
+      } else {
+        setCurrentTeam(null)
       }
-      
+
       if (!teamsResponse.success) throw new Error("Failed to fetch teams")
       return teamsResponse.data
     },

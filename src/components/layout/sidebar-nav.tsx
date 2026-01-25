@@ -1,8 +1,7 @@
-// @ts-nocheck
 "use client"
 
 import * as React from "react"
-import { ChevronRight, type LucideIcon, Folder, Forward, MoreHorizontal, Trash2, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Plus, Loader2 } from "lucide-react"
+import { ChevronRight, type LucideIcon, MoreHorizontal, BadgeCheck, Palette, ChevronsUpDown, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Plus, Loader2 } from "lucide-react"
 import { useTheme } from "next-themes"
 import Link from "next/link"
 import { cn } from "@/lib/utils"
@@ -28,14 +27,9 @@ import {
 import {
   SidebarGroup,
   SidebarGroupLabel,
-  SidebarGroupAction,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { SettingsDialog } from "@/components/installningar/settings-dialog"
@@ -128,12 +122,12 @@ export function NavCollapsibleSection({
   label,
   storageKey,
   defaultOpen = false,
-  icon: Icon,
+  icon: _Icon,
 }: {
   items: {
     title: string
     titleEnkel?: string
-    url: string
+    uring
     icon?: LucideIcon
     isActive?: boolean
     featureKey?: FeatureKey
@@ -255,9 +249,6 @@ export function NavSettings({
     </SidebarGroup>
   )
 }
-
-
-const AI_STORAGE_KEY = 'ai-robot-conversations' // Legacy, kept for reference
 
 interface AIConversation {
   id: string

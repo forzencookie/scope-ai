@@ -1,4 +1,3 @@
-// @ts-nocheck
 // ============================================
 // Hooks - Central Export
 // ============================================
@@ -28,7 +27,7 @@ export type {
 } from "./use-table"
 
 // Data layer hooks
-export * from "./use-inbox"
+
 export * from "./use-transactions"
 export * from "./use-account-balances"
 

@@ -65,7 +65,6 @@ export async function getTransactions(_userId?: string): Promise<ApiResponse<Tra
 }
 
 export async function getTransactionsWithAI(
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _userId?: string
 ): Promise<ApiResponse<TransactionWithAI[]>> {
   try {
@@ -280,7 +279,6 @@ export async function updateTransaction(
 
 export async function deleteTransaction(
   id: string,
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   _userId?: string
 ): Promise<ApiResponse<boolean>> {
   try {

@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import { Checkbox } from "@/components/ui/checkbox"
@@ -58,29 +57,30 @@ export function PayslipsTable({
                         className="cursor-pointer hover:bg-muted/50 transition-colors"
                         selected={selectedIds.has(String(slip.id))}
                     >
-                        <div className="w-[50px] p-4 flex items-center justify-center" onClick={(e) => e.stopPropagation()}>
+                        <div style={{ gridColumn: 'span 1' }} className="flex items-center justify-center p-4" onClick={(e) => e.stopPropagation()}>
                             <Checkbox
                                 checked={selectedIds.has(String(slip.id))}
                                 onCheckedChange={() => onToggleSelection(String(slip.id))}
                             />
                         </div>
-                        <div className="flex-1 p-4 font-medium flex items-center gap-3">
+                        <div style={{ gridColumn: 'span 3' }} className="p-4 font-medium flex items-center gap-3">
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
                                 {slip.employee.substring(0, 2).toUpperCase()}
                             </div>
                             {slip.employee}
                         </div>
-                        <div className="w-[120px] p-4 text-sm text-muted-foreground tabular-nums">
+                        <div style={{ gridColumn: 'span 2' }} className="p-4 text-sm text-muted-foreground tabular-nums">
                             {slip.period}
                         </div>
-                        <div className="w-[120px] p-4 text-right text-sm tabular-nums text-muted-foreground">
+                        <div style={{ gridColumn: 'span 2' }} className="p-4 text-right text-sm tabular-nums text-muted-foreground">
                             {formatCurrency(slip.grossSalary)}
                         </div>
-                        <div className="w-[120px] p-4 text-right text-sm font-medium tabular-nums">
+                        <div style={{ gridColumn: 'span 2' }} className="p-4 text-right text-sm font-medium tabular-nums">
                             {formatCurrency(slip.netSalary)}
                         </div>
-                        <div className="w-[140px] p-4">
-                            <AppStatusBadge status={slip.status === 'draft' ? 'Utkast' : slip.status === 'paid' ? 'Betald' : 'Granskas'} />
+                        <div style={{ gridColumn: 'span 2' }} className="p-4 flex items-center font-medium">
+                            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                            <AppStatusBadge status={slip.status as any} />
                         </div>
                     </GridTableRow>
                 ))}

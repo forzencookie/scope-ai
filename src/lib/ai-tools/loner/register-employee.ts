@@ -1,11 +1,12 @@
-// @ts-nocheck
 
 import { z } from "zod"
-import { AITool, InteractionContext } from "@/lib/ai-tools/types.ts"
+import { AITool, InteractionContext } from "@/lib/ai-tools/types"
 
 export const registerEmployeeTool: AITool = {
     name: "register_employee",
     description: "Proposes registering a new employee. Returns a preview card for user confirmation.",
+    requiresConfirmation: true,
+    category: 'write',
     parameters: z.object({
         name: z.string().describe("Full name of the employee"),
         role: z.string().describe("Job title or role"),
@@ -13,20 +14,38 @@ export const registerEmployeeTool: AITool = {
         salary: z.number().describe("Monthly salary in SEK"),
     }),
 
-    execute: async ({ name, role, email, salary }: { name: string, role: string, email: string, salary: number }, context: InteractionContext) => {
+    execute: async (params: unknown, context: InteractionContext) => {
+        const { name, role, email, salary } = params as { name: string, role: string, email: string, salary: number }
         // We don't save immediately. We return a preview.
         // The preview component will handle the actual saving via API.
 
         return {
             success: true,
-            message: `Prepared registration for ${name}. Please confirm details.`,
+            message: `Jag har förberett registrering av ${name}. Ser det korrekt ut?`,
             display: {
-                type: 'employee_preview',
-                data: {
-                    name,
-                    role,
-                    email,
-                    salary
+                component: "EmployeeList",
+                props: {
+                    employees: [{
+                        name,
+                        role,
+                        email,
+                        salary,
+                        id: 'preview',
+                        status: 'active'
+                    }]
+                }
+            },
+            confirmationRequired: {
+                title: `Registrera ${name}?`,
+                description: "Detta lägger till en ny anställd i systemet.",
+                summary: [
+                    { label: "Namn", value: name },
+                    { label: "Roll", value: role },
+                    { label: "Månadslön", value: String(salary) + " kr" }
+                ],
+                action: {
+                    toolName: "register_employee",
+                    params: params
                 }
             }
         }

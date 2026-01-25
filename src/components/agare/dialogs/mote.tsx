@@ -14,7 +14,7 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 
-export type MeetingType = "annual" | "general"
+export type MeetingType = "annual" | "general" | "board"
 
 interface PlanMeetingDialogProps {
     open: boolean

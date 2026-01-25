@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import { createPortalSession } from '@/lib/stripe'
@@ -27,14 +26,16 @@ export async function POST(request: NextRequest) {
             .eq('id', auth.userId)
             .single()
 
-        if (!profile?.stripe_customer_id) {
+        const customerId = (profile as any)?.stripe_customer_id
+
+        if (!customerId) {
             return ApiResponse.badRequest('No active subscription found')
         }
 
         const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
         const portalUrl = await createPortalSession(
-            profile.stripe_customer_id,
+            customerId,
             `${origin}/dashboard/settings`
         )
 

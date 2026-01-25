@@ -1,15 +1,14 @@
-// @ts-nocheck
 "use client"
 
 import { Suspense, useState, useEffect, useMemo, useCallback } from "react"
 import {
     Activity,
-    History,
+    // History,
     Filter,
     ChevronDown,
     Plus,
-    FolderOpen,
-    List,
+    // FolderOpen,
+    // List,
     Calendar,
     ChevronLeft,
     Loader2,
@@ -29,14 +28,13 @@ import { cn } from "@/lib/utils"
 import { ActionWizard } from "@/components/agare"
 import {
     EventsFolderView,
-    EventsTable,
     EventsCalendar,
     countEventsByQuarter,
     filterEventsByQuarter,
     type Quarter,
     RoadmapView,
 } from "@/components/handelser"
-import { Map } from "lucide-react"
+// import { Map } from "lucide-react"
 
 // View types
 type ViewType = "folders" | "timeline" | "calendar" | "roadmap"
@@ -48,7 +46,7 @@ const availableYears = [currentYear, currentYear - 1, currentYear - 2]
 function HandelserPageContent() {
     const lastUpdated = useLastUpdated()
     // Keep useEvents for Folders (needs counts) and Calendar
-    const { events: allEvents, countsBySource, emitAI, emitUser, emitSystem, isLoading: isGlobalLoading } = useEvents()
+    const { events: allEvents, countsBySource, emitUser, isLoading: isGlobalLoading } = useEvents()
 
     // View state
     const [activeView, setActiveView] = useState<ViewType>("folders")
@@ -62,6 +60,7 @@ function HandelserPageContent() {
     const [wizardOpen, setWizardOpen] = useState(false)
 
     // Handle completing a corporate action from the wizard
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const handleActionComplete = (actionType: CorporateActionType) => {
         emitUser('created', `Ny bolagsåtgärd: ${actionType}`, 'bolagsåtgärd', {
             metadata: { actionType, status: 'draft' }
@@ -100,11 +99,11 @@ function HandelserPageContent() {
 
     // Paginated events for Timeline view
     const {
-        events: paginatedEvents,
-        totalCount: paginatedTotalCount,
-        page,
+        // events: paginatedEvents,
+        // totalCount: paginatedTotalCount,
+        // page,
         setPage,
-        pageSize,
+        // pageSize,
         isLoading: isPaginationLoading
     } = useEventsPaginated(25, paginationFilters)
 
@@ -115,20 +114,13 @@ function HandelserPageContent() {
 
     const quarterEvents = useMemo(() => {
         if (!selectedQuarter) return yearEvents
-        return filterEventsByQuarter(events, selectedYear, selectedQuarter)
-    }, [events, selectedYear, selectedQuarter, yearEvents])
-
-    // Filter by source
-    const filteredEvents = useMemo(() => {
-        const baseEvents = selectedQuarter ? quarterEvents : yearEvents
-        if (!activeFilter) return baseEvents
-        return baseEvents.filter(e => e.source === activeFilter)
-    }, [yearEvents, quarterEvents, selectedQuarter, activeFilter])
+        return filterEventsByQuarter(allEvents, selectedYear, selectedQuarter)
+    }, [allEvents, selectedYear, selectedQuarter, yearEvents])
 
     // Count events by quarter for folder view
     const quarterCounts = useMemo(() => {
-        return countEventsByQuarter(events, selectedYear)
-    }, [events, selectedYear])
+        return countEventsByQuarter(allEvents, selectedYear)
+    }, [allEvents, selectedYear])
 
     // Group paginated events by date for timeline view
     const groupedPaginatedEvents = useMemo(() => {
@@ -142,10 +134,14 @@ function HandelserPageContent() {
         }, {} as Record<string, typeof paginatedEvents>)
     }, [paginatedEvents])
 
-    const dateLabels: Record<string, string> = {
-        [new Date().toLocaleDateString('sv-SE')]: 'Idag',
-        [new Date(Date.now() - 86400000).toLocaleDateString('sv-SE')]: 'Igår',
-    }
+    const dateLabels = useMemo(() => {
+        const now = new Date()
+        const oneDayMs = 86400000
+        return {
+            [now.toLocaleDateString('sv-SE')]: 'Idag',
+            [new Date(now.getTime() - oneDayMs).toLocaleDateString('sv-SE')]: 'Igår',
+        }
+    }, [])
 
     // Handle quarter selection
     const handleSelectQuarter = useCallback((quarter: Quarter) => {
@@ -175,7 +171,7 @@ function HandelserPageContent() {
            }, 100)
            */
         }
-    }, [isLoading, events.length]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [allEvents.length]) // eslint-disable-line react-hooks/exhaustive-deps
 
     // Source filter buttons
     const filterButtons: { source: EventSource | null; label: string }[] = [

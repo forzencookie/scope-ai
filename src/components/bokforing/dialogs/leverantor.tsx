@@ -90,7 +90,7 @@ interface SupplierInvoiceDialogProps {
     onSave?: (data: SupplierInvoiceFormState) => void
 }
 
-const initialFormState: SupplierInvoiceFormState = {
+const getInitialFormState = (): SupplierInvoiceFormState => ({
     supplier: "",
     invoiceNumber: "",
     ocr: "",
@@ -101,7 +101,7 @@ const initialFormState: SupplierInvoiceFormState = {
     category: "Övriga kostnader",
     status: "Mottagen",
     file: null
-}
+})
 
 export function SupplierInvoiceDialog({
     open,
@@ -111,7 +111,7 @@ export function SupplierInvoiceDialog({
     const [activeTab, setActiveTab] = useState<"manual" | "ai">("manual")
     const [aiState, setAiState] = useState<AiState>('idle')
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [formState, setFormState] = useState<SupplierInvoiceFormState>(initialFormState)
+    const [formState, setFormState] = useState<SupplierInvoiceFormState>(getInitialFormState)
 
     // Process file with AI
     const processWithAI = async (file: File) => {
@@ -141,7 +141,14 @@ export function SupplierInvoiceDialog({
     }
 
     // Use shared file capture hook
-    const fileCapture = useFileCapture({
+    const { 
+        cameraInputProps, 
+        imagePreview, 
+        triggerCamera, 
+        handleFileSelect, 
+        cameraInputRef, 
+        clearFile 
+    } = useFileCapture({
         onFileSelected: async (file) => {
             setFormState(prev => ({ ...prev, file }))
             if (activeTab === 'ai') {
@@ -150,23 +157,16 @@ export function SupplierInvoiceDialog({
         }
     })
 
-    // Calculate due date based on invoice date (default 30 days)
-    useEffect(() => {
-        if (formState.date && !formState.dueDate) {
-            const date = new Date(formState.date)
-            date.setDate(date.getDate() + 30)
-            setFormState(prev => ({ ...prev, dueDate: date.toISOString().split('T')[0] }))
-        }
-    }, [formState.date])
+
 
     // Reset form when dialog opens
     useEffect(() => {
         if (open) {
-            setFormState(initialFormState)
+            setFormState(getInitialFormState())
             setActiveTab("manual")
             setAiState('idle')
             setErrorMessage(null)
-            fileCapture.clearFile()
+            clearFile()
         }
     }, [open])
 
@@ -199,7 +199,7 @@ export function SupplierInvoiceDialog({
                 </DialogHeader>
 
                 {/* Hidden camera input */}
-                <input {...fileCapture.cameraInputProps} ref={fileCapture.cameraInputRef} />
+                <input {...cameraInputProps} ref={cameraInputRef} />
 
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -217,17 +217,17 @@ export function SupplierInvoiceDialog({
                     <TabsContent value="manual" className="space-y-4">
                         {!formState.file && !formState.fileName ? (
                             <UploadDropzone
-                                onFilesSelected={fileCapture.handleFileSelect}
+                                onFilesSelected={handleFileSelect}
                                 accept=".pdf,.jpg,.jpeg,.png"
                                 title="Ladda upp faktura"
                                 description="Bifoga PDF eller bild på fakturan"
                             />
                         ) : (
                             <div className="space-y-2">
-                                {fileCapture.imagePreview && (
+                                {imagePreview && (
                                     <div className="relative rounded-lg overflow-hidden border bg-muted/30">
                                         <img
-                                            src={fileCapture.imagePreview}
+                                            src={imagePreview}
                                             alt="Preview"
                                             className="w-full max-h-32 object-contain"
                                         />
@@ -238,7 +238,7 @@ export function SupplierInvoiceDialog({
                                     fileName={formState.fileName}
                                     onRemove={() => {
                                         setFormState(prev => ({ ...prev, file: null, fileName: undefined }))
-                                        fileCapture.clearFile()
+                                        clearFile()
                                     }}
                                 />
                             </div>
@@ -278,7 +278,14 @@ export function SupplierInvoiceDialog({
                                     label="Fakturadatum"
                                     icon={Calendar}
                                     value={formState.date}
-                                    onChange={(v) => updateField('date', v)}
+                                    onChange={(v) => {
+                                        updateField('date', v)
+                                        if (v && !formState.dueDate) {
+                                            const date = new Date(v)
+                                            date.setDate(date.getDate() + 30)
+                                            updateField('dueDate', date.toISOString().split('T')[0])
+                                        }
+                                    }}
                                 />
                                 <FormField
                                     type="date"
@@ -365,13 +372,13 @@ export function SupplierInvoiceDialog({
                         {aiState === 'idle' && (
                             <div className="space-y-4">
                                 <UploadDropzone
-                                    onFilesSelected={fileCapture.handleFileSelect}
+                                    onFilesSelected={handleFileSelect}
                                     accept=".pdf,.jpg,.jpeg,.png"
                                     title="Ladda upp för AI-skanning"
                                     description="AI läser av leverantör, belopp, OCR och datum automatiskt"
                                 />
                                 <div className="flex justify-center">
-                                    <Button variant="outline" size="sm" onClick={fileCapture.triggerCamera} className="gap-2">
+                                    <Button variant="outline" size="sm" onClick={triggerCamera} className="gap-2">
                                         <Camera className="h-4 w-4" />
                                         Ta foto med kamera
                                     </Button>
@@ -417,9 +424,9 @@ export function SupplierInvoiceDialog({
                                 </div>
 
                                 <div className="flex gap-4">
-                                    {fileCapture.imagePreview && (
+                                    {imagePreview && (
                                         <div className="w-24 h-32 rounded-lg overflow-hidden border bg-muted/30 shrink-0">
-                                            <img src={fileCapture.imagePreview} alt="Invoice" className="w-full h-full object-cover" />
+                                            <img src={imagePreview} alt="Invoice" className="w-full h-full object-cover" />
                                         </div>
                                     )}
                                     <div className="flex-1 space-y-3">

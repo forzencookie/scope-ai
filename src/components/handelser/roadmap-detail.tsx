@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Check, Circle, Clock, ChevronDown, ChevronRight, AlertCircle, ArrowRight } from "lucide-react"
+import { ChevronDown, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -14,7 +14,7 @@ import {
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
 import type { Roadmap, RoadmapStep, RoadmapStepStatus } from "@/types/roadmap"
-import { updateStep, updateRoadmapStatus } from "@/services/roadmap-service"
+import { updateStep } from "@/services/roadmap-service"
 
 interface RoadmapDetailProps {
     roadmap: Roadmap
@@ -81,7 +81,7 @@ export function RoadmapDetail({ roadmap, onUpdate, onBack }: RoadmapDetailProps)
 
             <div className="space-y-3">
                 <h3 className="font-medium text-lg px-1">Att göra</h3>
-                {sortedSteps.map((step, index) => {
+                {sortedSteps.map((step) => {
                     const isCompleted = step.status === 'completed'
                     const isOpen = expandedSteps[step.id]
 

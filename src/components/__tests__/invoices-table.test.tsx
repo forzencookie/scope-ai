@@ -1,7 +1,6 @@
-// @ts-nocheck
 import { render, screen } from "@testing-library/react"
 import userEvent from "@testing-library/user-event"
-import { InvoicesTable } from "../bokforing/invoices-table"
+import { InvoicesTable } from "../bokforing/fakturor"
 import { INVOICE_STATUSES } from "@/lib/status-types"
 
 // Mock ResizeObserver

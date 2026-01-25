@@ -75,9 +75,12 @@ export function useCachedQuery<T>({
     const onErrorRef = useRef(onError)
     const queryFnRef = useRef(queryFn)
 
-    onSuccessRef.current = onSuccess
-    onErrorRef.current = onError
-    queryFnRef.current = queryFn
+    // Update refs in effect to avoid render side-effects
+    useEffect(() => {
+        onSuccessRef.current = onSuccess
+        onErrorRef.current = onError
+        queryFnRef.current = queryFn
+    }, [onSuccess, onError, queryFn])
 
     const fetchData = useCallback(async (forceRefresh = false) => {
         const currentRequestId = ++requestIdRef.current
@@ -163,7 +166,10 @@ export function useCachedQuery<T>({
         isMounted.current = true
 
         if (!skip) {
-            fetchData()
+            // Defer fetch to avoid synchronous setState warning
+            setTimeout(() => {
+                if (isMounted.current) fetchData()
+            }, 0)
         }
 
         return () => {

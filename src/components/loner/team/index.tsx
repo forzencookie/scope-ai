@@ -37,15 +37,15 @@ export default function TeamTab() {
     const selectedEmployeeObj = employees.find(e => e.id === selectedEmployee)
 
     return (
-        <div className="space-y-6 max-w-6xl mx-auto px-6">
-            <div className="flex items-center justify-between">
+        <div className="space-y-4 md:space-y-6">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Team & Rapportering</h2>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Team & Rapportering</h2>
                     <p className="text-muted-foreground">Hantera anställda, utlägg och milersättning.</p>
                 </div>
-                <Button onClick={() => setNewEmployeeDialogOpen(true)}>
+                <Button onClick={() => setNewEmployeeDialogOpen(true)} className="w-full sm:w-auto">
                     <Plus className="h-4 w-4 mr-2" />
-                    Ny anställd
+                    <span className="sm:inline">Ny anställd</span>
                 </Button>
             </div>
 
@@ -58,11 +58,11 @@ export default function TeamTab() {
                     <h3 className="text-lg font-medium mb-2">Inga anställda ännu</h3>
                     <p className="text-muted-foreground text-center text-sm max-w-sm">
                         Lägg till ditt team för att hantera löner, tid och utlägg.
-                        Klicka på "Ny anställd" för att börja.
+                        Klicka på &quot;Ny anställd&quot; för att börja.
                     </p>
                 </div>
             ) : (
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                <div className="grid gap-4 md:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                     {employees.map((emp) => (
                         <EmployeeCard
                             key={emp.id}

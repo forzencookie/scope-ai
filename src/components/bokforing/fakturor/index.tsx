@@ -136,18 +136,18 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     )
 
     return (
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between gap-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Fakturor</h2>
+                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Fakturor</h2>
                     <p className="text-muted-foreground text-sm">Hantera alla fakturor</p>
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button className="gap-2">
+                        <Button className="gap-2 w-full sm:w-auto">
                             <Plus className="h-4 w-4" />
-                            Ny faktura
+                            <span className="sm:inline">Ny faktura</span>
                             <ChevronDown className="h-3.5 w-3.5" />
                         </Button>
                     </DropdownMenuTrigger>

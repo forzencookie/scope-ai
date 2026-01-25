@@ -45,8 +45,6 @@ export function useFinancialMetrics() {
         // Initialize last 12 months
         const now = new Date()
         for (let i = 11; i >= 0; i--) {
-            const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
-            const monthKey = d.toLocaleString('sv-SE', { month: 'short' })
             // Initialize if not exists (though we iterate verifications, we want consistent x-axis)
             // Actually, simpler to just map data we have, but chart needs fixed axis usually.
             // Let's stick to dynamically filling based on available data for now, or fixed list.
@@ -57,7 +55,6 @@ export function useFinancialMetrics() {
         verifications.forEach((v: Verification) => {
             const date = new Date(v.date)
             const monthKey = date.toLocaleString('sv-SE', { month: 'short' })
-            const year = date.getFullYear()
             // Filter for current year or rolling? Let's assume current year (2024 in context)
             // Or 12 rolling months. Let's do 12 rolling months for charts.
 
@@ -71,9 +68,6 @@ export function useFinancialMetrics() {
                 const type = getAccountType(row.account)
                 // Revenue (Class 3) is Credit (-). We want positive number for chart.
                 // Expenses (Class 4-8) is Debit (+). We want positive number for chart.
-
-                // Net amount for this row: Debit - Credit
-                const net = row.debit - row.credit
 
                 if (type === 'revenue') {
                     // Revenue increases with Credit. Net is negative. 

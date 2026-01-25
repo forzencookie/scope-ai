@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Skatt AI Tools - Periodiseringsfonder
  *
@@ -9,7 +8,7 @@ import { defineTool } from '../registry'
 import type { AITool } from '../types'
 import {
     listPeriodiseringsfonder,
-    createPeriodiseringsfond,
+    // createPeriodiseringsfond,
     dissolvePeriodiseringsfond,
     getExpiringFonder,
     calculateTaxSavings,

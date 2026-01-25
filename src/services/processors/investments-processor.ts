@@ -1,4 +1,4 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Investments Data Layer
  * 
@@ -40,7 +40,7 @@ async function listFromTable<T>(
 ): Promise<T[]> {
     try {
         const { data, error } = await supabase()
-            .from(table)
+            .from(table as any)
             .select('*')
             .order(orderBy, { ascending: false })
 
@@ -62,7 +62,7 @@ async function createInTable<T>(
 ): Promise<T | null> {
     try {
         const { data, error } = await supabase()
-            .from(table)
+            .from(table as any)
             .insert(input)
             .select()
             .single()
@@ -86,7 +86,7 @@ async function updateInTable<T>(
 ): Promise<T | null> {
     try {
         const { data, error } = await supabase()
-            .from(table)
+            .from(table as any)
             .update({ ...updates, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
@@ -106,7 +106,7 @@ async function updateInTable<T>(
 async function deleteFromTable(table: string, id: string): Promise<boolean> {
     try {
         const { error } = await supabase()
-            .from(table)
+            .from(table as any)
             .delete()
             .eq('id', id)
 
@@ -236,12 +236,12 @@ export const deleteShareHolding = (id: string) => deleteFromTable('share_holding
 export async function recordDividend(id: string, amount: number): Promise<ShareHolding | null> {
     try {
         const { data: existing } = await supabase()
-            .from('share_holdings')
+            .from('share_holdings' as any)
             .select('dividend_received')
             .eq('id', id)
             .single()
 
-        const newTotal = (existing?.dividend_received || 0) + amount
+        const newTotal = ((existing as any)?.dividend_received || 0) + amount
         return updateShareHolding(id, { dividendReceived: newTotal })
     } catch {
         return null

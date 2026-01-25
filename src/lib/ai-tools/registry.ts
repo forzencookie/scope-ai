@@ -5,7 +5,7 @@
  * and execution with audit logging.
  */
 
-import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, AIConfirmationRequest } from './types'
+import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext } from './types'
 import { db } from '../database/server-db'
 
 // Re-export types that tools may need
@@ -74,10 +74,15 @@ class AIToolRegistry {
         params: unknown,
         options?: {
             userId?: string
+            companyId?: string
             skipConfirmation?: boolean
             confirmationId?: string
         }
     ): Promise<AIToolResult<T>> {
+        const context: InteractionContext = {
+            userId: options?.userId || 'system',
+            companyId: options?.companyId || null
+        }
         const tool = this.get(name)
 
         if (!tool) {
@@ -91,7 +96,7 @@ class AIToolRegistry {
         if (tool.requiresConfirmation && !options?.skipConfirmation && !options?.confirmationId) {
             // Return a confirmation request instead of executing
             // The actual confirmation content should be built by the tool
-            const preflightResult = await tool.execute(params)
+            const preflightResult = await tool.execute(params, context)
 
             if (preflightResult.confirmationRequired) {
                 const confirmationId = crypto.randomUUID()
@@ -138,7 +143,7 @@ class AIToolRegistry {
 
         // Execute the tool
         try {
-            const result = await tool.execute(params)
+            const result = await tool.execute(params, context)
 
             // Log the action for audit trail
             if (tool.requiresConfirmation || tool.category === 'write') {

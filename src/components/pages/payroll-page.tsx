@@ -5,14 +5,10 @@
 import { useCallback, Suspense, useMemo } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
     TooltipProvider
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
-import { PiggyBank, Loader2 } from "lucide-react"
+import { Loader2 } from "lucide-react"
 
 // Import constants from payroll components
 import { allTabs } from "@/components/loner/constants"

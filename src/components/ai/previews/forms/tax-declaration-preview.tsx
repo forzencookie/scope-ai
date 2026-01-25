@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 /**
@@ -14,7 +13,8 @@ import {
     FormFieldRow,
     FormTotalRow,
     type FormStatus,
-    type FormFieldValidation
+    type FormFieldValidation,
+    type FormPreviewProps
 } from "../form-preview"
 
 // =============================================================================

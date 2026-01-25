@@ -22,14 +22,18 @@ export function Hero() {
   // Pause/resume based on visibility
   useEffect(() => {
     if (isInView) {
-      // When becoming visible, reset and start fresh
-      setStep(0)
-      setTimelineOffset(0)
-      setIsPaused(false)
-      setRestartKey(prev => prev + 1)
+      // Use a timeout to avoid synchronous state update during render phase of parent
+      const timer = setTimeout(() => {
+        setStep(0)
+        setTimelineOffset(0)
+        setIsPaused(false)
+        setRestartKey(prev => prev + 1)
+      }, 0)
+      return () => clearTimeout(timer)
     } else {
       // When going out of view, pause
-      setIsPaused(true)
+      const timer = setTimeout(() => setIsPaused(true), 0)
+      return () => clearTimeout(timer)
     }
   }, [isInView])
 

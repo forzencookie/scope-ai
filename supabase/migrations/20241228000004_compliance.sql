@@ -41,7 +41,7 @@ CREATE POLICY "Allow all access to corporate_documents" ON corporate_documents F
 CREATE POLICY "Allow all access to shareholders" ON shareholders FOR ALL USING (true);
 
 -- Seed Initial Shareholders (Mock to Real)
-INSERT INTO shareholders (name, shares_count, shares_percentage)
+INSERT INTO shareholders (name, shares, share_percentage)
 VALUES 
     ('Rice', 900, 90.00),
     ('Investor AB', 100, 10.00)

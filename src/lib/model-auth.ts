@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Server-Side Model Authorization
  * 
@@ -6,7 +7,6 @@
  * server-side, preventing client-side bypass attacks.
  */
 
-// @ts-nocheck - Supabase types need regeneration after migration runs
 // TODO: Run `npx supabase gen types typescript` after applying migration
 
 import { getSupabaseAdmin } from './database/supabase'
@@ -202,7 +202,7 @@ export async function getMonthlyUsage(userId: string): Promise<UsageStats | null
         periodStart.setHours(0, 0, 0, 0)
 
         const { data, error } = await supabase
-            .from('ai_usage')
+            .from('ai_usage' as any)
             .select('tokens_used, requests_count, period_start, period_end')
             .eq('user_id', userId)
             .gte('period_start', periodStart.toISOString())
@@ -212,7 +212,7 @@ export async function getMonthlyUsage(userId: string): Promise<UsageStats | null
         }
 
         // Aggregate across all models
-        const totals = data.reduce((acc, row) => ({
+        const totals = data.reduce((acc, row: any) => ({
             tokensUsed: acc.tokensUsed + (row.tokens_used || 0),
             requestsCount: acc.requestsCount + (row.requests_count || 0),
         }), { tokensUsed: 0, requestsCount: 0 })
@@ -262,7 +262,7 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
         const supabase = getSupabaseAdmin()
 
-        await supabase.from('security_audit_log').insert({
+        await supabase.from('security_audit_log' as any).insert({
             user_id: event.userId,
             event_type: event.eventType,
             requested_resource: event.requestedResource,

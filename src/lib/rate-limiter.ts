@@ -1,4 +1,4 @@
-// @ts-nocheck
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Consolidated Rate Limiter
  * 
@@ -67,7 +67,7 @@ function validateIpAddress(ip: string | null | undefined): string | null {
 // Client Identification
 // ============================================================================
 
-const TRUST_PROXY_HEADERS = 
+const TRUST_PROXY_HEADERS =
     process.env.TRUST_PROXY_HEADERS === 'true' ||
     process.env.VERCEL === '1' ||
     process.env.CF_PAGES === '1'
@@ -78,24 +78,24 @@ const TRUST_PROXY_HEADERS =
  */
 export function getClientIdentifier(request: Request): string {
     const isTrusted = TRUST_PROXY_HEADERS || process.env.VERCEL === '1' || process.env.CF_PAGES === '1'
-    
+
     if (isTrusted) {
         // Cloudflare
         const cfIp = validateIpAddress(request.headers.get('cf-connecting-ip'))
         if (cfIp) return `ip:${cfIp}`
-        
+
         // X-Forwarded-For (take first IP)
         const xff = request.headers.get('x-forwarded-for')
         if (xff) {
             const firstIp = validateIpAddress(xff.split(',')[0])
             if (firstIp) return `ip:${firstIp}`
         }
-        
+
         // X-Real-IP
         const realIp = validateIpAddress(request.headers.get('x-real-ip'))
         if (realIp) return `ip:${realIp}`
     }
-    
+
     return 'anonymous'
 }
 
@@ -143,26 +143,26 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
     try {
         // Try to get existing entry
         const { data: existing } = await supabase
-            .from('rate_limits')
+            .from('rate_limits' as any)
             .select('count, reset_time')
             .eq('identifier', identifier)
             .single()
 
         if (existing) {
-            const existingResetTime = new Date(existing.reset_time).getTime()
-            
+            const existingResetTime = new Date((existing as any).reset_time).getTime()
+
             // Window expired - reset
             if (now >= existingResetTime) {
                 await supabase
-                    .from('rate_limits')
+                    .from('rate_limits' as any)
                     .update({ count: 1, reset_time: new Date(resetTime).toISOString() })
                     .eq('identifier', identifier)
-                
+
                 return { success: true, remaining: config.maxRequests - 1, resetTime }
             }
 
             // Rate limit exceeded
-            if (existing.count >= config.maxRequests) {
+            if ((existing as any).count >= config.maxRequests) {
                 return {
                     success: false,
                     remaining: 0,
@@ -173,16 +173,16 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
 
             // Increment counter
             await supabase
-                .from('rate_limits')
-                .update({ count: existing.count + 1 })
+                .from('rate_limits' as any)
+                .update({ count: (existing as any).count + 1 })
                 .eq('identifier', identifier)
 
-            return { success: true, remaining: config.maxRequests - existing.count - 1, resetTime: existingResetTime }
+            return { success: true, remaining: config.maxRequests - (existing as any).count - 1, resetTime: existingResetTime }
         }
 
         // No existing entry - create new one
         await supabase
-            .from('rate_limits')
+            .from('rate_limits' as any)
             .insert({ identifier, count: 1, reset_time: new Date(resetTime).toISOString() })
 
         return { success: true, remaining: config.maxRequests - 1, resetTime }
@@ -220,7 +220,7 @@ export async function checkRateLimit(
  */
 export async function clearRateLimitStore(): Promise<void> {
     if (useSupabase) {
-        await supabase.from('rate_limits').delete().neq('identifier', '')
+        await supabase.from('rate_limits' as any).delete().neq('identifier', '')
     } else {
         memoryStore.clear()
     }
@@ -231,7 +231,7 @@ export async function clearRateLimitStore(): Promise<void> {
  */
 export async function cleanupExpiredEntries(): Promise<void> {
     if (useSupabase) {
-        await supabase.from('rate_limits').delete().lt('reset_time', new Date().toISOString())
+        await supabase.from('rate_limits' as any).delete().lt('reset_time', new Date().toISOString())
     } else {
         const now = Date.now()
         for (const [key, entry] of memoryStore.entries()) {

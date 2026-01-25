@@ -49,7 +49,7 @@ export * from './common/company'
 // ============================================================================
 
 import { aiToolRegistry } from './registry'
-import type { AITool } from './types'
+import { toolsToGoogleFunctions, toolsToOpenAIFunctions, type AITool } from './types'
 import { bokforingTools } from './bokforing'
 import { lonerTools } from './loner'
 import { skattTools } from './skatt'
@@ -85,7 +85,6 @@ export function initializeAITools(): void {
  * Get all tools in OpenAI function calling format
  */
 export function getOpenAITools() {
-    const { toolsToOpenAIFunctions } = require('./types')
     return toolsToOpenAIFunctions(aiToolRegistry.getAll())
 }
 
@@ -93,6 +92,5 @@ export function getOpenAITools() {
  * Get all tools in Google Gemini format
  */
 export function getGoogleTools() {
-    const { toolsToGoogleFunctions } = require('./types')
     return toolsToGoogleFunctions(aiToolRegistry.getAll())
 }

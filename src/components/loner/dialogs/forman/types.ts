@@ -59,8 +59,10 @@ export interface ParkingFormData {
     marketValue: string
 }
 
+import { FormanCatalogItem } from "@/lib/ai/tool-types"
+
 // Common props for all forms
 export interface FormProps {
-    benefit: any // using any for now to match imported type usage or I should import FormanCatalogItem
+    benefit: FormanCatalogItem
     onAssign: (employeeName: string, amount: number, metadata?: Record<string, unknown>) => void
 }

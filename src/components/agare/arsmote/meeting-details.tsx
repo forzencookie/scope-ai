@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { formatDateLong, formatDate } from "@/lib/utils"
 import {
   Calendar,
@@ -96,14 +95,14 @@ export function MeetingDetails({ meeting, onClose }: MeetingDetailsProps) {
           )}
 
           {/* Motions */}
-          {(meeting.motions || []).length > 0 && (
+          {(meeting.motions?.length ?? 0) > 0 && (
             <div className="space-y-3">
               <h4 className="font-medium flex items-center gap-2">
                 <MessageSquare className="h-4 w-4" />
                 Motioner ({meeting.motions?.length} st)
               </h4>
               <div className="space-y-2">
-                {meeting.motions.map((motion: Motion) => (
+                {meeting.motions?.map((motion: Motion) => (
                   <div
                     key={motion.id}
                     className="p-3 bg-muted/50 rounded-lg space-y-2"
@@ -138,7 +137,7 @@ export function MeetingDetails({ meeting, onClose }: MeetingDetailsProps) {
                 Beslut ({meeting.decisions?.length} st)
               </h4>
               <div className="space-y-2">
-                {meeting.decisions.map((decision: any, index: number) => (
+                {(meeting.decisions || []).map((decision: any, index: number) => (
                   <div
                     key={decision.id}
                     className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"

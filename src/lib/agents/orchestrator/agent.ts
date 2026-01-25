@@ -13,7 +13,6 @@ import type {
     AgentContext,
     AgentResponse,
     Intent,
-    IntentCategory,
 } from '../types'
 import { agentRegistry } from '../registry'
 import { messageBus } from '../message-bus'
@@ -87,7 +86,7 @@ export class OrchestratorAgent extends BaseAgent {
     /**
      * Orchestrator always returns high confidence for routing.
      */
-    async canHandle(intent: Intent, context: AgentContext): Promise<number> {
+    async canHandle(_intent: Intent, _context: AgentContext): Promise<number> {
         // Orchestrator handles routing, so always high confidence
         return 1.0
     }

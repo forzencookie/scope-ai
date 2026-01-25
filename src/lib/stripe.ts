@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Stripe Client and Helper Functions
  * 
@@ -5,7 +6,6 @@
  * Tiers: free (no subscription), pro, enterprise
  */
 
-// @ts-nocheck - Supabase types need regeneration after adding stripe_customer_id column
 // TODO: Run migration to add stripe_customer_id, then regenerate types
 
 import Stripe from 'stripe'
@@ -36,7 +36,7 @@ export const stripe = {
     get checkout() { return getStripe().checkout },
     get billingPortal() { return getStripe().billingPortal },
     get webhooks() { return getStripe().webhooks },
-    constructEvent: (...args: Parameters<Stripe['webhooks']['constructEvent']>) => 
+    constructEvent: (...args: Parameters<Stripe['webhooks']['constructEvent']>) =>
         getStripe().webhooks.constructEvent(...args),
 }
 
@@ -73,14 +73,13 @@ export async function getOrCreateCustomer(
 
     // Check if user already has a Stripe customer ID
     const { data: profile } = await supabase
-        // @ts-ignore
-        .from('profiles')
+        .from('profiles' as any)
         .select('stripe_customer_id')
         .eq('id', userId)
         .single()
 
-    if (profile?.stripe_customer_id) {
-        return profile.stripe_customer_id
+    if ((profile as any)?.stripe_customer_id) {
+        return (profile as any).stripe_customer_id
     }
 
     // Create new customer
@@ -94,8 +93,7 @@ export async function getOrCreateCustomer(
 
     // Store customer ID in profile
     await supabase
-        // @ts-ignore
-        .from('profiles')
+        .from('profiles' as any)
         .update({ stripe_customer_id: customer.id })
         .eq('id', userId)
 
@@ -191,8 +189,7 @@ export async function updateUserTier(
     const supabase = getSupabaseAdmin()
 
     await supabase
-        // @ts-ignore
-        .from('profiles')
+        .from('profiles' as any)
         .update({ subscription_tier: tier })
         .eq('id', userId)
 
@@ -207,11 +204,10 @@ export async function getUserIdFromCustomer(customerId: string): Promise<string 
     const supabase = getSupabaseAdmin()
 
     const { data } = await supabase
-        // @ts-ignore
-        .from('profiles')
+        .from('profiles' as any)
         .select('id')
         .eq('stripe_customer_id', customerId)
         .single()
 
-    return data?.id || null
+    return (data as any)?.id || null
 }

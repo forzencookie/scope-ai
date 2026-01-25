@@ -18,13 +18,13 @@ export function InventarierStats({ stats }: InventarierStatsProps) {
         <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/40 dark:to-zinc-950/40 p-5">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
                 {/* Total Value Section */}
-                <div className="flex items-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center gap-4">
                     <div className="h-14 w-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                         <Package className="h-7 w-7 text-slate-600 dark:text-slate-400" />
                     </div>
-                    <div>
+                    <div className="text-center sm:text-left">
                         <p className="text-sm text-muted-foreground">Totalt tillgångsvärde</p>
-                        <p className="text-3xl font-bold tabular-nums">{formatCurrency(totalValue)}</p>
+                        <p className="text-2xl sm:text-3xl font-bold tabular-nums">{formatCurrency(totalValue)}</p>
                         <p className="text-sm text-muted-foreground">
                             {stats.totalCount} tillgångar i {stats.kategorier} kategorier
                         </p>

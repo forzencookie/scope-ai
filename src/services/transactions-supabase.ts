@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 // ============================================
 // Supabase-backed Transactions Service
 // ============================================
@@ -10,12 +9,11 @@ import type {
   SortConfig,
   Transaction,
   TransactionWithAI,
-  AISuggestion,
 } from "@/types"
 import type { TransactionStatus } from "@/lib/status-types"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
 import { supabase } from "@/lib/database/supabase"
-import type { Tables } from "@/types/supabase"
+import type { Tables } from "@/types/database"
 
 // ============================================
 // Type Mappings
@@ -27,21 +25,21 @@ type DbTransaction = Tables<"transactions">
  * Map database transaction to application Transaction type
  */
 function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
-  const isNegative = db.amount < 0
-  const formattedAmount = `${isNegative ? '-' : '+'}$${Math.abs(db.amount).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const isNegative = db.amount_value < 0
+  const formattedAmount = `${isNegative ? '-' : '+'}$${Math.abs(db.amount_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
 
   return {
     id: db.id,
-    name: db.merchant || db.description || 'Unknown Transaction',
-    date: new Date(db.occurred_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-    timestamp: new Date(db.occurred_at),
+    name: db.name || db.description || 'Unknown Transaction',
+    date: new Date(db.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    timestamp: new Date(db.date),
     amount: formattedAmount,
-    amountValue: db.amount,
+    amountValue: db.amount_value, // Use calculated numeric value
     status: (db.status as TransactionStatus) || TRANSACTION_STATUS_LABELS.TO_RECORD,
-    category: category || 'Uncategorized',
-    iconName: getIconForCategory(category || 'Uncategorized'),
-    iconColor: getIconColorForCategory(category || 'Uncategorized'),
-    account: 'Main Account', // Could be enhanced with account lookup
+    category: category || db.category || 'Uncategorized',
+    iconName: getIconForCategory(category || db.category || 'Uncategorized'),
+    iconColor: getIconColorForCategory(category || db.category || 'Uncategorized'),
+    account: db.account || 'Main Account',
     description: db.description || undefined,
   }
 }
@@ -49,12 +47,14 @@ function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
 /**
  * Map application Transaction to database insert format
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function mapTransactionToDb(transaction: Partial<Transaction>, userId: string): Partial<DbTransaction> {
   return {
     user_id: userId,
-    merchant: transaction.name,
-    amount: transaction.amountValue,
-    occurred_at: transaction.timestamp?.toISOString(),
+    name: transaction.name,
+    amount: transaction.amount, // Note: DB likely stores text amount, amount_value stores number
+    amount_value: transaction.amountValue,
+    date: transaction.timestamp?.toISOString() || new Date().toISOString(),
     status: transaction.status,
     description: transaction.description,
     currency: 'USD',
@@ -168,12 +168,9 @@ function errorResponse<T>(error: string, data: T): ApiResponse<T> {
 export async function getTransactions(userId: string): Promise<ApiResponse<Transaction[]>> {
   const { data, error } = await supabase
     .from('transactions')
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
     .eq('user_id', userId)
-    .order('occurred_at', { ascending: false })
+    .order('date', { ascending: false })
 
   if (error) {
     console.error('Failed to fetch transactions:', error)
@@ -181,7 +178,7 @@ export async function getTransactions(userId: string): Promise<ApiResponse<Trans
   }
 
   const transactions = data.map(t =>
-    mapDbToTransaction(t, (t.categories as { name: string } | null)?.name)
+    mapDbToTransaction(t)
   )
 
   return successResponse(transactions)
@@ -190,12 +187,9 @@ export async function getTransactions(userId: string): Promise<ApiResponse<Trans
 export async function getTransactionsWithAI(userId: string): Promise<ApiResponse<TransactionWithAI[]>> {
   const { data, error } = await supabase
     .from('transactions')
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
     .eq('user_id', userId)
-    .order('occurred_at', { ascending: false })
+    .order('date', { ascending: false })
 
   if (error) {
     console.error('Failed to fetch transactions:', error)
@@ -205,7 +199,7 @@ export async function getTransactionsWithAI(userId: string): Promise<ApiResponse
   // For now, AI suggestions would come from a separate AI service
   // This could be enhanced to fetch from an ai_suggestions table
   const transactions: TransactionWithAI[] = data.map(t => ({
-    ...mapDbToTransaction(t, (t.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(t),
     aiSuggestion: undefined, // Would be populated from AI service
     isAIApproved: false,
   }))
@@ -222,10 +216,7 @@ export async function getTransactionsPaginated(
 ): Promise<PaginatedResponse<TransactionWithAI>> {
   let query = supabase
     .from('transactions')
-    .select(`
-      *,
-      categories (name)
-    `, { count: 'exact' })
+    .select('*', { count: 'exact' })
     .eq('user_id', userId)
 
   // Apply filters
@@ -234,28 +225,28 @@ export async function getTransactionsPaginated(
       query = query.in('status', filters.status)
     }
     if (filters.searchQuery) {
-      query = query.or(`merchant.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`)
+      query = query.or(`name.ilike.%${filters.searchQuery}%,description.ilike.%${filters.searchQuery}%`)
     }
     if (filters.dateRange) {
       query = query
-        .gte('occurred_at', filters.dateRange.start.toISOString())
-        .lte('occurred_at', filters.dateRange.end.toISOString())
+        .gte('date', filters.dateRange.start.toISOString())
+        .lte('date', filters.dateRange.end.toISOString())
     }
     if (filters.amountRange) {
       query = query
-        .gte('amount', filters.amountRange.min)
-        .lte('amount', filters.amountRange.max)
+        .gte('amount_value', filters.amountRange.min)
+        .lte('amount_value', filters.amountRange.max)
     }
   }
 
   // Apply sorting
   if (sort) {
-    const dbField = sort.field === 'timestamp' ? 'occurred_at' :
-      sort.field === 'amountValue' ? 'amount' :
-        sort.field === 'name' ? 'merchant' : sort.field
+    const dbField = sort.field === 'timestamp' ? 'date' :
+      sort.field === 'amountValue' ? 'amount_value' :
+        sort.field === 'name' ? 'name' : sort.field
     query = query.order(dbField as string, { ascending: sort.direction === 'asc' })
   } else {
-    query = query.order('occurred_at', { ascending: false })
+    query = query.order('date', { ascending: false })
   }
 
   // Apply pagination
@@ -276,7 +267,7 @@ export async function getTransactionsPaginated(
   }
 
   const transactions: TransactionWithAI[] = data.map(t => ({
-    ...mapDbToTransaction(t, (t.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(t),
     aiSuggestion: undefined,
     isAIApproved: false,
   }))
@@ -295,10 +286,7 @@ export async function getTransactionsPaginated(
 export async function getTransaction(id: string, userId: string): Promise<ApiResponse<TransactionWithAI | null>> {
   const { data, error } = await supabase
     .from('transactions')
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
     .eq('id', id)
     .eq('user_id', userId)
     .single()
@@ -312,7 +300,7 @@ export async function getTransaction(id: string, userId: string): Promise<ApiRes
   }
 
   const transaction: TransactionWithAI = {
-    ...mapDbToTransaction(data, (data.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(data),
     aiSuggestion: undefined,
     isAIApproved: false,
   }
@@ -330,13 +318,10 @@ export async function getTransactionsByStatus(
 ): Promise<ApiResponse<TransactionWithAI[]>> {
   const { data, error } = await supabase
     .from('transactions')
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
     .eq('user_id', userId)
     .eq('status', status)
-    .order('occurred_at', { ascending: false })
+    .order('date', { ascending: false })
 
   if (error) {
     console.error('Failed to fetch transactions by status:', error)
@@ -344,7 +329,7 @@ export async function getTransactionsByStatus(
   }
 
   const transactions: TransactionWithAI[] = data.map(t => ({
-    ...mapDbToTransaction(t, (t.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(t),
     aiSuggestion: undefined,
     isAIApproved: false,
   }))
@@ -362,10 +347,7 @@ export async function updateTransactionStatus(
     .update({ status })
     .eq('id', id)
     .eq('user_id', userId)
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
     .single()
 
   if (error) {
@@ -377,7 +359,7 @@ export async function updateTransactionStatus(
   }
 
   const transaction: TransactionWithAI = {
-    ...mapDbToTransaction(data, (data.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(data),
     aiSuggestion: undefined,
     isAIApproved: false,
   }
@@ -396,9 +378,9 @@ export async function updateTransaction(
 ): Promise<ApiResponse<TransactionWithAI | null>> {
   const dbUpdates: Record<string, unknown> = {}
 
-  if (updates.name !== undefined) dbUpdates.merchant = updates.name
-  if (updates.amountValue !== undefined) dbUpdates.amount = updates.amountValue
-  if (updates.timestamp !== undefined) dbUpdates.occurred_at = updates.timestamp.toISOString()
+  if (updates.name !== undefined) dbUpdates.name = updates.name
+  if (updates.amountValue !== undefined) dbUpdates.amount_value = updates.amountValue
+  if (updates.timestamp !== undefined) dbUpdates.date = updates.timestamp.toISOString()
   if (updates.status !== undefined) dbUpdates.status = updates.status
   if (updates.description !== undefined) dbUpdates.description = updates.description
 
@@ -407,10 +389,7 @@ export async function updateTransaction(
     .update(dbUpdates)
     .eq('id', id)
     .eq('user_id', userId)
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
     .single()
 
   if (error) {
@@ -422,7 +401,7 @@ export async function updateTransaction(
   }
 
   const transaction: TransactionWithAI = {
-    ...mapDbToTransaction(data, (data.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(data),
     aiSuggestion: undefined,
     isAIApproved: false,
   }
@@ -453,17 +432,16 @@ export async function createTransaction(
     .from('transactions')
     .insert({
       user_id: userId,
-      merchant: transaction.name,
-      amount: transaction.amountValue,
-      occurred_at: transaction.timestamp.toISOString(),
+      name: transaction.name,
+      amount: transaction.amount,
+      amount_value: transaction.amountValue,
+      date: transaction.timestamp.toISOString(),
       status: transaction.status,
       description: transaction.description,
       currency: 'USD',
-    })
-    .select(`
-      *,
-      categories (name)
-    `)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } as any) // Cast to any to bypass strict Insert type check for optional ID
+    .select('*')
     .single()
 
   if (error) {
@@ -472,7 +450,7 @@ export async function createTransaction(
   }
 
   const newTransaction: TransactionWithAI = {
-    ...mapDbToTransaction(data, (data.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(data),
     aiSuggestion: undefined,
     isAIApproved: false,
   }
@@ -494,10 +472,7 @@ export async function bulkUpdateStatus(
     .update({ status })
     .in('id', ids)
     .eq('user_id', userId)
-    .select(`
-      *,
-      categories (name)
-    `)
+    .select('*')
 
   if (error) {
     console.error('Failed to bulk update status:', error)
@@ -505,7 +480,7 @@ export async function bulkUpdateStatus(
   }
 
   const transactions: TransactionWithAI[] = data.map(t => ({
-    ...mapDbToTransaction(t, (t.categories as { name: string } | null)?.name),
+    ...mapDbToTransaction(t),
     aiSuggestion: undefined,
     isAIApproved: false,
   }))

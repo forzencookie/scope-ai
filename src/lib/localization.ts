@@ -53,7 +53,8 @@ export const INVOICE_STATUS_LABELS = {
     DRAFT: "Utkast",
     OVERDUE: "Förfallen",
     CANCELLED: "Makulerad",
-    RECORDED: "Bokförd",  // Only achieved via verifikation matching
+    RECORDED: "Bokförd",
+    RECEIVED: "Mottagen",
 } as const
 
 // =============================================================================
@@ -67,6 +68,7 @@ export const RECEIPT_STATUS_LABELS = {
     REVIEW_NEEDED: "Granskning krävs",
     PROCESSED: "Behandlad",
     REJECTED: "Avvisad",
+    MATCHED: "Matchad",
     RECORDED: "Bokförd",  // Only achieved via verifikation matching
 } as const
 

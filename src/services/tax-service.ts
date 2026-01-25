@@ -1,4 +1,4 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getSupabaseClient } from '@/lib/database/supabase'
 
 export type VatStats = {
@@ -17,11 +17,11 @@ export const taxService = {
     /**
      * Get aggregated VAT stats for a specific date range (e.g. Quarter)
      */
-    async getVatStats(startDate: string, endDate: string): Promise<VatStats> {
+    async getVatStats(startDate: string, _endDate: string): Promise<VatStats> {
         const supabase = getSupabaseClient()
+        const year = parseInt(startDate.substring(0, 4)) || new Date().getFullYear()
         const { data, error } = await supabase.rpc('get_vat_stats', {
-            start_date: startDate,
-            end_date: endDate
+            p_year: year
         }) as { data: any, error: any }
 
         if (error) {
@@ -40,11 +40,10 @@ export const taxService = {
     /**
      * Get aggregated AGI stats for a specific month
      */
-    async getAgiStats(year: number, month: number): Promise<AgiStats> {
+    async getAgiStats(year: number, _month: number): Promise<AgiStats> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase.rpc('get_agi_stats', {
-            period_year: year,
-            period_month: month
+            p_year: year
         }) as { data: any, error: any }
 
         if (error) {

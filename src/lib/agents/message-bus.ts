@@ -7,10 +7,8 @@
 
 import type {
     AgentMessage,
-    AgentMessageType,
     AgentDomain,
     AgentContext,
-    AgentResponse,
     Intent,
 } from './types'
 import { agentRegistry } from './registry'

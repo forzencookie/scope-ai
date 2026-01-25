@@ -607,8 +607,16 @@ function SidebarMenuSkeleton({
   showIcon?: boolean
 }) {
   // Random width between 50 to 90%.
-  const width = React.useMemo(() => {
-    return `${Math.floor(Math.random() * 40) + 50}%`
+  // Use a stable seed or just fixed values for SSR consistency if needed, 
+  // but for skeleton, random is fine mostly. Issue is purity.
+  // We can use a simple hash of something stable? Or just ignore purity for a skeleton?
+  // Better: moved inside useEffect or just set a static random once on mount if purity check is strict.
+  // Actually, useMemo with [] is technically safe from re-renders but strict mode might run it twice.
+  // Let's use a determinstic pseudo-random based on something if possible, or just accept it's a skeleton.
+  const [width, setWidth] = React.useState("70%")
+
+  React.useEffect(() => {
+      setWidth(`${Math.floor(Math.random() * 40) + 50}%`)
   }, [])
 
   return (

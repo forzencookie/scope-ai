@@ -66,7 +66,7 @@ export class LonerAgent extends BaseAgent {
     preferredModel = 'gpt-4o'
 
     async handle(message: string, context: AgentContext): Promise<AgentResponse> {
-        const intent = context.intent
+        // const intent = context.intent
 
         if (/beräkna|kalkyl|räkna/.test(message.toLowerCase())) {
             return this.handleSalaryCalculation(message, context)
@@ -90,7 +90,7 @@ export class LonerAgent extends BaseAgent {
         )
     }
 
-    private async handleSalaryCalculation(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleSalaryCalculation(message: string, _context: AgentContext): Promise<AgentResponse> {
         const amountMatch = message.match(/(\d[\d\s]*)/);
         const amount = amountMatch ? parseInt(amountMatch[1].replace(/\s/g, '')) : null
 
@@ -116,7 +116,7 @@ export class LonerAgent extends BaseAgent {
         )
     }
 
-    private async handleAGI(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleAGI(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📋 **Arbetsgivardeklaration (AGI)**\n\n' +
             'AGI ska lämnas senast den 12:e varje månad.\n\n' +
@@ -128,7 +128,7 @@ export class LonerAgent extends BaseAgent {
         )
     }
 
-    private async handleBenefits(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleBenefits(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🎁 **Förmåner**\n\n' +
             '**Skattefria:**\n' +

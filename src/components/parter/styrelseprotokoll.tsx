@@ -1,4 +1,3 @@
-// @ts-nocheck
 "use client"
 
 import * as React from "react"
@@ -162,7 +161,7 @@ export function Styrelseprotokoll() {
           <Card className="flex-1 bg-primary text-primary-foreground border-none p-6 flex flex-col justify-between">
             <div>
               <p className="text-primary-foreground/80 font-medium tracking-wide text-sm uppercase">Signerade protokoll</p>
-              <h3 className="text-4xl font-extrabold mt-2 tracking-tight">{stats.signed}</h3>
+              <h3 className="text-3xl md:text-4xl font-extrabold mt-2 tracking-tight">{stats.signed}</h3>
             </div>
             <div>
               <p className="text-primary-foreground/80 text-sm mb-4">
@@ -181,7 +180,7 @@ export function Styrelseprotokoll() {
 
           <Card className="flex-1 p-6 flex flex-col justify-center">
             <p className="text-muted-foreground font-medium text-sm uppercase tracking-wide">Fattade beslut i år</p>
-            <h3 className="text-4xl font-extrabold mt-2 tracking-tight tabular-nums">{stats.totalDecisions}</h3>
+            <h3 className="text-3xl md:text-4xl font-extrabold mt-2 tracking-tight tabular-nums">{stats.totalDecisions}</h3>
             <p className="text-sm text-green-600 mt-2 font-medium flex items-center gap-1">
               +12% från föregående år
             </p>

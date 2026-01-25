@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * React Query hooks for data fetching with caching
  * 
@@ -71,7 +70,7 @@ export function useTransactionsQuery(
             if (isAuthenticated && userId) {
                 const response = await transactionService.getTransactionsWithAI(userId)
                 if (!response.success) throw new Error(response.error || "Failed to fetch transactions")
-                return response.data
+                return response.data || []
             } else {
                 // PRODUCTION: Return empty array for unauthenticated users
                 // They need to log in to see real data

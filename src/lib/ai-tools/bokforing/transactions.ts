@@ -1,4 +1,3 @@
-// @ts-nocheck
 /**
  * Bokföring AI Tools - Transactions
  *
@@ -125,10 +124,10 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
                 
                 // Apply amount filters client-side if provided
                 if (params.minAmount !== undefined) {
-                    transactions = transactions.filter(t => Math.abs(t.amount || 0) >= params.minAmount!)
+                    transactions = transactions.filter(t => Math.abs(Number(t.amount || 0)) >= params.minAmount!)
                 }
                 if (params.maxAmount !== undefined) {
-                    transactions = transactions.filter(t => Math.abs(t.amount || 0) <= params.maxAmount!)
+                    transactions = transactions.filter(t => Math.abs(Number(t.amount || 0)) <= params.maxAmount!)
                 }
             }
         } catch (error) {

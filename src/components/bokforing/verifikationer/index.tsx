@@ -51,7 +51,7 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
             <div className="flex flex-col gap-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">
                             {accountParam ? `Huvudbok: ${accountParam}` : "Verifikationer"}
                         </h2>
                         <p className="text-muted-foreground">
@@ -63,7 +63,7 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                     <div className="flex items-center gap-2">
                         <Button size="sm" className="h-8 w-full sm:w-auto px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
                             <Plus className="h-3.5 w-3.5" />
-                            <span>Ny verifikation</span>
+                            <span className="sm:inline">Ny verifikation</span>
                         </Button>
                     </div>
                 </div>

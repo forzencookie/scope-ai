@@ -57,6 +57,7 @@ export const INVOICE_STATUS_VARIANT: Record<InvoiceStatus, StatusVariant> = {
     "Förfallen": "error",
     "Makulerad": "neutral",
     "Bokförd": "violet",
+    "Mottagen": "info",
 }
 
 // =============================================================================
@@ -73,6 +74,7 @@ export const RECEIPT_STATUS_VARIANT: Record<ReceiptStatus, StatusVariant> = {
     "Bearbetar": "neutral",
     "Granskning krävs": "error",
     "Behandlad": "success",
+    "Matchad": "success",
     "Avvisad": "error",
     "Bokförd": "violet",
 }

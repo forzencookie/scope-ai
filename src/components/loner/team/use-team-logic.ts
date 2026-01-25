@@ -8,7 +8,7 @@ import { useVerifications } from "@/hooks/use-verifications"
 export function useTeamLogic() {
     const toast = useToast()
     const { verifications, addVerification } = useVerifications()
-    const { employees, isLoading, refresh, addEmployee } = useEmployees()
+    const { employees, isLoading, addEmployee } = useEmployees()
 
     const [reportDialogOpen, setReportDialogOpen] = useState(false)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
@@ -70,7 +70,7 @@ export function useTeamLogic() {
             toast.success("Anställd tillagd", `${newEmployee.name} har lagts till i teamet.`)
             setNewEmployeeDialogOpen(false)
             setNewEmployee({ name: '', role: '', email: '', salary: '' })
-        } catch (error) {
+        } catch {
             toast.error("Ett fel uppstod", "Kunde inte spara anställd.")
         } finally {
             setIsSaving(false)

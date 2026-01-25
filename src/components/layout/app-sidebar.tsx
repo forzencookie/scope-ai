@@ -1,9 +1,8 @@
-// @ts-nocheck
 "use client"
 
 
 import * as React from "react"
-import { PanelLeft, Sparkles, type LucideIcon, Calculator, Users, Settings2, FileText, PiggyBank, LayoutGrid } from "lucide-react"
+import { PanelLeft, Sparkles, type LucideIcon, Settings2, LayoutGrid } from "lucide-react"
 
 import { NavSettings, NavCollapsibleSection, NavAIConversations } from "./sidebar-nav"
 import { UserTeamSwitcher } from "./user-team-switcher"
@@ -18,11 +17,9 @@ import {
   SidebarMenuItem,
   SidebarMenuButton,
   SidebarMenuAction,
-  SidebarSeparator,
   useSidebar,
 } from "@/components/ui/sidebar"
 import { SettingsDialog } from "@/components/installningar/settings-dialog"
-import { cn } from "@/lib/utils"
 import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
 import { AI_CHAT_EVENT } from "@/lib/ai/context"
 import { useAuth } from "@/hooks/use-auth"
@@ -92,7 +89,7 @@ export function AppSidebar({
   
   React.useEffect(() => {
     getTeams().then(response => {
-      if (response.success && response.data.length > 0) {
+      if (response.success && response.data && response.data.length > 0) {
         // Map teams to include logo icons
         const mappedTeams = response.data.map((team, i) => ({
           id: team.id || `team-${i}`,
@@ -140,13 +137,12 @@ export function AppSidebar({
 
   // Handle global AI chat events
   React.useEffect(() => {
-    const handleOpenAIChat = (e: Event) => {
-      const customEvent = e as CustomEvent
+    const handleOpenAIChat = () => {
       setInternalMode("ai-chat")
       if (onModeChange) onModeChange("ai-chat")
     }
 
-    const handleLoadConversation = (e: Event) => {
+    const handleLoadConversation = () => {
       setInternalMode("ai-chat")
       if (onModeChange) onModeChange("ai-chat")
     }
@@ -159,16 +155,6 @@ export function AppSidebar({
       window.removeEventListener("load-conversation", handleLoadConversation)
     }
   }, [onModeChange])
-
-  // Toggle sidebar mode
-  const toggleMode = React.useCallback(() => {
-    const newMode = sidebarMode === "navigation" ? "ai-chat" : "navigation"
-    if (onModeChange) {
-      onModeChange(newMode)
-    } else {
-      setInternalMode(newMode)
-    }
-  }, [sidebarMode, onModeChange])
 
   // Default minimal header for AI workspace style
   const header = minimalHeader ?? {

@@ -22,11 +22,11 @@ export function AGIContent() {
     } = useEmployerDeclaration()
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
             <AgiStats stats={stats} />
 
-            <div className="flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2 flex-1 relative max-w-sm">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-2 flex-1 relative w-full sm:max-w-sm">
                     <Search className="h-4 w-4 absolute left-3 text-muted-foreground" />
                     <Input
                         placeholder="Sök period..."

@@ -115,7 +115,7 @@ export function ReportDialog({
                     <DialogTitle>Rapportering - {employeeName}</DialogTitle>
                 </DialogHeader>
                 
-                <Tabs value={reportType} onValueChange={(v) => onReportTypeChange(v as any)} className="w-full">
+                <Tabs value={reportType} onValueChange={(v) => onReportTypeChange(v as "time" | "expense" | "mileage")} className="w-full">
                     <TabsList className="grid w-full grid-cols-3 mb-4">
                         <TabsTrigger value="time">
                             <Clock className="h-4 w-4 mr-2" />

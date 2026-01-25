@@ -97,7 +97,7 @@ export class SkattAgent extends BaseAgent {
         )
     }
 
-    private async handleVAT(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleVAT(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🧾 **Momsdeklaration**\n\n' +
             'Jag kan:\n' +
@@ -108,7 +108,7 @@ export class SkattAgent extends BaseAgent {
         )
     }
 
-    private async handleK10(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handleK10(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '📈 **K10 - Fåmansföretag**\n\n' +
             'K10 används för att deklarera utdelning från fåmansföretag.\n\n' +
@@ -120,7 +120,7 @@ export class SkattAgent extends BaseAgent {
         )
     }
 
-    private async handlePeriodiseringsfonder(message: string, context: AgentContext): Promise<AgentResponse> {
+    private async handlePeriodiseringsfonder(_message: string, _context: AgentContext): Promise<AgentResponse> {
         return this.successResponse(
             '🏦 **Periodiseringsfonder**\n\n' +
             'Minska skatten genom att avsätta upp till 25% av överskottet.\n\n' +
@@ -132,9 +132,9 @@ export class SkattAgent extends BaseAgent {
         )
     }
 
-    private async handleDeadlines(message: string, context: AgentContext): Promise<AgentResponse> {
-        const now = new Date()
-        const month = now.getMonth() + 1
+    private async handleDeadlines(_message: string, _context: AgentContext): Promise<AgentResponse> {
+        // const now = new Date()
+        // const month = now.getMonth() + 1
 
         return this.successResponse(
             '📅 **Kommande skattedeadlines**\n\n' +

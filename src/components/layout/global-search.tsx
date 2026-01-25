@@ -81,9 +81,9 @@ export function GlobalSearch() {
     }, [])
 
     // Reset selection when filtered items change
-    useEffect(() => {
+    /* useEffect(() => {
         setSelectedIndex(0)
-    }, [query])
+    }, [query]) */
 
     return (
         <div ref={containerRef} className="relative w-full max-w-md">
@@ -95,6 +95,7 @@ export function GlobalSearch() {
                     value={query}
                     onChange={(e) => {
                         setQuery(e.target.value)
+                        setSelectedIndex(0)
                         setIsOpen(true)
                     }}
                     onFocus={() => setIsOpen(true)}

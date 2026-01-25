@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 /**
  * Complete INK2 SRU Processor
  * Calculates all INK2/INK2R/INK2S fields from accounting data
@@ -9,13 +8,13 @@
 
 import type { Verification } from "@/hooks/use-verifications"
 import type { SRUDeclaration, SRUField, TaxPeriod } from "@/types/sru"
-import {
-    INK2R_BALANCE_SHEET_FIELDS,
-    INK2R_INCOME_STATEMENT_FIELDS,
-    INK2S_FIELDS,
-    INK2_MAIN_FIELDS,
-    type FieldDefinition
-} from "./ink2-fields"
+// import {
+//     INK2R_BALANCE_SHEET_FIELDS,
+//     INK2R_INCOME_STATEMENT_FIELDS,
+//     INK2S_FIELDS,
+//     INK2_MAIN_FIELDS,
+//     type FieldDefinition
+// } from "./ink2-fields"
 
 // =============================================================================
 // Types
@@ -90,7 +89,7 @@ export function calculateAccountBalances(
 /**
  * Sum balances for accounts within a range or list
  */
-function sumAccounts(
+function _sumAccounts(
     balances: Map<string, AccountBalance>,
     accountSpec: number[] | undefined,
     sign: '+' | '-' | '*' = '*'
@@ -467,7 +466,7 @@ export const INK2SRUProcessor = {
     calculateAll(
         verifications: Verification[],
         company: CompanyInfo,
-        taxPeriod: TaxPeriod
+        _taxPeriod: TaxPeriod
     ): INK2CalculationResult {
         // Calculate account balances for the fiscal year
         const balances = calculateAccountBalances(

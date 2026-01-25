@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types
 /**
  * Compliance API (Shareholders, Corporate Documents)
  * 

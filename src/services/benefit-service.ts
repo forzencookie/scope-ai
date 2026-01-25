@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 import { getSupabaseClient } from '@/lib/database/supabase'
 
 export type Benefit = {
@@ -67,7 +66,7 @@ export const benefitService = {
     async getBenefits(): Promise<Benefit[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
-            .from('benefits')
+            .from('benefits' as any)
             .select('*')
             .order('category')
 
@@ -95,7 +94,7 @@ export const benefitService = {
     async getEmployeeBenefits(employeeId: string): Promise<EmployeeBenefit[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
-            .from('employee_benefits')
+            .from('employee_benefits' as any)
             .select('*, benefits(name)')
             .eq('employee_id', employeeId)
 

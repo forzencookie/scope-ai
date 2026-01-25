@@ -360,7 +360,7 @@ END $$;
 
 -- Step 6: Update RPC functions to use new table names
 
-CREATE OR REPLACE FUNCTION get_meeting_stats(p_meeting_type TEXT DEFAULT NULL)
+CREATE OR REPLACE FUNCTION get_meeting_stats_v2(p_meeting_type TEXT DEFAULT NULL)
 RETURNS JSON
 LANGUAGE plpgsql
 SECURITY DEFINER

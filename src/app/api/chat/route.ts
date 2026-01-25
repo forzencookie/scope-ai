@@ -1,4 +1,3 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types
 /**
  * Chat API
  * 
@@ -179,7 +178,8 @@ async function handleGoogleProvider(
     conversationId: string | null,
     tools: any[],
     userDb: UserScopedDb | null,
-    confirmationId?: string
+    confirmationId: string | undefined,
+    userId: string
 ) {
     const { GoogleGenerativeAI } = await import('@google/generative-ai')
     const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '')
@@ -211,7 +211,7 @@ async function handleGoogleProvider(
     const chat = model.startChat({
         history,
         systemInstruction: SYSTEM_PROMPT,
-        tools: googleTools.length > 0 ? [{ functionDeclarations: googleTools }] : undefined,
+        tools: googleTools.length > 0 ? [{ functionDeclarations: googleTools }] as any : undefined,
     })
 
     let fullContent = ''
@@ -319,6 +319,7 @@ async function handleGoogleProvider(
                 conversation_id: conversationId,
                 role: 'assistant',
                 content: fullContent,
+                user_id: userId
             })
         } catch (e) {
             console.error('Failed to save message', e)
@@ -406,6 +407,7 @@ async function handleAnthropicProvider(
                 conversation_id: conversationId,
                 role: 'assistant',
                 content: fullContent,
+                user_id: userDb.userId
             })
         } catch (e) {
             console.error('Failed to save message', e)
@@ -539,7 +541,11 @@ async function handleOpenAIProvider(
                             const tool = aiToolRegistry.get(toolCall.name)
 
                             if (tool) {
-                                const result = await tool.execute(toolArgs) as AIToolResult
+                                const result = await tool.execute(toolArgs, {
+                                    userId: userDb?.userId || '',
+                                    companyId: userDb?.companyId || '',
+                                    userDb: userDb!
+                                }) as AIToolResult
 
                                 // Stream back the result data
                                 if (result.display) {
@@ -586,6 +592,7 @@ async function handleOpenAIProvider(
                 conversation_id: conversationId,
                 role: 'assistant',
                 content: fullContent,
+                user_id: userDb.userId
             })
         } catch (e) {
             console.error('Failed to save message', e)
@@ -672,11 +679,7 @@ export async function POST(request: NextRequest) {
                 conversation_id: conversationId,
                 role: 'user',
                 content: latestUserMessage.content,
-                metadata: {
-                    mentions: mentions || [],
-                    attachments: attachments?.map((a: any) => ({ name: a.name, type: a.type })) || [],
-                    model: modelId
-                }
+                user_id: userDb.userId
             });
         }
         // === PERSISTENCE END ===
@@ -790,7 +793,7 @@ export async function POST(request: NextRequest) {
                         await handleOpenAIProvider(modelId, messagesForAI, controller, conversationId, tools, userDb, confirmationId)
                     } else {
                         // Default to Google
-                        await handleGoogleProvider(modelId, messagesForAI, controller, conversationId, tools, userDb, confirmationId)
+                        await handleGoogleProvider(modelId, messagesForAI, controller, conversationId, tools, userDb, confirmationId, userId)
                     }
 
                     // Track usage after successful response

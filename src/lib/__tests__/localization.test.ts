@@ -53,8 +53,8 @@ describe('Localization Constants', () => {
             expect(INVOICE_STATUS_LABELS.OVERDUE).toBe('Förfallen')
         })
 
-        it('should have exactly 4 statuses', () => {
-            expect(Object.keys(INVOICE_STATUS_LABELS)).toHaveLength(4)
+        it('should have exactly 7 statuses', () => {
+            expect(Object.keys(INVOICE_STATUS_LABELS)).toHaveLength(7)
         })
     })
 
@@ -68,8 +68,8 @@ describe('Localization Constants', () => {
             expect(RECEIPT_STATUS_LABELS.REJECTED).toBe('Avvisad')
         })
 
-        it('should have exactly 6 statuses', () => {
-            expect(Object.keys(RECEIPT_STATUS_LABELS)).toHaveLength(6)
+        it('should have exactly 8 statuses', () => {
+            expect(Object.keys(RECEIPT_STATUS_LABELS)).toHaveLength(8)
         })
     })
 

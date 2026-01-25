@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '@/lib/database/supabase'
 
+
 export type PayrollStats = {
     currentPeriod: string
     employeeCount: number
@@ -55,6 +56,7 @@ export const payrollService = {
      */
     async getStats(): Promise<PayrollStats> {
         const supabase = getSupabaseClient()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase.rpc('get_payroll_stats') as { data: any, error: any }
 
         const getCurrentPeriod = () => {
@@ -89,7 +91,8 @@ export const payrollService = {
     async getEmployees(): Promise<Employee[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
-            .from('employees')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('employees' as any)
             .select('*')
             .order('name')
 
@@ -97,6 +100,7 @@ export const payrollService = {
             return []
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (data || []).map((e: any) => ({
             id: e.id,
             name: e.name,
@@ -116,7 +120,8 @@ export const payrollService = {
     async getPayslips(year?: number, month?: number): Promise<Payslip[]> {
         const supabase = getSupabaseClient()
         let query = supabase
-            .from('payslips')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('payslips' as any)
             .select('*, employees(name)')
             .order('year', { ascending: false })
             .order('month', { ascending: false })
@@ -130,6 +135,7 @@ export const payrollService = {
             return []
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (data || []).map((p: any) => ({
             id: p.id,
             employeeId: p.employee_id,
@@ -153,7 +159,8 @@ export const payrollService = {
     async getAGIReports(year?: number): Promise<AGIReport[]> {
         const supabase = getSupabaseClient()
         let query = supabase
-            .from('agi_reports')
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('agi_reports' as any)
             .select('*')
             .order('year', { ascending: false })
             .order('month', { ascending: false })
@@ -167,6 +174,7 @@ export const payrollService = {
             return []
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (data || []).map((r: any) => ({
             id: r.id,
             period: r.period,

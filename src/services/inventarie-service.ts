@@ -1,5 +1,5 @@
-// @ts-nocheck - TODO: Fix after regenerating Supabase types with proper PostgrestVersion
 import { getSupabaseClient } from '@/lib/database/supabase'
+
 
 // Types matching schema.sql inventarier table
 export type Inventarie = {
@@ -57,7 +57,7 @@ export const inventarieService = {
         }
 
         // Map snake_case DB columns to camelCase for UI
-        const inventarier: Inventarie[] = (data || []).map(row => ({
+        const inventarier: Inventarie[] = (data || []).map((row: any) => ({
             id: row.id,
             namn: row.namn,
             kategori: row.kategori || 'Inventarier',
@@ -111,7 +111,7 @@ export const inventarieService = {
         const id = `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
         const { data, error } = await supabase
-            .from('inventarier')
+            .from('inventarier' as any)
             .insert({
                 id,
                 namn: inventarie.namn,
@@ -135,7 +135,7 @@ export const inventarieService = {
         const supabase = getSupabaseClient()
 
         const { error } = await supabase
-            .from('inventarier')
+            .from('inventarier' as any)
             .delete()
             .eq('id', id)
 

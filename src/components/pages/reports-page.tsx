@@ -1,19 +1,11 @@
 "use client"
 
 import { useCallback, Suspense, useMemo } from "react"
-import { useSearchParams, useRouter, notFound } from "next/navigation"
+import { useSearchParams, useRouter } from "next/navigation"
 import {
-    Tooltip,
-    TooltipContent,
-    TooltipTrigger,
     TooltipProvider
 } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
 import {
-    Calculator,
-    FileText,
-    Send,
-    FileBarChart,
     Loader2,
 } from "lucide-react"
 import { useCompany } from "@/providers/company-provider"

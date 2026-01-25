@@ -51,18 +51,18 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
     } = useTransactionsLogic(props)
 
     return (
-        <div className="w-full space-y-6">
+        <div className="w-full space-y-4 md:space-y-6">
             {/* Page Heading */}
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div className="flex flex-col gap-4 md:gap-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <h2 className="text-2xl font-bold tracking-tight">{text.transactions?.title || "Transaktioner"}</h2>
+                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">{text.transactions?.title || "Transaktioner"}</h2>
                         <p className="text-muted-foreground">{text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}</p>
                     </div>
                     <div className="flex items-center gap-2">
                         <Button className="gap-2 w-full sm:w-auto" onClick={() => setNewTransactionDialogOpen(true)}>
                             <Plus className="h-4 w-4" />
-                            {text.transactions?.newTransaction || "Ny händelse"}
+                            <span className="sm:inline">{text.transactions?.newTransaction || "Ny händelse"}</span>
                         </Button>
                     </div>
                 </div>
