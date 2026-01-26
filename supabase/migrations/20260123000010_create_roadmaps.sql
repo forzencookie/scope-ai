@@ -88,7 +88,7 @@ create policy "Users can delete steps for their roadmaps"
 create extension if not exists moddatetime schema extensions;
 
 create trigger handle_updated_at before update on roadmaps
-  for each row execute procedure moddatetime (updated_at);
+  for each row execute procedure extensions.moddatetime (updated_at);
 
 create trigger handle_updated_at before update on roadmap_steps
-  for each row execute procedure moddatetime (updated_at);
+  for each row execute procedure extensions.moddatetime (updated_at);

@@ -65,7 +65,7 @@ GRANT ALL ON corporate_documents TO service_role;
 CREATE INDEX IF NOT EXISTS idx_corporate_documents_user_id 
   ON corporate_documents(user_id);
 
-RAISE NOTICE '✅ Fixed corporate_documents - removed public access, added user-scoped policies';
+DO $$ BEGIN RAISE NOTICE '✅ Fixed corporate_documents - removed public access, added user-scoped policies'; END $$;
 
 -- ============================================================================
 -- SECTION 2: FIX roadmap_steps (Uses parent join - optimize)
@@ -125,7 +125,7 @@ CREATE POLICY roadmap_steps_delete ON roadmap_steps
 CREATE INDEX IF NOT EXISTS idx_roadmap_steps_user_id 
   ON roadmap_steps(user_id);
 
-RAISE NOTICE '✅ Fixed roadmap_steps - added direct user_id for performance';
+DO $$ BEGIN RAISE NOTICE '✅ Fixed roadmap_steps - added direct user_id for performance'; END $$;
 
 -- ============================================================================
 -- SECTION 3: ENSURE roadmaps table is properly secured
@@ -160,7 +160,7 @@ CREATE POLICY roadmaps_delete ON roadmaps
 
 ALTER TABLE roadmaps ENABLE ROW LEVEL SECURITY;
 
-RAISE NOTICE '✅ Updated roadmaps policies to use optimized pattern';
+DO $$ BEGIN RAISE NOTICE '✅ Updated roadmaps policies to use optimized pattern'; END $$;
 
 -- ============================================================================
 -- SECTION 4: CHECK FOR ANY OTHER TABLES WITH public access policies
@@ -230,7 +230,7 @@ CREATE TRIGGER set_roadmap_step_user_id_trigger
   FOR EACH ROW
   EXECUTE FUNCTION set_roadmap_step_user_id();
 
-RAISE NOTICE '✅ Created trigger to auto-populate user_id on roadmap_steps';
+DO $$ BEGIN RAISE NOTICE '✅ Created trigger to auto-populate user_id on roadmap_steps'; END $$;
 
 -- ============================================================================
 -- SECTION 6: VERIFY ALL CRITICAL TABLES HAVE PROPER SECURITY

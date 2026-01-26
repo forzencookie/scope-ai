@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     
     -- Who did it
-    user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE SET NULL,
+    user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
     user_name TEXT,  -- Denormalized for display even if user is deleted
     user_email TEXT,
     
@@ -43,17 +43,19 @@ ALTER TABLE activity_log ENABLE ROW LEVEL SECURITY;
 -- Users can view activity for their company
 CREATE POLICY "Users can view company activity"
     ON activity_log FOR SELECT
+    TO authenticated
     USING (
         company_id IN (
-            SELECT id FROM companies WHERE user_id = auth.uid()
+            SELECT id FROM companies WHERE user_id = (SELECT auth.uid())
         )
-        OR user_id = auth.uid()
+        OR user_id = (SELECT auth.uid())
     );
 
 -- Users can insert their own activity (system also inserts via service role)
 CREATE POLICY "Users can log their own activity"
     ON activity_log FOR INSERT
-    WITH CHECK (user_id = auth.uid());
+    TO authenticated
+    WITH CHECK (user_id = (SELECT auth.uid()));
 
 -- Indexes for performance
 CREATE INDEX IF NOT EXISTS idx_activity_log_company ON activity_log(company_id, created_at DESC);
@@ -66,10 +68,13 @@ CREATE INDEX IF NOT EXISTS idx_activity_log_created ON activity_log(created_at D
 -- ============================================================================
 
 -- Function to log activity automatically
-CREATE OR REPLACE FUNCTION log_activity()
+-- NOTE: This is a simplified version that works with transactions table specifically.
+-- For other tables, activity should be logged via application code.
+CREATE OR REPLACE FUNCTION log_transaction_activity()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 DECLARE
     v_action TEXT;
@@ -78,27 +83,13 @@ DECLARE
     v_user_id UUID;
     v_user_name TEXT;
     v_user_email TEXT;
-    v_company_id UUID;
 BEGIN
     -- Determine action
     IF TG_OP = 'INSERT' THEN
         v_action := 'created';
     ELSIF TG_OP = 'UPDATE' THEN
-        -- Check for specific status changes
-        IF TG_TABLE_NAME = 'transactions' AND NEW.status != OLD.status THEN
-            IF NEW.status = 'bokförd' THEN
-                v_action := 'booked';
-            ELSE
-                v_action := 'updated';
-            END IF;
-        ELSIF TG_TABLE_NAME IN ('customerinvoices', 'supplierinvoices') THEN
-            IF NEW.status = 'paid' AND OLD.status != 'paid' THEN
-                v_action := 'paid';
-            ELSIF NEW.status = 'sent' AND OLD.status != 'sent' THEN
-                v_action := 'sent';
-            ELSE
-                v_action := 'updated';
-            END IF;
+        IF NEW.status = 'bokförd' AND OLD.status != 'bokförd' THEN
+            v_action := 'booked';
         ELSE
             v_action := 'updated';
         END IF;
@@ -107,12 +98,7 @@ BEGIN
     END IF;
 
     -- Get user info
-    v_user_id := COALESCE(
-        NEW.updated_by,
-        NEW.created_by,
-        NEW.user_id,
-        auth.uid()
-    );
+    v_user_id := COALESCE(NEW.user_id, OLD.user_id, auth.uid());
     
     -- Get user details
     SELECT email, raw_user_meta_data->>'full_name'
@@ -120,36 +106,14 @@ BEGIN
     FROM auth.users
     WHERE id = v_user_id;
 
-    -- Get company_id
-    v_company_id := COALESCE(NEW.company_id, OLD.company_id);
-
-    -- Build entity name based on table
-    CASE TG_TABLE_NAME
-        WHEN 'transactions' THEN
-            v_entity_name := COALESCE(NEW.description, OLD.description, 'Transaktion');
-        WHEN 'customerinvoices' THEN
-            v_entity_name := 'Kundfaktura #' || COALESCE(NEW.invoice_number, OLD.invoice_number, '?');
-        WHEN 'supplierinvoices' THEN
-            v_entity_name := 'Leverantörsfaktura #' || COALESCE(NEW.invoice_number, OLD.invoice_number, '?');
-        WHEN 'receipts' THEN
-            v_entity_name := 'Kvitto ' || COALESCE(TO_CHAR(NEW.total_amount, '999 999 kr'), '');
-        WHEN 'payslips' THEN
-            v_entity_name := 'Lönebesked';
-        WHEN 'verifications' THEN
-            v_entity_name := 'Verifikation #' || COALESCE(NEW.number::TEXT, OLD.number::TEXT, '?');
-        ELSE
-            v_entity_name := TG_TABLE_NAME;
-    END CASE;
+    -- Build entity name
+    v_entity_name := COALESCE(NEW.description, OLD.description, 'Transaktion');
 
     -- Build changes object for updates
-    IF TG_OP = 'UPDATE' THEN
+    IF TG_OP = 'UPDATE' AND NEW.status IS DISTINCT FROM OLD.status THEN
         v_changes := jsonb_build_object(
-            'status', CASE WHEN NEW.status IS DISTINCT FROM OLD.status 
-                THEN jsonb_build_object('from', OLD.status, 'to', NEW.status) 
-                ELSE NULL END
+            'status', jsonb_build_object('from', OLD.status, 'to', NEW.status)
         );
-        -- Remove null values
-        v_changes := (SELECT jsonb_object_agg(key, value) FROM jsonb_each(v_changes) WHERE value IS NOT NULL);
     END IF;
 
     -- Insert activity log
@@ -167,9 +131,9 @@ BEGIN
         v_user_id,
         v_user_name,
         v_user_email,
-        v_company_id,
+        COALESCE(NEW.company_id, OLD.company_id),
         v_action,
-        TG_TABLE_NAME,
+        'transaction',
         COALESCE(NEW.id, OLD.id),
         v_entity_name,
         v_changes
@@ -179,30 +143,10 @@ BEGIN
 END;
 $$;
 
--- Apply triggers to key tables
+-- Apply trigger only to transactions (safest, most valuable)
 DROP TRIGGER IF EXISTS trg_transactions_activity ON transactions;
 CREATE TRIGGER trg_transactions_activity
     AFTER INSERT OR UPDATE OR DELETE ON transactions
-    FOR EACH ROW EXECUTE FUNCTION log_activity();
-
-DROP TRIGGER IF EXISTS trg_customerinvoices_activity ON customerinvoices;
-CREATE TRIGGER trg_customerinvoices_activity
-    AFTER INSERT OR UPDATE OR DELETE ON customerinvoices
-    FOR EACH ROW EXECUTE FUNCTION log_activity();
-
-DROP TRIGGER IF EXISTS trg_supplierinvoices_activity ON supplierinvoices;
-CREATE TRIGGER trg_supplierinvoices_activity
-    AFTER INSERT OR UPDATE OR DELETE ON supplierinvoices
-    FOR EACH ROW EXECUTE FUNCTION log_activity();
-
-DROP TRIGGER IF EXISTS trg_receipts_activity ON receipts;
-CREATE TRIGGER trg_receipts_activity
-    AFTER INSERT OR UPDATE OR DELETE ON receipts
-    FOR EACH ROW EXECUTE FUNCTION log_activity();
-
-DROP TRIGGER IF EXISTS trg_verifications_activity ON verifications;
-CREATE TRIGGER trg_verifications_activity
-    AFTER INSERT OR UPDATE OR DELETE ON verifications
-    FOR EACH ROW EXECUTE FUNCTION log_activity();
+    FOR EACH ROW EXECUTE FUNCTION log_transaction_activity();
 
 COMMENT ON TABLE activity_log IS 'Audit trail tracking all significant actions for accountability and history';
