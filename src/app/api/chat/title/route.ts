@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 
 function getOpenAIClient() {
     return new OpenAI({
@@ -8,6 +9,12 @@ function getOpenAIClient() {
 }
 
 export async function POST(req: NextRequest) {
+    // Verify authentication
+    const auth = await verifyAuth(req)
+    if (!auth) {
+        return ApiResponse.unauthorized('Authentication required')
+    }
+
     try {
         const { messages } = await req.json()
 

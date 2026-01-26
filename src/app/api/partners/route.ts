@@ -1,41 +1,51 @@
-import { createClient } from '@supabase/supabase-js'
-import { NextResponse } from 'next/server'
+/**
+ * Partners API
+ * 
+ * SECURITY: Requires authentication and uses user-scoped database
+ * Previously used anon client which bypassed RLS!
+ */
+import { NextRequest, NextResponse } from 'next/server'
+import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { createUserScopedDb } from '@/lib/user-scoped-db'
 
-// Initialize Supabase client
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabase = createClient(supabaseUrl, supabaseKey)
+export async function GET(request: NextRequest) {
+  // Verify authentication
+  const auth = await verifyAuth(request)
+  if (!auth) {
+    return ApiResponse.unauthorized('Authentication required')
+  }
 
-export async function GET() {
   try {
-    const { data, error } = await supabase
-      .from('partners')
-      .select('*')
-      .order('name', { ascending: true })
+    const db = createUserScopedDb(auth.userId)
+    const partners = await db.partners.list()
 
-    if (error) throw error
-
-    return NextResponse.json({ partners: data })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ partners })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
+  // Verify authentication
+  const auth = await verifyAuth(request)
+  if (!auth) {
+    return ApiResponse.unauthorized('Authentication required')
+  }
+
   try {
     const json = await request.json()
-    const { data, error } = await supabase
-      .from('partners')
-      .insert(json)
-      .select()
-      .single()
+    const db = createUserScopedDb(auth.userId)
+    
+    // Add user_id to the partner data
+    const partner = await db.partners.create({
+      ...json,
+      user_id: auth.userId
+    })
 
-    if (error) throw error
-
-    return NextResponse.json({ partner: data })
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ partner })
+  } catch (error: unknown) {
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    return NextResponse.json({ error: message }, { status: 500 })
   }
 }

@@ -1,5 +1,6 @@
 import OpenAI from 'openai'
 import { NextRequest } from 'next/server'
+import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 
 function getOpenAIClient() {
   return new OpenAI({
@@ -58,6 +59,12 @@ interface BookingRequest {
 }
 
 export async function POST(request: NextRequest) {
+  // Verify authentication
+  const auth = await verifyAuth(request)
+  if (!auth) {
+    return ApiResponse.unauthorized('Authentication required')
+  }
+
   try {
     const body: BookingRequest = await request.json()
     const { transaction, messages } = body

@@ -7,10 +7,13 @@
  * - Amount
  * - Category suggestion
  * - Per-field confidence scores
+ * 
+ * SECURITY: Requires authentication (GPT-4o Vision is expensive)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
+import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 
 function getOpenAIClient() {
     return new OpenAI({
@@ -38,8 +41,16 @@ export interface ExtractedReceiptData {
  * 
  * Accepts FormData with 'file' field containing the receipt image
  * Returns extracted receipt data with per-field confidence
+ * 
+ * SECURITY: Requires authentication
  */
 export async function POST(request: NextRequest) {
+    // Verify authentication - this endpoint uses expensive GPT-4o Vision API
+    const auth = await verifyAuth(request)
+    if (!auth) {
+        return ApiResponse.unauthorized('Authentication required for AI extraction')
+    }
+
     try {
         const formData = await request.formData()
         const file = formData.get('file') as File | null
