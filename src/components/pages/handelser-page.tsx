@@ -9,7 +9,8 @@ import {
     List,
     ChevronLeft,
     Loader2,
-    Map
+    Map,
+    History
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,6 +22,7 @@ import {
 import { useLastUpdated } from "@/hooks/use-last-updated"
 import { cn } from "@/lib/utils"
 import { ActionWizard } from "@/components/agare"
+import { ActivityFeed } from "@/components/shared/activity-feed"
 import {
     EventsFolderView,
     EventsCalendar,
@@ -37,6 +39,7 @@ const viewTabs: { id: ViewType; label: string; icon: typeof FolderOpen }[] = [
     { id: "timeline", label: "Tidslinje", icon: List },
     { id: "calendar", label: "Kalender", icon: Calendar },
     { id: "roadmap", label: "Planering", icon: Map },
+    { id: "activity", label: "Aktivitetslogg", icon: History },
 ]
 
 function HandelserPageContent() {
@@ -221,6 +224,15 @@ function HandelserPageContent() {
                     {/* Roadmap View */}
                     {activeView === "roadmap" && (
                         <RoadmapView onCreateNew={() => setWizardOpen(true)} />
+                    )}
+
+                    {/* Activity Log View */}
+                    {activeView === "activity" && (
+                        <ActivityFeed 
+                            limit={50} 
+                            showHeader={false}
+                            className="border-0 shadow-none bg-transparent"
+                        />
                     )}
                 </div>
             </div>
