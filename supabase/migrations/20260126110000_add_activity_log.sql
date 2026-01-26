@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS activity_log (
     user_email TEXT,
     
     -- What company context
-    company_id UUID REFERENCES companies(id) ON DELETE CASCADE,
+    company_id TEXT REFERENCES companies(id) ON DELETE CASCADE,
     
     -- What happened
     action TEXT NOT NULL,  -- 'created', 'updated', 'deleted', 'booked', 'sent', 'approved'
