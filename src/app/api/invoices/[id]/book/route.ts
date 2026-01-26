@@ -41,6 +41,7 @@ export async function POST(
         const r = (n: number) => Math.round(n * 100) / 100;
 
         const verification = await userDb.verifications.create({
+            id: crypto.randomUUID(),
             date: new Date().toISOString().split('T')[0],
             description: `Faktura ${id} - ${invoice.supplier_name}`,
             rows: [

@@ -3,19 +3,21 @@
 /**
  * useAIUsage - Hook for tracking AI token usage
  *
- * Fetches the user's current AI usage for the billing period
- * and provides helpers for displaying usage stats.
+ * Fetches the user's current AI usage for the billing period.
+ * Uses model multipliers - expensive models consume more of the budget.
  */
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "./use-auth"
 import { useSubscription } from "./use-subscription"
-import { TIER_TOKEN_LIMITS } from "@/lib/subscription"
+import { TIER_TOKEN_LIMITS, getModelMultiplier } from "@/lib/subscription"
 import { getSupabaseClient } from "@/lib/database/supabase"
 
 export interface AIUsageStats {
-  /** Total tokens used this period */
+  /** Effective tokens used (with model multipliers applied) */
   tokensUsed: number
+  /** Raw tokens used (actual API tokens) */
+  rawTokensUsed: number
   /** Total requests this period */
   requestsCount: number
   /** Token limit for current tier */
@@ -41,6 +43,8 @@ interface UseAIUsageReturn {
   loading: boolean
   error: string | null
   refresh: () => Promise<void>
+  /** Check if user can afford a request with given model */
+  canAfford: (modelId: string, estimatedTokens?: number) => boolean
 }
 
 function getCurrentBillingPeriod(): { start: Date; end: Date } {
@@ -71,41 +75,54 @@ export function useAIUsage(): UseAIUsageReturn {
       const supabase = getSupabaseClient()
       const { start, end } = getCurrentBillingPeriod()
 
-      // Fetch usage for current period
+      // Fetch usage for current period - include model_id for multiplier calculation
       const { data: usageData, error: usageError } = await supabase
         .from("aiusage")
-        .select("tokens_used, requests_count")
+        .select("tokens_used, requests_count, model_id")
         .eq("user_id", user.id)
         .gte("period_start", start.toISOString())
         .lte("period_end", end.toISOString())
 
       if (usageError) {
         console.error("Failed to fetch AI usage:", usageError)
-        // Don't throw - just use defaults
       }
 
-      // Sum up usage across all models
-      const tokensUsed = usageData?.reduce((sum: number, row: { tokens_used?: number }) => sum + (row.tokens_used || 0), 0) || 0
-      const requestsCount = usageData?.reduce((sum: number, row: { requests_count?: number }) => sum + (row.requests_count || 0), 0) || 0
+      // Calculate effective tokens with model multipliers
+      let effectiveTokensUsed = 0
+      let rawTokensUsed = 0
+      let requestsCount = 0
+
+      if (usageData) {
+        for (const row of usageData) {
+          const tokens = row.tokens_used || 0
+          const modelId = row.model_id || 'gpt-4o-mini'
+          const multiplier = getModelMultiplier(modelId)
+          
+          rawTokensUsed += tokens
+          effectiveTokensUsed += tokens * multiplier
+          requestsCount += row.requests_count || 0
+        }
+      }
 
       // TODO: Fetch extra credits from a credits table when implemented
       const extraCredits = 0
 
       const tokenLimit = TIER_TOKEN_LIMITS[tier] || 0
       const totalAvailable = tokenLimit + extraCredits
-      const tokensRemaining = Math.max(0, totalAvailable - tokensUsed)
+      const tokensRemaining = Math.max(0, totalAvailable - effectiveTokensUsed)
       const usagePercent = totalAvailable > 0 
-        ? Math.min(100, Math.round((tokensUsed / totalAvailable) * 100))
+        ? Math.min(100, Math.round((effectiveTokensUsed / totalAvailable) * 100))
         : 0
 
       setUsage({
-        tokensUsed,
+        tokensUsed: effectiveTokensUsed,
+        rawTokensUsed,
         requestsCount,
         tokenLimit,
         extraCredits,
         totalAvailable,
         usagePercent,
-        isOverLimit: tokensUsed >= totalAvailable && totalAvailable > 0,
+        isOverLimit: effectiveTokensUsed >= totalAvailable && totalAvailable > 0,
         tokensRemaining,
         periodStart: start,
         periodEnd: end,
@@ -124,11 +141,20 @@ export function useAIUsage(): UseAIUsageReturn {
     }
   }, [tierLoading, fetchUsage])
 
+  // Check if user can afford a request with given model
+  const canAfford = useCallback((modelId: string, estimatedTokens: number = 2000) => {
+    if (!usage) return true // Assume yes if loading
+    const multiplier = getModelMultiplier(modelId)
+    const cost = estimatedTokens * multiplier
+    return usage.tokensRemaining >= cost
+  }, [usage])
+
   return {
     usage,
     loading: loading || tierLoading,
     error,
     refresh: fetchUsage,
+    canAfford,
   }
 }
 

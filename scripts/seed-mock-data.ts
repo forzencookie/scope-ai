@@ -74,9 +74,11 @@ async function seed() {
         const txId = generateUUID(t.id)
         const payload = {
             id: txId,
+            name: t.name,
+            date: new Date(t.date).toISOString().split('T')[0],
             description: t.name,
             created_at: new Date(t.date).toISOString(),
-            amount: t.amountValue,
+            amount: String(t.amountValue),
             amount_value: t.amountValue,
             status: status,
             category: t.category,
@@ -104,10 +106,9 @@ async function seed() {
 
         const payload = {
             id: r.id,
-            // supplier: r.supplier, // Removed
+            date: new Date(r.date).toISOString().split('T')[0],
             amount: amountVal,
             status: r.status,
-            // image_url: r.attachment,
             user_id: userId,
             total_amount: amountVal,
             created_at: new Date(r.date).toISOString(),

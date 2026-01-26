@@ -145,10 +145,15 @@ function BuyCreditsSection() {
                                 Populär
                             </span>
                         )}
+                        {pkg.savings && (
+                            <span className="absolute -top-2 right-3 bg-green-600 text-white text-xs px-2 py-0.5 rounded-full">
+                                {pkg.savings}
+                            </span>
+                        )}
                         <div className="font-semibold">{pkg.label}</div>
                         <div className="text-2xl font-bold mt-1">{pkg.price} kr</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                            {(pkg.price / (pkg.tokens / 1000)).toFixed(2)} kr/1k tokens
+                            {(pkg.price / (pkg.tokens / 1000000)).toFixed(0)} kr/1M tokens
                         </div>
                     </button>
                 ))}
@@ -177,7 +182,7 @@ export function BillingTab() {
                     <div>
                         <p className="font-medium">{tierName}-plan</p>
                         <p className="text-sm text-muted-foreground">
-                            {isDemo ? "Gratis" : "299 kr/månad"}
+                            {isDemo ? "Gratis" : "449 kr/månad"}
                         </p>
                     </div>
                     <span className={cn(

@@ -19,13 +19,19 @@ export async function DELETE(request: NextRequest) {
 
     // Use user-scoped DB - this ensures RLS policies are respected
     // and users can ONLY delete their own data
-    const db = createUserScopedDb(auth.userId)
+    const db = await createUserScopedDb()
+    if (!db) {
+        return ApiResponse.unauthorized('Could not establish database connection')
+    }
 
     try {
-        // Delete user's own data only (RLS enforced)
-        await db.receipts.delete()
-        await db.transactions.delete()
-        await db.verifications.delete()
+        // Delete user's own data only (RLS enforced via the client)
+        // We use the client directly since user-scoped-db doesn't have delete methods
+        const client = db.client
+        
+        await client.from('receipts').delete().eq('user_id', db.userId)
+        await client.from('transactions').delete().eq('user_id', db.userId)
+        await client.from('verifications').delete().eq('user_id', db.userId)
 
         console.log(`[Cleanup] User ${auth.userId} reset their data`)
 

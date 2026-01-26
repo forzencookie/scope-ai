@@ -261,24 +261,91 @@ export async function getMonthlyUsage(userId: string): Promise<UsageStats | null
 
 /**
  * Check if user is within their usage limits
+ * Now includes purchased credits as additional budget
  */
 export async function checkUsageLimits(userId: string): Promise<{
     withinLimits: boolean
     tokensRemaining: number
     requestsRemaining: number
+    tierTokensRemaining: number
+    purchasedCreditsRemaining: number
 }> {
+    const supabase = getSupabaseAdmin()
     const userTier = await getUserTier(userId)
     const limits = TIER_LIMITS[userTier]
     const usage = await getMonthlyUsage(userId)
 
     const tokensUsed = usage?.tokensUsed || 0
     const requestsUsed = usage?.requestsCount || 0
+    
+    // Get purchased credits
+    const { data: creditsData } = await supabase.rpc('get_user_credits', {
+        p_user_id: userId
+    })
+    const purchasedCredits = creditsData || 0
+
+    const tierTokensRemaining = Math.max(0, limits.tokensPerMonth - tokensUsed)
+    const totalRemaining = tierTokensRemaining + purchasedCredits
 
     return {
-        withinLimits: tokensUsed < limits.tokensPerMonth,
-        tokensRemaining: Math.max(0, limits.tokensPerMonth - tokensUsed),
-        requestsRemaining: Math.max(0, limits.requestsPerDay - requestsUsed) // Note: This is simplified
+        withinLimits: totalRemaining > 0,
+        tokensRemaining: totalRemaining,
+        requestsRemaining: Math.max(0, limits.requestsPerDay - requestsUsed),
+        tierTokensRemaining,
+        purchasedCreditsRemaining: purchasedCredits,
     }
+}
+
+/**
+ * Consume tokens from user's budget.
+ * First uses tier allocation, then purchased credits.
+ * Returns true if consumption was successful.
+ */
+export async function consumeTokens(
+    userId: string,
+    tokensToConsume: number,
+    modelId: string
+): Promise<{ success: boolean; source: 'tier' | 'credits' | 'mixed'; tokensFromCredits: number }> {
+    const supabase = getSupabaseAdmin()
+    const limits = await checkUsageLimits(userId)
+    
+    // Apply model multiplier for effective cost
+    const { getModelMultiplier } = await import('./subscription')
+    const multiplier = getModelMultiplier(modelId)
+    const effectiveTokens = Math.ceil(tokensToConsume * multiplier)
+
+    if (effectiveTokens > limits.tokensRemaining) {
+        // Not enough budget
+        return { success: false, source: 'tier', tokensFromCredits: 0 }
+    }
+
+    let tokensFromCredits = 0
+    let source: 'tier' | 'credits' | 'mixed' = 'tier'
+
+    // If tier budget is exhausted or will be exhausted, use credits
+    if (limits.tierTokensRemaining < effectiveTokens) {
+        // Need to use some credits
+        tokensFromCredits = effectiveTokens - limits.tierTokensRemaining
+        
+        if (limits.tierTokensRemaining === 0) {
+            source = 'credits'
+        } else {
+            source = 'mixed'
+        }
+
+        // Consume from purchased credits
+        const { data: consumeSuccess } = await supabase.rpc('consume_user_credits', {
+            p_user_id: userId,
+            p_tokens_to_consume: tokensFromCredits
+        })
+
+        if (!consumeSuccess) {
+            console.error('[ModelAuth] Failed to consume credits')
+            return { success: false, source: 'tier', tokensFromCredits: 0 }
+        }
+    }
+
+    return { success: true, source, tokensFromCredits }
 }
 
 // ============================================================================

@@ -21,6 +21,10 @@ import { RoadmapCard } from "./cards/RoadmapCard"
 import { EmployeeCard } from "./cards/EmployeeCard"
 import { VerificationCard } from "./cards/VerificationCard"
 
+// Billing/Usage Cards
+import { AIUsageCard } from "./cards/AIUsageCard"
+import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
+
 // Type definition for the registry
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CardComponent = ComponentType<any>
@@ -114,4 +118,15 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     deadlineslist: SmartListCard,
     benefitstable: SmartListCard,
     vatsummary: SmartListCard,
+
+    // Billing/Usage
+    aiusagecard: AIUsageCard,
+    usage: AIUsageCard,
+
+    buycreditsprompt: BuyCreditsPrompt,
+    creditsprompt: BuyCreditsPrompt,
+    
+    buycreditscheckout: BuyCreditsCheckout,
+    creditscheckout: BuyCreditsCheckout,
+    buyconfirm: BuyCreditsCheckout,
 }

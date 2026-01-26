@@ -2,8 +2,12 @@
 
 import { useRef, useEffect, useState, useCallback } from "react"
 import { useChat } from "@/hooks/use-chat"
+import { useAIUsage } from "@/hooks/use-ai-usage"
+import { useSubscription } from "@/hooks/use-subscription"
+import { useModel } from "@/providers/model-provider"
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
+import { BuyCreditsDialog } from "@/components/billing"
 import { type MentionItem } from "@/components/ai/mention-popover"
 import { getGreeting } from "@/lib/chat-utils"
 import { Plus, MessageSquare } from "lucide-react"
@@ -28,6 +32,9 @@ interface AIChatSidebarProps {
 export function AIChatSidebar({ }: AIChatSidebarProps) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
+    const { modelId } = useModel()
+    const { canAfford, refresh: refreshUsage } = useAIUsage()
+    const { isDemo, isPaid } = useSubscription()
 
     const {
         conversations,
@@ -46,6 +53,7 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
     const [attachedFiles, setAttachedFiles] = useState<File[]>([])
     const [showHistory, setShowHistory] = useState(false)
     const [isInputFocused, setIsInputFocused] = useState(false)
+    const [showBuyCredits, setShowBuyCredits] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     // Scroll to bottom when messages change
@@ -54,6 +62,12 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
     }, [messages])
 
     const handleSend = useCallback(() => {
+        // Check if user can afford this request (Pro users only)
+        if (isPaid && !canAfford(modelId)) {
+            setShowBuyCredits(true)
+            return
+        }
+
         const content = textareaValue
         const files = [...attachedFiles]
         const mentions = [...mentionItems]
@@ -67,7 +81,10 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
             files,
             mentions
         })
-    }, [textareaValue, attachedFiles, mentionItems, sendMessage])
+
+        // Refresh usage after sending
+        setTimeout(() => refreshUsage(), 2000)
+    }, [textareaValue, attachedFiles, mentionItems, sendMessage, isPaid, canAfford, modelId, refreshUsage])
 
     const handleCancelConfirmation = useCallback((messageId: string) => {
         deleteMessage(messageId)
@@ -330,6 +347,13 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
                     </div>
                 </div>
             </div>
+
+            {/* Out of tokens dialog */}
+            <BuyCreditsDialog
+                open={showBuyCredits}
+                onOpenChange={setShowBuyCredits}
+                outOfTokens
+            />
         </SidebarGroup>
     )
 }

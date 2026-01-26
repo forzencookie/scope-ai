@@ -48,7 +48,8 @@ export async function POST(req: Request) {
             // email: body.email || null, // Not in schema
             monthly_salary: Number(body.salary) || 0,
             status: body.status || 'active',
-            start_date: body.employment_date || new Date().toISOString().split('T')[0]
+            start_date: body.employment_date || new Date().toISOString().split('T')[0],
+            user_id: userDb.userId,
         });
 
         if (!employee) {

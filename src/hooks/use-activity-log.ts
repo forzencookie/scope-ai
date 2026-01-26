@@ -9,7 +9,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { useAuth } from "./use-auth"
-import { createBrowserSupabaseClient } from "@/lib/database/supabase-client"
+import { getSupabaseClient } from "@/lib/database/supabase"
 
 // ============================================================================
 // Types
@@ -132,7 +132,7 @@ export function useActivityLog({
   const [hasMore, setHasMore] = useState(true)
   const [offset, setOffset] = useState(0)
 
-  const supabase = createBrowserSupabaseClient()
+  const supabase = getSupabaseClient()
 
   // Fetch activities
   const fetchActivities = useCallback(
@@ -263,7 +263,7 @@ export async function logActivity(params: {
   changes?: Record<string, { from: unknown; to: unknown }>
   metadata?: Record<string, unknown>
 }) {
-  const supabase = createBrowserSupabaseClient()
+  const supabase = getSupabaseClient()
 
   const {
     data: { user },

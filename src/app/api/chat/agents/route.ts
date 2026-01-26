@@ -18,6 +18,11 @@ import { smartClassify } from '@/lib/agents/orchestrator/classifier'
 import { initializeAITools } from '@/lib/ai-tools'
 import { agentMetrics, createTimer } from '@/lib/agents/metrics'
 
+import { streamText, streamData, streamAgent, streamError } from './streaming'
+import { handleSingleAgentStream, handleMultiAgentStream } from './handlers'
+import { mapIntentToAgent } from './intent-mapper'
+import { handleConfirmation } from './confirmation'
+
 // =============================================================================
 // Configuration
 // =============================================================================
@@ -27,7 +32,6 @@ const RATE_LIMIT_CONFIG = {
     windowMs: 60 * 1000,
 }
 
-// Feature flag: Enable agent system
 const AGENT_SYSTEM_ENABLED = process.env.AGENT_SYSTEM_ENABLED === 'true' ||
     process.env.NODE_ENV === 'development'
 
@@ -37,105 +41,6 @@ function ensureInitialized() {
         initializeAITools()
         initializeAgents()
         initialized = true
-    }
-}
-
-// =============================================================================
-// Streaming Helpers
-// =============================================================================
-
-const textEncoder = new TextEncoder()
-
-function streamText(controller: ReadableStreamDefaultController, text: string) {
-    if (!text) return
-    controller.enqueue(textEncoder.encode(`T:${JSON.stringify(text)}\n`))
-}
-
-function streamData(controller: ReadableStreamDefaultController, data: unknown) {
-    controller.enqueue(textEncoder.encode(`D:${JSON.stringify(data)}\n`))
-}
-
-function streamAgent(controller: ReadableStreamDefaultController, agentInfo: {
-    activeAgent: AgentDomain
-    agentName: string
-    routing?: string
-}) {
-    controller.enqueue(textEncoder.encode(`A:${JSON.stringify(agentInfo)}\n`))
-}
-
-function streamError(controller: ReadableStreamDefaultController, error: string) {
-    controller.enqueue(textEncoder.encode(`E:${JSON.stringify({ error })}\n`))
-}
-
-// =============================================================================
-// Confirmation Handler
-// =============================================================================
-
-/**
- * Handle a confirmation response for a pending action.
- */
-async function handleConfirmation(
-    confirmationId: string,
-    action: 'confirm' | 'cancel',
-    context: AgentContext,
-    controller: ReadableStreamDefaultController,
-    userDb: UserScopedDb | null,
-    userId: string
-): Promise<string> {
-    try {
-        // Look up the pending confirmation from shared memory or database
-        const pendingConfirmation = context.sharedMemory.pendingConfirmation as {
-            id: string
-            toolName: string
-            toolParams: Record<string, unknown>
-            actionDescription: string
-        } | undefined
-
-        if (!pendingConfirmation || pendingConfirmation.id !== confirmationId) {
-            streamText(controller, 'Bekräftelsen kunde inte hittas eller har redan behandlats.')
-            return 'Bekräftelsen kunde inte hittas eller har redan behandlats.'
-        }
-
-        if (action === 'cancel') {
-            streamText(controller, 'Åtgärden avbröts. ✋')
-            return 'Åtgärden avbröts.'
-        }
-
-        // Execute the confirmed action
-        streamText(controller, `Utför: ${pendingConfirmation.actionDescription}...\n`)
-        
-        const tool = (await import('@/lib/ai-tools')).aiToolRegistry.get(pendingConfirmation.toolName)
-        if (!tool) {
-            streamError(controller, `Verktyget "${pendingConfirmation.toolName}" kunde inte hittas.`)
-            return `Fel: Verktyget kunde inte hittas.`
-        }
-
-        const result = await tool.execute(pendingConfirmation.toolParams, {
-            userId,
-            companyId: userDb?.companyId || '',
-            userDb
-        })
-
-        if (result.success) {
-            streamText(controller, '\nKlart! ✅')
-            streamData(controller, { 
-                toolResults: [{ 
-                    tool: pendingConfirmation.toolName, 
-                    result: result.data, 
-                    success: true 
-                }],
-                display: result.display,
-                navigation: result.navigation,
-            })
-            return 'Åtgärden genomfördes framgångsrikt.'
-        } else {
-            streamError(controller, result.error || 'Ett fel uppstod.')
-            return `Fel: ${result.error}`
-        }
-    } catch (error) {
-        const errorMsg = error instanceof Error ? error.message : 'Okänt fel'
-        streamError(controller, errorMsg)
-        return `Fel: ${errorMsg}`
     }
 }
 
@@ -179,7 +84,6 @@ async function streamAgentResponse(
         const targetAgent = agentRegistry.get(targetDomain)
         
         if (targetAgent) {
-            // Stream agent info to frontend
             streamAgent(controller, {
                 activeAgent: targetDomain,
                 agentName: targetAgent.name,
@@ -197,7 +101,6 @@ async function streamAgentResponse(
 
         // Check if this needs multi-agent coordination
         if (intent.requiresMultiAgent && intent.suggestedAgents && intent.suggestedAgents.length > 1) {
-            // Multi-agent workflow
             fullContent = await handleMultiAgentStream(
                 message,
                 intent.suggestedAgents,
@@ -205,7 +108,6 @@ async function streamAgentResponse(
                 controller
             )
         } else {
-            // Single agent handling
             fullContent = await handleSingleAgentStream(
                 message,
                 targetDomain,
@@ -253,11 +155,11 @@ async function streamAgentResponse(
                 executionTimeMs,
                 totalTimeMs: totalTimer.elapsed(),
                 toolsCalled,
-                toolsSucceeded: 0, // Would need to track this from agent response
+                toolsSucceeded: 0,
                 toolsFailed: 0,
                 responseSuccess,
                 responseLength: fullContent.length,
-                hasDisplay: false, // Would need to track from response
+                hasDisplay: false,
                 hasConfirmation: false,
                 hasNavigation: false,
                 modelId,
@@ -267,161 +169,6 @@ async function streamAgentResponse(
     }
 
     return fullContent
-}
-
-/**
- * Handle single agent request with streaming.
- */
-async function handleSingleAgentStream(
-    message: string,
-    agentDomain: AgentDomain,
-    context: AgentContext,
-    controller: ReadableStreamDefaultController
-): Promise<string> {
-    const agent = agentRegistry.get(agentDomain)
-    if (!agent) {
-        streamText(controller, 'Kunde inte hitta rätt agent för din förfrågan.')
-        return 'Kunde inte hitta rätt agent för din förfrågan.'
-    }
-
-    // Get the agent response
-    const response = await agent.handle(message, context)
-    const responseText = response.text || response.message
-
-    // Stream the response text
-    if (responseText) {
-        // Simulate streaming by chunking the text
-        const chunks = chunkText(responseText, 10)
-        for (const chunk of chunks) {
-            streamText(controller, chunk)
-            await new Promise(r => setTimeout(r, 20)) // Small delay for smooth streaming
-        }
-    }
-
-    // Stream any tool results
-    if (response.toolResults && response.toolResults.length > 0) {
-        streamData(controller, {
-            toolResults: response.toolResults.map(tr => ({
-                tool: tr.toolName,
-                result: tr.result,
-                success: tr.success,
-            }))
-        })
-    }
-
-    // Stream display instructions
-    const displays = response.displayInstructions || (response.display ? [response.display] : [])
-    if (displays.length > 0) {
-        for (const display of displays) {
-            streamData(controller, { display })
-        }
-    }
-
-    // Stream confirmation requests
-    if (response.confirmationRequired) {
-        streamData(controller, { 
-            confirmationRequired: response.confirmationRequired 
-        })
-    }
-
-    // Stream navigation instructions
-    if (response.navigationInstructions && response.navigationInstructions.length > 0) {
-        for (const nav of response.navigationInstructions) {
-            streamData(controller, { navigation: nav })
-        }
-    }
-
-    return responseText || ''
-}
-
-/**
- * Handle multi-agent workflow with streaming.
- */
-async function handleMultiAgentStream(
-    message: string,
-    agents: AgentDomain[],
-    context: AgentContext,
-    controller: ReadableStreamDefaultController
-): Promise<string> {
-    let combinedResponse = ''
-
-    streamText(controller, 'Jag hämtar information från flera områden...\n\n')
-    combinedResponse += 'Jag hämtar information från flera områden...\n\n'
-
-    for (const agentDomain of agents) {
-        const agent = agentRegistry.get(agentDomain)
-        if (!agent) continue
-
-        // Notify which agent is processing
-        streamAgent(controller, {
-            activeAgent: agentDomain,
-            agentName: agent.name,
-        })
-
-        // Consult the agent
-        const response = await agent.consult(message, context)
-        const responseText = response.text || response.message
-
-        if (responseText) {
-            const header = `**${agent.name}:**\n`
-            streamText(controller, header)
-            combinedResponse += header
-
-            const chunks = chunkText(responseText, 10)
-            for (const chunk of chunks) {
-                streamText(controller, chunk)
-                await new Promise(r => setTimeout(r, 15))
-            }
-            combinedResponse += responseText + '\n\n'
-        }
-
-        // Stream any data
-        if (response.toolResults && response.toolResults.length > 0) {
-            streamData(controller, {
-                toolResults: response.toolResults,
-                agent: agentDomain,
-            })
-        }
-    }
-
-    return combinedResponse
-}
-
-/**
- * Chunk text into smaller pieces for streaming effect.
- */
-function chunkText(text: string, wordsPerChunk: number): string[] {
-    const words = text.split(' ')
-    const chunks: string[] = []
-    
-    for (let i = 0; i < words.length; i += wordsPerChunk) {
-        const chunk = words.slice(i, i + wordsPerChunk).join(' ')
-        chunks.push(chunk + ' ')
-    }
-    
-    return chunks
-}
-
-/**
- * Map intent category to agent domain.
- */
-function mapIntentToAgent(category: string): AgentDomain {
-    const mapping: Record<string, AgentDomain> = {
-        'RECEIPT': 'receipts',
-        'INVOICE': 'invoices',
-        'BOOKKEEPING': 'bokforing',
-        'PAYROLL': 'loner',
-        'TAX': 'skatt',
-        'REPORTING': 'rapporter',
-        'COMPLIANCE': 'compliance',
-        'STATISTICS': 'statistik',
-        'EVENTS': 'handelser',
-        'SETTINGS': 'installningar',
-        'NAVIGATION': 'orchestrator',
-        'GENERAL': 'orchestrator',
-        'MULTI_DOMAIN': 'orchestrator',
-    }
-    return mapping[category] || 'orchestrator'
 }
 
 // =============================================================================
@@ -449,17 +196,8 @@ export async function POST(request: NextRequest) {
 
         if (!rateLimitResult.success) {
             return new Response(
-                JSON.stringify({ 
-                    error: 'Too many requests.', 
-                    retryAfter: rateLimitResult.retryAfter 
-                }),
-                { 
-                    status: 429, 
-                    headers: { 
-                        'Content-Type': 'application/json', 
-                        'Retry-After': String(rateLimitResult.retryAfter) 
-                    } 
-                }
+                JSON.stringify({ error: 'Too many requests.', retryAfter: rateLimitResult.retryAfter }),
+                { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitResult.retryAfter) } }
             )
         }
 
@@ -492,12 +230,10 @@ export async function POST(request: NextRequest) {
             attachments?: Array<{ name: string; type: string; data: string }>
             mentions?: Array<{ type: string; label: string; pageType?: string }>
             model?: string
-            useAgents?: boolean
         }
 
         // === HANDLE CONFIRMATION RESPONSE ===
         if (confirmationId && confirmationAction) {
-            // Initialize systems first
             ensureInitialized()
             
             const confirmContext = createAgentContext({
@@ -529,10 +265,7 @@ export async function POST(request: NextRequest) {
             })
 
             return new Response(stream, {
-                headers: {
-                    'Content-Type': 'text/plain; charset=utf-8',
-                    'X-Agent-Mode': 'true',
-                }
+                headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Agent-Mode': 'true' }
             })
         }
 
@@ -572,8 +305,7 @@ export async function POST(request: NextRequest) {
         ensureInitialized()
 
         // === BUILD AGENT CONTEXT ===
-        // Note: Company data would be fetched via userDb if needed
-        const companyType = 'AB' as const // Default, can be enhanced
+        const companyType = 'AB' as const
 
         const agentContext = createAgentContext({
             userId,
@@ -608,13 +340,8 @@ export async function POST(request: NextRequest) {
         const stream = new ReadableStream({
             async start(controller) {
                 try {
-                    // Stream agent header
-                    streamData(controller, { 
-                        agentMode: true,
-                        conversationId,
-                    })
+                    streamData(controller, { agentMode: true, conversationId })
 
-                    // Process through agent system
                     await streamAgentResponse(
                         latestContent,
                         agentContext,
@@ -634,10 +361,7 @@ export async function POST(request: NextRequest) {
         })
 
         return new Response(stream, {
-            headers: {
-                'Content-Type': 'text/plain; charset=utf-8',
-                'X-Agent-Mode': 'true',
-            }
+            headers: { 'Content-Type': 'text/plain; charset=utf-8', 'X-Agent-Mode': 'true' }
         })
 
     } catch (error) {
@@ -662,7 +386,6 @@ export async function GET(request: NextRequest) {
 
         ensureInitialized()
 
-        // Return available agents info
         const agents = agentRegistry.getAll().map(agent => ({
             id: agent.id,
             name: agent.name,

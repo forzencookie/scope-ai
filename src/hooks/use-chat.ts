@@ -3,14 +3,13 @@
 /**
  * useChat - Custom hook for chat state and logic
  * Handles conversations, messages, streaming, and persistence
+ * 
+ * This is a composed hook that combines smaller focused hooks.
  */
 
-import { useState, useCallback, useEffect } from 'react'
-import type { Message, Conversation } from '@/lib/chat-types'
+import { useMemo } from 'react'
+import { useConversations, useSendMessage } from './chat'
 import type { MentionItem } from '@/components/ai/mention-popover'
-import { generateTitle, fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
-import { useModel } from '@/providers/model-provider'
-import { useRouter } from 'next/navigation'
 
 interface UseChatOptions {
     /** Initial conversation ID to load */
@@ -31,453 +30,39 @@ interface SendMessageOptions {
 }
 
 export function useChat(options: UseChatOptions = {}) {
-    const router = useRouter()
-    const { modelId } = useModel()
-    const [conversations, setConversations] = useState<Conversation[]>([])
-    const [currentConversationId, setCurrentConversationId] = useState<string | null>(
-        options.initialConversationId || null
-    )
-    const [isLoading, setIsLoading] = useState(false)
+    // Conversation management
+    const {
+        conversations,
+        setConversations,
+        currentConversationId,
+        setCurrentConversationId,
+        currentConversation,
+        startNewConversation,
+        loadConversation,
+        deleteConversation,
+        deleteMessage,
+    } = useConversations()
+
+    // Set initial conversation ID if provided
+    // Note: This is handled in useConversations, but we could enhance it here
 
     // Derived state
-    const currentConversation = conversations.find(c => c.id === currentConversationId)
-    const messages = useMemo(() => currentConversation?.messages || [], [currentConversation])
+    const messages = useMemo(() => 
+        currentConversation?.messages || [], 
+        [currentConversation]
+    )
 
-    // Load conversations from Supabase on mount
-    useEffect(() => {
-        async function loadConversations() {
-            try {
-                const res = await fetch('/api/chat/history')
-                if (res.ok) {
-                    const data = await res.json()
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const mapped = data.map((conv: any) => ({
-                        id: conv.id,
-                        title: conv.title || 'Ny konversation',
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        messages: (conv.messages || []).map((m: any) => ({
-                            id: m.id || crypto.randomUUID(),
-                            role: m.role as 'user' | 'assistant',
-                            content: m.content || '',
-                            mentions: m.metadata?.mentions || [],
-                            attachments: m.metadata?.attachments || []
-                        })),
-                        createdAt: new Date(conv.created_at).getTime(),
-                        updatedAt: new Date(conv.updated_at || conv.created_at).getTime()
-                    }))
-                    setConversations(mapped)
-                }
-            } catch (error) {
-                console.error('Failed to load conversations:', error)
-            }
-        }
-        loadConversations()
-    }, [])
-
-    // Notify sidebar when conversations change
-    useEffect(() => {
-        if (conversations.length > 0) {
-            window.dispatchEvent(new Event('ai-conversations-updated'))
-        }
-    }, [conversations])
-
-    // Start new conversation
-    const startNewConversation = useCallback(() => {
-        setCurrentConversationId(null)
-        // Hide any open AI dialog
-        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [])
-
-    // Load a conversation
-    const loadConversation = useCallback((conversationId: string) => {
-        setCurrentConversationId(conversationId)
-        // Hide any open AI dialog
-        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [])
-
-    // Delete a conversation
-    const deleteConversation = useCallback((conversationId: string) => {
-        setConversations(prev => prev.filter(c => c.id !== conversationId))
-        if (currentConversationId === conversationId) {
-            setCurrentConversationId(null)
-        }
-    }, [currentConversationId])
-
-    // Delete a message
-    const deleteMessage = useCallback((messageId: string) => {
-        setConversations(prev => prev.map(c =>
-            c.id === currentConversationId
-                ? { ...c, messages: c.messages.filter(m => m.id !== messageId) }
-                : c
-        ))
-    }, [currentConversationId])
-
-    // Send message
-    const sendMessage = useCallback(async ({
-        content,
-        files = [],
-        mentions = [],
-        retryMessageId,
-        confirmationId
-    }: SendMessageOptions) => {
-        const messageContent = content.trim()
-        const hasFiles = files.length > 0
-
-        // Validate we have something to send
-        if (!messageContent && !hasFiles && !retryMessageId && !confirmationId) return
-        if (isLoading) return
-
-        let conversationId = currentConversationId
-        let updatedMessages = [...messages]
-
-        // If retrying, find and remove the message + subsequent
-        if (retryMessageId) {
-            const retryIndex = updatedMessages.findIndex(m => m.id === retryMessageId)
-            if (retryIndex > 0) {
-                updatedMessages = updatedMessages.slice(0, retryIndex)
-            }
-        }
-
-        // Create assistant message placeholder
-        const assistantMessageId = crypto.randomUUID()
-        const assistantMessage: Message = {
-            id: assistantMessageId,
-            role: 'assistant',
-            content: ''
-        }
-
-        // Create or update conversation
-        if (!conversationId) {
-            conversationId = crypto.randomUUID()
-            const newConversation: Conversation = {
-                id: conversationId,
-                title: generateTitle(updatedMessages),
-                messages: updatedMessages,
-                createdAt: Date.now(),
-                updatedAt: Date.now()
-            }
-            setConversations(prev => [newConversation, ...prev])
-            setCurrentConversationId(conversationId)
-
-            // Generate AI title asynchronously
-            fetch('/api/chat/title', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ messages: updatedMessages })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.title) {
-                        setConversations(prev => prev.map(c =>
-                            c.id === conversationId ? { ...c, title: data.title } : c
-                        ))
-                    }
-                })
-                .catch(err => console.error('Failed to generate title:', err))
-        } else {
-            const currentTitle = conversations.find(c => c.id === conversationId)?.title
-
-            setConversations(prev => prev.map(c =>
-                c.id === conversationId
-                    ? { ...c, messages: updatedMessages, updatedAt: Date.now() }
-                    : c
-            ))
-
-            // Regenerate generic title if needed
-            if (currentTitle === 'Ny konversation' || currentTitle === 'New conversation') {
-                fetch('/api/chat/title', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ messages: updatedMessages })
-                })
-                    .then(res => res.json())
-                    .then(data => {
-                        if (data.title && data.title !== 'Ny konversation') {
-                            setConversations(prev => prev.map(c =>
-                                c.id === conversationId ? { ...c, title: data.title } : c
-                            ))
-                        }
-                    })
-                    .catch(err => console.error('Failed to regenerate title:', err))
-            }
-        }
-
-        setIsLoading(true)
-        // Show thinking dialog while AI is processing
-        window.dispatchEvent(new CustomEvent('ai-dialog-start', { detail: { contentType: 'default' } }))
-
-        try {
-            // Convert files to base64 for display and API
-            const messageAttachments = await Promise.all(
-                files.map(async (file) => ({
-                    name: file.name,
-                    type: file.type,
-                    dataUrl: await fileToDataUrl(file)
-                }))
-            )
-
-            // === AUTO-INJECT CONTEXT FOR IMAGES ===
-            // Simple hint for images - let the system prompt guide the conversational approach
-            let enhancedContent = messageContent
-            const hasImages = files.some(f => f.type.startsWith('image/'))
-
-            if (hasImages && !messageContent.trim()) {
-                // User sent only an image with no text - give a simple hint
-                enhancedContent = '[Användaren har skickat en bild. Beskriv vad du ser och fråga vad de vill göra.]'
-            }
-            // === END AUTO-INJECT ===
-
-            // Add user message if not retry/confirmation
-            if (!retryMessageId) {
-                const userMessage: Message = {
-                    id: crypto.randomUUID(),
-                    role: 'user',
-                    content: messageContent, // Keep original for display
-                    attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
-                    mentions: mentions.length > 0 ? mentions : undefined
-                }
-                updatedMessages = [...updatedMessages, userMessage]
-            }
-
-            // Add assistant placeholder
-            updatedMessages = [...updatedMessages, assistantMessage]
-
-            setConversations(prev => prev.map(c =>
-                c.id === conversationId
-                    ? { ...c, messages: updatedMessages, updatedAt: Date.now() }
-                    : c
-            ))
-
-            // Convert files for API
-            const attachments = await Promise.all(files.map(fileToBase64))
-
-            // Build messages for API, using enhancedContent for the last user message
-            const messagesForAPI = updatedMessages
-                .filter(m => {
-                    // Include user messages with content OR attachments
-                    if (m.role === 'user' && (m.content || m.attachments?.length)) return true
-                    // Only include assistant messages with actual text content
-                    if (m.role === 'assistant' && m.content && typeof m.content === 'string' && m.content.trim()) return true
-                    return false
-                })
-                .map((m, index, arr) => {
-                    // For the last user message, use enhancedContent (which has the hint for image-only messages)
-                    if (m.role === 'user' && index === arr.length - 1) {
-                        return { role: m.role, content: enhancedContent || m.content || '' }
-                    }
-                    return { role: m.role, content: m.content || '' }
-                })
-
-            const response = await fetch('/api/chat', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    messages: messagesForAPI,
-                    confirmationId,
-                    attachments: attachments.length > 0 ? attachments : undefined,
-                    mentions: mentions.length > 0 ? mentions : undefined,
-                    model: modelId
-                })
-            })
-
-            if (!response.ok) {
-                throw new Error('Failed to get response')
-            }
-
-            const contentType = response.headers.get('content-type')
-
-            // Handle JSON response (tool results)
-            if (contentType?.includes('application/json')) {
-                const data = await response.json()
-
-                setConversations(prev => prev.map(c =>
-                    c.id === conversationId
-                        ? {
-                            ...c,
-                            messages: c.messages.map(msg =>
-                                msg.id === assistantMessageId
-                                    ? {
-                                        ...msg,
-                                        content: data.content,
-                                        display: data.display,
-                                        confirmationRequired: data.confirmationRequired,
-                                        toolResults: data.toolResults
-                                    }
-                                    : msg
-                            )
-                        }
-                        : c
-                ))
-
-                // Dispatch completion event
-                window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
-                    detail: {
-                        contentType: data.display?.component || 'json',
-                        title: data.display?.title || 'Klar',
-                        content: data.content,
-                        data: data,
-                        display: data.display,
-                        navigation: data.navigation,
-                        highlightId: data.toolResults?.[0]?.result?.id
-                    }
-                }))
-                return
-            }
-
-            // Handle streaming response
-            const reader = response.body?.getReader()
-            const decoder = new TextDecoder()
-
-            if (reader) {
-                let fullContent = ''
-                let buffer = ''
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                let lastData: any = null // Capture data for completion event
-
-                while (true) {
-                    const { done, value } = await reader.read()
-                    if (done) break
-
-                    const textChunk = decoder.decode(value, { stream: true })
-                    buffer += textChunk
-
-                    const lines = buffer.split('\n')
-                    buffer = lines.pop() || ''
-
-                    for (const line of lines) {
-                        if (!line.trim()) continue
-
-                        try {
-                            if (line.startsWith('T:')) {
-                                const contentDelta = JSON.parse(line.slice(2))
-                                fullContent += contentDelta
-                            } else if (line.startsWith('D:')) {
-                                const data = JSON.parse(line.slice(2))
-                                lastData = data // Store for completion
-
-                                // Handle immediate navigation
-                                if (data.navigation) {
-                                    router.push(data.navigation.route)
-                                }
-
-                                setConversations(prev => prev.map(c =>
-                                    c.id === conversationId
-                                        ? {
-                                            ...c,
-                                            messages: c.messages.map(msg =>
-                                                msg.id === assistantMessageId
-                                                    ? {
-                                                        ...msg,
-                                                        display: data.display || msg.display,
-                                                        confirmationRequired: data.confirmationRequired || msg.confirmationRequired,
-                                                        toolResults: data.toolResults || msg.toolResults
-                                                    }
-                                                    : msg
-                                            )
-                                        }
-                                        : c
-                                ))
-                            }
-                        } catch (e) {
-                            console.error('Error parsing stream line:', line, e)
-                        }
-                    }
-
-                    // Update content state
-                    setConversations(prev => prev.map(c =>
-                        c.id === conversationId
-                            ? {
-                                ...c,
-                                messages: c.messages.map(msg =>
-                                    msg.id === assistantMessageId
-                                        ? { ...msg, content: fullContent }
-                                        : msg
-                                )
-                            }
-                            : c
-                    ))
-                }
-
-                // Check if the response contains error indicators
-                const isErrorResponse = fullContent.includes('Ett fel uppstod') ||
-                    fullContent.includes('fel uppstod vid generering') ||
-                    fullContent.includes('error') && fullContent.length < 100
-
-                // Check if there's structured output that warrants showing the dialog
-                // The dialog ONLY shows when AI uses tools/structured output
-                const hasStructuredOutput = lastData && (
-                    lastData.display ||
-                    lastData.navigation ||
-                    lastData.toolResults?.length > 0 ||
-                    lastData.confirmationRequired
-                )
-
-                // Dispatch appropriate event
-                if (isErrorResponse) {
-                    window.dispatchEvent(new CustomEvent('ai-dialog-error', {
-                        detail: {
-                            contentType: 'error',
-                            title: 'Fel uppstod',
-                            content: fullContent,
-                        }
-                    }))
-                } else if (hasStructuredOutput) {
-                    // Show confirmation dialog for tool calls / structured output
-                    // This is when AI decides to output structured data (receipts, confirmations, etc.)
-                    window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
-                        detail: {
-                            contentType: lastData?.display?.component || (lastData?.confirmationRequired ? 'confirmation' : 'action'),
-                            title: lastData?.display?.title || (lastData?.confirmationRequired ? 'Bekräfta åtgärd' : 'Åtgärd slutförd'),
-                            content: fullContent,
-                            data: lastData,
-                            display: lastData?.display,
-                            navigation: lastData?.navigation,
-                            confirmationRequired: lastData?.confirmationRequired,
-                            highlightId: lastData?.toolResults?.[0]?.result?.id
-                        }
-                    }))
-                } else {
-                    // Plain text response - hide thinking dialog, text appears in chat
-                    window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-                }
-            }
-        } catch (error) {
-            console.error('SendMessage error:', error)
-            const errorMessage = 'Ett fel uppstod. Försök igen.'
-
-            // Dispatch error event
-            window.dispatchEvent(new CustomEvent('ai-dialog-error', {
-                detail: {
-                    contentType: 'error',
-                    title: 'Fel uppstod',
-                    content: errorMessage,
-                }
-            }))
-
-            setConversations(prev => prev.map(c =>
-                c.id === conversationId
-                    ? {
-                        ...c,
-                        messages: c.messages.map(msg =>
-                            msg.id === assistantMessageId
-                                ? { ...msg, content: 'Ett fel uppstod. Försök igen.', error: true }
-                                : msg
-                        )
-                    }
-                    : c
-            ))
-        } finally {
-            setIsLoading(false)
-        }
-    }, [messages, currentConversationId, isLoading, conversations, modelId, router])
-
-    // Regenerate last response
-    const regenerateResponse = useCallback(() => {
-        const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant')
-        if (lastAssistantMessage) {
-            sendMessage({ content: '', retryMessageId: lastAssistantMessage.id })
-        }
-    }, [messages, sendMessage])
+    // Message sending
+    const {
+        isLoading,
+        sendMessage,
+        regenerateResponse,
+    } = useSendMessage({
+        conversations,
+        setConversations,
+        currentConversationId,
+        setCurrentConversationId,
+    })
 
     return {
         // State
@@ -497,3 +82,6 @@ export function useChat(options: UseChatOptions = {}) {
         setCurrentConversationId,
     }
 }
+
+// Re-export types for convenience
+export type { SendMessageOptions }

@@ -28,31 +28,76 @@ export type GatedFeature =
   | "exports"              // Export/download data (always allowed)
 
 // ============================================================================
-// Token Limits per Tier (monthly)
+// Token Budget System (monthly)
+// ============================================================================
+// 
+// Users get a "base token" budget. Different models consume tokens at different rates.
+// This naturally steers users to cheaper models while giving access to premium ones.
+//
+// ECONOMICS (Jan 2026):
+// - Weighted avg cost: ~20 kr/1M tokens (70% cheap, 30% mid-tier usage)
+// - Pro at 449 kr with 10M tokens = 64-91% margin depending on usage
+// - All scenarios above 30% target margin ✅
 // ============================================================================
 
+/** Base token budget per tier (monthly) */
 export const TIER_TOKEN_LIMITS: Record<SubscriptionTier, number> = {
-  demo: 0,              // No real AI tokens - simulated only
-  free: 0,              // Deprecated, same as demo
-  pro: 500_000,         // 500k tokens/month (~$5-10 worth)
-  enterprise: 2_000_000 // 2M tokens/month
+  demo: 0,               // No real AI tokens - simulated only
+  free: 0,               // Deprecated, same as demo
+  pro: 10_000_000,       // 10M base tokens/month
+  enterprise: 50_000_000 // 50M base tokens/month (negotiable)
 }
 
-/** Price per 1000 tokens for credit purchases (in SEK) */
-export const CREDIT_PRICE_PER_1K_TOKENS = 0.5 // 0.50 kr per 1k tokens
+/** 
+ * Model cost multipliers - expensive models consume more of the budget
+ * 1x = base rate (cheapest models)
+ * 
+ * Note: These should match ASSISTANT_TIERS in lib/ai/models.ts
+ * The multiplier means: 1 real API token costs X tokens from user's budget
+ */
+export const MODEL_COST_MULTIPLIERS: Record<string, number> = {
+  // Snabb tier (1x) - cheapest, for daily use
+  'gpt-4o-mini': 1,
+  'gemini-2.0-flash': 1,
+  
+  // Smart tier (3x) - balanced cost/performance
+  'gpt-4o': 3,
+  'gemini-2.0-pro-low': 3,
+  'claude-sonnet-4-20250514': 3,
+  
+  // Expert tier (15x) - premium, for complex tasks
+  'claude-opus-4-20250514': 15,
+  'gemini-2.0-pro-high': 10,
+  'gpt-4-turbo': 10,
+}
 
-/** Credit package options */
+/** Get multiplier for a model (defaults to 1x for unknown models) */
+export function getModelMultiplier(modelId: string): number {
+  return MODEL_COST_MULTIPLIERS[modelId] ?? 1
+}
+
+/** Calculate effective token cost for a model */
+export function calculateEffectiveTokens(actualTokens: number, modelId: string): number {
+  return actualTokens * getModelMultiplier(modelId)
+}
+
+// ============================================================================
+// Credit Packages (top-up when budget runs out)
+// ============================================================================
+
+/** Credit package options - ~80% margin */
 export interface CreditPackage {
   tokens: number
   price: number
   label: string
   popular?: boolean
+  savings?: string
 }
 
 export const CREDIT_PACKAGES: CreditPackage[] = [
-  { tokens: 100_000, price: 49, label: "100k tokens" },
-  { tokens: 500_000, price: 199, label: "500k tokens", popular: true },
-  { tokens: 1_000_000, price: 349, label: "1M tokens" },
+  { tokens: 2_000_000, price: 99, label: "2M tokens" },
+  { tokens: 5_000_000, price: 199, label: "5M tokens", popular: true, savings: "Spara 20%" },
+  { tokens: 15_000_000, price: 499, label: "15M tokens", savings: "Spara 33%" },
 ]
 
 /** Feature access by tier */

@@ -57,22 +57,29 @@ export async function POST(request: NextRequest) {
     try {
         const body: OnboardingSeedRequest = await request.json()
         const results: Record<string, number> = {}
-        const db = createUserScopedDb(auth.userId)
+        const db = await createUserScopedDb()
+        if (!db) {
+            return ApiResponse.unauthorized('Could not establish database connection')
+        }
 
         // Seed shareholders for AB
         if (body.companyType === 'ab' && body.shareholders && body.shareholders.length > 0) {
             try {
-                const shareholders = await Promise.all(
-                    body.shareholders.map(s => db.shareholders.create({
-                        name: s.name,
-                        ssn_org_nr: s.ssn_org_nr,
-                        shares_count: s.shares_count,
-                        shares_percentage: s.shares_percentage,
-                        share_class: s.share_class,
-                        user_id: auth.userId,
-                    }))
-                )
-                results.shareholders = shareholders.length
+                const shareholderData = body.shareholders.map(s => ({
+                    name: s.name,
+                    ssn_org_nr: s.ssn_org_nr,
+                    shares_count: s.shares_count,
+                    shares_percentage: s.shares_percentage,
+                    share_class: s.share_class,
+                    user_id: auth.userId,
+                    company_id: db.companyId,
+                }))
+                const { data: shareholders, error } = await db.client
+                    .from('shareholders')
+                    .insert(shareholderData)
+                    .select()
+                if (error) throw error
+                results.shareholders = shareholders?.length || 0
             } catch (error) {
                 console.error('Error inserting shareholders:', error)
                 return NextResponse.json({ success: false, error: 'Failed to insert shareholders' }, { status: 500 })

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { stripe, getTierFromPriceId, updateUserTier, getUserIdFromCustomer } from '@/lib/stripe'
+import { stripe, getTierFromPriceId, updateUserTier, getUserIdFromCustomer, addUserCredits } from '@/lib/stripe'
 import Stripe from 'stripe'
 
 /**
@@ -76,12 +76,31 @@ export async function POST(request: NextRequest) {
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const userId = session.metadata?.supabase_user_id
     const tier = session.metadata?.tier as 'pro' | 'enterprise' | undefined
+    const purchaseType = session.metadata?.purchase_type
 
     if (!userId) {
         console.error('[Stripe Webhook] No user ID in session metadata')
         return
     }
 
+    // Handle credit purchase (one-time payment)
+    if (purchaseType === 'credits') {
+        const creditTokens = parseInt(session.metadata?.credit_tokens || '0', 10)
+        const pricePaidSek = parseInt(session.metadata?.credit_price_sek || '0', 10)
+        
+        if (creditTokens > 0) {
+            await addUserCredits(
+                userId, 
+                creditTokens, 
+                session.id,
+                pricePaidSek * 100 // Convert to cents (öre)
+            )
+            console.log(`[Stripe Webhook] Credits purchased - added ${creditTokens} tokens to user ${userId}`)
+        }
+        return
+    }
+
+    // Handle subscription upgrade
     if (tier) {
         await updateUserTier(userId, tier)
         console.log(`[Stripe Webhook] Checkout completed - upgraded user ${userId} to ${tier}`)

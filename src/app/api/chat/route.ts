@@ -7,162 +7,27 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateChatMessages, validateJsonBody } from '@/lib/validation'
-import { createUserScopedDb, type UserScopedDb } from '@/lib/database/user-scoped-db'
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { authorizeModel, logUnauthorizedModelAccess, trackUsage, isDemoMode, getUserTier } from '@/lib/model-auth'
-
-// Types for AI interactions
-type AIContentPart = { type: string; text?: string; [key: string]: unknown }
-type AIContent = string | AIContentPart[]
-type AIMessage = {
-    role: string
-    content: AIContent
-    tool_calls?: unknown[]
-    [key: string]: unknown
-}
-type AIToolDefinition = {
-    type?: string
-    function?: {
-        name: string
-        description?: string
-        parameters?: unknown
-    }
-    [key: string]: unknown
-}
-
-// Token limits for input validation
-const MAX_INPUT_TOKENS = 3500
-const AVG_CHARS_PER_TOKEN = 4
-
-function estimateTokenCount(text: string): number {
-    const nonAsciiRatio = (text.match(/[^\x00-\x7F]/g) || []).length / Math.max(text.length, 1)
-    const charsPerToken = nonAsciiRatio > 0.2 ? 2.5 : AVG_CHARS_PER_TOKEN
-    return Math.ceil(text.length / charsPerToken)
-}
-
-function validateTokenLimits(messages: Array<{ role: string; content: string }>): { valid: boolean; error?: string } {
-    let totalTokens = 0
-    for (const message of messages) {
-        totalTokens += estimateTokenCount(message.content || '')
-    }
-    if (totalTokens > MAX_INPUT_TOKENS) {
-        return {
-            valid: false,
-            error: `Message content too long. Please reduce your message size. (Estimated ${totalTokens} tokens, max ${MAX_INPUT_TOKENS})`
-        }
-    }
-    return { valid: true }
-}
-
-function validateRequestOrigin(request: NextRequest): boolean {
-    const origin = request.headers.get('origin')
-    const referer = request.headers.get('referer')
-    const host = request.headers.get('host')
-
-    if (!origin && !referer) {
-        const apiKey = request.headers.get('x-api-key')
-        if (apiKey) return true
-        if (process.env.NODE_ENV === 'development') return true
-        return false
-    }
-
-    const requestOrigin = origin || (referer ? new URL(referer).origin : null)
-    if (!requestOrigin) return process.env.NODE_ENV === 'development'
-
-    try {
-        const originHost = new URL(requestOrigin).host
-        if (host && originHost === host) return true
-        const allowedOrigins = process.env.ALLOWED_ORIGINS?.split(',').map(o => o.trim()) || []
-        if (allowedOrigins.includes(requestOrigin) || allowedOrigins.includes(originHost)) return true
-        if (process.env.NODE_ENV === 'development') return true
-        return false
-    } catch {
-        return false
-    }
-}
-
-const SYSTEM_PROMPT = `# Scope AI Assistant Knowledge Base
-
-## Context
-Scope is a Swedish accounting platform for small businesses (AB, enskild firma, handelsbolag, kommanditbolag, föreningar). Users manage bookkeeping, receipts, invoices, payroll, taxes, shareholders, and compliance. The goal is autonomous AI-assisted accounting with human confirmation for important actions.
-
-## Available Capabilities
-- **create_receipt**: Create expense entries from extracted receipt data
-- **get_receipts**: Search and retrieve existing receipts  
-- **get_transactions**: Query bookkeeping transactions
-- **navigate**: Direct users to specific pages in the app
-
-## Swedish Accounting Reference
-- BAS kontoplan: Standard chart of accounts (1xxx assets, 2xxx liabilities, 3xxx revenue, 4-7xxx expenses, 8xxx financial)
-- Common accounts: 1930 (bank), 2440 (supplier debt), 2610 (output VAT), 2640 (input VAT), 5410 (consumables), 6212 (phone)
-- VAT rates: 25% (standard), 12% (food/hotels), 6% (books/transport), 0% (exempt)
-- Company types: AB (aktiebok, bolagsstämma), EF (F-skatt, egenavgifter), HB/KB (delägare, kapitalinsats)
-
-## Behavioral Patterns (Reference, Not Rules)
-
-**Proactive Suggestion Pattern**
-When analyzing information, effective assistants offer interpretations with reasoning rather than asking open questions. This respects the user's time and demonstrates competence.
-- Instead of: "What would you like me to do with this?"
-- Pattern: "This looks like [observation] — I'd suggest [action] because [reason]. Want me to proceed?"
-
-**Confirmation Pattern**  
-Before executing changes to data, showing a preview with clear options (Confirm/Edit/Cancel) prevents mistakes and builds trust. The more significant the action, the more detail in the preview.
-
-**Disambiguation Pattern**
-When information is unclear, presenting 2-3 likely interpretations as concrete options keeps conversations efficient.
-- Pattern: "I see a few possibilities: 1) [option A], 2) [option B]. Which fits?"
-
-**Context Awareness Pattern**
-The AI naturally adapts based on company type (AB vs EF), onboarding status, and conversation history. Missing information is noted conversationally, not demanded.
-
-**Language Matching Pattern**
-Responses match the user's language. Swedish input → Swedish response. English input → English response.
-
-## Example Interactions (Library)
-
-**Receipt image uploaded:**
-"Detta ser ut som ett kvitto från Clas Ohlson på 450 kr 🧾 Verkar vara kontorsmaterial — jag föreslår konto 5410 Förbrukningsinventarier med 25% moms. Vill du att jag skapar posten?"
-
-**User: "hur går det för företaget?"**
-Pull current metrics. Summarize P&L, cash position, trends. Proactively note anything interesting: "Omsättningen är upp 12% mot förra månaden 📈 Jag ser dock att kundfordringar växer — vill du att jag kollar om några fakturor är försenade?"
-
-**User: "jag har SIE-filer från mitt gamla system"**
-"Perfekt! Jag kan importera SIE4-filer — det tar med kontoplanen och alla transaktioner. Ladda upp filen så visar jag en sammanfattning innan vi kör igång."
-
-**User: "jag behöver betala ut lön"**
-Understand context. If employee count/salary unknown, ask naturally. Then calculate: gross, tax (skattetabell), arbetsgivaravgifter, net. Show payslip preview for confirmation.
-
-**User: "vilka deadlines har jag?"**
-"Närmaste deadlines: Moms Q1 ska in 12 april 📅 AGI för mars senast 12 maj. Vill du att jag förbereder någon av dessa?"
-
-**Random/non-accounting image:**
-Be friendly but note the mismatch: "Fin bild! 😊 Osäker på hur jag bokför den dock — är det kopplat till verksamheten, eller råkade du skicka fel?"
-
-**Unclear request:**
-Offer interpretations: "Jag är osäker om du menar: 1) Leverantörsfaktura (skuldbokning) 2) Kvitto (direkt kostnad) 3) Något annat — vilken passar?"
-
-**User skipped onboarding:**
-When relevant info is missing, weave it into conversation: "Jag ser att vi inte har organisationsnumret ännu — ska jag slå upp det hos Bolagsverket?"
-
-## Tone Reference
-- Professional but warm, like a knowledgeable colleague
-- Uses emojis sparingly to add warmth (📊 🧾 📈 ✅)
-- Concise responses — respects user's time
-- Celebrates wins, offers help with problems
-- Never condescending, always collaborative`
+import { 
+    authorizeModel, 
+    logUnauthorizedModelAccess, 
+    trackUsage, 
+    isDemoMode, 
+    checkUsageLimits, 
+    consumeTokens 
+} from '@/lib/model-auth'
+import { initializeAITools, aiToolRegistry } from '@/lib/ai-tools'
+import { validateTokenLimits, validateRequestOrigin } from './validation'
+import { streamText } from './streaming'
+import { handleGoogleProvider, handleAnthropicProvider, handleOpenAIProvider } from './providers'
+import type { AIContentPart, AIMessage, AIToolDefinition } from './types'
 
 const RATE_LIMIT_CONFIG = {
     maxRequests: 20,
     windowMs: 60 * 1000,
 }
-
-import {
-    initializeAITools,
-    aiToolRegistry,
-    toolsToOpenAIFunctions,
-    type AIToolResult,
-} from '@/lib/ai-tools'
 
 let toolsInitialized = false
 function ensureToolsInitialized() {
@@ -170,463 +35,6 @@ function ensureToolsInitialized() {
         initializeAITools()
         toolsInitialized = true
     }
-}
-
-// Helper to stream text
-const textEncoder = new TextEncoder()
-function streamText(controller: ReadableStreamDefaultController, text: string) {
-    if (!text) return
-    controller.enqueue(textEncoder.encode(`T:${JSON.stringify(text)}\n`))
-}
-
-function streamData(controller: ReadableStreamDefaultController, data: unknown) {
-    controller.enqueue(textEncoder.encode(`D:${JSON.stringify(data)}\n`))
-}
-
-// ============================================================================
-// Provider-specific implementations
-// ============================================================================
-
-async function handleGoogleProvider(
-    modelId: string,
-    messagesForAI: AIMessage[],
-    controller: ReadableStreamDefaultController,
-    conversationId: string | null,
-    tools: AIToolDefinition[],
-    userDb: UserScopedDb | null,
-    confirmationId: string | undefined,
-    userId: string
-) {
-    const { GoogleGenerativeAI } = await import('@google/generative-ai')
-    const genAI = new GoogleGenerativeAI(process.env.GOOGLE_AI_API_KEY || '')
-
-    // Map model IDs to actual Google model names
-    const googleModelMap: Record<string, string> = {
-        'gemini-2.0-flash': 'gemini-2.0-flash',
-        'gemini-2.0-pro-low': 'gemini-2.0-pro',
-        'gemini-2.0-pro-high': 'gemini-2.0-pro',
-    }
-
-    const actualModel = googleModelMap[modelId] || 'gemini-2.0-flash'
-    const model = genAI.getGenerativeModel({ model: actualModel })
-
-    // Convert messages to Google format
-    const history = messagesForAI.slice(0, -1).map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: typeof m.content === 'string' ? m.content : (m.content as AIContentPart[]).map((c) => c.text || '').join('\n') }]
-    }))
-
-    const lastMessage = messagesForAI[messagesForAI.length - 1]
-    const lastContent = typeof lastMessage.content === 'string'
-        ? lastMessage.content
-        : (lastMessage.content as AIContentPart[]).map((c) => c.text || '').join('\n')
-
-    const { toolsToGoogleFunctions } = await import('@/lib/ai-tools')
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const googleTools = toolsToGoogleFunctions(tools as any[])
-
-    const chat = model.startChat({
-        history,
-        systemInstruction: SYSTEM_PROMPT,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        tools: googleTools.length > 0 ? [{ functionDeclarations: googleTools }] as any : undefined,
-    })
-
-    let fullContent = ''
-    let currentMessage = lastContent
-
-    // Loop to handle tool calls (max 5 turns)
-    for (let i = 0; i < 5; i++) {
-        try {
-            const result = await chat.sendMessageStream(currentMessage)
-            let gotFunctionCall = false
-            const functionCalls: unknown[] = []
-
-            for await (const chunk of result.stream) {
-                // Check for text
-                const text = chunk.text()
-                if (text) {
-                    fullContent += text
-                    streamText(controller, text)
-                }
-
-                // Check for function calls
-                // Note: handling depends on exact SDK version, assuming chunk.functionCalls() exists
-                const calls = typeof chunk.functionCalls === 'function' ? chunk.functionCalls() : undefined
-                if (calls && calls.length > 0) {
-                    gotFunctionCall = true
-                    functionCalls.push(...calls)
-                }
-            }
-
-            if (!gotFunctionCall) {
-                break
-            }
-
-            // Execute tools
-            const functionResponses: { functionResponse: { name: string; response: Record<string, unknown> } }[] = []
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            for (const call of functionCalls as any[]) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const tool = tools.find((t: any) => t.name === call.name)
-                if (tool) {
-                    // Execute
-                    // streamData(controller, { toolCall: { name: call.name } }) // Optional: notify frontend
-                    try {
-                        const toolResult = await tool.execute(call.args)
-
-                        // Send data to frontend
-                        if (toolResult.display || toolResult.navigation || toolResult.confirmationRequired) {
-                            streamData(controller, {
-                                display: toolResult.display,
-                                navigation: toolResult.navigation,
-                                confirmationRequired: toolResult.confirmationRequired,
-                                toolResults: [{ toolName: call.name, result: toolResult }]
-                            })
-                        }
-
-                        functionResponses.push({
-                            functionResponse: {
-                                name: call.name,
-                                response: resultToGoogleResponse(toolResult)
-                            }
-                        })
-                    } catch (err: unknown) {
-                        functionResponses.push({
-                            functionResponse: {
-                                name: call.name,
-                                response: { name: call.name, content: { error: (err as Error).message } }
-                            }
-                        })
-                    }
-                } else {
-                    functionResponses.push({
-                        functionResponse: {
-                            name: call.name,
-                            response: { error: 'Tool not found' }
-                        }
-                    })
-                }
-            }
-
-            // Send responses back to model
-            // Google SDK: sendMessage(functionResponses) usually works for single turn, but for stream?
-            // Actually usually you send the responses as the next message
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            currentMessage = functionResponses as any
-
-        } catch (error: unknown) {
-            console.error('Google AI error:', error)
-            const errorMsg = '\n\nEtt fel uppstod vid generering.'
-            fullContent += errorMsg
-            streamText(controller, errorMsg)
-            break
-        }
-    }
-
-    // Helper to format tool result for Google
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    function resultToGoogleResponse(result: any) {
-        // Must return object expected by Google
-        // usually { name: string, content: object }
-        // But the SDK wrapper { functionResponse: ... } handles the wrapper
-        // The response content itself:
-        return { result: result.data || result.message || result.success }
-    }
-
-    // Persist message
-    if (conversationId && fullContent && userDb) {
-        try {
-            await userDb.messages.create({
-                conversation_id: conversationId,
-                role: 'assistant',
-                content: fullContent,
-                user_id: userId
-            })
-        } catch (e) {
-            console.error('Failed to save message', e)
-        }
-    }
-
-    return fullContent
-}
-
-async function handleAnthropicProvider(
-    modelId: string,
-    messagesForAI: AIMessage[],
-    controller: ReadableStreamDefaultController,
-    conversationId: string | null,
-    tools: AIToolDefinition[],
-    userDb: UserScopedDb | null,
-    _confirmationId?: string
-) {
-    const Anthropic = (await import('@anthropic-ai/sdk')).default
-    const anthropic = new Anthropic({
-        apiKey: process.env.ANTHROPIC_API_KEY,
-    })
-
-    // Map model IDs to actual Anthropic model names
-    const anthropicModelMap: Record<string, string> = {
-        'claude-sonnet-4-20250514': 'claude-sonnet-4-20250514',
-        'claude-opus-4-20250514': 'claude-opus-4-20250514',
-    }
-
-    const actualModel = anthropicModelMap[modelId] || 'claude-sonnet-4-20250514'
-
-    // Convert messages to Anthropic format
-    const anthropicMessages = messagesForAI.map(m => ({
-        role: m.role as 'user' | 'assistant',
-        content: typeof m.content === 'string' ? m.content : (m.content as AIContentPart[]).map((c) => {
-            if (c.type === 'text') return { type: 'text' as const, text: c.text }
-            if (c.type === 'image_url' && c.image_url && typeof c.image_url === 'object' && 'url' in c.image_url) {
-                // Extract base64 data from data URL
-                const url = (c.image_url as { url: string }).url
-                const match = url.match(/^data:([^;]+);base64,(.+)$/)
-                if (match) {
-                    return {
-                        type: 'image' as const,
-                        source: {
-                            type: 'base64' as const,
-                            media_type: match[1] as 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-                            data: match[2]
-                        }
-                    }
-                }
-            }
-            return { type: 'text' as const, text: c.text || '' }
-        })
-    }))
-
-    let fullContent = ''
-
-    try {
-        const stream = await anthropic.messages.stream({
-            model: actualModel,
-            max_tokens: 1500,
-            system: SYSTEM_PROMPT,
-            messages: anthropicMessages,
-        })
-
-        for await (const event of stream) {
-            if (event.type === 'content_block_delta' && event.delta.type === 'text_delta') {
-                const text = event.delta.text
-                if (text) {
-                    fullContent += text
-                    streamText(controller, text)
-                }
-            }
-        }
-    } catch (error: unknown) {
-        console.error('Anthropic API error:', error)
-        const errorMsg = '\n\nEtt fel uppstod vid generering.'
-        fullContent += errorMsg
-        streamText(controller, errorMsg)
-    }
-
-    // Persist message
-    if (conversationId && fullContent && userDb) {
-        try {
-            await userDb.messages.create({
-                conversation_id: conversationId,
-                role: 'assistant',
-                content: fullContent,
-                user_id: userDb.userId
-            })
-        } catch (e) {
-            console.error('Failed to save message', e)
-        }
-    }
-
-    return fullContent
-}
-
-async function handleOpenAIProvider(
-    modelId: string,
-    messagesForAI: AIMessage[],
-    controller: ReadableStreamDefaultController,
-    conversationId: string | null,
-    tools: AIToolDefinition[],
-    userDb: UserScopedDb | null,
-    _confirmationId?: string
-) {
-    const OpenAI = (await import('openai')).default
-    const openai = new OpenAI({
-        apiKey: process.env.OPENAI_API_KEY,
-    })
-
-    // Map model IDs to actual OpenAI model names
-    const openaiModelMap: Record<string, string> = {
-        'gpt-4o': 'gpt-4o',
-        'gpt-4o-mini': 'gpt-4o-mini',
-        'gpt-4-turbo': 'gpt-4-turbo',
-    }
-
-    const actualModel = openaiModelMap[modelId] || 'gpt-4o-mini'
-
-    // Convert messages to OpenAI format with null safety
-    const openaiMessages = [
-        { role: 'system' as const, content: SYSTEM_PROMPT },
-        ...messagesForAI.map(m => ({
-            role: m.role as 'user' | 'assistant',
-            content: typeof m.content === 'string'
-                ? m.content
-                : Array.isArray(m.content)
-                    ? (m.content as AIContentPart[]).map((c) => {
-                        if (c.type === 'text') return { type: 'text' as const, text: c.text || '' }
-                        if (c.type === 'image_url' && c.image_url?.url) {
-                            return {
-                                type: 'image_url' as const,
-                                image_url: { url: c.image_url.url, detail: 'low' as const }
-                            }
-                        }
-                        return { type: 'text' as const, text: '' }
-                    })
-                    : m.content || ''
-        }))
-    ]
-
-    // Convert tools to OpenAI function format
-    const openaiTools = tools.length > 0 ? toolsToOpenAIFunctions(tools) : undefined
-
-    // Debug: Log tools being passed
-    console.log(`[OpenAI] Passing ${openaiTools?.length || 0} tools to model ${actualModel}`)
-    if (openaiTools && openaiTools.length > 0) {
-        console.log(`[OpenAI] Tool names:`, openaiTools.map(t => t.function.name).join(', '))
-    }
-
-    let fullContent = ''
-
-    // Debug: Log message structure
-    console.log('[OpenAI] Messages structure:')
-    for (const msg of openaiMessages) {
-        if (typeof msg.content === 'string') {
-            console.log(`  ${msg.role}: string (${msg.content.length} chars)`)
-        } else if (Array.isArray(msg.content)) {
-            console.log(`  ${msg.role}: array with ${msg.content.length} parts:`)
-            for (const part of msg.content) {
-                if (part.type === 'text') {
-                    console.log(`    - text: "${part.text?.slice(0, 50)}..."`)
-                } else if (part.type === 'image_url') {
-                    const url = part.image_url?.url || ''
-                    console.log(`    - image_url: ${url.slice(0, 50)}... (${url.length} chars)`)
-                } else {
-                    console.log(`    - unknown type: ${JSON.stringify(part).slice(0, 100)}`)
-                }
-            }
-        } else {
-            console.log(`  ${msg.role}: ${typeof msg.content}`)
-        }
-    }
-
-    try {
-            const stream = await openai.chat.completions.create({
-                model: actualModel,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                messages: openaiMessages as any,
-                stream: true,
-                tools: openaiTools,
-                tool_choice: openaiTools ? 'auto' : undefined,
-            })
-
-        // Accumulate tool calls across chunks (OpenAI streams them incrementally)
-        const toolCallsInProgress: Map<number, { id: string; name: string; arguments: string }> = new Map()
-
-        for await (const chunk of stream) {
-            const delta = chunk.choices[0]?.delta
-            const finishReason = chunk.choices[0]?.finish_reason
-
-            // Handle text content
-            if (delta?.content) {
-                fullContent += delta.content
-                streamText(controller, delta.content)
-            }
-
-            // Accumulate tool call chunks
-            if (delta?.tool_calls) {
-                for (const toolCall of delta.tool_calls) {
-                    const index = toolCall.index
-                    const existing = toolCallsInProgress.get(index) || { id: '', name: '', arguments: '' }
-
-                    if (toolCall.id) existing.id = toolCall.id
-                    if (toolCall.function?.name) existing.name += toolCall.function.name
-                    if (toolCall.function?.arguments) existing.arguments += toolCall.function.arguments
-
-                    toolCallsInProgress.set(index, existing)
-                }
-            }
-
-            // When streaming completes with tool_calls finish reason, execute them
-            if (finishReason === 'tool_calls' || finishReason === 'stop') {
-                for (const [, toolCall] of toolCallsInProgress) {
-                    if (toolCall.name && toolCall.arguments) {
-                        console.log(`[OpenAI] Executing tool: ${toolCall.name}`)
-                        try {
-                            const toolArgs = JSON.parse(toolCall.arguments)
-                            const tool = aiToolRegistry.get(toolCall.name)
-
-                            if (tool) {
-                                const result = await tool.execute(toolArgs, {
-                                    userId: userDb?.userId || '',
-                                    companyId: userDb?.companyId || '',
-                                    userDb: userDb!
-                                }) as AIToolResult
-
-                                // Stream back the result data
-                                if (result.display) {
-                                    streamData(controller, { display: result.display })
-                                }
-                                if (result.navigation) {
-                                    streamData(controller, { navigation: result.navigation })
-                                }
-                                if (result.confirmationRequired) {
-                                    streamData(controller, { confirmationRequired: result.confirmationRequired })
-                                }
-                                streamData(controller, { toolResults: [{ tool: toolCall.name, result: result.data }] })
-                            } else {
-                                console.error(`[OpenAI] Tool not found: ${toolCall.name}`)
-                            }
-                        } catch (parseError) {
-                            console.error(`[OpenAI] Tool ${toolCall.name} failed:`, parseError)
-                        }
-                    }
-                }
-                toolCallsInProgress.clear()
-            }
-        }
-    } catch (error: unknown) {
-        console.error('OpenAI API error:', error)
-        // Extract meaningful error message from OpenAI error
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let errorDetail = (error as any).message || 'Ett fel uppstod vid generering.'
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        if ((error as any).error?.message) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            errorDetail = (error as any).error.message
-        }
-        // Check for common image-related errors
-        if (errorDetail.includes('image') || errorDetail.includes('content_policy')) {
-            errorDetail = 'Kunde inte behandla bilden. Försök med en annan bild eller mindre storlek.'
-        }
-        const errorMsg = `\n\nFel: ${errorDetail}`
-        fullContent += errorMsg
-        streamText(controller, errorMsg)
-    }
-
-    // Persist message
-    if (conversationId && fullContent && userDb) {
-        try {
-            await userDb.messages.create({
-                conversation_id: conversationId,
-                role: 'assistant',
-                content: fullContent,
-                user_id: userDb.userId
-            })
-        } catch (e) {
-            console.error('Failed to save message', e)
-        }
-    }
-
-    return fullContent
 }
 
 export async function POST(request: NextRequest) {
@@ -645,76 +53,73 @@ export async function POST(request: NextRequest) {
         }
 
         if (!validateRequestOrigin(request)) {
-            return new Response(JSON.stringify({ error: 'Invalid request origin', code: 'CSRF_ERROR' }), { status: 403, headers: { 'Content-Type': 'application/json' } })
+            return new Response(
+                JSON.stringify({ error: 'Invalid request origin', code: 'CSRF_ERROR' }), 
+                { status: 403, headers: { 'Content-Type': 'application/json' } }
+            )
         }
 
         const clientId = getClientIdentifier(request)
         const rateLimitResult = await checkRateLimit(clientId, RATE_LIMIT_CONFIG)
 
         if (!rateLimitResult.success) {
-            return new Response(JSON.stringify({ error: 'Too many requests.', retryAfter: rateLimitResult.retryAfter }), { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitResult.retryAfter) } })
+            return new Response(
+                JSON.stringify({ error: 'Too many requests.', retryAfter: rateLimitResult.retryAfter }), 
+                { status: 429, headers: { 'Content-Type': 'application/json', 'Retry-After': String(rateLimitResult.retryAfter) } }
+            )
         }
 
         let body: unknown
-        try { body = await request.json() } catch { return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 }) }
+        try { 
+            body = await request.json() 
+        } catch { 
+            return new Response(JSON.stringify({ error: 'Invalid JSON' }), { status: 400 }) 
+        }
 
         const bodyValidation = validateJsonBody(body)
-        if (!bodyValidation.valid) return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400 })
+        if (!bodyValidation.valid) {
+            return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400 })
+        }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { messages, confirmationId, conversationId: reqConversationId, attachments, mentions, model: requestedModel } = body as any
         const messageValidation = validateChatMessages(messages)
-        if (!messageValidation.valid || !messageValidation.data) return new Response(JSON.stringify({ error: messageValidation.error }), { status: 400 })
+        if (!messageValidation.valid || !messageValidation.data) {
+            return new Response(JSON.stringify({ error: messageValidation.error }), { status: 400 })
+        }
 
         // Token limit check
         const tokenValidation = validateTokenLimits(messageValidation.data)
-        if (!tokenValidation.valid) return new Response(JSON.stringify({ error: tokenValidation.error }), { status: 400 })
+        if (!tokenValidation.valid) {
+            return new Response(JSON.stringify({ error: tokenValidation.error }), { status: 400 })
+        }
 
         // === SERVER-SIDE MODEL AUTHORIZATION ===
-        // CRITICAL: Never trust client-supplied model ID - validate against user's tier
         const authResult = await authorizeModel(userId, requestedModel || DEFAULT_MODEL_ID)
 
         // === DEMO MODE HANDLING ===
-        // Demo users get simulated AI responses (no real API calls = no cost)
         if (isDemoMode(authResult.userTier)) {
-            const { getSimulatedChatResponse } = await import('@/lib/ai-simulation')
-            const latestUserMessage = messageValidation.data[messageValidation.data.length - 1]
-            const latestContent = latestUserMessage?.content || ''
-            
-            const simulated = getSimulatedChatResponse(latestContent)
-            
-            // Return streaming response for consistent UX
-            const stream = new ReadableStream({
-                async start(controller) {
-                    const encoder = new TextEncoder()
-                    
-                    // Simulate thinking delay
-                    await new Promise(r => setTimeout(r, simulated.delay))
-                    
-                    // Stream words for natural feel
-                    const words = simulated.content.split(' ')
-                    for (let i = 0; i < words.length; i++) {
-                        const word = words[i] + (i < words.length - 1 ? ' ' : '')
-                        controller.enqueue(encoder.encode(`T:${JSON.stringify(word)}\n`))
-                        await new Promise(r => setTimeout(r, 20 + Math.random() * 30))
-                    }
-                    
-                    // Send demo mode indicator
-                    controller.enqueue(encoder.encode(`D:${JSON.stringify({ demoMode: true })}\n`))
-                    controller.close()
+            return await handleDemoMode(messageValidation.data)
+        }
+
+        // === BUDGET CHECK ===
+        const budgetCheck = await checkUsageLimits(userId)
+        if (!budgetCheck.withinLimits) {
+            return new Response(JSON.stringify({ 
+                error: 'Du har förbrukat din AI-budget för denna månad. Köp fler credits under Inställningar > Fakturering.',
+                code: 'BUDGET_EXHAUSTED',
+                usage: {
+                    tokensRemaining: budgetCheck.tokensRemaining,
+                    tierTokensRemaining: budgetCheck.tierTokensRemaining,
+                    purchasedCreditsRemaining: budgetCheck.purchasedCreditsRemaining,
                 }
-            })
-            
-            return new Response(stream, {
-                headers: { 
-                    'Content-Type': 'text/event-stream',
-                    'X-Demo-Mode': 'true'
-                }
+            }), { 
+                status: 402,
+                headers: { 'Content-Type': 'application/json' } 
             })
         }
 
         if (!authResult.authorized) {
-            // Log the unauthorized attempt for security monitoring
             console.warn(`[Security] User ${userId} attempted unauthorized model access: ${requestedModel} → downgraded to ${authResult.modelId}`)
             await logUnauthorizedModelAccess(
                 userId,
@@ -725,20 +130,19 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // Use the authorized model (original if allowed, fallback if not)
         const modelId = authResult.modelId
         const modelInfo = authResult.model
         const provider = modelInfo.provider
 
-        const latestUserMessage = messageValidation.data[messageValidation.data.length - 1];
+        const latestUserMessage = messageValidation.data[messageValidation.data.length - 1]
         const latestContent = latestUserMessage?.content || ''
 
         // === PERSISTENCE START ===
-        let conversationId = reqConversationId;
+        let conversationId = reqConversationId
         if (!conversationId) {
-            const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation';
-            const conv = await userDb.conversations.create({ title });
-            if (conv && 'id' in conv) conversationId = conv.id;
+            const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
+            const conv = await userDb.conversations.create({ title })
+            if (conv && 'id' in conv) conversationId = conv.id
         }
 
         if (conversationId) {
@@ -747,7 +151,7 @@ export async function POST(request: NextRequest) {
                 role: 'user',
                 content: latestUserMessage.content,
                 user_id: userDb.userId
-            });
+            })
         }
         // === PERSISTENCE END ===
 
@@ -756,125 +160,43 @@ export async function POST(request: NextRequest) {
 
         // Build Messages
         console.log('[Chat] Building messages. Attachments:', attachments?.length || 0)
-        const messagesForAI = messageValidation.data!.map((m, index) => {
-            if (m.role === 'user' && index === messageValidation.data!.length - 1 && ((attachments && attachments.length > 0) || (mentions && mentions.length > 0))) {
-                const content: AIContentPart[] = [{ type: 'text', text: m.content || ' ' }]
-
-                if (attachments) {
-                    for (const attachment of attachments) {
-                        console.log(`[Chat] Processing attachment: ${attachment.name}, type: ${attachment.type}, data length: ${attachment.data?.length || 0}`)
-                        if (attachment.type.startsWith('image/')) {
-                            content.push({ type: 'image_url', image_url: { url: `data:${attachment.type};base64,${attachment.data}`, detail: 'low' } })
-                        } else {
-                            try {
-                                const textContent = Buffer.from(attachment.data, 'base64').toString('utf-8')
-                                content.push({ type: 'text', text: `\n\n[Bifogad fil: ${attachment.name}]\n${textContent.slice(0, 2000)}` })
-                            } catch {
-                                content.push({ type: 'text', text: `[Bifogad fil: ${attachment.name} (kunde inte läsas)]` })
-                            }
-                        }
-                    }
-                }
-
-                if (mentions && mentions.length > 0) {
-                    const mentionsText = (mentions as Array<{ type: string; label: string; pageType?: string; [key: string]: unknown }>).map((m) => m.type === 'page' ? `Active Page: ${m.label} (${m.pageType})` : `Mention: ${m.label}`).join('\n')
-                    content.push({ type: 'text', text: `\n\n[Context]\n${mentionsText}` })
-                }
-                return { role: m.role, content }
-            }
-            return m
-        })
+        const messagesForAI = buildMessagesForAI(messageValidation.data, attachments, mentions)
 
         // === CONTEXT INJECTION ===
-        // Fetch active roadmaps and KPIs to inject into the system prompt
-        // This gives the AI "Long Term Memory" about the company status
-        try {
-            const [activeRoadmaps, kpis] = await Promise.all([
-                userDb.roadmaps.listActive(),
-                userDb.getCompanyKPIs()
-            ]);
-
-            // Construct Context Block
-            let contextBlock = `\n\n## LIVE COMPANY STATUS (Auto-Injected)\n`;
-
-            // 1. KPIs
-            contextBlock += `**KPIs:**\n`;
-            contextBlock += `- Unpaid Invoices: ${kpis.unpaid_invoices_count}\n`;
-            contextBlock += `- Unread Inbox: ${kpis.unread_inbox_count}\n`;
-
-            // 2. Roadmaps
-            if (activeRoadmaps && activeRoadmaps.length > 0) {
-                contextBlock += `\n**Active Logical Plans (Roadmaps):**\n`;
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                activeRoadmaps.forEach((r: any) => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const steps = r.steps?.sort((a: any, b: any) => a.order_index - b.order_index);
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const pendingSteps = steps?.filter((s: any) => s.status !== 'completed').slice(0, 3); // Showing next 3 pending steps
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const completedCount = steps?.filter((s: any) => s.status === 'completed').length || 0;
-
-                    contextBlock += `- Plan: "${r.title}" (${completedCount}/${steps?.length || 0} done)\n`;
-                    if (pendingSteps && pendingSteps.length > 0) {
-                        contextBlock += `  Next steps:\n`;
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        pendingSteps.forEach((s: any) => {
-                            contextBlock += `  * [ ] ${s.title}\n`;
-                        });
-                    }
-                });
-            } else {
-                contextBlock += `\n(No active roadmaps found. You can suggest creating one if the user's goal is complex.)\n`;
-            }
-
-            // Prepend to the first user message or append to system prompt
-            // Strategy: Append to system prompt for every request so it's fresh
-            // Since SYSTEM_PROMPT is const, we'll modify the messages array for OpenAI/Anthropic/Google
-
-            // We'll wrap this logic in the provider handlers or just pre-process messages?
-            // Easier: Attach it to the LAST user message as hidden context if it's not too long.
-            // OR: Prepend to the first system message. 
-
-            // Let's modify the SYSTEM_PROMPT passed to handlers. 
-            // Since we can't easily change the const SYSTEM_PROMPT, we'll handle it inside the provider calls 
-            // by passing an `extendedSystemPrompt` or appending to the first message.
-
-            // NOTE: For simplicity in this codebase, I will append it to the last user message as a "System Note".
-            const lastMsg = messagesForAI[messagesForAI.length - 1];
-            if (lastMsg.role === 'user') {
-                const contextinjection = `\n\n[SYSTEM NOTE: ${contextBlock}]`;
-
-                if (Array.isArray(lastMsg.content)) {
-                    lastMsg.content.push({ type: 'text', text: contextinjection });
-                } else {
-                    lastMsg.content += contextinjection;
-                }
-            }
-
-        } catch (ctxError) {
-            console.warn('Failed to inject context:', ctxError);
-        }
+        await injectCompanyContext(messagesForAI, userDb)
 
         // Create Stream
         const stream = new ReadableStream({
             async start(controller) {
                 try {
+                    const providerParams = {
+                        modelId,
+                        messagesForAI: messagesForAI as AIMessage[],
+                        controller,
+                        conversationId,
+                        tools: tools as AIToolDefinition[],
+                        userDb,
+                        confirmationId,
+                        userId
+                    }
+
                     if (provider === 'anthropic') {
-                        await handleAnthropicProvider(modelId, messagesForAI, controller, conversationId, tools, userDb, confirmationId)
+                        await handleAnthropicProvider(providerParams)
                     } else if (provider === 'openai') {
-                        await handleOpenAIProvider(modelId, messagesForAI, controller, conversationId, tools, userDb, confirmationId)
+                        await handleOpenAIProvider(providerParams)
                     } else {
-                        // Default to Google
-                        await handleGoogleProvider(modelId, messagesForAI, controller, conversationId, tools, userDb, confirmationId, userId)
+                        await handleGoogleProvider(providerParams)
                     }
 
                     // Track usage after successful response
-                    // Note: For more accurate tracking, pass token count from provider response
-                    await trackUsage(userId, modelId, provider, 0)
+                    const estimatedTokens = 2000
+                    await trackUsage(userId, modelId, provider, estimatedTokens)
+                    await consumeTokens(userId, estimatedTokens, modelId)
                 } catch (error: unknown) {
                     console.error('Provider error:', error)
-                    console.error('Provider error stack:', error.stack)
-                    const errorDetail = error.message || error.error?.message || 'Okänt fel'
+                    const err = error as { stack?: string; message?: string; error?: { message?: string } }
+                    console.error('Provider error stack:', err.stack)
+                    const errorDetail = err.message || err.error?.message || 'Okänt fel'
                     streamText(controller, `\n\nEtt fel uppstod: ${errorDetail}`)
                 } finally {
                     controller.close()
@@ -887,5 +209,138 @@ export async function POST(request: NextRequest) {
     } catch (error) {
         console.error('Chat API error:', error)
         return new Response(JSON.stringify({ error: 'An unexpected error occurred.' }), { status: 500 })
+    }
+}
+
+// =============================================================================
+// Helper Functions
+// =============================================================================
+
+async function handleDemoMode(messages: Array<{ role: string; content: string }>) {
+    const { getSimulatedChatResponse } = await import('@/lib/ai-simulation')
+    const latestUserMessage = messages[messages.length - 1]
+    const latestContent = latestUserMessage?.content || ''
+    
+    const simulated = getSimulatedChatResponse(latestContent)
+    
+    const stream = new ReadableStream({
+        async start(controller) {
+            const encoder = new TextEncoder()
+            
+            await new Promise(r => setTimeout(r, simulated.delay))
+            
+            const words = simulated.content.split(' ')
+            for (let i = 0; i < words.length; i++) {
+                const word = words[i] + (i < words.length - 1 ? ' ' : '')
+                controller.enqueue(encoder.encode(`T:${JSON.stringify(word)}\n`))
+                await new Promise(r => setTimeout(r, 20 + Math.random() * 30))
+            }
+            
+            controller.enqueue(encoder.encode(`D:${JSON.stringify({ demoMode: true })}\n`))
+            controller.close()
+        }
+    })
+    
+    return new Response(stream, {
+        headers: { 
+            'Content-Type': 'text/event-stream',
+            'X-Demo-Mode': 'true'
+        }
+    })
+}
+
+function buildMessagesForAI(
+    messages: Array<{ role: string; content: string }>,
+    attachments?: Array<{ name: string; type: string; data: string }>,
+    mentions?: Array<{ type: string; label: string; pageType?: string }>
+) {
+    return messages.map((m, index) => {
+        if (m.role === 'user' && index === messages.length - 1 && ((attachments && attachments.length > 0) || (mentions && mentions.length > 0))) {
+            const content: AIContentPart[] = [{ type: 'text', text: m.content || ' ' }]
+
+            if (attachments) {
+                for (const attachment of attachments) {
+                    console.log(`[Chat] Processing attachment: ${attachment.name}, type: ${attachment.type}, data length: ${attachment.data?.length || 0}`)
+                    if (attachment.type.startsWith('image/')) {
+                        content.push({ 
+                            type: 'image_url', 
+                            image_url: { url: `data:${attachment.type};base64,${attachment.data}`, detail: 'low' } 
+                        })
+                    } else {
+                        try {
+                            const textContent = Buffer.from(attachment.data, 'base64').toString('utf-8')
+                            content.push({ type: 'text', text: `\n\n[Bifogad fil: ${attachment.name}]\n${textContent.slice(0, 2000)}` })
+                        } catch {
+                            content.push({ type: 'text', text: `[Bifogad fil: ${attachment.name} (kunde inte läsas)]` })
+                        }
+                    }
+                }
+            }
+
+            if (mentions && mentions.length > 0) {
+                const mentionsText = mentions.map((m) => 
+                    m.type === 'page' ? `Active Page: ${m.label} (${m.pageType})` : `Mention: ${m.label}`
+                ).join('\n')
+                content.push({ type: 'text', text: `\n\n[Context]\n${mentionsText}` })
+            }
+            
+            return { role: m.role, content }
+        }
+        return m
+    })
+}
+
+async function injectCompanyContext(
+    messagesForAI: Array<{ role: string; content: string | AIContentPart[] }>,
+    userDb: { roadmaps: { listActive: () => Promise<unknown[]> }; getCompanyKPIs: () => Promise<{ unpaid_invoices_count: number; unread_inbox_count: number }> }
+) {
+    try {
+        const [activeRoadmaps, kpis] = await Promise.all([
+            userDb.roadmaps.listActive(),
+            userDb.getCompanyKPIs()
+        ])
+
+        let contextBlock = `\n\n## LIVE COMPANY STATUS (Auto-Injected)\n`
+        contextBlock += `**KPIs:**\n`
+        contextBlock += `- Unpaid Invoices: ${kpis.unpaid_invoices_count}\n`
+        contextBlock += `- Unread Inbox: ${kpis.unread_inbox_count}\n`
+
+        if (activeRoadmaps && activeRoadmaps.length > 0) {
+            contextBlock += `\n**Active Logical Plans (Roadmaps):**\n`
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            activeRoadmaps.forEach((r: any) => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const steps = r.steps?.sort((a: any, b: any) => a.order_index - b.order_index)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const pendingSteps = steps?.filter((s: any) => s.status !== 'completed').slice(0, 3)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const completedCount = steps?.filter((s: any) => s.status === 'completed').length || 0
+
+                contextBlock += `- Plan: "${r.title}" (${completedCount}/${steps?.length || 0} done)\n`
+                if (pendingSteps && pendingSteps.length > 0) {
+                    contextBlock += `  Next steps:\n`
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    pendingSteps.forEach((s: any) => {
+                        contextBlock += `  * [ ] ${s.title}\n`
+                    })
+                }
+            })
+        } else {
+            contextBlock += `\n(No active roadmaps found. You can suggest creating one if the user's goal is complex.)\n`
+        }
+
+        const lastMsg = messagesForAI[messagesForAI.length - 1]
+        if (lastMsg.role === 'user') {
+            const contextInjection = `\n\n[SYSTEM NOTE: ${contextBlock}]`
+
+            if (Array.isArray(lastMsg.content)) {
+                lastMsg.content.push({ type: 'text', text: contextInjection })
+            } else {
+                lastMsg.content += contextInjection
+            }
+        }
+
+    } catch (ctxError) {
+        console.warn('Failed to inject context:', ctxError)
     }
 }

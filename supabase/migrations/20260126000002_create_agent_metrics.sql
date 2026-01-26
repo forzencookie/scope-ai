@@ -69,22 +69,24 @@ CREATE TABLE IF NOT EXISTS agent_metrics (
 );
 
 -- Indexes for analytics queries
-CREATE INDEX idx_agent_metrics_user ON agent_metrics(user_id);
-CREATE INDEX idx_agent_metrics_company ON agent_metrics(company_id);
-CREATE INDEX idx_agent_metrics_created ON agent_metrics(created_at DESC);
-CREATE INDEX idx_agent_metrics_agent ON agent_metrics(selected_agent);
-CREATE INDEX idx_agent_metrics_intent ON agent_metrics(intent);
-CREATE INDEX idx_agent_metrics_success ON agent_metrics(response_success);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_user ON agent_metrics(user_id);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_company ON agent_metrics(company_id);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_created ON agent_metrics(created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_agent ON agent_metrics(selected_agent);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_intent ON agent_metrics(intent);
+CREATE INDEX IF NOT EXISTS idx_agent_metrics_success ON agent_metrics(response_success);
 
 -- RLS Policies
 ALTER TABLE agent_metrics ENABLE ROW LEVEL SECURITY;
 
 -- Users can read their own metrics
+DROP POLICY IF EXISTS "Users can view own metrics" ON agent_metrics;
 CREATE POLICY "Users can view own metrics"
     ON agent_metrics FOR SELECT
     USING (auth.uid() = user_id);
 
 -- Service role can insert metrics (from API route)
+DROP POLICY IF EXISTS "Service role can insert metrics" ON agent_metrics;
 CREATE POLICY "Service role can insert metrics"
     ON agent_metrics FOR INSERT
     WITH CHECK (TRUE);

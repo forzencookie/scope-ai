@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { data: documents, error } = await supabase
-            .from('corporate_documents')
+            .from('corporate_documents' as any)
             .select('*')
         
         if (error) throw error;
@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
 
         if (type === 'document') {
             const { data: newDoc, error } = await supabase
-                .from('corporate_documents')
+                .from('corporate_documents' as any)
                 .insert({ ...data, company_id: userDb.companyId })
                 .select()
                 .single();

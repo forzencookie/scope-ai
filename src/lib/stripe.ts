@@ -215,3 +215,54 @@ export async function getUserIdFromCustomer(customerId: string): Promise<string 
 
     return (data as { id?: string } | null)?.id || null
 }
+
+// ============================================================================
+// Credit Management
+// ============================================================================
+
+/**
+ * Add purchased credits to a user's account
+ */
+export async function addUserCredits(
+    userId: string,
+    credits: number,
+    stripePaymentId?: string,
+    pricePaidCents?: number
+): Promise<void> {
+    const { getSupabaseAdmin } = await import('./database/supabase')
+    const supabase = getSupabaseAdmin()
+
+    const { error } = await supabase.rpc('add_user_credits', {
+        p_user_id: userId,
+        p_credits: credits,
+        p_stripe_payment_id: stripePaymentId || null,
+        p_price_paid_cents: pricePaidCents || null,
+        p_currency: 'sek',
+    })
+
+    if (error) {
+        console.error('[Stripe] Failed to add credits:', error)
+        throw new Error('Failed to add credits to user account')
+    }
+
+    console.log(`[Stripe] Added ${credits} credits to user ${userId}`)
+}
+
+/**
+ * Get a user's current credit balance
+ */
+export async function getUserCredits(userId: string): Promise<number> {
+    const { getSupabaseAdmin } = await import('./database/supabase')
+    const supabase = getSupabaseAdmin()
+
+    const { data, error } = await supabase.rpc('get_user_credits', {
+        p_user_id: userId,
+    })
+
+    if (error) {
+        console.error('[Stripe] Failed to get credits:', error)
+        return 0
+    }
+
+    return data || 0
+}
