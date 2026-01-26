@@ -36,34 +36,20 @@ export type {
     UseTableDataResult,
 } from "./use-table"
 
-// Data layer hooks
+// Data layer hooks - React Query based (caching, optimistic updates, deduplication)
+export {
+    useTransactions,
+    useTransactionsPaginated,
+    useTransactionsByStatus,
+    useTransactionStats,
+    useTransactionAI,
+    useTransactionSelection,
+    transactionQueryKeys,
+    prefetchTransactions,
+    useInvalidateTransactions,
+} from "./use-transactions-query"
 
-export * from "./use-transactions"
 export * from "./use-account-balances"
-
-// Bank transactions hook (connects to bank simulator)
-export { 
-  useBankTransactions, 
-  suggestCategory, 
-  getCategoryAccountNumber, 
-  getBankAccountNumber,
-} from "./use-bank-transactions"
-export type { UseBankTransactionsReturn } from "./use-bank-transactions"
 
 // Last updated timestamp hook
 export { useLastUpdated, useLastUpdatedTime, formatLastUpdated } from "./use-last-updated"
-
-// React Query based hooks (recommended for new code)
-export {
-    queryKeys,
-    useTransactionsQuery,
-    useTransactionsPaginatedQuery,
-    useUpdateTransactionStatus,
-    useDeleteTransaction,
-    prefetchTransactions,
-    invalidateTransactions,
-} from "./use-query-data"
-
-// Agent Chat Hook
-export { useAgentChat } from "./use-agent-chat"
-export type { UseAgentChatReturn } from "./use-agent-chat"

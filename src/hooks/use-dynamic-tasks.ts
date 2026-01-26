@@ -1,6 +1,6 @@
 
 import { useMemo } from 'react'
-import { useTransactions } from '@/hooks/use-transactions'
+import { useTransactions } from '@/hooks/use-transactions-query'
 import { payslips, agiReports } from '@/components/loner/constants'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
 

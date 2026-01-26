@@ -1,6 +1,6 @@
 import { useState, useMemo, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useTransactions } from "@/hooks/use-transactions"
+import { useTransactions } from "@/hooks"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useToast } from "@/components/ui/toast"
 import { basAccounts, type AccountClass } from "@/data/accounts"

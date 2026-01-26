@@ -27,7 +27,7 @@ import {
 import { VerifikationerTable } from "@/components/bokforing/verifikationer"
 import { useTextMode } from "@/providers/text-mode-provider"
 
-import { useTransactionsPaginated } from "@/hooks/use-transactions"
+import { useTransactionsPaginated } from "@/hooks"
 
 // Tab configuration with feature requirements and translations
 const allTabs = [

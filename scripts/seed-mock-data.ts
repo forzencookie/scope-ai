@@ -17,6 +17,8 @@ if (fs.existsSync(envPath)) {
 
 import {
     mockTransactions,
+    mockReceipts,
+    mockInvoices,
     mockShareholders
 } from '@/data/mock-data'
 
@@ -66,9 +68,8 @@ async function seed() {
     console.log(`Seeding transactions...`)
     let txCount = 0
     for (const t of mockTransactions) {
-        let status = 'Att bokföra'
-        if (t.status === 'recorded') status = 'Bokförd'
-        if (t.status === 'missing_documentation') status = 'Saknar underlag'
+        // Status is already in Swedish from mock-data.ts
+        const status = t.status
 
         const txId = generateUUID(t.id)
         const payload = {
@@ -132,7 +133,7 @@ async function seed() {
     for (const inv of mockInvoices) {
         const status = normalizeInvoiceStatus(inv.status)
         if (inv.type === 'customer') {
-            const { error } = await supabase.from('customer_invoices').upsert({
+            const { error } = await supabase.from('customerinvoices').upsert({
                 id: generateUUID(inv.id),
                 invoice_number: inv.number,
                 invoice_date: inv.date,
@@ -146,7 +147,7 @@ async function seed() {
             })
             if (error) console.error(`CustInvoice Error (${inv.id}):`, error.message)
         } else {
-            const { error } = await supabase.from('supplier_invoices').upsert({
+            const { error } = await supabase.from('supplierinvoices').upsert({
                 id: generateUUID(inv.id),
                 invoice_number: inv.number,
                 supplier_name: inv.customer,
@@ -158,7 +159,7 @@ async function seed() {
                 user_id: userId,
                 company_id: companyId
             })
-            if (error && !error.message.includes('relation "public.supplier_invoices" does not exist')) {
+            if (error && !error.message.includes('relation "public.supplierinvoices" does not exist')) {
                 console.error(`SuppInvoice Error (${inv.id}):`, error.message)
             }
         }
