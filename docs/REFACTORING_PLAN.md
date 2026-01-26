@@ -1,154 +1,178 @@
 # 🔧 Scope AI Refactoring Plan
 
 > **Created:** 24 januari 2026  
-> **Codebase Size:** 96,379 lines of TypeScript/TSX  
-> **Goal:** Reduce file sizes, extract shared features, eliminate DRY violations
+> **Revised:** 26 januari 2026 (Architectural Review)  
+> **Codebase Size:** ~102,500 lines of TypeScript/TSX  
+> **Philosophy:** Composition over abstraction - don't over-engineer
 
 ---
 
-## 📊 Current State Analysis
+## 📊 Architectural Assessment
 
-### Codebase Breakdown
-| Directory | Lines | % |
-|-----------|------:|--:|
-| src/components/ | 49,629 | 51.5% |
-| src/lib/ | 21,080 | 21.9% |
-| src/app/ | 7,655 | 7.9% |
-| src/hooks/ | 6,570 | 6.8% |
-| src/services/ | 5,402 | 5.6% |
-| src/data/ | 2,512 | 2.6% |
-| src/providers/ | 1,789 | 1.9% |
-| src/types/ | 1,520 | 1.6% |
+### ✅ What's Already Well-Designed
 
-### Largest Files (Refactoring Targets)
-| File | Lines | Issue |
-|------|-------|-------|
-| `data/ownership.ts` | 823 | Static data mixed with logic |
-| `app/api/chat/route.ts` | 816 | Monolithic API handler |
-| `lib/bookkeeping.ts` | 784 | Too many responsibilities |
-| `lib/user-scoped-db.ts` | 766 | Repetitive query patterns |
-| `components/ui/sidebar.tsx` | 726 | Could extract sub-components |
-| `app/api/chat/agents/route.ts` | 682 | Similar to chat/route.ts |
-| `components/onboarding/onboarding-wizard.tsx` | 631 | Step logic can be extracted |
-| `components/bokforing/dialogs/bokforing.tsx` | 630 | Complex dialog |
-| `components/ui/settings-items.tsx` | 621 | Repetitive patterns |
-| `components/pages/handelser-page.tsx` | 509 | Complex view switching |
+| Pattern | Location | Assessment |
+|---------|----------|------------|
+| **Page Tab Pattern** | All 5 page components | ✅ Clean, ~100 lines each, uses `PageTabsLayout` |
+| **Table Pattern** | `GridTable` → domain grids → feature components | ✅ Excellent composition, not DRY violation |
+| **Shared Hooks** | `use-table.ts` (filter/sort/data) | ✅ Generic, reusable |
+| **Lazy Loading** | `lazy-loader.tsx` | ✅ Centralized, consistent |
+| **UI Primitives** | `sidebar.tsx` (shadcn/ui) | ✅ Standard library pattern |
 
-### Identified DRY Violations
+### Why We're NOT Creating These:
 
-1. **Page Tab Pattern** - Every page reimplements the same tab layout logic
-2. **Table Pattern** - Repeated filtering, sorting, pagination logic
-3. **Dialog Pattern** - Similar dialog structures across features
-4. **Data Fetching** - Repeated loading/error state handling
-5. **Form Pattern** - Similar form structures with validation
+| Rejected Idea | Reason |
+|---------------|--------|
+| `useTabPage` hook | Current pattern is 20-30 lines per page - readable, flexible, not a real DRY violation |
+| `DataTable` abstraction | Would fight against the excellent composition pattern already in place |
+| Splitting `sidebar.tsx` (UI) | It's a shadcn/ui primitives file - meant to be monolithic |
 
 ---
 
-## 🎯 Phase 1: Extract Shared Page Infrastructure
+## 🎯 Actual Refactoring Targets
 
-**Priority:** 🔴 High  
-**Impact:** ~200-300 lines saved  
-**Risk:** Low
+### Priority 1: `sidebar-nav.tsx` (565 lines) ⚠️
 
-### 1.1 Create `useTabPage` Hook
+**Problem:** Application sidebar navigation has grown organically with:
+- `NavSection` - simple nav section
+- `NavCollapsibleSection` - collapsible with localStorage
+- `NavSettings` - settings section  
+- `NavAIConversations` - AI chat history (150+ lines with pixel art dog!)
+- `NavUser` - user dropdown with theme switcher
 
-**Target:** Eliminate ~50-80 lines from each page component
-
-**New file:** `src/hooks/use-tab-page.ts`
-
-```typescript
-interface TabConfig<T extends string> {
-  id: T
-  label: string
-  labelEnkel?: string
-  color: string
-  feature?: FeatureKey | null
-}
-
-interface UseTabPageOptions<T extends string> {
-  tabs: TabConfig<T>[]
-  defaultTab: T
-  basePath: string
-  filterByFeature?: boolean
-}
-
-interface UseTabPageReturn<T extends string> {
-  currentTab: T
-  setCurrentTab: (tab: T) => void
-  availableTabs: TabConfig<T>[]
-  lastUpdated: Date
-}
-
-function useTabPage<T extends string>(options: UseTabPageOptions<T>): UseTabPageReturn<T>
+**Action:** Split into focused files:
 ```
-
-**Files to refactor:**
-- [ ] `components/pages/accounting-page.tsx` (-60 lines)
-- [ ] `components/pages/reports-page.tsx` (-50 lines)
-- [ ] `components/pages/payroll-page.tsx` (-50 lines)
-- [ ] `components/pages/parter-page.tsx` (-60 lines)
-
-### 1.2 Create `TabPageLayout` Component
-
-**New file:** `src/components/shared/layout/tab-page-layout.tsx`
-
-This already partially exists as `PageTabsLayout`, but we should enhance it to include:
-- TooltipProvider wrapper
-- Standard container structure
-- Loading states
-- Error boundaries
-
----
-
-## 🎯 Phase 2: Extract Table Infrastructure
-
-**Priority:** 🔴 High  
-**Impact:** ~300-400 lines saved  
-**Risk:** Medium
-
-### 2.1 Create `DataTable` Component
-
-**New directory:** `src/components/shared/data-table/`
-
-```
-src/components/shared/data-table/
+src/components/layout/sidebar/
 ├── index.ts
-├── data-table.tsx           // Main component
-├── data-table-toolbar.tsx   // Filters + search + actions
-├── data-table-pagination.tsx
-├── data-table-empty.tsx     // Empty state
-├── data-table-loading.tsx   // Loading skeleton
-├── data-table-columns.tsx   // Column definition helpers
-└── use-data-table.ts        // Consolidated state hook
+├── nav-section.tsx           (~60 lines)
+├── nav-collapsible.tsx       (~80 lines)
+├── nav-settings.tsx          (~50 lines)
+├── nav-ai-conversations.tsx  (~150 lines)
+├── nav-user.tsx              (~100 lines)
+└── pixel-dog.tsx             (~40 lines - the cute dog deserves its own file!)
 ```
 
-**Files to refactor:**
-- [ ] `bokforing/transaktioner/index.tsx`
-- [ ] `bokforing/fakturor/index.tsx`
-- [ ] `bokforing/kvitton/index.tsx`
-- [ ] `bokforing/verifikationer/index.tsx`
-- [ ] `handelser/handelser-tabell.tsx`
-- [ ] `loner/payslips/payslips-table.tsx`
+**Benefit:** Each section is testable, maintainable, and can be understood in isolation.
 
-### 2.2 Consolidate Table Logic Hooks
+---
 
-**Current state:** Multiple similar hooks with repeated patterns
-- `use-transactions-logic.ts`
-- `use-invoices-logic.ts`
-- `use-receipts-logic.ts`
-- `use-verifications-logic.ts`
-- `use-payslips-logic.ts`
+### Priority 2: `onboarding-wizard.tsx` (627 lines) ⚠️
 
-**New approach:** Generic `useTableLogic` with domain adapters
+**Problem:** Single file with:
+- Step configuration (100+ lines of objects)
+- Main wizard orchestrator
+- Individual step renderers inline
+- Form handling for each step
 
-```typescript
-// Enhanced: src/hooks/use-table-logic.ts
-interface UseTableLogicConfig<T> {
-  fetchFn: (params: FetchParams) => Promise<T[]>
-  filterConfig: FilterConfig
-  sortConfig: SortConfig
-  defaultSort?: { field: keyof T; direction: 'asc' | 'desc' }
-}
+**Action:** Extract step renderers:
+```
+src/components/onboarding/
+├── onboarding-wizard.tsx     (orchestrator, ~150 lines)
+├── steps/
+│   ├── welcome-step.tsx
+│   ├── company-type-step.tsx
+│   ├── share-structure-step.tsx
+│   ├── shareholders-step.tsx
+│   └── ...
+├── step-config.ts            (step definitions)
+└── types.ts
+```
+
+---
+
+### Priority 3: `settings-items.tsx` (620 lines) ⚠️
+
+**Assessment:** Actually well-designed! It's a collection of reusable settings UI components:
+- `SettingsPageHeader`
+- `SettingsFormField`
+- `SettingsToggle`
+- `SettingsDeviceCard`
+- etc.
+
+**Action:** ✅ Leave as-is - this is a UI component library file, similar to shadcn pattern.
+
+---
+
+### Priority 4: Large API Routes
+
+| File | Lines | Action |
+|------|-------|--------|
+| `chat/route.ts` | 891 | Consider extracting tool handlers if it grows more |
+| `chat/agents/route.ts` | 682 | Shares patterns with chat route - could share utilities |
+
+**Action:** Monitor, but not urgent. API routes are appropriately complex for their functionality.
+
+---
+
+## 📋 Revised Implementation Plan
+
+### Week 1: Sidebar Navigation Split
+
+| Task | Est. Time |
+|------|-----------|
+| Create `sidebar/` directory structure | 30m |
+| Extract `NavSection` | 30m |
+| Extract `NavCollapsibleSection` | 30m |
+| Extract `NavSettings` | 20m |
+| Extract `NavAIConversations` + pixel dog | 45m |
+| Extract `NavUser` | 30m |
+| Update imports, verify everything works | 30m |
+
+### Week 2: Onboarding Wizard Split
+
+| Task | Est. Time |
+|------|-----------|
+| Create step configuration file | 30m |
+| Extract each step component (8-10 steps) | 2h |
+| Refactor wizard to use extracted steps | 1h |
+| Test complete flow | 30m |
+
+---
+
+## 📊 Expected Outcomes
+
+| Metric | Before | After |
+|--------|--------|-------|
+| `sidebar-nav.tsx` | 565 lines | ~50 lines (index + imports) |
+| `onboarding-wizard.tsx` | 627 lines | ~150 lines (orchestrator) |
+| Files > 500 lines (app code) | 4 | 2 |
+| Testability | Medium | High (isolated components) |
+
+---
+
+## ❌ What We're NOT Doing
+
+1. **Creating abstract "god" components** that try to handle every case
+2. **Reducing line count for its own sake** - some files are big because they should be
+3. **Fighting against composition patterns** that are already working
+4. **Touching shadcn/ui files** - they follow their own conventions
+
+---
+
+## ✅ Checklist
+
+### Phase 1: Sidebar Split
+- [ ] Create `src/components/layout/sidebar/` directory
+- [ ] Extract `NavSection`
+- [ ] Extract `NavCollapsibleSection`
+- [ ] Extract `NavSettings`
+- [ ] Extract `NavAIConversations`
+- [ ] Extract `NavUser`
+- [ ] Create barrel export `index.ts`
+- [ ] Update `app-sidebar.tsx` imports
+- [ ] Verify build passes
+- [ ] Test all navigation functionality
+
+### Phase 2: Onboarding Split
+- [ ] Create `src/components/onboarding/steps/` directory
+- [ ] Extract step config to separate file
+- [ ] Extract each step component
+- [ ] Refactor wizard orchestrator
+- [ ] Test complete onboarding flow
+
+---
+
+*This plan focuses on genuine improvements, not arbitrary line-count reduction.*
 
 function useTableLogic<T>(config: UseTableLogicConfig<T>) {
   // Returns: data, loading, error, filters, sorting, pagination, selection

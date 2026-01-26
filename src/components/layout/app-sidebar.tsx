@@ -4,7 +4,7 @@
 import * as React from "react"
 import { PanelLeft, Sparkles, type LucideIcon, Settings2, LayoutGrid } from "lucide-react"
 
-import { NavSettings, NavCollapsibleSection, NavAIConversations } from "./sidebar-nav"
+import { NavSettings, NavCollapsibleSection, NavAIConversations } from "./sidebar"
 import { UserTeamSwitcher } from "./user-team-switcher"
 import { AIChatSidebar } from "./ai-chat-sidebar"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
