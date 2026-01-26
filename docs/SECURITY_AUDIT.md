@@ -5,7 +5,7 @@
 **Date:** January 26, 2026  
 **Auditor:** Claude (Automated Security Analysis)  
 **Scope:** Full codebase, database migrations, API routes, authentication flows  
-**Last Updated:** January 26, 2026 - Priority 1 fixes applied
+**Last Updated:** January 26, 2026 - All critical fixes applied
 
 ---
 
@@ -19,13 +19,21 @@ This is a **sensitive financial platform** handling:
 - Corporate governance (shares, dividends, board meetings)
 - Swedish government submissions (Skatteverket, Bolagsverket)
 
-### Overall Security Score: 7.2/10 ✅ IMPROVED (was 5.8)
+### Overall Security Score: 8.5/10 ✅ SIGNIFICANTLY IMPROVED (was 5.8)
 
 | Severity | Count | Status |
 |----------|-------|--------|
-| 🚨 Critical Issues | ~~8~~ → 2 | 6 fixed |
-| ⚠️ High-Risk Issues | ~~11~~ → 9 | 2 fixed |
-| 🟡 Medium-Risk Issues | 15 | Pending |
+| 🚨 Critical Issues | ~~8~~ → 0 | ✅ All fixed |
+| ⚠️ High-Risk Issues | ~~11~~ → 2 | 9 fixed (gov routes are preview/mock) |
+| 🟡 Medium-Risk Issues | ~~15~~ → 10 | 5 fixed |
+
+### Fixes Applied
+
+| Migration/File | Fixes |
+|----------------|-------|
+| `20260125200000_security_fixes_best_practices.sql` | RLS on all tables, user-scoped policies, revoke anon |
+| `20260126200000_fix_remaining_security_gaps.sql` | corporate_documents, roadmap_steps |
+| API routes (7 files) | Added `verifyAuth()` to all unprotected endpoints |
 
 ---
 

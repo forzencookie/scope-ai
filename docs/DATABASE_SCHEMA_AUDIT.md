@@ -1,35 +1,39 @@
 # Database Schema Security Audit
 
 **Generated:** 2026-01-26  
-**Source:** Analysis of all 31 migration files in `/supabase/migrations/`
+**Source:** Analysis of all 31 migration files in `/supabase/migrations/`  
+**Last Updated:** 2026-01-26 - All critical issues fixed
 
 ---
 
 ## Executive Summary
 
-### 🔴 CRITICAL Security Issues Found
+### ✅ ALL CRITICAL Issues Fixed
 
-1. **`events` table** - RLS policy allows read access to ALL users (`USING (true)`)
-2. **`partners` table** - Policy `FOR ALL USING (true)` - completely public
-3. **`members` table** - Policy `FOR ALL USING (true)` - completely public  
-4. **`corporate_documents` table** - Policy `FOR ALL USING (true)` - completely public
-5. **`shareholders` table (original)** - Policy `FOR ALL USING (true)` before later fix
-6. **`roadmap_steps` table** - No `user_id` column, relies on parent join only
-7. **`rate_limits_sliding`** - Anon has full CRUD access (intentional for rate limiting but risky)
+| Issue | Table | Status |
+|-------|-------|--------|
+| 1 | `events` | ✅ Fixed in `20260125200000_security_fixes_best_practices.sql` |
+| 2 | `partners` | ✅ Fixed in `20260125200000_security_fixes_best_practices.sql` |
+| 3 | `members` | ✅ Fixed in `20260125200000_security_fixes_best_practices.sql` |
+| 4 | `corporate_documents` | ✅ Fixed in `20260126200000_fix_remaining_security_gaps.sql` |
+| 5 | `shareholders` | ✅ Fixed in `20260125200000_security_fixes_best_practices.sql` |
+| 6 | `roadmap_steps` | ✅ Fixed in `20260126200000_fix_remaining_security_gaps.sql` - added direct user_id |
+| 7 | `rate_limits_sliding` | ✅ Intentional for rate limiting - documented |
 
-### 🟡 MEDIUM Issues
+### ✅ MEDIUM Issues Fixed
 
-8. **Several tables with `OR user_id IS NULL`** - Allows access to orphaned records (fixed in later migrations)
-9. **`GRANT ALL TO anon`** on financial tables - transactions, receipts, invoices (fixed later)
-10. **`categories`** - Global read access (intentional but verify)
+| Issue | Status |
+|-------|--------|
+| `OR user_id IS NULL` patterns | ✅ Removed |
+| `GRANT ALL TO anon` on financial tables | ✅ Revoked |
+| `categories` global read | ✅ Intentional (BAS codes), admin-only write |
 
-### ✅ Fixed in Later Migrations
+### Security Migrations Applied
 
-The migrations `20260125200000_security_fixes_best_practices.sql` addresses most issues by:
-- Removing `OR user_id IS NULL` patterns
-- Switching to `(SELECT auth.uid())` for performance
-- Adding proper FK constraints
-- Revoking anon access
+1. `20260125200000_security_fixes_best_practices.sql` - Comprehensive fixes
+2. `20260126200000_fix_remaining_security_gaps.sql` - Remaining gaps
+
+**Run `SELECT * FROM verify_security_setup() WHERE status != '✅ OK'` to verify.**
 
 ---
 
@@ -47,6 +51,7 @@ The migrations `20260125200000_security_fixes_best_practices.sql` addresses most
 | **Has company_id** | ✅ Yes (`UUID` / `TEXT`) |
 | **RLS Enabled** | ✅ Yes |
 | **Final Policy** | `transactions_select/insert/update/delete` - user_id = auth.uid() |
+
 
 **Columns:**
 - `id` TEXT PRIMARY KEY
