@@ -27,6 +27,34 @@ export type GatedFeature =
   | "custom_integrations"  // Custom API integrations
   | "exports"              // Export/download data (always allowed)
 
+// ============================================================================
+// Token Limits per Tier (monthly)
+// ============================================================================
+
+export const TIER_TOKEN_LIMITS: Record<SubscriptionTier, number> = {
+  demo: 0,              // No real AI tokens - simulated only
+  free: 0,              // Deprecated, same as demo
+  pro: 500_000,         // 500k tokens/month (~$5-10 worth)
+  enterprise: 2_000_000 // 2M tokens/month
+}
+
+/** Price per 1000 tokens for credit purchases (in SEK) */
+export const CREDIT_PRICE_PER_1K_TOKENS = 0.5 // 0.50 kr per 1k tokens
+
+/** Credit package options */
+export interface CreditPackage {
+  tokens: number
+  price: number
+  label: string
+  popular?: boolean
+}
+
+export const CREDIT_PACKAGES: CreditPackage[] = [
+  { tokens: 100_000, price: 49, label: "100k tokens" },
+  { tokens: 500_000, price: 199, label: "500k tokens", popular: true },
+  { tokens: 1_000_000, price: 349, label: "1M tokens" },
+]
+
 /** Feature access by tier */
 const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "simulated" | "disabled">> = {
   demo: {
