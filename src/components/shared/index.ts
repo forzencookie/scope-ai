@@ -28,6 +28,9 @@ export { UpgradePrompt, UpgradeButton, FeatureGate } from "./upgrade-prompt"
 // Real-time collaboration components
 export { OnlineUsers, OnlineUsersBadge, EditConflictWarning } from "./online-users"
 
+// Activity log / audit trail
+export { ActivityFeed, ActivityItem, ActivityTimeline } from "./activity-feed"
+
 // Lazy Loading with Spinner (Golden Standard)
 export {
     LoadingSpinner,

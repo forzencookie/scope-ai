@@ -59,5 +59,9 @@ export type { SubscriptionTier, GatedFeature } from "./use-subscription"
 export { useRealtime, usePagePresence, useEditLock } from "./use-realtime"
 export type { PresenceUser, RealtimeEvent } from "./use-realtime"
 
+// Activity log / audit trail
+export { useActivityLog, logActivity, formatActivity, formatActivityTime } from "./use-activity-log"
+export type { ActivityLogEntry, ActivityAction, EntityType } from "./use-activity-log"
+
 // Last updated timestamp hook
 export { useLastUpdated, useLastUpdatedTime, formatLastUpdated } from "./use-last-updated"
