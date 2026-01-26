@@ -2,7 +2,7 @@ import { formatDateLong, cn } from "@/lib/utils"
 import { HandHeart, MapPin, CheckCircle, Clock, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { type MeetingStatus } from "@/lib/status-types"
+import { getAnnualMeetingStatusLabel } from "@/lib/meeting-utils"
 import { type AnnualMeeting } from "@/types/meeting"
 
 interface NextMeetingCardProps {
@@ -25,17 +25,6 @@ export function NextMeetingCard({
   stats,
   onOpenCreateDialog
 }: NextMeetingCardProps) {
-
-  const getMeetingStatusLabel = (status: AnnualMeeting['status']): MeetingStatus => {
-    const labels: Record<AnnualMeeting['status'], MeetingStatus> = {
-      'planerad': 'Planerad',
-      'kallad': 'Kallad',
-      'genomförd': 'Genomförd',
-      'protokoll signerat': 'Signerat',
-    }
-    return labels[status]
-  }
-
   if (!nextMeeting) {
     return (
       <div className="rounded-xl border bg-muted/20 p-6">
@@ -72,7 +61,7 @@ export function NextMeetingCard({
               <span>{nextMeeting.location || 'Lokal ej angiven'}</span>
             </div>
           </div>
-          <AppStatusBadge status={getMeetingStatusLabel(nextMeeting.status)} />
+          <AppStatusBadge status={getAnnualMeetingStatusLabel(nextMeeting.status)} />
         </div>
 
         {/* Divider */}

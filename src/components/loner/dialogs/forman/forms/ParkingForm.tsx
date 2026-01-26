@@ -1,11 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { formatCurrency } from "@/lib/utils"
 import { FormProps, ParkingFormData } from "../types"
+import { EmployeeInput, PeriodInput, TextInputField, CurrencyInput, SubmitButton } from "./shared"
 
 export function ParkingForm({ onAssign }: FormProps) {
     const [form, setForm] = useState<ParkingFormData>({
@@ -27,52 +25,36 @@ export function ParkingForm({ onAssign }: FormProps) {
 
     return (
         <div className="space-y-4">
-            <div className="space-y-2">
-                <Label>Anställd</Label>
-                <Input
-                    placeholder="Namn på anställd..."
-                    value={form.employeeName}
-                    onChange={e => setForm(f => ({ ...f, employeeName: e.target.value }))}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Månad</Label>
-                <Input
-                    type="month"
-                    value={form.month}
-                    onChange={e => setForm(f => ({ ...f, month: e.target.value }))}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Plats</Label>
-                <Input
-                    placeholder="t.ex. P-hus City..."
-                    value={form.location}
-                    onChange={e => setForm(f => ({ ...f, location: e.target.value }))}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Marknadsvärde (månad)</Label>
-                <div className="relative">
-                    <Input
-                        type="number"
-                        placeholder="0"
-                        value={form.marketValue}
-                        onChange={e => setForm(f => ({ ...f, marketValue: e.target.value }))}
-                        className="pr-10"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
-                </div>
-            </div>
+            <EmployeeInput
+                value={form.employeeName}
+                onChange={(v) => setForm(f => ({ ...f, employeeName: v }))}
+            />
+            <PeriodInput
+                value={form.month}
+                onChange={(v) => setForm(f => ({ ...f, month: v }))}
+            />
+            <TextInputField
+                label="Plats"
+                value={form.location}
+                onChange={(v) => setForm(f => ({ ...f, location: v }))}
+                placeholder="t.ex. P-hus City..."
+            />
+            <CurrencyInput
+                label="Marknadsvärde (månad)"
+                value={form.marketValue}
+                onChange={(v) => setForm(f => ({ ...f, marketValue: v }))}
+            />
             {form.marketValue && (
                 <div className="bg-muted/30 p-3 rounded-md text-sm">
                     <span className="text-muted-foreground">Förmånsvärde: </span>
                     <span className="font-medium">{formatCurrency(parseFloat(form.marketValue))}/mån</span>
                 </div>
             )}
-            <Button className="w-full" onClick={handleSubmit} disabled={!form.employeeName || !form.month || !form.marketValue}>
-                Registrera
-            </Button>
+            <SubmitButton
+                label="Registrera"
+                onClick={handleSubmit}
+                disabled={!form.employeeName || !form.month || !form.marketValue}
+            />
         </div>
     )
 }

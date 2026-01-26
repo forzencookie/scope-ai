@@ -14,6 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { useToast } from "@/components/ui/toast"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 
 interface Payslip {
     id: string | number
@@ -53,7 +54,7 @@ export function PayslipDetailsDialog({
                     <DialogTitle>Lönespecifikation</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4 py-4">
+                <div id="payslip-preview" className="space-y-4 py-4 bg-white dark:bg-background">
                     {/* Employee & Period Header */}
                     <div className="flex items-center gap-4 bg-muted/40 p-4 rounded-lg">
                         <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -122,8 +123,14 @@ export function PayslipDetailsDialog({
 
                 {/* Actions */}
                 <div className="flex gap-2 justify-end">
-                    <Button variant="outline" size="sm" onClick={() => {
+                    <Button variant="outline" size="sm" onClick={async () => {
                         toast.info("Laddar ner", "Förbereder PDF...")
+                        try {
+                            await downloadElementAsPDF({ fileName: `lonespec-${payslip.employee.replace(/\s+/g, '-')}-${payslip.period}`, elementId: 'payslip-preview' })
+                            toast.success("Klart", "Lönespecifikation har laddats ner.")
+                        } catch {
+                            toast.error("Fel", "Kunde inte skapa PDF.")
+                        }
                     }}>
                         <Download className="h-4 w-4 mr-2" />
                         Ladda ner PDF

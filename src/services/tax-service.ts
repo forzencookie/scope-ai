@@ -1,5 +1,18 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getSupabaseClient } from '@/lib/database/supabase'
+import type { PostgrestError } from '@supabase/supabase-js'
+
+interface VatStatsRpcResult {
+    outputVat?: number
+    salesVat?: number
+    inputVat?: number
+    netVat?: number
+}
+
+interface AgiStatsRpcResult {
+    totalSalary?: number
+    tax?: number
+    contributions?: number
+}
 
 export type VatStats = {
     salesVat: number
@@ -22,7 +35,7 @@ export const taxService = {
         const year = parseInt(startDate.substring(0, 4)) || new Date().getFullYear()
         const { data, error } = await supabase.rpc('get_vat_stats', {
             p_year: year
-        }) as { data: any, error: any }
+        }) as { data: VatStatsRpcResult | null, error: PostgrestError | null }
 
         if (error) {
             console.error('Failed to fetch VAT stats:', error)
@@ -31,9 +44,9 @@ export const taxService = {
 
         // RPC returns JSON object, but keys might differ
         return {
-            salesVat: Number(data.outputVat || data.salesVat || 0),
-            inputVat: Number(data.inputVat || 0),
-            netVat: Number(data.netVat || 0)
+            salesVat: Number(data?.outputVat || data?.salesVat || 0),
+            inputVat: Number(data?.inputVat || 0),
+            netVat: Number(data?.netVat || 0)
         }
     },
 
@@ -44,7 +57,7 @@ export const taxService = {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase.rpc('get_agi_stats', {
             p_year: year
-        }) as { data: any, error: any }
+        }) as { data: AgiStatsRpcResult | null, error: PostgrestError | null }
 
         if (error) {
             console.error('Failed to fetch AGI stats:', error)
@@ -52,9 +65,9 @@ export const taxService = {
         }
 
         return {
-            totalSalary: Number(data.totalSalary) || 0,
-            tax: Number(data.tax) || 0,
-            contributions: Number(data.contributions) || 0
+            totalSalary: Number(data?.totalSalary) || 0,
+            tax: Number(data?.tax) || 0,
+            contributions: Number(data?.contributions) || 0
         }
     }
 }

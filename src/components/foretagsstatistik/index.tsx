@@ -19,12 +19,12 @@ import { monthlyRevenue, expenseCategories } from "./data"
 import { useFinancialMetrics, type MonthlyMetric, type ExpenseCategory, type KPI } from "@/hooks/use-financial-metrics"
 
 // Map icon names to actual icons
-const kpiIcons = {
-    TrendingUp,
-    Wallet,
-    Shield,
-    Droplets,
-}
+// const kpiIcons = {
+//     TrendingUp,
+//     Wallet,
+//     Shield,
+//     Droplets,
+// }
 
 // KPIs with resolved icons
 const kpis = [
@@ -64,6 +64,7 @@ export function Foretagsstatistik() {
     const maxRevenue = Math.max(...displayMetrics.map(m => m.revenue)) || 1 // Avoid divide by zero
 
     // Map live KPIs to icons
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const displayKpis: (KPI & { icon: any })[] = liveKpis.length > 0 ? [
         { ...liveKpis[0], icon: TrendingUp }, // Omsättning
         { ...liveKpis[1], icon: Wallet },     // Resultat

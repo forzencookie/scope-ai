@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useInView } from "framer-motion"
 import { CheckCircle2, ArrowRight, FileText, Check } from "lucide-react"
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+// import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 import { ScaledPreview, Cursor } from "./shared"
 
 /**

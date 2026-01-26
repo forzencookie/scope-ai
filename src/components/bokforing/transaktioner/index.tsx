@@ -4,6 +4,7 @@ import { memo } from "react"
 import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
+import { PageHeader } from "@/components/shared"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { NewTransactionDialog } from "../dialogs/ny-transaktion"
 import { BookingDialog } from "../dialogs/bokforing"
@@ -53,20 +54,16 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
     return (
         <div className="w-full space-y-4 md:space-y-6">
             {/* Page Heading */}
-            <div className="flex flex-col gap-4 md:gap-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                    <div>
-                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">{text.transactions?.title || "Transaktioner"}</h2>
-                        <p className="text-muted-foreground">{text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}</p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button className="gap-2 w-full sm:w-auto" onClick={() => setNewTransactionDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            <span className="sm:inline">{text.transactions?.newTransaction || "Ny händelse"}</span>
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title={text.transactions?.title || "Transaktioner"}
+                subtitle={text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}
+                actions={
+                    <Button className="gap-2 w-full sm:w-auto" onClick={() => setNewTransactionDialogOpen(true)}>
+                        <Plus className="h-4 w-4" />
+                        <span className="sm:inline">{text.transactions?.newTransaction || "Ny händelse"}</span>
+                    </Button>
+                }
+            />
 
             {/* Status Hero */}
             <TransactionsStatusCard

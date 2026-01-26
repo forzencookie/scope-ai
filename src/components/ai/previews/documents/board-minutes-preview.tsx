@@ -12,7 +12,7 @@ import {
     DocumentSection,
     type DocumentPreviewProps
 } from "../document-preview"
-import { User, Calendar, MapPin, CheckCircle2 } from "lucide-react"
+import { User } from "lucide-react"
 
 // =============================================================================
 // Types

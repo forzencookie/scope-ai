@@ -42,7 +42,6 @@ export function MomsdeklarationContent() {
         statusFilter, setStatusFilter,
         selectedReport, setSelectedReport,
         showAIDialog, setShowAIDialog,
-        isLoading,
         
         // Data
         filteredPeriods,

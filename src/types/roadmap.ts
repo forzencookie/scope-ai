@@ -19,6 +19,7 @@ export interface RoadmapStep {
     description: string | null
     status: RoadmapStepStatus
     order_index: number
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata: Record<string, any> | null
     created_at: string
     updated_at: string
@@ -30,11 +31,13 @@ export interface CreateRoadmapInput {
     steps: {
         title: string
         description?: string
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         metadata?: Record<string, any>
     }[]
 }
 
 export interface UpdateRoadmapStepInput {
     status?: RoadmapStepStatus
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     metadata?: Record<string, any>
 }

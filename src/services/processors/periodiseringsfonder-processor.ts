@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Periodiseringsfonder Data Layer
  * 
@@ -8,6 +7,23 @@
 
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
 import type { Periodiseringsfond, CreatePeriodiseringsfondInput, TaxSavingsCalculation } from './ai-tool-types'
+
+// =============================================================================
+// Database Row Types
+// =============================================================================
+
+interface PeriodiseringsfondRow {
+    id: string
+    company_id: string
+    year: number
+    amount: number | string
+    dissolved_amount?: number | string
+    expires_at: string
+    status: 'active' | 'dissolved' | 'partially_dissolved'
+    notes?: string
+    created_at: string
+    updated_at: string
+}
 
 // =============================================================================
 // CRUD Operations
@@ -24,7 +40,7 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .select('*')
         .order('year', { ascending: false })
 
@@ -33,7 +49,7 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
         return []
     }
 
-    return (data || []).map(mapFromDb)
+    return ((data || []) as PeriodiseringsfondRow[]).map(mapFromDb)
 }
 
 /**
@@ -52,7 +68,7 @@ export async function createPeriodiseringsfond(
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .insert({
             year: input.year,
             amount: input.amount,
@@ -60,7 +76,7 @@ export async function createPeriodiseringsfond(
             notes: input.notes,
             status: 'active',
             dissolved_amount: 0,
-        } as any)
+        })
         .select()
         .single()
 
@@ -69,7 +85,7 @@ export async function createPeriodiseringsfond(
         return null
     }
 
-    return mapFromDb(data)
+    return mapFromDb(data as PeriodiseringsfondRow)
 }
 
 /**
@@ -87,27 +103,28 @@ export async function dissolvePeriodiseringsfond(
 
     // First get the current fond
     const { data: existingData } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .select('*')
         .eq('id', id)
         .single()
 
-    // Explicitly cast to any to avoid type confusion between DB row and domain model
-    const existing = existingData as any
+    const existing = existingData as PeriodiseringsfondRow | null
 
     if (!existing) return null
 
-    const dissolveAmount = amount ?? (existing.amount - existing.dissolved_amount)
-    const newDissolvedAmount = (existing.dissolved_amount || 0) + dissolveAmount
-    const newStatus = newDissolvedAmount >= existing.amount ? 'dissolved' : 'partially_dissolved'
+    const existingAmount = Number(existing.amount)
+    const existingDissolved = Number(existing.dissolved_amount || 0)
+    const dissolveAmount = amount ?? (existingAmount - existingDissolved)
+    const newDissolvedAmount = existingDissolved + dissolveAmount
+    const newStatus = newDissolvedAmount >= existingAmount ? 'dissolved' : 'partially_dissolved'
 
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .update({
             dissolved_amount: newDissolvedAmount,
             status: newStatus,
             updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', id)
         .select()
         .single()
@@ -117,7 +134,7 @@ export async function dissolvePeriodiseringsfond(
         return null
     }
 
-    return mapFromDb(data)
+    return mapFromDb(data as PeriodiseringsfondRow)
 }
 
 /**
@@ -133,7 +150,7 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
 
     const supabase = getSupabaseClient()
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .select('*')
         .eq('status', 'active')
         .lte('expires_at', futureDate.toISOString().split('T')[0])
@@ -144,7 +161,7 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
         return []
     }
 
-    return (data || []).map(mapFromDb)
+    return ((data || []) as PeriodiseringsfondRow[]).map(mapFromDb)
 }
 
 // =============================================================================
@@ -191,8 +208,7 @@ export async function getTotalActiveFonder(): Promise<number> {
 // Helpers
 // =============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapFromDb(row: any): Periodiseringsfond {
+function mapFromDb(row: PeriodiseringsfondRow): Periodiseringsfond {
     return {
         id: row.id,
         companyId: row.company_id,

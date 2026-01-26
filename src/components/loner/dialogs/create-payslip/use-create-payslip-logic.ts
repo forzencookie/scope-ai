@@ -41,6 +41,7 @@ export function useCreatePayslipLogic({
     const toast = useToast()
     const { addVerification } = useVerifications()
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [employees, setEmployees] = useState<Record<string, any>[]>([])
     const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
     const [step, setStep] = useState(1)
@@ -140,6 +141,8 @@ export function useCreatePayslipLogic({
 
     const handleConfirmPayslip = async () => {
         if (!selectedEmp) return
+        // Prevent duplicate submissions
+        if (isCreating) return
         setIsCreating(true)
 
         try {

@@ -30,6 +30,7 @@ type WizardStep = 'select' | 'configure' | 'preview' | 'complete'
 export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardProps) {
     const [step, setStep] = useState<WizardStep>('select')
     const [selectedAction, setSelectedAction] = useState<CorporateActionType | null>(null)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [actionData, setActionData] = useState<any>(null)
 
     const { shareholders, addDocument, isAddingDoc } = useCompliance()
@@ -39,6 +40,7 @@ export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardPro
         setStep('configure')
     }
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const handleConfigure = (data: any) => {
         setActionData(data)
         setStep('preview')

@@ -2,7 +2,6 @@
 
 import { useMemo } from 'react';
 import {
-    Building2,
     ExternalLink,
     Check,
     Clock,
@@ -13,6 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { useCompany } from '@/providers/company-provider';
+import { PageHeader } from '@/components/shared';
 
 // Authority connection types
 type AuthorityStatus = 'connected' | 'pending' | 'error' | 'not_connected';
@@ -27,18 +27,18 @@ interface AuthorityConnection {
     registrationNumber?: string;
 }
 
-const authorityMeta: Record<string, { icon: React.ElementType; colorClass: string; bgClass: string }> = {
-    bolagsverket: {
-        icon: Building2,
-        colorClass: 'text-blue-600 dark:text-blue-400',
-        bgClass: 'bg-blue-100 dark:bg-blue-950/50',
-    },
-    skatteverket: {
-        icon: Building2,
-        colorClass: 'text-orange-600 dark:text-orange-400',
-        bgClass: 'bg-orange-100 dark:bg-orange-950/50',
-    },
-};
+// const authorityMeta: Record<string, { icon: React.ElementType; colorClass: string; bgClass: string }> = {
+//     bolagsverket: {
+//         icon: Building2,
+//         colorClass: 'text-blue-600 dark:text-blue-400',
+//         bgClass: 'bg-blue-100 dark:bg-blue-950/50',
+//     },
+//     skatteverket: {
+//         icon: Building2,
+//         colorClass: 'text-orange-600 dark:text-orange-400',
+//         bgClass: 'bg-orange-100 dark:bg-orange-950/50',
+//     },
+// };
 
 const statusConfig: Record<AuthorityStatus, { label: string; colorClass: string; bgClass: string; icon: React.ElementType }> = {
     connected: {
@@ -111,16 +111,11 @@ export function Myndigheter() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Myndigheter</h2>
-                        <p className="text-muted-foreground mt-1">
-                            Hantera kopplingar till Skatteverket och Bolagsverket.
-                        </p>
-                    </div>
-                </div>
-            </div>            {/* Info card */}
+            <PageHeader
+                title="Myndigheter"
+                subtitle="Hantera kopplingar till Skatteverket och Bolagsverket."
+            />
+            {/* Info card */}
             <Card className="bg-muted/30 border-dashed">
                 <CardContent className="py-4">
                     <p className="text-sm text-muted-foreground">
@@ -133,8 +128,9 @@ export function Myndigheter() {
             {/* Authority cards */}
             <div className="grid gap-4 md:grid-cols-2">
                 {connections.map((connection) => {
-                    const meta = authorityMeta[connection.authority];
+                    // const meta = authorityMeta[connection.authority];
                     const status = statusConfig[connection.status];
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const StatusIcon = status?.icon as any;
                     // const AuthorityIcon = meta.icon; // Icon removed
 
@@ -156,6 +152,7 @@ export function Myndigheter() {
                                         status.bgClass,
                                         status.colorClass
                                     )}>
+                                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                         {(StatusIcon as any) ? <StatusIcon className="h-3 w-3" /> : null}
                                         {status.label}
                                     </div>

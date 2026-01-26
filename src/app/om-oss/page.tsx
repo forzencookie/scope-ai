@@ -5,7 +5,6 @@ import { Navbar, Footer, AnimatedDitherArt } from "@/components/landing"
 import { SectionHeader } from "@/components/landing/shared/section-header"
 import { StaticWorldMap } from "@/components/landing/sections/global-reach/static-world-map"
 import { ThemeProvider } from "@/providers/theme-provider"
-import { Zap, Users, Globe, Rocket } from "lucide-react"
 
 export default function AboutPage() {
     return (

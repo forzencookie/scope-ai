@@ -13,7 +13,9 @@ export function useVatReport() {
     const toast = useToast()
 
     // Data State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [periods, setPeriods] = useState<any[]>([])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [savedReports, setSavedReports] = useState<any[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
@@ -154,7 +156,7 @@ export function useVatReport() {
             id: "send",
             label: "Skicka till Skatteverket",
             icon: Send,
-            onClick: (ids) => {
+            onClick: (_ids) => {
                 toast.info("Kommer snart", "Inlämning direkt till Skatteverket via API är under utveckling.")
             },
         },

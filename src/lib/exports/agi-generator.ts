@@ -32,7 +32,7 @@ export interface AGIXMLParams {
 }
 
 export function generateAGIXML(data: AGIXMLParams): string {
-    const timestamp = new Date().toISOString()
+    // const timestamp = new Date().toISOString()
     const [year, month] = data.period.split('-')
     const periodCode = `${year}${month}` // YYYYMM
 

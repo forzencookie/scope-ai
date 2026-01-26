@@ -1,5 +1,5 @@
-import { useState, useEffect, useMemo } from "react"
-import { useMembers, type Member } from "@/hooks/use-members"
+import { useState, useEffect } from "react"
+import { useMembers } from "@/hooks/use-members"
 
 export function useMemberStats() {
   const { members } = useMembers()
@@ -18,6 +18,7 @@ export function useMemberStats() {
       const { data, error } = await supabase.rpc('get_member_stats')
 
       if (!error && data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const rpcStats = data as any
         setStats(prev => ({
           ...prev,

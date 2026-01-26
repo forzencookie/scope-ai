@@ -3,7 +3,7 @@
 // Core logic for Swedish accounting
 // ============================================
 
-import { getAccount, isDebitIncrease, isCreditIncrease, type Account } from '@/data/accounts';
+import { getAccount, isDebitIncrease } from '@/data/accounts';
 import { formatCurrency } from '@/lib/utils';
 
 // ============================================

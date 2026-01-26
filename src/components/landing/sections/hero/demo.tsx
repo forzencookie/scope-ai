@@ -58,7 +58,6 @@ export function HeroDemo({
     timelineOffset,
     setTimelineOffset,
     isPaused,
-    setIsPaused,
     onLoopComplete
 }: HeroDemoProps) {
     const [isInView, setIsInView] = useState(false)
@@ -93,7 +92,6 @@ export function HeroDemo({
         timelineOffset={timelineOffset}
         setTimelineOffset={setTimelineOffset}
         isPaused={isPaused}
-        setIsPaused={setIsPaused}
         onLoopComplete={onLoopComplete}
     />
 }
@@ -105,7 +103,6 @@ function HeroDemoContent({
     timelineOffset,
     setTimelineOffset,
     isPaused,
-    setIsPaused,
     onLoopComplete
 }: HeroDemoProps) {
     const [inputText, setInputText] = useState("")

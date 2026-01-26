@@ -13,7 +13,6 @@ import type {
     AgentDomain,
     AgentContext,
     AgentResponse,
-    Intent,
 } from '../../types'
 
 // =============================================================================
@@ -193,6 +192,7 @@ export class ReceiptAgent extends BaseAgent {
             return this.errorResponse(result.error || 'Kunde inte hämta kvitton')
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const receipts = result.result as any[]
 
         if (!receipts || receipts.length === 0) {

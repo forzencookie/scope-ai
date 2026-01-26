@@ -5,7 +5,6 @@ import { useState, useEffect } from "react"
 import {
     Calendar,
     UploadCloud,
-    FileText,
     CheckCircle2,
     Building2,
     Banknote,
@@ -29,18 +28,12 @@ import {
     DialogTitle,
     DialogFooter,
 } from "@/components/ui/dialog"
-import {
-    Select,
-    SelectContent,
-    SelectItem,
-    SelectTrigger,
-    SelectValue,
-} from "@/components/ui/select"
 import { UploadDropzone, FilePreview } from "@/components/ui/upload-dropzone"
 import { AiProcessingState } from "@/components/shared"
 import { type SupplierInvoiceStatus } from "@/lib/status-types"
 import { FormField, FormFieldRow } from "@/components/ui/form-field"
 import { useFileCapture } from "@/hooks/use-file-capture"
+import { useToast } from "@/components/ui/toast"
 
 // Category options
 const CATEGORY_OPTIONS = [
@@ -88,6 +81,7 @@ interface SupplierInvoiceDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onSave?: (data: SupplierInvoiceFormState) => void
+    onInvoiceCreated?: () => void
 }
 
 const getInitialFormState = (): SupplierInvoiceFormState => ({
@@ -106,12 +100,15 @@ const getInitialFormState = (): SupplierInvoiceFormState => ({
 export function SupplierInvoiceDialog({
     open,
     onOpenChange,
-    onSave
+    onSave,
+    onInvoiceCreated
 }: SupplierInvoiceDialogProps) {
+    const toast = useToast()
     const [activeTab, setActiveTab] = useState<"manual" | "ai">("manual")
     const [aiState, setAiState] = useState<AiState>('idle')
     const [errorMessage, setErrorMessage] = useState<string | null>(null)
     const [formState, setFormState] = useState<SupplierInvoiceFormState>(getInitialFormState)
+    const [isSaving, setIsSaving] = useState(false)
 
     // Process file with AI
     const processWithAI = async (file: File) => {
@@ -119,17 +116,31 @@ export function SupplierInvoiceDialog({
         setErrorMessage(null)
 
         try {
-            // Artificial delay to show processing state (mock)
-            await new Promise(resolve => setTimeout(resolve, 3000))
+            // Call AI extraction API
+            const formData = new FormData()
+            formData.append('file', file)
+            formData.append('type', 'supplier_invoice')
+
+            const response = await fetch('/api/ai/extract', {
+                method: 'POST',
+                body: formData
+            })
+
+            if (!response.ok) {
+                throw new Error('AI extraction failed')
+            }
+
+            const result = await response.json()
 
             setFormState(prev => ({
                 ...prev,
-                supplier: "Leverantör AB",
-                invoiceNumber: "INV-" + Math.floor(Math.random() * 10000),
-                ocr: Math.floor(Math.random() * 1000000000).toString(),
-                amount: "12500",
-                vatAmount: "2500",
-                category: "Konsulttjänster",
+                supplier: result.supplier || prev.supplier,
+                invoiceNumber: result.invoiceNumber || prev.invoiceNumber,
+                ocr: result.ocr || prev.ocr,
+                amount: result.amount?.toString() || prev.amount,
+                vatAmount: result.vatAmount?.toString() || prev.vatAmount,
+                dueDate: result.dueDate || prev.dueDate,
+                category: result.category || prev.category,
                 status: "Mottagen"
             }))
             setAiState('preview')
@@ -162,21 +173,54 @@ export function SupplierInvoiceDialog({
     // Reset form when dialog opens
     useEffect(() => {
         if (open) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setFormState(getInitialFormState())
             setActiveTab("manual")
             setAiState('idle')
             setErrorMessage(null)
             clearFile()
         }
-    }, [open])
+    }, [open, clearFile])
 
     const updateField = (field: keyof SupplierInvoiceFormState, value: string) => {
         setFormState(prev => ({ ...prev, [field]: value }))
     }
 
-    const handleAcceptAi = () => {
-        onSave?.({ ...formState, status: "Mottagen" })
-        onOpenChange(false)
+    const handleAcceptAi = async () => {
+        if (isSaving) return
+        setIsSaving(true)
+        
+        try {
+            const response = await fetch('/api/supplier-invoices/processed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    supplier: formState.supplier,
+                    invoiceNumber: formState.invoiceNumber,
+                    ocr: formState.ocr,
+                    issueDate: formState.date,
+                    dueDate: formState.dueDate,
+                    amount: formState.amount,
+                    vatAmount: formState.vatAmount,
+                    category: formState.category,
+                    status: 'mottagen'
+                })
+            })
+
+            if (!response.ok) throw new Error('Failed to save')
+
+            const result = await response.json()
+            toast.success('Faktura sparad', `Faktura från ${result.invoice.supplier} har lagts till`)
+            
+            onSave?.({ ...formState, status: "Mottagen" })
+            onInvoiceCreated?.()
+            onOpenChange(false)
+        } catch (error) {
+            console.error('Save error:', error)
+            toast.error('Fel', 'Kunde inte spara fakturan')
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const handleEditAi = () => {
@@ -184,9 +228,46 @@ export function SupplierInvoiceDialog({
         setAiState('idle')
     }
 
-    const handleSave = () => {
-        onSave?.(formState)
-        onOpenChange(false)
+    const handleSave = async () => {
+        if (isSaving) return
+        if (!formState.supplier.trim()) {
+            toast.error('Fel', 'Leverantörsnamn krävs')
+            return
+        }
+        
+        setIsSaving(true)
+        
+        try {
+            const response = await fetch('/api/supplier-invoices/processed', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    supplier: formState.supplier,
+                    invoiceNumber: formState.invoiceNumber,
+                    ocr: formState.ocr,
+                    issueDate: formState.date,
+                    dueDate: formState.dueDate,
+                    amount: formState.amount,
+                    vatAmount: formState.vatAmount,
+                    category: formState.category,
+                    status: formState.status.toLowerCase()
+                })
+            })
+
+            if (!response.ok) throw new Error('Failed to save')
+
+            const result = await response.json()
+            toast.success('Faktura sparad', `Faktura från ${result.invoice.supplier} har lagts till`)
+            
+            onSave?.(formState)
+            onInvoiceCreated?.()
+            onOpenChange(false)
+        } catch (error) {
+            console.error('Save error:', error)
+            toast.error('Fel', 'Kunde inte spara fakturan')
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const handleRetry = () => formState.file && processWithAI(formState.file)
@@ -201,6 +282,7 @@ export function SupplierInvoiceDialog({
                 {/* Hidden camera input */}
                 <input {...cameraInputProps} ref={cameraInputRef} />
 
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 mb-4">
                         <TabsTrigger value="manual" className="gap-2">
@@ -226,6 +308,7 @@ export function SupplierInvoiceDialog({
                             <div className="space-y-2">
                                 {imagePreview && (
                                     <div className="relative rounded-lg overflow-hidden border bg-muted/30">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={imagePreview}
                                             alt="Preview"
@@ -426,6 +509,7 @@ export function SupplierInvoiceDialog({
                                 <div className="flex gap-4">
                                     {imagePreview && (
                                         <div className="w-24 h-32 rounded-lg overflow-hidden border bg-muted/30 shrink-0">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={imagePreview} alt="Invoice" className="w-full h-full object-cover" />
                                         </div>
                                     )}
@@ -458,13 +542,13 @@ export function SupplierInvoiceDialog({
                                 </div>
 
                                 <div className="flex gap-3 pt-2">
-                                    <Button variant="outline" className="flex-1 gap-2" onClick={handleEditAi}>
+                                    <Button variant="outline" className="flex-1 gap-2" onClick={handleEditAi} disabled={isSaving}>
                                         <Pencil className="h-4 w-4" />
                                         Redigera
                                     </Button>
-                                    <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700" onClick={handleAcceptAi}>
+                                    <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700" onClick={handleAcceptAi} disabled={isSaving}>
                                         <Check className="h-4 w-4" />
-                                        Godkänn
+                                        {isSaving ? "Sparar..." : "Godkänn"}
                                     </Button>
                                 </div>
                             </div>
@@ -474,11 +558,11 @@ export function SupplierInvoiceDialog({
 
                 {activeTab === 'manual' && (
                     <DialogFooter className="mt-4">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
                             Avbryt
                         </Button>
-                        <Button onClick={handleSave}>
-                            Spara faktura
+                        <Button onClick={handleSave} disabled={isSaving}>
+                            {isSaving ? "Sparar..." : "Spara faktura"}
                         </Button>
                     </DialogFooter>
                 )}

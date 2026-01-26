@@ -6,6 +6,7 @@ import { downloadTextFile } from "./utils"
 
 const TaxDeclarationPreview = dynamic(() => import("../previews/forms/tax-declaration-preview").then(m => ({ default: m.TaxDeclarationPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function TaxDeclarationCard(props: any) {
     return (
         <TaxDeclarationPreview

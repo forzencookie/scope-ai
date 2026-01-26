@@ -40,7 +40,7 @@ export function BulkActionToolbar({
   selectedCount,
   selectedIds,
   onClearSelection,
-  actions = [],
+  actions = defaultActions,
   className,
 }: BulkActionToolbarProps) {
   const isVisible = selectedCount > 0

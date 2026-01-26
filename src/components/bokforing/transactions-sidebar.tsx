@@ -5,12 +5,9 @@ import {
     ArrowDownLeft, 
     ArrowUpRight, 
     Clock, 
-    CheckCircle2, 
-    AlertCircle,
     TrendingUp,
     TrendingDown,
     Wallet,
-    CreditCard
 } from "lucide-react"
 
 import { 
@@ -25,7 +22,7 @@ import {
 } from "@/components/shared/page-sidebar"
 import type { TransactionWithAI } from "@/types"
 import type { TransactionStats } from "@/services/transaction-service"
-import { formatNumber, safeNumber } from "@/lib/utils"
+import { safeNumber } from "@/lib/utils"
 
 interface TransactionsSidebarProps {
     transactions: TransactionWithAI[]

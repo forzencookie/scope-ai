@@ -108,7 +108,7 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
             setShowHistory(true)
         }
 
-        const handleNewConversation = () => {
+        const onNewConversationEvent = () => {
             startNewConversation()
             setTextareaValue("")
             setMentionItems([])
@@ -140,14 +140,14 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
         window.addEventListener(AI_CHAT_EVENT, handleOpenAIChat)
         window.addEventListener("load-conversation", handleLoadConversation)
         window.addEventListener("ai-chat-show-history", handleShowHistory)
-        window.addEventListener("ai-chat-new-conversation", handleNewConversation)
+        window.addEventListener("ai-chat-new-conversation", onNewConversationEvent)
         window.addEventListener("ai-chat-focus-input", handleFocusInput)
 
         return () => {
             window.removeEventListener(AI_CHAT_EVENT, handleOpenAIChat)
             window.removeEventListener("load-conversation", handleLoadConversation)
             window.removeEventListener("ai-chat-show-history", handleShowHistory)
-            window.removeEventListener("ai-chat-new-conversation", handleNewConversation)
+            window.removeEventListener("ai-chat-new-conversation", onNewConversationEvent)
             window.removeEventListener("ai-chat-focus-input", handleFocusInput)
         }
     }, [sendMessage, startNewConversation, loadConversation])

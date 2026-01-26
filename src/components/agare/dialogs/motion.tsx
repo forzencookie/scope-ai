@@ -17,6 +17,7 @@ import {
 interface MotionDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSubmit?: (data: any) => void
 }
 

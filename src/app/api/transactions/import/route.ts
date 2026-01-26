@@ -25,6 +25,7 @@ interface ZRapportData {
     vatAmount: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function parseZRapport(base64Data: string): Promise<ZRapportData | null> {
     try {
         const openai = getOpenAIClient()
@@ -115,6 +116,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 })
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const createdTransactions: any[] = []
 
         if (type === 'z-rapport') {

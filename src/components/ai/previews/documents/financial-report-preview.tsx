@@ -11,7 +11,6 @@ import { cn, formatCurrency } from "@/lib/utils"
 import {
     DocumentPreview,
     DocumentSection,
-    DocumentTable,
     type DocumentPreviewProps
 } from "../document-preview"
 

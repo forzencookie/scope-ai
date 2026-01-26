@@ -15,6 +15,7 @@ export interface GetComplianceDocsParams {
     limit?: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>({
     name: 'get_compliance_docs',
     description: 'Hämta bolagsdokument som styrelseprotokoll eller stämmoprotokoll.',
@@ -35,6 +36,7 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>(
                 let docs = data.documents || []
 
                 if (params.type) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     docs = docs.filter((d: any) => d.type === params.type)
                 }
 
@@ -46,6 +48,7 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>(
                     data: displayDocs,
                     message: `Hittade ${docs.length} dokument, visar de senaste ${displayDocs.length}.`,
                     display: {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         component: 'ComplianceList' as any,
                         props: { documents: displayDocs },
                         title: 'Bolagsdokument',
@@ -71,6 +74,7 @@ export interface RegisterDividendParams {
     recipientName?: string
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const registerDividendTool = defineTool<RegisterDividendParams, any>({
     name: 'register_dividend',
     description: 'Registrera ett utdelningsbeslut från bolagsstämma. Kräver bekräftelse.',
@@ -114,6 +118,7 @@ export interface DraftBoardMinutesParams {
     decisions?: string[]
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
     name: 'draft_board_minutes',
     description: 'Skapa ett utkast till styrelseprotokoll eller stämmoprotokoll.',

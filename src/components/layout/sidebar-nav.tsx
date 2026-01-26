@@ -154,12 +154,41 @@ export function NavCollapsibleSection({
     const stored = localStorage.getItem(`sidebar-section-${storageKey}`)
     return stored !== null ? stored === 'true' : defaultOpen
   })
+  
+  // Track if we're currently toggling to prevent rapid clicks
+  const isToggling = React.useRef(false)
+  const saveTimeout = React.useRef<NodeJS.Timeout | null>(null)
 
-  // Persist to localStorage
+  // Persist to localStorage with debouncing
   const handleOpenChange = React.useCallback((open: boolean) => {
+    // Prevent rapid toggles
+    if (isToggling.current) return
+    isToggling.current = true
+    
     setIsOpen(open)
-    localStorage.setItem(`sidebar-section-${storageKey}`, String(open))
+    
+    // Debounce localStorage write to prevent excessive writes
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current)
+    }
+    saveTimeout.current = setTimeout(() => {
+      localStorage.setItem(`sidebar-section-${storageKey}`, String(open))
+    }, 100)
+    
+    // Reset toggle lock after animation
+    setTimeout(() => {
+      isToggling.current = false
+    }, 200)
   }, [storageKey])
+  
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (saveTimeout.current) {
+        clearTimeout(saveTimeout.current)
+      }
+    }
+  }, [])
 
   // Helper to get the correct title based on mode
   const getTitle = (item: { title: string; titleEnkel?: string }) => {

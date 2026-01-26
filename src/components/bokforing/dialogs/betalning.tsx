@@ -4,9 +4,7 @@ import * as React from "react"
 import { useState, useEffect } from "react"
 import {
     Dialog,
-    DialogContent,
-    DialogHeader,
-    DialogTitle
+    DialogContent
 } from "@/components/ui/dialog"
 import { Button } from "@/components/ui/button"
 import { Loader2, CheckCircle2, ShieldCheck, ArrowRight, Building2, Lock } from "lucide-react"
@@ -33,6 +31,7 @@ export function TinkPaymentDialog({
 
     // Reset state when dialog opens
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         if (open) setStep('select-bank')
     }, [open])
 

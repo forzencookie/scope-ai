@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useCompliance } from "@/hooks/use-compliance"
-import { StockTransactionType, AktiebokStats, ShareholderDisplay } from "./types"
+import { StockTransactionType, ShareholderDisplay } from "./types"
 
 const SHARE_REGEX = /(\d+) aktier/;
 const NAME_REGEX = /till (.+)$/;
@@ -12,6 +12,7 @@ const NAME_REGEX = /till (.+)$/;
 export function useAktiebokLogic() {
   const { addVerification } = useVerifications()
   const toast = useToast()
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { shareholders: realShareholders, addShareholder } = useCompliance()
   const { verifications } = useVerifications()
 
@@ -27,7 +28,7 @@ export function useAktiebokLogic() {
   const [txShares, setTxShares] = useState("")
   const [txPrice, setTxPrice] = useState("")
   const [txTo, setTxTo] = useState("")
-  const [txFrom, setTxFrom] = useState("")
+  const [_txFrom, _setTxFrom] = useState("")
   const [txShareClass, setTxShareClass] = useState<'A' | 'B'>('B')
 
   // Derived stats
@@ -179,7 +180,7 @@ export function useAktiebokLogic() {
     txShares, setTxShares,
     txPrice, setTxPrice,
     txTo, setTxTo,
-    txFrom, setTxFrom,
+    txFrom: _txFrom, setTxFrom: _setTxFrom,
     txShareClass, setTxShareClass,
     
     handleSaveTransaction

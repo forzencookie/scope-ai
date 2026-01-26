@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query"
-import type { Transaction, TransactionWithAI, Invoice, Receipt } from "@/types"
+import type { TransactionWithAI, Invoice, Receipt } from "@/types"
 import { CompanyProvider } from "./company-provider"
 
 // PRODUCTION: No mock data - empty defaults

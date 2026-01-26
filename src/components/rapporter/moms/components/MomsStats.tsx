@@ -11,6 +11,7 @@ interface MomsStatsProps {
         inputVat: number
         netVat: number
     }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     text: any
 }
 

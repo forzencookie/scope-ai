@@ -2,7 +2,6 @@ import { formatDateLong } from "@/lib/utils"
 import {
   Calendar,
   MapPin,
-  CheckCircle,
   FileCheck,
   ChevronRight
 } from "lucide-react"
@@ -10,17 +9,8 @@ import { Button } from "@/components/ui/button"
 import { Card, CardDescription, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { AppStatusBadge } from "@/components/ui/status-badge"
+import { getBoardMeetingStatusLabel } from "@/lib/meeting-utils"
 import { type BoardMeeting } from "@/types/board-meeting"
-
-// Reusable function to get labels, kept out of component for purity or could be passed in
-const getMeetingStatusLabel = (status: BoardMeeting['status']) => {
-  const labels = {
-    'planerad': 'Planerad',
-    'genomförd': 'Genomförd',
-    'protokoll signerat': 'Signerat',
-  }
-  return labels[status] || status
-}
 
 interface BoardMeetingsStatsProps {
   heroData: { meeting: BoardMeeting; label: string } | null
@@ -59,7 +49,8 @@ export function BoardMeetingsStats({ heroData, onClick }: BoardMeetingsStatsProp
             </CardDescription>
           </div>
           {meeting && (
-            <AppStatusBadge status={getMeetingStatusLabel(meeting.status) as any} />
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            <AppStatusBadge status={getBoardMeetingStatusLabel(meeting.status)} />
           )}
         </div>
       </CardHeader>

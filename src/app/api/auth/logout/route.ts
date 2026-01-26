@@ -5,7 +5,7 @@ import { createServerSupabaseClient } from '@/lib/database/supabase-server'
  * POST /api/auth/logout
  * Securely logs out the user by clearing the server-side session
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
     try {
         const supabase = await createServerSupabaseClient()
 

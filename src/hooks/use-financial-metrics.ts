@@ -43,7 +43,6 @@ export function useFinancialMetrics() {
         const months = new Map<string, { revenue: number; expenses: number }>()
 
         // Initialize last 12 months
-        const now = new Date()
         for (let i = 11; i >= 0; i--) {
             // Initialize if not exists (though we iterate verifications, we want consistent x-axis)
             // Actually, simpler to just map data we have, but chart needs fixed axis usually.

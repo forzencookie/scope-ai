@@ -10,6 +10,7 @@ import { defineTool } from '../registry'
 // Shareholder Read Tools
 // =============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getShareholdersTool = defineTool<Record<string, never>, any[]>({
     name: 'get_shareholders',
     description: 'Hämta den aktuella aktieboken och lista över alla aktieägare.',
@@ -35,8 +36,11 @@ export const getShareholdersTool = defineTool<Record<string, never>, any[]>({
                                 companyName: "Din Företag AB",
                                 orgNumber: "556123-4567",
                                 date: new Date().toISOString().split('T')[0],
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 totalShares: shareholders.reduce((sum: number, s: any) => sum + (s.sharesCount || 0), 0),
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 totalCapital: shareholders.reduce((sum: number, s: any) => sum + (s.sharesCount || 0), 0) * 100, // Mock quota value
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 shareholders: shareholders.map((s: any) => ({
                                     ...s,
                                     personalOrOrgNumber: s.ssnOrgNr,
@@ -70,6 +74,7 @@ export interface AddShareholderParams {
     shareClass: 'A' | 'B'
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const addShareholderTool = defineTool<AddShareholderParams, any>({
     name: 'add_shareholder',
     description: 'Lägg till en ny aktieägare i aktieboken. Kräver bekräftelse.',

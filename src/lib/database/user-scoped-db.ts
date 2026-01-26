@@ -9,13 +9,17 @@
  *   if (!userDb) return unauthorized()
  *   const transactions = await userDb.transactions.list()
  */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { createServerSupabaseClient } from './supabase-server'
 import { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 // Type aliases for cleaner code
 type Tables = Database['public']['Tables']
+
+// Roadmap with nested steps type (from join query)
+type RoadmapWithSteps = Tables['roadmaps']['Row'] & {
+    steps: Tables['roadmap_steps']['Row'][]
+}
 
 export interface UserScopedDb {
     userId: string
@@ -86,7 +90,7 @@ export interface UserScopedDb {
 
     // Roadmaps (user-scoped planning)
     roadmaps: {
-        listActive: () => Promise<any[]>
+        listActive: () => Promise<RoadmapWithSteps[]>
     }
 
     // Aggregated KPIs (reads from multiple tables)
@@ -155,7 +159,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] transactions.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -166,7 +170,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -187,7 +191,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] transactions.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
 
             update: async (id: string, data) => {
@@ -202,7 +206,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] transactions.update error:', error)
                     return null
                 }
-                return (updated as any)
+                return updated
             },
 
             delete: async (id: string) => {
@@ -235,7 +239,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] receipts.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -246,7 +250,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -266,7 +270,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] receipts.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
 
             update: async (id: string, data) => {
@@ -281,7 +285,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] receipts.update error:', error)
                     return null
                 }
-                return (updated as any)
+                return updated
             },
         },
 
@@ -301,7 +305,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] supplierInvoices.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -312,7 +316,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -332,7 +336,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] supplierInvoices.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
 
             update: async (id: string, data) => {
@@ -347,7 +351,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] supplierInvoices.update error:', error)
                     return null
                 }
-                return (updated as any)
+                return updated
             },
         },
 
@@ -367,7 +371,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] verifications.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -378,7 +382,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -398,7 +402,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] verifications.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
         },
 
@@ -421,7 +425,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] employees.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -432,7 +436,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -451,7 +455,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] employees.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
 
             update: async (id: string, data) => {
@@ -466,7 +470,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] employees.update error:', error)
                     return null
                 }
-                return (updated as any)
+                return updated
             },
         },
 
@@ -489,7 +493,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] payslips.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -500,7 +504,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -519,7 +523,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] payslips.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
         },
 
@@ -543,7 +547,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] conversations.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             getById: async (id: string) => {
@@ -555,7 +559,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     .single()
 
                 if (error) return null
-                return (data as any)
+                return data
             },
 
             create: async (data) => {
@@ -574,7 +578,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] conversations.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
 
             delete: async (id: string) => {
@@ -620,7 +624,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] messages.listByConversation error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             create: async (data) => {
@@ -647,7 +651,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] messages.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
         },
 
@@ -670,7 +674,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] inboxItems.list error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
 
             create: async (data) => {
@@ -690,7 +694,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] inboxItems.create error:', error)
                     return null
                 }
-                return (created as any)
+                return created
             },
 
             update: async (id: string, data) => {
@@ -705,7 +709,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] inboxItems.update error:', error)
                     return null
                 }
-                return (updated as any)
+                return updated
             },
         },
 
@@ -725,7 +729,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
                     console.error('[UserScopedDb] roadmaps.listActive error:', error)
                     return []
                 }
-                return (data || []) as any
+                return data || []
             },
         },
 

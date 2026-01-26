@@ -4,31 +4,24 @@
 
 import {
     BookOpen,
-    Bot,
     Box,
-    Apple,
     CheckSquare,
-    Frame,
-    Home,
-    Mail,
     PieChart,
     Building2,
     Users,
-    Puzzle,
     Settings,
     Landmark,
     Vote,
     FileText,
     PiggyBank,
     Captions,
-    LayoutGrid,
     Scale,
     Gift,
     Send,
     Coins,
     Calendar,
 } from "lucide-react"
-import type { FeatureKey } from "@/lib/company-types"
+// import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
 
 // ============================================

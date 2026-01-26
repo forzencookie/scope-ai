@@ -7,7 +7,7 @@ import {
     CreditCard
 } from "lucide-react"
 import { useToast } from "@/components/ui/toast"
-import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
+import { BulkActionToolbar, PageHeader } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { VerifikationDialog } from "../verifikation-dialog"
 
@@ -18,16 +18,13 @@ import { VerifikationerGrid } from "./components/VerifikationerGrid"
 
 // Logic
 import { useVerificationsLogic } from "./use-verifications-logic"
-import { accountClassLabels, AccountClass } from "@/data/accounts"
 
 export const VerifikationerTable = memo(function VerifikationerTable() {
     const toast = useToast()
     
     const {
         // State
-        searchQuery, setSearchQuery,
-        classFilter, setClassFilter,
-        filterDropdownOpen, setFilterDropdownOpen,
+        setSearchQuery,
         createDialogOpen, setCreateDialogOpen,
         detailsDialogOpen, setDetailsDialogOpen,
         selectedVerifikation, 
@@ -42,32 +39,23 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
         filteredVerifikationer,
         stats,
         selection,
-        isLoading
     } = useVerificationsLogic()
 
     return (
         <div className="w-full space-y-6">
             {/* Header */}
-            <div className="flex flex-col gap-4">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">
-                            {accountParam ? `Huvudbok: ${accountParam}` : "Verifikationer"}
-                        </h2>
-                        <p className="text-muted-foreground">
-                            {accountParam
-                                ? `Systematisk översikt för konto ${accountParam} (${filteredVerifikationer[0]?.kontoName || 'Laddar...'})`
-                                : "Se alla bokförda transaktioner och verifikationer."}
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Button size="sm" className="h-8 w-full sm:w-auto px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                            <Plus className="h-3.5 w-3.5" />
-                            <span className="sm:inline">Ny verifikation</span>
-                        </Button>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title={accountParam ? `Huvudbok: ${accountParam}` : "Verifikationer"}
+                subtitle={accountParam
+                    ? `Systematisk översikt för konto ${accountParam} (${filteredVerifikationer[0]?.kontoName || 'Laddar...'})`
+                    : "Se alla bokförda transaktioner och verifikationer."}
+                actions={
+                    <Button size="sm" className="h-8 w-full sm:w-auto px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
+                        <Plus className="h-3.5 w-3.5" />
+                        <span className="sm:inline">Ny verifikation</span>
+                    </Button>
+                }
+            />
 
             {/* Active Account Filter Badge */}
             {accountParam && (
@@ -92,7 +80,7 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
             <VerifikationDialog
                 open={createDialogOpen}
                 onOpenChange={setCreateDialogOpen}
-                onVerifikationCreated={(transactionId, underlagId, type) => {
+                onVerifikationCreated={() => {
                     toast.success("Verifikation skapad", "Kopplingen har sparats och status har uppdaterats till Bokförd.")
                 }}
             />

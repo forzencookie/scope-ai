@@ -41,6 +41,7 @@ export function useVerificationsLogic() {
         )
 
          // Optimization: Create a lookup map for accounts to avoid O(N) search per row
+         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const accountMap = new Map<string, any>();
         basAccounts.forEach(a => accountMap.set(a.number, a));
 

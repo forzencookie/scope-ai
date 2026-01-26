@@ -39,6 +39,7 @@ export interface K10Data {
 
 export interface K10FormPreviewProps {
     data: K10Data
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     actions?: any // Simplified
     className?: string
 }

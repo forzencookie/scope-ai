@@ -19,7 +19,7 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/toast"
-import { BulkActionToolbar, type BulkAction } from "@/components/shared/bulk-action-toolbar"
+import { BulkActionToolbar, type BulkAction, PageHeader } from "@/components/shared"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 import { usePayslipsLogic } from "./use-payslips-logic"
@@ -97,22 +97,16 @@ export function LonesbeskContent() {
         <main className="flex-1 flex flex-col p-6">
             <div className="max-w-6xl w-full space-y-6">
                 {/* Page Heading */}
-                <div className="flex flex-col gap-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Lönekörning</h2>
-                            <p className="text-muted-foreground mt-1">
-                                Hantera löner och lönespecifikationer för dina anställda.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
-                                <Plus className="h-4 w-4 mr-2" />
-                                <span className="sm:inline">Ny lönekörning</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
+                <PageHeader
+                    title="Lönekörning"
+                    subtitle="Hantera löner och lönespecifikationer för dina anställda."
+                    actions={
+                        <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
+                            <Plus className="h-4 w-4 mr-2" />
+                            <span className="sm:inline">Ny lönekörning</span>
+                        </Button>
+                    }
+                />
 
                 {/* Payroll Period Summary */}
                 {!isLoading && <PayslipsStats stats={stats} />}
@@ -141,7 +135,7 @@ export function LonesbeskContent() {
                     payslip={selectedPayslip}
                     open={viewDialogOpen}
                     onOpenChange={setViewDialogOpen}
-                    onSend={(id) => {
+                    onSend={() => {
                         toast.success("Lönespecifikation skickad", "Skickades till anställd")
                     }}
                 />

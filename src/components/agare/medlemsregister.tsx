@@ -10,11 +10,11 @@ import {
   Plus,
   MoreHorizontal,
   Download,
-  AlertCircle
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { FilterButton } from "@/components/ui/filter-button"
+import { PageHeader } from "@/components/shared"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -112,15 +112,11 @@ export function Medlemsregister() {
         formatDate={formatDate}
       />
 
-      <div className="flex flex-col gap-4 md:gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="min-w-0">
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Medlemsregister</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
-              Hantera medlemmar, medlemsavgifter och roller.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+      <PageHeader
+        title="Medlemsregister"
+        subtitle="Hantera medlemmar, medlemsavgifter och roller."
+        actions={
+          <>
             <Button variant="outline" size="sm">
               <Download className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Exportera lista</span>
@@ -129,9 +125,9 @@ export function Medlemsregister() {
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Lägg till medlem</span>
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       <MembersStats stats={stats} />
 

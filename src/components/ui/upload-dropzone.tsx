@@ -48,7 +48,6 @@ export function UploadDropzone({
   icon,
   title = "Dra och släpp filer här",
   description = "eller klicka för att välja",
-  buttonText = "Välj fil",
   ...props
 }: UploadDropzoneProps) {
   const [isDragOver, setIsDragOver] = useState(false)

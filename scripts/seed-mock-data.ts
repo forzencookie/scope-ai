@@ -1,6 +1,6 @@
-// @ts-nocheck
-
+// Seed script
 import { createClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 import * as fs from 'fs'
 import * as path from 'path'
 import * as dotenv from 'dotenv'
@@ -17,14 +17,10 @@ if (fs.existsSync(envPath)) {
 
 import {
     mockTransactions,
-    mockReceipts,
-    mockInvoices,
-    mockShareholders,
-    mockAnnualMeetings,
-    mockDividends
+    mockShareholders
 } from '@/data/mock-data'
 
-const supabase = createClient(
+const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
@@ -75,7 +71,7 @@ async function seed() {
         if (t.status === 'missing_documentation') status = 'Saknar underlag'
 
         const txId = generateUUID(t.id)
-        const payload: any = {
+        const payload = {
             id: txId,
             description: t.name,
             created_at: new Date(t.date).toISOString(),
@@ -104,7 +100,7 @@ async function seed() {
     for (const r of mockReceipts) {
         const amountVal = typeof r.amount === 'string' ? parseFloat(r.amount.replace(/[^0-9.-]/g, '')) : r.amount
 
-        const payload: any = {
+        const payload = {
             id: r.id,
             // supplier: r.supplier, // Removed
             amount: amountVal,
@@ -187,7 +183,7 @@ async function seed() {
 }
 
 function normalizeInvoiceStatus(s: string) {
-    const map: any = {
+    const map: Record<string, string> = {
         'sent': 'sent',
         'draft': 'draft',
         'paid': 'paid',

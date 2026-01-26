@@ -16,6 +16,7 @@ export async function GET() {
     if (error) throw error
 
     return NextResponse.json({ partners: data })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
@@ -33,6 +34,7 @@ export async function POST(request: Request) {
     if (error) throw error
 
     return NextResponse.json({ partner: data })
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }

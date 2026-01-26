@@ -1,6 +1,7 @@
-import { useState, useMemo, useEffect } from "react"
+import { useMemo } from "react"
 import { useCompany } from "@/providers/company-provider"
 import { useVerifications } from "@/hooks/use-verifications"
+import { useTaxPeriod } from "@/hooks/use-tax-period"
 import { k10Declarations } from "@/components/loner/constants"
 
 export interface K10Data {
@@ -21,27 +22,11 @@ export function useK10Calculation() {
     const { company } = useCompany()
     const { verifications } = useVerifications()
 
-    // Get dynamic beskattningsår from helper
-    const [taxYear, setTaxYear] = useState({ year: new Date().getFullYear(), deadline: '2 maj ' + (new Date().getFullYear() + 1) })
-    
-    useEffect(() => {
-        const loadTaxYear = async () => {
-            try {
-                // In a real app we might dynamic import or just have this util available
-                // For now we simulate the logic from the original file or import it if better
-                // But typically hooks shouldn't do async imports inside useEffect unless necessary.
-                // Replicating the logic from the original file:
-                const { getCurrentBeskattningsar, getK10Deadline } = await import('@/lib/tax-periods')
-                const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
-                const result = getCurrentBeskattningsar(fiscalYearEnd)
-                const k10Deadline = getK10Deadline(result.year)
-                setTaxYear({ year: result.year, deadline: k10Deadline })
-            } catch (e) {
-                console.warn("Could not load tax periods, using defaults", e)
-            }
-        }
-        loadTaxYear()
-    }, [company?.fiscalYearEnd])
+    // Get dynamic beskattningsår using shared hook
+    const { taxYear } = useTaxPeriod({ 
+        fiscalYearEnd: company?.fiscalYearEnd || '12-31',
+        type: 'k10' 
+    })
 
     // Calculate K10 using dynamic year & real ledger data
     const k10Data = useMemo<K10Data>(() => {

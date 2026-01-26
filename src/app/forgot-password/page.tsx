@@ -37,7 +37,7 @@ export default function ForgotPasswordPage() {
       } else {
         setSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('Ett oväntat fel inträffade. Försök igen.')
     }
     

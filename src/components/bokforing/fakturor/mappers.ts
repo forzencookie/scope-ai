@@ -2,6 +2,7 @@ import { type Invoice } from "@/data/invoices"
 import { type SupplierInvoice } from "@/data/ownership"
 import { type UnifiedInvoice } from "./types"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mapCustomerInvoices = (apiInvoices: any[]): Invoice[] => {
     return apiInvoices.map(inv => ({
         id: inv.id,
@@ -12,10 +13,12 @@ export const mapCustomerInvoices = (apiInvoices: any[]): Invoice[] => {
         amount: inv.amount,
         vatAmount: inv.vatAmount,
         totalAmount: inv.totalAmount,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         status: inv.status as any,
     }))
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const mapSupplierInvoices = (apiInvoices: any[]): SupplierInvoice[] => {
     return apiInvoices.map(inv => ({
         id: inv.id,

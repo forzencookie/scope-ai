@@ -145,6 +145,7 @@ export const invoiceService = {
             totalAmount: Number(row.amount), // Assuming amount is total for now
             invoiceDate: row.created_at || new Date().toISOString(),
             dueDate: row.due_date,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             status: (row.status as any),
             currency: 'SEK'
         }))

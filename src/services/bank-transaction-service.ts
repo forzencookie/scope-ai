@@ -14,7 +14,6 @@
 import type { 
   NakedBankTransaction, 
   EnrichedTransaction, 
-  TransactionCategory,
   BankAccountType,
 } from '@/types/bank'
 

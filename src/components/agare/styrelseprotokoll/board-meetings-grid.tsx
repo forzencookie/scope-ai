@@ -1,4 +1,4 @@
-import { ChevronDown, Calendar, Users, MapPin, MoreHorizontal, Download, CheckCircle, Send, Sparkles } from "lucide-react"
+import { ChevronDown, Calendar, Users, MoreHorizontal, Download, CheckCircle, Send, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardHeader, CardContent } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -16,17 +16,8 @@ import {
 } from "@/components/ui/collapsible"
 import { cn, formatDateLong } from "@/lib/utils"
 import { AppStatusBadge } from "@/components/ui/status-badge"
+import { getBoardMeetingStatusLabel } from "@/lib/meeting-utils"
 import { type BoardMeeting } from "@/types/board-meeting"
-import { type MeetingStatus } from "@/lib/status-types"
-
-const getMeetingStatusLabel = (status: BoardMeeting['status']): MeetingStatus => {
-  const labels: Record<BoardMeeting['status'], MeetingStatus> = {
-    'planerad': 'Planerad',
-    'genomförd': 'Genomförd',
-    'protokoll signerat': 'Signerat',
-  }
-  return labels[status]
-}
 
 const getMeetingTypeLabel = (type: BoardMeeting['type']) => {
    switch (type) {
@@ -108,7 +99,7 @@ export function BoardMeetingsGrid({
                        </div>
 
                        <div className="flex items-center gap-2">
-                         <AppStatusBadge status={getMeetingStatusLabel(meeting.status)} />
+                         <AppStatusBadge status={getBoardMeetingStatusLabel(meeting.status)} />
                          <DropdownMenu>
                            <DropdownMenuTrigger asChild>
                              <Button variant="ghost" size="icon" className="h-8 w-8" onClick={(e) => e.stopPropagation()}>

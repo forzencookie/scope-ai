@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePartners } from '@/hooks/use-partners';
 import { useVerifications } from '@/hooks/use-verifications';
-import { PARTNER_ACCOUNTS, Partner } from '@/data/ownership';
+import { PARTNER_ACCOUNTS } from '@/data/ownership';
 import { useCompany } from '@/providers/company-provider';
 
 export function usePartnerManagement() {
@@ -34,7 +34,6 @@ export function usePartnerManagement() {
 
       return {
         ...p,
-        // @ts-ignore
         currentCapitalBalance: ledgerBalance !== 0 ? ledgerBalance : p.capitalContribution
       }
     })
@@ -52,6 +51,7 @@ export function usePartnerManagement() {
       const { data, error } = await supabase.rpc('get_partner_stats')
 
       if (!error && data) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const stats = data as any
         setRpcStats({
           partnerCount: Number(stats.partnerCount) || 0,
@@ -69,7 +69,6 @@ export function usePartnerManagement() {
     // But we have local enrichedPartners.
     // Let's mix:
     const calculatedTotalOwners = enrichedPartners.length
-    // @ts-ignore
     const calculatedTotalCapital = enrichedPartners.reduce((acc, p) => acc + (p.currentCapitalBalance || 0), 0)
     const calculatedActivePartners = enrichedPartners.filter(p => p.ownershipPercentage > 0).length
 

@@ -223,7 +223,6 @@ export interface BillingHistoryRowProps {
 
 export function BillingHistoryRow({
     date,
-    id,
     paymentMethod,
     cardLastFour,
     amount,

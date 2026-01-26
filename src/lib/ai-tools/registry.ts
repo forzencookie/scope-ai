@@ -184,6 +184,7 @@ class AIToolRegistry {
                 toolName: log.toolName,
                 parameters: log.params,
                 result: log.result,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 status: (log.result as any)?.success === false ? 'error' : 'success',
                 userId: log.userId,
             })

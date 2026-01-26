@@ -6,6 +6,9 @@ import { TooltipProvider } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/toast"
 import { SectionCard } from "@/components/ui/section-card"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
+import { useCompany } from "@/providers/company-provider"
+import { downloadSRUPackage } from "@/lib/generators/sru-generator"
+import type { SRUPackage, SRUDeclaration, SRUField } from "@/types/sru"
 
 // Logic
 import { useK10Calculation } from "./use-k10-calculation"
@@ -18,6 +21,7 @@ import { K10History } from "./components/K10History"
 export function K10Content() {
     const toast = useToast()
     const navigateToAI = useNavigateToAIChat()
+    const { company } = useCompany()
     
     // Logic Hook
     const { k10Data, taxYear } = useK10Calculation()
@@ -26,8 +30,46 @@ export function K10Content() {
         toast.info("Kommer snart", "Integration med Skatteverket är under utveckling.")
     }
 
-    const handleExport = () => {
-        toast.info("Exporterar SRU", "K10 laddas ner som SRU-fil för import till Skatteverket...")
+    const handleExport = async () => {
+        toast.info("Exporterar SRU", "Förbereder K10 SRU-filer...")
+        
+        try {
+            // Build K10 SRU fields based on calculated data
+            const fields: SRUField[] = [
+                { code: 100, value: k10Data.aktiekapital },              // Aktiekapital
+                { code: 200, value: k10Data.omkostnadsbelopp },          // Omkostnadsbelopp
+                { code: 300, value: k10Data.agarandel },                 // Ägarandel %
+                { code: 400, value: k10Data.schablonbelopp },            // Schablonbelopp
+                { code: 500, value: k10Data.lonebaseratUtrymme },        // Lönebaserat utrymme
+                { code: 600, value: k10Data.gransbelopp },               // Gränsbelopp
+                { code: 700, value: k10Data.totalDividends },            // Utdelning
+                { code: 800, value: k10Data.remainingUtrymme },          // Sparat utrymme
+            ]
+
+            const declaration: SRUDeclaration = {
+                blankettType: 'K10',
+                period: `${taxYear.year}P4`,
+                orgnr: company?.orgNumber || '556000-0000',
+                name: company?.name || 'Företag AB',
+                fields,
+            }
+
+            const pkg: SRUPackage = {
+                sender: {
+                    orgnr: company?.orgNumber || '556000-0000',
+                    name: company?.name || 'Företag AB',
+                    email: company?.email || '',
+                },
+                declarations: [declaration],
+                generatedAt: new Date(),
+                programName: 'Scope AI',
+            }
+
+            await downloadSRUPackage(pkg)
+            toast.success("Klart", "K10 SRU-filer har laddats ner.")
+        } catch {
+            toast.error("Fel", "Kunde inte skapa SRU-filer.")
+        }
     }
 
     return (
@@ -60,7 +102,7 @@ export function K10Content() {
                     />
 
                     {/* Stats Grid */}
-                    <K10Stats data={k10Data} deadline={taxYear.deadline} />
+                    <K10Stats data={k10Data} deadline={taxYear.deadlineLabel} />
 
                     {/* Section Separator */}
                     <div className="border-b-2 border-border/60" />

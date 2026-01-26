@@ -5,6 +5,7 @@ import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 
 const FinancialReportPreview = dynamic(() => import("../previews/documents/financial-report-preview").then(m => ({ default: m.FinancialReportPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function FinancialReportCard(props: any) {
     return (
         <FinancialReportPreview

@@ -76,6 +76,7 @@ export function NewWithdrawalDialog({ open, onOpenChange, partners, onSave }: Ne
                  key={t}
                  variant={newType === t ? "default" : "outline"}
                  className="w-full capitalize"
+                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                  onClick={() => setNewType(t as any)}
                >
                  {t}

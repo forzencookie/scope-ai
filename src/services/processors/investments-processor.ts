@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Investments Data Layer
  * 
@@ -22,6 +21,72 @@ import type {
 } from './ai-tool-types'
 
 // =============================================================================
+// Database Row Types
+// =============================================================================
+
+interface PropertyRow {
+    id: string
+    company_id: string
+    name: string
+    property_type: string
+    address?: string
+    purchase_date?: string
+    purchase_price?: number
+    land_value?: number
+    building_value?: number
+    depreciation_rate?: number
+    current_value?: number
+    bas_account?: string
+    notes?: string
+    created_at: string
+    updated_at: string
+}
+
+interface ShareHoldingRow {
+    id: string
+    company_id: string
+    company_name: string
+    org_number?: string
+    holding_type?: string
+    shares_count: number
+    purchase_date?: string
+    purchase_price?: number
+    current_value?: number
+    dividend_received?: number
+    bas_account?: string
+    notes?: string
+    created_at: string
+    updated_at: string
+}
+
+interface CryptoHoldingRow {
+    id: string
+    company_id: string
+    coin: string
+    amount: number
+    purchase_date?: string
+    purchase_price_sek?: number
+    current_price_sek?: number
+    bas_account?: string
+    notes?: string
+    created_at: string
+    updated_at: string
+}
+
+interface CryptoTransactionRow {
+    id: string
+    company_id: string
+    coin: string
+    transaction_type: 'buy' | 'sell'
+    amount: number
+    price_sek: number
+    total_sek: number
+    transaction_date: string
+    notes?: string
+    created_at: string
+}
+
+// =============================================================================
 // Shared Utilities
 // =============================================================================
 
@@ -33,14 +98,14 @@ const supabase = () => {
 }
 
 // Generic list function
-async function listFromTable<T>(
+async function listFromTable<TRow, TResult>(
     table: string,
-    mapper: (row: any) => T,
+    mapper: (row: TRow) => TResult,
     orderBy: string = 'created_at'
-): Promise<T[]> {
+): Promise<TResult[]> {
     try {
         const { data, error } = await supabase()
-            .from(table as any)
+            .from(table)
             .select('*')
             .order(orderBy, { ascending: false })
 
@@ -48,21 +113,21 @@ async function listFromTable<T>(
             console.error(`Error fetching ${table}:`, error)
             return []
         }
-        return (data || []).map(mapper)
+        return ((data || []) as TRow[]).map(mapper)
     } catch {
         return []
     }
 }
 
 // Generic create function
-async function createInTable<T>(
+async function createInTable<TRow, TResult>(
     table: string,
-    input: Record<string, any>,
-    mapper: (row: any) => T
-): Promise<T | null> {
+    input: Record<string, unknown>,
+    mapper: (row: TRow) => TResult
+): Promise<TResult | null> {
     try {
         const { data, error } = await supabase()
-            .from(table as any)
+            .from(table)
             .insert(input)
             .select()
             .single()
@@ -71,22 +136,22 @@ async function createInTable<T>(
             console.error(`Error creating in ${table}:`, error)
             return null
         }
-        return mapper(data)
+        return mapper(data as TRow)
     } catch {
         return null
     }
 }
 
 // Generic update function
-async function updateInTable<T>(
+async function updateInTable<TRow, TResult>(
     table: string,
     id: string,
-    updates: Record<string, any>,
-    mapper: (row: any) => T
-): Promise<T | null> {
+    updates: Record<string, unknown>,
+    mapper: (row: TRow) => TResult
+): Promise<TResult | null> {
     try {
         const { data, error } = await supabase()
-            .from(table as any)
+            .from(table)
             .update({ ...updates, updated_at: new Date().toISOString() })
             .eq('id', id)
             .select()
@@ -96,7 +161,7 @@ async function updateInTable<T>(
             console.error(`Error updating in ${table}:`, error)
             return null
         }
-        return mapper(data)
+        return mapper(data as TRow)
     } catch {
         return null
     }
@@ -106,7 +171,7 @@ async function updateInTable<T>(
 async function deleteFromTable(table: string, id: string): Promise<boolean> {
     try {
         const { error } = await supabase()
-            .from(table as any)
+            .from(table)
             .delete()
             .eq('id', id)
 
@@ -120,7 +185,7 @@ async function deleteFromTable(table: string, id: string): Promise<boolean> {
 // Properties (Fastigheter)
 // =============================================================================
 
-const mapProperty = (row: any): Property => ({
+const mapProperty = (row: PropertyRow): Property => ({
     id: row.id,
     companyId: row.company_id,
     name: row.name,
@@ -138,10 +203,10 @@ const mapProperty = (row: any): Property => ({
     updatedAt: new Date(row.updated_at),
 })
 
-export const listProperties = () => listFromTable('properties', mapProperty, 'name')
+export const listProperties = () => listFromTable<PropertyRow, Property>('properties', mapProperty, 'name')
 
 export const createProperty = (input: CreatePropertyInput) =>
-    createInTable('properties', {
+    createInTable<PropertyRow, Property>('properties', {
         name: input.name,
         property_type: input.propertyType,
         address: input.address,
@@ -155,7 +220,7 @@ export const createProperty = (input: CreatePropertyInput) =>
     }, mapProperty)
 
 export const updateProperty = (id: string, updates: Partial<CreatePropertyInput>) =>
-    updateInTable('properties', id, {
+    updateInTable<PropertyRow, Property>('properties', id, {
         ...(updates.name && { name: updates.name }),
         ...(updates.address && { address: updates.address }),
         ...(updates.depreciationRate && { depreciation_rate: updates.depreciationRate }),
@@ -190,12 +255,12 @@ export function calculatePropertyBookValue(property: Property): number {
 // Share Holdings (Aktieinnehav)
 // =============================================================================
 
-const mapShareHolding = (row: any): ShareHolding => ({
+const mapShareHolding = (row: ShareHoldingRow): ShareHolding => ({
     id: row.id,
     companyId: row.company_id,
     companyName: row.company_name,
     orgNumber: row.org_number,
-    holdingType: row.holding_type || 'other',
+    holdingType: (row.holding_type || 'other') as ShareHolding['holdingType'],
     sharesCount: row.shares_count,
     purchaseDate: row.purchase_date ? new Date(row.purchase_date) : undefined,
     purchasePrice: row.purchase_price ? Number(row.purchase_price) : undefined,
@@ -207,10 +272,10 @@ const mapShareHolding = (row: any): ShareHolding => ({
     updatedAt: new Date(row.updated_at),
 })
 
-export const listShareHoldings = () => listFromTable('share_holdings', mapShareHolding, 'company_name')
+export const listShareHoldings = () => listFromTable<ShareHoldingRow, ShareHolding>('share_holdings', mapShareHolding, 'company_name')
 
 export const createShareHolding = (input: CreateShareHoldingInput) =>
-    createInTable('share_holdings', {
+    createInTable<ShareHoldingRow, ShareHolding>('share_holdings', {
         company_name: input.companyName,
         org_number: input.orgNumber,
         holding_type: input.holdingType ?? 'other',
@@ -222,7 +287,7 @@ export const createShareHolding = (input: CreateShareHoldingInput) =>
     }, mapShareHolding)
 
 export const updateShareHolding = (id: string, updates: Partial<ShareHolding>) =>
-    updateInTable('share_holdings', id, {
+    updateInTable<ShareHoldingRow, ShareHolding>('share_holdings', id, {
         ...(updates.currentValue && { current_value: updates.currentValue }),
         ...(updates.dividendReceived && { dividend_received: updates.dividendReceived }),
         ...(updates.notes !== undefined && { notes: updates.notes }),
@@ -236,12 +301,13 @@ export const deleteShareHolding = (id: string) => deleteFromTable('share_holding
 export async function recordDividend(id: string, amount: number): Promise<ShareHolding | null> {
     try {
         const { data: existing } = await supabase()
-            .from('share_holdings' as any)
+            .from('share_holdings')
             .select('dividend_received')
             .eq('id', id)
             .single()
 
-        const newTotal = ((existing as any)?.dividend_received || 0) + amount
+        const row = existing as { dividend_received?: number } | null
+        const newTotal = (row?.dividend_received || 0) + amount
         return updateShareHolding(id, { dividendReceived: newTotal })
     } catch {
         return null
@@ -261,7 +327,7 @@ export function calculateUnrealizedGain(holding: ShareHolding): number {
 // Crypto Holdings
 // =============================================================================
 
-const mapCryptoHolding = (row: any): CryptoHolding => ({
+const mapCryptoHolding = (row: CryptoHoldingRow): CryptoHolding => ({
     id: row.id,
     companyId: row.company_id,
     coin: row.coin,
@@ -275,7 +341,7 @@ const mapCryptoHolding = (row: any): CryptoHolding => ({
     updatedAt: new Date(row.updated_at),
 })
 
-const mapCryptoTransaction = (row: any): CryptoTransaction => ({
+const mapCryptoTransaction = (row: CryptoTransactionRow): CryptoTransaction => ({
     id: row.id,
     companyId: row.company_id,
     coin: row.coin,
@@ -288,14 +354,14 @@ const mapCryptoTransaction = (row: any): CryptoTransaction => ({
     createdAt: new Date(row.created_at),
 })
 
-export const listCryptoHoldings = () => listFromTable('crypto_holdings', mapCryptoHolding, 'coin')
+export const listCryptoHoldings = () => listFromTable<CryptoHoldingRow, CryptoHolding>('crypto_holdings', mapCryptoHolding, 'coin')
 
 export const listCryptoTransactions = (coin?: string) => {
     if (coin) {
-        return listFromTable('crypto_transactions', mapCryptoTransaction, 'transaction_date')
+        return listFromTable<CryptoTransactionRow, CryptoTransaction>('crypto_transactions', mapCryptoTransaction, 'transaction_date')
             .then(txs => txs.filter(t => t.coin === coin))
     }
-    return listFromTable('crypto_transactions', mapCryptoTransaction, 'transaction_date')
+    return listFromTable<CryptoTransactionRow, CryptoTransaction>('crypto_transactions', mapCryptoTransaction, 'transaction_date')
 }
 
 export const createCryptoTransaction = (input: CreateCryptoTransactionInput) =>

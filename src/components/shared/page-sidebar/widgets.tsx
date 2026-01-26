@@ -225,3 +225,112 @@ export function DeadlineTimeline({
         </Card>
     )
 }
+
+// ============================================================================
+// Dynamic Tasks Widget - Shows actionable tasks from real data
+// ============================================================================
+
+import { useDynamicTasks, type DynamicGoal } from "@/hooks"
+import { CheckCircle2, Circle, ChevronRight } from "lucide-react"
+import Link from "next/link"
+
+interface DynamicTasksWidgetProps {
+    /** Which category to show, or all if not specified */
+    category?: 'bokforing' | 'rapporter' | 'loner' | 'agare'
+    /** Max goals to show */
+    maxGoals?: number
+    className?: string
+}
+
+export function DynamicTasksWidget({
+    category,
+    maxGoals = 3,
+    className
+}: DynamicTasksWidgetProps) {
+    const { goals, isLoading } = useDynamicTasks()
+
+    const filteredGoals = category 
+        ? goals.filter(g => g.category === category)
+        : goals
+
+    const displayGoals = filteredGoals.slice(0, maxGoals)
+
+    if (isLoading) {
+        return (
+            <Card className={cn("h-full", className)}>
+                <CardHeader className="pb-3">
+                    <CardTitle className="text-base">Uppgifter</CardTitle>
+                </CardHeader>
+                <CardContent className="pt-0">
+                    <p className="text-sm text-muted-foreground text-center py-4">Laddar...</p>
+                </CardContent>
+            </Card>
+        )
+    }
+
+    return (
+        <Card className={cn("h-full", className)}>
+            <CardHeader className="pb-3">
+                <CardTitle className="text-base">Att göra</CardTitle>
+                <CardDescription className="text-xs">
+                    Baserat på din bokföring
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="pt-0 space-y-4">
+                {displayGoals.map((goal) => (
+                    <GoalSection key={goal.id} goal={goal} />
+                ))}
+                {displayGoals.length === 0 && (
+                    <p className="text-sm text-muted-foreground text-center py-4">
+                        Inga uppgifter just nu! 🎉
+                    </p>
+                )}
+            </CardContent>
+        </Card>
+    )
+}
+
+function GoalSection({ goal }: { goal: DynamicGoal }) {
+    const completedCount = goal.tasks.filter(t => t.completed).length
+    const totalCount = goal.tasks.length
+    const allCompleted = completedCount === totalCount
+
+    return (
+        <div className="space-y-2">
+            <div className="flex items-center justify-between">
+                <h4 className="text-sm font-medium">{goal.name}</h4>
+                <span className={cn(
+                    "text-xs px-1.5 py-0.5 rounded",
+                    allCompleted 
+                        ? "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        : "bg-muted text-muted-foreground"
+                )}>
+                    {completedCount}/{totalCount}
+                </span>
+            </div>
+            <div className="space-y-1">
+                {goal.tasks.map((task) => (
+                    <Link
+                        key={task.id}
+                        href={task.href || '#'}
+                        className={cn(
+                            "flex items-center gap-2 p-2 rounded-md text-sm transition-colors",
+                            "hover:bg-muted/80",
+                            task.completed && "text-muted-foreground"
+                        )}
+                    >
+                        {task.completed ? (
+                            <CheckCircle2 className="h-4 w-4 text-green-500 shrink-0" />
+                        ) : (
+                            <Circle className="h-4 w-4 text-muted-foreground shrink-0" />
+                        )}
+                        <span className={cn("flex-1 truncate", task.completed && "line-through")}>
+                            {task.title}
+                        </span>
+                        <ChevronRight className="h-4 w-4 text-muted-foreground shrink-0" />
+                    </Link>
+                ))}
+            </div>
+        </div>
+    )
+}

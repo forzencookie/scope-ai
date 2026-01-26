@@ -24,7 +24,7 @@ Deno.serve(async (req) => {
     }
 
     // Parse request body
-    const { action, data } = await req.json()
+    const { action } = await req.json()
 
     // Your business logic here
     let result

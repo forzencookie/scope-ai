@@ -5,7 +5,7 @@ import { TransactionCard } from "./cards/TransactionCard"
 import { InvoiceCard } from "./cards/InvoiceCard"
 import { TaskChecklist } from "./cards/TaskChecklist"
 import { SummaryCard } from "./cards/SummaryCard"
-import { GenericListCard, SmartListCard } from "./cards/GenericListCard"
+import { SmartListCard } from "./cards/GenericListCard"
 
 // Preview Wrappers
 import { VATReportCard } from "./cards/VATReportCard"
@@ -22,6 +22,7 @@ import { EmployeeCard } from "./cards/EmployeeCard"
 import { VerificationCard } from "./cards/VerificationCard"
 
 // Type definition for the registry
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 type CardComponent = ComponentType<any>
 
 export const CARD_REGISTRY: Record<string, CardComponent> = {

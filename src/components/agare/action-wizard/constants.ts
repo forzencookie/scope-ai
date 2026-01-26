@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import type { CorporateActionType } from "@/types/events"
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const actionIcons: Record<CorporateActionType, any> = {
     board_change: Users,
     dividend: Coins,

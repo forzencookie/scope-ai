@@ -8,6 +8,7 @@ interface UseAiExtractionOptions<T> {
     /** API endpoint for extraction */
     apiEndpoint: string
     /** Transform API response to form state */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     transformResponse: (data: any) => Partial<T>
     /** Initial form state */
     initialState: T

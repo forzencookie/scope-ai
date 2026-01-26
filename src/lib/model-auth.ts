@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Server-Side Model Authorization
  * 
@@ -15,6 +14,13 @@ import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel
 // ============================================================================
 // Types
 // ============================================================================
+
+interface UsageRow {
+    tokens_used?: number
+    requests_count?: number
+    period_start?: string
+    period_end?: string
+}
 
 export interface ModelAuthResult {
     authorized: boolean
@@ -201,6 +207,7 @@ export async function getMonthlyUsage(userId: string): Promise<UsageStats | null
         periodStart.setDate(1)
         periodStart.setHours(0, 0, 0, 0)
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
             .from('ai_usage' as any)
             .select('tokens_used, requests_count, period_start, period_end')
@@ -212,7 +219,7 @@ export async function getMonthlyUsage(userId: string): Promise<UsageStats | null
         }
 
         // Aggregate across all models
-        const totals = data.reduce((acc, row: any) => ({
+        const totals = (data as UsageRow[]).reduce((acc, row) => ({
             tokensUsed: acc.tokensUsed + (row.tokens_used || 0),
             requestsCount: acc.requestsCount + (row.requests_count || 0),
         }), { tokensUsed: 0, requestsCount: 0 })
@@ -262,6 +269,7 @@ export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
         const supabase = getSupabaseAdmin()
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase.from('security_audit_log' as any).insert({
             user_id: event.userId,
             event_type: event.eventType,

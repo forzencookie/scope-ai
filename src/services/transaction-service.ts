@@ -51,6 +51,7 @@ export const transactionService = {
         }
 
         return {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             transactions: (data || []).map((row: any) => {
                 // Safe date parsing
                 const dateStr = row.date ? new Date(row.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]

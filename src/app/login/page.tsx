@@ -6,9 +6,9 @@ import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2, ArrowRight } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { AlertMessage } from '@/components/ui/alert-message'
-import Link from 'next/link'
+// import Link from 'next/link'
 import { ScopeAILogo } from '@/components/ui/icons/scope-ai-logo'
 
 // Google icon
@@ -24,16 +24,16 @@ function GoogleIcon({ className }: { className?: string }) {
 }
 
 // Microsoft icon
-function MicrosoftIcon({ className }: { className?: string }) {
-  return (
-    <svg className={className} viewBox="0 0 23 23">
-      <path fill="#f35325" d="M1 1h10v10H1z" />
-      <path fill="#81bc06" d="M12 1h10v10H12z" />
-      <path fill="#05a6f0" d="M1 12h10v10H1z" />
-      <path fill="#ffba08" d="M12 12h10v10H12z" />
-    </svg>
-  )
-}
+// function MicrosoftIcon({ className }: { className?: string }) {
+//   return (
+//     <svg className={className} viewBox="0 0 23 23">
+//       <path fill="#f35325" d="M1 1h10v10H1z" />
+//       <path fill="#81bc06" d="M12 1h10v10H12z" />
+//       <path fill="#05a6f0" d="M1 12h10v10H1z" />
+//       <path fill="#ffba08" d="M12 12h10v10H12z" />
+//     </svg>
+//   )
+// }
 
 function LoginFallback() {
   return (
@@ -79,7 +79,7 @@ function LoginContent() {
 
   useEffect(() => {
     if (oauthError && errorMessage) {
-      setError(decodeURIComponent(errorMessage))
+      setTimeout(() => setError(decodeURIComponent(errorMessage)), 0)
     }
   }, [oauthError, errorMessage])
 

@@ -93,7 +93,7 @@ export async function isAdmin(userId: string): Promise<boolean> {
     try {
         const supabase = await createServerSupabaseClient()
         const { data: profile } = await supabase
-            // @ts-ignore
+            // @ts-expect-error - Profiles table definition might be partial
             .from('profiles')
             .select('role')
             .eq('id', userId)

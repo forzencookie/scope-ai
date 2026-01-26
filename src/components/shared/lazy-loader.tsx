@@ -33,6 +33,7 @@ export function LoadingSpinner({ message = "Laddar..." }: LoadingSpinnerProps) {
  *     "Laddar transaktioner..."
  * )
  */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function createLazyComponent<T extends ComponentType<any>>(
     importFn: () => Promise<{ default: T }>,
     loadingMessage?: string

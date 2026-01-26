@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/static-components */
 "use client"
 
 import { useMemo } from "react"
@@ -66,7 +65,7 @@ export function BenefitDetailsDialog({
                             <Icon className="h-6 w-6 text-primary" />
                         </div>
                         <div className="space-y-1">
-                            <DialogTitle className="text-xl">{(benefit as any).title || benefit.name}</DialogTitle>
+                            <DialogTitle className="text-xl">{benefit.name}</DialogTitle>
                             <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                 <StatusBadge
                                     variant={benefit.taxFree ? 'success' : 'warning'}

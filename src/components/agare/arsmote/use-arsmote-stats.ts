@@ -31,7 +31,7 @@ export function useArsmoteStats() {
         try {
           const parsed = JSON.parse(doc.content)
           content = { ...content, ...parsed }
-        } catch (e) {
+        } catch {
           // Fallback
         }
 

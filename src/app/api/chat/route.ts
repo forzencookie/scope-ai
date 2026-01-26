@@ -8,9 +8,28 @@ import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateChatMessages, validateJsonBody } from '@/lib/validation'
 import { createUserScopedDb, type UserScopedDb } from '@/lib/database/user-scoped-db'
-import { getModelById, DEFAULT_MODEL_ID } from '@/lib/ai/models'
+import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import { authorizeModel, logUnauthorizedModelAccess, trackUsage } from '@/lib/model-auth'
+
+// Types for AI interactions
+type AIContentPart = { type: string; text?: string; [key: string]: unknown }
+type AIContent = string | AIContentPart[]
+type AIMessage = {
+    role: string
+    content: AIContent
+    tool_calls?: unknown[]
+    [key: string]: unknown
+}
+type AIToolDefinition = {
+    type?: string
+    function?: {
+        name: string
+        description?: string
+        parameters?: unknown
+    }
+    [key: string]: unknown
+}
 
 // Token limits for input validation
 const MAX_INPUT_TOKENS = 3500
@@ -143,9 +162,6 @@ import {
     aiToolRegistry,
     toolsToOpenAIFunctions,
     type AIToolResult,
-    type AIDisplayInstruction,
-    type AINavigationInstruction,
-    type AIConfirmationRequest,
 } from '@/lib/ai-tools'
 
 let toolsInitialized = false
@@ -163,7 +179,7 @@ function streamText(controller: ReadableStreamDefaultController, text: string) {
     controller.enqueue(textEncoder.encode(`T:${JSON.stringify(text)}\n`))
 }
 
-function streamData(controller: ReadableStreamDefaultController, data: any) {
+function streamData(controller: ReadableStreamDefaultController, data: unknown) {
     controller.enqueue(textEncoder.encode(`D:${JSON.stringify(data)}\n`))
 }
 
@@ -173,10 +189,10 @@ function streamData(controller: ReadableStreamDefaultController, data: any) {
 
 async function handleGoogleProvider(
     modelId: string,
-    messagesForAI: any[],
+    messagesForAI: AIMessage[],
     controller: ReadableStreamDefaultController,
     conversationId: string | null,
-    tools: any[],
+    tools: AIToolDefinition[],
     userDb: UserScopedDb | null,
     confirmationId: string | undefined,
     userId: string
@@ -197,20 +213,22 @@ async function handleGoogleProvider(
     // Convert messages to Google format
     const history = messagesForAI.slice(0, -1).map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: typeof m.content === 'string' ? m.content : m.content.map((c: any) => c.text || '').join('\n') }]
+        parts: [{ text: typeof m.content === 'string' ? m.content : (m.content as AIContentPart[]).map((c) => c.text || '').join('\n') }]
     }))
 
     const lastMessage = messagesForAI[messagesForAI.length - 1]
     const lastContent = typeof lastMessage.content === 'string'
         ? lastMessage.content
-        : lastMessage.content.map((c: any) => c.text || '').join('\n')
+        : (lastMessage.content as AIContentPart[]).map((c) => c.text || '').join('\n')
 
     const { toolsToGoogleFunctions } = await import('@/lib/ai-tools')
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const googleTools = toolsToGoogleFunctions(tools as any[])
 
     const chat = model.startChat({
         history,
         systemInstruction: SYSTEM_PROMPT,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         tools: googleTools.length > 0 ? [{ functionDeclarations: googleTools }] as any : undefined,
     })
 
@@ -222,7 +240,7 @@ async function handleGoogleProvider(
         try {
             const result = await chat.sendMessageStream(currentMessage)
             let gotFunctionCall = false
-            const functionCalls: any[] = []
+            const functionCalls: unknown[] = []
 
             for await (const chunk of result.stream) {
                 // Check for text
@@ -246,9 +264,11 @@ async function handleGoogleProvider(
             }
 
             // Execute tools
-            const functionResponses = []
-            for (const call of functionCalls) {
-                const tool = tools.find(t => t.name === call.name)
+            const functionResponses: { functionResponse: { name: string; response: Record<string, unknown> } }[] = []
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            for (const call of functionCalls as any[]) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const tool = tools.find((t: any) => t.name === call.name)
                 if (tool) {
                     // Execute
                     // streamData(controller, { toolCall: { name: call.name } }) // Optional: notify frontend
@@ -271,11 +291,11 @@ async function handleGoogleProvider(
                                 response: resultToGoogleResponse(toolResult)
                             }
                         })
-                    } catch (err: any) {
+                    } catch (err: unknown) {
                         functionResponses.push({
                             functionResponse: {
                                 name: call.name,
-                                response: { name: call.name, content: { error: err.message } }
+                                response: { name: call.name, content: { error: (err as Error).message } }
                             }
                         })
                     }
@@ -292,9 +312,10 @@ async function handleGoogleProvider(
             // Send responses back to model
             // Google SDK: sendMessage(functionResponses) usually works for single turn, but for stream?
             // Actually usually you send the responses as the next message
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             currentMessage = functionResponses as any
 
-        } catch (error: any) {
+        } catch (error: unknown) {
             console.error('Google AI error:', error)
             const errorMsg = '\n\nEtt fel uppstod vid generering.'
             fullContent += errorMsg
@@ -304,6 +325,7 @@ async function handleGoogleProvider(
     }
 
     // Helper to format tool result for Google
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     function resultToGoogleResponse(result: any) {
         // Must return object expected by Google
         // usually { name: string, content: object }
@@ -331,12 +353,12 @@ async function handleGoogleProvider(
 
 async function handleAnthropicProvider(
     modelId: string,
-    messagesForAI: any[],
+    messagesForAI: AIMessage[],
     controller: ReadableStreamDefaultController,
     conversationId: string | null,
-    tools: any[],
+    tools: AIToolDefinition[],
     userDb: UserScopedDb | null,
-    confirmationId?: string
+    _confirmationId?: string
 ) {
     const Anthropic = (await import('@anthropic-ai/sdk')).default
     const anthropic = new Anthropic({
@@ -354,11 +376,12 @@ async function handleAnthropicProvider(
     // Convert messages to Anthropic format
     const anthropicMessages = messagesForAI.map(m => ({
         role: m.role as 'user' | 'assistant',
-        content: typeof m.content === 'string' ? m.content : m.content.map((c: any) => {
+        content: typeof m.content === 'string' ? m.content : (m.content as AIContentPart[]).map((c) => {
             if (c.type === 'text') return { type: 'text' as const, text: c.text }
-            if (c.type === 'image_url') {
+            if (c.type === 'image_url' && c.image_url && typeof c.image_url === 'object' && 'url' in c.image_url) {
                 // Extract base64 data from data URL
-                const match = c.image_url.url.match(/^data:([^;]+);base64,(.+)$/)
+                const url = (c.image_url as { url: string }).url
+                const match = url.match(/^data:([^;]+);base64,(.+)$/)
                 if (match) {
                     return {
                         type: 'image' as const,
@@ -393,7 +416,7 @@ async function handleAnthropicProvider(
                 }
             }
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Anthropic API error:', error)
         const errorMsg = '\n\nEtt fel uppstod vid generering.'
         fullContent += errorMsg
@@ -419,12 +442,12 @@ async function handleAnthropicProvider(
 
 async function handleOpenAIProvider(
     modelId: string,
-    messagesForAI: any[],
+    messagesForAI: AIMessage[],
     controller: ReadableStreamDefaultController,
     conversationId: string | null,
-    tools: any[],
+    tools: AIToolDefinition[],
     userDb: UserScopedDb | null,
-    confirmationId?: string
+    _confirmationId?: string
 ) {
     const OpenAI = (await import('openai')).default
     const openai = new OpenAI({
@@ -448,7 +471,7 @@ async function handleOpenAIProvider(
             content: typeof m.content === 'string'
                 ? m.content
                 : Array.isArray(m.content)
-                    ? m.content.map((c: any) => {
+                    ? (m.content as AIContentPart[]).map((c) => {
                         if (c.type === 'text') return { type: 'text' as const, text: c.text || '' }
                         if (c.type === 'image_url' && c.image_url?.url) {
                             return {
@@ -496,13 +519,14 @@ async function handleOpenAIProvider(
     }
 
     try {
-        const stream = await openai.chat.completions.create({
-            model: actualModel,
-            messages: openaiMessages as any,
-            stream: true,
-            tools: openaiTools,
-            tool_choice: openaiTools ? 'auto' : undefined,
-        })
+            const stream = await openai.chat.completions.create({
+                model: actualModel,
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                messages: openaiMessages as any,
+                stream: true,
+                tools: openaiTools,
+                tool_choice: openaiTools ? 'auto' : undefined,
+            })
 
         // Accumulate tool calls across chunks (OpenAI streams them incrementally)
         const toolCallsInProgress: Map<number, { id: string; name: string; arguments: string }> = new Map()
@@ -569,12 +593,15 @@ async function handleOpenAIProvider(
                 toolCallsInProgress.clear()
             }
         }
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('OpenAI API error:', error)
         // Extract meaningful error message from OpenAI error
-        let errorDetail = error.message || 'Ett fel uppstod vid generering.'
-        if (error.error?.message) {
-            errorDetail = error.error.message
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        let errorDetail = (error as any).message || 'Ett fel uppstod vid generering.'
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        if ((error as any).error?.message) {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            errorDetail = (error as any).error.message
         }
         // Check for common image-related errors
         if (errorDetail.includes('image') || errorDetail.includes('content_policy')) {
@@ -634,6 +661,7 @@ export async function POST(request: NextRequest) {
         const bodyValidation = validateJsonBody(body)
         if (!bodyValidation.valid) return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400 })
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { messages, confirmationId, conversationId: reqConversationId, attachments, mentions, model: requestedModel } = body as any
         const messageValidation = validateChatMessages(messages)
         if (!messageValidation.valid || !messageValidation.data) return new Response(JSON.stringify({ error: messageValidation.error }), { status: 400 })
@@ -691,7 +719,7 @@ export async function POST(request: NextRequest) {
         console.log('[Chat] Building messages. Attachments:', attachments?.length || 0)
         const messagesForAI = messageValidation.data!.map((m, index) => {
             if (m.role === 'user' && index === messageValidation.data!.length - 1 && ((attachments && attachments.length > 0) || (mentions && mentions.length > 0))) {
-                const content: any[] = [{ type: 'text', text: m.content || ' ' }]
+                const content: AIContentPart[] = [{ type: 'text', text: m.content || ' ' }]
 
                 if (attachments) {
                     for (const attachment of attachments) {
@@ -710,7 +738,7 @@ export async function POST(request: NextRequest) {
                 }
 
                 if (mentions && mentions.length > 0) {
-                    const mentionsText = mentions.map((m: any) => m.type === 'page' ? `Active Page: ${m.label} (${m.pageType})` : `Mention: ${m.label}`).join('\n')
+                    const mentionsText = (mentions as Array<{ type: string; label: string; pageType?: string; [key: string]: unknown }>).map((m) => m.type === 'page' ? `Active Page: ${m.label} (${m.pageType})` : `Mention: ${m.label}`).join('\n')
                     content.push({ type: 'text', text: `\n\n[Context]\n${mentionsText}` })
                 }
                 return { role: m.role, content }
@@ -738,14 +766,19 @@ export async function POST(request: NextRequest) {
             // 2. Roadmaps
             if (activeRoadmaps && activeRoadmaps.length > 0) {
                 contextBlock += `\n**Active Logical Plans (Roadmaps):**\n`;
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 activeRoadmaps.forEach((r: any) => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const steps = r.steps?.sort((a: any, b: any) => a.order_index - b.order_index);
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const pendingSteps = steps?.filter((s: any) => s.status !== 'completed').slice(0, 3); // Showing next 3 pending steps
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     const completedCount = steps?.filter((s: any) => s.status === 'completed').length || 0;
 
                     contextBlock += `- Plan: "${r.title}" (${completedCount}/${steps?.length || 0} done)\n`;
                     if (pendingSteps && pendingSteps.length > 0) {
                         contextBlock += `  Next steps:\n`;
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         pendingSteps.forEach((s: any) => {
                             contextBlock += `  * [ ] ${s.title}\n`;
                         });
@@ -799,7 +832,7 @@ export async function POST(request: NextRequest) {
                     // Track usage after successful response
                     // Note: For more accurate tracking, pass token count from provider response
                     await trackUsage(userId, modelId, provider, 0)
-                } catch (error: any) {
+                } catch (error: unknown) {
                     console.error('Provider error:', error)
                     console.error('Provider error stack:', error.stack)
                     const errorDetail = error.message || error.error?.message || 'Okänt fel'

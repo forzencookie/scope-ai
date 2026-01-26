@@ -78,7 +78,6 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = React.useState("Konto")
   const [isExpanded, setIsExpanded] = React.useState(false)
-  const [integrations, setIntegrations] = React.useState<Record<string, boolean>>({})
   const { company, updateCompany } = useCompany()
   const { addToast } = useToast()
 
@@ -128,41 +127,6 @@ export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialo
       title: "Inställningar sparade",
       description: "Dina ändringar har sparats.",
     })
-  }
-
-  // Fetch integration states on mount
-  React.useEffect(() => {
-    const fetchIntegrations = async () => {
-      try {
-        const response = await fetch('/api/integrations')
-        const data = await response.json()
-        if (data.integrations) {
-          setIntegrations(data.integrations)
-        }
-      } catch (error) {
-        console.error('Failed to fetch integrations:', error)
-      }
-    }
-    if (open) {
-      fetchIntegrations()
-    }
-  }, [open])
-
-  const toggleIntegration = async (id: string) => {
-    const newState = !integrations[id]
-    try {
-      const response = await fetch('/api/integrations', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, connected: newState }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        setIntegrations(prev => ({ ...prev, [id]: newState }))
-      }
-    } catch (error) {
-      console.error('Failed to toggle integration:', error)
-    }
   }
 
   // Render the active tab content

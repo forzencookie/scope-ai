@@ -1,4 +1,5 @@
-import { useAsync, useAsyncMutation } from "./use-async"
+import { useAsyncMutation } from "./use-async"
+import { useCachedQuery } from "./use-cached-query"
 import { type Partner } from "@/data/ownership"
 
 export function usePartners() {
@@ -17,19 +18,22 @@ export function usePartners() {
         data: partners,
         isLoading,
         error,
-        refetch
-    } = useAsync(async () => {
-         // Fallback to empty array if endpoint 404s during transition
-         try {
-            const res = await fetch('/api/partners'); 
-            if (!res.ok) return [];
-            const json = await res.json();
-            return json.partners as Partner[];
-         } catch {
-             console.warn("Partners API missing, return empty");
-             return [];
-         }
-    }, [] as Partner[], []);
+        invalidate: refetch
+    } = useCachedQuery({
+        cacheKey: 'partners-list',
+        queryFn: async () => {
+            try {
+                const res = await fetch('/api/partners'); 
+                if (!res.ok) return [];
+                const json = await res.json();
+                return json.partners as Partner[];
+            } catch {
+                console.warn("Partners API missing, return empty");
+                return [];
+            }
+        },
+        ttlMs: 2 * 60 * 1000, // 2 minute cache
+    });
 
     const addPartner = useAsyncMutation(async (data: Partial<Partner>) => {
         const res = await fetch('/api/partners', {
@@ -40,5 +44,5 @@ export function usePartners() {
         return await res.json();
     });
 
-    return { partners, isLoading, error, refetch, addPartner: addPartner.execute };
+    return { partners: partners ?? [], isLoading, error, refetch, addPartner: addPartner.execute };
 }

@@ -1,19 +1,13 @@
 "use client"
 
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import {
-    LayoutDashboard,
-    ArrowLeftRight,
-    TrendingDown,
-} from "lucide-react"
 
 // Import extracted tab components
 import { EkonomiskOversikt } from "@/components/foretagsstatistik/oversikt"
 import { Transaktionsrapport } from "@/components/foretagsstatistik/transaktionsrapport"
 import { Kostnadsanalys } from "@/components/foretagsstatistik/kostnadsanalys"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useCallback, useMemo } from "react"
+import { useCallback } from "react"
 import {
     Tooltip,
     TooltipContent,

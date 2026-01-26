@@ -8,6 +8,16 @@ export { useIsMobile } from "./use-mobile"
 // Generic async hooks
 export { useAsync, useAsyncMutation } from "./use-async"
 
+// Cached query hook (reduces API calls with TTL-based caching)
+export { useCachedQuery } from "./use-cached-query"
+
+// Dynamic tasks hook (generates actionable tasks from real data)
+export { useDynamicTasks } from "./use-dynamic-tasks"
+export type { DynamicTask, DynamicGoal } from "./use-dynamic-tasks"
+
+// Highlight hook (for highlighting AI-created content)
+export { useHighlight, useHighlightState } from "./use-highlight"
+
 // Table hooks (consolidated)
 export {
     useTableFilter,

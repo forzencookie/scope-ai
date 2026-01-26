@@ -29,6 +29,7 @@ export async function POST(request: NextRequest) {
 
     try {
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (err: any) {
         console.error('[Stripe Webhook] Signature verification failed:', err.message)
         return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })

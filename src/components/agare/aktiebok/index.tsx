@@ -8,6 +8,7 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
+import { PageHeader } from "@/components/shared"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -50,41 +51,35 @@ export function Aktiebok() {
 
     return (
         <div className="space-y-4 md:space-y-6">
-            <div className="flex flex-col gap-4 md:gap-6">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                    <div className="min-w-0">
-                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">Aktiebok</h2>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
-                            Digital aktiebok med historik över ägarförändringar och transaktioner.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <Button size="sm">
-                                    <Plus className="h-4 w-4 sm:mr-2" />
-                                    <span className="hidden sm:inline">Åtgärder</span>
-                                </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Nyemission
-                                </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
-                                    <ArrowRightLeft className="h-4 w-4 mr-2" />
-                                    Registrera överlåtelse
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem>
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Exportera aktiebok
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Aktiebok"
+                subtitle="Digital aktiebok med historik över ägarförändringar och transaktioner."
+                actions={
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <Button size="sm">
+                                <Plus className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Åtgärder</span>
+                            </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Nyemission
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
+                                <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                Registrera överlåtelse
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem>
+                                <Download className="h-4 w-4 mr-2" />
+                                Exportera aktiebok
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                }
+            />
 
             <AktiebokStats stats={stats} shareholders={shareholders} />
 

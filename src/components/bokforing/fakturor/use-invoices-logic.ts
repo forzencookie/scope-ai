@@ -44,7 +44,6 @@ export function useInvoicesLogic() {
         customerInvoices: apiCustomerInvoices,
         supplierInvoices: apiSupplierInvoices,
         isLoading,
-        error: fetchError,
         page,
         setPage,
         pageSize,

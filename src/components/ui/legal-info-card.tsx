@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { FileText, Scale, AlertTriangle, Info, LucideIcon } from "lucide-react"
+import { FileText, Scale, Info, LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import {
   Card,

@@ -4,6 +4,7 @@ import { Plus, Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { PageHeader } from "@/components/shared"
 import {
     Dialog,
     DialogContent,
@@ -27,7 +28,6 @@ export function InventarierTable() {
         isDialogOpen, setIsDialogOpen,
         newAsset, setNewAsset,
         isLoading,
-        text,
 
         // Data
         inventarier,
@@ -42,26 +42,23 @@ export function InventarierTable() {
     return (
         <div className="space-y-4 md:space-y-6">
             {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-2">
-                <div className="space-y-1">
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Tillgångar</h2>
-                    <p className="text-muted-foreground">
-                        Datorer, möbler och andra saker du äger.
-                    </p>
-                </div>
-                <div className="flex flex-col sm:flex-row gap-2">
-                    <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={handleDepreciate}>
-                        <Calculator className="h-4 w-4" />
-                        <span className="sm:inline">Bokför avskrivning</span>
-                    </Button>
-                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-                        <DialogTrigger asChild>
-                            <Button className="gap-2 w-full sm:w-auto">
-                                <Plus className="h-4 w-4" />
-                                <span className="sm:inline">Ny tillgång</span>
-                            </Button>
-                        </DialogTrigger>
-                        <DialogContent>
+            <PageHeader
+                title="Tillgångar"
+                subtitle="Datorer, möbler och andra saker du äger."
+                actions={
+                    <div className="flex flex-col sm:flex-row gap-2">
+                        <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={handleDepreciate}>
+                            <Calculator className="h-4 w-4" />
+                            <span className="sm:inline">Bokför avskrivning</span>
+                        </Button>
+                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                            <DialogTrigger asChild>
+                                <Button className="gap-2 w-full sm:w-auto">
+                                    <Plus className="h-4 w-4" />
+                                    <span className="sm:inline">Ny tillgång</span>
+                                </Button>
+                            </DialogTrigger>
+                            <DialogContent>
                             <DialogHeader>
                                 <DialogTitle>Lägg till inventarie</DialogTitle>
                                 <DialogDescription>
@@ -109,8 +106,9 @@ export function InventarierTable() {
                             </DialogFooter>
                         </DialogContent>
                     </Dialog>
-                </div>
-            </div>
+                    </div>
+                }
+            />
 
             {/* Stats Cards */}
             <InventarierStats stats={stats} />

@@ -13,6 +13,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+import { PageHeader } from '@/components/shared';
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -38,11 +39,14 @@ export function Firmatecknare() {
         return documents
             .filter(d => d.type === 'board_meeting_minutes')
             .map(d => {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 let content: any = {};
                 try {
                     const parsed = JSON.parse(d.content);
                     if (parsed && typeof parsed === 'object') content = parsed;
-                } catch(e) {}
+                } catch {
+                    // ignore
+                }
                 
                 return {
                     id: d.id,
@@ -79,9 +83,13 @@ export function Firmatecknare() {
         // cast to any to satisfy the shared logic types which might expect legacy mock structures
         // In a full refactor, firmatecknare-logic.ts types should be updated to match API types perfectly.
         return deriveSignatories(companyType, {
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             shareholders: shareholders as any[],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             partners: partners as any[],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             boardMeetings: boardMeetings as any[],
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             ownerInfo: ownerInfo as any
         });
     }, [companyType, shareholders, partners, boardMeetings, ownerInfo]);
@@ -93,17 +101,16 @@ export function Firmatecknare() {
     return (
         <div className="space-y-6">
             {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <p className="text-sm text-muted-foreground">
-                        Firmatecknare baserat på {company?.name || 'företagets'} ägarstruktur och styrelse.
-                    </p>
-                </div>
-                <Button size="sm" className="gap-1.5">
-                    <Plus className="h-4 w-4" />
-                    Lägg till
-                </Button>
-            </div>
+            <PageHeader
+                title="Firmatecknare"
+                subtitle={`Firmatecknare baserat på ${company?.name || 'företagets'} ägarstruktur och styrelse.`}
+                actions={
+                    <Button size="sm" className="gap-1.5">
+                        <Plus className="h-4 w-4" />
+                        Lägg till
+                    </Button>
+                }
+            />
 
             {/* Ensam firmateckning */}
             <Card>

@@ -1,5 +1,29 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { getSupabaseClient } from '@/lib/database/supabase'
+import type { PostgrestError } from '@supabase/supabase-js'
+
+interface VatDeclarationData {
+    periodType?: string
+    startDate?: string
+    endDate?: string
+    dueDate?: string
+    outputVat?: number
+    inputVat?: number
+    netVat?: number
+    submittedAt?: string
+}
+
+interface VatDeclarationRow {
+    id: string
+    period: string | null
+    status: string | null
+    data: VatDeclarationData | null
+}
+
+interface VatStatsRpcResult {
+    salesVat?: number
+    inputVat?: number
+    netVat?: number
+}
 
 export type VATDeclaration = {
     id: string
@@ -46,13 +70,13 @@ export const vatService = {
         }
 
         return (data || [])
-            .filter((d: any) => !year || d.period?.includes(year.toString()))
-            .map((d: any) => {
-                const details = d.data as any || {}
+            .filter((d: VatDeclarationRow) => !year || d.period?.includes(year.toString()))
+            .map((d: VatDeclarationRow) => {
+                const details = d.data || {}
                 return {
                     id: d.id,
                     period: d.period || '',
-                    periodType: details.periodType || 'monthly',
+                    periodType: (details.periodType || 'monthly') as 'monthly' | 'quarterly' | 'yearly',
                     year: year || new Date().getFullYear(), // Approximate
                     startDate: details.startDate || '',
                     endDate: details.endDate || '',
@@ -60,7 +84,7 @@ export const vatService = {
                     outputVat: Number(details.outputVat) || 0,
                     inputVat: Number(details.inputVat) || 0,
                     netVat: Number(details.netVat) || 0,
-                    status: (d.status as any) || 'upcoming',
+                    status: (d.status || 'upcoming') as 'upcoming' | 'pending' | 'submitted',
                     submittedAt: details.submittedAt,
                 }
             })
@@ -94,9 +118,10 @@ export const vatService = {
             }
         }
 
-        const details = (data.data as any) || {}
+        const row = data as VatDeclarationRow
+        const details = row.data || {}
         return {
-            currentPeriod: data.period || '',
+            currentPeriod: row.period || '',
             dueDate: details.dueDate || '',
             outputVat: Number(details.outputVat) || 0,
             inputVat: Number(details.inputVat) || 0,
@@ -113,7 +138,7 @@ export const vatService = {
         const year = parseInt(startDate.substring(0, 4)) || new Date().getFullYear()
         const { data, error } = await supabase.rpc('get_vat_stats', {
             p_year: year
-        }) as { data: any; error: any }
+        }) as { data: VatStatsRpcResult | null; error: PostgrestError | null }
 
         if (error) {
             console.error('Failed to calculate VAT:', error)

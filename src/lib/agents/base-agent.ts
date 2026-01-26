@@ -52,7 +52,7 @@ export abstract class BaseAgent implements Agent {
      * Default implementation checks intent category and capabilities.
      * Override for custom logic.
      */
-    async canHandle(intent: Intent, context: AgentContext): Promise<number> {
+    async canHandle(intent: Intent, _context: AgentContext): Promise<number> {
         // Map intent categories to domains
         const intentToDomain: Record<string, AgentDomain[]> = {
             'RECEIPT': ['receipts'],

@@ -1,19 +1,14 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useMemo } from "react"
 import {
     Calendar,
     TrendingUp,
     Clock,
-    Bot,
     Send,
     FileDown,
-    ChevronDown,
-    ChevronRight,
 } from "lucide-react"
 import { useToast } from "@/components/ui/toast"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import { FilterButton } from "@/components/ui/filter-button"
 import {
@@ -23,21 +18,18 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
     DropdownMenuLabel,
-    DropdownMenuCheckboxItem,
 } from "@/components/ui/dropdown-menu"
 import {
     CollapsibleTableContainer,
     CollapsibleTableHeader,
-    CollapsibleTableSection,
-    type CollapsibleTableItem
+    CollapsibleTableSection
 } from "@/components/ui/collapsible-table"
 import { useVerifications } from "@/hooks/use-verifications"
+import { useTaxPeriod } from "@/hooks/use-tax-period"
 import { Ink2Processor, type Ink2FormField } from "@/services/processors/inkomstdeklaration-processor"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
-import { cn, formatNumber } from "@/lib/utils"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
-
-import { SectionCard } from "@/components/ui/section-card"
+import { formatNumber } from "@/lib/utils"
+import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { SRUPreviewDialog } from "./dialogs/sru"
 import { useCompany } from "@/providers/company-provider"
 
@@ -48,25 +40,18 @@ import { useCompany } from "@/providers/company-provider"
 
 
 export function InkomstdeklarationContent() {
-    const router = useRouter()
-    const navigateToAI = useNavigateToAIChat()
+    // const router = useRouter()
     const { addToast: toast } = useToast()
     const { verifications } = useVerifications()
     const { company } = useCompany()
     const [showSRUPreview, setShowSRUPreview] = useState(false)
     const [activeFilter, setActiveFilter] = useState<"all" | "incomeStatement" | "balanceSheet" | "taxAdjustments">("all")
 
-    // Get dynamic beskattningsår from helper
-    const [taxYear, setTaxYear] = useState({ year: 2024, deadlineLabel: '1 jul 2025' })
-    useEffect(() => {
-        const loadTaxYear = async () => {
-            const { getCurrentBeskattningsar } = await import('@/lib/tax-periods')
-            const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
-            const result = getCurrentBeskattningsar(fiscalYearEnd)
-            setTaxYear({ year: result.year, deadlineLabel: result.deadlineLabel })
-        }
-        loadTaxYear()
-    }, [company?.fiscalYearEnd])
+    // Get dynamic beskattningsår using shared hook
+    const { taxYear } = useTaxPeriod({ 
+        fiscalYearEnd: company?.fiscalYearEnd || '12-31',
+        type: 'income' 
+    })
 
     // Calculate all fields from ledger
     const calculatedData = useMemo(() => {
@@ -176,193 +161,166 @@ export function InkomstdeklarationContent() {
         })
     }
 
+    const taxReportStats: TaxReportStat[] = [
+        {
+            label: "Beskattningsår",
+            value: stats.year,
+            subtitle: "Inkomstdeklaration 2",
+            icon: Calendar,
+        },
+        {
+            label: "Bokfört resultat",
+            value: `${formatNumber(stats.result)} kr`,
+            subtitle: "Före skattemässiga justeringar",
+            icon: TrendingUp,
+        },
+        {
+            label: "Status",
+            value: INVOICE_STATUS_LABELS.DRAFT,
+            subtitle: `Deadline: ${stats.deadline}`,
+            icon: Clock,
+        },
+    ]
+
     return (
-
-        <main className="flex-1 flex flex-col p-4 md:p-6">
-            <div className="max-w-6xl w-full space-y-4 md:space-y-6">
-                {/* Page Heading */}
-                {/* Page Heading */}
-                <div className="flex flex-col gap-4 md:gap-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                        <div className="min-w-0">
-                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Inkomstdeklaration</h2>
-                            <p className="text-xs sm:text-sm text-muted-foreground mt-1">Sammanställ INK2-deklaration baserat på bokföringen.</p>
-                        </div>
-                        <div className="flex items-center gap-2 shrink-0">
-                            <Button size="sm" onClick={handleSend} className="w-full sm:w-auto">
-                                <Send className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Skicka till Skatteverket</span>
-                                <span className="sm:hidden">Skicka</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-                <StatCardGrid columns={3}>
-                    <StatCard
-                        label="Beskattningsår"
-                        value={stats.year}
-                        subtitle="Inkomstdeklaration 2"
-                        headerIcon={Calendar}
-                    />
-                    <StatCard
-                        label="Bokfört resultat"
-                        value={`${formatNumber(stats.result)} kr`}
-                        subtitle="Före skattemässiga justeringar"
-                        headerIcon={TrendingUp}
-                    />
-                    <StatCard
-                        label="Status"
-                        value={INVOICE_STATUS_LABELS.DRAFT}
-                        subtitle={`Deadline: ${stats.deadline}`}
-                        headerIcon={Clock}
-                    />
-                </StatCardGrid>
-
-                {/* Section Separator */}
-                <div className="border-b-2 border-border/60" />
-
-                <SectionCard
-                    icon={Bot}
-                    title="AI-inkomstdeklaration"
-                    description="INK2-fälten genereras automatiskt från bokföringen."
-                    variant="ai"
-                    onAction={() => navigateToAI(getDefaultAIContext('inkomstdeklaration'))}
-                />
-
+        <TaxReportLayout
+            title="Inkomstdeklaration"
+            subtitle="Sammanställ INK2-deklaration baserat på bokföringen."
+            stats={taxReportStats}
+            aiContext="inkomstdeklaration"
+            aiTitle="AI-inkomstdeklaration"
+            aiDescription="INK2-fälten genereras automatiskt från bokföringen."
+            actions={
+                <Button size="sm" onClick={handleSend} className="w-full sm:w-auto">
+                    <Send className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Skicka till Skatteverket</span>
+                    <span className="sm:hidden">Skicka</span>
+                </Button>
+            }
+            dialogs={
                 <SRUPreviewDialog
                     open={showSRUPreview}
                     onOpenChange={setShowSRUPreview}
                 />
-
-
-                {/* Thick separator below AI card */}
-                <div className="border-b-2 border-border/60" />
-
+            }
+        >
+            <CollapsibleTableContainer>
                 {/* Form Header with Actions */}
-
-                <CollapsibleTableContainer>
-                    {/* Form Header with Actions */}
-                    <CollapsibleTableHeader
-                        title={
-                            activeFilter === "all" ? "INK2 – Komplett" :
-                                activeFilter === "incomeStatement" ? "INK2 – Resultaträkning" :
-                                    activeFilter === "balanceSheet" ? "INK2R – Balansräkning" :
-                                        "INK2S – Skattemässiga justeringar"
-                        }
+                <CollapsibleTableHeader
+                    title={
+                        activeFilter === "all" ? "INK2 – Komplett" :
+                            activeFilter === "incomeStatement" ? "INK2 – Resultaträkning" :
+                                activeFilter === "balanceSheet" ? "INK2R – Balansräkning" :
+                                    "INK2S – Skattemässiga justeringar"
+                    }
+                >
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <FilterButton
+                                label={activeFilter === "all" ? "Visa alla" : "Filtrerad"}
+                                isActive={activeFilter !== "all"}
+                            />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-64">
+                            <DropdownMenuLabel>Visa sektion</DropdownMenuLabel>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => setActiveFilter("all")}
+                                className={activeFilter === "all" ? "bg-accent" : ""}
+                            >
+                                Visa alla (komplett INK2)
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem
+                                onClick={() => setActiveFilter("incomeStatement")}
+                                className={activeFilter === "incomeStatement" ? "bg-accent" : ""}
+                            >
+                                Resultaträkning (3.x)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => setActiveFilter("balanceSheet")}
+                                className={activeFilter === "balanceSheet" ? "bg-accent" : ""}
+                            >
+                                Balansräkning (2.x)
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                                onClick={() => setActiveFilter("taxAdjustments")}
+                                className={activeFilter === "taxAdjustments" ? "bg-accent" : ""}
+                            >
+                                Skattemässiga justeringar (4.x)
+                            </DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowSRUPreview(true)}
                     >
-                        <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                                <FilterButton
-                                    label={activeFilter === "all" ? "Visa alla" : "Filtrerad"}
-                                    isActive={activeFilter !== "all"}
-                                />
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-64">
-                                <DropdownMenuLabel>Visa sektion</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() => setActiveFilter("all")}
-                                    className={activeFilter === "all" ? "bg-accent" : ""}
-                                >
-                                    Visa alla (komplett INK2)
-                                </DropdownMenuItem>
-                                <DropdownMenuSeparator />
-                                <DropdownMenuItem
-                                    onClick={() => setActiveFilter("incomeStatement")}
-                                    className={activeFilter === "incomeStatement" ? "bg-accent" : ""}
-                                >
+                        <FileDown className="h-4 w-4 mr-1.5" />
+                        Exportera SRU
+                    </Button>
+                </CollapsibleTableHeader>
+
+                {/* Form Sections */}
+                <div className="space-y-8">
+                    {/* Income Statement */}
+                    {(activeFilter === "all" || activeFilter === "incomeStatement") && (
+                        <div className="space-y-4">
+                            {activeFilter === "all" && (
+                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
                                     Resultaträkning (3.x)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => setActiveFilter("balanceSheet")}
-                                    className={activeFilter === "balanceSheet" ? "bg-accent" : ""}
-                                >
+                                </h3>
+                            )}
+                            {incomeStatementSections.map((section, idx) => (
+                                <CollapsibleTableSection
+                                    key={section.title}
+                                    title={section.title}
+                                    items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
+                                    defaultOpen={activeFilter === "incomeStatement" || idx < 3}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Balance Sheet */}
+                    {(activeFilter === "all" || activeFilter === "balanceSheet") && (
+                        <div className="space-y-4">
+                            {activeFilter === "all" && (
+                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
                                     Balansräkning (2.x)
-                                </DropdownMenuItem>
-                                <DropdownMenuItem
-                                    onClick={() => setActiveFilter("taxAdjustments")}
-                                    className={activeFilter === "taxAdjustments" ? "bg-accent" : ""}
-                                >
+                                </h3>
+                            )}
+                            {balanceSheetSections.map((section, idx) => (
+                                <CollapsibleTableSection
+                                    key={section.title}
+                                    title={section.title}
+                                    items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
+                                    defaultOpen={activeFilter === "balanceSheet" && idx < 3}
+                                />
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Tax Adjustments */}
+                    {(activeFilter === "all" || activeFilter === "taxAdjustments") && (
+                        <div className="space-y-4">
+                            {activeFilter === "all" && (
+                                <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
                                     Skattemässiga justeringar (4.x)
-                                </DropdownMenuItem>
-                            </DropdownMenuContent>
-                        </DropdownMenu>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => setShowSRUPreview(true)}
-                        >
-                            <FileDown className="h-4 w-4 mr-1.5" />
-                            Exportera SRU
-                        </Button>
-                    </CollapsibleTableHeader>
-
-                    {/* Form Sections */}
-                    <div className="space-y-8">
-                        {/* Income Statement */}
-                        {(activeFilter === "all" || activeFilter === "incomeStatement") && (
-                            <div className="space-y-4">
-                                {activeFilter === "all" && (
-                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
-                                        Resultaträkning (3.x)
-                                    </h3>
-                                )}
-                                {incomeStatementSections.map((section, idx) => (
-                                    <CollapsibleTableSection
-                                        key={section.title}
-                                        title={section.title}
-                                        items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
-                                        defaultOpen={activeFilter === "incomeStatement" || idx < 3}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Balance Sheet */}
-
-                        {(activeFilter === "all" || activeFilter === "balanceSheet") && (
-                            <div className="space-y-4">
-                                {activeFilter === "all" && (
-                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
-                                        Balansräkning (2.x)
-                                    </h3>
-                                )}
-                                {balanceSheetSections.map((section, idx) => (
-                                    <CollapsibleTableSection
-                                        key={section.title}
-                                        title={section.title}
-                                        items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
-                                        defaultOpen={activeFilter === "balanceSheet" && idx < 3}
-                                    />
-                                ))}
-                            </div>
-                        )}
-
-                        {/* Tax Adjustments */}
-
-                        {(activeFilter === "all" || activeFilter === "taxAdjustments") && (
-                            <div className="space-y-4">
-                                {activeFilter === "all" && (
-                                    <h3 className="text-sm font-medium text-muted-foreground uppercase tracking-wide pb-2 border-b border-border/60">
-                                        Skattemässiga justeringar (4.x)
-                                    </h3>
-                                )}
-                                {taxAdjustmentSections.map((section, idx) => (
-                                    <CollapsibleTableSection
-                                        key={section.title}
-                                        title={section.title}
-                                        items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
-                                        defaultOpen={activeFilter === "taxAdjustments" && idx < 3}
-                                    />
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </CollapsibleTableContainer>
-
-
-            </div >
-        </main >
+                                </h3>
+                            )}
+                            {taxAdjustmentSections.map((section, idx) => (
+                                <CollapsibleTableSection
+                                    key={section.title}
+                                    title={section.title}
+                                    items={section.fields.map(f => ({ id: f.field, label: f.label, value: f.value }))}
+                                    defaultOpen={activeFilter === "taxAdjustments" && idx < 3}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </div>
+            </CollapsibleTableContainer>
+        </TaxReportLayout>
     )
 }

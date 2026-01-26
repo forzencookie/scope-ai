@@ -1,11 +1,9 @@
 import {
   Users,
   UserCheck,
-  UserX,
-  CreditCard,
-  AlertCircle
+  CreditCard
 } from "lucide-react"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+import { StatCard } from "@/components/ui/stat-card"
 import { formatCurrency } from "@/lib/utils"
 
 interface MembersStatsProps {

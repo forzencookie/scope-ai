@@ -59,6 +59,7 @@ export const calculateGransbeloppTool = defineTool({
             },
             message: `Gränsbelopp ${params.year}: ${Math.round(gransbelopp).toLocaleString('sv-SE')} kr`,
             display: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 component: 'K10Summary' as any,
                 props: { gransbelopp: Math.round(gransbelopp), year: params.year },
                 title: 'K10 Beräkning',

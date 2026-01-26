@@ -1,6 +1,5 @@
 "use client"
 
-import { useRouter } from "next/navigation"
 import { useCallback } from "react"
 
 // Page types that can be mentioned in AI chat

@@ -4,7 +4,7 @@ import { memo } from "react"
 import { UploadCloud, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
-import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
+import { BulkActionToolbar, PageHeader } from "@/components/shared"
 import { DeleteConfirmDialog } from "@/components/shared/delete-confirm-dialog"
 import { UnderlagDialog } from "../dialogs/underlag"
 import { BookingDialog } from "../dialogs/bokforing"
@@ -53,16 +53,16 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
     return (
         <div className="w-full space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <div>
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">{text.receipts.title || "Kvitton logg"}</h2>
-                    <p className="text-muted-foreground">{text.receipts.subtitle || "Ladda upp och hantera dina kvitton"}</p>
-                </div>
-                <Button className="gap-2 w-full sm:w-auto" onClick={() => setUploadDialogOpen(true)}>
-                    <UploadCloud className="h-4 w-4" />
-                    {text.receipts.upload || "Ladda upp"}
-                </Button>
-            </div>
+            <PageHeader
+                title={text.receipts.title || "Kvitton logg"}
+                subtitle={text.receipts.subtitle || "Ladda upp och hantera dina kvitton"}
+                actions={
+                    <Button className="gap-2 w-full sm:w-auto" onClick={() => setUploadDialogOpen(true)}>
+                        <UploadCloud className="h-4 w-4" />
+                        {text.receipts.upload || "Ladda upp"}
+                    </Button>
+                }
+            />
 
             {/* Dashboard / Stats */}
             <ReceiptsDashboard

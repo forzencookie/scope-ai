@@ -5,6 +5,7 @@ import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
+import { PageHeader } from "@/components/shared"
 import { MeetingStats } from "./meeting-stats"
 import { UpcomingAlert } from "./upcoming-alert"
 import { GeneralMeetingsGrid } from "./general-meetings-grid"
@@ -32,21 +33,17 @@ export function Bolagsstamma() {
 
   return (
     <div className="space-y-4 md:space-y-6">
-      <div className="flex flex-col gap-4 md:gap-6 pt-2">
-         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-           <div className="min-w-0">
-             <h2 className="text-xl md:text-2xl font-bold tracking-tight">Bolagsstämma</h2>
-             <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
-               Protokoll, kallelser och beslut från bolagsstämmor.
-             </p>
-           </div>
-           <Button size="sm" onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
-             <Plus className="h-4 w-4 sm:mr-2" />
-             <span className="hidden sm:inline">Planera stämma</span>
-             <span className="sm:hidden">Planera</span>
-           </Button>
-         </div>
-      </div>
+      <PageHeader
+        title="Bolagsstämma"
+        subtitle="Protokoll, kallelser och beslut från bolagsstämmor."
+        actions={
+          <Button size="sm" onClick={() => setShowCreateDialog(true)} className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Planera stämma</span>
+            <span className="sm:hidden">Planera</span>
+          </Button>
+        }
+      />
 
       <MeetingStats stats={stats} />
       

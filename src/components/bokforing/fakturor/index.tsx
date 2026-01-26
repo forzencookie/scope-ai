@@ -33,7 +33,7 @@ import { InvoiceCard } from "./components/InvoiceCard"
 
 // Constants & Types
 import { UNIFIED_COLUMNS, CUSTOMER_COLUMNS, SUPPLIER_COLUMNS } from "./constants"
-import { ViewFilter, PeriodFilter } from "./types"
+import { ViewFilter } from "./types"
 
 // Logic
 import { useInvoicesLogic } from "./use-invoices-logic"
@@ -42,7 +42,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const {
         // State
         viewFilter, setViewFilter,
-        periodFilter, setPeriodFilter,
+        setPeriodFilter,
         customerDialogOpen, setCustomerDialogOpen,
         supplierDialogOpen, setSupplierDialogOpen,
         isLoading,
@@ -65,6 +65,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     } = useInvoicesLogic()
 
     // Render Helpers
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const renderCard = (invoice: any) => (
         <InvoiceCard
             key={invoice.id}
@@ -265,6 +266,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
             <SupplierInvoiceDialog
                 open={supplierDialogOpen}
                 onOpenChange={setSupplierDialogOpen}
+                onInvoiceCreated={handleInvoiceCreated}
             />
         </div>
     )

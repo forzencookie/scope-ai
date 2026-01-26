@@ -172,7 +172,6 @@ interface OnboardingWizardProps {
 export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
-  const [showMoreBanks, setShowMoreBanks] = useState(false)
   const step = onboardingSteps[currentStep]
   const isLastStep = currentStep === onboardingSteps.length - 1
   const isFirstStep = currentStep === 0

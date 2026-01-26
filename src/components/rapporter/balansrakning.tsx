@@ -1,15 +1,12 @@
 "use client"
 
 import { useCompany } from "@/providers/company-provider"
-import {
-    CollapsibleTableContainer,
-    CollapsibleTableSection,
-} from "@/components/ui/collapsible-table"
+import { CollapsibleTableSection } from "@/components/ui/collapsible-table"
 import { cn } from "@/lib/utils"
-import { SectionCard } from "@/components/ui/section-card"
+import { ReportLayout } from "@/components/shared"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useRouter } from "next/navigation"
-import { Scale, Loader2, CheckCircle2, XCircle } from "lucide-react"
+import { Scale, CheckCircle2, XCircle } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"
 
 // ============================================
@@ -22,76 +19,29 @@ export function BalansrakningContent() {
     const router = useRouter()
     const { balanceSheetSections, isLoading } = useFinancialReports()
 
-    if (isLoading) {
-        return (
-            <div className="flex h-64 items-center justify-center text-muted-foreground">
-                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                Laddar balansräkning...
-            </div>
-        )
-    }
-
-    if (!balanceSheetSections || balanceSheetSections.length === 0) {
-        return <div className="p-6">Ingen data tillgänglig.</div>
-    }
-
     // Calculate totals for balance check
-    const totalAssets = balanceSheetSections.find(s => s.title === "Tillgångar")?.total || 0
-    const totalEqLiab = balanceSheetSections.find(s => s.title === "Eget kapital och skulder")?.total || 0
+    const totalAssets = balanceSheetSections?.find(s => s.title === "Tillgångar")?.total || 0
+    const totalEqLiab = balanceSheetSections?.find(s => s.title === "Eget kapital och skulder")?.total || 0
     const isBalanced = Math.abs(totalAssets - totalEqLiab) < 1 // Tolerance for float math
 
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
-            <CollapsibleTableContainer>
-                {/* Page Heading */}
-                <div className="flex flex-col gap-4 md:gap-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div className="min-w-0">
-                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Balansräkning</h2>
-                            <p className="text-xs sm:text-sm text-muted-foreground">Per {new Date().toISOString().split('T')[0]} • {companyType.toUpperCase()}</p>
-                        </div>
-                    </div>
-                </div>
-
-                <SectionCard
-                    title="Analysera finansiell ställning"
-                    description="Få en genomgång av bolagets likviditet, soliditet och långsiktiga finansiella hälsa."
-                    variant="ai"
-                    icon={Scale}
-                    actionLabel="Analysera balansräkning"
-                    onAction={() => navigateToAI(getDefaultAIContext("balansrakning"))}
-                />
-
-                {/* Collapsible Sections */}
-                <div className="space-y-4">
-                    {balanceSheetSections.map((section) => (
-                        <CollapsibleTableSection
-                            key={section.title}
-                            title={section.title}
-                            items={section.items.map(item => ({
-                                id: item.id,
-                                label: item.label,
-                                value: item.value,
-                                onClick: item.id ? () => {
-                                    const params = new URLSearchParams()
-                                    params.set("tab", "verifikationer")
-                                    params.set("account", item.id!)
-                                    router.push(`/dashboard/bokforing?${params.toString()}`)
-                                } : undefined
-                            }))}
-                            total={section.total}
-                            defaultOpen={true}
-                            neutral={true}
-                        />
-                    ))}
-                </div>
-
-                {/* Balance Verification */}
+        <ReportLayout
+            title="Balansräkning"
+            subtitle={`Per ${new Date().toISOString().split('T')[0]} • ${companyType.toUpperCase()}`}
+            isLoading={isLoading}
+            loadingMessage="Laddar balansräkning..."
+            hasData={!!balanceSheetSections && balanceSheetSections.length > 0}
+            ai={{
+                title: "Analysera finansiell ställning",
+                description: "Få en genomgång av bolagets likviditet, soliditet och långsiktiga finansiella hälsa.",
+                icon: Scale,
+                actionLabel: "Analysera balansräkning",
+                onAction: () => navigateToAI(getDefaultAIContext("balansrakning"))
+            }}
+            footer={
                 <div className={cn(
                     "mt-8 p-4 rounded-lg",
-                    isBalanced
-                        ? "bg-green-500/10"
-                        : "bg-red-500/10"
+                    isBalanced ? "bg-green-500/10" : "bg-red-500/10"
                 )}>
                     <div className="flex items-center justify-between">
                         <div>
@@ -107,15 +57,34 @@ export function BalansrakningContent() {
                                 : "bg-red-500/20 text-red-600 dark:text-red-400"
                         )}>
                             {isBalanced ? "Balanserar" : "Obalanserad"}
-                            {isBalanced ? (
-                                <CheckCircle2 className="h-4 w-4" />
-                            ) : (
-                                <XCircle className="h-4 w-4" />
-                            )}
+                            {isBalanced ? <CheckCircle2 className="h-4 w-4" /> : <XCircle className="h-4 w-4" />}
                         </div>
                     </div>
                 </div>
-            </CollapsibleTableContainer>
-        </main>
+            }
+        >
+            <div className="space-y-4">
+                {balanceSheetSections?.map((section) => (
+                    <CollapsibleTableSection
+                        key={section.title}
+                        title={section.title}
+                        items={section.items.map(item => ({
+                            id: item.id,
+                            label: item.label,
+                            value: item.value,
+                            onClick: item.id ? () => {
+                                const params = new URLSearchParams()
+                                params.set("tab", "verifikationer")
+                                params.set("account", item.id!)
+                                router.push(`/dashboard/bokforing?${params.toString()}`)
+                            } : undefined
+                        }))}
+                        total={section.total}
+                        defaultOpen={true}
+                        neutral={true}
+                    />
+                ))}
+            </div>
+        </ReportLayout>
     )
 }

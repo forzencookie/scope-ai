@@ -36,6 +36,7 @@ export function GenericListCard({ title, items }: GenericListCardProps) {
 }
 
 // Smart wrapper that finds array data in props
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function SmartListCard(props: any) {
     const { title, className, ...rest } = props
     
@@ -48,6 +49,7 @@ export function SmartListCard(props: any) {
     const dataArray = Object.values(rest).find(v => Array.isArray(v)) as unknown[] | undefined
 
     if (dataArray && dataArray.length > 0) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const items = dataArray.slice(0, 5).map((item: any) => {
             return {
                 primary: String(item.description || item.vendor || item.name || item.customer || item.title || ""),

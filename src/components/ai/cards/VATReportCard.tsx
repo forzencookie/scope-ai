@@ -6,6 +6,7 @@ import { downloadTextFile } from "./utils"
 
 const VATFormPreview = dynamic(() => import("../previews/forms/vat-form-preview").then(m => ({ default: m.VATFormPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function VATReportCard(props: any) {
     return (
         <VATFormPreview

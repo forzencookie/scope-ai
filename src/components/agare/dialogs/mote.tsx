@@ -20,6 +20,7 @@ interface PlanMeetingDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     type: MeetingType
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSubmit?: (data: any) => void
     defaultAgenda: string[]
 }

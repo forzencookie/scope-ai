@@ -215,9 +215,11 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
         const agiData = {
             period: r.period,
             employeeCount: r.employeeCount || 0,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             totalGrossPay: (r as any).totalGrossPay || 0,
             totalBenefits: 0, // Mock for now
             totalTaxDeduction: r.totalTax || 0,
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             employerFeeBasis: (r as any).totalGrossPay || 0,
             totalEmployerFee: r.employerContributions || 0,
             // totalToPay calculated in component

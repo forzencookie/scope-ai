@@ -1,7 +1,7 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { type Invoice } from "@/types"
-import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoice-service'
+import { invoiceService } from '@/services/invoice-service'
 import { useAsync } from "./use-async"
 
 export function useInvoices() {
@@ -16,6 +16,7 @@ export function useInvoices() {
 
             if (data.invoices && Array.isArray(data.invoices)) {
                 // Ensure proper typing
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 const mapped: Invoice[] = data.invoices.map((inv: any) => ({
                     id: inv.id || inv.invoiceNumber,
                     customer: inv.customer,

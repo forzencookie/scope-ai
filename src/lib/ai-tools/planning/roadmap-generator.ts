@@ -14,6 +14,7 @@ export const generateRoadmapTool = {
             metadata: z.record(z.string(), z.any()).optional().describe("Metadata for the step, e.g., { action: 'register_company' } to link to specific app actions")
         })).describe("The generated steps for the roadmap")
     }),
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     execute: async (args: { goal: string; context?: string; steps: any[] }) => {
         try {
             const roadmap = await createRoadmap({

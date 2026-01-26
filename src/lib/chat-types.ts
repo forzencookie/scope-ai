@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Chat type definitions
  * Shared types for chat functionality
@@ -18,17 +17,17 @@ export interface Message {
     // Structured data for AI cards
     display?: {
         type: 'ReceiptCard' | 'TransactionCard' | 'TaskChecklist' | 'ReceiptsTable' | 'ActivityCard' | 'ComparisonTable'
-        data: any
+        data: Record<string, unknown>
     }
     confirmationRequired?: {
         id: string
         type: string
-        data: any
+        data: Record<string, unknown>
         action: string
     }
     toolResults?: Array<{
         toolName: string
-        result: any
+        result: unknown
     }>
 }
 

@@ -49,9 +49,6 @@ interface SubmissionResponse {
   nextDeadline?: string
 }
 
-// Storage key for localStorage simulation (in real app, use database)
-const STORAGE_KEY = 'myndigheter_submissions'
-
 // Document configurations
 const DOCUMENT_CONFIGS: Record<DocumentType, {
   name: string

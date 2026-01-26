@@ -22,6 +22,7 @@ export async function getIncomeDeclarations(taxYear?: number): Promise<IncomeDec
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch income declarations:', error); return [] }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data || []).map((d: any) => ({
         id: d.id,
         taxYear: d.tax_year,
@@ -57,6 +58,7 @@ export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch NE appendix:', error); return [] }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data || []).map((d: any) => ({
         id: d.id,
         taxYear: d.tax_year,
@@ -95,6 +97,7 @@ export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClos
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch annual closings:', error); return [] }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data || []).map((d: any) => ({
         id: d.id,
         fiscalYear: d.fiscal_year,
@@ -120,6 +123,7 @@ export type AnnualReport = {
     fiscalYear: number
     companyName?: string
     orgNumber?: string
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     reportSections: Record<string, any>
     directorsReport?: string
     auditorReport?: string
@@ -135,6 +139,7 @@ export async function getAnnualReports(fiscalYear?: number): Promise<AnnualRepor
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch annual reports:', error); return [] }
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return (data || []).map((d: any) => ({
         id: d.id,
         fiscalYear: d.fiscal_year,

@@ -1,5 +1,5 @@
 
-import { UserPlus, Briefcase, Mail, Coins, Check, ArrowRight } from "lucide-react"
+import { UserPlus, Briefcase, Coins, Check, ArrowRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"

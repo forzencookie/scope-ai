@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { LoadingButton } from "@/components/ui/loading-button"
+import { Button } from "@/components/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -28,6 +29,7 @@ interface AddPartnerDialogProps {
 
 export function AddPartnerDialog({ open, onOpenChange, companyType, onSave }: AddPartnerDialogProps) {
   const showKommanditdelägare = companyType === 'kb'
+  const [isLoading, setIsLoading] = useState(false)
   
   const [newPartner, setNewPartner] = useState<Partial<Partner>>({
     name: '',
@@ -38,16 +40,24 @@ export function AddPartnerDialog({ open, onOpenChange, companyType, onSave }: Ad
   })
 
   const handleSave = async () => {
-      await onSave(newPartner)
-      onOpenChange(false)
-      // Reset
-      setNewPartner({
-        name: '',
-        personalNumber: '',
-        type: 'komplementär',
-        ownershipPercentage: 0,
-        capitalContribution: 0,
-      })
+      // Prevent double-clicks
+      if (isLoading) return
+      setIsLoading(true)
+      
+      try {
+        await onSave(newPartner)
+        onOpenChange(false)
+        // Reset
+        setNewPartner({
+          name: '',
+          personalNumber: '',
+          type: 'komplementär',
+          ownershipPercentage: 0,
+          capitalContribution: 0,
+        })
+      } finally {
+        setIsLoading(false)
+      }
   }
 
   return (
@@ -124,8 +134,10 @@ export function AddPartnerDialog({ open, onOpenChange, companyType, onSave }: Ad
               </div>
             </div>
             <DialogFooter>
-                <Button variant="ghost" onClick={() => onOpenChange(false)}>Avbryt</Button>
-                <Button onClick={handleSave}>Lägg till delägare</Button>
+                <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>Avbryt</Button>
+                <LoadingButton onClick={handleSave} loading={isLoading} loadingText="Sparar...">
+                    Lägg till delägare
+                </LoadingButton>
             </DialogFooter>
           </DialogContent>
         </Dialog>

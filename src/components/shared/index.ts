@@ -12,6 +12,14 @@ export { TableToolbar } from "./table-toolbar"
 export type { StatusOption, SortOption } from "./table-toolbar"
 export { DeleteConfirmDialog, useDeleteConfirmation } from "./delete-confirm-dialog"
 
+// Layout components
+export { PageHeader, PageHeaderActions } from "./layout/page-header"
+export { PageTabsLayout } from "./layout/page-tabs-layout"
+export type { TabConfig } from "./layout/page-tabs-layout"
+export { ReportLayout } from "./layout/report-layout"
+export { TaxReportLayout } from "./layout/tax-report-layout"
+export type { TaxReportStat, TaxReportLayoutProps } from "./layout/tax-report-layout"
+
 // Lazy Loading with Spinner (Golden Standard)
 export {
     LoadingSpinner,

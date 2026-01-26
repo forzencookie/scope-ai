@@ -6,6 +6,7 @@ import { Plus, Filter, Info } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { LegalInfoCard } from "@/components/ui/legal-info-card"
+import { PageHeader } from "@/components/shared"
 import { WithdrawalStats } from "./withdrawal-stats"
 import { WithdrawalsGrid } from "./withdrawals-grid"
 import { NewWithdrawalDialog } from "./new-withdrawal-dialog"
@@ -47,6 +48,17 @@ export function DelagaruttagManager() {
 
     return (
         <div className="space-y-6">
+            <PageHeader
+                title="Delägare & Uttag"
+                subtitle="Hantera delägaruttag, insättningar och lån i bolaget."
+                actions={
+                    <Button size="sm" onClick={() => setShowAddDialog(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ny transaktion
+                    </Button>
+                }
+            />
+
             <WithdrawalStats 
                 stats={overallStats} 
             />
@@ -86,10 +98,6 @@ export function DelagaruttagManager() {
                                     ))}
                                 </DropdownMenuContent>
                             </DropdownMenu>
-                            <Button size="sm" onClick={() => setShowAddDialog(true)}>
-                                <Plus className="mr-2 h-4 w-4" />
-                                Ny transaktion
-                            </Button>
                         </div>
                     </div>
 

@@ -6,6 +6,7 @@ import { downloadTextFile } from "./utils"
 
 const AGIFormPreview = dynamic(() => import("../previews/forms/agi-form-preview").then(m => ({ default: m.AGIFormPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AGIReportCard(props: any) {
     return (
         <AGIFormPreview

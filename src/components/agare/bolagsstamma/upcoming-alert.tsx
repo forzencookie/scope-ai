@@ -6,6 +6,7 @@ import { formatDateLong } from "@/lib/utils"
 interface UpcomingAlertProps {
     stats: {
         daysUntilNext: number | null
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         nextMeeting: any | null
     }
 }

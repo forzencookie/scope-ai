@@ -1,7 +1,7 @@
 "use client"
 
 import { createContext, useContext, useState, useCallback, useMemo, type ReactNode } from "react"
-import type { Transaction, TransactionWithAI } from "@/types"
+import type { TransactionWithAI } from "@/types"
 
 // PRODUCTION: No mock data
 const defaultTransactions: TransactionWithAI[] = []

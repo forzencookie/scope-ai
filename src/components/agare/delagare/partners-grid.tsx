@@ -81,7 +81,6 @@ export function PartnersGrid({ partners, showKommanditdelägare, onSearchChange,
                   {/* Type (Conditional) */}
                   {showKommanditdelägare && (
                     <div className="col-span-2">
-                       {/* @ts-ignore - type checks */}
                       <AppStatusBadge
                         status={partner.type === 'komplementär' ? 'Komplementär' : 'Kommanditdelägare'}
                       />
@@ -101,10 +100,8 @@ export function PartnersGrid({ partners, showKommanditdelägare, onSearchChange,
                   {/* Balance */}
                   <div className={cn("text-right font-mono", showKommanditdelägare ? "col-span-[1.5]" : "col-span-2")}>
                     <span className={
-                        // @ts-ignore
                         partner.currentCapitalBalance < partner.capitalContribution ? 'text-amber-600' : 'text-green-600 dark:text-green-500/70'
                     }>
-                        {/* @ts-ignore */}
                       {formatCurrency(partner.currentCapitalBalance)}
                     </span>
                   </div>

@@ -1,12 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { formatCurrency } from "@/lib/utils"
 import { MealFormData, FormProps } from "../types"
 import { MEAL_RATES } from "../constants"
+import { EmployeeInput, PeriodInput, TextInputField, SubmitButton } from "./shared"
+import { Label } from "@/components/ui/label"
 
 export function MealForm({ benefit, onAssign }: FormProps) {
     const [form, setForm] = useState<MealFormData>({
@@ -29,22 +28,14 @@ export function MealForm({ benefit, onAssign }: FormProps) {
 
     return (
         <div className="space-y-4">
-            <div className="space-y-2">
-                <Label>Anställd</Label>
-                <Input
-                    placeholder="Namn på anställd..."
-                    value={form.employeeName}
-                    onChange={e => setForm(f => ({ ...f, employeeName: e.target.value }))}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Månad</Label>
-                <Input
-                    type="month"
-                    value={form.month}
-                    onChange={e => setForm(f => ({ ...f, month: e.target.value }))}
-                />
-            </div>
+            <EmployeeInput
+                value={form.employeeName}
+                onChange={(v) => setForm(f => ({ ...f, employeeName: v }))}
+            />
+            <PeriodInput
+                value={form.month}
+                onChange={(v) => setForm(f => ({ ...f, month: v }))}
+            />
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <Label>Antal dagar</Label>
@@ -52,11 +43,12 @@ export function MealForm({ benefit, onAssign }: FormProps) {
                         {benefit.id === 'lunch' ? '130' : '260'} kr/dag
                     </span>
                 </div>
-                <Input
+                <TextInputField
+                    label=""
                     type="number"
                     placeholder="0"
                     value={form.days}
-                    onChange={e => setForm(f => ({ ...f, days: e.target.value }))}
+                    onChange={(v) => setForm(f => ({ ...f, days: v }))}
                 />
             </div>
             {form.days && (
@@ -67,9 +59,11 @@ export function MealForm({ benefit, onAssign }: FormProps) {
                     </span>
                 </div>
             )}
-            <Button className="w-full" onClick={handleSubmit} disabled={!form.employeeName || !form.month || !form.days}>
-                Registrera
-            </Button>
+            <SubmitButton
+                label="Registrera"
+                onClick={handleSubmit}
+                disabled={!form.employeeName || !form.month || !form.days}
+            />
         </div>
     )
 }

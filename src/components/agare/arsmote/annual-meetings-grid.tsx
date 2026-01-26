@@ -10,7 +10,6 @@ import {
   Download,
   Send,
   CheckCircle,
-  FileText,
   Sparkles,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -28,7 +27,7 @@ import {
   GridTableRows,
 } from "@/components/ui/grid-table"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { type MeetingStatus } from "@/lib/status-types"
+import { getAnnualMeetingStatusLabel } from "@/lib/meeting-utils"
 import { type AnnualMeeting } from "@/types/meeting"
 
 interface AnnualMeetingsGridProps {
@@ -44,17 +43,6 @@ export function AnnualMeetingsGrid({
   onSelectMeeting,
   onOpenNotice 
 }: AnnualMeetingsGridProps) {
-
-  const getMeetingStatusLabel = (status: AnnualMeeting['status']): MeetingStatus => {
-    const labels: Record<AnnualMeeting['status'], MeetingStatus> = {
-      'planerad': 'Planerad',
-      'kallad': 'Kallad',
-      'genomförd': 'Genomförd',
-      'protokoll signerat': 'Signerat',
-    }
-    return labels[status]
-  }
-
   return (
     <div className="overflow-x-auto pb-4 -mx-2">
       <div className="min-w-[800px] px-2">
@@ -121,7 +109,7 @@ export function AnnualMeetingsGrid({
 
               {/* Status */}
               <div className="col-span-2">
-                <AppStatusBadge status={getMeetingStatusLabel(meeting.status)} showIcon />
+                <AppStatusBadge status={getAnnualMeetingStatusLabel(meeting.status)} showIcon />
               </div>
 
               {/* Actions */}

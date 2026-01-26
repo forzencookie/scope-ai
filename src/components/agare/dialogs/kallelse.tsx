@@ -48,17 +48,35 @@ export function SendNoticeDialog({
     const toast = useToast()
 
     const [isSending, setIsSending] = React.useState(false)
+    const [sendMethod, setSendMethod] = React.useState<'email' | 'post' | 'both'>('email')
 
     const handleSend = async () => {
+        if (isSending) return
         setIsSending(true)
-        // Simulate network delay
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        setIsSending(false)
+        
+        try {
+            const response = await fetch('/api/notices', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    meetingId: meeting?.id || 'new',
+                    meetingType: isAssociation ? 'annual' : 'general',
+                    recipients: [], // Would be populated with real recipient emails
+                    method: sendMethod,
+                })
+            })
 
-        toast.success("Kallelse skickad", `Kallelse har skickats till ${recipientCount} ${recipientType}.`)
+            if (!response.ok) throw new Error('Failed to send')
 
-        onSubmit?.()
-        onOpenChange(false)
+            toast.success("Kallelse skickad", `Kallelse har skickats till ${recipientCount} ${recipientType}.`)
+            onSubmit?.()
+            onOpenChange(false)
+        } catch (error) {
+            console.error('Send notice error:', error)
+            toast.error("Fel", "Kunde inte skicka kallelsen")
+        } finally {
+            setIsSending(false)
+        }
     }
 
     const handleDownloadPDF = () => {

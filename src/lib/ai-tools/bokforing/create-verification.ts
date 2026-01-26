@@ -1,7 +1,13 @@
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { z } from "zod"
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
+
+interface VerificationRow {
+    account: string
+    description?: string
+    debit?: number
+    credit?: number
+}
 
 export const createVerificationTool: AITool = {
     name: "create_verification",
@@ -20,7 +26,7 @@ export const createVerificationTool: AITool = {
     }),
 
     execute: async (params: unknown, _context: InteractionContext) => {
-        const { description, date, rows } = params as { description: string, date?: string, rows: any[] }
+        const { description, date, rows } = params as { description: string, date?: string, rows: VerificationRow[] }
         // Validate balance
         // We let the UI handle the hard validation, but good to check here too.
 
@@ -49,7 +55,7 @@ export const createVerificationTool: AITool = {
                 ],
                 action: {
                     toolName: "create_verification",
-                    params: params
+                    params: params as Record<string, unknown>
                 }
             }
         }

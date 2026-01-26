@@ -88,6 +88,7 @@ export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(
                             {/* Left: Company info */}
                             <div>
                                 {companyInfo?.logo ? (
+                                    /* eslint-disable-next-line @next/next/no-img-element */
                                     <img src={companyInfo.logo} alt="" className="h-10 mb-2" />
                                 ) : companyInfo?.name && (
                                     <h2 className="text-xl font-bold">{companyInfo.name}</h2>

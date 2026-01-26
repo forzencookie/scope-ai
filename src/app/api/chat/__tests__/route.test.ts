@@ -133,7 +133,7 @@ describe('Chat API Validation Logic', () => {
         it('should understand token limits concept', () => {
             const AVG_CHARS_PER_TOKEN = 4
             const MAX_INPUT_TOKENS = 4000
-            const maxChars = MAX_INPUT_TOKENS * AVG_CHARS_PER_TOKEN // ~16000 chars
+            const _maxChars = MAX_INPUT_TOKENS * AVG_CHARS_PER_TOKEN // ~16000 chars
             
             const shortMessage = 'Hello, how are you?'
             const longMessage = 'a'.repeat(20000)

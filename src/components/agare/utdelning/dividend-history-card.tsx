@@ -8,6 +8,7 @@ import { DividendTable } from "./dividend-table"
 import { RegisterDividendDialog } from "./register-dividend-dialog"
 
 interface DividendHistoryCardProps {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     history: any[]
     onRegister: (year: number, amount: number) => Promise<void>
 }

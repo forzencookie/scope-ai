@@ -87,20 +87,20 @@ export async function middleware(request: NextRequest) {
         // Check if user has admin role
         // Note: profiles table must exist for this to work
         try {
-            const { data: profile } = await (supabase as any)
+            const { data: profile } = await supabase
                 .from('profiles')
                 .select('role')
                 .eq('id', user!.id)
                 .single()
 
-            const role = (profile as any)?.role
+            const role = profile?.role
             if (!profile || role !== 'admin') {
                 // Not an admin - redirect to dashboard with error
                 const dashboardUrl = new URL('/dashboard', request.url)
                 dashboardUrl.searchParams.set('error', 'admin_required')
                 return NextResponse.redirect(dashboardUrl)
             }
-        } catch (e) {
+        } catch {
             // If profiles table doesn't exist yet, deny admin access
             const dashboardUrl = new URL('/dashboard', request.url)
             dashboardUrl.searchParams.set('error', 'admin_required')
@@ -112,7 +112,7 @@ export async function middleware(request: NextRequest) {
     // This catches deleted users whose JWT hasn't expired yet
     if (isProtectedRoute && isAuthenticated && user) {
         try {
-            const { count } = await (supabase as any)
+            const { count } = await supabase
                 .from('profiles')
                 .select('*', { count: 'exact', head: true })
                 .eq('id', user.id)

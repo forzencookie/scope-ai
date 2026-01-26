@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+// import { useState } from 'react';
 import {
     FileText,
     Download,
@@ -11,7 +11,7 @@ import {
     MoreHorizontal,
     Plus,
 } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import {
@@ -21,7 +21,7 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { LucideIcon } from 'lucide-react';
-import type { CorporateDocumentType, SignatureStatus } from '@/types/documents';
+import type { CorporateDocumentType } from '@/types/documents';
 
 // Mock document data
 interface DocumentItem {

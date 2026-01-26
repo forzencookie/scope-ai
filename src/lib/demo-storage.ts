@@ -8,7 +8,7 @@
  * - Storage quota management
  */
 
-import type { Transaction, TransactionWithAI } from "@/types"
+import type { TransactionWithAI } from "@/types"
 import type { Invoice } from "@/data/invoices"
 import type { Receipt } from "@/data/receipts"
 

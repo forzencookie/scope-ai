@@ -12,6 +12,7 @@ export async function POST(req: NextRequest) {
         const { messages } = await req.json()
 
         // Take first user message for context
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const firstUserMessage = messages.find((m: any) => m.role === 'user')
         if (!firstUserMessage) {
             return NextResponse.json({ title: "Ny konversation" })

@@ -17,7 +17,6 @@ import {
   Loader2,
   Building2,
   CheckCircle,
-  ArrowRight,
   User,
 } from 'lucide-react'
 import { AlertMessage } from '@/components/ui/alert-message'
@@ -108,7 +107,7 @@ export default function RegisterPage() {
       } else {
         setSuccess(true)
       }
-    } catch (err) {
+    } catch {
       setError('Ett oväntat fel inträffade. Försök igen.')
     }
 
@@ -126,7 +125,7 @@ export default function RegisterPage() {
         setError(error.message)
         setLoading(false)
       }
-    } catch (err) {
+    } catch {
       setError('Ett oväntat fel inträffade. Försök igen.')
       setLoading(false)
     }

@@ -1,4 +1,5 @@
-import { useAsync, useAsyncMutation } from "./use-async"
+import { useAsyncMutation } from "./use-async"
+import { useCachedQuery } from "./use-cached-query"
 
 export interface Member {
   id: string
@@ -19,22 +20,27 @@ export function useMembers() {
         data: members,
         isLoading,
         error,
-        refetch
-    } = useAsync(async () => {
-         try {
-            const res = await fetch('/api/members'); 
-            if (!res.ok) return [];
-            const json = await res.json();
-            const currentYear = new Date().getFullYear();
-            return (json.members || []).map((m: any) => ({
-                ...m,
-                currentYearFeePaid: m.lastPaidYear === currentYear
-            })) as Member[];
-         } catch(e) {
-             console.warn("Members API missing/failed", e);
-             return [];
-         }
-    }, [] as Member[], []);
+        invalidate: refetch
+    } = useCachedQuery({
+        cacheKey: 'members-list',
+        queryFn: async () => {
+            try {
+                const res = await fetch('/api/members'); 
+                if (!res.ok) return [];
+                const json = await res.json();
+                const currentYear = new Date().getFullYear();
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                return (json.members || []).map((m: any) => ({
+                    ...m,
+                    currentYearFeePaid: m.lastPaidYear === currentYear
+                })) as Member[];
+            } catch(e) {
+                console.warn("Members API missing/failed", e);
+                return [];
+            }
+        },
+        ttlMs: 2 * 60 * 1000, // 2 minute cache
+    });
 
     const addMember = useAsyncMutation(async (data: Partial<Member>) => {
         const res = await fetch('/api/members', {
@@ -48,5 +54,5 @@ export function useMembers() {
         return await res.json();
     });
 
-    return { members, isLoading, error, refetch, addMember: addMember.execute };
+    return { members: members ?? [], isLoading, error, refetch, addMember: addMember.execute };
 }

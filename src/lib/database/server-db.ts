@@ -1,10 +1,178 @@
 import { getSupabaseAdmin } from './supabase';
-// import { SimulatedDB } from './server-db-types'; // Removed: Missing file
+import type { Json } from '@/types/database';
 
+// =============================================================================
+// Type Definitions for Server DB Operations
+// =============================================================================
 
-// Suppress type errors for now until Supabase types are regenerated
-/* eslint-disable @typescript-eslint/no-explicit-any */
-// /* eslint-disable @typescript-eslint/ban-ts-comment */
+interface TransactionInput {
+    id?: string
+    date?: string
+    description?: string
+    name?: string
+    amount?: number | string
+    status?: string
+    category?: string
+    source?: string
+    createdBy?: string
+    created_by?: string
+    metadata?: Record<string, unknown>
+}
+
+interface TransactionMetadata {
+    status?: string
+    category?: string
+    [key: string]: unknown
+}
+
+interface InboxItemRow {
+    id: string
+    sender?: string
+    title?: string
+    description?: string
+    date?: string
+    created_at: string
+    category?: string
+    read?: boolean
+    starred?: boolean
+}
+
+interface InboxItemInput {
+    id?: string
+    sender?: string
+    title?: string
+    description?: string
+    date?: string
+    category?: string
+    read?: boolean
+    starred?: boolean
+}
+
+interface AIToolLogInput {
+    toolName: string
+    parameters: Record<string, unknown>
+    result?: unknown
+    status: 'success' | 'error' | 'pending'
+    executionTimeMs?: number
+    errorMessage?: string
+    userId?: string
+}
+
+interface MessageInput {
+    conversation_id: string
+    role: 'user' | 'assistant' | 'system' | 'data'
+    content: string
+    tool_calls?: Json
+    tool_results?: Json
+    metadata?: Record<string, unknown>
+    user_id: string
+}
+
+interface ReceiptInput {
+    id?: string
+    date?: string
+    supplier?: string
+    amount?: number
+    category?: string
+    status?: string
+    source?: string
+    createdBy?: string
+    created_by?: string
+    attachmentUrl?: string
+}
+
+interface InvoiceInput {
+    id?: string
+    invoiceNumber?: string
+    customerName?: string
+    amount?: number
+    vatAmount?: number
+    totalAmount?: number
+    issueDate?: string
+    date?: string
+    dueDate?: string
+    status?: string
+    createdBy?: string
+    created_by?: string
+    companyId?: string
+}
+
+interface SupplierInvoiceInput {
+    id?: string
+    invoiceNumber?: string
+    supplierName?: string
+    supplier?: string
+    amount?: number
+    vatAmount?: number
+    totalAmount?: number
+    dueDate?: string
+    invoiceDate?: string
+    status?: string
+    ocr?: string
+    ocrNumber?: string
+}
+
+interface VerificationInput {
+    id?: string
+    date?: string
+    description?: string
+    rows?: Json
+}
+
+interface EmployeeInput {
+    name: string
+    role?: string
+    email?: string
+    salary?: number
+    status?: string
+    employment_date?: string
+}
+
+interface PayslipInput {
+    id?: string
+    employee_id: string
+    period: string
+    gross_salary: number
+    tax_deduction: number
+    net_salary: number
+    bonuses?: number
+    deductions?: number
+    status?: string
+    payment_date?: string
+    user_id?: string
+}
+
+interface CorporateDocumentInput {
+    id?: string
+    type: string
+    title: string
+    date?: string
+    content?: string
+    status?: string
+    source?: string
+    createdBy?: string
+    created_by?: string
+    metadata?: Record<string, unknown>
+}
+
+interface ShareholderInput {
+    name: string
+    ssn_org_nr?: string
+    shares_count?: number
+    shares_percentage?: number
+    share_class?: string
+}
+
+interface TaxReportInput {
+    id?: string
+    user_id?: string
+    period_id?: string
+    report_type?: string
+    data?: Json
+    status?: string
+    period_start?: string
+    period_end?: string
+}
 
 // We keep the SimulatedDB interface compatible for now, or use loose typing
 // as the frontend expects certain shapes.
@@ -70,15 +238,13 @@ export const db = {
         };
     },
 
-    set: (_data: any) => {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const _ = _data;
+    set: (_data: Record<string, unknown>) => {
         // No-op: We don't overwrite the whole DB anymore
         console.warn("db.set() called but ignored in Supabase mode");
     },
 
     // Transactions
-    addTransaction: async (tx: any) => {
+    addTransaction: async (tx: TransactionInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('transactions').insert({
             id: tx.id,
@@ -97,15 +263,15 @@ export const db = {
         return data || tx;
     },
 
-    updateTransactionMetadata: async (id: string, metadata: any) => {
+    updateTransactionMetadata: async (id: string, metadata: TransactionMetadata) => {
         const supabase = getSupabaseAdmin();
         // First get existing meta
         const { data: existing } = await supabase.from('transactions').select('metadata').eq('id', id).single();
-        const existingMeta = (existing?.metadata as object) || {};
+        const existingMeta = (existing?.metadata as Record<string, unknown>) || {};
         const newMeta = { ...existingMeta, ...metadata };
 
         await supabase.from('transactions').update({
-            metadata: newMeta,
+            metadata: newMeta as unknown as Json,
             status: metadata.status || undefined,
             category: metadata.category || undefined
         }).eq('id', id);
@@ -149,12 +315,12 @@ export const db = {
 
         if (filters.limit) query = query.limit(filters.limit);
 
-        const { data, error } = await query as { data: any[]; error: any };
+        const { data, error } = await query;
         if (error) console.error("Supabase Error (getCustomerInvoices):", error);
 
         // Map snake_case to CamelCase if needed by frontend/AI, but generally tools should adapt. 
         // For consistency with existing codebase, let's map it.
-        return (data || []).map(i => ({
+        return (data || []).map((i: { id: string; customer_name?: string; invoice_number?: string; total_amount?: number; due_date?: string }) => ({
             ...i,
             customerName: i.customer_name,
             invoiceNumber: i.invoice_number,
@@ -176,10 +342,10 @@ export const db = {
 
         if (filters.limit) query = query.limit(filters.limit);
 
-        const { data, error } = await query as { data: any[]; error: any };
+        const { data, error } = await query;
         if (error) console.error("Supabase Error (getSupplierInvoices):", error);
 
-        return (data || []).map(i => ({
+        return (data || []).map((i: { id: string; supplier_name?: string; invoice_number?: string; total_amount?: number; due_date?: string; issue_date?: string }) => ({
             ...i,
             supplierName: i.supplier_name,
             invoiceNumber: i.invoice_number,
@@ -190,7 +356,7 @@ export const db = {
     },
 
     // Receipts
-    addReceipt: async (receipt: any) => {
+    addReceipt: async (receipt: ReceiptInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('receipts').insert({
             id: receipt.id,
@@ -208,7 +374,7 @@ export const db = {
     },
 
     // Invoices
-    addInvoice: async (invoice: any) => {
+    addInvoice: async (invoice: InvoiceInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('customerinvoices').insert({
             id: invoice.id,
@@ -228,7 +394,7 @@ export const db = {
     },
 
     // Supplier Invoices
-    addSupplierInvoice: async (invoice: any) => {
+    addSupplierInvoice: async (invoice: SupplierInvoiceInput) => {
         const supabase = getSupabaseAdmin();
         // Map frontend CamelCase to DB snake_case
         const { data, error } = await supabase.from('supplierinvoices').insert({
@@ -249,13 +415,13 @@ export const db = {
             throw error;
         }
 
-        return invoice;
+        return data || invoice;
     },
 
-    updateSupplierInvoice: async (id: string, updates: any) => {
+    updateSupplierInvoice: async (id: string, updates: { status?: string }) => {
         const supabase = getSupabaseAdmin();
         // Create mapping of updates
-        const dbUpdates: any = {};
+        const dbUpdates: Record<string, string> = {};
         if (updates.status) dbUpdates.status = updates.status;
 
         const { error } = await supabase.from('supplierinvoices').update(dbUpdates).eq('id', id);
@@ -267,7 +433,7 @@ export const db = {
     },
 
     // Verifications
-    addVerification: async (verification: any) => {
+    addVerification: async (verification: VerificationInput) => {
         const supabase = getSupabaseAdmin();
 
         let id = verification.id;
@@ -281,7 +447,7 @@ export const db = {
             id,
             date: verification.date,
             description: verification.description,
-            rows: verification.rows as any // Cast explicitly if type mismatch, but 'rows' is now in schema
+            rows: verification.rows
         }).select().single();
 
         if (error) {
@@ -302,7 +468,7 @@ export const db = {
     },
 
     // Legacy fallback
-    updateTransaction: async (id: string, updates: any) => {
+    updateTransaction: async (id: string, updates: Record<string, unknown>) => {
         const supabase = getSupabaseAdmin();
         await supabase.from('transactions').update(updates).eq('id', id);
         return { id, ...updates };
@@ -317,7 +483,7 @@ export const db = {
             .order('created_at', { ascending: false })
             .limit(limit ?? 50); // Default pagination
         if (error) console.error('getInboxItems error:', error);
-        return (data || []).map((row: any) => ({
+        return (data || []).map((row: InboxItemRow) => ({
             id: row.id,
             sender: row.sender,
             title: row.title,
@@ -330,7 +496,7 @@ export const db = {
         }));
     },
 
-    addInboxItem: async (item: any) => {
+    addInboxItem: async (item: InboxItemInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('inboxitems').insert({
             id: item.id || undefined,
@@ -346,9 +512,9 @@ export const db = {
         return data || item;
     },
 
-    updateInboxItem: async (id: string, updates: any) => {
+    updateInboxItem: async (id: string, updates: { read?: boolean; starred?: boolean; category?: string }) => {
         const supabase = getSupabaseAdmin();
-        const dbUpdates: any = {};
+        const dbUpdates: { read?: boolean; starred?: boolean; category?: string } = {};
         if (updates.read !== undefined) dbUpdates.read = updates.read;
         if (updates.starred !== undefined) dbUpdates.starred = updates.starred;
         if (updates.category !== undefined) dbUpdates.category = updates.category;
@@ -366,20 +532,12 @@ export const db = {
     },
 
     // AI Audit Logs
-    logAIToolExecution: async (log: {
-        toolName: string,
-        parameters: any,
-        result?: any,
-        status: 'success' | 'error' | 'pending',
-        executionTimeMs?: number,
-        errorMessage?: string,
-        userId?: string
-    }) => {
+    logAIToolExecution: async (log: AIToolLogInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('ai_audit_log').insert({
             tool_name: log.toolName,
-            parameters: log.parameters,
-            result: log.result,
+            parameters: log.parameters as unknown as Json,
+            result: log.result as unknown as Json,
             status: log.status,
             execution_time_ms: log.executionTimeMs,
             error_message: log.errorMessage,
@@ -414,7 +572,7 @@ export const db = {
         return data || [];
     },
 
-    upsertTaxReport: async (report: any) => {
+    upsertTaxReport: async (report: TaxReportInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('taxreports').upsert({
             id: report.id || undefined,
@@ -442,7 +600,7 @@ export const db = {
         return data || [];
     },
 
-    addEmployee: async (employee: any) => {
+    addEmployee: async (employee: EmployeeInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('employees').insert({
             name: employee.name,
@@ -464,6 +622,7 @@ export const db = {
     // Payslips
     getPayslips: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let query = supabase.from('payslips' as any).select('*, employees(*)').order('created_at', { ascending: false });
         if (limit) query = query.limit(limit);
         else query = query.limit(50); // Default pagination
@@ -472,8 +631,9 @@ export const db = {
         return data || [];
     },
 
-    addPayslip: async (payslip: any) => {
+    addPayslip: async (payslip: PayslipInput) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase.from('payslips' as any).insert({
             id: payslip.id,
             employee_id: payslip.employee_id,
@@ -494,6 +654,7 @@ export const db = {
     // Corporate Compliance
     getCorporateDocuments: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let query = supabase.from('corporate_documents' as any).select('*').order('date', { ascending: false });
         if (limit) query = query.limit(limit);
         else query = query.limit(50); // Default pagination
@@ -501,8 +662,9 @@ export const db = {
         return data || [];
     },
 
-    addCorporateDocument: async (doc: any) => {
+    addCorporateDocument: async (doc: CorporateDocumentInput) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase.from('corporate_documents' as any).insert({
             id: doc.id || undefined,
             type: doc.type,
@@ -520,6 +682,7 @@ export const db = {
 
     getShareholders: async (limit?: number) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         let query = supabase.from('shareholders' as any).select('*').order('shares_count', { ascending: false });
         if (limit) query = query.limit(limit);
         else query = query.limit(100); // Default pagination
@@ -527,15 +690,17 @@ export const db = {
         return data || [];
     },
 
-    updateShareholder: async (id: string, updates: any) => {
+    updateShareholder: async (id: string, updates: Partial<ShareholderInput>) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase.from('shareholders' as any).update(updates).eq('id', id).select().single();
         if (error) console.error("Supabase Error (updateShareholder):", error);
         return data || { id, ...updates };
     },
 
-    addShareholder: async (shareholder: any) => {
+    addShareholder: async (shareholder: ShareholderInput) => {
         const supabase = getSupabaseAdmin();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase.from('shareholders' as any).insert({
             name: shareholder.name,
             ssn_org_nr: shareholder.ssn_org_nr || '',
@@ -557,6 +722,7 @@ export const db = {
     getRoadmaps: async (userId: string) => {
         const supabase = getSupabaseAdmin();
         // Get active roadmaps with their steps
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
             .from('roadmaps' as any)
             .select('*, steps:roadmap_steps(*)')
@@ -624,15 +790,7 @@ export const db = {
         return data;
     },
 
-    addMessage: async (message: {
-        conversation_id: string,
-        role: 'user' | 'assistant' | 'system' | 'data',
-        content: string,
-        tool_calls?: any,
-        tool_results?: any,
-        metadata?: any,
-        user_id: string
-    }) => {
+    addMessage: async (message: MessageInput) => {
         const supabase = getSupabaseAdmin();
         const { data, error } = await supabase.from('messages').insert({
             conversation_id: message.conversation_id,

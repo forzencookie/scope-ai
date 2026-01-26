@@ -63,7 +63,7 @@ export function useInventarierLogic() {
             })
             setIsDialogOpen(false)
             setNewAsset({ livslangdAr: 5 })
-        } catch (error) {
+        } catch {
             // Error handled in hook (logged)
         }
     }, [newAsset, addInventarie])

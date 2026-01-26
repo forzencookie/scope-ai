@@ -21,22 +21,13 @@ import { Badge } from "@/components/ui/badge"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { type BoardMeeting, type AgendaItem } from "@/types/board-meeting"
-import { type MeetingStatus } from "@/lib/status-types"
+import { getBoardMeetingStatusLabel } from "@/lib/meeting-utils"
+import { type BoardMeeting } from "@/types/board-meeting"
 
 interface BoardMeetingDetailsProps {
   meeting: BoardMeeting | null
   open: boolean
   onClose: () => void
-}
-
-const getMeetingStatusLabel = (status: BoardMeeting['status']): MeetingStatus => {
-  const labels: Record<BoardMeeting['status'], MeetingStatus> = {
-    'planerad': 'Planerad',
-    'genomförd': 'Genomförd',
-    'protokoll signerat': 'Signerat',
-  }
-  return labels[status]
 }
 
 export function BoardMeetingDetails({ meeting, open, onClose }: BoardMeetingDetailsProps) {
@@ -48,7 +39,7 @@ export function BoardMeetingDetails({ meeting, open, onClose }: BoardMeetingDeta
         <SheetHeader className="p-6 pb-4 border-b">
           <div className="flex items-center justify-between mb-2">
             <Badge variant="outline">Möte #{meeting.meetingNumber}</Badge>
-            <AppStatusBadge status={getMeetingStatusLabel(meeting.status)} />
+            <AppStatusBadge status={getBoardMeetingStatusLabel(meeting.status)} />
           </div>
           <SheetTitle className="text-2xl">Styrelsemöte</SheetTitle>
           <SheetDescription className="flex items-center gap-4 mt-2">

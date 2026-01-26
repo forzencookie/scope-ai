@@ -1,6 +1,5 @@
 import { AlertCircle, CheckCircle2, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { TRANSACTION_STATUSES } from "@/types"
 
 interface TransactionsStatusCardProps {
     pendingCount: number

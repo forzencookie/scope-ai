@@ -110,6 +110,7 @@ const getExpiringFonderTool = defineTool({
     },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const periodiseringsfonderTools: AITool<any, any>[] = [
     listPeriodiseringsfondsTools,
     createPeriodiseringsfondTool,

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SearchBar } from "@/components/ui/search-bar"
 import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
-import { SectionErrorBoundary } from "@/components/shared/error-boundary"
+import { ErrorBoundary, PageHeader } from "@/components/shared"
 
 import { useBenefitsLogic } from "./use-benefits-logic"
 import { BenefitSection } from "./benefit-section"
@@ -33,12 +33,10 @@ export function BenefitsTab() {
     if (error && !isLoading) {
         return (
             <div className="space-y-6 px-6 pb-6 max-w-6xl">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Förmåner</h2>
-                    <p className="text-muted-foreground">
-                        Hantera personalförmåner och skattefria avdrag.
-                    </p>
-                </div>
+                <PageHeader
+                    title="Förmåner"
+                    subtitle="Hantera personalförmåner och skattefria avdrag."
+                />
                 <DataErrorState
                     message={error}
                     onRetry={handleRetry}
@@ -51,20 +49,16 @@ export function BenefitsTab() {
         <SectionErrorBoundary sectionName="Förmåner">
             <div className="space-y-6 px-6 pb-6 max-w-6xl">
                 {/* Header */}
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Förmåner</h2>
-                        <p className="text-muted-foreground">
-                            Hantera personalförmåner och skattefria avdrag.
-                        </p>
-                    </div>
-                    <div className="flex items-center gap-2">
+                <PageHeader
+                    title="Förmåner"
+                    subtitle="Hantera personalförmåner och skattefria avdrag."
+                    actions={
                         <Button onClick={() => document.getElementById('benefits-search')?.focus()}>
                             <Plus className="h-4 w-4 mr-2" />
                             Registrera förmån
                         </Button>
-                    </div>
-                </div>
+                    }
+                />
 
                 {/* KPI Cards */}
                 {isLoading ? (

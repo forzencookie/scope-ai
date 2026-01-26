@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import { useState } from "react"
 import { useToast } from "@/components/ui/toast"
-import { cn } from "@/lib/utils"
+// import { cn } from "@/lib/utils"
 
 interface VerificationRow {
     account: string

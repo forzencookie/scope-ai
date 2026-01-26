@@ -9,7 +9,6 @@ import { motion, AnimatePresence } from "framer-motion"
 import { useAIDialogOptional } from "@/providers/ai-overlay-provider"
 import {
     MascotCookingScene,
-    MascotCelebrationScene,
     MascotCelebrationSceneStatic,
     MascotPlayingScene,
     MascotReadingScene,
@@ -251,6 +250,7 @@ function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProp
 
                 {/* Just the confirmation card */}
                 <ConfirmationCard
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     confirmation={output.confirmationRequired as any}
                     isLoading={false}
                     onConfirm={onAccept}

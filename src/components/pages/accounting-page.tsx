@@ -3,7 +3,7 @@
 import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
-import type { TransactionStats } from '@/services/transaction-service'
+import { transactionService, type TransactionStats } from '@/services/transaction-service'
 import {
     TooltipProvider,
 } from "@/components/ui/tooltip"
@@ -89,7 +89,7 @@ function AccountingPageContent() {
     // Use paginated hook
     const {
         transactions,
-        isLoading,
+        isLoading: _isLoading,
         error: fetchError,
         page,
         setPage,

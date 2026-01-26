@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/grid-table"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { Withdrawal, TYPE_CONFIG } from "@/types/withdrawal"
-import { ArrowUpRight, ArrowDownRight, Wallet, Calendar } from "lucide-react"
+import { Calendar } from "lucide-react"
 
 interface WithdrawalsGridProps {
   withdrawals: Withdrawal[]
@@ -38,7 +38,6 @@ export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
         <GridTableRows>
           {withdrawals.map((withdrawal) => {
             const config = TYPE_CONFIG[withdrawal.type]
-            const Icon = config.icon
 
             return (
               <GridTableRow key={withdrawal.id} minWidth="0">
@@ -58,6 +57,7 @@ export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
                 </div>
                 <div className="col-span-2">
                   <AppStatusBadge 
+                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                      status={config.label as any} 
                      className={config.color}
                   />

@@ -47,6 +47,7 @@ export async function POST(request: NextRequest) {
             success: true
         })
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
         console.error('Transcription error:', error)
         return NextResponse.json(

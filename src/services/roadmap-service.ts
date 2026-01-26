@@ -132,6 +132,7 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
                 // Assuming Type expects string for simplified usage here or exact match.
                 // If RoadmapStep equals DB Row, fine. If not, map.
                 // Safest to cast for now if structures are close.
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
             })) as any
         } as unknown as Roadmap
     } catch (error) {

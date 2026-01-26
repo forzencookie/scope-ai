@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { getSupabaseAdmin } from '@/lib/database/supabase'
 
-export async function DELETE(request: NextRequest) {
+export async function DELETE() {
     const supabase = getSupabaseAdmin();
 
     try {
@@ -10,6 +10,7 @@ export async function DELETE(request: NextRequest) {
         // regenerate types with: npx supabase gen types typescript --project-id <id> > src/types/database.types.ts
         await supabase.from('receipts').delete().neq('id', '0');
         await supabase.from('transactions').delete().neq('id', '0');
+        // eslint-disable-next-line @typescript-eslint/ban-ts-comment
         // @ts-ignore
         await supabase.from('verifications').delete().neq('id', '0');
 

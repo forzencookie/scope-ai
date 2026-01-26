@@ -9,6 +9,7 @@ import { Minus, Plus } from "lucide-react"
 
 interface BoardChangeFormProps {
     onBack: () => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     onSubmit: (data: any) => void
 }
 

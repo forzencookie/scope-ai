@@ -54,16 +54,6 @@ function formatOrgNr(orgnr: string): string {
     return orgnr.replace(/-/g, '')
 }
 
-/**
- * Encode string to ISO-8859-1 compatible format
- * Swedish characters: å=E5, ä=E4, ö=F6, Å=C5, Ä=C4, Ö=D6
- */
-function toISO88591(str: string): string {
-    // In browser context, we just return the string
-    // The actual encoding happens when creating the Blob
-    return str
-}
-
 // =============================================================================
 // INFO.SRU Generator
 // =============================================================================

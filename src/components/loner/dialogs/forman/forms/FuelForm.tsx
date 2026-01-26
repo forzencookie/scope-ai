@@ -1,11 +1,9 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import { formatCurrency } from "@/lib/utils"
 import { FormProps, FuelFormData } from "../types"
+import { EmployeeInput, PeriodInput, TextInputField, CurrencyInput, SubmitButton } from "./shared"
 
 export function FuelForm({ onAssign }: FormProps) {
     const [form, setForm] = useState<FuelFormData>({
@@ -30,45 +28,27 @@ export function FuelForm({ onAssign }: FormProps) {
 
     return (
         <div className="space-y-4">
-            <div className="space-y-2">
-                <Label>Anställd</Label>
-                <Input
-                    placeholder="Namn på anställd..."
-                    value={form.employeeName}
-                    onChange={e => setForm(f => ({ ...f, employeeName: e.target.value }))}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Månad</Label>
-                <Input
-                    type="month"
-                    value={form.month}
-                    onChange={e => setForm(f => ({ ...f, month: e.target.value }))}
-                />
-            </div>
+            <EmployeeInput
+                value={form.employeeName}
+                onChange={(v) => setForm(f => ({ ...f, employeeName: v }))}
+            />
+            <PeriodInput
+                value={form.month}
+                onChange={(v) => setForm(f => ({ ...f, month: v }))}
+            />
             <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-2">
-                    <Label>Antal liter</Label>
-                    <Input
-                        type="number"
-                        placeholder="0"
-                        value={form.liters}
-                        onChange={e => setForm(f => ({ ...f, liters: e.target.value }))}
-                    />
-                </div>
-                <div className="space-y-2">
-                    <Label>Pris/liter</Label>
-                    <div className="relative">
-                        <Input
-                            type="number"
-                            placeholder="0"
-                            value={form.pricePerLiter}
-                            onChange={e => setForm(f => ({ ...f, pricePerLiter: e.target.value }))}
-                            className="pr-10"
-                        />
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
-                    </div>
-                </div>
+                <TextInputField
+                    label="Antal liter"
+                    type="number"
+                    placeholder="0"
+                    value={form.liters}
+                    onChange={(v) => setForm(f => ({ ...f, liters: v }))}
+                />
+                <CurrencyInput
+                    label="Pris/liter"
+                    value={form.pricePerLiter}
+                    onChange={(v) => setForm(f => ({ ...f, pricePerLiter: v }))}
+                />
             </div>
             {form.liters && form.pricePerLiter && (
                 <div className="bg-muted/30 p-3 rounded-md text-sm">
@@ -76,9 +56,11 @@ export function FuelForm({ onAssign }: FormProps) {
                     <span className="font-medium">{formatCurrency(parseFloat(form.liters) * parseFloat(form.pricePerLiter) * 1.2)}</span>
                 </div>
             )}
-            <Button className="w-full" onClick={handleSubmit} disabled={!form.employeeName || !form.month || !form.liters || !form.pricePerLiter}>
-                Registrera
-            </Button>
+            <SubmitButton
+                label="Registrera"
+                onClick={handleSubmit}
+                disabled={!form.employeeName || !form.month || !form.liters || !form.pricePerLiter}
+            />
         </div>
     )
 }

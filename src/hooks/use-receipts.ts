@@ -1,7 +1,8 @@
 
-import { useState, useEffect, useMemo, useCallback } from "react"
+import { useState, useCallback } from "react"
 import { receiptService, type Receipt } from '@/services/receipt-service'
 import { useAsync } from "./use-async"
+import { useCachedQuery } from "./use-cached-query"
 
 export function useReceiptsPaginated(
     pageSize: number = 20,
@@ -79,10 +80,17 @@ export function useReceiptStats() {
         data: stats,
         isLoading,
         error,
-        refetch
-    } = useAsync(async () => {
-        return await receiptService.getStats()
-    }, { matchedCount: 0, unmatchedCount: 0, total: 0, totalAmount: 0 })
+        invalidate: refetch
+    } = useCachedQuery({
+        cacheKey: 'receipt-stats',
+        queryFn: () => receiptService.getStats(),
+        ttlMs: 60 * 1000, // 1 minute cache
+    })
 
-    return { stats, isLoading, error, refetch }
+    return { 
+        stats: stats ?? { matchedCount: 0, unmatchedCount: 0, total: 0, totalAmount: 0 }, 
+        isLoading, 
+        error, 
+        refetch 
+    }
 }

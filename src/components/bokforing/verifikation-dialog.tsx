@@ -161,6 +161,7 @@ export function VerifikationDialog({
                     <DialogTitle>Ny verifikation</DialogTitle>
                 </DialogHeader>
 
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                     <TabsList className="grid w-full grid-cols-2 mb-4">
                         <TabsTrigger value="manual" className="gap-2">

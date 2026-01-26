@@ -1,7 +1,6 @@
 "use client"
 
 import {
-    Calendar,
     Send,
     Wallet,
     Users,
@@ -35,7 +34,6 @@ export function AGIDetailsDialog({
     report,
     open,
     onOpenChange,
-    onSend
 }: AGIDetailsDialogProps) {
     const toast = useToast()
 

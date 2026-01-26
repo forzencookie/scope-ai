@@ -1,11 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { formatCurrency } from "@/lib/utils"
 import { AllowanceFormData, FormProps } from "../types"
+import { EmployeeInput, DateInput, CurrencyInput, SubmitButton } from "./shared"
 
 export function AllowanceForm({ benefit, onAssign }: FormProps) {
     const [form, setForm] = useState<AllowanceFormData>({
@@ -24,22 +23,15 @@ export function AllowanceForm({ benefit, onAssign }: FormProps) {
 
     return (
         <div className="space-y-4">
-            <div className="space-y-2">
-                <Label>Anställd</Label>
-                <Input
-                    placeholder="Namn på anställd..."
-                    value={form.employeeName}
-                    onChange={e => setForm(f => ({ ...f, employeeName: e.target.value }))}
-                />
-            </div>
-            <div className="space-y-2">
-                <Label>Datum</Label>
-                <Input
-                    type="date"
-                    value={form.date}
-                    onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-                />
-            </div>
+            <EmployeeInput
+                value={form.employeeName}
+                onChange={(v) => setForm(f => ({ ...f, employeeName: v }))}
+            />
+            <DateInput
+                label="Datum"
+                value={form.date}
+                onChange={(v) => setForm(f => ({ ...f, date: v }))}
+            />
             <div className="space-y-2">
                 <div className="flex items-center justify-between">
                     <Label>Belopp</Label>
@@ -49,20 +41,17 @@ export function AllowanceForm({ benefit, onAssign }: FormProps) {
                         </span>
                     )}
                 </div>
-                <div className="relative">
-                    <Input
-                        type="number"
-                        placeholder="0"
-                        value={form.amount}
-                        onChange={e => setForm(f => ({ ...f, amount: e.target.value }))}
-                        className="pr-10"
-                    />
-                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
-                </div>
+                <CurrencyInput
+                    label=""
+                    value={form.amount}
+                    onChange={(v) => setForm(f => ({ ...f, amount: v }))}
+                />
             </div>
-            <Button className="w-full" onClick={handleSubmit} disabled={!form.employeeName || !form.amount}>
-                Registrera
-            </Button>
+            <SubmitButton
+                label="Registrera"
+                onClick={handleSubmit}
+                disabled={!form.employeeName || !form.amount}
+            />
         </div>
     )
 }

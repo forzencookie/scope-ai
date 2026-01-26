@@ -7,17 +7,10 @@ import {
   Plus
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { FilterButton } from "@/components/ui/filter-button"
 import { FilterTabs } from "@/components/ui/filter-tabs"
 import { SearchBar } from "@/components/ui/search-bar"
 import { Card } from "@/components/ui/card"
+import { PageHeader } from "@/components/shared"
 
 // Types & Hooks
 import { BoardMeeting } from "@/types/board-meeting"
@@ -146,6 +139,18 @@ export function Styrelseprotokoll() {
 
   return (
     <div className="space-y-6">
+      {/* Page Header */}
+      <PageHeader
+        title="Styrelseprotokoll"
+        subtitle="Hantera och arkivera styrelseprotokoll för ditt bolag."
+        actions={
+          <Button onClick={() => setShowCreateDialog(true)} size="sm">
+            <Plus className="mr-2 h-4 w-4" />
+            Nytt möte
+          </Button>
+        }
+      />
+
       {/* Bento Grid Header */}
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         {/* Hero Card: Next/Latest Meeting */}

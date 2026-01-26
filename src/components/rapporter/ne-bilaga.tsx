@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
+// import { useRouter } from "next/navigation"
 import {
     Calendar,
     TrendingUp,
@@ -13,13 +13,11 @@ import {
     Calculator,
     Info,
 } from "lucide-react"
-import { cn, formatCurrency } from "@/lib/utils"
+import { formatCurrency, cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/toast"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
 import {
     Tooltip,
     TooltipContent,
@@ -35,6 +33,7 @@ import { SectionCard } from "@/components/ui/section-card"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)
@@ -45,18 +44,10 @@ import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 // R15-R24: Balance sheet adjustments
 // R25-R45: Tax adjustments and final result
 
-interface NERow {
-    id: string       // R1, R2, etc.
-    label: string
-    value: number
-    isTotal?: boolean
-    isHeader?: boolean
-    indent?: boolean
-}
 
 // Mock calculated data - in production this would come from verifications/ledger
 function useNECalculation() {
-    const { verifications } = useVerifications()
+    const { verifications: _ } = useVerifications()
 
     // Calculate from verifications (simplified - would use proper account mappings)
     return useMemo(() => {
@@ -119,7 +110,7 @@ function useNECalculation() {
                 taxableResult: slutligtResultat,
             }
         }
-    }, [verifications])
+    }, [])
 }
 
 // =============================================================================
@@ -127,7 +118,7 @@ function useNECalculation() {
 // =============================================================================
 
 export function NEBilagaContent() {
-    const router = useRouter()
+    // const router = useRouter()
     const navigateToAI = useNavigateToAIChat()
     const { addToast: toast } = useToast()
     const neData = useNECalculation()
@@ -158,17 +149,32 @@ export function NEBilagaContent() {
         })
     }
 
-    const handleExport = () => {
+    const handleExport = async () => {
         toast({
             title: "Exporterar NE-bilaga",
-            description: "NE-bilaga laddas ner som PDF...",
+            description: "Förbereder PDF...",
         })
+        try {
+            await downloadElementAsPDF({
+                fileName: `NE-bilaga-2024`,
+                elementId: 'ne-bilaga-content'
+            })
+            toast({
+                title: "Klart",
+                description: "NE-bilaga har laddats ner som PDF.",
+            })
+        } catch {
+            toast({
+                title: "Fel",
+                description: "Kunde inte skapa PDF. Försök igen.",
+            })
+        }
     }
 
     return (
         <TooltipProvider>
             <main className="flex-1 flex flex-col p-4 md:p-6">
-                <div className="w-full space-y-4 md:space-y-6">
+                <div id="ne-bilaga-content" className="w-full space-y-4 md:space-y-6 bg-background">
                     {/* Page Heading */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
                         <div>

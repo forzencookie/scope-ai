@@ -10,11 +10,13 @@ import { GenericForm } from "./generic-form"
 interface ConfigureStepProps {
     actionType: CorporateActionType
     onBack: () => void
-    onContinue: (data: any) => void
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    onSubmit: (data: any) => void
     shareholders: Shareholder[]
 }
 
-export function ConfigureStep({ actionType, onBack, onContinue, shareholders }: ConfigureStepProps) {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function ConfigureStep({ actionType, onBack, onContinue, shareholders }: ConfigureStepProps & { onContinue: (data: any) => void }) {
     if (actionType === 'board_change') {
         return <BoardChangeForm onBack={onBack} onSubmit={onContinue} />
     }

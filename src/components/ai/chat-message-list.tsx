@@ -19,6 +19,7 @@ import type { Message } from "@/lib/chat-types"
 import { useState } from "react"
 
 // Attachment preview with image error fallback
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 function AttachmentPreview({ attachment }: { attachment: any }) {
     const [imageError, setImageError] = useState(false)
     const isImage = attachment.type?.startsWith('image/')
@@ -40,6 +41,7 @@ function AttachmentPreview({ attachment }: { attachment: any }) {
         <div className="flex items-center gap-2 bg-muted/60 rounded-lg p-2 pr-3 text-xs max-w-[200px]">
             {showImage ? (
                 <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img
                         src={imageSrc}
                         alt={attachment.name || 'Bild'}
@@ -80,7 +82,6 @@ export function ChatMessageList({
     onRetry,
     onConfirm,
     onCancelConfirmation,
-    onRegenerate,
 }: ChatMessageListProps) {
     // Only used to check if a message is last
     const lastMessageId = messages.length > 0 ? messages[messages.length - 1].id : null
@@ -118,6 +119,7 @@ export function ChatMessageList({
                 {message.confirmationRequired && (
                     <div className="md:hidden">
                         <ConfirmationCard
+                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
                             confirmation={message.confirmationRequired as any}
                             isLoading={isLoading && isLast}
                             onConfirm={() => onConfirm(message.confirmationRequired!.id)}
@@ -141,10 +143,12 @@ export function ChatMessageList({
                                 tasks={message.display.data.tasks || []}
                             />
                         )}
+                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                         {message.display.type === ('BenefitsTable' as any) && (
                             <div className="rounded-lg border border-border p-4 bg-muted/30">
                                 <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
                                 <ul className="space-y-2">
+                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                     {(message.display.data.benefits || []).map((b: any) => (
                                         <li key={b.id || Math.random()} className="text-xs flex justify-between items-center">
                                             <span>{b.name}</span>
@@ -225,6 +229,7 @@ export function ChatMessageList({
                             {/* Attachments */}
                             {message.attachments && message.attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 justify-end">
+                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                     {message.attachments.map((att: any, i: number) => (
                                         <AttachmentPreview key={i} attachment={att} />
                                     ))}

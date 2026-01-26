@@ -4,6 +4,7 @@ import { TaxSettingsCard } from "./tax-settings-card"
 import { CalculationResult } from "./calculation-result"
 import { MonthlyTrend } from "./monthly-trend"
 import { useTaxCalculator } from "./use-tax-calculator"
+import { PageHeader } from "@/components/shared"
 
 export function EgenavgifterCalculator() {
     const {
@@ -20,6 +21,11 @@ export function EgenavgifterCalculator() {
 
     return (
         <div className="space-y-6">
+             <PageHeader
+                 title="Egenavgifter"
+                 subtitle="Beräkna egenavgifter och sociala avgifter för enskild firma."
+             />
+
              <div className="grid gap-6 md:grid-cols-2">
                 <div className="space-y-6">
                       <TaxSettingsCard

@@ -237,7 +237,7 @@ function findRouteByIntent(intent: string): RouteInfo | null {
     }
 
     // Second, search through all routes for alias matches
-    for (const [key, route] of Object.entries(ROUTES)) {
+    for (const [, route] of Object.entries(ROUTES)) {
         // Check label match
         if (route.label.toLowerCase() === normalizedIntent) {
             return route

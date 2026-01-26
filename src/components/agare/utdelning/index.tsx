@@ -1,5 +1,6 @@
 "use client"
 
+import { PageHeader } from "@/components/shared"
 import { useDividendLogic } from "./use-dividend-logic"
 import { UtdelningStats } from "./utdelning-stats"
 import { RulesCard } from "./rules-card"
@@ -11,16 +12,10 @@ export function UtdelningContent() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-2xl font-bold tracking-tight">Utdelning</h2>
-                        <p className="text-muted-foreground mt-1">
-                            Hantera utdelning och K10-underlag.
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <PageHeader
+                title="Utdelning"
+                subtitle="Hantera utdelning och K10-underlag."
+            />
 
             <UtdelningStats stats={stats} />
             

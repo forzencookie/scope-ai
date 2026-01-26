@@ -90,7 +90,8 @@ function useNavigationHistory() {
     // Track pathname changes
     useEffect(() => {
         navigationStore.push(pathname)
-        updateState()
+        // Defer state update to avoid synchronous cascading renders
+        setTimeout(() => updateState(), 0)
     }, [pathname, updateState])
 
     const goBack = useCallback(() => {
@@ -114,7 +115,7 @@ function useNavigationHistory() {
     return { canGoBack, canGoForward, goBack, goForward }
 }
 
-function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
+function DashboardToolbar({ sidebarMode: _sidebarMode, setSidebarMode: _setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
     const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()

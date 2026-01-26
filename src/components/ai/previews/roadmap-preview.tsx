@@ -1,8 +1,7 @@
 
-import { Check, Map, ArrowRight } from "lucide-react"
+import { Map, ArrowRight } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 
 interface RoadmapPreviewProps {
     data: {
@@ -20,6 +19,7 @@ interface RoadmapPreviewProps {
 }
 
 export function RoadmapPreview({ data, onConfirm }: RoadmapPreviewProps) {
+    if (!onConfirm) { console.log("No confirm action provided") } 
     return (
         <Card className="w-full max-w-md overflow-hidden border-indigo-100 dark:border-indigo-900 bg-background/95 backdrop-blur-sm shadow-sm ring-1 ring-indigo-100/20">
             {/* Header */}

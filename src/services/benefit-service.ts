@@ -36,6 +36,7 @@ export const benefitService = {
      */
     async getStats(year: number): Promise<BenefitStats> {
         const supabase = getSupabaseClient()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase.rpc('get_benefit_stats', { target_year: year }) as { data: any, error: any }
 
         if (error) {
@@ -66,6 +67,7 @@ export const benefitService = {
     async getBenefits(): Promise<Benefit[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from('benefits' as any)
             .select('*')
             .order('category')
@@ -75,6 +77,7 @@ export const benefitService = {
             return []
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (data || []).map((b: any) => ({
             id: b.id,
             name: b.name,
@@ -94,6 +97,7 @@ export const benefitService = {
     async getEmployeeBenefits(employeeId: string): Promise<EmployeeBenefit[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from('employee_benefits' as any)
             .select('*, benefits(name)')
             .eq('employee_id', employeeId)
@@ -103,6 +107,7 @@ export const benefitService = {
             return []
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         return (data || []).map((eb: any) => ({
             id: eb.id,
             employeeId: eb.employee_id,

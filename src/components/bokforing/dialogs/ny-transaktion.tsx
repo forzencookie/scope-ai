@@ -98,7 +98,7 @@ export function NewTransactionDialog({ open, onOpenChange }: NewTransactionDialo
             })
 
             if (res.ok) {
-                const data = await res.json()
+                await res.json()
                 // Success - close dialog and refresh
                 onOpenChange(false)
                 resetForm()

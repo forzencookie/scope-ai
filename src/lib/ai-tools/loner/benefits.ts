@@ -20,6 +20,7 @@ export interface GetBenefitsParams {
     category?: 'tax_free' | 'taxable' | 'deduction'
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
     name: 'get_available_benefits',
     description: 'Hämta tillgängliga personalförmåner (t.ex. friskvård, bilförmån).',
@@ -43,6 +44,7 @@ export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
             data: filtered,
             message: `Hittade ${filtered.length} tillgängliga förmåner.`,
             display: {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 component: 'BenefitsTable' as any,
                 props: { benefits: filtered },
                 title: 'Tillgängliga Förmåner',

@@ -125,7 +125,7 @@ export function CompanyTypeSelector({
 
 // Compact inline selector for headers/toolbars
 export function CompanyTypeBadge() {
-  const { companyType, companyTypeName, companyTypeFullName } = useCompany()
+  const { companyType, companyTypeName } = useCompany()
   const Icon = companyTypeIcons[companyType]
 
   return (

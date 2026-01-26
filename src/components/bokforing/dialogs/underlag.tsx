@@ -33,6 +33,7 @@ import { AiProcessingState } from "@/components/shared"
 import { type Receipt } from "@/data/receipts"
 import { FormField, FormFieldRow } from "@/components/ui/form-field"
 import { useFileCapture } from "@/hooks/use-file-capture"
+import { useAiExtraction } from "@/hooks/use-ai-extraction"
 
 // Category options for select
 const CATEGORY_OPTIONS = [
@@ -43,9 +44,6 @@ const CATEGORY_OPTIONS = [
     { value: "Representation", label: "Representation" },
     { value: "IT-utrustning", label: "IT-utrustning" },
 ]
-
-// AI processing states
-type AiState = 'idle' | 'processing' | 'preview' | 'error'
 
 // Extended receipt type for form handling
 interface UnderlagFormState {
@@ -64,7 +62,7 @@ interface UnderlagDialogProps {
     onOpenChange: (open: boolean) => void
     mode: "create" | "edit" | "view"
     receipt?: Receipt
-    onSave?: (data: UnderlagFormState) => void
+    onSave?: (data: UnderlagFormState) => void | Promise<void>
 }
 
 const initialFormState: UnderlagFormState = {
@@ -85,48 +83,33 @@ export function UnderlagDialog({
     onSave
 }: UnderlagDialogProps) {
     const [activeTab, setActiveTab] = useState<"manual" | "ai">("manual")
-    const [aiState, setAiState] = useState<AiState>('idle')
-    const [errorMessage, setErrorMessage] = useState<string | null>(null)
-    const [formState, setFormState] = useState<UnderlagFormState>(initialFormState)
+    const [isSaving, setIsSaving] = useState(false)
 
-    // Process file with AI
-    const processWithAI = async (file: File) => {
-        setAiState('processing')
-        setErrorMessage(null)
-
-        try {
-            const formData = new FormData()
-            formData.append('file', file)
-
-            const response = await fetch('/api/ai/extract-receipt', {
-                method: 'POST',
-                body: formData
-            })
-
-            const result = await response.json()
-
-            if (result.success && result.data) {
-                const { supplier, date, amount, moms, category } = result.data
-                setFormState(prev => ({
-                    ...prev,
-                    supplier: supplier?.value || supplier || prev.supplier,
-                    date: date?.value || date || prev.date,
-                    amount: `${amount?.value || amount} kr` || prev.amount,
-                    moms: moms ? `${moms?.value || moms} kr` : prev.moms,
-                    category: category?.value || category || prev.category,
-                    status: RECEIPT_STATUSES.REVIEW_NEEDED
-                }))
-                setAiState('preview')
-                if (result.warning) setErrorMessage(result.warning)
-            } else {
-                throw new Error(result.error || 'Failed to extract data')
+    // Use AI extraction hook for processing receipts
+    const {
+        aiState,
+        errorMessage,
+        formState,
+        setFormState,
+        processWithAI,
+        reset: resetAiState,
+        retry: retryAi,
+        switchToManual
+    } = useAiExtraction<UnderlagFormState>({
+        apiEndpoint: '/api/ai/extract-receipt',
+        initialState: initialFormState,
+        transformResponse: (data) => {
+            const { supplier, date, amount, moms, category } = data
+            return {
+                supplier: supplier?.value || supplier || '',
+                date: date?.value || date || new Date().toISOString().split('T')[0],
+                amount: `${amount?.value || amount} kr` || '',
+                moms: moms ? `${moms?.value || moms} kr` : '',
+                category: category?.value || category || 'Övriga kostnader',
+                status: RECEIPT_STATUSES.REVIEW_NEEDED
             }
-        } catch (error) {
-            console.error('AI extraction error:', error)
-            setErrorMessage('Kunde inte tolka kvittot. Försök igen eller använd manuell inmatning.')
-            setAiState('error')
         }
-    }
+    })
 
     // Use shared file capture hook
     const fileCapture = useFileCapture({
@@ -153,31 +136,42 @@ export function UnderlagDialog({
                     fileName: receipt.attachment
                 })
             } else {
-                setFormState(initialFormState)
-                setAiState('idle')
-                setErrorMessage(null)
+                resetAiState()
                 fileCapture.clearFile()
             }
             setActiveTab("manual")
         }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, receipt, mode])
 
-    const handleAcceptAi = () => {
-        onSave?.({ ...formState, status: RECEIPT_STATUSES.VERIFIED })
-        onOpenChange(false)
+    const handleAcceptAi = async () => {
+        if (isSaving) return
+        setIsSaving(true)
+        try {
+            await onSave?.({ ...formState, status: RECEIPT_STATUSES.VERIFIED })
+            onOpenChange(false)
+        } finally {
+            setIsSaving(false)
+        }
     }
 
     const handleEditAi = () => {
         setActiveTab("manual")
-        setAiState('idle')
+        switchToManual()
     }
 
-    const handleSave = () => {
-        onSave?.({ ...formState, status: RECEIPT_STATUSES.VERIFIED })
-        onOpenChange(false)
+    const handleSave = async () => {
+        if (isSaving) return
+        setIsSaving(true)
+        try {
+            await onSave?.({ ...formState, status: RECEIPT_STATUSES.VERIFIED })
+            onOpenChange(false)
+        } finally {
+            setIsSaving(false)
+        }
     }
 
-    const handleRetry = () => formState.file && processWithAI(formState.file)
+    const handleRetry = () => retryAi()
 
     const updateField = (field: keyof UnderlagFormState, value: string) => {
         setFormState(prev => ({ ...prev, [field]: value }))
@@ -198,6 +192,7 @@ export function UnderlagDialog({
                 {/* Hidden camera input */}
                 <input {...fileCapture.cameraInputProps} ref={fileCapture.cameraInputRef} />
 
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                 <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
                     {!isViewMode && (
                         <TabsList className="grid w-full grid-cols-2 mb-4">
@@ -225,6 +220,7 @@ export function UnderlagDialog({
                             <div className="space-y-2">
                                 {fileCapture.imagePreview && (
                                     <div className="relative rounded-lg overflow-hidden border bg-muted/30">
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={fileCapture.imagePreview}
                                             alt="Receipt preview"
@@ -380,6 +376,7 @@ export function UnderlagDialog({
                                 <div className="flex gap-4">
                                     {fileCapture.imagePreview && (
                                         <div className="w-24 h-32 rounded-lg overflow-hidden border bg-muted/30 shrink-0">
+                                            {/* eslint-disable-next-line @next/next/no-img-element */}
                                             <img src={fileCapture.imagePreview} alt="Receipt" className="w-full h-full object-cover" />
                                         </div>
                                     )}
@@ -412,13 +409,13 @@ export function UnderlagDialog({
                                 </div>
 
                                 <div className="flex gap-3 pt-2">
-                                    <Button variant="outline" className="flex-1 gap-2" onClick={handleEditAi}>
+                                    <Button variant="outline" className="flex-1 gap-2" onClick={handleEditAi} disabled={isSaving}>
                                         <Pencil className="h-4 w-4" />
                                         Redigera
                                     </Button>
-                                    <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700" onClick={handleAcceptAi}>
+                                    <Button className="flex-1 gap-2 bg-green-600 hover:bg-green-700" onClick={handleAcceptAi} disabled={isSaving}>
                                         <Check className="h-4 w-4" />
-                                        Godkänn
+                                        {isSaving ? "Sparar..." : "Godkänn"}
                                     </Button>
                                 </div>
                             </div>
@@ -430,11 +427,11 @@ export function UnderlagDialog({
                     <DialogFooter className="mt-4">
                         {!isViewMode ? (
                             <>
-                                <Button variant="outline" onClick={() => onOpenChange(false)}>
+                                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
                                     Avbryt
                                 </Button>
-                                <Button onClick={handleSave}>
-                                    Spara underlag
+                                <Button onClick={handleSave} disabled={isSaving}>
+                                    {isSaving ? "Sparar..." : "Spara underlag"}
                                 </Button>
                             </>
                         ) : (

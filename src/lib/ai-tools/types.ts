@@ -1,10 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * AI Tools Type System
  * 
  * Core types for the AI tool layer that gives the AI Workspace
  * full control over the dashboard.
  */
+
+import { ZodTypeAny } from 'zod'
 
 // Use OpenAI-compatible parameter type instead of JSONSchema7
 // This matches OpenAI's FunctionParameters type
@@ -17,12 +18,12 @@ export type FunctionParameters = {
         items?: { type: string }
     }>
     required?: string[]
-} | any // Allow Zod schemas or other validators
+} | ZodTypeAny // Allow Zod schemas
 
 export interface InteractionContext {
     userId: string
     companyId: string | null
-    [key: string]: any
+    [key: string]: unknown
 }
 
 // =============================================================================
@@ -274,7 +275,7 @@ export function toolToGoogleFunction(tool: AITool): {
     description: string
     parameters: {
         type: string
-        properties: Record<string, any>
+        properties: Record<string, unknown>
         required?: string[]
     }
 } {
@@ -290,8 +291,8 @@ export function toolToGoogleFunction(tool: AITool): {
         return 'STRING' // Default
     }
 
-    const mapProperties = (props: Record<string, any>): Record<string, any> => {
-        const result: Record<string, any> = {}
+    const mapProperties = (props: Record<string, { type: string; description?: string; enum?: string[]; items?: { type: string }; properties?: Record<string, unknown> }>): Record<string, unknown> => {
+        const result: Record<string, unknown> = {}
         for (const [key, value] of Object.entries(props)) {
             result[key] = {
                 type: mapType(value.type),
@@ -299,10 +300,10 @@ export function toolToGoogleFunction(tool: AITool): {
                 enum: value.enum,
             }
             if (value.items) {
-                result[key].items = { type: mapType(value.items.type) }
+                (result[key] as Record<string, unknown>).items = { type: mapType(value.items.type) }
             }
             if (value.properties) {
-                result[key].properties = mapProperties(value.properties)
+                (result[key] as Record<string, unknown>).properties = mapProperties(value.properties as Record<string, { type: string; description?: string; enum?: string[]; items?: { type: string }; properties?: Record<string, unknown> }>)
             }
         }
         return result

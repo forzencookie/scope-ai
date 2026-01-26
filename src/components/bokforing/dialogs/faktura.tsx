@@ -133,6 +133,9 @@ export function InvoiceCreateDialog({
     }
 
     const handleSubmit = async () => {
+        // Prevent duplicate submissions
+        if (isCreating) return
+
         // Validate form
         const errors: InvoiceFormErrors = {}
 

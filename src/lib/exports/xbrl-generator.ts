@@ -27,7 +27,7 @@ export interface XBRLParams {
 }
 
 export function generateXBRL(data: XBRLParams): string {
-    const docDate = new Date().toISOString().split('T')[0]
+    // const docDate = new Date().toISOString().split('T')[0]
 
     // This is a simplified wrapper. Real XBRL requires massive taxonomy imports.
     return `<?xml version="1.0" encoding="UTF-8"?>

@@ -10,6 +10,7 @@ import { defineTool } from '../registry'
 // Partner Tools
 // =============================================================================
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getPartnersTool = defineTool<Record<string, never>, any>({
     name: 'get_partners',
     description: 'Hämta alla delägare i handelsbolag eller kommanditbolag.',
@@ -25,8 +26,10 @@ export const getPartnersTool = defineTool<Record<string, never>, any>({
                 return {
                     success: true,
                     data: data,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     message: `Hittade ${(data as any).partnerCount || 0} delägare.`,
                     display: {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         component: 'PartnersGrid' as any,
                         props: { stats: data },
                         title: 'Delägare',
@@ -42,6 +45,7 @@ export const getPartnersTool = defineTool<Record<string, never>, any>({
     },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getMembersTool = defineTool<Record<string, never>, any>({
     name: 'get_members',
     description: 'Hämta alla medlemmar i ekonomisk förening.',
@@ -57,8 +61,10 @@ export const getMembersTool = defineTool<Record<string, never>, any>({
                 return {
                     success: true,
                     data: data,
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     message: `Föreningen har ${(data as any).totalMembers || 0} medlemmar, varav ${(data as any).activeMembers || 0} aktiva.`,
                     display: {
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         component: 'MemberList' as any,
                         props: { stats: data },
                         title: 'Medlemsregister',

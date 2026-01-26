@@ -184,8 +184,6 @@ export function DonutMini({
         })
     }, [data, size, strokeWidth])
 
-    const total = data.reduce((sum, d) => sum + safeNumber(d.value), 0)
-
     if (segments.length === 0) {
         return (
             <MiniChartCard title={title} description={description} className={className}>

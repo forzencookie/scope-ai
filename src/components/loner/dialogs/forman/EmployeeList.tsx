@@ -38,6 +38,7 @@ export function EmployeeList({ benefit, assignedEmployees, onDelete }: EmployeeL
                 ) : (
                     employeesWithBenefit.map((employee, i) => {
                         const remaining = getRemainingAllowance(employee.employeeName)
+                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
                         const metadata = (employee as unknown as { metadata: Record<string, any> }).metadata || {}
 
                         return (

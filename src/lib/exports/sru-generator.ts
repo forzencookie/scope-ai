@@ -71,7 +71,7 @@ export class SRUGenerator {
         this.addLine(`#IDENTITET ${orgNumber.replace(/\D/g, '')} ${period}`)
 
         // Add info fields (usually generic for all forms)
-        const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
+        // const date = new Date().toISOString().slice(0, 10).replace(/-/g, '')
         this.addLine(`#NAMN ${fields['contactName'] || ''}`)
 
         // Add specific fields

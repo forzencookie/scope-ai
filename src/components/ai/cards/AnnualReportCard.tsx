@@ -7,6 +7,7 @@ import { downloadTextFile } from "./utils"
 
 const AnnualReportPreview = dynamic(() => import("../previews/documents/annual-report-preview").then(m => ({ default: m.AnnualReportPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function AnnualReportCard(props: any) {
     return (
         <AnnualReportPreview

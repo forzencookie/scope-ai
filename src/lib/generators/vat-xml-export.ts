@@ -31,28 +31,6 @@ function periodToSkatteverketFormat(period: string): string {
 }
 
 /**
- * Format date to ISO format for XML
- */
-function formatDateISO(dateStr: string): string {
-    // Input might be "2024-02-12" or "12 feb 2025"
-    if (dateStr.includes("-")) return dateStr
-
-    // Parse Swedish date format
-    const months: Record<string, string> = {
-        jan: "01", feb: "02", mar: "03", apr: "04",
-        maj: "05", jun: "06", jul: "07", aug: "08",
-        sep: "09", okt: "10", nov: "11", dec: "12"
-    }
-    const parts = dateStr.split(" ")
-    if (parts.length === 3) {
-        const [day, month, year] = parts
-        const m = months[month.toLowerCase()] || "01"
-        return `${year}-${m}-${day.padStart(2, "0")}`
-    }
-    return dateStr
-}
-
-/**
  * Escape XML special characters
  */
 function escapeXml(str: string): string {

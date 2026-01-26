@@ -30,7 +30,6 @@ export function PartnersStats({ stats, enrichedPartners, totalWithdrawals }: Par
             <div className="h-8 rounded-lg bg-muted/50 overflow-hidden flex mb-3">
               {enrichedPartners.map((partner, index) => {
                 const percentage = stats.totalCapital > 0
-                  // @ts-ignore - currentCapitalBalance might be added by enrichment
                   ? (partner.currentCapitalBalance / stats.totalCapital) * 100
                   : 0
                 const colors = [
@@ -44,9 +43,7 @@ export function PartnersStats({ stats, enrichedPartners, totalWithdrawals }: Par
                   <div
                     key={partner.id}
                     className={cn("h-full transition-all relative group", colors[index % colors.length])}
-                    // @ts-ignore
                     style={{ width: `${Math.max(percentage, 0)}%` }}
-                    // @ts-ignore
                     title={`${partner.name}: ${formatCurrency(partner.currentCapitalBalance)}`}
                   >
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
@@ -73,7 +70,6 @@ export function PartnersStats({ stats, enrichedPartners, totalWithdrawals }: Par
                     <div className={cn("h-2.5 w-2.5 rounded-full", colors[index % colors.length])} />
                     <span className="text-sm">{partner.name}</span>
                     <span className="text-sm font-medium tabular-nums">
-                        {/* @ts-ignore */}
                       {formatCurrency(partner.currentCapitalBalance)}
                     </span>
                   </div>

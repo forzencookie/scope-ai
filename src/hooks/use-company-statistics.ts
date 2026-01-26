@@ -4,7 +4,9 @@ import { Shield, Droplets, Scale, Percent, Users, Building2, Package, CreditCard
 
 export function useCompanyStatistics() {
     const [isLoading, setIsLoading] = useState(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [monthlyFlow, setMonthlyFlow] = useState<any[]>([])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [dashboardCounts, setDashboardCounts] = useState<any>({
         transactions: { total: 0, unbooked: 0 },
         invoices: { sent: 0, overdue: 0, totalValue: 0 }
@@ -14,6 +16,7 @@ export function useCompanyStatistics() {
     // But we can fetch them via RPC internally instead of full hook if we want to isolate
     // Or just fetch the minimal 'totals' needed. 
     // For now, let's fetch account balances via RPC to keep it efficient (already implemented in Phase 2.1)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [accountBalances, setAccountBalances] = useState<any[]>([])
 
     useEffect(() => {

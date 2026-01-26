@@ -282,6 +282,7 @@ export function ChatInput({
                                         }}
                                         className="relative w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer z-10"
                                     >
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
                                         <img
                                             src={url}
                                             alt={file.name}

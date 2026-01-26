@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react"
 import { motion, AnimatePresence, useInView } from "framer-motion"
-import { ArrowRight, Paperclip, Mic, AtSign, FileText, Pencil, X, Check } from "lucide-react"
+import { ArrowRight, Paperclip, Mic, AtSign, FileText, X, Check } from "lucide-react"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 import { ScaledPreview, Cursor } from "./shared"
 

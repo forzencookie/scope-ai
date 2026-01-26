@@ -14,7 +14,7 @@ export const registerEmployeeTool: AITool = {
         salary: z.number().describe("Monthly salary in SEK"),
     }),
 
-    execute: async (params: unknown, context: InteractionContext) => {
+    execute: async (params: unknown, _context: InteractionContext) => {
         const { name, role, email, salary } = params as { name: string, role: string, email: string, salary: number }
         // We don't save immediately. We return a preview.
         // The preview component will handle the actual saving via API.

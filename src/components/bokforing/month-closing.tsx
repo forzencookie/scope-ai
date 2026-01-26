@@ -7,8 +7,9 @@ import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Badge } from "@/components/ui/badge"
 import { Label } from "@/components/ui/label"
+import { PageHeader } from "@/components/shared"
 import { cn } from "@/lib/utils"
-import { Lock, Unlock, CheckCircle2, AlertTriangle, Calendar, FileCheck } from "lucide-react"
+import { Lock, Unlock, FileCheck } from "lucide-react"
 
 export function MonthClosing() {
     const { getPeriod, lockPeriod, unlockPeriod, toggleCheck, getVerificationStats } = useMonthClosing()
@@ -24,12 +25,10 @@ export function MonthClosing() {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col gap-4">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Månadsavslut</h2>
-                    <p className="text-muted-foreground">Stäm av, kontrollera och lås perioder.</p>
-                </div>
-            </div>
+            <PageHeader
+                title="Månadsavslut"
+                subtitle="Stäm av, kontrollera och lås perioder."
+            />
 
             {/* Timeline */}
             <div className="flex items-center gap-2 overflow-x-auto pb-4">

@@ -4,7 +4,7 @@
  * All date logic lives here to maintain DRY principle.
  */
 
-import { format, addMonths, subMonths, startOfQuarter, endOfQuarter, getMonth, getYear, setMonth, setDate, isBefore, isAfter, parseISO } from 'date-fns'
+import { format, addMonths, subMonths, startOfQuarter, endOfQuarter, getMonth, getYear, setDate, isBefore } from 'date-fns'
 import { sv } from 'date-fns/locale'
 
 // =============================================================================

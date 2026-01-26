@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
             .eq('id', auth.userId)
             .single()
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const customerId = (profile as any)?.stripe_customer_id
 
         if (!customerId) {

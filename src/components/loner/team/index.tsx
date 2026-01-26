@@ -2,6 +2,7 @@
 
 import { Button } from "@/components/ui/button"
 import { Users, Plus } from "lucide-react"
+import { PageHeader } from "@/components/shared"
 import { useTeamLogic } from "./use-team-logic"
 import { EmployeeCard } from "./employee-card"
 import { AddEmployeeDialog, ReportDialog } from "./dialogs"
@@ -38,16 +39,16 @@ export default function TeamTab() {
 
     return (
         <div className="space-y-4 md:space-y-6">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Team & Rapportering</h2>
-                    <p className="text-muted-foreground">Hantera anställda, utlägg och milersättning.</p>
-                </div>
-                <Button onClick={() => setNewEmployeeDialogOpen(true)} className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 mr-2" />
-                    <span className="sm:inline">Ny anställd</span>
-                </Button>
-            </div>
+            <PageHeader
+                title="Team & Rapportering"
+                subtitle="Hantera anställda, utlägg och milersättning."
+                actions={
+                    <Button onClick={() => setNewEmployeeDialogOpen(true)} className="w-full sm:w-auto">
+                        <Plus className="h-4 w-4 mr-2" />
+                        <span className="sm:inline">Ny anställd</span>
+                    </Button>
+                }
+            />
 
             {/* Empty State */}
             {employees.length === 0 && !isLoading ? (

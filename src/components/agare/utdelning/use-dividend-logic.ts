@@ -32,25 +32,27 @@ export function useDividendLogic() {
                 try { 
                     const parsed = JSON.parse(doc.content);
                     content = { ...content, ...parsed }
-                } catch (e) { }
+                } catch { } // Ignored
                 return { ...content, date: doc.date, status: doc.status }
             })
 
         meetings.forEach(meeting => {
-            // @ts-ignore
+            // @ts-expect-error - Dynamic types from JSON storage
             (meeting.decisions || [])
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .filter((d: any) => d.type === 'dividend' && d.amount)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .forEach((d: any) => {
                     const amount = d.amount || 0
                     const tax = amount * 0.2 // Simplified 20% tax rule
                     history.push({
-                        // @ts-ignore
+                        // @ts-expect-error - Dynamic types
                         year: Number(meeting.year || new Date(meeting.date).getFullYear()),
                         amount: amount,
                         taxRate: '20%',
                         tax: tax,
                         netAmount: amount - tax,
-                        // @ts-ignore
+                        // @ts-expect-error - Dynamic types
                         status: d.booked || meeting.status === 'signed' ? 'paid' : 'planned'
                     })
                 })

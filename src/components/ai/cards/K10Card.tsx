@@ -5,6 +5,7 @@ import { downloadTextFile } from "./utils"
 
 const K10FormPreview = dynamic(() => import("../previews/forms/k10-form-preview").then(m => ({ default: m.K10FormPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function K10Card(props: any) {
     return (
         <K10FormPreview

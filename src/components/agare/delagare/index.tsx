@@ -3,6 +3,7 @@
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { PageHeader } from "@/components/shared"
 import { PartnersStats } from "./partners-stats"
 import { PartnersGrid } from "./partners-grid"
 import { RecentWithdrawalsGrid } from "./recent-withdrawals-grid"
@@ -35,7 +36,6 @@ export function Delagare() {
             capitalContribution: Number(partnerData.capitalContribution),
             id: crypto.randomUUID(),
             joinDate: new Date().toISOString().split('T')[0],
-            // @ts-ignore
             currentCapitalBalance: Number(partnerData.capitalContribution),
             isLimitedLiability: partnerData.type === 'kommanditdelägare',
             type: partnerData.type || 'komplementär'
@@ -44,21 +44,17 @@ export function Delagare() {
 
     return (
         <div className="space-y-4 md:space-y-6">
-            <div className="flex flex-col gap-4 md:gap-6 pt-2">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-                    <div className="min-w-0">
-                        <h2 className="text-xl md:text-2xl font-bold tracking-tight">Delägare</h2>
-                        <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                            {companyType === 'hb' ? 'Handelsbolag' : 'Kommanditbolag'}
-                        </p>
-                    </div>
+            <PageHeader
+                title="Delägare"
+                subtitle={companyType === 'hb' ? 'Handelsbolag' : 'Kommanditbolag'}
+                actions={
                     <Button size="sm" onClick={() => setShowAddDialog(true)} className="w-full sm:w-auto">
                         <Plus className="h-4 w-4 sm:mr-2" />
                         <span className="hidden sm:inline">Lägg till delägare</span>
                         <span className="sm:hidden">Lägg till</span>
                     </Button>
-                </div>
-            </div>
+                }
+            />
 
             <PartnersStats
                 stats={stats}

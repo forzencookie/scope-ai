@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Förmåner (Employee Benefits) Data Layer
  * 
@@ -17,6 +16,35 @@ import type {
 import { formanerCatalog } from './ai/tool-mock-data' // Static reference catalog as fallback
 
 // =============================================================================
+// Database Row Types
+// =============================================================================
+
+interface FormanCatalogRow {
+    id: string
+    name: string
+    category: BenefitCategory
+    max_amount?: number
+    tax_free: boolean
+    formansvarde_calculation?: string
+    description?: string
+    rules?: Record<string, unknown>
+    bas_account?: string
+}
+
+interface EmployeeBenefitRow {
+    id: string
+    company_id: string
+    employee_name: string
+    benefit_type: string
+    amount: number | string
+    year: number
+    month?: number
+    formansvarde?: number | string
+    notes?: string
+    created_at: string
+}
+
+// =============================================================================
 // Catalog Operations
 // =============================================================================
 
@@ -30,13 +58,14 @@ export async function listAvailableBenefits(
     // Try Supabase first
     if (isSupabaseConfigured()) {
         const supabase = getSupabaseClient()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
             .from('formaner_catalog' as any)
             .select('*')
             .order('name')
 
         if (!error && data?.length) {
-            const mapped = data.map(mapCatalogFromDb)
+            const mapped = (data as FormanCatalogRow[]).map(mapCatalogFromDb)
             return filterByCompanyType(mapped, companyType)
         }
     }
@@ -51,13 +80,14 @@ export async function listAvailableBenefits(
 export async function getBenefitDetails(id: string): Promise<FormanCatalogItem | null> {
     if (isSupabaseConfigured()) {
         const supabase = getSupabaseClient()
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data } = await supabase
             .from('formaner_catalog' as any)
             .select('*')
             .eq('id', id)
             .single()
 
-        if (data) return mapCatalogFromDb(data)
+        if (data) return mapCatalogFromDb(data as FormanCatalogRow)
     }
 
     // Fallback
@@ -94,6 +124,7 @@ export async function assignBenefit(
     const formansvarde = benefit?.taxFree ? 0 : calculateFormansvarde(input.benefitType, input.amount)
 
     const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
         .from('employee_benefits' as any)
         .insert({
@@ -113,7 +144,7 @@ export async function assignBenefit(
         return null
     }
 
-    return mapBenefitFromDb(data)
+    return mapBenefitFromDb(data as EmployeeBenefitRow)
 }
 
 /**
@@ -126,6 +157,7 @@ export async function getEmployeeBenefits(
     if (!isSupabaseConfigured()) return []
 
     const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
         .from('employee_benefits' as any)
         .select('*')
@@ -138,7 +170,7 @@ export async function getEmployeeBenefits(
         return []
     }
 
-    return (data || []).map(mapBenefitFromDb)
+    return ((data || []) as EmployeeBenefitRow[]).map(mapBenefitFromDb)
 }
 
 /**
@@ -250,8 +282,8 @@ function filterByCompanyType(
     })
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapCatalogFromDb(row: any): FormanCatalogItem {
+// function mapCatalogFromDb(row: any): FormanCatalogItem {
+function mapCatalogFromDb(row: FormanCatalogRow): FormanCatalogItem {
     return {
         id: row.id,
         name: row.name,
@@ -265,8 +297,7 @@ function mapCatalogFromDb(row: any): FormanCatalogItem {
     }
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapBenefitFromDb(row: any): EmployeeBenefit {
+function mapBenefitFromDb(row: EmployeeBenefitRow): EmployeeBenefit {
     return {
         id: row.id,
         companyId: row.company_id,

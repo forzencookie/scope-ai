@@ -23,6 +23,7 @@ export interface NewEmployee {
 export function useEmployees() {
     const [employees, setEmployees] = useState<Employee[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [error, setError] = useState<any>(null)
 
     const fetchEmployees = useCallback(async () => {

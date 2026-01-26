@@ -183,6 +183,7 @@ export interface AnnualReportParams {
     year: number
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
     name: 'draft_annual_report',
     description: 'Skapa utkast för årsredovisning (K2).',

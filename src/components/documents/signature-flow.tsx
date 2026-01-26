@@ -66,8 +66,6 @@ interface SignatureFlowProps {
 }
 
 export function SignatureFlow({
-    documentId,
-    documentTitle = 'Dokument',
     existingSignatures = [],
     onRequestSignature,
     onUploadSigned,

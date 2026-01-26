@@ -8,7 +8,7 @@ import { useTextMode } from "@/providers/text-mode-provider"
 import { type Receipt } from '@/services/receipt-service'
 import { type BookingData } from "../dialogs/bokforing"
 import { BookOpen, Trash2, Archive, Download } from "lucide-react"
-import { RECEIPT_STATUSES } from "@/lib/status-types"
+// import { RECEIPT_STATUSES } from "@/lib/status-types"
 
 export function useReceiptsLogic() {
     const { text } = useTextMode()
@@ -29,7 +29,7 @@ export function useReceiptsLogic() {
     const {
         receipts,
         isLoading,
-        error: fetchError,
+        error: _fetchError,
         page,
         setPage,
         pageSize,
@@ -65,7 +65,7 @@ export function useReceiptsLogic() {
         setDetailsDialogOpen(true)
     }, [])
 
-    const handleSaveReceipt = useCallback(async (data: any) => {
+    const handleSaveReceipt = useCallback(async (data: { supplier: string; date: string; amount: number; moms: number; category: string; status: string; file?: File, fileName?: string }) => {
         try {
             const response = await fetch('/api/receipts/processed', {
                 method: 'POST',
@@ -177,7 +177,7 @@ export function useReceiptsLogic() {
             }
         )
         return actions
-    }, [toast, bulkSelection, text, receipts, isInvoiceMethod, handleBulkBooking, fetchReceipts])
+    }, [toast, bulkSelection, text, isInvoiceMethod, handleBulkBooking, fetchReceipts])
 
     return {
         // State

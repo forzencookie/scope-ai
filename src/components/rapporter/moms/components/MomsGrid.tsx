@@ -6,6 +6,7 @@ import { VatReport } from "@/services/processors/vat-processor"
 
 interface MomsGridProps {
     periods: VatReport[]
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
     selection: any
     onSelectReport: (report: VatReport) => void
 }

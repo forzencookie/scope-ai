@@ -1,21 +1,14 @@
 "use client"
 
-import { useState, useMemo } from "react"
-import { useRouter } from "next/navigation"
+import { useMemo } from "react"
 import {
-    Calendar,
     Building2,
     Clock,
-    Bot,
-    ChevronDown,
-    ChevronRight,
     Eye,
     Send,
     Download,
+    Calendar,
 } from "lucide-react"
-import { cn } from "@/lib/utils"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import { SectionCard } from "@/components/ui/section-card"
 import { Button } from "@/components/ui/button"
 import {
     CollapsibleTableContainer,
@@ -26,16 +19,15 @@ import {
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useToast } from "@/components/ui/toast"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 
 
 // =============================================================================
 // Main Component
 // =============================================================================
 export function ArsbokslutContent() {
-    const router = useRouter()
-    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const { companyTypeName } = useCompany()
     const { text } = useTextMode()
@@ -125,66 +117,44 @@ export function ArsbokslutContent() {
         { label: "Övriga skulder", value: Math.round(otherLiabilities) },
     ]), [equity, result, payables, taxes, otherLiabilities]);
 
-    if (isLoading) {
-        return <div className="p-12 text-center text-muted-foreground">Läser in bokföring...</div>
-    }
+    const stats: TaxReportStat[] = [
+        {
+            label: text.reports.fiscalYear,
+            value: "2024",
+            subtitle: "2024-01-01 – 2024-12-31",
+            icon: Calendar,
+        },
+        {
+            label: text.reports.companyType,
+            value: companyTypeName,
+            subtitle: text.reports.simplified,
+            icon: Building2,
+        },
+        {
+            label: text.reports.reportStatus,
+            value: text.reports.workInProgress,
+            subtitle: `${text.reports.deadline}: 2 maj 2025`,
+            icon: Clock,
+        },
+    ]
 
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
-            <div className="w-full space-y-4 md:space-y-6">
-                {/* Page Heading */}
-                <div className="flex flex-col gap-4 md:gap-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Årsbokslut</h2>
-                            <p className="text-muted-foreground mt-1">Sammanställning av räkenskaper för enskild firma.</p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button onClick={() => window.print()} variant="outline" size="sm" className="w-full sm:w-auto">
-                                <Download className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Exportera</span>
-                            </Button>
-                        </div>
-                    </div>
-                </div>
-
-
-
-                <StatCardGrid columns={3}>
-                    <StatCard
-                        label={text.reports.fiscalYear}
-                        value="2024"
-                        subtitle="2024-01-01 – 2024-12-31"
-                        headerIcon={Calendar}
-                    />
-                    <StatCard
-                        label={text.reports.companyType}
-                        value={companyTypeName}
-                        subtitle={text.reports.simplified}
-                        headerIcon={Building2}
-                    />
-                    <StatCard
-                        label={text.reports.reportStatus}
-                        value={text.reports.workInProgress}
-                        subtitle={`${text.reports.deadline}: 2 maj 2025`}
-                        headerIcon={Clock}
-                    />
-                </StatCardGrid>
-
-                {/* Section Separator */}
-                <div className="border-b-2 border-border/60" />
-
-                <SectionCard
-                    icon={Bot}
-                    title={text.reports.aiYearEnd}
-                    description={text.reports.aiYearEndDesc}
-                    variant="ai"
-                    onAction={() => navigateToAI(getDefaultAIContext('arsbokslut'))}
-                />
-
-                {/* Section Separator */}
-                <div className="border-b-2 border-border/60" />
-
+        <TaxReportLayout
+            title="Årsbokslut"
+            subtitle="Sammanställning av räkenskaper för enskild firma."
+            stats={stats}
+            aiContext="arsbokslut"
+            aiTitle={text.reports.aiYearEnd}
+            aiDescription={text.reports.aiYearEndDesc}
+            isLoading={isLoading}
+            actions={
+                <Button onClick={() => window.print()} variant="outline" size="sm" className="w-full sm:w-auto">
+                    <Download className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Exportera</span>
+                </Button>
+            }
+        >
+            <div id="arsbokslut-content" className="space-y-6">
                 {/* Header with Actions */}
                 <CollapsibleTableHeader
                     title="Årsbokslut 2024"
@@ -194,7 +164,15 @@ export function ArsbokslutContent() {
                         <Eye className="mr-2 h-4 w-4" />
                         Visa detaljer
                     </Button>
-                    <Button variant="outline" size="sm" className="h-9">
+                    <Button variant="outline" size="sm" className="h-9" onClick={async () => {
+                        toast.info("Förbereder PDF", "Vänta...")
+                        try {
+                            await downloadElementAsPDF({ fileName: 'arsbokslut-2024', elementId: 'arsbokslut-content' })
+                            toast.success("Klart", "Årsbokslut har laddats ner som PDF.")
+                        } catch {
+                            toast.error("Fel", "Kunde inte skapa PDF.")
+                        }
+                    }}>
                         <Download className="mr-2 h-4 w-4" />
                         Exportera PDF
                     </Button>
@@ -245,6 +223,6 @@ export function ArsbokslutContent() {
                     </CollapsibleTableContainer>
                 </div>
             </div>
-        </main>
+        </TaxReportLayout>
     )
 }

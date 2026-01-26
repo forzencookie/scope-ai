@@ -25,7 +25,7 @@ export function AuthGuard({
     redirectTo = "/login",
     showLoading = true,
 }: AuthGuardProps) {
-    const { user, loading, isAuthenticated } = useAuth()
+    const { loading, isAuthenticated } = useAuth()
     const router = useRouter()
     const [isChecking, setIsChecking] = useState(true)
 
@@ -39,7 +39,7 @@ export function AuthGuard({
             const loginUrl = `${redirectTo}?redirect=${encodeURIComponent(currentPath)}`
             router.replace(loginUrl)
         } else {
-            setIsChecking(false)
+            setTimeout(() => setIsChecking(false), 0)
         }
     }, [loading, isAuthenticated, router, redirectTo])
 

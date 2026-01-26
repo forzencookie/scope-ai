@@ -81,6 +81,7 @@ const listCryptoHoldingsTool = defineTool({
     },
 })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const investmentTools: AITool<any, any>[] = [
     getInvestmentSummaryTool,
     listPropertiesTool,

@@ -57,6 +57,7 @@ export const inventarieService = {
         }
 
         // Map snake_case DB columns to camelCase for UI
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const inventarier: Inventarie[] = (data || []).map((row: any) => ({
             id: row.id,
             namn: row.namn,
@@ -111,6 +112,7 @@ export const inventarieService = {
         const id = `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
         const { data, error } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from('inventarier' as any)
             .insert({
                 id,
@@ -135,6 +137,7 @@ export const inventarieService = {
         const supabase = getSupabaseClient()
 
         const { error } = await supabase
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from('inventarier' as any)
             .delete()
             .eq('id', id)

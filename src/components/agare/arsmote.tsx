@@ -14,6 +14,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { FilterButton } from "@/components/ui/filter-button"
+import { PageHeader } from "@/components/shared"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -89,10 +90,12 @@ export const Arsmote = memo(function Arsmote() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter(m =>
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (m.decisions || []).some((d: any) =>
           d.title?.toLowerCase().includes(query) ||
           d.decision?.toLowerCase().includes(query)
         ) ||
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         (m.motions || []).some((mo: any) =>
           mo.title?.toLowerCase().includes(query) ||
           mo.description?.toLowerCase().includes(query)
@@ -131,15 +134,11 @@ export const Arsmote = memo(function Arsmote() {
   return (
     <div className="space-y-4 md:space-y-6">
       {/* Page Heading */}
-      <div className="flex flex-col gap-4 md:gap-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4">
-          <div className="min-w-0">
-            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Årsmöte</h2>
-            <p className="text-xs sm:text-sm text-muted-foreground mt-1 hidden sm:block">
-              Planera, dokumentera och förvalta föreningens årsmöten.
-            </p>
-          </div>
-          <div className="flex items-center gap-2 shrink-0">
+      <PageHeader
+        title="Årsmöte"
+        subtitle="Planera, dokumentera och förvalta föreningens årsmöten."
+        actions={
+          <>
             <Button variant="outline" size="sm" onClick={() => setShowMotionDialog(true)} className="flex-1 sm:flex-none">
               <MessageSquare className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Ny motion</span>
@@ -148,9 +147,9 @@ export const Arsmote = memo(function Arsmote() {
               <Plus className="h-4 w-4 sm:mr-2" />
               <span className="hidden sm:inline">Planera årsmöte</span>
             </Button>
-          </div>
-        </div>
-      </div>
+          </>
+        }
+      />
 
       {/* Next Meeting Hero Card */}
       <NextMeetingCard

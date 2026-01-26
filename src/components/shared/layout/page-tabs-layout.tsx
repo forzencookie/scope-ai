@@ -38,6 +38,7 @@ export function PageTabsLayout({
     // Helper to render a single tab button
     const renderTabButton = (tab: TabConfig) => {
         const isActive = currentTab === tab.id
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const Icon = tab.icon as any
 
         return (
@@ -67,7 +68,7 @@ export function PageTabsLayout({
     }
 
     // Determine which tabs to show based on expansion state
-    const visibleTabs = showAllTabs ? tabs : tabs.slice(0, maxVisibleTabs)
+    const _visibleTabs = showAllTabs ? tabs : tabs.slice(0, maxVisibleTabs)
     const hasMoreTabs = tabs.length > maxVisibleTabs
 
     return (

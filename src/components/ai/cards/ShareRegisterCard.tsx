@@ -5,6 +5,7 @@ import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 
 const ShareRegisterPreview = dynamic(() => import("../previews/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function ShareRegisterCard(props: any) {
     return (
         <ShareRegisterPreview

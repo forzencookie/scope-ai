@@ -1,58 +1,45 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import {
     Calendar,
     Building2,
     Clock,
-    Bot,
     Download,
     Send,
     FileText,
 } from "lucide-react"
-import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
-import { SectionCard, ListCard, ListCardItem } from "@/components/ui/section-card"
+import { ListCard, ListCardItem } from "@/components/ui/section-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { ArsredovisningWizardDialog } from "./dialogs/assistent"
-import {
-    CollapsibleTableContainer,
-    CollapsibleTableHeader
-} from "@/components/ui/collapsible-table"
+import { CollapsibleTableHeader } from "@/components/ui/collapsible-table"
 import { reportSections } from "./constants"
 import { useVerifications } from "@/hooks/use-verifications"
 import { AnnualReportProcessor } from "@/services/processors/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
-
 import { useCompany } from "@/providers/company-provider"
-import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
+import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 
 export function ArsredovisningContent() {
-    const router = useRouter()
-    const navigateToAI = useNavigateToAIChat()
     const toast = useToast()
     const [showAIDialog, setShowAIDialog] = useState(false)
     const { verifications } = useVerifications()
-    const { company, companyTypeFullName, companyTypeName } = useCompany()
+    const { company, companyTypeFullName } = useCompany()
 
-    // ... existing preview state ...
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewTitle, setPreviewTitle] = useState("")
     const [previewSections, setPreviewSections] = useState<ReportSection[]>([])
 
     const handleViewReport = (sectionName: string) => {
-        // ... (existing logic)
         const year = 2024
         let sections: ReportSection[] = []
         let title = sectionName
 
         if (sectionName === "Resultaträkning") {
             const lines = AnnualReportProcessor.calculateIncomeStatement(verifications, year)
-            // Transform lines to sections (grouping by headers?)
-            // Simple mapping: one big section
             sections = [{
                 id: "rr",
                 title: `Resultaträkning ${year}`,
@@ -78,7 +65,6 @@ export function ArsredovisningContent() {
             }]
             title = "Balansräkning"
         } else {
-            // Placeholder for other sections
             sections = [{
                 id: "placeholder",
                 title: sectionName,
@@ -91,121 +77,98 @@ export function ArsredovisningContent() {
         setPreviewOpen(true)
     }
 
+    const stats: TaxReportStat[] = [
+        {
+            label: "Räkenskapsår",
+            value: "2024",
+            subtitle: "2024-01-01 – 2024-12-31",
+            icon: Calendar,
+        },
+        {
+            label: "Bolagsform",
+            value: companyTypeFullName || "Aktiebolag",
+            subtitle: "K2-regelverk",
+            icon: Building2,
+        },
+        {
+            label: "Status",
+            value: "Under arbete",
+            subtitle: "Deadline: 30 jun 2025",
+            icon: Clock,
+        },
+    ]
+
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
-            <div className="w-full space-y-4 md:space-y-6">
-                {/* Page Header */}
-                <div className="flex flex-col gap-4 md:gap-6">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                        <div>
-                            <h2 className="text-xl md:text-2xl font-bold tracking-tight">Årsredovisning</h2>
-                            <p className="text-muted-foreground mt-1">
-                                Sammanställning av räkenskapsåret för Bolagsverket.
-                            </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button
-                                onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}
-                                size="sm"
-                                className="w-full sm:w-auto"
-                            >
-                                <Send className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Skicka till Bolagsverket</span>
-                            </Button>
-                        </div>
+        <TaxReportLayout
+            title="Årsredovisning"
+            subtitle="Sammanställning av räkenskapsåret för Bolagsverket."
+            stats={stats}
+            aiContext="arsredovisning"
+            aiTitle="AI-årsredovisning"
+            aiDescription="Genereras automatiskt från bokföringen enligt K2."
+            actions={
+                <Button
+                    onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}
+                    size="sm"
+                    className="w-full sm:w-auto"
+                >
+                    <Send className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Skicka till Bolagsverket</span>
+                </Button>
+            }
+            dialogs={
+                <>
+                    <ArsredovisningWizardDialog
+                        open={showAIDialog}
+                        onOpenChange={setShowAIDialog}
+                    />
+                    <ReportPreviewDialog
+                        open={previewOpen}
+                        onOpenChange={setPreviewOpen}
+                        title={previewTitle}
+                        meta={{
+                            year: "2024",
+                            yearLabel: "Räkenskapsår",
+                            companyName: company?.name || "Mitt Företag AB",
+                            companyId: company?.orgNumber || "556000-0000",
+                            location: company?.city || "Stockholm"
+                        }}
+                        sections={previewSections}
+                    />
+                </>
+            }
+        >
+            <div className="space-y-4">
+                <CollapsibleTableHeader title="Delar av årsredovisningen">
+                    <div className="flex items-center gap-2">
+                        <IconButton icon={Download} label="Exportera XBRL" showLabel />
                     </div>
-                </div>
+                </CollapsibleTableHeader>
 
-
-
-                <StatCardGrid columns={3}>
-                    <StatCard
-                        label="Räkenskapsår"
-                        value="2024"
-                        subtitle="2024-01-01 – 2024-12-31"
-                        headerIcon={Calendar}
-                    />
-                    <StatCard
-                        label="Bolagsform"
-                        value={companyTypeFullName || "Aktiebolag"}
-                        subtitle="K2-regelverk"
-                        headerIcon={Building2}
-                    />
-                    <StatCard
-                        label="Status"
-                        value="Under arbete"
-                        subtitle="Deadline: 30 jun 2025"
-                        headerIcon={Clock}
-                    />
-                </StatCardGrid>
-
-                {/* Section Separator */}
-                <div className="border-b-2 border-border/60" />
-
-                <SectionCard
-                    icon={Bot}
-                    title="AI-årsredovisning"
-                    description="Genereras automatiskt från bokföringen enligt K2."
-                    variant="ai"
-                    onAction={() => navigateToAI(getDefaultAIContext('arsredovisning'))}
-                />
-
-                {/* Section Separator */}
-                <div className="border-b-2 border-border/60" />
-
-                <ArsredovisningWizardDialog
-                    open={showAIDialog}
-                    onOpenChange={setShowAIDialog}
-                />
-
-                <ReportPreviewDialog
-                    open={previewOpen}
-                    onOpenChange={setPreviewOpen}
-                    title={previewTitle}
-                    meta={{
-                        year: "2024",
-                        yearLabel: "Räkenskapsår",
-                        companyName: company?.name || "Mitt Företag AB",
-                        companyId: company?.orgNumber || "556000-0000",
-                        location: company?.city || "Stockholm"
-                    }}
-                    sections={previewSections}
-                />
-
-                <div className="space-y-4">
-                    <CollapsibleTableHeader
-                        title="Delar av årsredovisningen"
-                    >
-                        <div className="flex items-center gap-2">
-                            <IconButton icon={Download} label="Exportera XBRL" showLabel />
-                        </div>
-                    </CollapsibleTableHeader>
-
-                    <ListCard variant="minimal">
-                        {reportSections.map((section) => (
-                            <ListCardItem
-                                key={section.name}
-                                onClick={() => handleViewReport(section.name)}
-                                className="transition-colors"
-                                icon={<FileText className="h-6 w-6 text-muted-foreground" />}
-                                trailing={
-                                    <div className="flex items-center gap-3">
-                                        <AppStatusBadge
-                                            status={section.status === "complete" ? "Klar" : section.status === "incomplete" ? "Ofullständig" : "Väntar"}
-                                            size="md"
-                                        />
-                                    </div>
-                                }
-                            >
-                                <div className="space-y-1">
-                                    <p className="text-base font-semibold tracking-tight">{section.name}</p>
-                                    <p className="text-sm text-muted-foreground">{section.description}</p>
+                <ListCard variant="minimal">
+                    {reportSections.map((section) => (
+                        <ListCardItem
+                            key={section.name}
+                            onClick={() => handleViewReport(section.name)}
+                            className="transition-colors"
+                            icon={<FileText className="h-6 w-6 text-muted-foreground" />}
+                            trailing={
+                                <div className="flex items-center gap-3">
+                                    <AppStatusBadge
+                                        status={section.status === "complete" ? "Klar" : section.status === "incomplete" ? "Ofullständig" : "Väntar"}
+                                        size="md"
+                                    />
                                 </div>
-                            </ListCardItem>
-                        ))}
-                    </ListCard>
-                </div>
+                            }
+                        >
+                            <div className="space-y-1">
+                                <p className="text-base font-semibold tracking-tight">{section.name}</p>
+                                <p className="text-sm text-muted-foreground">{section.description}</p>
+                            </div>
+                        </ListCardItem>
+                    ))}
+                </ListCard>
             </div>
-        </main>
+        </TaxReportLayout>
     )
 }

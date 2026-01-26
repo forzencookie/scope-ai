@@ -2,6 +2,7 @@ import * as React from "react"
 import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { LoadingButton } from "@/components/ui/loading-button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -40,12 +41,17 @@ export function AddMemberDialog({ open, onOpenChange, memberCount }: AddMemberDi
   const [payFee, setPayFee] = useState(true)
   const [payCapital, setPayCapital] = useState(true) // Pays Initial Capital (Insats)
   const [capitalAmount, setCapitalAmount] = useState("100") // Default insats
+  const [isLoading, setIsLoading] = useState(false)
 
   const handleAddMember = async () => {
     if (!newName) {
       toast.error("Namn saknas", "Ange namn på medlemmen")
       return
     }
+
+    // Prevent double-clicks
+    if (isLoading) return
+    setIsLoading(true)
 
     try {
       // 1. Add to backend
@@ -104,6 +110,8 @@ export function AddMemberDialog({ open, onOpenChange, memberCount }: AddMemberDi
     } catch (error) {
       toast.error("Kunde inte lägga till medlem", "Ett fel uppstod")
       console.error(error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -200,11 +208,11 @@ export function AddMemberDialog({ open, onOpenChange, memberCount }: AddMemberDi
         </div>
 
         <DialogFooter>
-          <Button variant="ghost" onClick={() => onOpenChange(false)}>Avbryt</Button>
-          <Button onClick={handleAddMember}>
+          <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={isLoading}>Avbryt</Button>
+          <LoadingButton onClick={handleAddMember} loading={isLoading} loadingText="Sparar...">
             <Plus className="h-4 w-4 mr-2" />
             Lägg till medlem
-          </Button>
+          </LoadingButton>
         </DialogFooter>
       </DialogContent>
     </Dialog>

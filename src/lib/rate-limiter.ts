@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Consolidated Rate Limiter
  * 
@@ -23,6 +22,11 @@ import { supabase } from './database/supabase'
 // ============================================================================
 // Types
 // ============================================================================
+
+interface RateLimitRow {
+    count: number
+    reset_time: string
+}
 
 export interface RateLimitConfig {
     /** Maximum number of requests allowed in the window */
@@ -142,6 +146,7 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
 
     try {
         // Try to get existing entry
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing } = await supabase
             .from('rate_limits' as any)
             .select('count, reset_time')
@@ -149,10 +154,12 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
             .single()
 
         if (existing) {
-            const existingResetTime = new Date((existing as any).reset_time).getTime()
+            const row = existing as RateLimitRow
+            const existingResetTime = new Date(row.reset_time).getTime()
 
             // Window expired - reset
             if (now >= existingResetTime) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 await supabase
                     .from('rate_limits' as any)
                     .update({ count: 1, reset_time: new Date(resetTime).toISOString() })
@@ -162,7 +169,7 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
             }
 
             // Rate limit exceeded
-            if ((existing as any).count >= config.maxRequests) {
+            if (row.count >= config.maxRequests) {
                 return {
                     success: false,
                     remaining: 0,
@@ -172,15 +179,17 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
             }
 
             // Increment counter
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             await supabase
                 .from('rate_limits' as any)
-                .update({ count: (existing as any).count + 1 })
+                .update({ count: row.count + 1 })
                 .eq('identifier', identifier)
 
-            return { success: true, remaining: config.maxRequests - (existing as any).count - 1, resetTime: existingResetTime }
+            return { success: true, remaining: config.maxRequests - row.count - 1, resetTime: existingResetTime }
         }
 
         // No existing entry - create new one
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase
             .from('rate_limits' as any)
             .insert({ identifier, count: 1, reset_time: new Date(resetTime).toISOString() })
@@ -220,6 +229,7 @@ export async function checkRateLimit(
  */
 export async function clearRateLimitStore(): Promise<void> {
     if (useSupabase) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase.from('rate_limits' as any).delete().neq('identifier', '')
     } else {
         memoryStore.clear()
@@ -231,6 +241,7 @@ export async function clearRateLimitStore(): Promise<void> {
  */
 export async function cleanupExpiredEntries(): Promise<void> {
     if (useSupabase) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase.from('rate_limits' as any).delete().lt('reset_time', new Date().toISOString())
     } else {
         const now = Date.now()

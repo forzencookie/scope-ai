@@ -24,6 +24,7 @@ export function useVerifications() {
 
     const fetchVerifications = useCallback(async () => {
         try {
+            setError(null)
             const response = await fetch('/api/verifications')
             if (!response.ok) throw new Error('Failed to fetch')
             const data = await response.json()
@@ -36,7 +37,7 @@ export function useVerifications() {
         } catch (err) {
             console.error(err)
             setVerifications([])
-            // setError('Failed to load verifications') // Don't show error if we fallback
+            setError('Failed to load verifications')
         } finally {
             setIsLoading(false)
         }

@@ -68,11 +68,8 @@ export function useTransactionsLogic({
 
     // Booking Handlers
     const handleBook = useCallback(async (bookingData: BookingData) => {
-        // Simulating async operation if needed
-        await new Promise(resolve => setTimeout(resolve, 500))
-        
         if (onTransactionBooked) {
-            onTransactionBooked(bookingData.entityId, bookingData)
+            await onTransactionBooked(bookingData.entityId, bookingData)
         }
         setBookingDialogOpen(false)
         setSelectedTransactions([])

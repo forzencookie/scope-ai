@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * Stripe Client and Helper Functions
  * 
@@ -72,14 +71,16 @@ export async function getOrCreateCustomer(
     const supabase = getSupabaseAdmin()
 
     // Check if user already has a Stripe customer ID
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile } = await supabase
         .from('profiles' as any)
         .select('stripe_customer_id')
         .eq('id', userId)
         .single()
 
-    if ((profile as any)?.stripe_customer_id) {
-        return (profile as any).stripe_customer_id
+    const profileData = profile as { stripe_customer_id?: string } | null
+    if (profileData?.stripe_customer_id) {
+        return profileData.stripe_customer_id
     }
 
     // Create new customer
@@ -92,6 +93,7 @@ export async function getOrCreateCustomer(
     })
 
     // Store customer ID in profile
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
         .from('profiles' as any)
         .update({ stripe_customer_id: customer.id })
@@ -188,6 +190,7 @@ export async function updateUserTier(
     const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
         .from('profiles' as any)
         .update({ subscription_tier: tier })
@@ -203,11 +206,12 @@ export async function getUserIdFromCustomer(customerId: string): Promise<string 
     const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await supabase
         .from('profiles' as any)
         .select('id')
         .eq('stripe_customer_id', customerId)
         .single()
 
-    return (data as any)?.id || null
+    return (data as { id?: string } | null)?.id || null
 }

@@ -7,6 +7,7 @@ interface MeetingStatsProps {
         upcoming: number
         completed: number
         totalDecisions: number
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         nextMeeting: any | null // Using any loosely here to match the flexible structure passed
         daysUntilNext: number | null
     }
