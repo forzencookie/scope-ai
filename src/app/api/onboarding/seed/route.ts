@@ -8,7 +8,7 @@
  */
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { createUserScopedDb } from '@/lib/user-scoped-db'
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 interface ShareholderData {
     name: string

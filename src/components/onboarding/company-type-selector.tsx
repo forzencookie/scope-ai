@@ -141,7 +141,7 @@ export function CompanyTypeBadge() {
 
 // Card-based display for current company type
 export function CompanyTypeCard() {
-  const { companyType } = useCompany()
+  const { companyType, companyTypeFullName } = useCompany()
   const info = companyTypes[companyType]
   const Icon = companyTypeIcons[companyType]
 
