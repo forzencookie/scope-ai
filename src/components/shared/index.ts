@@ -25,6 +25,9 @@ export { DemoBanner } from "./demo-banner"
 export { TierBadge, TierIndicator } from "./tier-badge"
 export { UpgradePrompt, UpgradeButton, FeatureGate } from "./upgrade-prompt"
 
+// Real-time collaboration components
+export { OnlineUsers, OnlineUsersBadge, EditConflictWarning } from "./online-users"
+
 // Lazy Loading with Spinner (Golden Standard)
 export {
     LoadingSpinner,
