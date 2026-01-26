@@ -31,7 +31,7 @@ export interface ModelAuthResult {
     reason?: string
 }
 
-export type UserTier = 'free' | 'pro' | 'enterprise'
+export type UserTier = 'demo' | 'free' | 'pro' | 'enterprise'
 
 export interface UsageStats {
     tokensUsed: number
@@ -58,9 +58,11 @@ export interface SecurityEvent {
 /**
  * Defines which user tiers can access which model tiers.
  * Users can access their tier and all lower tiers.
+ * Demo users cannot access any real AI models.
  */
 const TIER_ACCESS: Record<UserTier, ModelTier[]> = {
-    'free': ['free'],
+    'demo': [], // Demo users get simulated responses, no real AI
+    'free': [], // Free deprecated, treat same as demo
     'pro': ['free', 'pro'],
     'enterprise': ['free', 'pro', 'enterprise'],
 }
@@ -69,7 +71,8 @@ const TIER_ACCESS: Record<UserTier, ModelTier[]> = {
  * Monthly token limits per tier
  */
 export const TIER_LIMITS: Record<UserTier, { tokensPerMonth: number; requestsPerDay: number }> = {
-    'free': { tokensPerMonth: 50_000, requestsPerDay: 50 },
+    'demo': { tokensPerMonth: 0, requestsPerDay: 0 }, // Demo gets simulated AI, no real tokens
+    'free': { tokensPerMonth: 0, requestsPerDay: 0 }, // Free deprecated, same as demo
     'pro': { tokensPerMonth: 500_000, requestsPerDay: 500 },
     'enterprise': { tokensPerMonth: 5_000_000, requestsPerDay: 5000 },
 }
@@ -80,29 +83,49 @@ export const TIER_LIMITS: Record<UserTier, { tokensPerMonth: number; requestsPer
 
 /**
  * Get user's subscription tier from database
- * Returns 'pro' by default (allows all basic models)
- * In production, this should query the actual subscription status
+ * Returns 'demo' by default for unauthenticated/new users
  */
 export async function getUserTier(userId: string): Promise<UserTier> {
     try {
         const supabase = getSupabaseAdmin()
 
-        // Try to get user from auth.users to verify they exist
-        const { data: user, error: userError } = await supabase.auth.admin.getUserById(userId)
+        // Query the profiles table for subscription tier
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('subscription_tier')
+            .eq('id', userId)
+            .single()
 
-        if (userError || !user) {
-            console.warn('[ModelAuth] User not found:', userId)
-            return 'free'
+        if (profileError || !profile) {
+            console.warn('[ModelAuth] Profile not found for user:', userId)
+            return 'demo'
         }
 
-        // For now, give all authenticated users 'pro' access
-        // TODO: Implement proper subscription tiers with Stripe integration
-        return 'pro'
+        const tier = profile.subscription_tier as UserTier
+        
+        // Treat 'free' as 'demo' (free is deprecated)
+        if (tier === 'free') {
+            return 'demo'
+        }
+        
+        // Validate tier is one of our known values
+        if (['demo', 'pro', 'enterprise'].includes(tier)) {
+            return tier
+        }
+        
+        return 'demo'
     } catch (error) {
         console.error('[ModelAuth] Failed to get user tier:', error)
-        // Default to 'pro' to prevent blocking users due to DB issues
-        return 'pro'
+        // Default to 'demo' to prevent unauthorized access due to DB issues
+        return 'demo'
     }
+}
+
+/**
+ * Check if user is in demo mode (simulated AI, no real API calls)
+ */
+export function isDemoMode(tier: UserTier): boolean {
+    return tier === 'demo' || tier === 'free'
 }
 
 /**

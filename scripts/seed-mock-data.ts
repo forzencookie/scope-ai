@@ -84,6 +84,7 @@ async function seed() {
             user_id: userId,
             company_id: companyId,
             created_by: userId,
+            is_demo_data: true,  // Mark as demo data for cleanup on upgrade
         }
 
         const { error } = await supabase.from('transactions').upsert(payload)
@@ -109,7 +110,8 @@ async function seed() {
             // image_url: r.attachment,
             user_id: userId,
             total_amount: amountVal,
-            created_at: new Date(r.date).toISOString()
+            created_at: new Date(r.date).toISOString(),
+            is_demo_data: true,  // Mark as demo data for cleanup on upgrade
         }
 
         const { error } = await supabase.from('receipts').upsert(payload)

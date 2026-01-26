@@ -20,6 +20,11 @@ export { ReportLayout } from "./layout/report-layout"
 export { TaxReportLayout } from "./layout/tax-report-layout"
 export type { TaxReportStat, TaxReportLayoutProps } from "./layout/tax-report-layout"
 
+// Demo mode components
+export { DemoBanner } from "./demo-banner"
+export { TierBadge, TierIndicator } from "./tier-badge"
+export { UpgradePrompt, UpgradeButton, FeatureGate } from "./upgrade-prompt"
+
 // Lazy Loading with Spinner (Golden Standard)
 export {
     LoadingSpinner,

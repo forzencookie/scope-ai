@@ -10,7 +10,7 @@ import { validateChatMessages, validateJsonBody } from '@/lib/validation'
 import { createUserScopedDb, type UserScopedDb } from '@/lib/database/user-scoped-db'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { authorizeModel, logUnauthorizedModelAccess, trackUsage } from '@/lib/model-auth'
+import { authorizeModel, logUnauthorizedModelAccess, trackUsage, isDemoMode, getUserTier } from '@/lib/model-auth'
 
 // Types for AI interactions
 type AIContentPart = { type: string; text?: string; [key: string]: unknown }
@@ -673,6 +673,45 @@ export async function POST(request: NextRequest) {
         // === SERVER-SIDE MODEL AUTHORIZATION ===
         // CRITICAL: Never trust client-supplied model ID - validate against user's tier
         const authResult = await authorizeModel(userId, requestedModel || DEFAULT_MODEL_ID)
+
+        // === DEMO MODE HANDLING ===
+        // Demo users get simulated AI responses (no real API calls = no cost)
+        if (isDemoMode(authResult.userTier)) {
+            const { getSimulatedChatResponse } = await import('@/lib/ai-simulation')
+            const latestUserMessage = messageValidation.data[messageValidation.data.length - 1]
+            const latestContent = latestUserMessage?.content || ''
+            
+            const simulated = getSimulatedChatResponse(latestContent)
+            
+            // Return streaming response for consistent UX
+            const stream = new ReadableStream({
+                async start(controller) {
+                    const encoder = new TextEncoder()
+                    
+                    // Simulate thinking delay
+                    await new Promise(r => setTimeout(r, simulated.delay))
+                    
+                    // Stream words for natural feel
+                    const words = simulated.content.split(' ')
+                    for (let i = 0; i < words.length; i++) {
+                        const word = words[i] + (i < words.length - 1 ? ' ' : '')
+                        controller.enqueue(encoder.encode(`T:${JSON.stringify(word)}\n`))
+                        await new Promise(r => setTimeout(r, 20 + Math.random() * 30))
+                    }
+                    
+                    // Send demo mode indicator
+                    controller.enqueue(encoder.encode(`D:${JSON.stringify({ demoMode: true })}\n`))
+                    controller.close()
+                }
+            })
+            
+            return new Response(stream, {
+                headers: { 
+                    'Content-Type': 'text/event-stream',
+                    'X-Demo-Mode': 'true'
+                }
+            })
+        }
 
         if (!authResult.authorized) {
             // Log the unauthorized attempt for security monitoring

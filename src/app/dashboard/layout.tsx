@@ -17,6 +17,7 @@ import { ModelProvider } from "@/providers/model-provider"
 import { AIDialogProvider } from "@/providers/ai-overlay-provider"
 import { AIOverlay } from "@/components/ai"
 import { AuthGuard } from "@/components/auth/auth-guard"
+import { DemoBanner } from "@/components/shared/demo-banner"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw } from "lucide-react"
@@ -234,6 +235,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     } as React.CSSProperties
                 }
             >
+                {/* Demo mode banner */}
+                <DemoBanner />
+                
                 {/* Grey toolbar spanning full width - scrolls with content */}
                 <DashboardToolbar sidebarMode={sidebarMode} setSidebarMode={setSidebarMode} />
 

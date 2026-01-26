@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check } from "lucide-react"
+import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Zap } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -27,6 +27,8 @@ import {
 } from "@/components/ui/sidebar"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
+import { useSubscription } from "@/hooks/use-subscription"
+import { TierBadge } from "@/components/shared/tier-badge"
 
 interface UserTeamSwitcherProps {
     user: { name: string; email: string; avatar: string }
@@ -44,6 +46,7 @@ export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const { signOut } = useAuth()
+    const { isDemo, tierName } = useSubscription()
     const [activeTeam, setActiveTeam] = React.useState(teams[0])
     const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
@@ -118,9 +121,18 @@ export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
                             </div>
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
-                        {/* Account actions */}
+                        {/* Subscription tier and upgrade */}
                         <DropdownMenuGroup>
-                            <DropdownMenuItem><Sparkles className="mr-2 h-4 w-4" />Uppgradera till Pro</DropdownMenuItem>
+                            <div className="flex items-center justify-between px-2 py-1.5">
+                                <span className="text-xs text-muted-foreground">Abonnemang</span>
+                                <TierBadge size="sm" showTooltip={false} />
+                            </div>
+                            {isDemo && (
+                                <DropdownMenuItem onClick={() => router.push('/priser')}>
+                                    <Zap className="mr-2 h-4 w-4 text-amber-500" />
+                                    Uppgradera till Pro
+                                </DropdownMenuItem>
+                            )}
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>

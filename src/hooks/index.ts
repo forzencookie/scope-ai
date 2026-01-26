@@ -51,5 +51,9 @@ export {
 
 export * from "./use-account-balances"
 
+// Subscription/tier management
+export { useSubscription } from "./use-subscription"
+export type { SubscriptionTier, GatedFeature } from "./use-subscription"
+
 // Last updated timestamp hook
 export { useLastUpdated, useLastUpdatedTime, formatLastUpdated } from "./use-last-updated"

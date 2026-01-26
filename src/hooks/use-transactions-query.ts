@@ -15,7 +15,6 @@ import type { TransactionFilters, SortConfig, Transaction, TransactionWithAI } f
 import type { TransactionStatus } from "@/lib/status-types"
 import * as transactionService from "@/services/transactions"
 import { useAuth } from "./use-auth"
-import { deleteStoredTransaction } from "@/lib/demo-storage"
 
 // ============================================================================
 // Query Keys - Centralized key management for cache invalidation
@@ -123,12 +122,11 @@ export function useTransactions() {
     // Delete mutation with optimistic updates
     const deleteMutation = useMutation({
         mutationFn: async (id: string) => {
-            if (isAuthenticated && userId) {
-                const response = await transactionService.deleteTransaction(id, userId)
-                if (!response.success) throw new Error(response.error || "Failed to delete transaction")
-            } else {
-                deleteStoredTransaction(id)
+            if (!isAuthenticated || !userId) {
+                throw new Error("Must be authenticated to delete transactions")
             }
+            const response = await transactionService.deleteTransaction(id, userId)
+            if (!response.success) throw new Error(response.error || "Failed to delete transaction")
             return id
         },
         onMutate: async (id) => {
