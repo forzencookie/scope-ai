@@ -35,7 +35,7 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
     ai_suggestions: "simulated",
     bank_connection: "disabled",
     gov_submission: "simulated",
-    team_members: "disabled",
+    team_members: "full",        // No cost - just sharing demo data
     priority_support: "disabled",
     custom_integrations: "disabled",
     exports: "full",
@@ -47,7 +47,7 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
     ai_suggestions: "simulated",
     bank_connection: "disabled",
     gov_submission: "simulated",
-    team_members: "disabled",
+    team_members: "full",        // No cost - just sharing demo data
     priority_support: "disabled",
     custom_integrations: "disabled",
     exports: "full",
