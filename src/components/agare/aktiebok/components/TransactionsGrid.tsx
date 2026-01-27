@@ -12,7 +12,7 @@ interface TransactionsGridProps {
 export function TransactionsGrid({ transactions, getTransactionTypeLabel }: TransactionsGridProps) {
     return (
         <div className="w-full overflow-x-auto pb-2">
-            <div className="min-w-[700px]">
+            <div className="md:min-w-[700px]">
                 <GridTableHeader
                     columns={[
                         { label: "Datum", icon: Calendar, span: 2 },

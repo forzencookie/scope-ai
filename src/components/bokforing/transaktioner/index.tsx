@@ -58,12 +58,22 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 title={text.transactions?.title || "Transaktioner"}
                 subtitle={text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}
                 actions={
-                    <Button className="gap-2 w-full sm:w-auto" onClick={() => setNewTransactionDialogOpen(true)}>
-                        <Plus className="h-4 w-4" />
-                        <span className="sm:inline">{text.transactions?.newTransaction || "Ny händelse"}</span>
-                    </Button>
+                    <div className="hidden md:block">
+                        <Button className="gap-2" onClick={() => setNewTransactionDialogOpen(true)}>
+                            <Plus className="h-4 w-4" />
+                            <span>{text.transactions?.newTransaction || "Ny händelse"}</span>
+                        </Button>
+                    </div>
                 }
             />
+
+            {/* Mobile-only action button */}
+            <div className="md:hidden w-full">
+                <Button className="w-full" size="lg" onClick={() => setNewTransactionDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Ny transaktion
+                </Button>
+            </div>
 
             {/* Status Hero */}
             <TransactionsStatusCard

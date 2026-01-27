@@ -46,16 +46,16 @@ export function InventarierTable() {
                 title="Tillgångar"
                 subtitle="Datorer, möbler och andra saker du äger."
                 actions={
-                    <div className="flex flex-col sm:flex-row gap-2">
-                        <Button variant="outline" className="gap-2 w-full sm:w-auto" onClick={handleDepreciate}>
+                    <div className="hidden md:flex gap-2">
+                        <Button variant="outline" className="gap-2" onClick={handleDepreciate}>
                             <Calculator className="h-4 w-4" />
-                            <span className="sm:inline">Bokför avskrivning</span>
+                            Bokför avskrivning
                         </Button>
                         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="gap-2 w-full sm:w-auto">
+                                <Button className="gap-2">
                                     <Plus className="h-4 w-4" />
-                                    <span className="sm:inline">Ny tillgång</span>
+                                    Ny tillgång
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
@@ -105,10 +105,18 @@ export function InventarierTable() {
                                 <Button onClick={handleAddAsset}>Spara</Button>
                             </DialogFooter>
                         </DialogContent>
-                    </Dialog>
+                        </Dialog>
                     </div>
                 }
             />
+
+            {/* Mobile-only action button */}
+            <div className="md:hidden w-full">
+                <Button className="w-full" size="lg" onClick={() => setIsDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Ny tillgång
+                </Button>
+            </div>
 
             {/* Stats Cards */}
             <InventarierStats stats={stats} />

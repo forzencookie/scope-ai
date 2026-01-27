@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { formatCurrency } from "@/lib/utils"
 import {
-    GridTableContainer,
     GridTableHeader,
     GridTableRows,
     GridTableRow,
@@ -38,18 +37,19 @@ export function PayslipsTable({
     ]
 
     return (
-        <GridTableContainer>
-            <GridTableHeader
-                columns={columns}
-                gridCols={12}
-                trailing={
-                    <Checkbox
-                        checked={allSelected}
-                        onCheckedChange={onToggleAll}
-                    />
-                }
-            />
-            <GridTableRows>
+        <div className="w-full overflow-x-auto pb-2">
+            <div className="md:min-w-[800px]">
+                <GridTableHeader
+                    columns={columns}
+                    gridCols={12}
+                    trailing={
+                        <Checkbox
+                            checked={allSelected}
+                            onCheckedChange={onToggleAll}
+                        />
+                    }
+                />
+                <GridTableRows>
                 {data.map((slip) => (
                     <GridTableRow
                         key={slip.id}
@@ -84,7 +84,8 @@ export function PayslipsTable({
                         </div>
                     </GridTableRow>
                 ))}
-            </GridTableRows>
-        </GridTableContainer>
+                </GridTableRows>
+            </div>
+        </div>
     )
 }

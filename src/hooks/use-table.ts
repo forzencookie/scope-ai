@@ -272,9 +272,12 @@ export const commonSortHandlers = {
         return parseDate(a.date).getTime() - parseDate(b.date).getTime()
     },
     timestamp: <T extends { timestamp: Date }>(a: T, b: T): number => {
-        return a.timestamp.getTime() - b.timestamp.getTime()
+        // Handle case where timestamp might still be a string (hydration mismatch or API issue)
+        const tA = a.timestamp instanceof Date ? a.timestamp.getTime() : new Date(a.timestamp).getTime()
+        const tB = b.timestamp instanceof Date ? b.timestamp.getTime() : new Date(b.timestamp).getTime()
+        return (isNaN(tA) ? 0 : tA) - (isNaN(tB) ? 0 : tB)
     },
     amountValue: <T extends { amountValue: number }>(a: T, b: T): number => {
-        return a.amountValue - b.amountValue
+        return (Number(a.amountValue) || 0) - (Number(b.amountValue) || 0)
     },
 }

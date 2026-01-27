@@ -25,7 +25,7 @@ export function K10History({ onExport }: K10HistoryProps) {
             </div>
 
             <div className="w-full overflow-x-auto pb-4 -mx-2">
-                <div className="min-w-[800px] px-2">
+                <div className="md:min-w-[800px] px-2">
                     <GridTableHeader
                         columns={[
                             { label: "År", icon: Calendar, span: 2 },

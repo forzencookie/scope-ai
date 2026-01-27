@@ -60,7 +60,7 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
     return (
         <div className="rounded-md border bg-card">
             <div className="w-full overflow-x-auto">
-                <div className="min-w-[1000px]">
+                <div className="md:min-w-[1000px]">
                     <Table>
                 <TableHeader>
                     <TableRow>

@@ -20,9 +20,23 @@ import { AuthGuard } from "@/components/auth/auth-guard"
 import { DemoBanner } from "@/components/shared/demo-banner"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw } from "lucide-react"
+import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw, Home, BookOpen, PieChart, Users, Building2, Menu } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
-import { useEffect, useCallback } from "react"
+import React, { useEffect, useCallback } from "react"
+import Link from "next/link"
+import { useAuth } from "@/hooks/use-auth"
+import { UserTeamSwitcher } from "@/components/layout/user-team-switcher"
+import { QueryProvider } from "@/providers/query-provider"
+import { Box } from "lucide-react"
+import { cn } from "@/lib/utils"
+
+// Default team based on company provider
+const defaultTeam = {
+  id: 'default',
+  name: 'Mitt Företag',
+  logo: Building2,
+  plan: 'Free',
+}
 
 // Module-level navigation history store (persists across component remounts)
 const navigationStore = {
@@ -116,75 +130,159 @@ function useNavigationHistory() {
     return { canGoBack, canGoForward, goBack, goForward }
 }
 
-function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
-    const { state } = useSidebar()
-    const isCollapsed = state === "collapsed"
+// Mobile nav link component
+function MobileNavLink({ href, icon: Icon, children, pathname }: { href: string, icon: React.ComponentType<{ className?: string }>, children: React.ReactNode, pathname: string }) {
+    const isActive = pathname === href || pathname.startsWith(href + '/')
+    return (
+        <Link 
+            href={href} 
+            className={cn(
+                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
+                isActive 
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            )}
+        >
+            <Icon className="h-4 w-4" />
+            {children}
+        </Link>
+    )
+}
+
+function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
     const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()
+    const { user } = useAuth()
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const pathname = usePathname()
+    const prevPathnameRef = React.useRef(pathname)
+    
+    // Auto-close menu on navigation (using ref to avoid setState in effect)
+    useEffect(() => {
+        if (prevPathnameRef.current !== pathname) {
+            prevPathnameRef.current = pathname
+            setIsMobileMenuOpen(false)
+        }
+    }, [pathname])
+
+    // Minimal user object for the switcher
+    const currentUser = {
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Användare',
+        email: user?.email || '',
+        avatar: user?.user_metadata?.avatar_url || '',
+    }
+
+    const [teams] = useState([{ ...defaultTeam, logo: Box }])
 
     return (
-        <div className="h-12 bg-sidebar flex items-center shrink-0 mt-2">
-            {/* Left spacer - matches sidebar width, hidden when collapsed */}
-            {!isCollapsed && (
-                <div
-                    className="h-full shrink-0 transition-all duration-200"
-                    style={{ width: "var(--sidebar-width)" }}
-                />
-            )}
-            {/* Sidebar toggle */}
-            <SidebarTrigger className="ml-2" />
-            {/* Navigation buttons */}
-            <div className="flex items-center gap-0.5 ml-1">
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-full"
-                    onClick={goBack}
-                    disabled={!canGoBack}
-                    title="Bakåt"
-                >
-                    <ChevronLeft className="h-4 w-4" />
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-7 w-7 rounded-full"
-                    onClick={goForward}
-                    disabled={!canGoForward}
-                    title="Framåt"
-                >
-                    <ChevronRight className="h-4 w-4" />
-                </Button>
+        <div className="flex flex-col">
+            {/* Desktop Toolbar Row */}
+            <div className="hidden md:flex h-12 items-center px-2">
+                {/* Sidebar toggle */}
+                <SidebarTrigger />
+                {/* Navigation buttons */}
+                <div className="flex items-center gap-0.5 ml-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full"
+                        onClick={goBack}
+                        disabled={!canGoBack}
+                        title="Bakåt"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full"
+                        onClick={goForward}
+                        disabled={!canGoForward}
+                        title="Framåt"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+                {/* Search bar centered */}
+                <div className="flex-1 flex justify-center px-4">
+                    <GlobalSearch />
+                </div>
+                {/* Right side actions */}
+                <div className="flex items-center gap-1 mr-2">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => window.dispatchEvent(new CustomEvent("page-refresh"))}
+                        title="Uppdatera"
+                    >
+                        <RefreshCw className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                            setSidebarMode("ai-chat")
+                            window.dispatchEvent(new CustomEvent("ai-chat-show-history"))
+                        }}
+                        title="Chatthistorik"
+                    >
+                        <MessageSquare className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8"
+                        onClick={() => {
+                            setSidebarMode("ai-chat")
+                            window.dispatchEvent(new CustomEvent("ai-chat-new-conversation"))
+                        }}
+                        title="Ny chatt"
+                    >
+                        <Plus className="h-4 w-4" />
+                    </Button>
+                </div>
             </div>
-            {/* Search bar centered over main content area */}
-            <div className="flex-1 flex justify-center px-4">
-                <GlobalSearch />
-            </div>
-            {/* Right side actions */}
-            <div className="flex items-center gap-1 mr-4">
-                {/* Refresh button */}
-                <Button
-                    variant="ghost"
+
+            {/* Mobile Toolbar Row */}
+            <div className="flex md:hidden h-12 items-center px-2">
+                {/* Mobile: Menu toggle */}
+                <Button 
+                    variant="ghost" 
                     size="icon"
-                    className="h-8 w-8"
-                    onClick={() => window.dispatchEvent(new CustomEvent("page-refresh"))}
-                    title="Uppdatera"
+                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 >
-                    <RefreshCw className="h-4 w-4" />
+                    {isMobileMenuOpen ? <ChevronLeft className="h-5 w-5 rotate-[-90deg]" /> : <Menu className="h-5 w-5" />}
                 </Button>
-                {/* Chat history - switches to AI mode and shows history */}
-                <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-8 w-8"
-                    onClick={() => {
-                        setSidebarMode("ai-chat")
-                        window.dispatchEvent(new CustomEvent("ai-chat-show-history"))
-                    }}
-                    title="Chatthistorik"
-                >
-                    <MessageSquare className="h-4 w-4" />
-                </Button>
-                {/* New chat - switches to AI mode and starts new conversation */}
+
+                {/* Navigation buttons */}
+                <div className="flex items-center gap-0.5 ml-1">
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full"
+                        onClick={goBack}
+                        disabled={!canGoBack}
+                        title="Bakåt"
+                    >
+                        <ChevronLeft className="h-4 w-4" />
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 rounded-full"
+                        onClick={goForward}
+                        disabled={!canGoForward}
+                        title="Framåt"
+                    >
+                        <ChevronRight className="h-4 w-4" />
+                    </Button>
+                </div>
+
+                {/* Spacer */}
+                <div className="flex-1" />
+
+                {/* Right side actions */}
                 <Button
                     variant="ghost"
                     size="icon"
@@ -197,6 +295,30 @@ function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: Sideba
                 >
                     <Plus className="h-4 w-4" />
                 </Button>
+
+                {/* Profile */}
+                <div className="scale-90 origin-right">
+                    <UserTeamSwitcher user={currentUser} teams={teams} compact={true} />
+                </div>
+            </div>
+
+            {/* Mobile Push-Down Navigation Menu */}
+            <div className={cn(
+                "grid transition-all duration-300 ease-in-out md:hidden", 
+                isMobileMenuOpen ? "grid-rows-[1fr] opacity-100 mb-2" : "grid-rows-[0fr] opacity-0"
+            )}>
+                <div className="overflow-hidden">
+                    <div className="px-2 pt-1 pb-3 flex flex-col gap-1">
+                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                            Navigering
+                        </div>
+                        <MobileNavLink href="/dashboard" icon={Home} pathname={pathname}>Hem</MobileNavLink>
+                        <MobileNavLink href="/dashboard/bokforing" icon={BookOpen} pathname={pathname}>Bokföring</MobileNavLink>
+                        <MobileNavLink href="/dashboard/rapporter" icon={PieChart} pathname={pathname}>Rapporter</MobileNavLink>
+                        <MobileNavLink href="/dashboard/loner" icon={Users} pathname={pathname}>Löner</MobileNavLink>
+                        <MobileNavLink href="/dashboard/agare" icon={Building2} pathname={pathname}>Bolagsstyrning</MobileNavLink>
+                    </div>
+                </div>
             </div>
         </div>
     )
@@ -237,15 +359,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
             >
                 {/* Demo mode banner */}
                 <DemoBanner />
-                
-                {/* Grey toolbar spanning full width - scrolls with content */}
-                <DashboardToolbar sidebarMode={sidebarMode} setSidebarMode={setSidebarMode} />
 
                 {/* Main layout */}
-                <div className="flex flex-1 w-full bg-sidebar">
-                    <AppSidebar variant="inset" mode={sidebarMode} onModeChange={setSidebarMode} />
+                <div className="flex flex-1 w-full bg-sidebar mt-2">
+                    <AppSidebar variant="inset" mode={sidebarMode} onModeChange={setSidebarMode} className="hidden md:flex" />
                     <SidebarInset>
-                        <div className="relative w-full h-full px-4 md:px-[5%]">
+                        {/* Toolbar inside content area */}
+                        <DashboardToolbar sidebarMode={sidebarMode} setSidebarMode={setSidebarMode} />
+                        
+                        <div className="relative w-full h-full px-0 md:px-[5%]">
                             {children}
                             {/* AI Overlay - shows when AI is processing */}
                             <AIOverlay />
@@ -270,19 +392,21 @@ export default function DashboardLayout({
 }) {
     return (
         <AuthGuard>
-            <TextModeProvider>
-                <ModelProvider>
-                    <CompanyProvider>
-                        <AIDialogProvider>
-                            <ToastProvider>
-                                <DashboardContent>
-                                    {children}
-                                </DashboardContent>
-                            </ToastProvider>
-                        </AIDialogProvider>
-                    </CompanyProvider>
-                </ModelProvider>
-            </TextModeProvider>
+            <QueryProvider>
+                <TextModeProvider>
+                    <ModelProvider>
+                        <CompanyProvider>
+                            <AIDialogProvider>
+                                <ToastProvider>
+                                    <DashboardContent>
+                                        {children}
+                                    </DashboardContent>
+                                </ToastProvider>
+                            </AIDialogProvider>
+                        </CompanyProvider>
+                    </ModelProvider>
+                </TextModeProvider>
+            </QueryProvider>
         </AuthGuard>
     )
 }

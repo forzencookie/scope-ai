@@ -57,12 +57,22 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
                 title={text.receipts.title || "Kvitton logg"}
                 subtitle={text.receipts.subtitle || "Ladda upp och hantera dina kvitton"}
                 actions={
-                    <Button className="gap-2 w-full sm:w-auto" onClick={() => setUploadDialogOpen(true)}>
-                        <UploadCloud className="h-4 w-4" />
-                        {text.receipts.upload || "Ladda upp"}
-                    </Button>
+                    <div className="hidden md:block">
+                        <Button className="gap-2" onClick={() => setUploadDialogOpen(true)}>
+                            <UploadCloud className="h-4 w-4" />
+                            {text.receipts.upload || "Ladda upp"}
+                        </Button>
+                    </div>
                 }
             />
+
+            {/* Mobile-only action button */}
+            <div className="md:hidden w-full">
+                <Button className="w-full" size="lg" onClick={() => setUploadDialogOpen(true)}>
+                    <UploadCloud className="mr-2 h-4 w-4" />
+                    Ladda upp kvitto
+                </Button>
+            </div>
 
             {/* Dashboard / Stats */}
             <ReceiptsDashboard

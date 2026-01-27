@@ -32,7 +32,7 @@ export function GridTableHeader({
     gridCols = 12,
     trailing,
     className,
-    minWidth = "700px"
+    minWidth = "0"
 }: GridTableHeaderProps) {
     return (
         <div
@@ -116,7 +116,7 @@ export function GridTableRow({
     selected,
     onClick,
     className,
-    minWidth = "700px"
+    minWidth = "0"
 }: GridTableRowProps) {
     return (
         <div

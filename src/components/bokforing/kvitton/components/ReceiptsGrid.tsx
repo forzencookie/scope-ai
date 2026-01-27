@@ -48,7 +48,7 @@ export function ReceiptsGrid({
 }: ReceiptsGridProps) {
     return (
         <div className="w-full overflow-x-auto pb-2">
-            <div className="min-w-[800px] px-2">
+            <div className="md:min-w-[800px] px-2">
                 <GridTableHeader
                     columns={[
                         { label: text.receipts.supplier, icon: Building2, span: 3 },

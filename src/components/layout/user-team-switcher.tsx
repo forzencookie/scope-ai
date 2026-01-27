@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, Sparkles, User, Sun, Moon, Monitor, Check, Zap } from "lucide-react"
+import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, User, Sun, Moon, Monitor, Check, Zap } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -37,16 +37,17 @@ interface UserTeamSwitcherProps {
         logo: LucideIcon
         plan: string
     }[]
+    compact?: boolean
 }
 
-export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
+export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitcherProps) {
     const { isMobile } = useSidebar()
     const { theme, setTheme } = useTheme()
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const { signOut } = useAuth()
-    const { isDemo, tierName } = useSubscription()
+    const { isDemo, tierName: _tierName } = useSubscription()
     const [activeTeam, setActiveTeam] = React.useState(teams[0])
     const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
@@ -96,11 +97,15 @@ export function UserTeamSwitcher({ user, teams }: UserTeamSwitcherProps) {
                                 <AvatarImage src={user.avatar} alt={user.name} />
                                 <AvatarFallback className="rounded-lg bg-muted text-foreground"><User className="h-4 w-4" /></AvatarFallback>
                             </Avatar>
-                            <div className="grid flex-1 text-left text-sm leading-tight transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0">
-                                <span className="truncate font-medium text-foreground">{user.name}</span>
-                                <span className="truncate text-xs text-muted-foreground">{user.email}</span>
-                            </div>
-                            <ChevronsUpDown className="ml-auto transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0" />
+                            {!compact && (
+                                <>
+                                    <div className="grid flex-1 text-left text-sm leading-tight transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0">
+                                        <span className="truncate font-medium text-foreground">{user.name}</span>
+                                        <span className="truncate text-xs text-muted-foreground">{user.email}</span>
+                                    </div>
+                                    <ChevronsUpDown className="ml-auto transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0" />
+                                </>
+                            )}
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

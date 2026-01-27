@@ -108,11 +108,14 @@ function ParterPageContent() {
     const lastUpdated = useLastUpdated();
 
     // Filter tabs based on available features for the current company type
+    // Remove icons - only show colored dots in quick menu
     const tabs = useMemo(() => {
-        return allTabs.filter(tab => {
-            if (!tab.feature) return true;
-            return hasFeature(tab.feature);
-        });
+        return allTabs
+            .filter(tab => {
+                if (!tab.feature) return true;
+                return hasFeature(tab.feature);
+            })
+            .map(({ icon: _icon, ...rest }) => rest); // Remove icon property
     }, [hasFeature]);
 
     // Check if this is EF (no tabs, just owner info)

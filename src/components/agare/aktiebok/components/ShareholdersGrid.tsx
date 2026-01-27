@@ -26,7 +26,7 @@ interface ShareholdersGridProps {
 export function ShareholdersGrid({ shareholders }: ShareholdersGridProps) {
     return (
         <div className="w-full overflow-x-auto pb-2">
-            <div className="min-w-[800px]">
+            <div className="md:min-w-[800px]">
                 <GridTableHeader
                     columns={[
                         { label: 'Aktieägare', icon: User, span: 3 },

@@ -101,12 +101,22 @@ export function LonesbeskContent() {
                     title="Lönekörning"
                     subtitle="Hantera löner och lönespecifikationer för dina anställda."
                     actions={
-                        <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
-                            <Plus className="h-4 w-4 mr-2" />
-                            <span className="sm:inline">Ny lönekörning</span>
-                        </Button>
+                        <div className="hidden md:block">
+                            <Button onClick={() => setShowAIDialog(true)}>
+                                <Plus className="h-4 w-4 mr-2" />
+                                Ny lönekörning
+                            </Button>
+                        </div>
                     }
                 />
+
+                {/* Mobile-only action button */}
+                <div className="md:hidden w-full -mt-2">
+                    <Button className="w-full" size="lg" onClick={() => setShowAIDialog(true)}>
+                        <Plus className="mr-2 h-4 w-4" />
+                        Ny lönekörning
+                    </Button>
+                </div>
 
                 {/* Payroll Period Summary */}
                 {!isLoading && <PayslipsStats stats={stats} />}

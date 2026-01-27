@@ -43,12 +43,22 @@ export default function TeamTab() {
                 title="Team & Rapportering"
                 subtitle="Hantera anställda, utlägg och milersättning."
                 actions={
-                    <Button onClick={() => setNewEmployeeDialogOpen(true)} className="w-full sm:w-auto">
-                        <Plus className="h-4 w-4 mr-2" />
-                        <span className="sm:inline">Ny anställd</span>
-                    </Button>
+                    <div className="hidden md:block">
+                        <Button onClick={() => setNewEmployeeDialogOpen(true)}>
+                            <Plus className="h-4 w-4 mr-2" />
+                            Ny anställd
+                        </Button>
+                    </div>
                 }
             />
+
+            {/* Mobile-only action button */}
+            <div className="md:hidden w-full">
+                <Button className="w-full" size="lg" onClick={() => setNewEmployeeDialogOpen(true)}>
+                    <Plus className="mr-2 h-4 w-4" />
+                    Ny anställd
+                </Button>
+            </div>
 
             {/* Empty State */}
             {employees.length === 0 && !isLoading ? (

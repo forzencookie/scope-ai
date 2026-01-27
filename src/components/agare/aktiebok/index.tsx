@@ -55,31 +55,45 @@ export function Aktiebok() {
                 title="Aktiebok"
                 subtitle="Digital aktiebok med historik över ägarförändringar och transaktioner."
                 actions={
-                    <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                            <Button size="sm">
-                                <Plus className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Åtgärder</span>
-                            </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                            <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
-                                <Plus className="h-4 w-4 mr-2" />
-                                Nyemission
-                            </DropdownMenuItem>
-                            <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
-                                <ArrowRightLeft className="h-4 w-4 mr-2" />
-                                Registrera överlåtelse
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
-                            <DropdownMenuItem>
-                                <Download className="h-4 w-4 mr-2" />
-                                Exportera aktiebok
-                            </DropdownMenuItem>
-                        </DropdownMenuContent>
-                    </DropdownMenu>
+                    <div className="hidden md:block">
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <Button size="sm">
+                                    <Plus className="h-4 w-4 md:mr-2" />
+                                    <span className="hidden md:inline">Åtgärder</span>
+                                </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end">
+                                <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
+                                    <Plus className="h-4 w-4 mr-2" />
+                                    Lägg till aktieägare
+                                </DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
+                                    <ArrowRightLeft className="h-4 w-4 mr-2" />
+                                    Registrera överlåtelse
+                                </DropdownMenuItem>
+                                <DropdownMenuSeparator />
+                                <DropdownMenuItem>
+                                    <Download className="h-4 w-4 mr-2" />
+                                    Exportera aktiebok
+                                </DropdownMenuItem>
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
                 }
             />
+
+            {/* Mobile-only primary action button */}
+            <div className="md:hidden w-full">
+                <Button 
+                    className="w-full" 
+                    size="lg"
+                    onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}
+                >
+                    <Plus className="mr-2 h-4 w-4" />
+                    Lägg till aktieägare
+                </Button>
+            </div>
 
             <AktiebokStats stats={stats} shareholders={shareholders} />
 

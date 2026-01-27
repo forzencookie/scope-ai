@@ -73,7 +73,17 @@ export async function getTransactionsWithAI(
 
     if (!res.ok) throw new Error(json.error || 'Failed to fetch');
 
-    return successResponse(json.transactions || []);
+    // Revive Date objects from JSON strings
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const transactions = (json.transactions || []).map((t: any) => ({
+      ...t,
+      // Ensure timestamp is a real Date object
+      timestamp: t.timestamp ? new Date(t.timestamp) : new Date(),
+      // Ensure date string is present (fallback to current date formatted)
+      date: t.date || new Date().toLocaleDateString('sv-SE', { day: 'numeric', month: 'short', year: 'numeric' }),
+    })) as TransactionWithAI[];
+
+    return successResponse(transactions);
   } catch (err) {
     console.error('Fetch transactions failed:', err);
     return errorResponse('Failed to load transactions', []);

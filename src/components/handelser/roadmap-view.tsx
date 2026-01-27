@@ -1,8 +1,7 @@
 "use client"
 
 import { useEffect, useState } from "react"
-import { Plus, Map, ArrowRight, Loader2, Calendar } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Map, ArrowRight, Loader2, Calendar } from "lucide-react"
 import { Card } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { type Roadmap } from "@/types/roadmap"
@@ -13,7 +12,7 @@ interface RoadmapViewProps {
     onCreateNew: () => void
 }
 
-export function RoadmapView({ onCreateNew }: RoadmapViewProps) {
+export function RoadmapView({ onCreateNew: _onCreateNew }: RoadmapViewProps) {
     const [roadmaps, setRoadmaps] = useState<Roadmap[]>([])
     const [loading, setLoading] = useState(true)
     const [selectedRoadmap, setSelectedRoadmap] = useState<Roadmap | null>(null)
@@ -64,13 +63,9 @@ export function RoadmapView({ onCreateNew }: RoadmapViewProps) {
                     <Map className="h-8 w-8 text-primary" />
                 </div>
                 <h3 className="text-xl font-semibold mb-2">Inga aktiva planer</h3>
-                <p className="text-muted-foreground max-w-md mb-8">
+                <p className="text-muted-foreground text-sm max-w-xs md:max-w-md mb-8 px-4">
                     Skapa en långsiktig plan för ditt företagande. AI hjälper dig att bryta ner stora mål i hanterbara steg.
                 </p>
-                <Button onClick={onCreateNew} size="lg" className="rounded-full">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Skapa ny plan
-                </Button>
             </div>
         )
     }

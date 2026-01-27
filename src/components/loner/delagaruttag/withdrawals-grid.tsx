@@ -23,7 +23,7 @@ interface WithdrawalsGridProps {
 export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
   return (
     <div className="overflow-x-auto pb-4 -mx-2">
-      <div className="min-w-[800px] px-2">
+      <div className="md:min-w-[800px] px-2">
         <GridTableHeader
           minWidth="0"
           columns={[
