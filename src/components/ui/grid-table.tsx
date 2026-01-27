@@ -14,6 +14,8 @@ interface TableColumn {
     icon?: React.ComponentType<{ className?: string }>
     span?: number  // grid column span, defaults to 1
     align?: 'left' | 'right' | 'center'
+    /** Hide this column on mobile (below md breakpoint) */
+    hiddenOnMobile?: boolean
 }
 
 interface GridTableHeaderProps {
@@ -55,7 +57,8 @@ export function GridTableHeader({
                         className={cn(
                             "flex items-center gap-1 w-full min-w-0",
                             align === 'right' && "justify-end",
-                            align === 'center' && "justify-center"
+                            align === 'center' && "justify-center",
+                            col.hiddenOnMobile && "hidden md:flex"
                         )}
                         style={spanStyle}
                     >

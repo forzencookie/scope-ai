@@ -132,16 +132,18 @@ export function TransactionsSidebar({ transactions, stats }: TransactionsSidebar
                     />
                 )}
 
-                {/* 7-day Trend */}
+                {/* 7-day Trend - hidden on mobile */}
                 {trendData.length > 0 && (
-                    <Sparkline
-                        title="7-dagars trend"
-                        description="Nettotransaktioner per dag"
-                        data={trendData}
-                        height={48}
-                        color="hsl(var(--primary))"
-                        showArea
-                    />
+                    <div className="hidden md:block">
+                        <Sparkline
+                            title="7-dagars trend"
+                            description="Nettotransaktioner per dag"
+                            data={trendData}
+                            height={48}
+                            color="hsl(var(--primary))"
+                            showArea
+                        />
+                    </div>
                 )}
 
                 {/* Recent Activity */}

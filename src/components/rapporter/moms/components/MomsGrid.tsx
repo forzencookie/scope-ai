@@ -17,9 +17,9 @@ export function MomsGrid({ periods, selection, onSelectReport }: MomsGridProps) 
             <GridTableHeader
                 columns={[
                     { label: "Period", icon: Calendar, span: 2 },
-                    { label: "Deadline", icon: Clock, span: 2 },
-                    { label: "Utgående moms", icon: ArrowUpRight, span: 2, align: "right" },
-                    { label: "Ingående moms", icon: ArrowDownRight, span: 2, align: "right" },
+                    { label: "Deadline", icon: Clock, span: 2, hiddenOnMobile: true },
+                    { label: "Utgående moms", icon: ArrowUpRight, span: 2, align: "right", hiddenOnMobile: true },
+                    { label: "Ingående moms", icon: ArrowDownRight, span: 2, align: "right", hiddenOnMobile: true },
                     { label: "Att betala", icon: Wallet, span: 2, align: "right" },
                     { label: "Status", icon: CheckCircle2, span: 1 },
                 ]}
@@ -41,13 +41,13 @@ export function MomsGrid({ periods, selection, onSelectReport }: MomsGridProps) 
                         <div style={{ gridColumn: 'span 2' }} className="font-medium">
                             {item.period}
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground">
+                        <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground hidden md:block">
                             {item.dueDate}
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums hidden md:block">
                             {item.salesVat.toLocaleString("sv-SE")} kr
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums">
+                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums hidden md:block">
                             {item.inputVat.toLocaleString("sv-SE")} kr
                         </div>
                         <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums font-medium">

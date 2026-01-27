@@ -101,7 +101,7 @@ export function GlobalSearch() {
                     onFocus={() => setIsOpen(true)}
                     onKeyDown={handleKeyDown}
                     placeholder="Sök..."
-                    className="w-full h-9 pl-9 pr-4 text-sm bg-muted/50 border border-border/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background placeholder:text-muted-foreground"
+                    className="w-full h-9 pl-9 pr-4 text-sm bg-muted/50 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background placeholder:text-muted-foreground"
                 />
             </div>
 

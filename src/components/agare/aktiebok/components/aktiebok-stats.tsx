@@ -71,20 +71,20 @@ export function AktiebokStats({ stats, shareholders }: AktiebokStatsProps) {
                 </div>
 
                 {/* Right: Key Metrics */}
-                <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4">
-                    <div className="flex flex-col justify-center p-3 md:p-4 rounded-lg bg-background/60 border border-border/50">
+                <div className="flex-1 grid grid-cols-3 gap-2 md:gap-4">
+                    <div className="flex flex-col justify-center p-2 md:p-4 rounded-lg bg-background/60 border border-border/50">
                         <FileText className="h-5 w-5 text-indigo-500 mb-2" />
-                        <p className="text-xl md:text-2xl font-bold tabular-nums">{formatNumber(stats.totalShares)}</p>
+                        <p className="text-lg md:text-2xl font-bold tabular-nums">{formatNumber(stats.totalShares)}</p>
                         <p className="text-xs text-muted-foreground">Totalt aktier</p>
                     </div>
-                    <div className="flex flex-col justify-center p-3 md:p-4 rounded-lg bg-background/60 border border-border/50">
+                    <div className="flex flex-col justify-center p-2 md:p-4 rounded-lg bg-background/60 border border-border/50">
                         <Vote className="h-5 w-5 text-violet-500 mb-2" />
-                        <p className="text-xl md:text-2xl font-bold tabular-nums">{formatNumber(stats.totalVotes)}</p>
+                        <p className="text-lg md:text-2xl font-bold tabular-nums">{formatNumber(stats.totalVotes)}</p>
                         <p className="text-xs text-muted-foreground">Totalt röster</p>
                     </div>
-                    <div className="flex flex-col justify-center p-3 md:p-4 rounded-lg bg-background/60 border border-border/50">
+                    <div className="flex flex-col justify-center p-2 md:p-4 rounded-lg bg-background/60 border border-border/50">
                         <Users className="h-5 w-5 text-purple-500 mb-2" />
-                        <p className="text-xl md:text-2xl font-bold tabular-nums">{formatNumber(stats.shareholderCount)}</p>
+                        <p className="text-lg md:text-2xl font-bold tabular-nums">{formatNumber(stats.shareholderCount)}</p>
                         <p className="text-xs text-muted-foreground">Aktieägare</p>
                     </div>
                 </div>

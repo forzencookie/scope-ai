@@ -29,8 +29,8 @@ export function K10History({ onExport }: K10HistoryProps) {
                     <GridTableHeader
                         columns={[
                             { label: "År", icon: Calendar, span: 2 },
-                            { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3 },
-                            { label: "Utnyttjat", icon: Percent, align: "right", span: 3 },
+                            { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3, hiddenOnMobile: true },
+                            { label: "Utnyttjat", icon: Percent, align: "right", span: 3, hiddenOnMobile: true },
                             { label: "Sparat", icon: Calculator, align: "right", span: 2 },
                             { label: "Status", align: "center", span: 2 },
                         ]}
@@ -40,10 +40,10 @@ export function K10History({ onExport }: K10HistoryProps) {
                         {displayedHistory.map((k10) => (
                             <GridTableRow key={k10.year}>
                                 <div style={{ gridColumn: 'span 2' }} className="font-medium text-sm">{k10.year}</div>
-                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums">
+                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums hidden md:block">
                                     {formatCurrency(k10.gransbelopp)}
                                 </div>
-                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums">
+                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums hidden md:block">
                                     {formatCurrency(k10.usedAmount)}
                                 </div>
                                 <div style={{ gridColumn: 'span 2' }} className="text-right font-medium text-sm tabular-nums text-green-600 dark:text-green-400">

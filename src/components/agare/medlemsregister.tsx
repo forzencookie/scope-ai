@@ -171,8 +171,8 @@ export function Medlemsregister() {
             minWidth="0"
             columns={[
               { label: "Namn & Medlemsnr", icon: Users, span: 3 },
-              { label: "Kontakt", span: 3 },
-              { label: "Medlemskap", span: 2 },
+              { label: "Kontakt", span: 3, hiddenOnMobile: true },
+              { label: "Medlemskap", span: 2, hiddenOnMobile: true },
               { label: "Status", span: 2 },
               { label: "", span: 1 },
             ]}
@@ -204,7 +204,7 @@ export function Medlemsregister() {
                 </div>
 
                 {/* Kontakt */}
-                <div className="col-span-3 space-y-0.5">
+                <div className="col-span-3 space-y-0.5 hidden md:block">
                   <div className="flex items-center gap-1.5 text-sm">
                     <Mail className="h-3 w-3 text-muted-foreground" />
                     <span className="truncate max-w-[180px]">{member.email}</span>
@@ -218,7 +218,7 @@ export function Medlemsregister() {
                 </div>
 
                 {/* Medlemskap */}
-                <div className="col-span-2 space-y-1">
+                <div className="col-span-2 space-y-1 hidden md:block">
                   <div className="text-sm font-medium">
                     {getMembershipTypeLabel(member.membershipType)}
                   </div>

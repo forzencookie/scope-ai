@@ -45,10 +45,10 @@ export function RecentWithdrawalsGrid() {
             <GridTableHeader
               columns={[
                 { label: "", span: 1 }, // Checkbox
-                { label: "Datum", icon: Calendar, span: 2 },
+                { label: "Datum", icon: Calendar, span: 2, hiddenOnMobile: true },
                 { label: "Delägare", icon: User, span: 2 },
                 { label: "Typ", span: 2 },
-                { label: "Beskrivning", span: 3 },
+                { label: "Beskrivning", span: 3, hiddenOnMobile: true },
                 { label: "Belopp", icon: Banknote, span: 2, align: 'right' },
               ]}
             />
@@ -64,14 +64,14 @@ export function RecentWithdrawalsGrid() {
                     />
                   </div>
 
-                  <div className="col-span-2 text-sm text-muted-foreground">{withdrawal.date}</div>
+                  <div className="col-span-2 text-sm text-muted-foreground hidden md:block">{withdrawal.date}</div>
                   <div className="col-span-2 font-medium">{withdrawal.partnerName}</div>
                   <div className="col-span-2">
                     <AppStatusBadge
                       status={withdrawal.type === 'uttag' ? 'Uttag' : 'Insättning'}
                     />
                   </div>
-                  <div className="col-span-3 text-sm text-muted-foreground truncate">{withdrawal.description}</div>
+                  <div className="col-span-3 text-sm text-muted-foreground truncate hidden md:block">{withdrawal.description}</div>
                   <div className="col-span-2 text-right font-mono">
                     <span className={withdrawal.type === 'uttag' ? 'text-red-600 dark:text-red-500/70' : 'text-green-600 dark:text-green-500/70'}>
                       {withdrawal.type === 'uttag' ? '-' : '+'}{formatCurrency(withdrawal.amount)}

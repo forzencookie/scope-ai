@@ -31,7 +31,7 @@ export function PayslipsTable({
     const columns = [
         { label: "Anställd", icon: User, span: 3 },
         { label: "Period", icon: Calendar, span: 2 },
-        { label: "Brutto", icon: Banknote, span: 2, align: 'right' as const },
+        { label: "Brutto", icon: Banknote, span: 2, align: 'right' as const, hiddenOnMobile: true },
         { label: "Netto", icon: Wallet, span: 2, align: 'right' as const },
         { label: "Status", icon: CheckCircle2, span: 2 },
     ]
@@ -67,12 +67,12 @@ export function PayslipsTable({
                             <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold">
                                 {slip.employee.substring(0, 2).toUpperCase()}
                             </div>
-                            {slip.employee}
+                            <span className="truncate">{slip.employee}</span>
                         </div>
                         <div style={{ gridColumn: 'span 2' }} className="p-4 text-sm text-muted-foreground tabular-nums">
                             {slip.period}
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="p-4 text-right text-sm tabular-nums text-muted-foreground">
+                        <div style={{ gridColumn: 'span 2' }} className="p-4 text-right text-sm tabular-nums text-muted-foreground hidden md:block">
                             {formatCurrency(slip.grossSalary)}
                         </div>
                         <div style={{ gridColumn: 'span 2' }} className="p-4 text-right text-sm font-medium tabular-nums">

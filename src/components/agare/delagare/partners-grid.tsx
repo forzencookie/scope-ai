@@ -49,10 +49,10 @@ export function PartnersGrid({ partners, showKommanditdelägare, onSearchChange,
               columns={[
                 { label: "", span: 1 }, // Checkbox
                 { label: "Namn", icon: User, span: 3 },
-                { label: "Personnummer", span: 2 },
-                ...(showKommanditdelägare ? [{ label: "Typ", span: 2 }] : []),
+                { label: "Personnummer", span: 2, hiddenOnMobile: true },
+                ...(showKommanditdelägare ? [{ label: "Typ", span: 2, hiddenOnMobile: true }] : []),
                 { label: "Ägarandel", icon: Percent, span: 1, align: 'right' },
-                { label: "Insatskapital", icon: Banknote, span: showKommanditdelägare ? 1.5 : 2, align: 'right' },
+                { label: "Insatskapital", icon: Banknote, span: showKommanditdelägare ? 1.5 : 2, align: 'right', hiddenOnMobile: true },
                 { label: "Kapitalsaldo", icon: Wallet, span: showKommanditdelägare ? 1.5 : 2, align: 'right' },
               ]}
             />
@@ -74,13 +74,13 @@ export function PartnersGrid({ partners, showKommanditdelägare, onSearchChange,
                   </div>
 
                   {/* PNR */}
-                  <div className="col-span-2 font-mono text-sm text-muted-foreground">
+                  <div className="col-span-2 font-mono text-sm text-muted-foreground hidden md:block">
                     {formatPersonalNumber(partner.personalNumber)}
                   </div>
 
                   {/* Type (Conditional) */}
                   {showKommanditdelägare && (
-                    <div className="col-span-2">
+                    <div className="col-span-2 hidden md:block">
                       <AppStatusBadge
                         status={partner.type === 'komplementär' ? 'Komplementär' : 'Kommanditdelägare'}
                       />
@@ -93,7 +93,7 @@ export function PartnersGrid({ partners, showKommanditdelägare, onSearchChange,
                   </div>
 
                   {/* Capital */}
-                  <div className={cn("text-right font-mono", showKommanditdelägare ? "col-span-[1.5]" : "col-span-2")}>
+                  <div className={cn("text-right font-mono hidden md:block", showKommanditdelägare ? "col-span-[1.5]" : "col-span-2")}>
                     {formatCurrency(partner.capitalContribution)}
                   </div>
 

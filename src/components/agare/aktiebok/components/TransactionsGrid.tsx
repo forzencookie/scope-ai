@@ -17,10 +17,10 @@ export function TransactionsGrid({ transactions, getTransactionTypeLabel }: Tran
                     columns={[
                         { label: "Datum", icon: Calendar, span: 2 },
                         { label: "Typ", icon: CheckCircle2, span: 2 },
-                        { label: "Från", icon: User, span: 2 },
+                        { label: "Från", icon: User, span: 2, hiddenOnMobile: true },
                         { label: "Till", icon: User, span: 2 },
                         { label: "Aktier", icon: Hash, span: 2, align: 'right' },
-                        { label: "Pris/aktie", icon: Banknote, span: 1, align: 'right' },
+                        { label: "Pris/aktie", icon: Banknote, span: 1, align: 'right', hiddenOnMobile: true },
                         { label: "Totalt", icon: Banknote, span: 1, align: 'right' },
                     ]}
                 />
@@ -38,7 +38,7 @@ export function TransactionsGrid({ transactions, getTransactionTypeLabel }: Tran
                         </div>
 
                         {/* 3. Från */}
-                        <div className="col-span-2 text-sm text-muted-foreground">
+                        <div className="col-span-2 text-sm text-muted-foreground hidden md:block">
                             {tx.fromShareholder || '—'}
                         </div>
 
@@ -54,7 +54,7 @@ export function TransactionsGrid({ transactions, getTransactionTypeLabel }: Tran
                         </div>
 
                         {/* 6. Pris */}
-                        <div className="col-span-1 tabular-nums text-sm text-muted-foreground text-right">
+                        <div className="col-span-1 tabular-nums text-sm text-muted-foreground text-right hidden md:block">
                             {formatCurrency(tx.pricePerShare)}
                         </div>
 

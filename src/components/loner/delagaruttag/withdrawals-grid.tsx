@@ -27,9 +27,9 @@ export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
         <GridTableHeader
           minWidth="0"
           columns={[
-            { label: "Datum", icon: Calendar, span: 2 },
+            { label: "Datum", icon: Calendar, span: 2, hiddenOnMobile: true },
             { label: "Delägare", span: 2 },
-            { label: "Beskrivning", span: 3 },
+            { label: "Beskrivning", span: 3, hiddenOnMobile: true },
             { label: "Typ", span: 2 },
             { label: "Belopp", span: 2 },
             { label: "", span: 1 },
@@ -41,7 +41,7 @@ export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
 
             return (
               <GridTableRow key={withdrawal.id} minWidth="0">
-                <div className="col-span-2 font-medium">
+                <div className="col-span-2 font-medium hidden md:block">
                   {formatDate(withdrawal.date)}
                 </div>
                 <div className="col-span-2">
@@ -52,7 +52,7 @@ export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
                     {withdrawal.partnerName}
                   </div>
                 </div>
-                <div className="col-span-3 text-sm text-muted-foreground truncate">
+                <div className="col-span-3 text-sm text-muted-foreground truncate hidden md:block">
                   {withdrawal.description}
                 </div>
                 <div className="col-span-2">

@@ -50,11 +50,11 @@ export function AnnualMeetingsGrid({
           minWidth="0"
           columns={[
             { label: "År", icon: Calendar, span: 1 },
-            { label: "Typ", span: 2 },
+            { label: "Typ", span: 2, hiddenOnMobile: true },
             { label: "Datum & Plats", span: 3 },
-            { label: "Motioner", icon: MessageSquare, span: 1 },
-            { label: "Beslut", icon: Gavel, span: 1 },
-            { label: "Närvarande", icon: Users, span: 1 },
+            { label: "Motioner", icon: MessageSquare, span: 1, hiddenOnMobile: true },
+            { label: "Beslut", icon: Gavel, span: 1, hiddenOnMobile: true },
+            { label: "Närvarande", icon: Users, span: 1, hiddenOnMobile: true },
             { label: "Status", span: 2 },
             { label: "", span: 1 },
           ]}
@@ -76,7 +76,7 @@ export function AnnualMeetingsGrid({
               </div>
 
               {/* Typ */}
-              <div className="col-span-2">
+              <div className="col-span-2 hidden md:block">
                 <Badge variant={meeting.type === 'extra' ? 'secondary' : 'default'}>
                   <HandHeart className="h-3 w-3 mr-1" />
                   {meeting.type === 'ordinarie' ? 'Ordinarie' : 'Extra'}
@@ -93,17 +93,17 @@ export function AnnualMeetingsGrid({
               </div>
 
               {/* Motioner */}
-              <div className="col-span-1 tabular-nums">
+              <div className="col-span-1 tabular-nums hidden md:block">
                 {(meeting.motions || []).length}
               </div>
 
               {/* Beslut */}
-              <div className="col-span-1 tabular-nums">
+              <div className="col-span-1 tabular-nums hidden md:block">
                 {(meeting.decisions || []).length}
               </div>
 
               {/* Närvarande */}
-              <div className="col-span-1 tabular-nums">
+              <div className="col-span-1 tabular-nums hidden md:block">
                 {meeting.attendeesCount || '-'}
               </div>
 

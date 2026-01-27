@@ -46,10 +46,10 @@ export function TransactionsTableGrid({
                 <GridTableHeader
                     columns={[
                         { label: text.labels?.supplier || "Leverantör", icon: Building2, span: 3 },
-                        { label: text.labels?.date || "Datum", icon: Calendar, span: 2 },
+                        { label: text.labels?.date || "Datum", icon: Calendar, span: 2, hiddenOnMobile: true },
                         { label: text.labels?.amount || "Belopp", icon: Banknote, span: 2 },
                         { label: text.labels?.status || "Status", icon: CheckCircle2, span: 2 },
-                        { label: text.labels?.account || "Konto", icon: CreditCard, span: 2 },
+                        { label: text.labels?.account || "Konto", icon: CreditCard, span: 2, hiddenOnMobile: true },
                     ]}
                     trailing={
                         <Checkbox
@@ -70,7 +70,7 @@ export function TransactionsTableGrid({
                             <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
                                 {transaction.name}
                             </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate">
+                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate hidden md:block">
                                 {transaction.date}
                             </div>
                             <div style={{ gridColumn: 'span 2' }}>
@@ -84,7 +84,7 @@ export function TransactionsTableGrid({
                             <div style={{ gridColumn: 'span 2' }}>
                                 <AppStatusBadge status={transaction.status} size="sm" />
                             </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate">
+                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate hidden md:block">
                                 {transaction.account}
                             </div>
                             <div
@@ -112,20 +112,12 @@ export function TransactionsTableGrid({
                                     onClick={onAddTransaction}
                                 >
                                     <Plus className="h-4 w-4 mr-2" />
-                                    {text.transactions?.newTransaction || "Ny transaktion"}
+                                    {text.transactions?.newTransaction || "Ny betalning eller inkomst"}
                                 </Button>
                             )}
                         </div>
                     )}
                 </GridTableRows>
-
-                {/* Only show add row button when table is empty - avoids redundancy with header button */}
-                {transactions.length === 0 && !hasActiveFilters && (
-                    <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={onAddTransaction}>
-                        <Plus className="h-4 w-4 mr-2" />
-                        {text.transactions?.newTransaction || "Ny transaktion"}
-                    </Button>
-                )}
             </div>
         </div>
     )
