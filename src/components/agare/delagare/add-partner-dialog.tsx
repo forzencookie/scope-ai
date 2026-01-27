@@ -18,7 +18,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-import { Partner } from "@/data/ownership"
+import { Partner } from "@/types/ownership"
 
 interface AddPartnerDialogProps {
     open: boolean

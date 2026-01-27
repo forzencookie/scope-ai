@@ -1,4 +1,4 @@
-import { type Shareholder, type Partner, type BoardMeeting, type OwnerInfo } from '@/data/ownership';
+import { type Shareholder, type Partner, type BoardMeeting, type OwnerInfo } from '@/types/ownership';
 
 export interface Signatory {
     id: string;

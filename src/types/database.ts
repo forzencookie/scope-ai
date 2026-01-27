@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accountbalances: {
@@ -1736,6 +1761,7 @@ export type Database = {
           id: string
           is_read: boolean | null
           message: string
+          read: boolean | null
           read_at: string | null
           title: string
           type: string | null
@@ -1750,6 +1776,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message: string
+          read?: boolean | null
           read_at?: string | null
           title: string
           type?: string | null
@@ -1764,6 +1791,7 @@ export type Database = {
           id?: string
           is_read?: boolean | null
           message?: string
+          read?: boolean | null
           read_at?: string | null
           title?: string
           type?: string | null
@@ -1909,6 +1937,56 @@ export type Database = {
             columns: ["employee_id"]
             isOneToOne: false
             referencedRelation: "employees"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      periodiseringsfonder: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          remaining_amount: number | null
+          status: string | null
+          updated_at: string | null
+          user_id: string | null
+          utilized_amount: number | null
+          year: number
+        }
+        Insert: {
+          amount: number
+          company_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          remaining_amount?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          utilized_amount?: number | null
+          year: number
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          remaining_amount?: number | null
+          status?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          utilized_amount?: number | null
+          year?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "periodiseringsfonder_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -2460,6 +2538,7 @@ export type Database = {
       supplierinvoices: {
         Row: {
           amount: number | null
+          category: string | null
           company_id: string | null
           created_at: string | null
           document_url: string | null
@@ -2477,6 +2556,7 @@ export type Database = {
         }
         Insert: {
           amount?: number | null
+          category?: string | null
           company_id?: string | null
           created_at?: string | null
           document_url?: string | null
@@ -2494,6 +2574,7 @@ export type Database = {
         }
         Update: {
           amount?: number | null
+          category?: string | null
           company_id?: string | null
           created_at?: string | null
           document_url?: string | null
@@ -2510,6 +2591,74 @@ export type Database = {
           vat_amount?: number | null
         }
         Relationships: []
+      }
+      tax_reports: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          data: Json | null
+          due_date: string | null
+          end_date: string | null
+          id: string
+          input_vat: number | null
+          net_vat: number | null
+          output_vat: number | null
+          period: string | null
+          report_type: string
+          start_date: string | null
+          status: string | null
+          submitted_at: string | null
+          updated_at: string | null
+          user_id: string | null
+          year: number | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          data?: Json | null
+          due_date?: string | null
+          end_date?: string | null
+          id?: string
+          input_vat?: number | null
+          net_vat?: number | null
+          output_vat?: number | null
+          period?: string | null
+          report_type: string
+          start_date?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          year?: number | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          data?: Json | null
+          due_date?: string | null
+          end_date?: string | null
+          id?: string
+          input_vat?: number | null
+          net_vat?: number | null
+          output_vat?: number | null
+          period?: string | null
+          report_type?: string
+          start_date?: string | null
+          status?: string | null
+          submitted_at?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+          year?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tax_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       taxcalendar: {
         Row: {
@@ -2745,6 +2894,36 @@ export type Database = {
           },
         ]
       }
+      usercredits: {
+        Row: {
+          created_at: string | null
+          credits_remaining: number | null
+          id: string
+          last_refill_at: string | null
+          lifetime_credits_purchased: number | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits_remaining?: number | null
+          id?: string
+          last_refill_at?: string | null
+          lifetime_credits_purchased?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits_remaining?: number | null
+          id?: string
+          last_refill_at?: string | null
+          lifetime_credits_purchased?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       vatdeclarations: {
         Row: {
           company_id: string | null
@@ -2843,6 +3022,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      add_user_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: number
+      }
       check_rate_limit_atomic: {
         Args: {
           p_identifier: string
@@ -2865,6 +3048,10 @@ export type Database = {
         Returns: number
       }
       clear_demo_data: { Args: { p_user_id: string }; Returns: undefined }
+      consume_user_credits: {
+        Args: { p_amount: number; p_user_id: string }
+        Returns: boolean
+      }
       get_account_balances: {
         Args: { date_from: string; date_to: string }
         Returns: {
@@ -2986,6 +3173,7 @@ export type Database = {
           total_transactions: number
         }[]
       }
+      get_user_credits: { Args: { p_user_id: string }; Returns: number }
       get_vat_stats: { Args: { p_year?: number }; Returns: Json }
       increment_ai_usage: {
         Args: {
@@ -3160,6 +3348,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       event_category: [

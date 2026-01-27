@@ -11,7 +11,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { type MembershipChange } from "@/data/ownership"
+import { type MembershipChange } from "@/types/ownership"
 import { type MembershipChangeType } from "@/lib/status-types"
 
 interface RightSidebarContentProps {

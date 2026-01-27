@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { formatDateLong, cn } from "@/lib/utils"
-import { type GeneralMeeting } from "@/data/ownership"
+import { type GeneralMeeting } from "@/types/ownership"
 import { type MeetingStatus } from "@/lib/status-types"
 
 const mapMeetingStatus = (status: GeneralMeeting['status']): MeetingStatus => {

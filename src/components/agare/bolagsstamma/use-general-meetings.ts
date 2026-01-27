@@ -1,6 +1,6 @@
 import { useMemo, useState, useEffect } from "react"
 import { useCompliance } from "@/hooks/use-compliance"
-import { type GeneralMeeting, type GeneralMeetingDecision } from "@/data/ownership"
+import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/ownership"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 

@@ -1,4 +1,4 @@
-import { GeneralMeeting, GeneralMeetingDecision } from "@/data/ownership"
+import { GeneralMeeting, GeneralMeetingDecision } from "@/types/ownership"
 import { MeetingCard } from "./meeting-card"
 import { MeetingDetails } from "./meeting-details"
 import { Vote } from "lucide-react"

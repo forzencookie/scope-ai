@@ -6,7 +6,7 @@ import { GridTableHeader, GridTableRow, GridTableRows } from "@/components/ui/gr
 import { SearchBar } from "@/components/ui/search-bar"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { formatCurrency, cn } from "@/lib/utils"
-import { Partner } from "@/data/ownership"
+import { Partner } from "@/types/ownership"
 
 interface PartnersGridProps {
     partners: Partner[] // Filtered partners

@@ -4,7 +4,7 @@ import { useInvoicesPaginated } from "@/hooks/use-invoices"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { mapCustomerInvoices, mapSupplierInvoices, mapToUnifiedInvoices } from "./mappers"
 import { Invoice } from "@/data/invoices"
-import { SupplierInvoice } from "@/data/ownership"
+import { SupplierInvoice } from "@/types/ownership"
 import { ViewFilter, PeriodFilter, UnifiedInvoice } from "./types"
 
 export function useInvoicesLogic() {

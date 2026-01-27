@@ -2,7 +2,7 @@ import { CheckCircle, Banknote, Sparkles } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { cn } from "@/lib/utils"
-import { GeneralMeeting, GeneralMeetingDecision } from "@/data/ownership"
+import { GeneralMeeting, GeneralMeetingDecision } from "@/types/ownership"
 
 interface MeetingDetailsProps {
     meeting: GeneralMeeting

@@ -1,5 +1,5 @@
 import { type Invoice } from "@/data/invoices"
-import { type SupplierInvoice } from "@/data/ownership"
+import { type SupplierInvoice } from "@/types/ownership"
 import { type UnifiedInvoice } from "./types"
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any

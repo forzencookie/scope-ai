@@ -31,7 +31,7 @@ import {
 import { cn } from "@/lib/utils"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { type MembershipStatus, type MembershipChangeType } from "@/lib/status-types"
-import { type MembershipChange } from "@/data/ownership"
+import { type MembershipChange } from "@/types/ownership"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useMembers, type Member } from "@/hooks/use-members"
 

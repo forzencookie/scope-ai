@@ -1,6 +1,6 @@
 import { formatCurrency, cn } from '@/lib/utils';
 import { Wallet, Users, TrendingDown } from 'lucide-react';
-import { type Partner } from '@/data/ownership';
+import { type Partner } from '@/types/ownership';
 
 interface PartnersStatsProps {
     stats: {

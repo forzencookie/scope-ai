@@ -1,4 +1,4 @@
-import { SupplierInvoice } from "@/data/ownership"
+import { SupplierInvoice } from "@/types/ownership"
 
 export type PaymentFormat = 'LB' | 'ISO20022'
 

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePartners } from '@/hooks/use-partners';
 import { useVerifications } from '@/hooks/use-verifications';
-import { PARTNER_ACCOUNTS } from '@/data/ownership';
+import { PARTNER_ACCOUNTS } from '@/types/withdrawal';
 import { useCompany } from '@/providers/company-provider';
 
 export function usePartnerManagement() {

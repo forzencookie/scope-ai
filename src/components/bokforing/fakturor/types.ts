@@ -1,5 +1,5 @@
 import { type Invoice } from "@/data/invoices"
-import { type SupplierInvoice } from "@/data/ownership"
+import { type SupplierInvoice } from "@/types/ownership"
 
 export type InvoiceDirection = "in" | "out"
 export type ViewFilter = "all" | "kundfakturor" | "leverantorsfakturor"

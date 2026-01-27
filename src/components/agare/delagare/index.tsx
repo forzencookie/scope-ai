@@ -10,7 +10,7 @@ import { RecentWithdrawalsGrid } from "./recent-withdrawals-grid"
 import { AddPartnerDialog } from "./add-partner-dialog"
 import { usePartnerManagement } from "./use-partner-management"
 import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card'
-import { Partner } from "@/data/ownership"
+import { Partner } from "@/types/ownership"
 
 export function Delagare() {
     const { partners, stats, addPartner, companyType } = usePartnerManagement()

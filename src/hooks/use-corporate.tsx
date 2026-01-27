@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { GeneralMeeting, GeneralMeetingDecision } from "@/data/ownership"
+import { GeneralMeeting, GeneralMeetingDecision } from "@/types/ownership"
 
 interface CorporateContextType {
     meetings: GeneralMeeting[]

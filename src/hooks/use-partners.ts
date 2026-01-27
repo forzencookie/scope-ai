@@ -1,6 +1,6 @@
 import { useAsyncMutation } from "./use-async"
 import { useCachedQuery } from "./use-cached-query"
-import { type Partner } from "@/data/ownership"
+import { type Partner } from "@/types/ownership"
 
 export function usePartners() {
     

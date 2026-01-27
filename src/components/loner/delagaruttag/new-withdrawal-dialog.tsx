@@ -11,7 +11,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { type Partner } from "@/data/ownership"
+import { type Partner } from "@/types/ownership"
 
 interface NewWithdrawalDialogProps {
   open: boolean
