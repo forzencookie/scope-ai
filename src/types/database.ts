@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accountbalances: {
@@ -695,46 +670,97 @@ export type Database = {
       }
       companies: {
         Row: {
+          accounting_method: string | null
+          address: string | null
+          city: string | null
+          company_type: string | null
+          contact_person: string | null
           created_at: string | null
+          email: string | null
+          fiscal_year_end: string | null
+          has_employees: boolean | null
+          has_moms_registration: boolean | null
           id: string
+          is_closely_held: boolean | null
           name: string
           org_number: string | null
+          phone: string | null
+          registration_date: string | null
           settings: Json | null
+          share_capital: number | null
           stripe_customer_id: string | null
           stripe_subscription_id: string | null
           subscription_ends_at: string | null
           subscription_status: string | null
           subscription_tier: string | null
+          total_shares: number | null
           updated_at: string | null
           user_id: string | null
+          vat_frequency: string | null
+          vat_number: string | null
+          zip_code: string | null
         }
         Insert: {
+          accounting_method?: string | null
+          address?: string | null
+          city?: string | null
+          company_type?: string | null
+          contact_person?: string | null
           created_at?: string | null
+          email?: string | null
+          fiscal_year_end?: string | null
+          has_employees?: boolean | null
+          has_moms_registration?: boolean | null
           id?: string
+          is_closely_held?: boolean | null
           name: string
           org_number?: string | null
+          phone?: string | null
+          registration_date?: string | null
           settings?: Json | null
+          share_capital?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_ends_at?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          total_shares?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vat_frequency?: string | null
+          vat_number?: string | null
+          zip_code?: string | null
         }
         Update: {
+          accounting_method?: string | null
+          address?: string | null
+          city?: string | null
+          company_type?: string | null
+          contact_person?: string | null
           created_at?: string | null
+          email?: string | null
+          fiscal_year_end?: string | null
+          has_employees?: boolean | null
+          has_moms_registration?: boolean | null
           id?: string
+          is_closely_held?: boolean | null
           name?: string
           org_number?: string | null
+          phone?: string | null
+          registration_date?: string | null
           settings?: Json | null
+          share_capital?: number | null
           stripe_customer_id?: string | null
           stripe_subscription_id?: string | null
           subscription_ends_at?: string | null
           subscription_status?: string | null
           subscription_tier?: string | null
+          total_shares?: number | null
           updated_at?: string | null
           user_id?: string | null
+          vat_frequency?: string | null
+          vat_number?: string | null
+          zip_code?: string | null
         }
         Relationships: []
       }
@@ -2598,6 +2624,33 @@ export type Database = {
         }
         Relationships: []
       }
+      system_parameters: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          key: string
+          updated_at: string | null
+          value: Json
+          year: number
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          key: string
+          updated_at?: string | null
+          value: Json
+          year: number
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          key?: string
+          updated_at?: string | null
+          value?: Json
+          year?: number
+        }
+        Relationships: []
+      }
       tax_reports: {
         Row: {
           company_id: string | null
@@ -3354,9 +3407,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       event_category: [

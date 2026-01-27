@@ -2,6 +2,7 @@ import { useMemo } from "react"
 import { useCompany } from "@/providers/company-provider"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useTaxPeriod } from "@/hooks/use-tax-period"
+import { useTaxParameters } from "@/hooks/use-tax-parameters"
 import { k10Declarations } from "@/components/loner/constants"
 
 export interface K10Data {
@@ -28,12 +29,14 @@ export function useK10Calculation() {
         type: 'k10' 
     })
 
+    const { params } = useTaxParameters(taxYear.year)
+
     // Calculate K10 using dynamic year & real ledger data
     const k10Data = useMemo<K10Data>(() => {
-        // Constants (In a real app, fetch these for the specific year)
-        // 2024 IBB is 57300. For 2023 it was 52500. 
-        // We should ideally have a map, but sticking to the original logic for now.
-        const ibb2024 = 57300
+        // Constants fetched from System Parameters (with fallback)
+        const ibb = params.ibb
+        const schablonRate = params.schablonRate
+        
         const aktiekapital = 25000 // Common min since 2020
         const omkostnadsbelopp = 25000 // Assumed equal to limits
         const agarandel = 100 // Assumed 100% for single owner view
@@ -78,14 +81,13 @@ export function useK10Calculation() {
         // Actually, Förenklingsregeln says: 2.75 * IBB. That's it.
         // But the previous file had: `const schablonRate = 2.75` and `const schablonbelopp = Math.round(ibb2024 * schablonRate * (agarandel / 100))`
         // That matches the simplification rule (2.75 IBB shared among shares).
-        const schablonRate = 2.75
-        const schablonbelopp = Math.round(ibb2024 * schablonRate * (agarandel / 100))
+        const schablonbelopp = Math.round(ibb * schablonRate * (agarandel / 100))
 
         // Lönebaserat utrymme (Main rule)
         // 50% of total salaries
         // Requirement: Owner salary must be >= 6 IBB + 5% of total salaries OR 9.6 IBB
-        const lonekrav1 = (6 * ibb2024) + (0.05 * arslonSumma)
-        const lonekrav2 = 9.6 * ibb2024
+        const lonekrav1 = (6 * ibb) + (0.05 * arslonSumma)
+        const lonekrav2 = 9.6 * ibb
         const minLonKrav = Math.min(lonekrav1, lonekrav2)
 
         const klararLonekrav = egenLon >= minLonKrav
@@ -114,7 +116,7 @@ export function useK10Calculation() {
             egenLon,
             klararLonekrav
         }
-    }, [taxYear.year, verifications])
+    }, [taxYear.year, verifications, params.ibb, params.schablonRate])
 
     return {
         k10Data,

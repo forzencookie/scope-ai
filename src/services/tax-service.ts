@@ -69,5 +69,25 @@ export const taxService = {
             tax: Number(data?.tax) || 0,
             contributions: Number(data?.contributions) || 0
         }
+    },
+
+    /**
+     * Get system parameter for a specific year (e.g. IBB)
+     */
+    async getSystemParameter<T>(key: string, year: number): Promise<T | null> {
+        const supabase = getSupabaseClient()
+        const { data, error } = await supabase
+            .from('system_parameters')
+            .select('value')
+            .eq('key', key)
+            .eq('year', year)
+            .single()
+
+        if (error || !data) {
+            console.warn(`Missing system parameter: ${key} for year ${year}`)
+            return null
+        }
+
+        return data.value as T
     }
 }

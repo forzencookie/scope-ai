@@ -46,6 +46,44 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
     const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
     const [confirmText, setConfirmText] = React.useState("")
     const [isDeleting, setIsDeleting] = React.useState(false)
+    const [isExporting, setIsExporting] = React.useState(false)
+
+    const handleSIEExport = async () => {
+        setIsExporting(true)
+        try {
+            // Get current fiscal year
+            const currentYear = new Date().getFullYear()
+            const response = await fetch(`/api/sie/export?year=${currentYear}`)
+            
+            if (!response.ok) {
+                throw new Error('Export failed')
+            }
+            
+            // Get the filename from Content-Disposition header or use default
+            const contentDisposition = response.headers.get('Content-Disposition')
+            let filename = `bokforing_${currentYear}.se`
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="(.+)"/)
+                if (match) filename = match[1]
+            }
+            
+            // Create blob and download
+            const blob = await response.blob()
+            const url = URL.createObjectURL(blob)
+            const link = document.createElement('a')
+            link.href = url
+            link.download = filename
+            document.body.appendChild(link)
+            link.click()
+            document.body.removeChild(link)
+            URL.revokeObjectURL(url)
+        } catch (error) {
+            console.error('SIE export error:', error)
+            alert('Kunde inte exportera SIE-fil. Försök igen.')
+        } finally {
+            setIsExporting(false)
+        }
+    }
 
     const handleDelete = async () => {
         setIsDeleting(true)
@@ -190,10 +228,8 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                 <SettingsActionCard
                     title="SIE-Export"
                     description="Exportera hela din bokföring till SIE4-format"
-                    actionLabel={text.settings.exportSIE}
-                    onAction={() => {
-                        alert("Export startad! Filen laddas ner strax.")
-                    }}
+                    actionLabel={isExporting ? "Exporterar..." : text.settings.exportSIE}
+                    onAction={handleSIEExport}
                     variant="info"
                     icon={Download}
                 />
