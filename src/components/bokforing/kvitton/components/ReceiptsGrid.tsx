@@ -23,6 +23,7 @@ interface ReceiptsGridProps {
     text: any
     selection: {
         isSelected: (id: string) => boolean
+        toggleItem: (id: string) => void
         toggleAll: () => void
         allSelected: boolean
     }

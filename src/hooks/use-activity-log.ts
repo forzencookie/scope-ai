@@ -17,7 +17,7 @@ import { getSupabaseClient } from "@/lib/database/supabase"
 
 export interface ActivityLogEntry {
   id: string
-  userId: string
+  userId: string | null
   userName: string | null
   userEmail: string | null
   companyId: string | null
@@ -171,7 +171,7 @@ export function useActivityLog({
           entityType: row.entity_type as EntityType,
           entityId: row.entity_id,
           entityName: row.entity_name,
-          changes: row.changes,
+          changes: row.changes as Record<string, { from: unknown; to: unknown }> | null,
           createdAt: new Date(row.created_at),
         }))
 
@@ -270,7 +270,9 @@ export async function logActivity(params: {
   } = await supabase.auth.getUser()
   if (!user) return
 
-  await supabase.from("activity_log").insert({
+  // Type assertion needed because Supabase types may be out of sync with actual schema
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  await (supabase.from("activity_log") as any).insert({
     user_id: user.id,
     user_name: user.user_metadata?.full_name || user.email?.split("@")[0],
     user_email: user.email,

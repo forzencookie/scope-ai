@@ -17,7 +17,7 @@ export interface BulkAction {
   label: string
   icon?: React.ComponentType<{ className?: string }>
   variant?: "default" | "destructive" | "ai"
-  onClick: (selectedIds: string[]) => void
+  onClick?: (selectedIds: string[]) => void
 }
 
 interface BulkActionToolbarProps {
@@ -29,7 +29,7 @@ interface BulkActionToolbarProps {
 }
 
 // Default actions that can be customized
-const defaultActions: Omit<BulkAction, "onClick">[] = [
+const defaultActions: BulkAction[] = [
   { id: "delete", label: "Radera", icon: Trash2, variant: "destructive" },
   { id: "archive", label: "Arkivera", icon: Archive },
   { id: "download", label: "Ladda ner", icon: Download },
@@ -90,7 +90,7 @@ export function BulkActionToolbar({
                   key={action.id}
                   variant={action.variant === "destructive" ? "destructive" : action.variant === "ai" ? "outline" : "outline"}
                   size="sm"
-                  onClick={() => action.onClick(selectedIds)}
+                  onClick={() => action.onClick?.(selectedIds)}
                   className={cn(
                     "gap-1.5",
                     action.variant === "ai" && "bg-purple-600 hover:bg-purple-700 text-white border-purple-600 hover:border-purple-700"
@@ -117,7 +117,7 @@ export function BulkActionToolbar({
                     return (
                       <DropdownMenuItem
                         key={action.id}
-                        onClick={() => action.onClick(selectedIds)}
+                        onClick={() => action.onClick?.(selectedIds)}
                         className={action.variant === "destructive" ? "text-red-600" : ""}
                       >
                         {Icon && <Icon className="h-4 w-4 mr-2" />}
@@ -178,6 +178,7 @@ export function useBulkSelection<T extends { id: string }>(items: T[]) {
     allSelected,
     someSelected,
     toggleItem,
+    toggle: toggleItem,  // Alias for compatibility
     toggleAll,
     clearSelection,
     isSelected,

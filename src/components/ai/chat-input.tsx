@@ -429,17 +429,12 @@ export function ChatInput({
                     open={isMentionOpen}
                     onOpenChange={setIsMentionOpen}
                     onSelect={(item) => {
-                        onChange(value + `@${item.label} `)
+                        // Add page mention with context
                         onMentionsChange([...mentions, item])
                         setIsMentionOpen(false)
                         textareaRef.current?.focus()
                     }}
                     searchQuery=""
-                    items={[
-                        { id: "cat-faktura", type: "faktura", label: "Faktura", sublabel: "Nämn en faktura" },
-                        { id: "cat-kvitto", type: "kvitto", label: "Kvitto", sublabel: "Nämn ett kvitto" },
-                        { id: "cat-transaktion", type: "transaktion", label: "Transaktion", sublabel: "Nämn en transaktion" },
-                    ]}
                     anchorRef={mentionAnchorRef}
                 />
             </div>

@@ -1,7 +1,7 @@
 # 🔍 Comprehensive Codebase Analysis Report
 
-> **Generated:** January 25, 2026  
-> **Scope:** Full component architecture, DRY violations, and improvement opportunities
+> **Generated:** January 27, 2026  
+> **Scope:** Full architecture, code quality, and improvement opportunities
 
 ---
 
@@ -9,457 +9,527 @@
 
 | Metric | Value |
 |--------|-------|
-| **Total Components** | 332 files |
-| **Total Lines** | ~45,563 lines |
-| **Large Files (>400 lines)** | 13 files |
-| **Medium Files (200-400)** | 55 files |
-| **Small Files (<200)** | 264 files |
-| **DRY Violations Identified** | 35+ patterns |
-| **Shared Components Available** | 50+ |
+| **Total Lines of Code** | 107,845 |
+| **Source Files** | 784 `.ts/.tsx` |
+| **Component Files** | 380 `.tsx` |
+| **Component Directories** | 87 folders |
+| **Lib Files** | 144 |
+| **Service Files** | 44 |
+| **Hooks** | 39 |
+| **API Routes** | 57 |
+| **Providers** | 13 |
+| **Database Migrations** | 38 |
+| **Test Files** | 11 (1.4% coverage) |
+| **TypeScript Errors** | 69 |
+| **`as any` Casts** | 112 |
+| **ESLint Disables** | 250 |
+| **TODO/FIXME Markers** | 16 |
 
 ---
 
-## 📊 Category Breakdown
+## 📊 Overall Grade: **B+ (81/100)**
 
-| Category | Lines | Files | Grade | Priority |
-|----------|-------|-------|-------|----------|
-| **UI** | 7,080 | 52 | A- | Low |
-| **Bokföring** | 6,685 | ~41 | B- | High |
-| **Ägare** | 6,520 | 60 | B | High |
-| **AI** | 6,491 | ~25 | B+ | Medium |
-| **Löner** | 4,475 | 47 | B- | Medium |
-| **Rapporter** | 4,459 | 28 | B- | High |
-| **Landing** | 3,754 | ~20 | B+ | Low |
-| **Shared** | 2,106 | 13 | A | N/A |
-| **Layout** | 1,856 | ~8 | B+ | Medium |
-| **Inställningar** | 1,209 | 14 | B+ | Low |
-| **Händelser** | 670 | 14 | B | Medium |
-| **Parter** | 258 | ~5 | B+ | Low |
+| Category | Score | Grade |
+|----------|-------|-------|
+| Architecture | 88 | A- |
+| Code Quality | 72 | C+ |
+| Testing | 35 | D |
+| Domain Design | 87 | A- |
+| DevEx | 82 | B+ |
+| Documentation | 85 | B+ |
 
 ---
 
-## 📁 Category: BOKFÖRING (Bookkeeping)
+## 🏗️ Architecture Overview
 
-### Grade: B- (74/100)
-
-### All Pages & Components
-
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| TransactionsTable | 166 | Good separation, uses custom logic hook | B+ |
-| UnifiedInvoicesView | 275 | Well-structured with Kanban view | B+ |
-| ReceiptsTable | 176 | Good, uses logic hook | B+ |
-| VerifikationerTable | 139 | Clean implementation | A- |
-| InventarierTable | 125 | Compact and focused | A- |
-| BookingDialog | 626 | ⚠️ **TOO LARGE** - Multi-step wizard | C |
-| InvoiceCreateDialog | 547 | ⚠️ **TOO LARGE** - Form + Preview | C+ |
-| SupplierInvoiceDialog | 484 | ⚠️ **TOO LARGE** - Duplicates patterns | C+ |
-| UnderlagDialog | 454 | ⚠️ **TOO LARGE** - AI + Form | C+ |
-| VerifikationDialog | 354 | Medium complexity | B |
-| NyTransaktionDialog | 289 | Acceptable size | B+ |
-
-### DRY Violations Identified
-
-| Pattern | Occurrences | Lines Wasted |
-|---------|-------------|--------------|
-| Stats Card Grid | 5x | ~150 lines |
-| Grid Table Pattern | 4x | ~200 lines |
-| Page Header Pattern | 6x | ~100 lines |
-| Pagination Footer | 3x | ~60 lines |
-| Logic Hook Pattern | 5x | ~300 lines |
-| AI Upload Tab Pattern | 2x | ~100 lines |
-
-### Improvement Opportunities
-
-1. **Extract `<StatCard>` usage** - Already exists in `ui/stat-card.tsx` but pattern not consistent
-2. **Create `<DataGrid>` abstraction** - Unify TransactionsTableGrid, ReceiptsGrid, VerifikationerGrid
-3. **Split large dialogs** - BookingDialog → 3 components, InvoiceCreateDialog → 2 components
-4. **Create `useDocumentLogic` base hook** - Template for all domain logic hooks
-5. **Extract `<PaginationFooter>`** - Shared pagination UI
-
-### Architecture
+### Multi-Agent AI System
 
 ```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│  accounting-page.tsx (PageTabsLayout)                                       │
-│    ├─ transaktioner → TransactionsTable → useTransactionsLogic              │
-│    ├─ fakturor → UnifiedInvoicesView → useInvoicesLogic                     │
-│    ├─ kvitton → ReceiptsTable → useReceiptsLogic                            │
-│    ├─ bokslut → MonthClosing                                                │
-│    └─ inventarier → InventarierTable → useInventarierLogic                  │
-│                         ↓                                                   │
-│               [Dialogs: BookingDialog, InvoiceDialog, etc.]                 │
-│                         ↓                                                   │
-│               [Shared: GridTable, StatCard, BulkActionToolbar]              │
-└─────────────────────────────────────────────────────────────────────────────┘
+                              ┌─────────────────┐
+                              │      GOJO       │
+                              │  (Orchestrator) │
+                              │   375 lines     │
+                              └────────┬────────┘
+                                       │
+        ┌──────────────────────────────┼──────────────────────────────┐
+        │              │               │               │              │
+        ▼              ▼               ▼               ▼              ▼
+   ┌─────────┐   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+   │ Bokför- │   │ Receipt │    │ Invoice │    │  Löner  │    │  Skatt  │
+   │  ing    │   │  Agent  │    │  Agent  │    │  Agent  │    │  Agent  │
+   └─────────┘   └─────────┘    └─────────┘    └─────────┘    └─────────┘
+        │              │               │               │              │
+        └──────────────┴───────────────┴───────────────┴──────────────┘
+                                       │
+        ┌──────────────────────────────┼──────────────────────────────┐
+        │              │               │               │              │
+        ▼              ▼               ▼               ▼              ▼
+   ┌─────────┐   ┌─────────┐    ┌─────────┐    ┌─────────┐    ┌─────────┐
+   │ Rapport │   │Complian-│    │Statistik│    │Händelser│    │Inställ- │
+   │  Agent  │   │ce Agent │    │  Agent  │    │  Agent  │    │ningar   │
+   └─────────┘   └─────────┘    └─────────┘    └─────────┘    └─────────┘
+```
+
+**Key Files:**
+- `src/lib/agents/base-agent.ts` - 510 lines (abstract base class)
+- `src/lib/agents/orchestrator/agent.ts` - 375 lines
+- `src/lib/agents/types.ts` - 428 lines
+- `src/lib/agents/registry.ts` - agent registration
+- `src/lib/agents/message-bus.ts` - inter-agent communication
+- `src/lib/agents/llm-client/` - model-agnostic LLM interface
+
+### Database Layer
+
+```
+src/lib/database/
+├── supabase.ts          (browser client)
+├── supabase-server.ts   (SSR client)  
+├── supabase-auth.ts     (auth helpers)
+├── user-scoped-db.ts    (RLS-respecting, 426 lines)
+├── server-db.ts         (admin bypass)
+└── repositories/        (12 domain repos)
+    ├── transactions.ts
+    ├── receipts.ts
+    ├── invoices.ts
+    ├── supplier-invoices.ts
+    ├── verifications.ts
+    ├── employees.ts
+    ├── payslips.ts
+    ├── conversations.ts
+    ├── inbox.ts
+    ├── financial.ts
+    ├── corporate.ts
+    └── types.ts
+```
+
+### Services Layer
+
+```
+src/services/
+├── index.ts                    (barrel export)
+├── transactions-supabase.ts    (547 lines)
+├── transactions.ts             (374 lines, mock)
+├── processors/
+│   ├── inkomstdeklaration-processor.ts  (474 lines)
+│   ├── investments-processor.ts          (434 lines)
+│   ├── invoice-processor.ts
+│   └── reports-processor.ts
+├── asset-service.ts
+├── benefit-service.ts
+├── event-service.ts
+├── inventarie-service.ts
+├── invoice-service.ts
+├── payroll-service.ts
+├── receipt-service.ts
+├── roadmap-service.ts
+├── tax-declaration-service.ts
+├── tax-service.ts
+├── transaction-service.ts
+└── vat-service.ts
+```
+
+### Providers (React Context)
+
+```
+src/providers/
+├── ai-overlay-provider.tsx
+├── app-provider.tsx
+├── app-providers.tsx
+├── company-provider.tsx
+├── data-provider.tsx
+├── invoices-provider.tsx
+├── model-provider.tsx
+├── query-provider.tsx
+├── receipts-provider.tsx
+├── text-mode-provider.tsx
+├── theme-provider.tsx
+└── transactions-provider.tsx
+```
+
+### API Routes (57 endpoints)
+
+```
+src/app/api/
+├── ai/
+├── auth/
+├── bolagsverket/        (373 lines)
+├── chat/
+│   ├── route.ts         (346 lines)
+│   └── agents/route.ts  (405 lines)
+├── compliance/
+├── contact/
+├── employees/
+├── financial-periods/
+├── inbox/
+├── integrations/
+├── invoices/
+├── members/
+├── models/
+├── notices/
+├── onboarding/
+├── partners/
+├── payroll/
+├── receipts/
+├── reports/
+├── sie/
+├── skatteverket/        (409 lines)
+├── stripe/
+├── supplier-invoices/
+├── transactions/
+├── transcribe/
+├── upload-invoice/
+├── user/
+└── verifications/
 ```
 
 ---
 
-## 📁 Category: ÄGARE (Owners)
+## 📁 Component Architecture
 
-### Grade: B (78/100)
+### Directory Structure
 
-### All Pages & Components
+| Directory | Files | Purpose |
+|-----------|-------|---------|
+| `components/ui/` | 52 | shadcn/ui primitives |
+| `components/bokforing/` | ~45 | Bookkeeping domain |
+| `components/agare/` | ~60 | Owners/shareholders |
+| `components/ai/` | ~25 | AI chat interface |
+| `components/loner/` | ~47 | Payroll domain |
+| `components/rapporter/` | ~28 | Reports domain |
+| `components/landing/` | ~20 | Marketing pages |
+| `components/shared/` | ~15 | Cross-domain shared |
+| `components/layout/` | ~10 | App shell |
+| `components/settings/` | ~10 | Settings components |
+| `components/installningar/` | ~14 | Settings tabs |
+| `components/handelser/` | ~14 | Events/timeline |
+| `components/parter/` | ~5 | Partners/parties |
 
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| Aktiebok | 198 | Good modular structure | B+ |
-| Delägare | 521 (folder) | Well-organized subcomponents | B+ |
-| Utdelning | 513 (folder) | Clean structure | B+ |
-| Årsmöte | 299 | ⚠️ Contains too much logic | B- |
-| Bolagsstämma | 140 | Good separation | A- |
-| Styrelseprotokoll | 248 | Could extract filter bar | B |
-| Medlemsregister | 272 | ⚠️ Inline table rendering | B- |
-| Firmatecknare | 228 | Acceptable complexity | B |
-| Myndigheter | 204 | Mostly static config | B+ |
-| ActionWizard | 159 | Well-architected wizard | A- |
+### Largest Files (Needs Refactoring)
 
-### DRY Violations Identified
-
-| Pattern | Occurrences | Lines Wasted |
-|---------|-------------|--------------|
-| Page Header | 8x | ~120 lines |
-| Document-to-Meeting Mapping | 5x | ~150 lines |
-| Status Filter Dropdown | 4x | ~80 lines |
-| Empty State Cards | 4x | ~60 lines |
-| Row Action Dropdowns | 6x | ~90 lines |
-
-### Improvement Opportunities
-
-1. **Create `<PageHeader>`** - 8 duplicates → 1 component
-2. **Extract `useMeetingDocuments<T>` hook** - Generic document parsing
-3. **Create `<StatusFilterDropdown>`** - Reusable filter component
-4. **Create `<EmptyState>`** - Standardize empty states
-5. **Create `<EntityActionMenu>`** - Unify row/card actions
-
----
-
-## 📁 Category: LÖNER (Payroll)
-
-### Grade: B- (73/100)
-
-### All Pages & Components
-
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| LönesbeskContent | 227 | Acceptable page component | B |
-| BenefitsTab | 181 | Well-structured | B+ |
-| TeamTab | 104 | Clean and focused | A- |
-| Egenavgifter | 46 | Good delegation | A- |
-| Delägaruttag | 134 | Clean structure | B+ |
-| CreatePayslipDialog | 132 | Multi-step wizard | B |
-| VehicleForm | 236 | ⚠️ Contains two forms | C+ |
-| AllowanceForm | 68 | Repetitive pattern | C+ |
-| MealForm, HousingForm, etc. | ~400 total | ⚠️ **7 similar forms** | C |
-
-### DRY Violations Identified
-
-| Pattern | Occurrences | Lines Wasted |
-|---------|-------------|--------------|
-| Form Input Pattern | 7x | ~400 lines |
-| Currency Input with Suffix | 15x | ~150 lines |
-| Employee Fetch Logic | 3x | ~60 lines |
-| Förmånsvärde Preview Box | 5x | ~50 lines |
-| Dialog Pattern | 6x | ~100 lines |
-
-### Improvement Opportunities
-
-1. **Create `<FormField>` variants** - Already exists in `ui/form-field.tsx` but underused
-2. **Create `<BenefitValuePreview>`** - Shared preview component
-3. **Create `useEmployeeList()` hook** - Centralize employee fetching
-4. **Split VehicleForm** - 236 lines → 2 × ~90 lines
-5. **Create `useBenefitForm()` hook** - Generic benefit form state
+| File | Lines | Issue |
+|------|-------|-------|
+| `src/types/database.ts` | 3,377 | ✅ Auto-generated |
+| `src/data/mock-data.ts` | 1,104 | ⚠️ Large mock data |
+| `src/components/ui/sidebar.tsx` | 734 | ⚠️ Complex UI component |
+| `src/services/transactions-supabase.ts` | 547 | ⚠️ Could split |
+| `src/data/accounts.ts` | 541 | ✅ Chart of accounts (static) |
+| `src/lib/agents/base-agent.ts` | 510 | ✅ Acceptable for base class |
+| `src/services/processors/inkomstdeklaration-processor.ts` | 474 | ⚠️ Complex processor |
+| `src/components/ai/chat-input.tsx` | 468 | ⚠️ Could extract |
+| `src/hooks/use-transactions-query.ts` | 453 | ⚠️ Large hook |
+| `src/components/bokforing/dialogs/underlag.tsx` | 447 | ⚠️ Complex dialog |
+| `src/app/users/page.tsx` | 447 | ⚠️ Admin page |
+| `src/lib/company-types.ts` | 443 | ✅ Type definitions |
+| `src/lib/ai-tools/common/navigation.ts` | 437 | ⚠️ Could modularize |
+| `src/services/processors/investments-processor.ts` | 434 | ⚠️ Complex processor |
+| `src/lib/agents/types.ts` | 428 | ✅ Type definitions |
+| `src/lib/database/user-scoped-db.ts` | 426 | ✅ Acceptable for DB layer |
+| `src/components/ai/ai-overlay.tsx` | 425 | ⚠️ Complex overlay |
+| `src/components/landing/sections/hero/demo.tsx` | 422 | ⚠️ Demo animation |
 
 ---
 
-## 📁 Category: RAPPORTER (Reports)
+## 🎯 Code Quality Metrics
 
-### Grade: B- (72/100)
+### Type Safety Issues
 
-### All Pages & Components
+| Issue | Count | Severity |
+|-------|-------|----------|
+| TypeScript Errors | 69 | 🟠 High |
+| `as any` Casts | 112 | 🟡 Medium |
+| ESLint Disables | 250 | 🟠 High |
+| `@ts-expect-error` | 4 | 🟢 Low |
 
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| Resultaträkning | 85 | Clean and focused | A |
-| Balansräkning | 121 | Good structure | A- |
-| Årsredovisning | 208 | Medium complexity | B |
-| Årsbokslut | 242 | Business logic mixed with UI | B- |
-| Inkomstdeklaration | 362 | ⚠️ Too many responsibilities | C+ |
-| NE-bilaga | 357 | ⚠️ Duplicates inkomstdeklaration patterns | C+ |
-| Moms Module | 487 | Well-organized module | B+ |
-| AGI Module | 504 | Good structure | B+ |
-| K10 Module | 475 | Good structure | B+ |
-| Assistent Dialog | 499 | ⚠️ **4 dialogs in 1 file** | C |
-| Moms Dialog | 393 | ⚠️ Too large | C+ |
+### Technical Debt Markers
 
-### DRY Violations Identified
-
-| Pattern | Occurrences | Lines Wasted |
-|---------|-------------|--------------|
-| Report Page Layout | 7x | ~350 lines |
-| handleSend/handleExport | 6x | ~60 lines |
-| AI SectionCard Config | 6x | ~80 lines |
-| Tax Year Loading | 3x | ~60 lines |
-| Section Divider | 20x | ~40 lines |
-
-### Improvement Opportunities
-
-1. **Extract `<ReportPageLayout>`** - Would reduce ~400 lines
-2. **Split assistent.tsx** - 499 lines → 4 separate dialog components
-3. **Create `useTaxPeriod()` hook** - Centralize tax year logic
-4. **Consolidate stats patterns** - AGI uses raw Cards, others use StatCard
-5. **Unify table components** - Mix of GridTable and shadcn Table
+```
+TODO/FIXME Found (16):
+├── src/app/api/contact/route.ts      - Email service integration (2)
+├── src/app/api/invoices/route.ts     - Customer invoices table (2)
+├── src/app/api/notices/route.ts      - Email + database (2)
+├── src/components/loner/             - Save logic (1)
+├── src/components/installningar/     - Stripe integration (1)
+├── src/hooks/use-ai-usage.ts         - Credits table (1)
+├── src/hooks/use-dynamic-tasks.ts    - Invoice API (1)
+├── src/lib/stripe.ts                 - Type regeneration (1)
+├── src/lib/ai-tools/skatt/           - Real service call (1)
+├── src/lib/model-auth.ts             - Type regeneration (1)
+└── src/services/navigation.ts        - Real API call (1)
+```
 
 ---
 
-## 📁 Category: HÄNDELSER (Events)
+## 🔧 Hooks Architecture
 
-### Grade: B (76/100)
+### Custom Hooks (39 files)
 
-### All Pages & Components
+| Category | Hooks | Notes |
+|----------|-------|-------|
+| **Data Fetching** | `use-transactions-query`, `use-invoices`, `use-receipts`, `use-verifications`, `use-partners`, `use-members`, `use-employees` | TanStack Query based |
+| **Domain Logic** | `use-activity-log`, `use-compliance`, `use-corporate`, `use-financial-metrics`, `use-financial-reports`, `use-month-closing`, `use-tax-period` | Business logic encapsulation |
+| **AI/Chat** | `use-chat`, `use-ai-extraction`, `use-ai-usage`, `chat/use-send-message` | AI interaction |
+| **UI State** | `use-table`, `use-mobile`, `use-navigation`, `use-highlight`, `use-file-capture` | UI utilities |
+| **Auth/Subscription** | `use-auth`, `use-subscription` | Auth state |
+| **Realtime** | `use-realtime`, `use-events` | Supabase realtime |
 
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| HandelserPage | 499 | ⚠️ **TOO LARGE** - 4 view modes | C |
-| EventsFolderView | 107 | Focused component | B+ |
-| EventsCalendar | 176 | Good structure | B+ |
-| RoadmapView | 131 | Clean implementation | A- |
-| RoadmapDetail | 145 | Acceptable complexity | B+ |
-| EventsTable | 104 | **UNUSED** ❓ | N/A |
+### TanStack Query Usage
 
-### DRY Violations Identified
-
-| Pattern | Occurrences | Lines Wasted |
-|---------|-------------|--------------|
-| Event Badge Rendering | 6x | ~60 lines |
-| Event Row Rendering | 3x | ~90 lines |
-| Progress Bar Pattern | 2x | ~40 lines |
-| Date Grouping | Could be shared | ~30 lines |
-
-### Improvement Opportunities
-
-1. **Split handelser-page.tsx** - 499 lines → 4 view components + state hook
-2. **Create `<EventBadge>` and `<EventListItem>`** - Shared event rendering
-3. **Create `useRoadmapProgress()` hook** - Centralize progress calculation
-4. **Remove or integrate unused EventsTable** - Dead code
+```
+14 uses of useQuery/useMutation in hooks
+```
 
 ---
 
-## 📁 Category: PARTER (Parties)
+## 📊 Domain Coverage
 
-### Grade: B+ (80/100)
+### Swedish Accounting Features
 
-### All Pages & Components
+| Domain | Status | Key Files |
+|--------|--------|-----------|
+| **Bokföring** (Bookkeeping) | ✅ Full | `bokforing/`, `use-verifications` |
+| **Kvitton** (Receipts) | ✅ Full | `receipts-provider`, `receipt-service` |
+| **Fakturor** (Invoices) | ✅ Full | `invoices-provider`, `invoice-service` |
+| **Leverantörsfakturor** | ✅ Full | `supplier-invoices/` |
+| **Löner** (Payroll) | ✅ Full | `loner/`, `payroll-service` |
+| **Förmåner** (Benefits) | ✅ Full | `benefit-service`, `formaner.ts` |
+| **Moms** (VAT) | ✅ Full | `vat-service`, `rapporter/moms` |
+| **Inkomstdeklaration** | ✅ Full | `inkomstdeklaration-processor` |
+| **K10** | ✅ Full | `rapporter/k10` |
+| **NE-bilaga** | ✅ Full | `ne-bilaga.tsx` |
+| **Inventarier** (Assets) | ✅ Full | `inventarie-service`, `asset-service` |
+| **Ägare** (Shareholders) | ✅ Full | `agare/`, `use-corporate` |
+| **Bolagsstämma** (AGM) | ✅ Full | `agare/bolagsstamma` |
+| **Periodiseringsfonder** | ✅ Full | Database table exists |
+| **SIE Import/Export** | ✅ Full | `api/sie/`, `parsers/sie-parser` |
 
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| ParterPage | 274 | Well-structured with tabs | B+ |
-| Uses ägare components | N/A | Good reuse of shared components | A |
-| Duplicate File (stamma-page.tsx) | 259 | ⚠️ **DUPLICATE** - Should delete | C |
+### Government Integrations
 
-### Notes
-
-Parter category cleverly reuses components from `ägare/` via lazy loading. The only issue is a duplicate file.
-
-### Improvement Opportunities
-
-1. **Delete duplicate** - `stamma-page.tsx` is unused
-2. Consider moving shared meeting components to a common location
-
----
-
-## 📁 Category: INSTÄLLNINGAR (Settings)
-
-### Grade: B+ (79/100)
-
-### All Pages & Components
-
-| Page/Component | Lines | Current State | Grade |
-|----------------|-------|---------------|-------|
-| SettingsDialog | 225 | Central orchestrator | B |
-| CompanyTab | 261 | ⚠️ Contains delete logic | C+ |
-| LanguageTab | 115 | Many select dropdowns | B |
-| All Other Tabs | <100 each | Well-sized | A- |
-| SettingsItems | 620 | Comprehensive shared UI | A |
-
-### DRY Violations Identified
-
-| Pattern | Occurrences | Lines Wasted |
-|---------|-------------|--------------|
-| Tab Wrapper Pattern | 10x | ~50 lines |
-| useTextMode Import | 10x | ~20 lines |
-| Select Dropdown Pattern | 5x | ~75 lines |
-
-### Improvement Opportunities
-
-1. **Use existing `SettingsSelectField`** - In settings-items but unused
-2. **Create `SettingsTabLayout` wrapper** - Would eliminate 10 duplicates
-3. **Extract `DeleteCompanyDialog`** - From company-tab.tsx
-4. **Move keyboard shortcuts** - From email-tab to accessibility-tab
+| Agency | Status | Endpoint |
+|--------|--------|----------|
+| Skatteverket | ✅ Implemented | `api/skatteverket/` (409 lines) |
+| Bolagsverket | ✅ Implemented | `api/bolagsverket/` (373 lines) |
 
 ---
 
-## 📁 Category: SHARED COMPONENTS
+## 🧪 Testing Status
 
-### Grade: A (88/100)
+### Current State
 
-### Available Shared Components
+```
+Test Files: 11
+Source Files: 784
+Coverage: 1.4%
+```
 
-| Component | Lines | Usage | Notes |
-|-----------|-------|-------|-------|
-| PageTabsLayout | 129 | ✅ High | All tabbed pages |
-| PageHeader | 71 | ⚠️ Low | Exists but underutilized |
-| BulkActionToolbar | 185 | ✅ High | All list views |
-| DeleteConfirmDialog | 109 | ✅ High | All delete actions |
-| LazyLoader | 211 | ✅ High | All tabs |
-| Kanban | 184 | ✅ Medium | Invoices view |
-| TableToolbar | 197 | ✅ Medium | Tables |
+### Test Locations
 
-### Available UI Components (Top Used)
+```
+src/components/__tests__/
+src/hooks/__tests__/
+src/lib/__tests__/
+```
 
-| Component | Lines | Usage |
-|-----------|-------|-------|
-| StatCard / StatCardGrid | 168 | ✅ High |
-| GridTable* | 146 | ✅ High |
-| SectionCard | 170 | ✅ High |
-| UploadDropzone | 227 | ✅ Medium |
-| AppStatusBadge | 163 | ✅ High |
-| FormField | 172 | ⚠️ Low |
-| SettingsItems | 620 | ⚠️ Medium |
+### Critical Testing Gaps
 
-### Underutilized Components
+| Area | Risk | Priority |
+|------|------|----------|
+| Tax calculations | 🔴 High | P0 |
+| Payroll processing | 🔴 High | P0 |
+| VAT calculations | 🔴 High | P0 |
+| Invoice processing | 🟠 Medium | P1 |
+| AI agent responses | 🟡 Low | P2 |
 
-1. **`PageHeader`** - Exists in shared but most pages inline their own
-2. **`FormField`** - 172 lines but löner/bokföring repeat patterns
-3. **`SettingsSelectField`** - In settings-items but language-tab doesn't use it
-4. **`BorderedSection`** - In settings-items but marked as potentially unused
+---
+
+## 🚀 DevEx Features
+
+### Available Scripts
+
+```json
+{
+  "dev": "next dev --turbopack",
+  "dev:clean": "rm -rf .next && next dev --turbopack",
+  "dev:light": "next dev",
+  "dev:limit": "NODE_OPTIONS='--max-old-space-size=2048' next dev --turbopack",
+  "build": "next build",
+  "test": "jest",
+  "test:watch": "jest --watch",
+  "test:coverage": "jest --coverage",
+  "db:types": "supabase gen types typescript --project-id ...",
+  "db:types:local": "supabase gen types typescript --local"
+}
+```
+
+### Good Practices
+
+- ✅ Turbopack enabled for fast dev
+- ✅ Memory-limited mode available
+- ✅ Supabase type generation scripts
+- ✅ 54 barrel exports for clean imports
+- ✅ Jest configured with setup file
+
+### Missing
+
+- ❌ No pre-commit hooks (Husky)
+- ❌ No lint-staged
+- ❌ No `db:migrate` convenience script
+- ❌ No E2E test setup (Playwright/Cypress)
 
 ---
 
 ## 🎯 Prioritized Recommendations
 
-### 🔴 HIGH PRIORITY (Immediate Impact)
+### 🔴 Critical (Before Production)
 
-| Action | Impact | Files Affected | Est. Lines Saved |
-|--------|--------|----------------|------------------|
-| **1. Use existing `PageHeader`** | 8 categories | 15+ files | ~200 lines |
-| **2. Split BookingDialog** | Maintainability | 1 → 3 files | ~200 lines |
-| **3. Split handelser-page.tsx** | 499 → ~150 lines | 1 → 5 files | ~350 lines |
-| **4. Split assistent.tsx (rapporter)** | 4 dialogs in 1 file | 1 → 4 files | ~200 lines |
-| **5. Consolidate benefit forms** | 7 repetitive forms | 7 files | ~250 lines |
+| Action | Impact | Effort |
+|--------|--------|--------|
+| **Add tests for tax/payroll logic** | Prevent financial errors | High |
+| **Fix 69 TypeScript errors** | Compile-time safety | Medium |
+| **Audit 250 ESLint disables** | Code quality | Medium |
 
-### 🟡 MEDIUM PRIORITY (Architecture Improvement)
+### 🟠 High Priority
 
-| Action | Impact | Files Affected |
-|--------|--------|----------------|
-| **6. Create `useMeetingDocuments<T>`** | Reduce hook duplication | 5 hooks |
-| **7. Create `<ReportPageLayout>`** | Consistent report pages | 7 rapporter files |
-| **8. Use FormField in löner** | Reduce form repetition | 7 form files |
-| **9. Create `<EventBadge>`** | Standardize event rendering | 3 files |
-| **10. Extract `useTaxPeriod()` hook** | Single source of truth | 3 files |
+| Action | Impact | Effort |
+|--------|--------|--------|
+| **Reduce `as any` casts (112)** | Type safety | Medium |
+| **Split files >500 lines** | Maintainability | Low |
+| **Add pre-commit hooks** | Prevent bad commits | Low |
 
-### 🟢 LOW PRIORITY (Polish)
+### 🟡 Medium Priority
 
-| Action | Impact |
-|--------|--------|
-| **11. Delete duplicate stamma-page.tsx** | Dead code removal |
-| **12. Remove unused EventsTable** | Dead code removal |
-| **13. Standardize table patterns** | Consistency |
-| **14. Move keyboard shortcuts to accessibility** | UX improvement |
+| Action | Impact | Effort |
+|--------|--------|--------|
+| **Create shared `<DataGrid>` component** | DRY | Medium |
+| **Consolidate selection hook interfaces** | Consistency | Low |
+| **Add E2E tests** | User flow confidence | High |
 
----
+### 🟢 Low Priority
 
-## 📈 Potential Impact Summary
-
-| Metric | Current | After Refactoring |
-|--------|---------|-------------------|
-| **Lines of Code** | ~45,563 | ~42,000 (-8%) |
-| **Large Files (>400)** | 13 | 4-5 |
-| **DRY Violations** | 35+ patterns | ~10 |
-| **Shared Component Usage** | ~60% | ~85% |
-| **Average Component Size** | 137 lines | ~110 lines |
+| Action | Impact | Effort |
+|--------|--------|--------|
+| **Clean up 16 TODOs** | Tech debt | Low |
+| **Standardize component patterns** | Consistency | Medium |
+| **Document API routes** | Developer onboarding | Low |
 
 ---
 
-## 🗺️ Cross-Category Connection Map
+## 📈 Improvement Tracking
+
+### TypeScript Error Reduction
+
+```
+Initial:     ~150+ errors (estimated)
+2026-01-26:  102 errors
+2026-01-27:  69 errors (after migration)
+Target:      0 errors
+```
+
+### Files Refactored in Phase 4
+
+```
+✅ src/components/bokforing/dialogs/leverantor/ (modularized)
+✅ src/components/bokforing/dialogs/faktura/ (modularized)  
+✅ src/components/bokforing/dialogs/shared/ (created)
+✅ src/components/settings/ (modularized)
+```
+
+---
+
+## 🗺️ Architecture Diagram
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────────────┐
-│                           SCOPE-AI COMPONENT ARCHITECTURE                            │
+│                           SCOPE-AI ARCHITECTURE                                      │
 ├─────────────────────────────────────────────────────────────────────────────────────┤
 │                                                                                      │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                           PAGES LAYER                                        │   │
-│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │   │
-│  │  │ accounting- │ │ parter-     │ │ reports-    │ │ handelser-  │  etc.       │   │
-│  │  │ page.tsx    │ │ page.tsx    │ │ page.tsx    │ │ page.tsx    │             │   │
-│  │  └──────┬──────┘ └──────┬──────┘ └──────┬──────┘ └──────┬──────┘             │   │
-│  └─────────┼───────────────┼───────────────┼───────────────┼────────────────────┘   │
-│            │               │               │               │                         │
-│            ▼               ▼               ▼               ▼                         │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                       SHARED LAYOUT (PageTabsLayout)                         │   │
-│  │  ┌──────────────────────────────────────────────────────────────────────┐   │   │
-│  │  │  LazyLoader → Domain Components (bokforing/, loner/, agare/, etc.)   │   │   │
-│  │  └──────────────────────────────────────────────────────────────────────┘   │   │
-│  └──────────────────────────────────────────────────────────────────────────────┘   │
-│                                      │                                               │
-│            ┌─────────────────────────┼─────────────────────────┐                    │
-│            ▼                         ▼                         ▼                    │
-│  ┌────────────────────┐  ┌────────────────────┐  ┌────────────────────┐             │
-│  │   DOMAIN PATTERN   │  │   DOMAIN PATTERN   │  │   DOMAIN PATTERN   │             │
-│  │                    │  │                    │  │                    │             │
-│  │  ┌──────────────┐  │  │  ┌──────────────┐  │  │  ┌──────────────┐  │             │
-│  │  │ index.tsx    │  │  │  │ index.tsx    │  │  │  │ index.tsx    │  │             │
-│  │  │ (View)       │  │  │  │ (View)       │  │  │  │ (View)       │  │             │
-│  │  └──────┬───────┘  │  │  └──────┬───────┘  │  │  └──────┬───────┘  │             │
-│  │         │          │  │         │          │  │         │          │             │
-│  │  ┌──────▼───────┐  │  │  ┌──────▼───────┐  │  │  ┌──────▼───────┐  │             │
-│  │  │ use-*-logic  │  │  │  │ use-*-logic  │  │  │  │ use-*-logic  │  │             │
-│  │  │ (Hook)       │  │  │  │ (Hook)       │  │  │  │ (Hook)       │  │             │
-│  │  └──────┬───────┘  │  │  └──────┬───────┘  │  │  └──────┬───────┘  │             │
-│  │         │          │  │         │          │  │         │          │             │
-│  │  ┌──────▼───────┐  │  │  ┌──────▼───────┐  │  │  ┌──────▼───────┐  │             │
-│  │  │ Sub-         │  │  │  │ Sub-         │  │  │  │ Sub-         │  │             │
-│  │  │ components   │  │  │  │ components   │  │  │  │ components   │  │             │
-│  │  └──────────────┘  │  │  └──────────────┘  │  │  └──────────────┘  │             │
-│  └────────────────────┘  └────────────────────┘  └────────────────────┘             │
-│                                      │                                               │
-│                                      ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                           SHARED COMPONENTS                                  │   │
-│  │  ┌─────────────┐ ┌─────────────┐ ┌─────────────┐ ┌─────────────┐             │   │
-│  │  │ StatCard    │ │ GridTable   │ │ BulkAction  │ │ SectionCard │  etc.       │   │
-│  │  │ StatCardGrid│ │ Header/Rows │ │ Toolbar     │ │             │             │   │
-│  │  └─────────────┘ └─────────────┘ └─────────────┘ └─────────────┘             │   │
-│  └──────────────────────────────────────────────────────────────────────────────┘   │
-│                                      │                                               │
-│                                      ▼                                               │
-│  ┌──────────────────────────────────────────────────────────────────────────────┐   │
-│  │                              UI PRIMITIVES                                   │   │
-│  │  Button, Card, Dialog, Input, Select, Badge, etc. (shadcn/ui based)         │   │
-│  └──────────────────────────────────────────────────────────────────────────────┘   │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                              PRESENTATION LAYER                                │ │
+│  │                                                                                │ │
+│  │   src/app/           src/components/         src/providers/                    │ │
+│  │   ├── dashboard/     ├── ai/                 ├── company-provider              │ │
+│  │   ├── api/ (57)      ├── bokforing/          ├── model-provider                │ │
+│  │   └── (pages)        ├── agare/              ├── query-provider                │ │
+│  │                      ├── loner/              └── (13 total)                    │ │
+│  │                      ├── rapporter/                                            │ │
+│  │                      └── (380 components)                                      │ │
+│  └────────────────────────────────────────────────────────────────────────────────┘ │
+│                                         │                                            │
+│                                         ▼                                            │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                              BUSINESS LOGIC LAYER                              │ │
+│  │                                                                                │ │
+│  │   src/hooks/              src/lib/agents/           src/services/              │ │
+│  │   ├── use-chat            ├── orchestrator/         ├── tax-service            │ │
+│  │   ├── use-invoices        ├── domains/ (11)         ├── vat-service            │ │
+│  │   ├── use-receipts        ├── base-agent (510L)     ├── payroll-service        │ │
+│  │   └── (39 hooks)          └── llm-client/           └── (18 services)          │ │
+│  └────────────────────────────────────────────────────────────────────────────────┘ │
+│                                         │                                            │
+│                                         ▼                                            │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                              DATA ACCESS LAYER                                 │ │
+│  │                                                                                │ │
+│  │   src/lib/database/                                                            │ │
+│  │   ├── supabase.ts (client)        ├── user-scoped-db.ts (RLS)                 │ │
+│  │   ├── supabase-server.ts (SSR)    ├── server-db.ts (admin)                    │ │
+│  │   └── repositories/ (12 repos)                                                 │ │
+│  └────────────────────────────────────────────────────────────────────────────────┘ │
+│                                         │                                            │
+│                                         ▼                                            │
+│  ┌────────────────────────────────────────────────────────────────────────────────┐ │
+│  │                              DATABASE (Supabase PostgreSQL)                    │ │
+│  │                                                                                │ │
+│  │   57+ tables │ 38 migrations │ RLS policies │ RPC functions                    │ │
+│  │   src/types/database.ts (3,377 lines - auto-generated)                         │ │
+│  └────────────────────────────────────────────────────────────────────────────────┘ │
 │                                                                                      │
 └─────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## Appendix: File Size Distribution
+## Appendix: Technology Stack
 
-### Files Over 400 Lines (Needs Splitting)
+### Core
 
-1. `ui/sidebar.tsx` - 734 lines
-2. `onboarding/onboarding-wizard.tsx` - 627 lines
-3. `bokforing/dialogs/bokforing.tsx` - 626 lines
-4. `ui/settings-items.tsx` - 620 lines
-5. `bokforing/dialogs/faktura.tsx` - 547 lines
-6. `layout/sidebar-nav.tsx` - 535 lines
-7. `rapporter/dialogs/assistent.tsx` - 499 lines
-8. `pages/handelser-page.tsx` - 499 lines
-9. `bokforing/dialogs/leverantor.tsx` - 484 lines
-10. `ai/chat-input.tsx` - 468 lines
-11. `bokforing/dialogs/underlag.tsx` - 454 lines
-12. `ai/ai-overlay.tsx` - 425 lines
-13. `landing/sections/hero/demo.tsx` - 422 lines
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| Next.js | 16.x | Framework |
+| React | 19.x | UI Library |
+| TypeScript | Latest | Type Safety |
+| Tailwind CSS | Latest | Styling |
+
+### Database & Auth
+
+| Technology | Purpose |
+|------------|---------|
+| Supabase | PostgreSQL + Auth + Realtime |
+| TanStack Query | Data fetching |
+
+### AI/ML
+
+| Provider | Purpose |
+|----------|---------|
+| Anthropic Claude | Primary LLM |
+| OpenAI | Alternative LLM |
+| Google Gemini | Alternative LLM |
+
+### UI Components
+
+| Library | Purpose |
+|---------|---------|
+| Radix UI | Accessible primitives |
+| shadcn/ui | Component system |
+| Framer Motion | Animations |
+| Recharts | Charts |
+| Lucide | Icons |
+
+### Payments
+
+| Provider | Purpose |
+|----------|---------|
+| Stripe | Subscriptions & billing |
+
+---
+
+*Last updated: January 27, 2026*

@@ -207,6 +207,26 @@ export abstract class BaseAgent implements Agent {
         for (const key of memoryKeys) {
             // Each agent can filter for relevant keys
             if (this.isRelevantMemoryKey(key)) {
+                // Special handling for mentions - extract aiContext for pages
+                if (key === 'mentions') {
+                    const mentions = context.sharedMemory[key] as Array<{
+                        type: string
+                        label: string
+                        aiContext?: string
+                    }>
+                    
+                    if (mentions && Array.isArray(mentions)) {
+                        const pageContexts = mentions
+                            .filter(m => m.type === 'page' && m.aiContext)
+                            .map(m => m.aiContext)
+                        
+                        if (pageContexts.length > 0) {
+                            relevant.push(`## Referenced Pages\n${pageContexts.join('\n\n')}`)
+                            continue
+                        }
+                    }
+                }
+                
                 relevant.push(`${key}: ${JSON.stringify(context.sharedMemory[key])}`)
             }
         }

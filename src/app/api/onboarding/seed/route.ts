@@ -92,8 +92,8 @@ export async function POST(request: NextRequest) {
                 const partners = await Promise.all(
                     body.partners.map(p => db.partners.create({
                         name: p.name,
-                        ssn_org_nr: p.ssn_org_nr,
-                        partner_type: p.type,
+                        personal_number: p.ssn_org_nr,
+                        type: p.type,
                         capital_contribution: p.capital_contribution,
                         ownership_percentage: p.ownership_percentage,
                         user_id: auth.userId,
@@ -113,9 +113,8 @@ export async function POST(request: NextRequest) {
                     body.members.map(m => db.members.create({
                         name: m.name,
                         email: m.email,
-                        member_since: m.member_since,
-                        status: m.status,
-                        fee_paid: m.fee_paid,
+                        join_date: m.member_since ?? new Date().toISOString().split('T')[0],
+                        status: m.status ?? 'active',
                         user_id: auth.userId,
                     }))
                 )

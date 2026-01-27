@@ -1,5 +1,5 @@
 // Shared Utility Components
-export { ErrorBoundary } from "./error-boundary"
+export { ErrorBoundary, SectionErrorBoundary } from "./error-boundary"
 export { BulkActionToolbar, useBulkSelection } from "./bulk-action-toolbar"
 export type { BulkAction } from "./bulk-action-toolbar"
 

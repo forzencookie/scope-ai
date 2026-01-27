@@ -2,10 +2,11 @@
  * Common AI Tools - Company
  *
  * Tools for company information and settings.
- * These tools fetch data from authenticated API endpoints.
+ * These tools fetch data from the database via company-service.
  */
 
 import { defineTool } from '../registry'
+import { companyService, CompanyInfo } from '@/services/company-service'
 
 // Helper to get base URL for API calls
 function getBaseUrl() {
@@ -16,41 +17,72 @@ function getBaseUrl() {
 // Company Info Tool
 // =============================================================================
 
-export const getCompanyInfoTool = defineTool({
+export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | null>({
     name: 'get_company_info',
-    description: 'Hämta information om företaget: namn, organisationsnummer, företagsform, inställningar.',
-    parameters: { type: 'object' as const, properties: {} },
+    description: 'Hämta information om företaget: namn, organisationsnummer, företagsform, räkenskapsår, momsinställningar.',
+    parameters: { 
+        type: 'object' as const, 
+        properties: {
+            userId: { type: 'string', description: 'User ID (optional, uses context if not provided)' }
+        } 
+    },
     requiresConfirmation: false,
     category: 'read',
-    execute: async () => {
-        let company = null
-        if (typeof window !== 'undefined') {
-            const stored = localStorage.getItem('scope-ai-company')
-            if (stored) {
-                company = JSON.parse(stored)
+    execute: async (params, context) => {
+        // Get user ID from params or context
+        const userId = params?.userId || context?.userId
+        
+        if (!userId) {
+            return {
+                success: false,
+                error: 'Kunde inte identifiera användaren. Logga in och försök igen.',
+                data: null,
             }
         }
 
+        // Fetch from database
+        const company = await companyService.getByUserId(userId)
+
         if (!company) {
-            company = {
-                name: 'Mitt Företag AB',
-                orgNumber: '556123-4567',
-                companyType: 'ab',
-                fiscalYearEnd: '12-31',
-                vatFrequency: 'quarterly',
-                isCloselyHeld: true,
-                hasEmployees: true,
+            return {
+                success: false,
+                error: 'Ingen företagsinformation hittades. Gå till Inställningar för att konfigurera ditt företag.',
+                data: null,
+                navigation: {
+                    route: '/dashboard/installningar',
+                    label: 'Gå till inställningar',
+                },
             }
+        }
+
+        // Format company type for display
+        const companyTypeLabels: Record<string, string> = {
+            ab: 'Aktiebolag',
+            enskild_firma: 'Enskild firma',
+            hb: 'Handelsbolag',
+            kb: 'Kommanditbolag',
+            ekonomisk_forening: 'Ekonomisk förening',
+        }
+
+        const vatFrequencyLabels: Record<string, string> = {
+            monthly: 'Månadsvis',
+            quarterly: 'Kvartalsvis',
+            annually: 'Årsvis',
         }
 
         return {
             success: true,
             data: company,
-            message: `${company.name} (${company.orgNumber})`,
+            message: `${company.name} (${company.orgNumber || 'Org.nr ej angivet'}) - ${companyTypeLabels[company.companyType] || company.companyType}. Räkenskapsår slutar ${company.fiscalYearEnd}. Moms: ${vatFrequencyLabels[company.vatFrequency] || company.vatFrequency}.`,
             display: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                component: 'CompanyInfoCard' as any,
-                props: { company },
+                component: 'CompanyInfoCard',
+                props: { 
+                    company: {
+                        ...company,
+                        companyTypeLabel: companyTypeLabels[company.companyType],
+                        vatFrequencyLabel: vatFrequencyLabels[company.vatFrequency],
+                    }
+                },
                 title: 'Företagsinformation',
                 fullViewRoute: '/dashboard/installningar',
             },

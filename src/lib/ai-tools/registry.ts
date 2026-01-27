@@ -182,7 +182,7 @@ class AIToolRegistry {
         try {
             await db.logAIToolExecution({
                 toolName: log.toolName,
-                parameters: log.params,
+                parameters: (log.params as Record<string, unknown>) || {},
                 result: log.result,
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 status: (log.result as any)?.success === false ? 'error' : 'success',

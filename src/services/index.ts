@@ -24,3 +24,10 @@ export * from "./tax-declaration-service"
 export * from "./tax-service"
 export { transactionService } from "./transaction-service"
 export * from "./vat-service"
+
+// New services (Priority 2)
+export * from "./verification-service"
+export * from "./account-service"
+export * from "./shareholder-service"
+export * from "./board-service"
+export * from "./company-statistics-service"

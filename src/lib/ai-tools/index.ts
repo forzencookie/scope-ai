@@ -20,11 +20,15 @@ export * from './bokforing/transactions'
 export * from './bokforing/invoices'
 export * from './bokforing/receipts'
 export * from './bokforing/reports'
+export * from './bokforing/inventarier'
+export * from './bokforing/verifications'
+export * from './bokforing/accounts'
 
 // Löner (Payroll)
 export { lonerTools } from './loner'
 export * from './loner/payroll'
 export * from './loner/benefits'
+export * from './loner/owner-payroll'
 
 // Skatt (Tax)
 export { skattTools } from './skatt'
@@ -38,11 +42,19 @@ export { parterTools } from './parter'
 export * from './parter/shareholders'
 export * from './parter/partners'
 export * from './parter/compliance'
+export * from './parter/board'
 
-// Common (Navigation, Company)
+// Common (Navigation, Company, Settings, Events, Statistics)
 export { commonTools } from './common'
 export * from './common/navigation'
 export * from './common/company'
+export * from './common/settings'
+export * from './common/events'
+export * from './common/statistics'
+
+// Planning (Roadmaps)
+export { planningTools } from './planning'
+export * from './planning/roadmap'
 
 // ============================================================================
 // Registration
@@ -55,6 +67,7 @@ import { lonerTools } from './loner'
 import { skattTools } from './skatt'
 import { parterTools } from './parter'
 import { commonTools } from './common'
+import { planningTools } from './planning'
 
 /**
  * Initialize all tools by registering them with the registry.
@@ -67,6 +80,7 @@ export function initializeAITools(): void {
         ...skattTools,
         ...parterTools,
         ...commonTools,
+        ...planningTools,
     ]
 
     for (const tool of allTools) {
@@ -79,6 +93,7 @@ export function initializeAITools(): void {
     console.log(`  - Skatt: ${skattTools.length} tools`)
     console.log(`  - Parter: ${parterTools.length} tools`)
     console.log(`  - Common: ${commonTools.length} tools`)
+    console.log(`  - Planning: ${planningTools.length} tools`)
 }
 
 /**

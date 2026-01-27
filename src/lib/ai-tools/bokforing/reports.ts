@@ -231,10 +231,237 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
     }
 })
 
+// =============================================================================
+// Prepare INK2 (Income Tax Declaration) Tool
+// =============================================================================
+
+export interface PrepareINK2Params {
+    year: number
+    includeOptimizations?: boolean
+}
+
+export interface INK2Data {
+    year: number
+    companyName: string
+    orgNumber: string
+    fields: Array<{ field: string; label: string; value: number; editable: boolean }>
+    summary: {
+        taxableIncome: number
+        corporateTax: number
+        periodiseringsfond?: number
+    }
+    status: 'draft' | 'ready' | 'submitted'
+}
+
+export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
+    name: 'prepare_ink2',
+    description: 'Förbered inkomstdeklaration (INK2) för aktiebolag. Beräknar skatt och visar skatteoptimering.',
+    category: 'write',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            year: { type: 'number', description: 'Inkomstår' },
+            includeOptimizations: { type: 'boolean', description: 'Visa förslag på skatteoptimering' },
+        },
+        required: ['year'],
+    },
+    execute: async (params) => {
+        // In production, pull from actual bookkeeping data
+        const incomeStatement = generateMockIncomeStatement()
+        const resultItem = incomeStatement.find(i => i.label === 'Årets resultat')
+        const result = resultItem?.value || 150000
+
+        // Calculate corporate tax (20.6% for 2024+)
+        const taxRate = 0.206
+        const maxPeriodisering = Math.round(result * 0.25) // 25% to periodiseringsfond
+        const taxableAfterPeriodisering = result - maxPeriodisering
+        const corporateTax = Math.round(taxableAfterPeriodisering * taxRate)
+
+        const ink2Data: INK2Data = {
+            year: params.year,
+            companyName: "Din Företag AB",
+            orgNumber: "556123-4567",
+            fields: [
+                { field: '1.1', label: 'Nettoomsättning', value: 2450000, editable: false },
+                { field: '1.3', label: 'Övriga rörelseintäkter', value: 15000, editable: true },
+                { field: '2.1', label: 'Råvaror och förnödenheter', value: -850000, editable: false },
+                { field: '2.4', label: 'Personalkostnader', value: -980000, editable: false },
+                { field: '2.5', label: 'Avskrivningar', value: -85000, editable: false },
+                { field: '2.6', label: 'Övriga rörelsekostnader', value: -350000, editable: false },
+                { field: '3.1', label: 'Ränteintäkter', value: 2500, editable: false },
+                { field: '3.2', label: 'Räntekostnader', value: -12500, editable: false },
+                { field: '4.1', label: 'Resultat före skatt', value: result, editable: false },
+                { field: '4.2', label: 'Avsättning periodiseringsfond', value: -maxPeriodisering, editable: true },
+                { field: '4.3', label: 'Skattemässigt resultat', value: taxableAfterPeriodisering, editable: false },
+            ],
+            summary: {
+                taxableIncome: taxableAfterPeriodisering,
+                corporateTax,
+                periodiseringsfond: maxPeriodisering,
+            },
+            status: 'draft',
+        }
+
+        const message = params.includeOptimizations
+            ? `INK2 förberedd. Tips: Avsätt ${maxPeriodisering.toLocaleString('sv-SE')} kr till periodiseringsfond för att sänka skatten till ${corporateTax.toLocaleString('sv-SE')} kr.`
+            : `INK2 förberedd för ${params.year}. Bolagsskatt: ${corporateTax.toLocaleString('sv-SE')} kr.`
+
+        return {
+            success: true,
+            data: ink2Data,
+            message,
+            display: {
+                component: 'INK2FormPreview',
+                title: `Inkomstdeklaration ${params.year}`,
+                props: { data: ink2Data },
+                fullViewRoute: '/dashboard/rapporter?tab=inkomstdeklaration',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Close Fiscal Year Tool
+// =============================================================================
+
+export interface CloseFiscalYearParams {
+    year: number
+    createOpeningBalances?: boolean
+}
+
+export interface YearEndResult {
+    year: number
+    result: number
+    closingEntries: Array<{ description: string; debit: string; credit: string; amount: number }>
+    status: 'preview' | 'closed'
+}
+
+export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResult>({
+    name: 'close_fiscal_year',
+    description: 'Stäng räkenskapsåret. Skapar bokslutsposter och överför resultat till eget kapital.',
+    category: 'write',
+    requiresConfirmation: true,
+    parameters: {
+        type: 'object',
+        properties: {
+            year: { type: 'number', description: 'Räkenskapsår att stänga' },
+            createOpeningBalances: { type: 'boolean', description: 'Skapa ingående balanser för nästa år (standard: true)' },
+        },
+        required: ['year'],
+    },
+    execute: async (params) => {
+        // In production, calculate from actual bookkeeping
+        const incomeStatement = generateMockIncomeStatement()
+        const resultItem = incomeStatement.find(i => i.label === 'Årets resultat')
+        const result = resultItem?.value || 150000
+
+        const closingEntries = [
+            { description: 'Nollställ intäkter', debit: '3XXX', credit: '8999', amount: 2450000 },
+            { description: 'Nollställ kostnader', debit: '8999', credit: '4-7XXX', amount: 2300000 },
+            { description: 'Överför årets resultat', debit: '8999', credit: '2099', amount: result },
+        ]
+
+        const yearEndData: YearEndResult = {
+            year: params.year,
+            result,
+            closingEntries,
+            status: 'preview',
+        }
+
+        const confirmationRequest: AIConfirmationRequest = {
+            title: `Stäng räkenskapsår ${params.year}`,
+            description: 'Skapar bokslutsposter och låser perioden',
+            summary: [
+                { label: 'År', value: String(params.year) },
+                { label: 'Årets resultat', value: `${result.toLocaleString('sv-SE')} kr` },
+                { label: 'Antal bokslutsposter', value: String(closingEntries.length) },
+                { label: 'Ingående balanser', value: params.createOpeningBalances !== false ? 'Ja' : 'Nej' },
+            ],
+            action: { toolName: 'close_fiscal_year', params },
+            requireCheckbox: true,
+        }
+
+        return {
+            success: true,
+            data: yearEndData,
+            message: `Årsbokslut förberett. Resultat: ${result.toLocaleString('sv-SE')} kr.`,
+            confirmationRequired: confirmationRequest,
+            display: {
+                component: 'YearEndPreview',
+                title: `Årsbokslut ${params.year}`,
+                props: { data: yearEndData },
+                fullViewRoute: '/dashboard/rapporter?tab=arsbokslut',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Generate Management Report Tool
+// =============================================================================
+
+export interface GenerateManagementReportParams {
+    year: number
+    language?: 'sv' | 'en'
+}
+
+export const generateManagementReportTool = defineTool<GenerateManagementReportParams, string>({
+    name: 'generate_management_report',
+    description: 'Generera förvaltningsberättelse för årsredovisningen baserat på årets siffror.',
+    category: 'write',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            year: { type: 'number', description: 'Räkenskapsår' },
+            language: { type: 'string', enum: ['sv', 'en'], description: 'Språk (standard: svenska)' },
+        },
+        required: ['year'],
+    },
+    execute: async (params) => {
+        // In production, this would use AI to generate text based on financial data
+        const managementReport = `
+## Förvaltningsberättelse
+
+### Allmänt om verksamheten
+Bolaget bedriver konsultverksamhet inom IT och systemutveckling. Verksamheten bedrivs från bolagets lokaler i Stockholm.
+
+### Väsentliga händelser under räkenskapsåret
+Under ${params.year} har bolaget fortsatt att växa och nettoomsättningen ökade med 17% jämfört med föregående år. Bolaget har under året investerat i ny IT-utrustning och utökat personalstyrkan.
+
+### Framtida utveckling
+Bolaget ser positivt på den fortsatta utvecklingen och förväntar sig en fortsatt tillväxt under kommande år.
+
+### Resultatdisposition
+Styrelsen föreslår att årets resultat, 150 000 kr, balanseras i ny räkning.
+        `.trim()
+
+        return {
+            success: true,
+            data: managementReport,
+            message: `Förvaltningsberättelse för ${params.year} genererad.`,
+            display: {
+                component: 'DocumentPreview',
+                title: 'Förvaltningsberättelse',
+                props: {
+                    title: `Förvaltningsberättelse ${params.year}`,
+                    type: 'management_report',
+                    content: managementReport,
+                    format: 'markdown',
+                },
+            },
+        }
+    },
+})
+
 export const reportTools = [
     getIncomeStatementTool,
     getBalanceSheetTool,
     exportSIETool,
     generateFinancialReportTool,
     draftAnnualReportTool,
+    prepareINK2Tool,
+    closeFiscalYearTool,
+    generateManagementReportTool,
 ]

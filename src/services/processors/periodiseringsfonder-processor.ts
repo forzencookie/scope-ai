@@ -39,8 +39,9 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
     }
 
     const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .select('*')
         .order('year', { ascending: false })
 
@@ -49,7 +50,7 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
         return []
     }
 
-    return ((data || []) as PeriodiseringsfondRow[]).map(mapFromDb)
+    return ((data || []) as unknown as PeriodiseringsfondRow[]).map(mapFromDb)
 }
 
 /**
@@ -67,8 +68,9 @@ export async function createPeriodiseringsfond(
     const expiresAt = new Date(input.year + 6, 11, 31) // Dec 31, 6 years later
 
     const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .insert({
             year: input.year,
             amount: input.amount,
@@ -85,7 +87,7 @@ export async function createPeriodiseringsfond(
         return null
     }
 
-    return mapFromDb(data as PeriodiseringsfondRow)
+    return mapFromDb(data as unknown as PeriodiseringsfondRow)
 }
 
 /**
@@ -102,13 +104,14 @@ export async function dissolvePeriodiseringsfond(
     const supabase = getSupabaseClient()
 
     // First get the current fond
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: existingData } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .select('*')
         .eq('id', id)
         .single()
 
-    const existing = existingData as PeriodiseringsfondRow | null
+    const existing = existingData as unknown as PeriodiseringsfondRow | null
 
     if (!existing) return null
 
@@ -118,8 +121,9 @@ export async function dissolvePeriodiseringsfond(
     const newDissolvedAmount = existingDissolved + dissolveAmount
     const newStatus = newDissolvedAmount >= existingAmount ? 'dissolved' : 'partially_dissolved'
 
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .update({
             dissolved_amount: newDissolvedAmount,
             status: newStatus,
@@ -134,7 +138,7 @@ export async function dissolvePeriodiseringsfond(
         return null
     }
 
-    return mapFromDb(data as PeriodiseringsfondRow)
+    return mapFromDb(data as unknown as PeriodiseringsfondRow)
 }
 
 /**
@@ -149,8 +153,9 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
     futureDate.setMonth(futureDate.getMonth() + withinMonths)
 
     const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder')
+        .from('periodiseringsfonder' as any)
         .select('*')
         .eq('status', 'active')
         .lte('expires_at', futureDate.toISOString().split('T')[0])
@@ -161,7 +166,7 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
         return []
     }
 
-    return ((data || []) as PeriodiseringsfondRow[]).map(mapFromDb)
+    return ((data || []) as unknown as PeriodiseringsfondRow[]).map(mapFromDb)
 }
 
 // =============================================================================

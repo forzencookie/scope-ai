@@ -8,9 +8,7 @@ import type {
     Periodiseringsfond,
     FormanCatalogItem,
     EmployeeBenefit,
-    Property,
     ShareHolding,
-    CryptoHolding,
 } from './tool-types'
 
 // =============================================================================
@@ -277,25 +275,6 @@ export const mockEmployeeBenefits: EmployeeBenefit[] = [
 // Properties Mock Data
 // =============================================================================
 
-export const mockProperties: Property[] = [
-    {
-        id: 'prop-1',
-        companyId: 'demo-company',
-        name: 'Kontorsfastighet Storgatan 15',
-        propertyType: 'building',
-        address: 'Storgatan 15, 111 22 Stockholm',
-        purchaseDate: new Date('2020-06-01'),
-        purchasePrice: 5000000,
-        landValue: 1500000,
-        buildingValue: 3500000,
-        depreciationRate: 2.0,
-        currentValue: 4860000, // After 2 years depreciation
-        basAccount: '1110',
-        createdAt: new Date('2020-06-01'),
-        updatedAt: new Date('2024-01-01'),
-    },
-]
-
 // =============================================================================
 // Share Holdings Mock Data
 // =============================================================================
@@ -315,37 +294,6 @@ export const mockShareHoldings: ShareHolding[] = [
         basAccount: '1350',
         notes: 'Strategisk investering',
         createdAt: new Date('2022-01-15'),
-        updatedAt: new Date('2024-01-01'),
-    },
-]
-
-// =============================================================================
-// Crypto Holdings Mock Data
-// =============================================================================
-
-export const mockCryptoHoldings: CryptoHolding[] = [
-    {
-        id: 'crypto-1',
-        companyId: 'demo-company',
-        coin: 'BTC',
-        amount: 0.5,
-        purchaseDate: new Date('2023-06-15'),
-        purchasePriceSek: 150000,
-        currentPriceSek: 250000,
-        basAccount: '1350',
-        createdAt: new Date('2023-06-15'),
-        updatedAt: new Date('2024-01-01'),
-    },
-    {
-        id: 'crypto-2',
-        companyId: 'demo-company',
-        coin: 'ETH',
-        amount: 5,
-        purchaseDate: new Date('2023-09-01'),
-        purchasePriceSek: 75000,
-        currentPriceSek: 95000,
-        basAccount: '1350',
-        createdAt: new Date('2023-09-01'),
         updatedAt: new Date('2024-01-01'),
     },
 ]

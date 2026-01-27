@@ -228,7 +228,7 @@ function HandelserPageContent() {
                     {activeView === "activity" && (
                         <ActivityFeed 
                             limit={50} 
-                            showHeader={false}
+                            showTitle={false}
                             className="border-0 shadow-none bg-transparent"
                         />
                     )}

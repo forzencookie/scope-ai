@@ -234,10 +234,7 @@ export async function addUserCredits(
 
     const { error } = await supabase.rpc('add_user_credits', {
         p_user_id: userId,
-        p_credits: credits,
-        p_stripe_payment_id: stripePaymentId || null,
-        p_price_paid_cents: pricePaidCents || null,
-        p_currency: 'sek',
+        p_amount: credits,
     })
 
     if (error) {

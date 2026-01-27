@@ -336,7 +336,7 @@ export async function consumeTokens(
         // Consume from purchased credits
         const { data: consumeSuccess } = await supabase.rpc('consume_user_credits', {
             p_user_id: userId,
-            p_tokens_to_consume: tokensFromCredits
+            p_amount: tokensFromCredits
         })
 
         if (!consumeSuccess) {

@@ -29,6 +29,7 @@ export { BoardMinutesPreview, type BoardMinutesPreviewProps, type BoardMinutesDa
 export { FinancialReportPreview, type FinancialReportPreviewProps, type FinancialReportData } from "./documents/financial-report-preview"
 export { ShareRegisterPreview, type ShareRegisterPreviewProps, type ShareRegisterData, type Shareholder } from "./documents/share-register-preview"
 export { AnnualReportPreview, type AnnualReportPreviewProps, type AnnualReportData } from "./documents/annual-report-preview"
+export { AgmPreparationPreview, type AgmPreparationPreviewProps, type AgmPreparationData } from "./documents/agm-preparation-preview"
 
 // Form previews
 export { VATFormPreview, type VATFormPreviewProps, type VATDeclarationData } from "./forms/vat-form-preview"

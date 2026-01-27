@@ -1,6 +1,7 @@
 import {
   Users,
   UserCheck,
+  UserX,
   CreditCard
 } from "lucide-react"
 import { StatCard } from "@/components/ui/stat-card"

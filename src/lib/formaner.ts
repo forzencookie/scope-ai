@@ -65,7 +65,7 @@ export async function listAvailableBenefits(
             .order('name')
 
         if (!error && data?.length) {
-            const mapped = (data as FormanCatalogRow[]).map(mapCatalogFromDb)
+            const mapped = (data as unknown as FormanCatalogRow[]).map(mapCatalogFromDb)
             return filterByCompanyType(mapped, companyType)
         }
     }
@@ -87,7 +87,7 @@ export async function getBenefitDetails(id: string): Promise<FormanCatalogItem |
             .eq('id', id)
             .single()
 
-        if (data) return mapCatalogFromDb(data as FormanCatalogRow)
+        if (data) return mapCatalogFromDb(data as unknown as FormanCatalogRow)
     }
 
     // Fallback
@@ -144,7 +144,7 @@ export async function assignBenefit(
         return null
     }
 
-    return mapBenefitFromDb(data as EmployeeBenefitRow)
+    return mapBenefitFromDb(data as unknown as EmployeeBenefitRow)
 }
 
 /**
@@ -170,7 +170,7 @@ export async function getEmployeeBenefits(
         return []
     }
 
-    return ((data || []) as EmployeeBenefitRow[]).map(mapBenefitFromDb)
+    return ((data || []) as unknown as EmployeeBenefitRow[]).map(mapBenefitFromDb)
 }
 
 /**

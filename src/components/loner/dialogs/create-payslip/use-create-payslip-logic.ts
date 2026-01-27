@@ -32,6 +32,14 @@ export interface PayslipCreateDialogProps {
     currentPeriod: string
 }
 
+interface PayslipEmployee {
+    id: string
+    name: string
+    role: string
+    lastSalary: number
+    taxRate: number
+}
+
 export function useCreatePayslipLogic({
     open,
     onOpenChange,
@@ -41,8 +49,7 @@ export function useCreatePayslipLogic({
     const toast = useToast()
     const { addVerification } = useVerifications()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [employees, setEmployees] = useState<Record<string, any>[]>([])
+    const [employees, setEmployees] = useState<PayslipEmployee[]>([])
     const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
     const [step, setStep] = useState(1)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
@@ -61,8 +68,7 @@ export function useCreatePayslipLogic({
                 const res = await fetch('/api/employees')
                 const data = await res.json()
                 if (data.employees) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setEmployees(data.employees.map((e: any) => ({
+                    setEmployees(data.employees.map((e: { id: string; name: string; role: string; monthly_salary: number | string; tax_rate: number | string }): PayslipEmployee => ({
                         id: e.id,
                         name: e.name,
                         role: e.role,

@@ -86,6 +86,20 @@ export interface UserScopedDb {
         listActive: () => Promise<RoadmapWithSteps[]>
     }
 
+    partners: {
+        list: (options?: { limit?: number }) => Promise<Tables['partners']['Row'][]>
+        getById: (id: string) => Promise<Tables['partners']['Row'] | null>
+        create: (data: Tables['partners']['Insert']) => Promise<Tables['partners']['Row'] | null>
+        update: (id: string, data: Tables['partners']['Update']) => Promise<Tables['partners']['Row'] | null>
+    }
+
+    members: {
+        list: (options?: { limit?: number }) => Promise<Tables['members']['Row'][]>
+        getById: (id: string) => Promise<Tables['members']['Row'] | null>
+        create: (data: Tables['members']['Insert']) => Promise<Tables['members']['Row'] | null>
+        update: (id: string, data: Tables['members']['Update']) => Promise<Tables['members']['Row'] | null>
+    }
+
     getCompanyKPIs: () => Promise<{
         recent_transactions_count: number
         unpaid_invoices_count: number
@@ -355,6 +369,68 @@ function createRoadmapsAccessor(supabase: SupabaseClient<Database>, userId: stri
     }
 }
 
+function createPartnersAccessor(supabase: SupabaseClient<Database>, _userId: string, companyId: string | null) {
+    return {
+        list: async (options?: { limit?: number }) => {
+            let query = supabase
+                .from('partners')
+                .select('*')
+                .order('created_at', { ascending: false })
+            if (companyId) query = query.eq('company_id', companyId)
+            if (options?.limit) query = query.limit(options.limit)
+            const { data, error } = await query
+            if (error) console.error('[UserScopedDb] partners.list error:', error)
+            return data || []
+        },
+        getById: async (id: string) => {
+            const { data } = await supabase.from('partners').select('*').eq('id', id).single()
+            return data
+        },
+        create: async (data: Tables['partners']['Insert']) => {
+            const insertData = { ...data, company_id: data.company_id ?? companyId }
+            const { data: result, error } = await supabase.from('partners').insert(insertData).select().single()
+            if (error) console.error('[UserScopedDb] partners.create error:', error)
+            return result
+        },
+        update: async (id: string, data: Tables['partners']['Update']) => {
+            const { data: result, error } = await supabase.from('partners').update(data).eq('id', id).select().single()
+            if (error) console.error('[UserScopedDb] partners.update error:', error)
+            return result
+        },
+    }
+}
+
+function createMembersAccessor(supabase: SupabaseClient<Database>, _userId: string, companyId: string | null) {
+    return {
+        list: async (options?: { limit?: number }) => {
+            let query = supabase
+                .from('members')
+                .select('*')
+                .order('created_at', { ascending: false })
+            if (companyId) query = query.eq('company_id', companyId)
+            if (options?.limit) query = query.limit(options.limit)
+            const { data, error } = await query
+            if (error) console.error('[UserScopedDb] members.list error:', error)
+            return data || []
+        },
+        getById: async (id: string) => {
+            const { data } = await supabase.from('members').select('*').eq('id', id).single()
+            return data
+        },
+        create: async (data: Tables['members']['Insert']) => {
+            const insertData = { ...data, company_id: data.company_id ?? companyId }
+            const { data: result, error } = await supabase.from('members').insert(insertData).select().single()
+            if (error) console.error('[UserScopedDb] members.create error:', error)
+            return result
+        },
+        update: async (id: string, data: Tables['members']['Update']) => {
+            const { data: result, error } = await supabase.from('members').update(data).eq('id', id).select().single()
+            if (error) console.error('[UserScopedDb] members.update error:', error)
+            return result
+        },
+    }
+}
+
 // =============================================================================
 // Main Factory Function
 // =============================================================================
@@ -398,6 +474,8 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
         messages: createMessagesAccessor(supabase, user.id),
         inboxItems: createInboxItemsAccessor(supabase, user.id, companyId),
         roadmaps: createRoadmapsAccessor(supabase, user.id),
+        partners: createPartnersAccessor(supabase, user.id, companyId),
+        members: createMembersAccessor(supabase, user.id, companyId),
 
         getCompanyKPIs: async () => {
             const [tx, invoices, inbox] = await Promise.all([

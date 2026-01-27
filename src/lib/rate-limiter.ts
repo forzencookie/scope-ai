@@ -154,7 +154,7 @@ async function checkRateLimitSupabase(identifier: string, config: RateLimitConfi
             .single()
 
         if (existing) {
-            const row = existing as RateLimitRow
+            const row = existing as unknown as RateLimitRow
             const existingResetTime = new Date(row.reset_time).getTime()
 
             // Window expired - reset

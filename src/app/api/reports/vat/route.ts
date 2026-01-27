@@ -15,8 +15,9 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: reports, error } = await userDb.client
-            .from('tax_reports')
+            .from('taxreports' as any)
             .select('*')
             .eq('type', 'vat')
             .order('created_at', { ascending: false });
@@ -48,8 +49,9 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing period_id" }, { status: 400 });
         }
 
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: savedReport, error } = await userDb.client
-            .from('tax_reports')
+            .from('taxreports' as any)
             .upsert({
                 ...report,
                 company_id: userDb.companyId,

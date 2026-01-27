@@ -69,46 +69,10 @@ export interface AssignBenefitInput {
 }
 
 // =============================================================================
-// Investments: Properties (Fastigheter)
-// =============================================================================
-
-export type PropertyType = 'building' | 'land' | 'investment_property'
-
-export interface Property {
-    id: string
-    companyId: string
-    name: string
-    propertyType?: PropertyType
-    address?: string
-    purchaseDate?: Date
-    purchasePrice?: number
-    landValue?: number // Separate for depreciation (land doesn't depreciate)
-    buildingValue?: number
-    depreciationRate: number // Typically 2-4%
-    currentValue?: number // Book value after depreciation
-    basAccount: string
-    notes?: string
-    createdAt: Date
-    updatedAt: Date
-}
-
-export interface CreatePropertyInput {
-    name: string
-    propertyType?: PropertyType
-    address?: string
-    purchaseDate?: Date
-    purchasePrice?: number
-    landValue?: number
-    buildingValue?: number
-    depreciationRate?: number
-    notes?: string
-}
-
-// =============================================================================
 // Investments: Share Holdings (Aktieinnehav)
 // =============================================================================
 
-export type HoldingType = 'subsidiary' | 'associated' | 'other'
+export type HoldingType = 'subsidiary' | 'associated' | 'listed' | 'unlisted' | 'other'
 
 export interface ShareHolding {
     id: string
@@ -134,48 +98,6 @@ export interface CreateShareHoldingInput {
     sharesCount?: number
     purchaseDate?: Date
     purchasePrice?: number
-    notes?: string
-}
-
-// =============================================================================
-// Investments: Crypto
-// =============================================================================
-
-export interface CryptoHolding {
-    id: string
-    companyId: string
-    coin: string // 'BTC', 'ETH', etc.
-    amount: number
-    purchaseDate?: Date
-    purchasePriceSek?: number
-    currentPriceSek?: number
-    basAccount: string
-    notes?: string
-    createdAt: Date
-    updatedAt: Date
-}
-
-export type CryptoTransactionType = 'buy' | 'sell' | 'swap'
-
-export interface CryptoTransaction {
-    id: string
-    companyId: string
-    coin: string
-    transactionType: CryptoTransactionType
-    amount: number
-    priceSek: number // Price per unit
-    totalSek: number
-    transactionDate: Date
-    notes?: string
-    createdAt: Date
-}
-
-export interface CreateCryptoTransactionInput {
-    coin: string
-    transactionType: CryptoTransactionType
-    amount: number
-    priceSek: number
-    transactionDate: Date
     notes?: string
 }
 

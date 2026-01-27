@@ -65,7 +65,7 @@ export function useReceiptsLogic() {
         setDetailsDialogOpen(true)
     }, [])
 
-    const handleSaveReceipt = useCallback(async (data: { supplier: string; date: string; amount: number; moms: number; category: string; status: string; file?: File, fileName?: string }) => {
+    const handleSaveReceipt = useCallback(async (data: { supplier: string; date: string; amount: string | number; moms: string | number; category: string; status: string; file?: File | null, fileName?: string }) => {
         try {
             const response = await fetch('/api/receipts/processed', {
                 method: 'POST',
@@ -73,8 +73,8 @@ export function useReceiptsLogic() {
                 body: JSON.stringify({
                     supplier: data.supplier,
                     date: data.date,
-                    amount: data.amount,
-                    moms: data.moms,
+                    amount: typeof data.amount === 'string' ? parseFloat(data.amount) || 0 : data.amount,
+                    moms: typeof data.moms === 'string' ? parseFloat(data.moms) || 0 : data.moms,
                     category: data.category,
                     status: data.status,
                     attachment: data.file ? data.file.name : (data.fileName || null),

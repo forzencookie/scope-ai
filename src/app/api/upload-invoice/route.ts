@@ -99,7 +99,7 @@ Format it as a readable email body.`
             // description: extractedText,
             // date: new Date().toLocaleDateString('sv-SE'),
             // category: 'other',
-            read: false,
+            // read: false,  // Column doesn't exist in schema
             // starred: false,
         })
 

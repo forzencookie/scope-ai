@@ -16,15 +16,15 @@ interface ConfigureStepProps {
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function ConfigureStep({ actionType, onBack, onContinue, shareholders }: ConfigureStepProps & { onContinue: (data: any) => void }) {
+export function ConfigureStep({ actionType, onBack, onSubmit, shareholders }: ConfigureStepProps) {
     if (actionType === 'board_change') {
-        return <BoardChangeForm onBack={onBack} onSubmit={onContinue} />
+        return <BoardChangeForm onBack={onBack} onSubmit={onSubmit} />
     }
     if (actionType === 'dividend') {
-        return <DividendForm shareholders={shareholders} onBack={onBack} onSubmit={onContinue} />
+        return <DividendForm shareholders={shareholders} onBack={onBack} onSubmit={onSubmit} />
     }
     if (actionType === 'roadmap') {
-        return <RoadmapForm onBack={onBack} onSubmit={onContinue} />
+        return <RoadmapForm onBack={onBack} onSubmit={onSubmit} />
     }
-    return <GenericForm onBack={onBack} onSubmit={onContinue} />
+    return <GenericForm onBack={onBack} onSubmit={onSubmit} />
 }

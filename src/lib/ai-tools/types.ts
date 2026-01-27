@@ -120,6 +120,7 @@ export interface AIDisplayInstruction {
     | 'BalanceSheet'
     | 'IncomeStatement'
     | 'CompanyStats'
+    | 'CompanyInfoCard'
     // Cards (simple previews)
     | 'ReceiptCard'
     | 'TransactionCard'
@@ -132,6 +133,8 @@ export interface AIDisplayInstruction {
     | 'FinancialReportPreview'
     | 'DividendPreview'
     | 'MeetingMinutesPreview'
+    | 'DocumentPreview'
+    | 'AgmPreparationPreview'
     // Form Previews (Authority submissions)
     | 'VATFormPreview'
     | 'AGIFormPreview'
@@ -139,6 +142,35 @@ export interface AIDisplayInstruction {
     | 'K10FormPreview'
     | 'NEFormPreview'
     | 'AnnualReportPreview'
+    // Bokföring Previews
+    | 'AssetPreview'
+    | 'DepreciationPreview'
+    | 'PeriodizationPreview'
+    | 'INK2FormPreview'
+    | 'YearEndPreview'
+    // Löner Previews
+    | 'SelfEmploymentPreview'
+    | 'Optimization312Preview'
+    // Settings & Planning
+    | 'SubscriptionPreview'
+    | 'IntegrationsList'
+    // Bokföring - Verifications & Accounts
+    | 'VerificationList'
+    | 'AccountList'
+    | 'BalanceSheetSummary'
+    | 'ChartOfAccounts'
+    // Ägare & Styrning
+    | 'BoardMembersList'
+    | 'SignatoriesList'
+    | 'BoardMeetingMinutesList'
+    | 'CompanyMeetingsList'
+    // Company Statistics
+    | 'CompanyStatistics'
+    | 'MonthlyBreakdown'
+    | 'KPIDisplay'
+    | 'DashboardCounts'
+    // Generic Displays
+    | 'DataTable'
 
     /** Props to pass to the component */
     props: Record<string, unknown>
@@ -314,8 +346,10 @@ export function toolToGoogleFunction(tool: AITool): {
         description: tool.description,
         parameters: {
             type: 'OBJECT',
-            properties: mapProperties(tool.parameters.properties),
-            required: tool.parameters.required
+            properties: 'properties' in tool.parameters && typeof tool.parameters.properties === 'object'
+                ? mapProperties(tool.parameters.properties as Record<string, { type: string; description?: string; enum?: string[]; items?: { type: string }; properties?: Record<string, unknown> }>)
+                : {},
+            required: 'required' in tool.parameters ? tool.parameters.required : undefined
         }
     }
 }

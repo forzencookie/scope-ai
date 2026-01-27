@@ -209,48 +209,114 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
 }
 
 // ============================================================================
-// useOnboarding - Hook to manage onboarding state
+// useOnboarding - Hook to manage onboarding state (database-backed)
 // ============================================================================
+
+interface OnboardingStatus {
+  needsOnboarding: boolean
+  completedAt: string | null
+  skipped: boolean
+  accountCreatedAt: string
+}
 
 export function useOnboarding() {
   const [showOnboarding, setShowOnboarding] = React.useState(false)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(true)
+  const [isLoading, setIsLoading] = React.useState(true)
 
+  // Fetch onboarding status from database on mount
   React.useEffect(() => {
-    // Check localStorage for permanent completion
-    const completed = localStorage.getItem("scope-onboarding-completed")
-    if (completed) {
-      setTimeout(() => setHasCompletedOnboarding(true), 0)
-      return
+    let mounted = true
+
+    async function fetchOnboardingStatus() {
+      try {
+        const response = await fetch('/api/onboarding/status')
+        
+        if (!response.ok) {
+          // If not authenticated or error, assume onboarding completed (don't block)
+          console.warn('[Onboarding] Could not fetch status, assuming completed')
+          if (mounted) {
+            setHasCompletedOnboarding(true)
+            setIsLoading(false)
+          }
+          return
+        }
+
+        const data: OnboardingStatus = await response.json()
+        
+        if (mounted) {
+          setHasCompletedOnboarding(!data.needsOnboarding)
+          
+          // Show onboarding dialog if user needs it
+          if (data.needsOnboarding) {
+            // Small delay for better UX (let dashboard load first)
+            setTimeout(() => {
+              if (mounted) setShowOnboarding(true)
+            }, 500)
+          }
+          
+          setIsLoading(false)
+        }
+      } catch (error) {
+        console.error('[Onboarding] Error fetching status:', error)
+        if (mounted) {
+          setHasCompletedOnboarding(true) // Fail open - don't block user
+          setIsLoading(false)
+        }
+      }
     }
 
-    // Check sessionStorage to see if already shown/skipped this session
-    const shownThisSession = sessionStorage.getItem("scope-onboarding-shown")
-    if (shownThisSession) {
-      setTimeout(() => setHasCompletedOnboarding(false), 0)
-      return
+    fetchOnboardingStatus()
+
+    return () => {
+      mounted = false
     }
-
-    // First time this session - show onboarding
-    setTimeout(() => setHasCompletedOnboarding(false), 0)
-    sessionStorage.setItem("scope-onboarding-shown", "true")
-    setTimeout(() => setShowOnboarding(true), 500)
   }, [])
 
-  const completeOnboarding = React.useCallback(() => {
-    localStorage.setItem("scope-onboarding-completed", "true")
-    setHasCompletedOnboarding(true)
-    setShowOnboarding(false)
+  const completeOnboarding = React.useCallback(async () => {
+    try {
+      const response = await fetch('/api/onboarding/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'complete' }),
+      })
+
+      if (response.ok) {
+        setHasCompletedOnboarding(true)
+        setShowOnboarding(false)
+      } else {
+        console.error('[Onboarding] Failed to complete onboarding')
+      }
+    } catch (error) {
+      console.error('[Onboarding] Error completing onboarding:', error)
+    }
   }, [])
 
-  const skipOnboarding = React.useCallback(() => {
-    sessionStorage.setItem("scope-onboarding-shown", "true")
-    setShowOnboarding(false)
+  const skipOnboarding = React.useCallback(async () => {
+    try {
+      const response = await fetch('/api/onboarding/status', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'skip' }),
+      })
+
+      if (response.ok) {
+        setHasCompletedOnboarding(true) // Treat as "done" for UI purposes
+        setShowOnboarding(false)
+      } else {
+        console.error('[Onboarding] Failed to skip onboarding')
+        // Still close the dialog even if API fails
+        setShowOnboarding(false)
+      }
+    } catch (error) {
+      console.error('[Onboarding] Error skipping onboarding:', error)
+      setShowOnboarding(false)
+    }
   }, [])
 
   const resetOnboarding = React.useCallback(() => {
-    localStorage.removeItem("scope-onboarding-completed")
-    sessionStorage.removeItem("scope-onboarding-shown")
+    // This is mainly for dev/testing - reset state locally
+    // In production, would need an admin endpoint to clear profile columns
     setHasCompletedOnboarding(false)
     setShowOnboarding(true)
   }, [])
@@ -258,6 +324,7 @@ export function useOnboarding() {
   return {
     showOnboarding,
     hasCompletedOnboarding,
+    isLoading,
     completeOnboarding,
     skipOnboarding,
     resetOnboarding,

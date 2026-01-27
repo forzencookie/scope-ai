@@ -1,15 +1,13 @@
 /**
  * Skatt AI Tools - Investments
  *
- * Tools for managing company investments (properties, shares, crypto).
+ * Tools for managing company investments (shares).
  */
 
 import { defineTool } from '../registry'
 import type { AITool } from '../types'
 import {
-    listProperties,
     listShareHoldings,
-    listCryptoHoldings,
     getInvestmentSummary,
 } from '@/services/processors/investments-processor'
 
@@ -19,7 +17,7 @@ import {
 
 const getInvestmentSummaryTool = defineTool({
     name: 'get_investment_summary',
-    description: 'Get a summary of all company investments: properties, shares, and crypto holdings.',
+    description: 'Get a summary of all company investments: shares and holdings.',
     parameters: { type: 'object' as const, properties: {} },
     requiresConfirmation: false,
     category: 'read',
@@ -28,23 +26,7 @@ const getInvestmentSummaryTool = defineTool({
         return {
             success: true,
             data: summary,
-            message: `Portfolio: ${summary.properties.count} properties, ${summary.shares.count} shares, ${summary.crypto.count} crypto`,
-        }
-    },
-})
-
-const listPropertiesTool = defineTool({
-    name: 'list_properties',
-    description: 'List all company properties (fastigheter) with depreciation and book values.',
-    parameters: { type: 'object' as const, properties: {} },
-    requiresConfirmation: false,
-    category: 'read',
-    execute: async () => {
-        const properties = await listProperties()
-        return {
-            success: true,
-            data: properties,
-            message: `Found ${properties.length} properties`,
+            message: `Portfolio: ${summary.shares.count} share holdings`,
         }
     },
 })
@@ -65,26 +47,8 @@ const listShareHoldingsTool = defineTool({
     },
 })
 
-const listCryptoHoldingsTool = defineTool({
-    name: 'list_crypto_holdings',
-    description: 'List all cryptocurrency holdings.',
-    parameters: { type: 'object' as const, properties: {} },
-    requiresConfirmation: false,
-    category: 'read',
-    execute: async () => {
-        const crypto = await listCryptoHoldings()
-        return {
-            success: true,
-            data: crypto,
-            message: `Found ${crypto.length} crypto holdings`,
-        }
-    },
-})
-
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const investmentTools: AITool<any, any>[] = [
     getInvestmentSummaryTool,
-    listPropertiesTool,
     listShareHoldingsTool,
-    listCryptoHoldingsTool,
 ]

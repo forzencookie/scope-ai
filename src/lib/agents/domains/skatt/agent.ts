@@ -133,8 +133,8 @@ export class SkattAgent extends BaseAgent {
     }
 
     private async handleDeadlines(_message: string, _context: AgentContext): Promise<AgentResponse> {
-        // const now = new Date()
-        // const month = now.getMonth() + 1
+        const now = new Date()
+        const month = now.getMonth() + 1
 
         return this.successResponse(
             '📅 **Kommande skattedeadlines**\n\n' +

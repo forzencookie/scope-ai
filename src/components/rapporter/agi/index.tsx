@@ -63,7 +63,7 @@ export function AGIContent() {
                     selectedIds={Array.from(selectedIds)}
                     actions={bulkActions.map(action => ({
                         ...action,
-                        onClick: () => action.onClick(Array.from(selectedIds))
+                        onClick: () => action.onClick?.(Array.from(selectedIds))
                     }))}
                     onClearSelection={clearSelection}
                 />

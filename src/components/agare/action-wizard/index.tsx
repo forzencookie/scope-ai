@@ -135,7 +135,7 @@ export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardPro
                         <ConfigureStep
                             actionType={selectedAction}
                             onBack={() => setStep('select')}
-                            onContinue={handleConfigure}
+                            onSubmit={handleConfigure}
                             shareholders={shareholders}
                         />
                     )}

@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SearchBar } from "@/components/ui/search-bar"
 import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
-import { ErrorBoundary, PageHeader } from "@/components/shared"
+import { ErrorBoundary, PageHeader, SectionErrorBoundary } from "@/components/shared"
 
 import { useBenefitsLogic } from "./use-benefits-logic"
 import { BenefitSection } from "./benefit-section"

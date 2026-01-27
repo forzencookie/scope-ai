@@ -13,8 +13,8 @@ export interface TaxPeriod {
 export interface UseTaxPeriodOptions {
     /** Fiscal year end, e.g., '12-31' */
     fiscalYearEnd?: string
-    /** Type of tax period: 'income' for INK2, 'k10' for K10 */
-    type?: 'income' | 'k10'
+    /** Type of tax period: 'income' for INK2, 'k10' for K10, 'fiscal' for fiscal year, 'vat' for VAT periods */
+    type?: 'income' | 'k10' | 'fiscal' | 'vat'
 }
 
 export interface UseTaxPeriodReturn {

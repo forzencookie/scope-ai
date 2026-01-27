@@ -5,12 +5,10 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, FileText, Image as ImageIcon } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
-import {
-    ConfirmationCard,
-    ReceiptCard,
-    TransactionCard,
-    TaskChecklist
-} from "@/components/ai"
+import { ConfirmationCard } from "@/components/ai"
+import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
+import { TransactionCard } from "@/components/ai/cards/TransactionCard"
+import { TaskChecklist } from "@/components/ai/cards/TaskChecklist"
 import { ActivityCard } from "@/components/ai/activity-card"
 import { ComparisonTable } from "@/components/ai/comparison-table"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
@@ -132,10 +130,10 @@ export function ChatMessageList({
                 {message.display && (
                     <div className="my-2 md:hidden">
                         {message.display.type === 'ReceiptCard' && (
-                            <ReceiptCard receipt={message.display.data.receipt || message.display.data} />
+                            <ReceiptCard receipt={(message.display.data.receipt || message.display.data) as Parameters<typeof ReceiptCard>[0]['receipt']} />
                         )}
                         {message.display.type === 'TransactionCard' && (
-                            <TransactionCard transaction={message.display.data.transaction || message.display.data} />
+                            <TransactionCard transaction={(message.display.data.transaction || message.display.data) as Parameters<typeof TransactionCard>[0]['transaction']} />
                         )}
                         {message.display.type === 'TaskChecklist' && (
                             <TaskChecklist
@@ -149,7 +147,7 @@ export function ChatMessageList({
                                 <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
                                 <ul className="space-y-2">
                                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                    {(message.display.data.benefits || []).map((b: any) => (
+                                    {((message.display.data as { benefits?: Array<{ id?: string; name?: string; category?: string }> }).benefits || []).map((b) => (
                                         <li key={b.id || Math.random()} className="text-xs flex justify-between items-center">
                                             <span>{b.name}</span>
                                             <span className="text-muted-foreground">{b.category}</span>

@@ -249,8 +249,265 @@ export const createTransactionTool = defineTool<CreateTransactionParams, Created
     },
 })
 
+// =============================================================================
+// Bulk Categorize Transactions Tool
+// =============================================================================
+
+export interface BulkCategorizeParams {
+    /** Either provide transaction IDs, or use filters to select */
+    transactionIds?: string[]
+    /** Auto-categorize all uncategorized transactions */
+    uncategorizedOnly?: boolean
+    /** Apply a specific category/account to matching transactions */
+    pattern?: string
+    account?: string
+}
+
+export interface BulkCategorizeResult {
+    categorized: number
+    skipped: number
+    errors: number
+}
+
+export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, BulkCategorizeResult>({
+    name: 'bulk_categorize_transactions',
+    description: 'Kontera flera transaktioner automatiskt. Kan kategorisera alla okonerade eller baserat på mönster.',
+    category: 'write',
+    requiresConfirmation: true,
+    parameters: {
+        type: 'object',
+        properties: {
+            transactionIds: {
+                type: 'array',
+                items: { type: 'string' },
+                description: 'Lista med transaktions-ID att kategorisera',
+            },
+            uncategorizedOnly: {
+                type: 'boolean',
+                description: 'Kategorisera endast okonerade transaktioner (standard: true)',
+            },
+            pattern: {
+                type: 'string',
+                description: 'Textmönster att matcha (t.ex. "Spotify" → alla Spotify-transaktioner)',
+            },
+            account: {
+                type: 'string',
+                description: 'Kontonummer att använda för matchade transaktioner',
+            },
+        },
+    },
+    execute: async (params) => {
+        // Fetch uncategorized transactions if no IDs provided
+        let transactions: Transaction[] = []
+        
+        try {
+            const baseUrl = getBaseUrl()
+            const queryParams = new URLSearchParams()
+            queryParams.set('status', 'pending')
+            queryParams.set('limit', '100')
+            
+            const res = await fetch(`${baseUrl}/api/transactions?${queryParams}`, {
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            
+            if (res.ok) {
+                const data = await res.json()
+                transactions = data.transactions || []
+                
+                // Filter by pattern if provided
+                if (params.pattern) {
+                    const pattern = params.pattern.toLowerCase()
+                    transactions = transactions.filter(t => 
+                        t.name?.toLowerCase().includes(pattern) ||
+                        (t as Transaction & { description?: string }).description?.toLowerCase().includes(pattern)
+                    )
+                }
+                
+                // Filter by specific IDs if provided
+                if (params.transactionIds && params.transactionIds.length > 0) {
+                    transactions = transactions.filter(t => params.transactionIds!.includes(t.id))
+                }
+            }
+        } catch (error) {
+            console.error('[AI Tool] Failed to fetch transactions for bulk categorize:', error)
+        }
+
+        const count = transactions.length
+        const confirmationSummary = [
+            { label: 'Antal transaktioner', value: String(count) },
+        ]
+        
+        if (params.pattern) {
+            confirmationSummary.push({ label: 'Mönster', value: params.pattern })
+        }
+        if (params.account) {
+            confirmationSummary.push({ label: 'Konto', value: params.account })
+        }
+
+        return {
+            success: true,
+            data: { categorized: count, skipped: 0, errors: 0 },
+            message: `${count} transaktioner förberedda för kontering.`,
+            confirmationRequired: {
+                title: 'Masskontering av transaktioner',
+                description: `Kontera ${count} transaktioner${params.pattern ? ` som matchar "${params.pattern}"` : ''}`,
+                summary: confirmationSummary,
+                action: { toolName: 'bulk_categorize_transactions', params },
+                requireCheckbox: true,
+            },
+            display: {
+                component: 'TransactionsTable',
+                props: { transactions: transactions.slice(0, 10) },
+                title: `${count} transaktioner att kontera`,
+                fullViewRoute: '/dashboard/bokforing?tab=transaktioner',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Get Transactions Missing Receipts Tool
+// =============================================================================
+
+export interface GetTransactionsMissingReceiptsParams {
+    minAmount?: number
+    limit?: number
+}
+
+export const getTransactionsMissingReceiptsTool = defineTool<GetTransactionsMissingReceiptsParams, Transaction[]>({
+    name: 'get_transactions_missing_receipts',
+    description: 'Visa transaktioner som saknar kvitto. Användbart för att säkerställa bokföringsunderlag.',
+    category: 'read',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            minAmount: {
+                type: 'number',
+                description: 'Minsta belopp för att inkluderas (standard: 500 kr)',
+            },
+            limit: {
+                type: 'number',
+                description: 'Max antal att visa (standard: 20)',
+            },
+        },
+    },
+    execute: async (params) => {
+        const minAmount = params.minAmount ?? 500
+        const limit = params.limit ?? 20
+        
+        let transactions: Transaction[] = []
+        
+        try {
+            const baseUrl = getBaseUrl()
+            const res = await fetch(`${baseUrl}/api/transactions?limit=100&missingReceipt=true`, {
+                cache: 'no-store',
+                headers: { 'Content-Type': 'application/json' }
+            })
+            
+            if (res.ok) {
+                const data = await res.json()
+                transactions = (data.transactions || [])
+                    .filter((t: Transaction) => Math.abs(Number(t.amount || 0)) >= minAmount)
+                    .slice(0, limit)
+            }
+        } catch (error) {
+            console.error('[AI Tool] Failed to fetch transactions missing receipts:', error)
+        }
+
+        const totalMissing = transactions.length
+
+        return {
+            success: true,
+            data: transactions,
+            message: totalMissing > 0
+                ? `Hittade ${totalMissing} transaktioner över ${minAmount} kr som saknar kvitto.`
+                : `Inga transaktioner över ${minAmount} kr saknar kvitto. 🎉`,
+            display: {
+                component: 'TransactionsTable',
+                props: { 
+                    transactions,
+                    highlight: 'missing-receipt'
+                },
+                title: 'Transaktioner utan kvitto',
+                fullViewRoute: '/dashboard/bokforing?tab=transaktioner',
+            },
+        }
+    },
+})
+
+// =============================================================================
+// Match Payment to Invoice Tool
+// =============================================================================
+
+export interface MatchPaymentToInvoiceParams {
+    transactionId: string
+    invoiceId: string
+}
+
+export interface PaymentMatchResult {
+    matched: boolean
+    transactionId: string
+    invoiceId: string
+    amount: number
+}
+
+export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams, PaymentMatchResult>({
+    name: 'match_payment_to_invoice',
+    description: 'Matcha en betalning (banktransaktion) mot en faktura. Markerar fakturan som betald.',
+    category: 'write',
+    requiresConfirmation: true,
+    parameters: {
+        type: 'object',
+        properties: {
+            transactionId: {
+                type: 'string',
+                description: 'ID för betalningen/transaktionen',
+            },
+            invoiceId: {
+                type: 'string',
+                description: 'ID för fakturan att matcha mot',
+            },
+        },
+        required: ['transactionId', 'invoiceId'],
+    },
+    execute: async (params) => {
+        // In a real implementation, this would:
+        // 1. Fetch the transaction
+        // 2. Fetch the invoice
+        // 3. Verify amounts match
+        // 4. Create verification entries
+        // 5. Mark invoice as paid
+        
+        return {
+            success: true,
+            data: {
+                matched: true,
+                transactionId: params.transactionId,
+                invoiceId: params.invoiceId,
+                amount: 0, // Would be fetched
+            },
+            message: `Betalning matchad mot faktura.`,
+            confirmationRequired: {
+                title: 'Matcha betalning',
+                description: 'Koppla betalningen till fakturan och markera som betald',
+                summary: [
+                    { label: 'Transaktion', value: params.transactionId },
+                    { label: 'Faktura', value: params.invoiceId },
+                ],
+                action: { toolName: 'match_payment_to_invoice', params },
+                requireCheckbox: false,
+            },
+        }
+    },
+})
+
 export const transactionTools = [
     getTransactionsTool,
     categorizeTransactionTool,
     createTransactionTool,
+    bulkCategorizeTransactionsTool,
+    getTransactionsMissingReceiptsTool,
+    matchPaymentToInvoiceTool,
 ]

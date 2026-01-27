@@ -116,7 +116,7 @@ function useNavigationHistory() {
     return { canGoBack, canGoForward, goBack, goForward }
 }
 
-function DashboardToolbar({ sidebarMode: _sidebarMode, setSidebarMode: _setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
+function DashboardToolbar({ sidebarMode, setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
     const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()

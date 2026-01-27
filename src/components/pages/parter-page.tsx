@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import {
     TooltipProvider,
 } from '@/components/ui/tooltip';
-import { LegalInfoCard } from '@/components/ui/legal-info-card';
+import { LegalInfoCard, legalInfoContent } from '@/components/ui/legal-info-card';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import { useCompany } from '@/providers/company-provider';
@@ -199,7 +199,7 @@ function ParterPageContent() {
 function EnskildFirmaOwnerInfo() {
     const { company } = useCompany();
 
-    const _ownerName = company.name; // In EF, company name is often owner name or includes it
+    const _ownerName = company?.name; // In EF, company name is often owner name or includes it
 
     return (
         <div className="space-y-6">

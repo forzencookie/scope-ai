@@ -1998,6 +1998,8 @@ export type Database = {
           email: string | null
           full_name: string | null
           id: string
+          onboarding_completed_at: string | null
+          onboarding_skipped: boolean | null
           role: Database["public"]["Enums"]["user_role"]
           subscription_tier: string | null
           updated_at: string
@@ -2008,6 +2010,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id: string
+          onboarding_completed_at?: string | null
+          onboarding_skipped?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           subscription_tier?: string | null
           updated_at?: string
@@ -2018,6 +2022,8 @@ export type Database = {
           email?: string | null
           full_name?: string | null
           id?: string
+          onboarding_completed_at?: string | null
+          onboarding_skipped?: boolean | null
           role?: Database["public"]["Enums"]["user_role"]
           subscription_tier?: string | null
           updated_at?: string

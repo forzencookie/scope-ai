@@ -2,31 +2,17 @@
  * Skatt AI Tools - VAT (Moms)
  *
  * Tools for VAT/Moms management and submissions.
+ * Uses vat-service.ts to query real data from Supabase.
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-
-const mockVatReport = {
-    salesVat: 25000,
-    purchaseVat: 12500,
-    vatToPay: 12500
-}
+import { vatService, type VATDeclaration, type VATStats } from '@/services/vat-service'
 
 // =============================================================================
 // VAT Read Tools
 // =============================================================================
 
-interface VATDeclaration {
-    id: string
-    period: string
-    outputVat: number
-    inputVat: number
-    netVat: number
-    dueDate: string
-    status: string
-}
-
-export const getVatReportTool = defineTool<{ period?: string }, VATDeclaration[]>({
+export const getVatReportTool = defineTool<{ period?: string; year?: number }, VATDeclaration[]>({
     name: 'get_vat_report',
     description: 'Hämta momsdeklarationer. Visar utgående och ingående moms samt nettobelopp.',
     category: 'read',
@@ -34,46 +20,76 @@ export const getVatReportTool = defineTool<{ period?: string }, VATDeclaration[]
     parameters: {
         type: 'object',
         properties: {
-            period: { type: 'string', description: 'Period (t.ex. "Q4 2024")' },
+            period: { type: 'string', description: 'Period (t.ex. "Q4 2024", "januari 2025")' },
+            year: { type: 'number', description: 'Filtrera på år (t.ex. 2024, 2025)' },
         },
     },
     execute: async (params) => {
-        // TODO: Implement real service call
-        const vatData = {
-            id: 'mock-vat-1',
-            period: params.period || 'Q4 2024',
-            outputVat: mockVatReport.salesVat,
-            inputVat: mockVatReport.purchaseVat,
-            netVat: mockVatReport.vatToPay,
-            dueDate: '2026-02-12',
-            status: 'upcoming'
-        }; // Mock data restored
+        // Fetch real VAT declarations from database
+        const declarations = await vatService.getDeclarations(params.year)
+        
+        // Filter by period string if provided
+        let filtered = declarations
+        if (params.period) {
+            const periodLower = params.period.toLowerCase()
+            filtered = declarations.filter(d => 
+                d.period.toLowerCase().includes(periodLower)
+            )
+        }
 
-        if (!vatData) {
-            return {
-                success: true,
-                data: [],
-                message: "Inga momsrapporter hittades."
+        if (filtered.length === 0) {
+            // Try to get current stats as fallback
+            const stats = await vatService.getCurrentStats()
+            if (stats.netVat !== 0) {
+                const fallbackDeclaration: VATDeclaration = {
+                    id: 'current',
+                    period: stats.currentPeriod,
+                    periodType: 'quarterly',
+                    year: new Date().getFullYear(),
+                    startDate: '',
+                    endDate: '',
+                    dueDate: stats.dueDate,
+                    outputVat: stats.outputVat,
+                    inputVat: stats.inputVat,
+                    netVat: stats.netVat,
+                    status: 'upcoming',
+                }
+                filtered = [fallbackDeclaration]
             }
         }
 
-        const periods = [vatData]
-        const action = vatData.netVat > 0 ? 'betala' : 'få tillbaka'
-        const message = `Moms för ${vatData.period}: ${vatData.netVat.toLocaleString('sv-SE')} kr att ${action}. Deadline: ${vatData.dueDate}.`
+        if (filtered.length === 0) {
+            return {
+                success: true,
+                data: [],
+                message: 'Inga momsdeklarationer hittades för den valda perioden.',
+            }
+        }
+
+        // Calculate totals for summary
+        const totalOutput = filtered.reduce((sum, d) => sum + d.outputVat, 0)
+        const totalInput = filtered.reduce((sum, d) => sum + d.inputVat, 0)
+        const totalNet = filtered.reduce((sum, d) => sum + d.netVat, 0)
+        
+        const latestDeclaration = filtered[0]
+        const action = totalNet > 0 ? 'betala' : 'få tillbaka'
+        const message = filtered.length === 1
+            ? `Moms för ${latestDeclaration.period}: ${Math.abs(latestDeclaration.netVat).toLocaleString('sv-SE')} kr att ${action}.${latestDeclaration.dueDate ? ` Deadline: ${latestDeclaration.dueDate}.` : ''}`
+            : `Hittade ${filtered.length} momsdeklarationer. Totalt ${Math.abs(totalNet).toLocaleString('sv-SE')} kr att ${action}.`
 
         return {
             success: true,
-            data: periods,
+            data: filtered,
             message,
             display: {
                 component: 'VatSummary',
                 props: {
-                    periods,
+                    periods: filtered,
                     summary: {
-                        outputVat: vatData.outputVat,
-                        inputVat: vatData.inputVat,
-                        netVat: vatData.netVat,
-                        dueDate: vatData.dueDate,
+                        outputVat: totalOutput,
+                        inputVat: totalInput,
+                        netVat: totalNet,
+                        dueDate: latestDeclaration.dueDate,
                     }
                 },
                 title: 'Momsdeklaration',
@@ -104,30 +120,41 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
         required: ['period'],
     },
     execute: async (params) => {
-        // Use mock data
+        // Fetch real data for the period
+        const declarations = await vatService.getDeclarations()
+        const periodLower = params.period.toLowerCase()
+        const matchingDeclaration = declarations.find(d => 
+            d.period.toLowerCase().includes(periodLower)
+        )
+        
+        // Use real data if found, otherwise get current stats
+        let vatData: { outputVat: number; inputVat: number; netVat: number }
+        if (matchingDeclaration) {
+            vatData = {
+                outputVat: matchingDeclaration.outputVat,
+                inputVat: matchingDeclaration.inputVat,
+                netVat: matchingDeclaration.netVat,
+            }
+        } else {
+            const stats = await vatService.getCurrentStats()
+            vatData = {
+                outputVat: stats.outputVat,
+                inputVat: stats.inputVat,
+                netVat: stats.netVat,
+            }
+        }
+
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Skicka momsdeklaration',
             description: `Momsdeklaration för ${params.period}`,
             summary: [
                 { label: 'Period', value: params.period },
-                { label: 'Utgående moms', value: `${mockVatReport.salesVat.toLocaleString('sv-SE')} kr` },
-                { label: 'Ingående moms', value: `${mockVatReport.purchaseVat.toLocaleString('sv-SE')} kr` },
-                { label: 'Att betala', value: `${mockVatReport.vatToPay.toLocaleString('sv-SE')} kr` },
+                { label: 'Utgående moms', value: `${vatData.outputVat.toLocaleString('sv-SE')} kr` },
+                { label: 'Ingående moms', value: `${vatData.inputVat.toLocaleString('sv-SE')} kr` },
+                { label: 'Att betala', value: `${vatData.netVat.toLocaleString('sv-SE')} kr` },
             ],
             action: { toolName: 'submit_vat_declaration', params },
             requireCheckbox: true,
-        }
-
-        // Transform mock data to VATDeclarationData
-        const vatData = {
-            period: params.period,
-            sales25: 100000, // Mock
-            vat25: mockVatReport.salesVat,
-            purchasesDomestic: 50000, // Mock
-            vatDomestic: mockVatReport.purchaseVat,
-            totalOutputVAT: mockVatReport.salesVat,
-            totalInputVAT: mockVatReport.purchaseVat,
-            netVAT: mockVatReport.vatToPay,
         }
 
         return {
@@ -137,7 +164,14 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
             confirmationRequired: confirmationRequest,
             display: {
                 component: 'VATFormPreview',
-                props: { data: vatData },
+                props: { 
+                    data: {
+                        period: params.period,
+                        totalOutputVAT: vatData.outputVat,
+                        totalInputVAT: vatData.inputVat,
+                        netVAT: vatData.netVat,
+                    }
+                },
                 title: 'Momsdeklaration',
                 fullViewRoute: '/dashboard/skatt?tab=momsdeklaration',
             },

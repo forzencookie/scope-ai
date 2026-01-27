@@ -1,5 +1,9 @@
 import { getSupabaseClient } from '@/lib/database/supabase'
+import type { Database } from '@/types/database'
 import type { PostgrestError } from '@supabase/supabase-js'
+
+type VatDeclarationsTable = Database['public']['Tables']['vatdeclarations']
+type VatDeclarationRow = VatDeclarationsTable['Row']
 
 interface VatDeclarationData {
     periodType?: string
@@ -10,13 +14,6 @@ interface VatDeclarationData {
     inputVat?: number
     netVat?: number
     submittedAt?: string
-}
-
-interface VatDeclarationRow {
-    id: string
-    period: string | null
-    status: string | null
-    data: VatDeclarationData | null
 }
 
 interface VatStatsRpcResult {
@@ -70,22 +67,22 @@ export const vatService = {
         }
 
         return (data || [])
-            .filter((d: VatDeclarationRow) => !year || d.period?.includes(year.toString()))
-            .map((d: VatDeclarationRow) => {
-                const details = d.data || {}
+            .filter((d) => !year || d.period?.includes(year.toString()))
+            .map((d) => {
+                const details = (d.data || {}) as VatDeclarationData
                 return {
                     id: d.id,
                     period: d.period || '',
                     periodType: (details.periodType || 'monthly') as 'monthly' | 'quarterly' | 'yearly',
-                    year: year || new Date().getFullYear(), // Approximate
-                    startDate: details.startDate || '',
-                    endDate: details.endDate || '',
-                    dueDate: details.dueDate || '',
-                    outputVat: Number(details.outputVat) || 0,
-                    inputVat: Number(details.inputVat) || 0,
-                    netVat: Number(details.netVat) || 0,
+                    year: d.year || year || new Date().getFullYear(),
+                    startDate: d.start_date || details.startDate || '',
+                    endDate: d.end_date || details.endDate || '',
+                    dueDate: d.due_date || details.dueDate || '',
+                    outputVat: d.output_vat ?? Number(details.outputVat) ?? 0,
+                    inputVat: d.input_vat ?? Number(details.inputVat) ?? 0,
+                    netVat: d.net_vat ?? Number(details.netVat) ?? 0,
                     status: (d.status || 'upcoming') as 'upcoming' | 'pending' | 'submitted',
-                    submittedAt: details.submittedAt,
+                    submittedAt: d.submitted_at || details.submittedAt,
                 }
             })
     },
@@ -119,13 +116,13 @@ export const vatService = {
         }
 
         const row = data as VatDeclarationRow
-        const details = row.data || {}
+        const details = (row.data || {}) as VatDeclarationData
         return {
             currentPeriod: row.period || '',
-            dueDate: details.dueDate || '',
-            outputVat: Number(details.outputVat) || 0,
-            inputVat: Number(details.inputVat) || 0,
-            netVat: Number(details.netVat) || 0,
+            dueDate: row.due_date || details.dueDate || '',
+            outputVat: row.output_vat ?? Number(details.outputVat) ?? 0,
+            inputVat: row.input_vat ?? Number(details.inputVat) ?? 0,
+            netVat: row.net_vat ?? Number(details.netVat) ?? 0,
         }
     },
 

@@ -10,6 +10,9 @@ interface VerifikationerGridProps {
     selection: {
         isSelected: (id: string) => boolean
         toggle: (id: string) => void
+        toggleItem: (id: string) => void
+        toggleAll: () => void
+        allSelected: boolean
     }
     onViewDetails: (v: Verification) => void
     onAccountFilter: (account: string) => void

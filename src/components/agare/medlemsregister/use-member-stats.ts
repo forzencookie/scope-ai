@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useMembers } from "@/hooks/use-members"
 
 export function useMemberStats() {

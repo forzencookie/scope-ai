@@ -205,7 +205,7 @@ function AccountingPageContent() {
                             {currentTab === "transaktioner" && (
                                 fetchError ? (
                                     <DataErrorState
-                                        message={fetchError}
+                                        message={fetchError instanceof Error ? fetchError.message : String(fetchError)}
                                         onRetry={handleRefresh}
                                     />
                                 ) : (

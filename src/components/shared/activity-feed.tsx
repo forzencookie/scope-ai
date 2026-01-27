@@ -33,6 +33,7 @@ import {
   LogOut,
   ChevronDown,
   History,
+  type LucideIcon,
 } from "lucide-react"
 import {
   useActivityLog,
@@ -49,7 +50,7 @@ import Link from "next/link"
 // Action Icons
 // ============================================================================
 
-const ACTION_ICONS: Record<ActivityAction, React.ElementType> = {
+const ACTION_ICONS: Record<ActivityAction, LucideIcon> = {
   created: Plus,
   updated: Pencil,
   deleted: Trash2,
@@ -120,8 +121,8 @@ interface ActivityItemProps {
 }
 
 export function ActivityItem({ activity, showAvatar = true }: ActivityItemProps) {
-  const Icon = ACTION_ICONS[activity.action] || Pencil
-  const colorClass = ACTION_COLORS[activity.action] || "bg-gray-500/10 text-gray-600"
+  const Icon = ACTION_ICONS[activity.action] ?? Pencil
+  const colorClass = ACTION_COLORS[activity.action] ?? "bg-gray-500/10 text-gray-600"
   const link = getEntityLink(activity.entityType, activity.entityId)
 
   const who = activity.userName || activity.userEmail?.split("@")[0] || "Okänd"
@@ -181,6 +182,8 @@ interface ActivityFeedProps {
   entityId?: string
   /** Maximum height */
   maxHeight?: string | number
+  /** Maximum number of activities to load initially */
+  limit?: number
   /** Show title */
   showTitle?: boolean
   /** Title text */
@@ -193,6 +196,7 @@ export function ActivityFeed({
   entityType,
   entityId,
   maxHeight = 400,
+  limit = 20,
   showTitle = true,
   title = "Aktivitet",
   className,
@@ -200,7 +204,7 @@ export function ActivityFeed({
   const { activities, loading, hasMore, loadMore } = useActivityLog({
     entityType,
     entityId,
-    limit: 20,
+    limit,
     realtime: true,
   })
 

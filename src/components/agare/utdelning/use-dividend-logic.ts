@@ -37,7 +37,6 @@ export function useDividendLogic() {
             })
 
         meetings.forEach(meeting => {
-            // @ts-expect-error - Dynamic types from JSON storage
             (meeting.decisions || [])
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
                 .filter((d: any) => d.type === 'dividend' && d.amount)
@@ -46,13 +45,11 @@ export function useDividendLogic() {
                     const amount = d.amount || 0
                     const tax = amount * 0.2 // Simplified 20% tax rule
                     history.push({
-                        // @ts-expect-error - Dynamic types
                         year: Number(meeting.year || new Date(meeting.date).getFullYear()),
                         amount: amount,
                         taxRate: '20%',
                         tax: tax,
                         netAmount: amount - tax,
-                        // @ts-expect-error - Dynamic types
                         status: d.booked || meeting.status === 'signed' ? 'paid' : 'planned'
                     })
                 })
