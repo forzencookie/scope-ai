@@ -38,29 +38,28 @@ export function MomsGrid({ periods, selection, onSelectReport }: MomsGridProps) 
                         onClick={() => onSelectReport(item)}
                         selected={selection.isSelected(item.period)}
                     >
-                        <div style={{ gridColumn: 'span 2' }} className="font-medium">
+                        <div className="col-span-2 font-medium">
                             {item.period}
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground hidden md:block">
+                        <div className="col-span-2 text-muted-foreground hidden md:block">
                             {item.dueDate}
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums hidden md:block">
+                        <div className="col-span-2 text-right tabular-nums hidden md:block">
                             {item.salesVat.toLocaleString("sv-SE")} kr
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums hidden md:block">
+                        <div className="col-span-2 text-right tabular-nums hidden md:block">
                             {item.inputVat.toLocaleString("sv-SE")} kr
                         </div>
-                        <div style={{ gridColumn: 'span 2' }} className="text-right tabular-nums font-medium">
+                        <div className="col-span-2 text-right tabular-nums font-medium">
                             {item.netVat.toLocaleString("sv-SE")} kr
                         </div>
-                        <div style={{ gridColumn: 'span 1' }}>
+                        <div className="col-span-1">
                             <AppStatusBadge
                                 status={item.status === "upcoming" ? "Kommande" : "Inskickad"}
                             />
                         </div>
                         <div
-                            style={{ gridColumn: 'span 1' }}
-                            className="flex justify-end"
+                            className="col-span-1 flex justify-end"
                             onClick={(e) => e.stopPropagation()}
                         >
                             <Checkbox

@@ -24,14 +24,14 @@ export function MonthClosing() {
     const isLocked = period.status === 'locked'
 
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 min-w-0">
             <PageHeader
                 title="Månadsavslut"
                 subtitle="Stäm av, kontrollera och lås perioder."
             />
 
             {/* Timeline */}
-            <div className="flex items-center gap-2 overflow-x-auto pb-4">
+            <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-12 gap-2 pb-4">
                 {months.map(m => {
                     const p = getPeriod(currentYear, m)
                     const isSelected = m === selectedMonth
@@ -40,7 +40,7 @@ export function MonthClosing() {
                             key={m}
                             onClick={() => setSelectedMonth(m)}
                             className={cn(
-                                "flex flex-col items-center gap-2 p-3 rounded-lg border min-w-[80px] transition-all",
+                                "flex flex-col items-center gap-2 p-2 md:p-3 rounded-lg border transition-all",
                                 isSelected ? "border-primary bg-primary/5 ring-1 ring-primary" : "bg-card hover:bg-muted/50",
                                 p.status === 'locked' ? "opacity-75" : ""
                             )}
@@ -58,7 +58,7 @@ export function MonthClosing() {
 
             {/* Detail View */}
             <div className="grid gap-6 md:grid-cols-2">
-                <Card className={cn(isLocked && "bg-muted/30")}>
+                <Card className={cn("min-w-0", isLocked && "bg-muted/30")}>
                     <CardHeader>
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
@@ -112,7 +112,7 @@ export function MonthClosing() {
                 </Card>
 
                 {/* Checklist */}
-                <Card>
+                <Card className="min-w-0">
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
                             <FileCheck className="h-5 w-5" />

@@ -52,10 +52,10 @@ export function ReceiptsGrid({
                 <GridTableHeader
                     columns={[
                         { label: text.receipts.supplier, icon: Building2, span: 3 },
-                        { label: text.labels.date, icon: Calendar, span: 2 },
-                        { label: text.receipts.category, icon: Tag, span: 2 },
+                        { label: text.labels.date, icon: Calendar, span: 2, hiddenOnMobile: true },
+                        { label: text.receipts.category, icon: Tag, span: 2, hiddenOnMobile: true },
                         { label: text.labels.amount, icon: Banknote, span: 2, align: "right" },
-                        { label: text.labels.status, icon: CheckCircle2, span: 2, align: "center" },
+                        { label: text.labels.status, icon: CheckCircle2, span: 2, align: "center", hiddenOnMobile: true },
                     ]}
                     trailing={
                         <div className="flex items-center justify-end gap-3">
@@ -132,27 +132,27 @@ function ReceiptRow({
             selected={selection.isSelected(receipt.id)}
             className={cn("group", highlightClass)}
         >
-            <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
+            <div className="col-span-3 font-medium truncate">
                 {receipt.supplier}
             </div>
-            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground text-sm truncate">
+            <div className="hidden md:block col-span-2 text-muted-foreground text-sm truncate">
                 {receipt.date}
             </div>
-            <div style={{ gridColumn: 'span 2' }}>
+            <div className="hidden md:block col-span-2">
                 <CategoryBadge>
                     {receipt.category}
                 </CategoryBadge>
             </div>
-            <div style={{ gridColumn: 'span 2' }} className="text-right truncate">
+            <div className="col-span-2 text-right truncate">
                 <AmountText value={parseAmount(receipt.amount)} />
             </div>
-            <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
+            <div className="hidden md:flex col-span-2 justify-center">
                 <AppStatusBadge
                     status={receipt.status}
                     size="sm"
                 />
             </div>
-            <div style={{ gridColumn: 'span 1' }} className="flex items-center justify-end gap-2">
+            <div className="col-span-1 flex items-center justify-end gap-2">
                 {receipt.attachment && (
                     <div className="text-muted-foreground bg-muted p-1 rounded-sm" title={receipt.attachment}>
                         <Paperclip className="h-3 w-3" />

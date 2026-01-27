@@ -112,7 +112,7 @@ export function TransactionsSidebar({ transactions, stats }: TransactionsSidebar
 
     return (
         <PageSidebar>
-            <div className="space-y-4">
+            <div className="space-y-4 hidden md:block">
                 {/* Quick Stats */}
                 {quickStats.length > 0 && (
                     <QuickStats 
@@ -132,18 +132,16 @@ export function TransactionsSidebar({ transactions, stats }: TransactionsSidebar
                     />
                 )}
 
-                {/* 7-day Trend - hidden on mobile */}
+                {/* 7-day Trend */}
                 {trendData.length > 0 && (
-                    <div className="hidden md:block">
-                        <Sparkline
-                            title="7-dagars trend"
-                            description="Nettotransaktioner per dag"
-                            data={trendData}
-                            height={48}
-                            color="hsl(var(--primary))"
-                            showArea
-                        />
-                    </div>
+                    <Sparkline
+                        title="7-dagars trend"
+                        description="Nettotransaktioner per dag"
+                        data={trendData}
+                        height={48}
+                        color="hsl(var(--primary))"
+                        showArea
+                    />
                 )}
 
                 {/* Recent Activity */}

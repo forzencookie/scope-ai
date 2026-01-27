@@ -39,17 +39,17 @@ export function K10History({ onExport }: K10HistoryProps) {
                     <GridTableRows>
                         {displayedHistory.map((k10) => (
                             <GridTableRow key={k10.year}>
-                                <div style={{ gridColumn: 'span 2' }} className="font-medium text-sm">{k10.year}</div>
-                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums hidden md:block">
+                                <div className="col-span-2 font-medium text-sm">{k10.year}</div>
+                                <div className="col-span-3 text-right font-medium text-sm tabular-nums hidden md:block">
                                     {formatCurrency(k10.gransbelopp)}
                                 </div>
-                                <div style={{ gridColumn: 'span 3' }} className="text-right font-medium text-sm tabular-nums hidden md:block">
+                                <div className="col-span-3 text-right font-medium text-sm tabular-nums hidden md:block">
                                     {formatCurrency(k10.usedAmount)}
                                 </div>
-                                <div style={{ gridColumn: 'span 2' }} className="text-right font-medium text-sm tabular-nums text-green-600 dark:text-green-400">
+                                <div className="col-span-2 text-right font-medium text-sm tabular-nums text-green-600 dark:text-green-400">
                                     +{formatCurrency(k10.savedAmount)}
                                 </div>
-                                <div style={{ gridColumn: 'span 2' }} className="flex justify-center">
+                                <div className="col-span-2 flex justify-center">
                                     <AppStatusBadge status={k10.status === "submitted" ? "Inskickad" : "Utkast"} />
                                 </div>
                             </GridTableRow>

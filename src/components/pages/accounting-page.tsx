@@ -187,7 +187,7 @@ function AccountingPageContent() {
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
                 {/* Tab Content */}
-                <div className="px-6 pt-6">
+                <div className="px-4 md:px-6 pt-6">
                     <PageTabsLayout
                         tabs={tabs}
                         currentTab={currentTab}
@@ -198,9 +198,9 @@ function AccountingPageContent() {
                     />
                 </div>
 
-                <main className="flex-1 flex flex-col p-6">
+                <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
                     <div className="flex gap-6">
-                        <div className="flex-1 max-w-6xl space-y-6">
+                        <div className="flex-1 min-w-0 max-w-6xl space-y-6">
                             {/* Content */}
                             {currentTab === "transaktioner" && (
                                 fetchError ? (

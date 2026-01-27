@@ -49,24 +49,23 @@ export function InventarierGrid({ inventarier, isLoading, selection }: Inventari
                                 onClick={() => selection.toggleItem(item.id)}
                                 className="cursor-pointer group"
                             >
-                                <div style={{ gridColumn: 'span 4' }} className="font-medium truncate">
+                                <div className="col-span-4 font-medium truncate">
                                     {item.namn}
                                 </div>
-                                <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate">
+                                <div className="col-span-2 text-muted-foreground truncate hidden md:block">
                                     {item.kategori}
                                 </div>
-                                <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground tabular-nums truncate">
+                                <div className="col-span-2 text-muted-foreground tabular-nums truncate hidden md:block">
                                     {item.inkopsdatum}
                                 </div>
-                                <div style={{ gridColumn: 'span 3' }} className="font-mono font-medium truncate">
+                                <div className="col-span-3 font-mono font-medium truncate">
                                     {formatCurrency(item.inkopspris)}
                                 </div>
-                                <div style={{ gridColumn: 'span 2' }} className="flex items-center h-8 truncate">
+                                <div className="col-span-2 flex items-center h-8 truncate hidden md:flex">
                                     <span className="text-muted-foreground">{item.livslangdAr} år</span>
                                 </div>
                                 <div
-                                    style={{ gridColumn: 'span 1' }}
-                                    className="flex justify-end items-center opacity-0 group-hover:opacity-100 transition-opacity"
+                                    className="col-span-1 flex justify-end items-center opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={(e) => e.stopPropagation()}
                                 >
                                     <Checkbox

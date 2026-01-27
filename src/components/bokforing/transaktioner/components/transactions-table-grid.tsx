@@ -67,13 +67,13 @@ export function TransactionsTableGrid({
                             onClick={() => onTransactionClick(transaction)}
                             selected={selection.isSelected(transaction.id)}
                         >
-                            <div style={{ gridColumn: 'span 3' }} className="font-medium truncate">
+                            <div className="col-span-3 font-medium truncate">
                                 {transaction.name}
                             </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate hidden md:block">
+                            <div className="col-span-2 text-muted-foreground truncate hidden md:block">
                                 {transaction.date}
                             </div>
-                            <div style={{ gridColumn: 'span 2' }}>
+                            <div className="col-span-2">
                                 <span className={cn(
                                     "font-medium tabular-nums",
                                     String(transaction.amount).startsWith("+") && "text-green-600 dark:text-green-400"
@@ -81,15 +81,15 @@ export function TransactionsTableGrid({
                                     {transaction.amount}
                                 </span>
                             </div>
-                            <div style={{ gridColumn: 'span 2' }}>
+                            <div className="col-span-2">
                                 <AppStatusBadge status={transaction.status} size="sm" />
                             </div>
-                            <div style={{ gridColumn: 'span 2' }} className="text-muted-foreground truncate hidden md:block">
+                            <div className="col-span-2 text-muted-foreground truncate hidden md:block">
                                 {transaction.account}
                             </div>
                             <div
                                 className={cn(
-                                    "flex justify-end items-center transition-opacity",
+                                    "col-span-1 flex justify-end items-center transition-opacity",
                                     selection.isSelected(transaction.id) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
                                 )}
                                 onClick={(e) => e.stopPropagation()}
