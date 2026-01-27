@@ -1,184 +1,31 @@
-import { getSupabaseAdmin } from './supabase';
-import type { Json } from '@/types/database';
+/**
+ * Server Database Access Layer
+ * 
+ * Provides admin-level database access that bypasses RLS.
+ * Uses the Supabase service role key for server-side operations.
+ * 
+ * For user-scoped operations with RLS, use user-scoped-db.ts instead.
+ */
+
+import { getSupabaseAdmin } from './supabase'
+import {
+    createTransactionsRepository,
+    createReceiptsRepository,
+    createInvoicesRepository,
+    createSupplierInvoicesRepository,
+    createVerificationsRepository,
+    createEmployeesRepository,
+    createPayslipsRepository,
+    createCorporateRepository,
+    createConversationsRepository,
+    createInboxRepository,
+    createFinancialRepository,
+} from './repositories'
 
 // =============================================================================
-// Type Definitions for Server DB Operations
+// Default State (fallback for empty database)
 // =============================================================================
 
-interface TransactionInput {
-    id?: string
-    date?: string
-    description?: string
-    name?: string
-    amount?: number | string
-    status?: string
-    category?: string
-    source?: string
-    createdBy?: string
-    created_by?: string
-    metadata?: Record<string, unknown>
-}
-
-interface TransactionMetadata {
-    status?: string
-    category?: string
-    [key: string]: unknown
-}
-
-interface InboxItemRow {
-    id: string
-    sender?: string
-    title?: string
-    description?: string
-    date?: string
-    created_at: string
-    category?: string
-    read?: boolean
-    starred?: boolean
-}
-
-interface InboxItemInput {
-    id?: string
-    sender?: string
-    title?: string
-    description?: string
-    date?: string
-    category?: string
-    read?: boolean
-    starred?: boolean
-}
-
-interface AIToolLogInput {
-    toolName: string
-    parameters: Record<string, unknown>
-    result?: unknown
-    status: 'success' | 'error' | 'pending'
-    executionTimeMs?: number
-    errorMessage?: string
-    userId?: string
-}
-
-interface MessageInput {
-    conversation_id: string
-    role: 'user' | 'assistant' | 'system' | 'data'
-    content: string
-    tool_calls?: Json
-    tool_results?: Json
-    metadata?: Record<string, unknown>
-    user_id: string
-}
-
-interface ReceiptInput {
-    id?: string
-    date?: string
-    supplier?: string
-    amount?: number
-    category?: string
-    status?: string
-    source?: string
-    createdBy?: string
-    created_by?: string
-    attachmentUrl?: string
-}
-
-interface InvoiceInput {
-    id?: string
-    invoiceNumber?: string
-    customerName?: string
-    amount?: number
-    vatAmount?: number
-    totalAmount?: number
-    issueDate?: string
-    date?: string
-    dueDate?: string
-    status?: string
-    createdBy?: string
-    created_by?: string
-    companyId?: string
-}
-
-interface SupplierInvoiceInput {
-    id?: string
-    invoiceNumber?: string
-    supplierName?: string
-    supplier?: string
-    amount?: number
-    vatAmount?: number
-    totalAmount?: number
-    dueDate?: string
-    invoiceDate?: string
-    status?: string
-    ocr?: string
-    ocrNumber?: string
-}
-
-interface VerificationInput {
-    id?: string
-    date?: string
-    description?: string
-    rows?: Json
-}
-
-interface EmployeeInput {
-    name: string
-    role?: string
-    email?: string
-    salary?: number
-    status?: string
-    employment_date?: string
-}
-
-interface PayslipInput {
-    id?: string
-    employee_id: string
-    period: string
-    gross_salary: number
-    tax_deduction: number
-    net_salary: number
-    bonuses?: number
-    deductions?: number
-    status?: string
-    payment_date?: string
-    user_id?: string
-}
-
-interface CorporateDocumentInput {
-    id?: string
-    type: string
-    title: string
-    date?: string
-    content?: string
-    status?: string
-    source?: string
-    createdBy?: string
-    created_by?: string
-    metadata?: Record<string, unknown>
-}
-
-interface ShareholderInput {
-    name: string
-    ssn_org_nr?: string
-    shares_count?: number
-    shares_percentage?: number
-    share_class?: string
-}
-
-interface TaxReportInput {
-    id?: string
-    user_id?: string
-    period_id?: string
-    report_type?: string
-    data?: Json
-    status?: string
-    period_start?: string
-    period_end?: string
-}
-
-// We keep the SimulatedDB interface compatible for now, or use loose typing
-// as the frontend expects certain shapes.
-// Ideally, we'd import Database types from supabase.
-
-// Fallback state if DB fails (or for initial cache)
 const defaultState = {
     transactions: [],
     receipts: [],
@@ -192,31 +39,31 @@ const defaultState = {
         skattekonto: 45000,
     },
     transactionMetadata: {},
-};
+}
 
-// ============================================================================
-// Supabase Database Adapter
-// Replaces the JSON file I/O with Supabase Admin calls
-// ============================================================================
+// =============================================================================
+// Database Object (combines all repositories)
+// =============================================================================
 
 export const db = {
+    /**
+     * Get all data for initial load (with default pagination)
+     */
     get: async (options?: { limit?: number }) => {
-        // Build the full "SimulatedDB" object by querying all tables
-        // PERFORMANCE: Added default pagination limits to prevent loading entire database
-        const supabase = getSupabaseAdmin();
-        const defaultLimit = options?.limit ?? 20; // Default to 20 records per table to optimize initial load
+        const supabase = getSupabaseAdmin()
+        const defaultLimit = options?.limit ?? 20
 
         const [tx, rc, si, ver] = await Promise.all([
             supabase.from('transactions').select('*').order('occurred_at', { ascending: false }).limit(defaultLimit),
             supabase.from('receipts').select('*').order('captured_at', { ascending: false }).limit(defaultLimit),
             supabase.from('supplierinvoices').select('*').order('due_date', { ascending: true }).limit(defaultLimit),
             supabase.from('verifications').select('*').order('date', { ascending: false }).limit(defaultLimit)
-        ]);
+        ])
 
         return {
             transactions: tx.data || [],
             receipts: rc.data?.map(r => ({ ...r, attachmentUrl: r.image_url })) || [],
-            invoices: [], // Not migrated yet
+            invoices: [],
             supplierInvoices: si.data?.map(i => ({
                 ...i,
                 invoiceNumber: i.invoice_number,
@@ -228,614 +75,258 @@ export const db = {
             })) || [],
             verifications: ver.data || [],
             inbox: [],
-            balances: defaultState.balances, // Still mocked for now
+            balances: defaultState.balances,
             transactionMetadata: {},
             aiAuditLogs: [],
             financialPeriods: [],
             taxReports: [],
             employees: [],
             payslips: []
-        };
+        }
     },
 
     set: (_data: Record<string, unknown>) => {
-        // No-op: We don't overwrite the whole DB anymore
-        console.warn("db.set() called but ignored in Supabase mode");
+        console.warn("db.set() called but ignored in Supabase mode")
     },
 
-    // Transactions
-    addTransaction: async (tx: TransactionInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('transactions').insert({
-            id: tx.id,
-            date: tx.date,
-            description: tx.description,
-            name: tx.description || 'Transaction',
-            amount: String(tx.amount || 0),
-            amount_value: Number(tx.amount || 0),
-            status: tx.status,
-            category: tx.category,
-            source: tx.source || 'manual',
-            created_by: tx.createdBy || tx.created_by,
-            metadata: tx
-        }).select().single();
-        if (error) console.error("Supabase Error:", error);
-        return data || tx;
+    // =========================================================================
+    // Transaction Methods (delegate to repository)
+    // =========================================================================
+    
+    addTransaction: async (tx: Parameters<ReturnType<typeof createTransactionsRepository>['create']>[0]) => {
+        const repo = createTransactionsRepository(getSupabaseAdmin())
+        return repo.create(tx)
     },
 
-    updateTransactionMetadata: async (id: string, metadata: TransactionMetadata) => {
-        const supabase = getSupabaseAdmin();
-        // First get existing meta
-        const { data: existing } = await supabase.from('transactions').select('metadata').eq('id', id).single();
-        const existingMeta = (existing?.metadata as Record<string, unknown>) || {};
-        const newMeta = { ...existingMeta, ...metadata };
-
-        await supabase.from('transactions').update({
-            metadata: newMeta as unknown as Json,
-            status: metadata.status || undefined,
-            category: metadata.category || undefined
-        }).eq('id', id);
-        return newMeta;
+    updateTransactionMetadata: async (id: string, metadata: Parameters<ReturnType<typeof createTransactionsRepository>['updateMetadata']>[1]) => {
+        const repo = createTransactionsRepository(getSupabaseAdmin())
+        return repo.updateMetadata(id, metadata)
     },
 
-    getTransactions: async (filters: {
-        limit?: number,
-        startDate?: string,
-        endDate?: string,
-        minAmount?: number,
-        maxAmount?: number,
-        status?: string
-    } = {}) => {
-        const supabase = getSupabaseAdmin();
-        let query = supabase.from('transactions').select('*').order('date', { ascending: false });
-
-        if (filters.startDate) query = query.gte('date', filters.startDate);
-        if (filters.endDate) query = query.lte('date', filters.endDate);
-        if (filters.minAmount !== undefined) query = query.gte('amount', filters.minAmount); // Note: Simple check, handling negative amounts (expenses) complexity might be needed if user means absolute magnitude
-        if (filters.status) query = query.eq('status', filters.status);
-
-        if (filters.limit) query = query.limit(filters.limit);
-
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getTransactions):", error);
-        return data || [];
+    getTransactions: async (filters?: Parameters<ReturnType<typeof createTransactionsRepository>['list']>[0]) => {
+        const repo = createTransactionsRepository(getSupabaseAdmin())
+        return repo.list(filters)
     },
 
-    getCustomerInvoices: async (filters: {
-        limit?: number,
-        status?: string,
-        customer?: string
-    } = {}) => {
-        const supabase = getSupabaseAdmin();
-        // Note: 'invoices' table is for customer invoices
-        let query = supabase.from('customerinvoices').select('*').order('due_date', { ascending: true });
-
-        if (filters.status) query = query.eq('status', filters.status);
-        if (filters.customer) query = query.ilike('customer_name', `%${filters.customer}%`);
-
-        if (filters.limit) query = query.limit(filters.limit);
-
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getCustomerInvoices):", error);
-
-        // Map snake_case to CamelCase if needed by frontend/AI, but generally tools should adapt. 
-        // For consistency with existing codebase, let's map it.
-        return (data || []).map((i: { id: string; customer_name?: string; invoice_number?: string; total_amount?: number; due_date?: string }) => ({
-            ...i,
-            customerName: i.customer_name,
-            invoiceNumber: i.invoice_number,
-            totalAmount: i.total_amount,
-            dueDate: i.due_date
-        }));
+    updateTransaction: async (id: string, updates: Record<string, unknown>) => {
+        const repo = createTransactionsRepository(getSupabaseAdmin())
+        return repo.update(id, updates)
     },
 
-    getSupplierInvoices: async (filters: {
-        limit?: number,
-        status?: string,
-        supplier?: string
-    } = {}) => {
-        const supabase = getSupabaseAdmin();
-        let query = supabase.from('supplierinvoices').select('*').order('due_date', { ascending: true });
+    // =========================================================================
+    // Receipt Methods
+    // =========================================================================
 
-        if (filters.status) query = query.eq('status', filters.status);
-        if (filters.supplier) query = query.ilike('supplier_name', `%${filters.supplier}%`);
-
-        if (filters.limit) query = query.limit(filters.limit);
-
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getSupplierInvoices):", error);
-
-        return (data || []).map((i: { id: string; supplier_name?: string; invoice_number?: string; total_amount?: number; due_date?: string; issue_date?: string }) => ({
-            ...i,
-            supplierName: i.supplier_name,
-            invoiceNumber: i.invoice_number,
-            totalAmount: i.total_amount,
-            dueDate: i.due_date,
-            invoiceDate: i.issue_date
-        }));
+    addReceipt: async (receipt: Parameters<ReturnType<typeof createReceiptsRepository>['create']>[0]) => {
+        const repo = createReceiptsRepository(getSupabaseAdmin())
+        return repo.create(receipt)
     },
 
-    // Receipts
-    addReceipt: async (receipt: ReceiptInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('receipts').insert({
-            id: receipt.id,
-            date: receipt.date,
-            supplier: receipt.supplier,
-            amount: receipt.amount,
-            category: receipt.category,
-            status: receipt.status,
-            source: receipt.source || 'manual',
-            created_by: receipt.createdBy || receipt.created_by,
-            image_url: receipt.attachmentUrl
-        }).select().single();
-        if (error) { console.error("Supabase Error (addReceipt):", error); throw error; }
-        return data ? { ...data, attachmentUrl: data.image_url } : receipt;
+    // =========================================================================
+    // Invoice Methods
+    // =========================================================================
+
+    getCustomerInvoices: async (filters?: Parameters<ReturnType<typeof createInvoicesRepository>['list']>[0]) => {
+        const repo = createInvoicesRepository(getSupabaseAdmin())
+        return repo.list(filters)
     },
 
-    // Invoices
-    addInvoice: async (invoice: InvoiceInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('customerinvoices').insert({
-            id: invoice.id,
-            invoice_number: invoice.invoiceNumber,
-            customer_name: invoice.customerName,
-            subtotal: invoice.amount || 0,
-            vat_amount: invoice.vatAmount || 0,
-            total_amount: invoice.totalAmount || 0,
-            invoice_date: invoice.issueDate || invoice.date,
-            due_date: invoice.dueDate,
-            status: invoice.status || 'draft',
-            user_id: invoice.createdBy || invoice.created_by,
-            company_id: invoice.companyId || '00000000-0000-0000-0000-000000000000', // Fallback for strict typing
-        }).select().single();
-        if (error) console.error("Supabase Error (addInvoice):", error);
-        return data || invoice;
+    addInvoice: async (invoice: Parameters<ReturnType<typeof createInvoicesRepository>['create']>[0]) => {
+        const repo = createInvoicesRepository(getSupabaseAdmin())
+        return repo.create(invoice)
     },
 
-    // Supplier Invoices
-    addSupplierInvoice: async (invoice: SupplierInvoiceInput) => {
-        const supabase = getSupabaseAdmin();
-        // Map frontend CamelCase to DB snake_case
-        const { data, error } = await supabase.from('supplierinvoices').insert({
-            id: invoice.id,
-            invoice_number: invoice.invoiceNumber,
-            supplier_name: invoice.supplierName, // or .supplier
-            amount: invoice.amount,
-            vat_amount: invoice.vatAmount,
-            total_amount: invoice.totalAmount,
-            due_date: invoice.dueDate,
-            issue_date: invoice.invoiceDate,
-            status: invoice.status,
-            ocr: invoice.ocr || invoice.ocrNumber
-        }).select().single();
+    // =========================================================================
+    // Supplier Invoice Methods
+    // =========================================================================
 
-        if (error) {
-            console.error('Error adding supplier invoice:', error);
-            throw error;
-        }
+    getSupplierInvoices: async (filters?: Parameters<ReturnType<typeof createSupplierInvoicesRepository>['list']>[0]) => {
+        const repo = createSupplierInvoicesRepository(getSupabaseAdmin())
+        return repo.list(filters)
+    },
 
-        return data || invoice;
+    addSupplierInvoice: async (invoice: Parameters<ReturnType<typeof createSupplierInvoicesRepository>['create']>[0]) => {
+        const repo = createSupplierInvoicesRepository(getSupabaseAdmin())
+        return repo.create(invoice)
     },
 
     updateSupplierInvoice: async (id: string, updates: { status?: string }) => {
-        const supabase = getSupabaseAdmin();
-        // Create mapping of updates
-        const dbUpdates: Record<string, string> = {};
-        if (updates.status) dbUpdates.status = updates.status;
-
-        const { error } = await supabase.from('supplierinvoices').update(dbUpdates).eq('id', id);
-        if (error) {
-            console.error('Error updating supplier invoice:', error);
-            throw error;
-        }
-        return { id, ...updates };
+        const repo = createSupplierInvoicesRepository(getSupabaseAdmin())
+        return repo.updateStatus(id, updates.status || '')
     },
 
-    // Verifications
-    addVerification: async (verification: VerificationInput) => {
-        const supabase = getSupabaseAdmin();
+    // =========================================================================
+    // Verification Methods
+    // =========================================================================
 
-        let id = verification.id;
-        if (!id) {
-            // Simple sequence generation via count (race condition prone but fine for MVP)
-            const { count } = await supabase.from('verifications').select('*', { count: 'exact', head: true });
-            id = `A-${(count || 0) + 1}`;
-        }
-
-        const { data, error } = await supabase.from('verifications').insert({
-            id,
-            date: verification.date,
-            description: verification.description,
-            rows: verification.rows
-        }).select().single();
-
-        if (error) {
-            console.error('Error adding verification:', error);
-            throw error;
-        }
-
-        return data || verification;
+    addVerification: async (verification: Parameters<ReturnType<typeof createVerificationsRepository>['create']>[0]) => {
+        const repo = createVerificationsRepository(getSupabaseAdmin())
+        return repo.create(verification)
     },
 
     getVerifications: async (limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        let query = supabase.from('verifications').select('*').order('created_at', { ascending: false });
-        if (limit) query = query.limit(limit);
-        else query = query.limit(50); // Default pagination
-        const { data } = await query;
-        return data || [];
+        const repo = createVerificationsRepository(getSupabaseAdmin())
+        return repo.list(limit)
     },
 
-    // Legacy fallback
-    updateTransaction: async (id: string, updates: Record<string, unknown>) => {
-        const supabase = getSupabaseAdmin();
-        await supabase.from('transactions').update(updates).eq('id', id);
-        return { id, ...updates };
-    },
+    // =========================================================================
+    // Inbox Methods
+    // =========================================================================
 
-    // Inbox
     getInboxItems: async (limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase
-            .from('inboxitems')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(limit ?? 50); // Default pagination
-        if (error) console.error('getInboxItems error:', error);
-        return (data || []).map((row: InboxItemRow) => ({
-            id: row.id,
-            sender: row.sender,
-            title: row.title,
-            description: row.description,
-            date: row.date || 'Idag',
-            timestamp: new Date(row.created_at),
-            category: row.category,
-            read: row.read,
-            starred: row.starred,
-        }));
+        const repo = createInboxRepository(getSupabaseAdmin())
+        return repo.list(limit)
     },
 
-    addInboxItem: async (item: InboxItemInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('inboxitems').insert({
-            id: item.id || undefined,
-            sender: item.sender,
-            title: item.title,
-            description: item.description,
-            date: item.date,
-            category: item.category || 'other',
-            read: item.read ?? false,
-            starred: item.starred ?? false,
-        }).select().single();
-        if (error) console.error('addInboxItem error:', error);
-        return data || item;
+    addInboxItem: async (item: Parameters<ReturnType<typeof createInboxRepository>['create']>[0]) => {
+        const repo = createInboxRepository(getSupabaseAdmin())
+        return repo.create(item)
     },
 
     updateInboxItem: async (id: string, updates: { read?: boolean; starred?: boolean; category?: string }) => {
-        const supabase = getSupabaseAdmin();
-        const dbUpdates: { read?: boolean; starred?: boolean; category?: string } = {};
-        if (updates.read !== undefined) dbUpdates.read = updates.read;
-        if (updates.starred !== undefined) dbUpdates.starred = updates.starred;
-        if (updates.category !== undefined) dbUpdates.category = updates.category;
-
-        const { error } = await supabase.from('inboxitems').update(dbUpdates).eq('id', id);
-        if (error) console.error('updateInboxItem error:', error);
-        return { id, ...updates };
+        const repo = createInboxRepository(getSupabaseAdmin())
+        return repo.update(id, updates)
     },
 
     clearInbox: async () => {
-        const supabase = getSupabaseAdmin();
-        const { error } = await supabase.from('inboxitems').delete().neq('id', '00000000-0000-0000-0000-000000000000');
-        if (error) console.error('clearInbox error:', error);
-        return { success: !error };
+        const repo = createInboxRepository(getSupabaseAdmin())
+        return repo.clear()
     },
 
-    // AI Audit Logs
-    logAIToolExecution: async (log: AIToolLogInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('ai_audit_log').insert({
-            tool_name: log.toolName,
-            parameters: log.parameters as unknown as Json,
-            result: log.result as unknown as Json,
-            status: log.status,
-            execution_time_ms: log.executionTimeMs,
-            error_message: log.errorMessage,
-            user_id: log.userId
-        }).select().single();
-        if (error) console.error("Supabase Error (logAIToolExecution):", error);
-        return data;
+    // =========================================================================
+    // AI Audit Log Methods
+    // =========================================================================
+
+    logAIToolExecution: async (log: Parameters<ReturnType<typeof createFinancialRepository>['logAIToolExecution']>[0]) => {
+        const repo = createFinancialRepository(getSupabaseAdmin())
+        return repo.logAIToolExecution(log)
     },
 
-    // Financial Periods
+    // =========================================================================
+    // Financial Period Methods
+    // =========================================================================
+
     getFinancialPeriods: async () => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('financialperiods').select('*').order('start_date', { ascending: false });
-        if (error) console.error("Supabase Error (getFinancialPeriods):", error);
-        return data || [];
+        const repo = createFinancialRepository(getSupabaseAdmin())
+        return repo.listPeriods()
     },
 
     updateFinancialPeriodStatus: async (id: string, status: string) => {
-        const supabase = getSupabaseAdmin();
-        const { error } = await supabase.from('financialperiods').update({ status }).eq('id', id);
-        if (error) console.error("Supabase Error (updateFinancialPeriodStatus):", error);
-        return { success: !error };
+        const repo = createFinancialRepository(getSupabaseAdmin())
+        return repo.updatePeriodStatus(id, status)
     },
 
-    // Tax Reports (VAT etc)
+    // =========================================================================
+    // Tax Report Methods
+    // =========================================================================
+
     getTaxReports: async (type?: string) => {
-        const supabase = getSupabaseAdmin();
-        let query = supabase.from('taxreports').select('*').order('generated_at', { ascending: false });
-        if (type) query = query.eq('type', type);
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getTaxReports):", error);
-        return data || [];
+        const repo = createFinancialRepository(getSupabaseAdmin())
+        return repo.listTaxReports(type)
     },
 
-    upsertTaxReport: async (report: TaxReportInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('taxreports').upsert({
-            id: report.id || undefined,
-            user_id: report.user_id,
-            period_id: report.period_id,
-            type: report.report_type || 'vat',
-            data: report.data,
-            status: report.status || 'draft',
-            period_start: report.period_start,
-            period_end: report.period_end,
-            generated_at: new Date().toISOString()
-        }).select().single();
-        if (error) console.error("Supabase Error (upsertTaxReport):", error);
-        return data || report;
+    upsertTaxReport: async (report: Parameters<ReturnType<typeof createFinancialRepository>['upsertTaxReport']>[0]) => {
+        const repo = createFinancialRepository(getSupabaseAdmin())
+        return repo.upsertTaxReport(report)
     },
 
-    // Employees
+    // =========================================================================
+    // Employee Methods
+    // =========================================================================
+
     getEmployees: async (limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        let query = supabase.from('employees').select('*').order('name');
-        if (limit) query = query.limit(limit);
-        else query = query.limit(100); // Default pagination for employees
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getEmployees):", error);
-        return data || [];
+        const repo = createEmployeesRepository(getSupabaseAdmin())
+        return repo.list(limit)
     },
 
-    addEmployee: async (employee: EmployeeInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('employees').insert({
-            name: employee.name,
-            role: employee.role,
-            email: employee.email,
-            salary: employee.salary,
-            status: employee.status || 'active',
-            employment_date: employee.employment_date || new Date().toISOString().split('T')[0]
-        }).select().single();
-
-        if (error) {
-            console.error("Supabase Error (addEmployee):", error);
-            throw new Error(`Failed to add employee: ${error.message}`);
-        }
-        return data;
+    addEmployee: async (employee: Parameters<ReturnType<typeof createEmployeesRepository>['create']>[0]) => {
+        const repo = createEmployeesRepository(getSupabaseAdmin())
+        return repo.create(employee)
     },
 
+    // =========================================================================
+    // Payslip Methods
+    // =========================================================================
 
-    // Payslips
     getPayslips: async (limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let query = supabase.from('payslips' as any).select('*, employees(*)').order('created_at', { ascending: false });
-        if (limit) query = query.limit(limit);
-        else query = query.limit(50); // Default pagination
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getPayslips):", error);
-        return data || [];
+        const repo = createPayslipsRepository(getSupabaseAdmin())
+        return repo.list(limit)
     },
 
-    addPayslip: async (payslip: PayslipInput) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase.from('payslips' as any).insert({
-            id: payslip.id,
-            employee_id: payslip.employee_id,
-            period: payslip.period,
-            gross_salary: payslip.gross_salary,
-            tax_deduction: payslip.tax_deduction,
-            net_salary: payslip.net_salary,
-            bonuses: payslip.bonuses || 0,
-            deductions: payslip.deductions || 0,
-            status: payslip.status || 'draft',
-            payment_date: payslip.payment_date,
-            user_id: payslip.user_id,
-        }).select().single();
-        if (error) console.error("Supabase Error (addPayslip):", error);
-        return data || payslip;
+    addPayslip: async (payslip: Parameters<ReturnType<typeof createPayslipsRepository>['create']>[0]) => {
+        const repo = createPayslipsRepository(getSupabaseAdmin())
+        return repo.create(payslip)
     },
 
-    // Corporate Compliance
+    // =========================================================================
+    // Corporate Methods
+    // =========================================================================
+
     getCorporateDocuments: async (limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let query = supabase.from('corporate_documents' as any).select('*').order('date', { ascending: false });
-        if (limit) query = query.limit(limit);
-        else query = query.limit(50); // Default pagination
-        const { data } = await query;
-        return data || [];
+        const repo = createCorporateRepository(getSupabaseAdmin())
+        return repo.listDocuments(limit)
     },
 
-    addCorporateDocument: async (doc: CorporateDocumentInput) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase.from('corporate_documents' as any).insert({
-            id: doc.id || undefined,
-            type: doc.type,
-            title: doc.title,
-            date: doc.date,
-            content: doc.content,
-            status: doc.status || 'draft',
-            source: doc.source || 'manual',
-            created_by: doc.createdBy || doc.created_by,
-            metadata: doc.metadata || {}
-        }).select().single();
-        if (error) console.error("Supabase Error (addCorporateDocument):", error);
-        return data || doc;
+    addCorporateDocument: async (doc: Parameters<ReturnType<typeof createCorporateRepository>['createDocument']>[0]) => {
+        const repo = createCorporateRepository(getSupabaseAdmin())
+        return repo.createDocument(doc)
     },
 
     getShareholders: async (limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        let query = supabase.from('shareholders' as any).select('*').order('shares_count', { ascending: false });
-        if (limit) query = query.limit(limit);
-        else query = query.limit(100); // Default pagination
-        const { data } = await query;
-        return data || [];
+        const repo = createCorporateRepository(getSupabaseAdmin())
+        return repo.listShareholders(limit)
     },
 
-    updateShareholder: async (id: string, updates: Partial<ShareholderInput>) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase.from('shareholders' as any).update(updates).eq('id', id).select().single();
-        if (error) console.error("Supabase Error (updateShareholder):", error);
-        return data || { id, ...updates };
+    addShareholder: async (shareholder: Parameters<ReturnType<typeof createCorporateRepository>['createShareholder']>[0]) => {
+        const repo = createCorporateRepository(getSupabaseAdmin())
+        return repo.createShareholder(shareholder)
     },
 
-    addShareholder: async (shareholder: ShareholderInput) => {
-        const supabase = getSupabaseAdmin();
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase.from('shareholders' as any).insert({
-            name: shareholder.name,
-            ssn_org_nr: shareholder.ssn_org_nr || '',
-            shares_count: shareholder.shares_count || 0,
-            shares_percentage: shareholder.shares_percentage || 0,
-            share_class: shareholder.share_class || 'B', // Default to B shares if not specified
-        }).select().single();
-        if (error) {
-            console.error("Supabase Error (addShareholder):", error);
-            throw new Error(`Failed to add shareholder: ${error.message}`);
-        }
-        return data;
+    updateShareholder: async (id: string, updates: Parameters<ReturnType<typeof createCorporateRepository>['updateShareholder']>[1]) => {
+        const repo = createCorporateRepository(getSupabaseAdmin())
+        return repo.updateShareholder(id, updates)
     },
-
-    // ============================================================================
-    // Planning & Roadmaps
-    // ============================================================================
 
     getRoadmaps: async (userId: string) => {
-        const supabase = getSupabaseAdmin();
-        // Get active roadmaps with their steps
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase
-            .from('roadmaps' as any)
-            .select('*, steps:roadmap_steps(*)')
-            .eq('user_id', userId)
-            .eq('status', 'active')
-            .order('created_at', { ascending: false });
-
-        if (error) console.error("Supabase Error (getRoadmaps):", error);
-        return data || [];
+        const repo = createCorporateRepository(getSupabaseAdmin())
+        return repo.listRoadmaps(userId)
     },
 
-    // ============================================================================
-    // KPI / Status Aggregation (for AI Context)
-    // ============================================================================
+    // =========================================================================
+    // KPI Methods
+    // =========================================================================
 
     getCompanyKPIs: async () => {
-        // Simplified KPI fetcher for AI context
-        // In a real app, this would do proper aggregation queries
-        const supabase = getSupabaseAdmin();
-
-        // Parallel queries for speed
-        const [tx, invoices, inbox] = await Promise.all([
-            supabase.from('transactions').select('amount, status').limit(100), // Last 100 tx
-            supabase.from('supplierinvoices').select('amount, due_date, status').eq('status', 'unpaid'),
-            supabase.from('inboxitems').select('count', { count: 'exact', head: true }).eq('read', false)
-        ]);
-
-        return {
-            recent_transactions_count: tx.data?.length || 0,
-            unpaid_invoices_count: invoices.data?.length || 0,
-            unread_inbox_count: inbox.count || 0,
-            last_sync: new Date().toISOString()
-        };
+        const repo = createFinancialRepository(getSupabaseAdmin())
+        return repo.getCompanyKPIs()
     },
 
-
-    // ============================================================================
-    // Chat Persistence
-    // ============================================================================
+    // =========================================================================
+    // Conversation Methods
+    // =========================================================================
 
     createConversation: async (title: string, userId?: string) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('conversations').insert({
-            title,
-            user_id: userId
-        }).select().single();
-        if (error) console.error("Supabase Error (createConversation):", error);
-        return data;
+        const repo = createConversationsRepository(getSupabaseAdmin())
+        return repo.create(title, userId)
     },
 
     getConversations: async (userId?: string, limit?: number) => {
-        const supabase = getSupabaseAdmin();
-        let query = supabase.from('conversations').select('*').order('updated_at', { ascending: false });
-        if (userId) query = query.eq('user_id', userId);
-        query = query.limit(limit ?? 50); // Default pagination for conversations
-        const { data, error } = await query;
-        if (error) console.error("Supabase Error (getConversations):", error);
-        return data || [];
+        const repo = createConversationsRepository(getSupabaseAdmin())
+        return repo.list(userId, limit)
     },
 
     getConversation: async (id: string) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('conversations').select('*').eq('id', id).single();
-        if (error) console.error("Supabase Error (getConversation):", error);
-        return data;
+        const repo = createConversationsRepository(getSupabaseAdmin())
+        return repo.getById(id)
     },
 
-    addMessage: async (message: MessageInput) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase.from('messages').insert({
-            conversation_id: message.conversation_id,
-            role: message.role,
-            content: message.content,
-            tool_calls: message.tool_calls,
-            tool_results: message.tool_results,
-            user_id: message.user_id
-        }).select().single();
-
-        // Update conversation timestamp
-        if (!error && message.conversation_id) {
-            await supabase.from('conversations')
-                .update({ updated_at: new Date().toISOString() })
-                .eq('id', message.conversation_id);
-        }
-
-        if (error) console.error("Supabase Error (addMessage):", error);
-        return data;
+    addMessage: async (message: Parameters<ReturnType<typeof createConversationsRepository>['addMessage']>[0]) => {
+        const repo = createConversationsRepository(getSupabaseAdmin())
+        return repo.addMessage(message)
     },
 
     getMessages: async (conversationId: string) => {
-        const supabase = getSupabaseAdmin();
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .eq('conversation_id', conversationId)
-            .order('created_at', { ascending: true });
-
-        if (error) console.error("Supabase Error (getMessages):", error);
-        return data || [];
-    }
-};
-
-// Keep readDB for the migration script ONLY (reads the JSON file one last time)
-/*
-export function readDB(): any { // Typing loose for now
-    const fs = require('fs');
-    const path = require('path');
-    const DB_PATH = path.join(process.cwd(), 'src', 'data', 'simulated-db.json');
-    try {
-        if (fs.existsSync(DB_PATH)) {
-            return JSON.parse(fs.readFileSync(DB_PATH, 'utf-8'));
-        }
-    } catch (e) { }
-    return defaultState;
+        const repo = createConversationsRepository(getSupabaseAdmin())
+        return repo.getMessages(conversationId)
+    },
 }
-*/
