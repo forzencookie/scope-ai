@@ -2,12 +2,59 @@
 
 import { useState } from "react"
 import Link from "next/link"
+import { useRouter } from "next/navigation"
 import { Check, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { SectionHeader } from "../../shared/section-header"
+import { useAuth } from "@/hooks/use-auth"
+
+// Map tier names to API tier values
+const TIER_MAP: Record<string, 'free' | 'pro' | 'enterprise'> = {
+  "Free": "free",
+  "Professional": "pro",
+  "Enterprise": "enterprise",
+}
 
 export function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
+  const [loadingTier, setLoadingTier] = useState<string | null>(null)
+  const { isAuthenticated } = useAuth()
+  const router = useRouter()
+
+  const handleSelectPlan = async (tierName: string, isComingSoon: boolean) => {
+    if (isComingSoon) return
+    
+    const tier = TIER_MAP[tierName]
+    
+    // Free tier - just go to register or dashboard
+    if (tier === "free") {
+      router.push(isAuthenticated ? "/dashboard" : "/register")
+      return
+    }
+
+    // Paid tier - if logged in, go directly to Stripe checkout
+    if (isAuthenticated) {
+      setLoadingTier(tierName)
+      try {
+        const response = await fetch('/api/stripe/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ tier }),
+        })
+        const data = await response.json()
+        if (data.url) {
+          window.location.href = data.url
+        }
+      } catch (error) {
+        console.error('Failed to create checkout session:', error)
+      } finally {
+        setLoadingTier(null)
+      }
+    } else {
+      // Not logged in - go to register with plan param
+      router.push(`/register?plan=${tier}`)
+    }
+  }
 
   return (
     <section id="pricing" className="px-6 md:px-12 lg:px-24 py-24 max-w-[1400px] mx-auto border-t border-stone-200">
@@ -76,8 +123,9 @@ export function Pricing() {
                 ))}
               </ul>
 
-              <Link
-                href={tier.price === "Kommer snart" ? "#" : "/register"}
+              <button
+                onClick={() => handleSelectPlan(tier.name, tier.price === "Kommer snart")}
+                disabled={tier.price === "Kommer snart" || loadingTier === tier.name}
                 className={cn(
                   "w-full py-3 text-sm font-medium rounded-lg transition-colors border text-center block",
                   tier.highlight
@@ -86,8 +134,8 @@ export function Pricing() {
                       ? "bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed"
                       : "bg-white text-stone-900 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
                 )}>
-                {tier.price === "Kommer snart" ? "Meddela mig" : "Kom igång"}
-              </Link>
+                {loadingTier === tier.name ? "Laddar..." : tier.price === "Kommer snart" ? "Meddela mig" : "Kom igång"}
+              </button>
             </div>
           ))}
         </div>

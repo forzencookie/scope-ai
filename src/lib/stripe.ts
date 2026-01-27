@@ -112,13 +112,14 @@ export interface CreateCheckoutOptions {
     tier: 'pro' | 'enterprise'
     successUrl: string
     cancelUrl: string
+    discountCode?: string  // Optional Stripe promotion code
 }
 
 /**
  * Create a Stripe Checkout session for subscription
  */
 export async function createCheckoutSession(options: CreateCheckoutOptions): Promise<string> {
-    const { userId, email, tier, successUrl, cancelUrl } = options
+    const { userId, email, tier, successUrl, cancelUrl, discountCode } = options
 
     const priceId = PRICE_IDS[tier]
     if (!priceId) {
@@ -128,7 +129,8 @@ export async function createCheckoutSession(options: CreateCheckoutOptions): Pro
     // Get or create customer
     const customerId = await getOrCreateCustomer(userId, email)
 
-    const session = await stripe.checkout.sessions.create({
+    // Build session config
+    const sessionConfig: Stripe.Checkout.SessionCreateParams = {
         customer: customerId,
         mode: 'subscription',
         line_items: [
@@ -148,7 +150,14 @@ export async function createCheckoutSession(options: CreateCheckoutOptions): Pro
                 supabase_user_id: userId,
             },
         },
-    })
+    }
+
+    // Add discount code if provided
+    if (discountCode) {
+        sessionConfig.discounts = [{ promotion_code: discountCode }]
+    }
+
+    const session = await stripe.checkout.sessions.create(sessionConfig)
 
     if (!session.url) {
         throw new Error('Failed to create checkout session')

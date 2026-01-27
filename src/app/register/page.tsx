@@ -58,12 +58,39 @@ function RegisterContent() {
 
     const oauthError = searchParams.get('error')
     const errorMessage = searchParams.get('message')
+    const plan = searchParams.get('plan') // 'pro' or 'enterprise' if coming from pricing
+
+    // Helper to redirect to Stripe checkout for paid plans
+    const redirectToCheckout = async (tier: string) => {
+        try {
+            const response = await fetch('/api/stripe/checkout', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ tier }),
+            })
+            const data = await response.json()
+            if (data.url) {
+                window.location.href = data.url
+            } else {
+                // Fallback to plan selection if checkout fails
+                router.push('/choose-plan')
+            }
+        } catch {
+            router.push('/choose-plan')
+        }
+    }
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
-            router.push('/dashboard')
+            // If user is already authenticated and came with a plan, redirect to checkout
+            if (plan && ['pro', 'enterprise'].includes(plan)) {
+                redirectToCheckout(plan)
+            } else {
+                // No plan specified - let them choose
+                router.push('/choose-plan')
+            }
         }
-    }, [isAuthenticated, authLoading, router])
+    }, [isAuthenticated, authLoading, router, plan])
 
     useEffect(() => {
         if (oauthError && errorMessage) {
@@ -81,8 +108,13 @@ function RegisterContent() {
             if (error) {
                 setError(error.message)
             } else {
-                // Usually redirect to email confirmation or dashboard
-                router.push('/dashboard')
+                // If user selected a paid plan from pricing, go to checkout
+                if (plan && ['pro', 'enterprise'].includes(plan)) {
+                    await redirectToCheckout(plan)
+                } else {
+                    // Otherwise let them choose their plan
+                    router.push('/choose-plan')
+                }
             }
         } catch {
             setError('Ett oväntat fel inträffade. Försök igen.')
@@ -95,7 +127,8 @@ function RegisterContent() {
         setError(null)
 
         try {
-            const { error } = await signInWithOAuth(provider)
+            // Pass the plan through OAuth flow if present
+            const { error } = await signInWithOAuth(provider, plan || undefined)
             if (error) {
                 setError(error.message)
                 setLoading(false)

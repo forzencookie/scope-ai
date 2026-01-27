@@ -6,7 +6,7 @@ import { createCheckoutSession, PRICE_IDS } from '@/lib/stripe'
  * POST /api/stripe/checkout
  * 
  * Creates a Stripe Checkout session for subscription upgrade.
- * Body: { tier: 'pro' | 'enterprise' }
+ * Body: { tier: 'pro' | 'enterprise', discountCode?: string }
  */
 export async function POST(request: NextRequest) {
     try {
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { tier } = body
+        const { tier, discountCode } = body
 
         if (!tier || !['pro', 'enterprise'].includes(tier)) {
             return ApiResponse.badRequest('Invalid tier. Must be "pro" or "enterprise"')
@@ -36,6 +36,7 @@ export async function POST(request: NextRequest) {
             tier: tier as 'pro' | 'enterprise',
             successUrl: `${origin}/dashboard/settings?payment=success`,
             cancelUrl: `${origin}/dashboard/settings?payment=cancelled`,
+            discountCode: discountCode || undefined,
         })
 
         return NextResponse.json({ url: checkoutUrl })

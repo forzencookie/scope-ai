@@ -4,7 +4,7 @@ import { cookies } from 'next/headers'
 
 /**
  * OAuth callback handler
- * Exchanges the auth code for a session and redirects to inbox
+ * Exchanges the auth code for a session and redirects to dashboard or checkout
  * 
  * SECURITY: Validates that session exchange succeeds before redirecting
  */
@@ -13,6 +13,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
+  const plan = requestUrl.searchParams.get('plan') // 'pro' or 'enterprise' if from pricing flow
 
   // Handle OAuth provider errors
   if (error) {
@@ -80,6 +81,15 @@ export async function GET(request: Request) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Success - redirect to inbox
-  return NextResponse.redirect(new URL('/inbox', requestUrl.origin))
+  // Success - redirect based on plan or let them choose
+  if (plan && ['pro', 'enterprise'].includes(plan)) {
+    // Redirect to a page that will trigger the Stripe checkout
+    // We use a dedicated route since we can't call Stripe directly from server
+    const checkoutUrl = new URL('/auth/checkout', requestUrl.origin)
+    checkoutUrl.searchParams.set('plan', plan)
+    return NextResponse.redirect(checkoutUrl)
+  }
+  
+  // No plan specified - let them choose their plan
+  return NextResponse.redirect(new URL('/choose-plan', requestUrl.origin))
 }

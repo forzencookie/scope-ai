@@ -44,12 +44,21 @@ export async function signIn(email: string, password: string): Promise<AuthRespo
 
 /**
  * Sign in with OAuth provider (Google, GitHub, etc.)
+ * @param provider - OAuth provider to use
+ * @param plan - Optional plan to redirect to after auth (for subscription flow)
  */
-export async function signInWithOAuth(provider: 'google' | 'github' | 'azure' | 'facebook') {
+export async function signInWithOAuth(provider: 'google' | 'github' | 'azure' | 'facebook', plan?: string) {
+  const redirectUrl = new URL('/auth/callback', window.location.origin)
+  
+  // Pass plan through OAuth flow if provided
+  if (plan && ['pro', 'enterprise'].includes(plan)) {
+    redirectUrl.searchParams.set('plan', plan)
+  }
+  
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider,
     options: {
-      redirectTo: `${window.location.origin}/auth/callback`,
+      redirectTo: redirectUrl.toString(),
     },
   })
   

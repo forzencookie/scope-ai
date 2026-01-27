@@ -18,6 +18,7 @@ import { AIDialogProvider } from "@/providers/ai-overlay-provider"
 import { AIOverlay } from "@/components/ai"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { DemoBanner } from "@/components/shared/demo-banner"
+import { DemoUpgradeModal } from "@/components/billing/demo-upgrade-modal"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw, Home, BookOpen, PieChart, Users, Building2, Menu } from "lucide-react"
@@ -381,6 +382,9 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 onClose={skipOnboarding}
                 onComplete={completeOnboarding}
             />
+
+            {/* Show upgrade modal for demo users after onboarding */}
+            {!showOnboarding && <DemoUpgradeModal />}
         </>
     )
 }
