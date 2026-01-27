@@ -8,6 +8,9 @@
  * 
  * PERFORMANCE: Uses React Query for automatic caching and deduplication.
  * Multiple components calling useSubscription() share the same cached data.
+ * 
+ * SECURITY: isPaid/isDemo flags are derived server-side to ensure consistency.
+ * Client cannot manipulate these values - they come from the verified profile API.
  */
 
 import { useCallback, useMemo } from "react"
@@ -18,15 +21,20 @@ import {
   GatedFeature,
   canUseFeature,
   isFeatureSimulated,
-  isDemoTier,
-  isPaidTier,
   TIER_DISPLAY_NAMES,
   TIER_COLORS,
   getUpgradePrompt,
 } from "@/lib/subscription"
 
 // Query key for subscription data - shared across all useSubscription calls
-export const subscriptionQueryKey = ["subscription", "tier"] as const
+export const subscriptionQueryKey = ["subscription", "profile"] as const
+
+// Profile data from server
+interface SubscriptionProfile {
+  tier: SubscriptionTier
+  isDemo: boolean
+  isPaid: boolean
+}
 
 interface UseSubscriptionReturn {
   /** Current subscription tier */
@@ -35,9 +43,9 @@ interface UseSubscriptionReturn {
   tierName: string
   /** Tailwind classes for tier badge */
   tierColor: string
-  /** Whether user is in demo mode */
+  /** Whether user is in demo mode (server-derived) */
   isDemo: boolean
-  /** Whether user has paid subscription */
+  /** Whether user has paid subscription (server-derived) */
   isPaid: boolean
   /** Loading state */
   loading: boolean
@@ -51,29 +59,38 @@ interface UseSubscriptionReturn {
   refresh: () => Promise<void>
 }
 
+const DEFAULT_PROFILE: SubscriptionProfile = {
+  tier: "demo",
+  isDemo: true,
+  isPaid: false,
+}
+
 export function useSubscription(): UseSubscriptionReturn {
   const { user, loading: authLoading } = useAuth()
   const queryClient = useQueryClient()
 
   // Use React Query for caching and deduplication
-  const { data: tier = "demo", isLoading } = useQuery({
+  const { data: profile = DEFAULT_PROFILE, isLoading } = useQuery({
     queryKey: subscriptionQueryKey,
-    queryFn: async (): Promise<SubscriptionTier> => {
-      if (!user) return "demo"
+    queryFn: async (): Promise<SubscriptionProfile> => {
+      if (!user) return DEFAULT_PROFILE
       
       const res = await fetch("/api/user/profile")
       if (res.ok) {
-        const profile = await res.json()
-        const userTier = profile.subscription_tier as SubscriptionTier
-        // Treat 'free' as 'demo'
-        return userTier === "free" ? "demo" : userTier || "demo"
+        const data = await res.json()
+        return {
+          // Use server-provided values - these are authoritative
+          tier: data.subscription_tier as SubscriptionTier,
+          isDemo: data.is_demo ?? true,
+          isPaid: data.is_paid ?? false,
+        }
       }
-      return "demo"
+      return DEFAULT_PROFILE
     },
     enabled: !authLoading && !!user,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    placeholderData: "demo" as SubscriptionTier,
+    placeholderData: DEFAULT_PROFILE,
   })
 
   // Refresh function
@@ -81,15 +98,15 @@ export function useSubscription(): UseSubscriptionReturn {
     await queryClient.invalidateQueries({ queryKey: subscriptionQueryKey })
   }, [queryClient])
 
-  // Memoized helpers
+  // Memoized helpers - use server-derived tier for feature checks
   const canUse = useCallback(
-    (feature: GatedFeature) => canUseFeature(tier, feature),
-    [tier]
+    (feature: GatedFeature) => canUseFeature(profile.tier, feature),
+    [profile.tier]
   )
 
   const isSimulated = useCallback(
-    (feature: GatedFeature) => isFeatureSimulated(tier, feature),
-    [tier]
+    (feature: GatedFeature) => isFeatureSimulated(profile.tier, feature),
+    [profile.tier]
   )
 
   const getUpgradeMessage = useCallback(
@@ -99,18 +116,19 @@ export function useSubscription(): UseSubscriptionReturn {
 
   return useMemo(
     () => ({
-      tier,
-      tierName: TIER_DISPLAY_NAMES[tier],
-      tierColor: TIER_COLORS[tier],
-      isDemo: isDemoTier(tier),
-      isPaid: isPaidTier(tier),
+      tier: profile.tier,
+      tierName: TIER_DISPLAY_NAMES[profile.tier],
+      tierColor: TIER_COLORS[profile.tier],
+      // Use server-derived flags - cannot be manipulated client-side
+      isDemo: profile.isDemo,
+      isPaid: profile.isPaid,
       loading: isLoading || authLoading,
       canUse,
       isSimulated,
       getUpgradeMessage,
       refresh,
     }),
-    [tier, isLoading, authLoading, canUse, isSimulated, getUpgradeMessage, refresh]
+    [profile, isLoading, authLoading, canUse, isSimulated, getUpgradeMessage, refresh]
   )
 }
 
