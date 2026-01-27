@@ -5,13 +5,19 @@
  *
  * Fetches the user's current AI usage for the billing period.
  * Uses model multipliers - expensive models consume more of the budget.
+ * 
+ * PERFORMANCE: Uses React Query for automatic caching and deduplication.
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback, useMemo } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { useSubscription } from "./use-subscription"
 import { TIER_TOKEN_LIMITS, getModelMultiplier } from "@/lib/subscription"
 import { getSupabaseClient } from "@/lib/database/supabase"
+
+// Query key for AI usage - shared across all useAIUsage calls
+export const aiUsageQueryKey = ["ai", "usage"] as const
 
 export interface AIUsageStats {
   /** Effective tokens used (with model multipliers applied) */
@@ -57,20 +63,13 @@ function getCurrentBillingPeriod(): { start: Date; end: Date } {
 export function useAIUsage(): UseAIUsageReturn {
   const { user } = useAuth()
   const { tier, loading: tierLoading } = useSubscription()
-  const [usage, setUsage] = useState<AIUsageStats | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
+  const queryClient = useQueryClient()
 
-  const fetchUsage = useCallback(async () => {
-    if (!user) {
-      setUsage(null)
-      setLoading(false)
-      return
-    }
-
-    try {
-      setLoading(true)
-      setError(null)
+  // Use React Query for caching usage data
+  const { data: usage = null, isLoading, error: queryError } = useQuery({
+    queryKey: [...aiUsageQueryKey, user?.id, tier],
+    queryFn: async (): Promise<AIUsageStats | null> => {
+      if (!user) return null
 
       const supabase = getSupabaseClient()
       const { start, end } = getCurrentBillingPeriod()
@@ -114,7 +113,7 @@ export function useAIUsage(): UseAIUsageReturn {
         ? Math.min(100, Math.round((effectiveTokensUsed / totalAvailable) * 100))
         : 0
 
-      setUsage({
+      return {
         tokensUsed: effectiveTokensUsed,
         rawTokensUsed,
         requestsCount,
@@ -126,20 +125,17 @@ export function useAIUsage(): UseAIUsageReturn {
         tokensRemaining,
         periodStart: start,
         periodEnd: end,
-      })
-    } catch (err) {
-      console.error("Error fetching AI usage:", err)
-      setError(err instanceof Error ? err.message : "Failed to load usage data")
-    } finally {
-      setLoading(false)
-    }
-  }, [user, tier])
+      }
+    },
+    enabled: !tierLoading && !!user,
+    staleTime: 30 * 1000, // Cache for 30 seconds (usage changes frequently)
+    gcTime: 2 * 60 * 1000, // Keep in cache for 2 minutes
+  })
 
-  useEffect(() => {
-    if (!tierLoading) {
-      fetchUsage()
-    }
-  }, [tierLoading, fetchUsage])
+  // Refresh function
+  const refresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: aiUsageQueryKey })
+  }, [queryClient])
 
   // Check if user can afford a request with given model
   const canAfford = useCallback((modelId: string, estimatedTokens: number = 2000) => {
@@ -149,11 +145,19 @@ export function useAIUsage(): UseAIUsageReturn {
     return usage.tokensRemaining >= cost
   }, [usage])
 
+  // Convert query error to string
+  const error = useMemo(() => {
+    if (queryError) {
+      return queryError instanceof Error ? queryError.message : "Failed to load usage data"
+    }
+    return null
+  }, [queryError])
+
   return {
     usage,
-    loading: loading || tierLoading,
+    loading: isLoading || tierLoading,
     error,
-    refresh: fetchUsage,
+    refresh,
     canAfford,
   }
 }
