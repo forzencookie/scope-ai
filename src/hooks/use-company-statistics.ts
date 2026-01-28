@@ -102,18 +102,19 @@ export function useCompanyStatistics() {
         const netIncome = totals.netIncome || 0
 
         // Check which account classes have data
-        const hasAssets = accountBalances.some(a => a.accountNumber.startsWith('1') && a.balance !== 0)
-        const hasEquity = accountBalances.some(a => a.accountNumber.startsWith('20') && a.balance !== 0)
+        // Note: RPC returns 'account' as the field name, not 'accountNumber'
+        const hasAssets = accountBalances.some(a => String(a.account).startsWith('1') && a.balance !== 0)
+        const hasEquity = accountBalances.some(a => String(a.account).startsWith('20') && a.balance !== 0)
         const hasLiabilities = accountBalances.some(a =>
-            a.accountNumber.startsWith('2') &&
-            !a.accountNumber.startsWith('20') &&
+            String(a.account).startsWith('2') &&
+            !String(a.account).startsWith('20') &&
             a.balance !== 0
         )
-        const hasCash = accountBalances.some(a => a.accountNumber.startsWith('19') && a.balance !== 0)
-        const hasReceivables = accountBalances.some(a => a.accountNumber.startsWith('15') && a.balance !== 0)
-        const hasRevenue = accountBalances.some(a => a.accountNumber.startsWith('3') && a.balance !== 0)
+        const hasCash = accountBalances.some(a => String(a.account).startsWith('19') && a.balance !== 0)
+        const hasReceivables = accountBalances.some(a => String(a.account).startsWith('15') && a.balance !== 0)
+        const hasRevenue = accountBalances.some(a => String(a.account).startsWith('3') && a.balance !== 0)
         const hasExpenses = accountBalances.some(a =>
-            ['4', '5', '6', '7', '8'].some(prefix => a.accountNumber.startsWith(prefix)) &&
+            ['4', '5', '6', '7', '8'].some(prefix => String(a.account).startsWith(prefix)) &&
             a.balance !== 0
         )
 
@@ -123,8 +124,8 @@ export function useCompanyStatistics() {
         const solidity = canCalcSolidity && assets > 0 ? (equity / assets) * 100 : null
 
         // Kassalikviditet (Current Assets / Current Liabilities)
-        const cashAccounts = accountBalances.filter(a => a.accountNumber.startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
-        const receivableAccounts = accountBalances.filter(a => a.accountNumber.startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
+        const cashAccounts = accountBalances.filter(a => String(a.account).startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
+        const receivableAccounts = accountBalances.filter(a => String(a.account).startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
         const currentAssets = cashAccounts + receivableAccounts
         const canCalcLiquidity = (hasCash || hasReceivables) && hasLiabilities
         const liquidity = canCalcLiquidity && liabilities > 0 ? (currentAssets / liabilities) * 100 : null
