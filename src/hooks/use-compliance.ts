@@ -70,7 +70,7 @@ export function useCompliance() {
             const res = await fetch('/api/compliance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'document', ...doc, created_by: userId })
+                body: JSON.stringify({ action: 'document', ...doc, created_by: userId })
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json.error || 'Failed to add document')
@@ -85,7 +85,7 @@ export function useCompliance() {
             const res = await fetch('/api/compliance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'shareholder_update', id, ...updates })
+                body: JSON.stringify({ action: 'shareholder_update', id, ...updates })
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json.error || 'Failed to update shareholder')
@@ -100,7 +100,7 @@ export function useCompliance() {
             const res = await fetch('/api/compliance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ type: 'shareholder_create', ...shareholder })
+                body: JSON.stringify({ action: 'shareholder_create', ...shareholder })
             })
             const json = await res.json()
             if (!res.ok) throw new Error(json.error || 'Failed to add shareholder')

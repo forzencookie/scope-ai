@@ -21,7 +21,7 @@ import {
 } from "@/components/ui/sidebar"
 import { SettingsDialog } from "@/components/installningar/settings-dialog"
 import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
-import { AI_CHAT_EVENT } from "@/lib/ai/context"
+import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
 import { useAuth } from "@/hooks/use-auth"
 
 // Import data from the data layer
@@ -135,11 +135,35 @@ export function AppSidebar({
     setSettingsOpen(open)
   }
 
+  // Store pending AI context when mode switches
+  const pendingAIContextRef = React.useRef<PageContext | null>(null)
+
   // Handle global AI chat events
   React.useEffect(() => {
-    const handleOpenAIChat = () => {
+    const handleOpenAIChat = (e: Event) => {
+      const context = (e as CustomEvent).detail as PageContext
+      
+      // Store context to re-dispatch after sidebar mounts
+      if (context) {
+        pendingAIContextRef.current = context
+      }
+      
       setInternalMode("ai-chat")
       if (onModeChange) onModeChange("ai-chat")
+      
+      // If already in ai-chat mode, the sidebar is mounted and will handle it
+      // If switching modes, we need to wait for mount then re-dispatch
+      if (sidebarMode !== "ai-chat" && context) {
+        // Re-dispatch after a short delay to allow sidebar to mount
+        setTimeout(() => {
+          if (pendingAIContextRef.current) {
+            window.dispatchEvent(new CustomEvent(AI_CHAT_EVENT, { 
+              detail: pendingAIContextRef.current 
+            }))
+            pendingAIContextRef.current = null
+          }
+        }, 100)
+      }
     }
 
     const handleLoadConversation = () => {

@@ -54,13 +54,14 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { type, ...data } = body
+        // Use 'action' key to avoid collision with document's 'type' field
+        const { action, ...data } = body
         const supabase = userDb.client;
 
-        if (type === 'document') {
+        if (action === 'document') {
             const { data: newDoc, error } = await supabase
                 .from('corporate_documents' as any)
-                .insert({ ...data, company_id: userDb.companyId })
+                .insert({ ...data, user_id: userDb.userId, company_id: userDb.companyId })
                 .select()
                 .single();
             
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, data: newDoc })
         }
 
-        if (type === 'shareholder_update') {
+        if (action === 'shareholder_update') {
             const { id, ...updates } = data
             const { data: updated, error } = await supabase
                 .from('shareholders')
@@ -81,7 +82,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, data: updated })
         }
 
-        if (type === 'shareholder_create') {
+        if (action === 'shareholder_create') {
             const { id: _id, ...newShareholder } = data
             const { data: created, error } = await supabase
                 .from('shareholders')
