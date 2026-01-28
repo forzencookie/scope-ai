@@ -70,7 +70,9 @@ export function useSubscription(): UseSubscriptionReturn {
   const queryClient = useQueryClient()
 
   // Use React Query for caching and deduplication
-  const { data: profile = DEFAULT_PROFILE, isLoading } = useQuery({
+  // Note: Use isPending instead of isLoading to correctly detect when we have real data
+  // isLoading is false when placeholderData is provided, even before fetch completes
+  const { data: profile = DEFAULT_PROFILE, isPending, isFetching } = useQuery({
     queryKey: subscriptionQueryKey,
     queryFn: async (): Promise<SubscriptionProfile> => {
       if (!user) return DEFAULT_PROFILE
@@ -90,7 +92,6 @@ export function useSubscription(): UseSubscriptionReturn {
     enabled: !authLoading && !!user,
     staleTime: 5 * 60 * 1000, // Cache for 5 minutes
     gcTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    placeholderData: DEFAULT_PROFILE,
   })
 
   // Refresh function
@@ -122,13 +123,14 @@ export function useSubscription(): UseSubscriptionReturn {
       // Use server-derived flags - cannot be manipulated client-side
       isDemo: profile.isDemo,
       isPaid: profile.isPaid,
-      loading: isLoading || authLoading,
+      // Use isPending OR isFetching to ensure we wait for real data
+      loading: isPending || isFetching || authLoading,
       canUse,
       isSimulated,
       getUpgradeMessage,
       refresh,
     }),
-    [profile, isLoading, authLoading, canUse, isSimulated, getUpgradeMessage, refresh]
+    [profile, isPending, isFetching, authLoading, canUse, isSimulated, getUpgradeMessage, refresh]
   )
 }
 
