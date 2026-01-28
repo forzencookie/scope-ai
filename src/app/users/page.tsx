@@ -70,7 +70,7 @@ export default function RegisterPage() {
   // Redirect if already authenticated
   useEffect(() => {
     if (isAuthenticated && !authLoading) {
-      router.push('/dashboard/inkorg')
+      router.push('/dashboard')
     }
   }, [isAuthenticated, authLoading, router])
 

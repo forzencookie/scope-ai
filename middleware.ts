@@ -146,7 +146,7 @@ export async function middleware(request: NextRequest) {
 
     // Redirect authenticated users away from login/register pages
     if (isPublicRoute && isAuthenticated && (pathname === '/login' || pathname === '/register')) {
-        return NextResponse.redirect(new URL('/dashboard/inkorg', request.url))
+        return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
     // Add user info to headers for API routes (so they don't need to re-fetch)
