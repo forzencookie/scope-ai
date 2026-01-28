@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react"
 import type { SceneType } from "@/components/ai/pixel-mascots"
 
 // Types for AI Dialog state
@@ -239,22 +239,22 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
         setHighlightedId(null)
     }, [])
 
+    const value = useMemo(() => ({
+        status,
+        output,
+        isMobile,
+        sceneType,
+        showThinking,
+        showComplete,
+        hide,
+        accept,
+        requestEdit,
+        highlightedId,
+        clearHighlight,
+    }), [status, output, isMobile, sceneType, showThinking, showComplete, hide, accept, requestEdit, highlightedId, clearHighlight])
+
     return (
-        <AIDialogContext.Provider
-            value={{
-                status,
-                output,
-                isMobile,
-                sceneType,
-                showThinking,
-                showComplete,
-                hide,
-                accept,
-                requestEdit,
-                highlightedId,
-                clearHighlight,
-            }}
-        >
+        <AIDialogContext.Provider value={value}>
             {children}
         </AIDialogContext.Provider>
     )

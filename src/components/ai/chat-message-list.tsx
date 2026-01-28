@@ -1,5 +1,6 @@
 "use client"
 
+import React from "react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, FileText, Image as ImageIcon } from "lucide-react"
@@ -18,7 +19,7 @@ import { useState } from "react"
 
 // Attachment preview with image error fallback
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function AttachmentPreview({ attachment }: { attachment: any }) {
+const AttachmentPreview = React.memo(function AttachmentPreview({ attachment }: { attachment: any }) {
     const [imageError, setImageError] = useState(false)
     const isImage = attachment.type?.startsWith('image/')
 
@@ -62,7 +63,7 @@ function AttachmentPreview({ attachment }: { attachment: any }) {
             </div>
         </div>
     )
-}
+})
 
 
 interface ChatMessageListProps {
@@ -74,7 +75,7 @@ interface ChatMessageListProps {
     onRegenerate?: () => void
 }
 
-export function ChatMessageList({
+export const ChatMessageList = React.memo(function ChatMessageList({
     messages,
     isLoading,
     onRetry,
@@ -146,7 +147,7 @@ export function ChatMessageList({
                             <div className="rounded-lg border border-border p-4 bg-muted/30">
                                 <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
                                 <ul className="space-y-2">
-                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                                    { }
                                     {((message.display.data as { benefits?: Array<{ id?: string; name?: string; category?: string }> }).benefits || []).map((b) => (
                                         <li key={b.id || Math.random()} className="text-xs flex justify-between items-center">
                                             <span>{b.name}</span>
@@ -216,9 +217,9 @@ export function ChatMessageList({
                             {/* Mentions */}
                             {message.mentions && message.mentions.length > 0 && (
                                 <div className="flex flex-wrap gap-2 justify-end">
-                                    {message.mentions.map((mention, i) => (
+                                    {message.mentions.map((mention) => (
                                         <MentionBadge
-                                            key={i}
+                                            key={mention.id || mention.label}
                                             item={mention}
                                         />
                                     ))}
@@ -229,7 +230,7 @@ export function ChatMessageList({
                                 <div className="flex flex-wrap gap-2 justify-end">
                                     {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
                                     {message.attachments.map((att: any, i: number) => (
-                                        <AttachmentPreview key={i} attachment={att} />
+                                        <AttachmentPreview key={att.id || att.name || `att-${i}`} attachment={att} />
                                     ))}
                                 </div>
                             )}
@@ -247,4 +248,4 @@ export function ChatMessageList({
             ))}
         </div>
     )
-}
+})

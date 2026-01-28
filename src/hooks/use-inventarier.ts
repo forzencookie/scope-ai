@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useCallback, useMemo } from "react"
+import { useState, useCallback, useMemo, useEffect } from "react"
 import { inventarieService, type Inventarie } from '@/services/inventarie-service'
 import { Monitor, Armchair, Car, Wrench, Package } from "lucide-react"
 
@@ -9,19 +9,32 @@ export function useInventarier() {
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
 
-    const fetchInventarier = useCallback(async () => {
+    const fetchInventarier = useCallback(async (signal?: AbortSignal) => {
         setIsLoading(true)
         setError(null)
         try {
             const listData = await inventarieService.getInventarier()
-            setInventarier(listData.inventarier)
+            if (!signal?.aborted) {
+                setInventarier(listData.inventarier)
+            }
         } catch (err) {
-            console.error('Failed to fetch inventarier:', err)
-            setError(err instanceof Error ? err : new Error('Unknown error'))
+            if (!signal?.aborted) {
+                console.error('Failed to fetch inventarier:', err)
+                setError(err instanceof Error ? err : new Error('Unknown error'))
+            }
         } finally {
-            setIsLoading(false)
+            if (!signal?.aborted) {
+                setIsLoading(false)
+            }
         }
     }, [])
+
+    // Initial fetch with cleanup
+    useEffect(() => {
+        const controller = new AbortController()
+        fetchInventarier(controller.signal)
+        return () => controller.abort()
+    }, [fetchInventarier])
 
     const addInventarie = useCallback(async (data: Omit<Inventarie, "id">) => {
         try {

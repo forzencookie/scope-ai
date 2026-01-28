@@ -112,8 +112,8 @@ export function MeetingCard({ meeting, isExpanded, onToggleExpand, children }: M
                                 <span>Viktiga beslut ({meeting.decisions.length})</span>
                             </div>
                             <ul className="list-disc list-inside text-muted-foreground space-y-1">
-                                {meeting.decisions.slice(0, 2).map((d, i) => (
-                                    <li key={i} className="truncate">{d.title}</li>
+                                {meeting.decisions.slice(0, 2).map((d) => (
+                                    <li key={d.id} className="truncate">{d.title}</li>
                                 ))}
                                 {meeting.decisions.length > 2 && (
                                     <li className="text-xs italic">

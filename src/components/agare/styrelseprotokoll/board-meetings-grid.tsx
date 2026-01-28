@@ -147,8 +147,8 @@ export function BoardMeetingsGrid({
                            {meeting.agendaItems
                              .filter(i => i.decision)
                              .slice(0, 2)
-                             .map((item, idx) => (
-                               <li key={idx} className="flex gap-2">
+                             .map((item) => (
+                               <li key={item.id} className="flex gap-2">
                                  <span className="text-muted-foreground">•</span>
                                  <span className="line-clamp-1">{item.title}</span>
                                </li>

@@ -1,3 +1,4 @@
+import { useMemo } from "react"
 import {
     TrendingDown,
     Loader2,
@@ -37,7 +38,17 @@ const PLACEHOLDER_CATEGORIES = [
 
 export function Kostnadsanalys() {
     const { expenseCategories, isLoading } = useCompanyStatistics()
-    const totalExpenses = expenseCategories.reduce((sum, cat) => sum + cat.amount, 0)
+    
+    // Memoize sorted categories to avoid re-sorting on every render
+    const sortedCategories = useMemo(
+        () => [...expenseCategories].sort((a, b) => b.amount - a.amount),
+        [expenseCategories]
+    )
+    
+    const totalExpenses = useMemo(
+        () => expenseCategories.reduce((sum, cat) => sum + cat.amount, 0),
+        [expenseCategories]
+    )
 
     if (isLoading) {
         return (
@@ -47,9 +58,6 @@ export function Kostnadsanalys() {
             </div>
         )
     }
-
-    // Sort categories largest first for better visualization
-    const sortedCategories = [...expenseCategories].sort((a, b) => b.amount - a.amount)
 
     // Use placeholders if no data
     const displayCategories = sortedCategories.length > 0 ? sortedCategories : PLACEHOLDER_CATEGORIES

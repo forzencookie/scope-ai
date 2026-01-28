@@ -1,13 +1,24 @@
 "use client"
 
 import { Suspense, use } from "react"
+import dynamic from "next/dynamic"
 
-// Import page content components (moved from app routes)
-import PayrollPage from "@/components/pages/payroll-page"
-import AccountingPage from "@/components/pages/accounting-page"
-import ReportsPage from "@/components/pages/reports-page"
-import HandelserPage from "@/components/pages/handelser-page"
-import ParterPage from "@/components/pages/parter-page"
+// Dynamic imports for better code splitting and faster initial load
+const PayrollPage = dynamic(() => import("@/components/pages/payroll-page"), {
+    loading: () => <div className="p-6">Laddar löner...</div>
+})
+const AccountingPage = dynamic(() => import("@/components/pages/accounting-page"), {
+    loading: () => <div className="p-6">Laddar bokföring...</div>
+})
+const ReportsPage = dynamic(() => import("@/components/pages/reports-page"), {
+    loading: () => <div className="p-6">Laddar rapporter...</div>
+})
+const HandelserPage = dynamic(() => import("@/components/pages/handelser-page"), {
+    loading: () => <div className="p-6">Laddar händelser...</div>
+})
+const ParterPage = dynamic(() => import("@/components/pages/parter-page"), {
+    loading: () => <div className="p-6">Laddar ägare...</div>
+})
 
 // Map slug to page component and label (Swedish URL names)
 const pageMap: Record<string, { component: React.ComponentType; label: string }> = {

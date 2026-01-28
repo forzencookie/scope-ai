@@ -88,9 +88,9 @@ export function NextMeetingCard({
           </div>
           {/* Compact checklist */}
           <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            {preparationItems.map((item, idx) => (
+            {preparationItems.map((item) => (
               <div
-                key={idx}
+                key={item.label}
                 className={cn(
                   "flex items-center gap-1.5",
                   item.done ? "text-green-600 dark:text-green-500" : "text-muted-foreground"

@@ -1,3 +1,4 @@
+import React from "react"
 import { Receipt } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
@@ -12,7 +13,7 @@ export interface ReceiptCardProps {
     }
 }
 
-export function ReceiptCard({ receipt }: ReceiptCardProps) {
+export const ReceiptCard = React.memo(function ReceiptCard({ receipt }: ReceiptCardProps) {
     return (
         <div className="rounded-lg border bg-card p-4 space-y-3">
             <div className="flex items-start justify-between">
@@ -35,4 +36,4 @@ export function ReceiptCard({ receipt }: ReceiptCardProps) {
             )}
         </div>
     )
-}
+})

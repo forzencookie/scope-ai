@@ -20,6 +20,8 @@ export function useCompanyStatistics() {
     const [accountBalances, setAccountBalances] = useState<any[]>([])
 
     useEffect(() => {
+        let isMounted = true
+
         async function fetchStats() {
             setIsLoading(true)
             const supabase = getSupabaseClient()
@@ -40,21 +42,25 @@ export function useCompanyStatistics() {
                 if (countsRes.error) console.error('Counts Error:', countsRes.error)
                 if (balancesRes.error) console.error('Balances Error:', balancesRes.error)
 
-                setMonthlyFlow(flowRes.data || [])
-                setDashboardCounts(countsRes.data || {
-                    transactions: { total: 0, unbooked: 0 },
-                    invoices: { sent: 0, overdue: 0, totalValue: 0 }
-                })
-                setAccountBalances(balancesRes.data || [])
+                if (isMounted) {
+                    setMonthlyFlow(flowRes.data || [])
+                    setDashboardCounts(countsRes.data || {
+                        transactions: { total: 0, unbooked: 0 },
+                        invoices: { sent: 0, overdue: 0, totalValue: 0 }
+                    })
+                    setAccountBalances(balancesRes.data || [])
+                }
 
             } catch (err) {
                 console.error('Failed to fetch dashboard stats', err)
             } finally {
-                setIsLoading(false)
+                if (isMounted) setIsLoading(false)
             }
         }
 
         fetchStats()
+
+        return () => { isMounted = false }
     }, [])
 
     // Calculate totals from account balances for KPIs

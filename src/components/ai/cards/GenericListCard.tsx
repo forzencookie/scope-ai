@@ -15,8 +15,8 @@ export function GenericListCard({ title, items }: GenericListCardProps) {
         <div className="rounded-lg border bg-card p-4 space-y-3">
             <h4 className="font-semibold">{title}</h4>
             <div className="space-y-2">
-                {items.map((item, index) => (
-                    <div key={index} className="flex items-center justify-between py-1.5 border-b last:border-0">
+                {items.map((item) => (
+                    <div key={item.primary} className="flex items-center justify-between py-1.5 border-b last:border-0">
                         <div>
                             <p className="text-sm font-medium">{item.primary}</p>
                             {item.secondary && (

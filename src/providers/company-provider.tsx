@@ -6,7 +6,7 @@
 // ============================================
 
 import * as React from "react"
-import { createContext, useContext, useState, useEffect, useCallback } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
 
@@ -317,7 +317,7 @@ export function CompanyProvider({
   const companyTypeName = companyTypes[companyType].name
   const companyTypeFullName = getCompanyTypeFullName(companyType)
 
-  const value: CompanyContextValue = {
+  const value = useMemo<CompanyContextValue>(() => ({
     company,
     companyType,
     isLoading,
@@ -327,7 +327,7 @@ export function CompanyProvider({
     hasFeature: checkFeature,
     companyTypeName,
     companyTypeFullName,
-  }
+  }), [company, companyType, isLoading, setCompanyType, setCompany, updateCompany, checkFeature, companyTypeName, companyTypeFullName])
 
   return (
     <CompanyContext.Provider value={value}>

@@ -1,5 +1,6 @@
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback } from "react"
+import { useCachedQuery } from "./use-cached-query"
 
 export interface VerificationRow {
     account: string
@@ -17,35 +18,25 @@ export interface Verification {
     sourceId?: string
 }
 
+async function fetchVerificationsFromAPI(): Promise<Verification[]> {
+    const response = await fetch('/api/verifications')
+    if (!response.ok) throw new Error('Failed to fetch')
+    const data = await response.json()
+    return data.verifications || []
+}
+
 export function useVerifications() {
-    const [verifications, setVerifications] = useState<Verification[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    const fetchVerifications = useCallback(async () => {
-        try {
-            setError(null)
-            const response = await fetch('/api/verifications')
-            if (!response.ok) throw new Error('Failed to fetch')
-            const data = await response.json()
-
-            if (!data.verifications) {
-                setVerifications([])
-            } else {
-                setVerifications(data.verifications)
-            }
-        } catch (err) {
-            console.error(err)
-            setVerifications([])
-            setError('Failed to load verifications')
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    useEffect(() => {
-        fetchVerifications()
-    }, [fetchVerifications])
+    const {
+        data: verifications,
+        isLoading,
+        error,
+        refetch,
+        invalidate,
+    } = useCachedQuery<Verification[]>({
+        cacheKey: 'verifications',
+        queryFn: fetchVerificationsFromAPI,
+        ttlMs: 5 * 60 * 1000, // 5 minutes cache
+    })
 
     const addVerification = useCallback(async (verification: Omit<Verification, "id">) => {
         try {
@@ -55,13 +46,19 @@ export function useVerifications() {
                 body: JSON.stringify(verification)
             })
             if (!response.ok) throw new Error('Failed to create verification')
-            await fetchVerifications()
+            await invalidate() // Invalidate cache and refetch
             return true
         } catch (err) {
             console.error(err)
             return false
         }
-    }, [fetchVerifications])
+    }, [invalidate])
 
-    return { verifications, isLoading, error, refresh: fetchVerifications, addVerification }
+    return {
+        verifications: verifications || [],
+        isLoading,
+        error,
+        refresh: refetch,
+        addVerification,
+    }
 }

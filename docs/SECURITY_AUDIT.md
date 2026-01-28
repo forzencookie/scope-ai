@@ -5,13 +5,15 @@
 **Date:** January 26, 2026  
 **Auditor:** Claude (Automated Security Analysis)  
 **Scope:** Full codebase, database migrations, API routes, authentication flows  
-**Last Updated:** January 26, 2026 - All critical fixes applied
+**Last Updated:** January 26, 2026 - All critical fixes applied  
+⚠️ **Disclaimer:** This is a point-in-time analysis. The codebase may have changed since this audit was conducted.
 
 ---
 
 ## EXECUTIVE SUMMARY
 
 This is a **sensitive financial platform** handling:
+
 - Bank transactions
 - Tax declarations (Skatteverket submissions)
 - Payroll & employee data
@@ -21,19 +23,19 @@ This is a **sensitive financial platform** handling:
 
 ### Overall Security Score: 8.5/10 ✅ SIGNIFICANTLY IMPROVED (was 5.8)
 
-| Severity | Count | Status |
-|----------|-------|--------|
-| 🚨 Critical Issues | ~~8~~ → 0 | ✅ All fixed |
-| ⚠️ High-Risk Issues | ~~11~~ → 2 | 9 fixed (gov routes are preview/mock) |
-| 🟡 Medium-Risk Issues | ~~15~~ → 10 | 5 fixed |
+| Severity              | Count       | Status                                |
+| --------------------- | ----------- | ------------------------------------- |
+| 🚨 Critical Issues    | ~~8~~ → 0   | ✅ All fixed                          |
+| ⚠️ High-Risk Issues   | ~~11~~ → 2  | 9 fixed (gov routes are preview/mock) |
+| 🟡 Medium-Risk Issues | ~~15~~ → 10 | 5 fixed                               |
 
 ### Fixes Applied
 
-| Migration/File | Fixes |
-|----------------|-------|
+| Migration/File                                     | Fixes                                                |
+| -------------------------------------------------- | ---------------------------------------------------- |
 | `20260125200000_security_fixes_best_practices.sql` | RLS on all tables, user-scoped policies, revoke anon |
-| `20260126200000_fix_remaining_security_gaps.sql` | corporate_documents, roadmap_steps |
-| API routes (7 files) | Added `verifyAuth()` to all unprotected endpoints |
+| `20260126200000_fix_remaining_security_gaps.sql`   | corporate_documents, roadmap_steps                   |
+| API routes (7 files)                               | Added `verifyAuth()` to all unprotected endpoints    |
 
 ---
 
@@ -41,18 +43,18 @@ This is a **sensitive financial platform** handling:
 
 ### Category 1: PUBLIC PAGES (Marketing/Auth)
 
-| Page | Purpose | Data Access | Security Status |
-|------|---------|-------------|-----------------|
-| `/` | Landing page | None | ✅ Safe |
-| `/priser` | Pricing | None | ✅ Safe |
-| `/om-oss` | About | None | ✅ Safe |
-| `/kontakt` | Contact form | None | ⚠️ Missing rate limiting |
-| `/funktioner` | Features | None | ✅ Safe |
-| `/villkor` | Terms | None | ✅ Safe |
-| `/integritetspolicy` | Privacy | None | ✅ Safe |
-| `/login` | Authentication | Supabase Auth | ✅ Secure |
-| `/register` | Registration | Supabase Auth | ✅ Secure |
-| `/forgot-password` | Password reset | Supabase Auth | ✅ Secure |
+| Page                 | Purpose        | Data Access   | Security Status          |
+| -------------------- | -------------- | ------------- | ------------------------ |
+| `/`                  | Landing page   | None          | ✅ Safe                  |
+| `/priser`            | Pricing        | None          | ✅ Safe                  |
+| `/om-oss`            | About          | None          | ✅ Safe                  |
+| `/kontakt`           | Contact form   | None          | ⚠️ Missing rate limiting |
+| `/funktioner`        | Features       | None          | ✅ Safe                  |
+| `/villkor`           | Terms          | None          | ✅ Safe                  |
+| `/integritetspolicy` | Privacy        | None          | ✅ Safe                  |
+| `/login`             | Authentication | Supabase Auth | ✅ Secure                |
+| `/register`          | Registration   | Supabase Auth | ✅ Secure                |
+| `/forgot-password`   | Password reset | Supabase Auth | ✅ Secure                |
 
 **Vulnerabilities:** `/kontakt` endpoint lacks rate limiting - potential spam vector
 
@@ -60,17 +62,18 @@ This is a **sensitive financial platform** handling:
 
 ### Category 2: DASHBOARD - CORE FINANCIAL PAGES
 
-| Page | Purpose | Data Tables | Sensitivity | Security |
-|------|---------|-------------|-------------|----------|
-| `/dashboard/handelser` | Events/Tasks | `events`, `roadmap_steps` | MEDIUM | ✅ RLS Protected |
-| `/dashboard/bokforing` | **Bookkeeping** | `transactions`, `receipts`, `verifications`, `supplierinvoices`, `inventarier` | **CRITICAL** | ✅ RLS Protected |
-| `/dashboard/rapporter` | **Financial Reports** | `taxreports`, `financialperiods`, `vatdeclarations` | **CRITICAL** | ✅ RLS Protected |
-| `/dashboard/loner` | **Payroll** | `employees`, `payslips`, `benefits` | **CRITICAL** | ✅ RLS Protected |
-| `/dashboard/agare` | **Ownership/Governance** | `shareholders`, `dividends`, `boardminutes`, `companymeetings` | **CRITICAL** | ⚠️ Partial - `corporate_documents` needs fix |
-| `/dashboard/foretagsstatistik` | Statistics | Aggregated data | MEDIUM | ✅ RLS Protected |
-| `/dashboard/settings` | Settings | `profiles`, `settings` | LOW | ✅ RLS Protected |
+| Page                           | Purpose                  | Data Tables                                                                    | Sensitivity  | Security                                     |
+| ------------------------------ | ------------------------ | ------------------------------------------------------------------------------ | ------------ | -------------------------------------------- |
+| `/dashboard/handelser`         | Events/Tasks             | `events`, `roadmap_steps`                                                      | MEDIUM       | ✅ RLS Protected                             |
+| `/dashboard/bokforing`         | **Bookkeeping**          | `transactions`, `receipts`, `verifications`, `supplierinvoices`, `inventarier` | **CRITICAL** | ✅ RLS Protected                             |
+| `/dashboard/rapporter`         | **Financial Reports**    | `taxreports`, `financialperiods`, `vatdeclarations`                            | **CRITICAL** | ✅ RLS Protected                             |
+| `/dashboard/loner`             | **Payroll**              | `employees`, `payslips`, `benefits`                                            | **CRITICAL** | ✅ RLS Protected                             |
+| `/dashboard/agare`             | **Ownership/Governance** | `shareholders`, `dividends`, `boardminutes`, `companymeetings`                 | **CRITICAL** | ⚠️ Partial - `corporate_documents` needs fix |
+| `/dashboard/foretagsstatistik` | Statistics               | Aggregated data                                                                | MEDIUM       | ✅ RLS Protected                             |
+| `/dashboard/settings`          | Settings                 | `profiles`, `settings`                                                         | LOW          | ✅ RLS Protected                             |
 
 **Page Data Flows:**
+
 - All pages properly use `user_id` scoping via hooks
 - Supabase RLS enforces row-level isolation
 - Middleware validates authentication
@@ -81,36 +84,36 @@ This is a **sensitive financial platform** handling:
 
 ### ✅ PREVIOUSLY UNPROTECTED - NOW FIXED (Jan 26, 2026)
 
-| Route | Method | Previous Issue | Fix Applied |
-|-------|--------|----------------|-------------|
-| `/api/ai/extract` | POST | NO AUTH | ✅ `verifyAuth()` added |
-| `/api/ai/extract-receipt` | POST | NO AUTH | ✅ `verifyAuth()` added |
-| `/api/cleanup` | DELETE | NO AUTH + DESTRUCTIVE | ✅ `verifyAuth()` + user-scoped DB (users can only delete own data) |
-| `/api/partners` | GET/POST | Wrong DB client | ✅ `verifyAuth()` + `createUserScopedDb()` |
-| `/api/chat/booking` | POST | NO AUTH | ✅ `verifyAuth()` added |
-| `/api/chat/title` | POST | NO AUTH | ✅ `verifyAuth()` added |
-| `/api/onboarding/seed` | POST | NO AUTH + Service Role | ✅ `verifyAuth()` + user-scoped DB |
+| Route                     | Method   | Previous Issue         | Fix Applied                                                         |
+| ------------------------- | -------- | ---------------------- | ------------------------------------------------------------------- |
+| `/api/ai/extract`         | POST     | NO AUTH                | ✅ `verifyAuth()` added                                             |
+| `/api/ai/extract-receipt` | POST     | NO AUTH                | ✅ `verifyAuth()` added                                             |
+| `/api/cleanup`            | DELETE   | NO AUTH + DESTRUCTIVE  | ✅ `verifyAuth()` + user-scoped DB (users can only delete own data) |
+| `/api/partners`           | GET/POST | Wrong DB client        | ✅ `verifyAuth()` + `createUserScopedDb()`                          |
+| `/api/chat/booking`       | POST     | NO AUTH                | ✅ `verifyAuth()` added                                             |
+| `/api/chat/title`         | POST     | NO AUTH                | ✅ `verifyAuth()` added                                             |
+| `/api/onboarding/seed`    | POST     | NO AUTH + Service Role | ✅ `verifyAuth()` + user-scoped DB                                  |
 
 ### ⚠️ REMAINING UNPROTECTED ROUTES
 
-| Route | Method | Issue | Impact |
-|-------|--------|-------|--------|
-| `/api/bolagsverket` | POST | **NO AUTH** | Government API exposed |
-| `/api/skatteverket` | POST | **NO AUTH** | Government API exposed |
+| Route               | Method | Issue       | Impact                 |
+| ------------------- | ------ | ----------- | ---------------------- |
+| `/api/bolagsverket` | POST   | **NO AUTH** | Government API exposed |
+| `/api/skatteverket` | POST   | **NO AUTH** | Government API exposed |
 
 ### WELL-SECURED ROUTES (Score: 8-10/10)
 
-| Route | Method | Security Features |
-|-------|--------|-------------------|
-| `/api/chat/agents` | POST | Auth + Rate Limiting + Origin Validation + Token Limits |
-| `/api/stripe/checkout` | POST | Auth + User-scoped DB + Stripe validation |
-| `/api/stripe/portal` | POST | Auth + Ownership check |
-| `/api/stripe/webhook` | POST | Stripe signature verification |
-| `/api/transactions/*` | GET/POST | Auth + RLS + User-scoped DB |
-| `/api/invoices/*` | GET/POST | Auth + RLS + User-scoped DB |
-| `/api/receipts/*` | GET/POST | Auth + RLS + User-scoped DB |
-| `/api/employees/*` | GET/POST | Auth + RLS + User-scoped DB |
-| `/api/payroll/*` | GET/POST | Auth + RLS + User-scoped DB |
+| Route                  | Method   | Security Features                                       |
+| ---------------------- | -------- | ------------------------------------------------------- |
+| `/api/chat/agents`     | POST     | Auth + Rate Limiting + Origin Validation + Token Limits |
+| `/api/stripe/checkout` | POST     | Auth + User-scoped DB + Stripe validation               |
+| `/api/stripe/portal`   | POST     | Auth + Ownership check                                  |
+| `/api/stripe/webhook`  | POST     | Stripe signature verification                           |
+| `/api/transactions/*`  | GET/POST | Auth + RLS + User-scoped DB                             |
+| `/api/invoices/*`      | GET/POST | Auth + RLS + User-scoped DB                             |
+| `/api/receipts/*`      | GET/POST | Auth + RLS + User-scoped DB                             |
+| `/api/employees/*`     | GET/POST | Auth + RLS + User-scoped DB                             |
+| `/api/payroll/*`       | GET/POST | Auth + RLS + User-scoped DB                             |
 
 ---
 
@@ -118,14 +121,14 @@ This is a **sensitive financial platform** handling:
 
 ### Tables Requiring user_id Scoping (41 tables identified)
 
-| Category | Tables | user_id | RLS | Policies |
-|----------|--------|---------|-----|----------|
-| **Financial** | `transactions`, `receipts`, `verifications`, `supplierinvoices`, `customerinvoices`, `inventarier`, `accountbalances` | ✅ All | ✅ All | ✅ All have CRUD policies |
-| **Payroll** | `employees`, `payslips`, `benefits`, `employeebenefits` | ✅ All | ✅ All | ✅ All secured |
-| **Tax/Compliance** | `taxreports`, `vatdeclarations`, `agireports`, `incomedeclarations`, `k10declarations`, `taxcalendar`, `financialperiods`, `monthclosings` | ✅ All | ✅ All | ✅ All secured |
-| **Corporate** | `shareholders`, `dividends`, `sharetransactions`, `companymeetings`, `boardminutes`, `annualclosings`, `annualreports` | ✅ All | ✅ All | ✅ All secured |
-| **Documents** | `documents`, `neappendices` | ⚠️ Check | ⚠️ Check | ⚠️ Verify |
-| **System** | `aiusage`, `ailogs`, `agent_metrics`, `ratelimits`, `ratelimitssliding` | ✅ Mostly | ✅ All | ✅ Service role protected |
+| Category           | Tables                                                                                                                                     | user_id   | RLS      | Policies                  |
+| ------------------ | ------------------------------------------------------------------------------------------------------------------------------------------ | --------- | -------- | ------------------------- |
+| **Financial**      | `transactions`, `receipts`, `verifications`, `supplierinvoices`, `customerinvoices`, `inventarier`, `accountbalances`                      | ✅ All    | ✅ All   | ✅ All have CRUD policies |
+| **Payroll**        | `employees`, `payslips`, `benefits`, `employeebenefits`                                                                                    | ✅ All    | ✅ All   | ✅ All secured            |
+| **Tax/Compliance** | `taxreports`, `vatdeclarations`, `agireports`, `incomedeclarations`, `k10declarations`, `taxcalendar`, `financialperiods`, `monthclosings` | ✅ All    | ✅ All   | ✅ All secured            |
+| **Corporate**      | `shareholders`, `dividends`, `sharetransactions`, `companymeetings`, `boardminutes`, `annualclosings`, `annualreports`                     | ✅ All    | ✅ All   | ✅ All secured            |
+| **Documents**      | `documents`, `neappendices`                                                                                                                | ⚠️ Check  | ⚠️ Check | ⚠️ Verify                 |
+| **System**         | `aiusage`, `ailogs`, `agent_metrics`, `ratelimits`, `ratelimitssliding`                                                                    | ✅ Mostly | ✅ All   | ✅ Service role protected |
 
 ### Tables With Security Issues
 
@@ -165,11 +168,13 @@ This is a **sensitive financial platform** handling:
 ### 3. PREMIUM FEATURE BYPASS RISK: MEDIUM ⚠️
 
 **Current protection:**
+
 - `subscription_tier` on `profiles` table
 - `/api/models/available` checks tier before returning models
 - AI routes check tier via `/api/chat/agents`
 
 **Gaps:**
+
 - No rate limiting on `/api/ai/extract` - free tier users could abuse
 - Subscription status not checked at middleware level
 - Missing server-side validation on expensive operations
@@ -177,12 +182,14 @@ This is a **sensitive financial platform** handling:
 ### 4. UNLIMITED EXPENSIVE OPERATIONS RISK: HIGH 🚨
 
 **Unprotected expensive endpoints:**
+
 - `/api/ai/extract` - GPT-4o Vision (~$0.01-0.05 per request)
 - `/api/ai/extract-receipt` - Same
 - `/api/transcribe` - Whisper API
 - `/api/chat/booking` - AI bookkeeping
 
 **Mitigation needed:**
+
 - Rate limiting per user per tier
 - Token quotas per billing period
 - Request validation
@@ -205,19 +212,20 @@ This is a **sensitive financial platform** handling:
 
 ### Priority 1: Fix Unprotected API Routes ✅ COMPLETED (Jan 26, 2026)
 
-| Route | Fix | Status |
-|-------|-----|--------|
-| `/api/ai/extract` | Add `verifyAuth()` + rate limiting | ✅ Done |
-| `/api/ai/extract-receipt` | Add `verifyAuth()` + rate limiting | ✅ Done |
-| `/api/cleanup` | Secured with auth + user-scoped DB | ✅ Done |
-| `/api/partners` | Use `createUserScopedDb()` | ✅ Done |
-| `/api/chat/booking` | Add `verifyAuth()` | ✅ Done |
-| `/api/chat/title` | Add `verifyAuth()` | ✅ Done |
-| `/api/onboarding/seed` | Add `verifyAuth()` + user-scoped DB | ✅ Done |
+| Route                     | Fix                                 | Status  |
+| ------------------------- | ----------------------------------- | ------- |
+| `/api/ai/extract`         | Add `verifyAuth()` + rate limiting  | ✅ Done |
+| `/api/ai/extract-receipt` | Add `verifyAuth()` + rate limiting  | ✅ Done |
+| `/api/cleanup`            | Secured with auth + user-scoped DB  | ✅ Done |
+| `/api/partners`           | Use `createUserScopedDb()`          | ✅ Done |
+| `/api/chat/booking`       | Add `verifyAuth()`                  | ✅ Done |
+| `/api/chat/title`         | Add `verifyAuth()`                  | ✅ Done |
+| `/api/onboarding/seed`    | Add `verifyAuth()` + user-scoped DB | ✅ Done |
 
 ### Priority 2: Consolidated Migration
 
 Create a single migration that:
+
 1. Creates all tables with proper types
 2. Adds `user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE` to all tables
 3. Enables RLS on all tables
@@ -229,6 +237,7 @@ Create a single migration that:
 ### Priority 3: Rate Limiting Infrastructure
 
 Add rate limiting table and middleware for:
+
 - AI endpoints: 10 requests/minute (free), 100/minute (pro)
 - Import endpoints: 5/minute
 - Government API: 3/minute
@@ -237,14 +246,14 @@ Add rate limiting table and middleware for:
 
 ## 📊 SECURITY SCORE BREAKDOWN
 
-| Category | Score | Status |
-|----------|-------|--------|
-| AI Routes | ~~4.5/10~~ → **8.5/10** | 🟢 Fixed - Auth added |
-| Payment Routes | **9.3/10** | 🟢 Good |
-| Auth Routes | **9/10** | 🟢 Good |
-| Financial Data | **7.4/10** | 🟡 Moderate |
-| User Data | ~~5.5/10~~ → **7.5/10** | 🟡 Improved |
-| System Routes | ~~0.5/10~~ → **6/10** | 🟡 Cleanup secured |
+| Category       | Score                   | Status                |
+| -------------- | ----------------------- | --------------------- |
+| AI Routes      | ~~4.5/10~~ → **8.5/10** | 🟢 Fixed - Auth added |
+| Payment Routes | **9.3/10**              | 🟢 Good               |
+| Auth Routes    | **9/10**                | 🟢 Good               |
+| Financial Data | **7.4/10**              | 🟡 Moderate           |
+| User Data      | ~~5.5/10~~ → **7.5/10** | 🟡 Improved           |
+| System Routes  | ~~0.5/10~~ → **6/10**   | 🟡 Cleanup secured    |
 
 **Overall Score: 7.2/10** ✅ (was 5.8/10)
 
@@ -263,5 +272,5 @@ Add rate limiting table and middleware for:
 
 ---
 
-*This audit was generated automatically. Manual review recommended for production deployment.*
-*Last updated: January 26, 2026 - Priority 1 API route fixes applied.*
+_This audit was generated automatically. Manual review recommended for production deployment._
+_Last updated: January 26, 2026 - Priority 1 API route fixes applied._

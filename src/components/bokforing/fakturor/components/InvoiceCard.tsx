@@ -1,3 +1,4 @@
+import React from "react"
 import {
     ArrowDownLeft,
     ArrowUpRight,
@@ -25,7 +26,7 @@ interface InvoiceCardProps {
     onMarkSupplierPaid: (id: string) => void
 }
 
-export function InvoiceCard({
+export const InvoiceCard = React.memo(function InvoiceCard({
     invoice,
     onSend,
     onMarkCustomerPaid,
@@ -103,4 +104,4 @@ export function InvoiceCard({
             <DropdownMenuItem className="text-red-600">Radera</DropdownMenuItem>
         </KanbanCard>
     )
-}
+})

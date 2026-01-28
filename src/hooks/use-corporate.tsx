@@ -64,8 +64,16 @@ export function CorporateProvider({ children }: { children: React.ReactNode }) {
         }))
     }, [])
 
+    const value = React.useMemo(() => ({
+        meetings,
+        addMeeting,
+        updateMeetingStatus,
+        addDecision,
+        updateDecision,
+    }), [meetings, addMeeting, updateMeetingStatus, addDecision, updateDecision])
+
     return (
-        <CorporateContext.Provider value={{ meetings, addMeeting, updateMeetingStatus, addDecision, updateDecision }}>
+        <CorporateContext.Provider value={value}>
             {children}
         </CorporateContext.Provider>
     )

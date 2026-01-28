@@ -164,16 +164,18 @@ export function useCachedQuery<T>({
     // Initial fetch
     useEffect(() => {
         isMounted.current = true
+        let timeoutId: ReturnType<typeof setTimeout> | undefined
 
         if (!skip) {
             // Defer fetch to avoid synchronous setState warning
-            setTimeout(() => {
+            timeoutId = setTimeout(() => {
                 if (isMounted.current) fetchData()
             }, 0)
         }
 
         return () => {
             isMounted.current = false
+            if (timeoutId) clearTimeout(timeoutId)
         }
     }, [fetchData, skip])
 

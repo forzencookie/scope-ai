@@ -196,7 +196,14 @@ export function useActivityLog({
 
   // Initial fetch
   useEffect(() => {
-    fetchActivities(true)
+    let isMounted = true
+    
+    if (isMounted) {
+      fetchActivities(true)
+    }
+    
+    return () => { isMounted = false }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, entityType, entityId])
 
   // Real-time subscription

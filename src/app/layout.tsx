@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
-import { CompanyProvider } from "@/providers/company-provider";
 import { CorporateProvider } from "@/hooks/use-corporate";
 
 const geistSans = Geist({
@@ -57,11 +56,9 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <CompanyProvider>
-            <CorporateProvider>
-              {children}
-            </CorporateProvider>
-          </CompanyProvider>
+          <CorporateProvider>
+            {children}
+          </CorporateProvider>
         </ThemeProvider>
       </body>
     </html>

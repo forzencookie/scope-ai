@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import {
     Calendar,
     UploadCloud,
@@ -171,11 +171,11 @@ export function UnderlagDialog({
         }
     }
 
-    const handleRetry = () => retryAi()
+    const handleRetry = useCallback(() => retryAi(), [retryAi])
 
-    const updateField = (field: keyof UnderlagFormState, value: string) => {
+    const updateField = useCallback((field: keyof UnderlagFormState, value: string) => {
         setFormState(prev => ({ ...prev, [field]: value }))
-    }
+    }, [setFormState])
 
     const isViewMode = mode === "view"
 

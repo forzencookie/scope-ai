@@ -1,5 +1,7 @@
 # Multi-Agent Architecture
 
+> ⚠️ **Note:** This is reference documentation for the multi-agent architecture. Review the source code for the current implementation.
+
 ## Overview
 
 Scope AI uses a multi-agent architecture where specialized AI agents handle different domains of the accounting platform. This design provides:
@@ -41,43 +43,44 @@ Scope AI uses a multi-agent architecture where specialized AI agents handle diff
 
 ### Core Files
 
-| File | Purpose |
-|------|---------|
-| `src/lib/agents/types.ts` | Type definitions for agents, contexts, responses |
-| `src/lib/agents/base-agent.ts` | Abstract base class all agents extend |
-| `src/lib/agents/registry.ts` | Agent registry singleton |
-| `src/lib/agents/message-bus.ts` | Inter-agent communication |
-| `src/lib/agents/metrics.ts` | Performance tracking and analytics |
-| `src/lib/agents/orchestrator/` | Gojo orchestrator, classifier, router, planner |
-| `src/lib/agents/domains/` | All 10 domain agents |
-| `src/app/api/chat/agents/route.ts` | Production-ready streaming API endpoint |
-| `src/hooks/use-agent-chat.ts` | React hook for agent chat UI |
+| File                               | Purpose                                          |
+| ---------------------------------- | ------------------------------------------------ |
+| `src/lib/agents/types.ts`          | Type definitions for agents, contexts, responses |
+| `src/lib/agents/base-agent.ts`     | Abstract base class all agents extend            |
+| `src/lib/agents/registry.ts`       | Agent registry singleton                         |
+| `src/lib/agents/message-bus.ts`    | Inter-agent communication                        |
+| `src/lib/agents/metrics.ts`        | Performance tracking and analytics               |
+| `src/lib/agents/orchestrator/`     | Gojo orchestrator, classifier, router, planner   |
+| `src/lib/agents/domains/`          | All 10 domain agents                             |
+| `src/app/api/chat/agents/route.ts` | Production-ready streaming API endpoint          |
+| `src/hooks/use-agent-chat.ts`      | React hook for agent chat UI                     |
 
 ## Agents
 
 ### Orchestrator (Gojo)
+
 - **Role**: Routes requests, coordinates workflows
 - **Model**: GPT-4o-mini (fast, cheap)
 - **Capabilities**: Intent classification, agent selection, multi-step planning
 
 ### Core Business Agents
 
-| Agent | Domain | Tools |
-|-------|--------|-------|
-| **BokforingAgent** | Accounting | `create_verification`, `get_transactions`, `match_transaction` |
-| **ReceiptAgent** | Expenses | `create_receipt`, `extract_receipt`, `categorize_expense` |
-| **InvoiceAgent** | Revenue | `create_invoice`, `send_invoice`, `send_reminder` |
-| **LonerAgent** | Payroll | `calculate_salary`, `generate_payslip`, `generate_agi` |
-| **SkattAgent** | Tax | `calculate_vat`, `calculate_k10`, `manage_periodiseringsfond` |
-| **RapporterAgent** | Reports | `generate_pl_report`, `generate_balance_sheet`, `compare_periods` |
-| **ComplianceAgent** | Filings | `get_deadlines`, `create_filing`, `check_requirements` |
+| Agent               | Domain     | Tools                                                             |
+| ------------------- | ---------- | ----------------------------------------------------------------- |
+| **BokforingAgent**  | Accounting | `create_verification`, `get_transactions`, `match_transaction`    |
+| **ReceiptAgent**    | Expenses   | `create_receipt`, `extract_receipt`, `categorize_expense`         |
+| **InvoiceAgent**    | Revenue    | `create_invoice`, `send_invoice`, `send_reminder`                 |
+| **LonerAgent**      | Payroll    | `calculate_salary`, `generate_payslip`, `generate_agi`            |
+| **SkattAgent**      | Tax        | `calculate_vat`, `calculate_k10`, `manage_periodiseringsfond`     |
+| **RapporterAgent**  | Reports    | `generate_pl_report`, `generate_balance_sheet`, `compare_periods` |
+| **ComplianceAgent** | Filings    | `get_deadlines`, `create_filing`, `check_requirements`            |
 
 ### Platform Control Agents
 
-| Agent | Domain | Tools |
-|-------|--------|-------|
-| **StatistikAgent** | KPIs | `get_financial_kpis`, `get_revenue_trends`, `generate_insights` |
-| **HandelserAgent** | Events | `get_events`, `create_event`, `get_roadmap` |
+| Agent                  | Domain   | Tools                                                            |
+| ---------------------- | -------- | ---------------------------------------------------------------- |
+| **StatistikAgent**     | KPIs     | `get_financial_kpis`, `get_revenue_trends`, `generate_insights`  |
+| **HandelserAgent**     | Events   | `get_events`, `create_event`, `get_roadmap`                      |
 | **InstallningarAgent** | Settings | `get_integrations`, `connect_integration`, `manage_team_members` |
 
 ## Usage
@@ -85,41 +88,45 @@ Scope AI uses a multi-agent architecture where specialized AI agents handle diff
 ### Basic Usage
 
 ```typescript
-import { handleUserMessage } from '@/lib/agents'
+import { handleUserMessage } from "@/lib/agents";
 
 const response = await handleUserMessage(
-    'Skapa en faktura till Företag AB på 10 000 kr',
-    userId,
-    companyId,
-    'AB'
-)
+  "Skapa en faktura till Företag AB på 10 000 kr",
+  userId,
+  companyId,
+  "AB",
+);
 
-console.log(response.message)
+console.log(response.message);
 // "Ska vi skapa en faktura! 📄..."
 ```
 
 ### With Full Context
 
 ```typescript
-import { initializeAgents, processMessage, createAgentContext } from '@/lib/agents'
+import {
+  initializeAgents,
+  processMessage,
+  createAgentContext,
+} from "@/lib/agents";
 
 // Initialize once at startup
-initializeAgents()
+initializeAgents();
 
 // Create context
 const context = createAgentContext(
-    userId,
-    companyId,
-    'AB',
-    userMessage,
-    conversationId
-)
+  userId,
+  companyId,
+  "AB",
+  userMessage,
+  conversationId,
+);
 
 // Add shared memory if needed
-context.sharedMemory['uploadedImage'] = imageData
+context.sharedMemory["uploadedImage"] = imageData;
 
 // Process
-const response = await processMessage(userMessage, context)
+const response = await processMessage(userMessage, context);
 ```
 
 ### API Endpoint
@@ -195,55 +202,55 @@ src/lib/agents/domains/my-agent/
 2. Extend `BaseAgent`:
 
 ```typescript
-import { BaseAgent } from '../../base-agent'
-import type { AgentDomain, AgentContext, AgentResponse } from '../../types'
+import { BaseAgent } from "../../base-agent";
+import type { AgentDomain, AgentContext, AgentResponse } from "../../types";
 
-const MY_PROMPT = `# My Agent...`
+const MY_PROMPT = `# My Agent...`;
 
 export class MyAgent extends BaseAgent {
-    id: AgentDomain = 'my-agent'  // Add to AgentDomain type
-    name = 'My Agent'
-    description = 'Does something useful'
-    
-    capabilities = ['keyword1', 'keyword2']
-    tools = ['tool1', 'tool2']
-    systemPrompt = MY_PROMPT
+  id: AgentDomain = "my-agent"; // Add to AgentDomain type
+  name = "My Agent";
+  description = "Does something useful";
 
-    async handle(message: string, context: AgentContext): Promise<AgentResponse> {
-        // Implementation
-    }
+  capabilities = ["keyword1", "keyword2"];
+  tools = ["tool1", "tool2"];
+  systemPrompt = MY_PROMPT;
+
+  async handle(message: string, context: AgentContext): Promise<AgentResponse> {
+    // Implementation
+  }
 }
 
-export const myAgent = new MyAgent()
+export const myAgent = new MyAgent();
 ```
 
 3. Register in `domains/index.ts`:
 
 ```typescript
-export { MyAgent, myAgent } from './my-agent'
+export { MyAgent, myAgent } from "./my-agent";
 
 // Add to domainAgents array
 export const domainAgents = [
-    // ...existing
-    myAgent,
-]
+  // ...existing
+  myAgent,
+];
 ```
 
 4. Add to `AgentDomain` type in `types.ts`:
 
 ```typescript
 export type AgentDomain =
-    // ...existing
-    | 'my-agent'
+  // ...existing
+  "my-agent";
 ```
 
 5. Add intent patterns in `orchestrator/router.ts`:
 
 ```typescript
 const INTENT_PATTERNS: Record<IntentCategory, RegExp[]> = {
-    // ...
-    MY_CATEGORY: [/keyword/i, /pattern/i],
-}
+  // ...
+  MY_CATEGORY: [/keyword/i, /pattern/i],
+};
 ```
 
 ## File Structure
@@ -297,11 +304,10 @@ GOOGLE_AI_API_KEY=...
 Streaming endpoint for agent chat.
 
 **Request:**
+
 ```json
 {
-  "messages": [
-    {"role": "user", "content": "Skapa en faktura..."}
-  ],
+  "messages": [{ "role": "user", "content": "Skapa en faktura..." }],
   "conversationId": "optional-uuid",
   "model": "gpt-4o",
   "attachments": [],
@@ -310,6 +316,7 @@ Streaming endpoint for agent chat.
 ```
 
 **Response (Streaming):**
+
 ```
 T:"Jag skapar "
 T:"fakturan..."
@@ -319,6 +326,7 @@ D:{"toolResults":[{"tool":"create_invoice","success":true}]}
 ```
 
 **Stream Protocol:**
+
 - `T:` - Text chunk (JSON string)
 - `D:` - Data payload (JSON object)
 - `A:` - Agent info (which agent is active)
@@ -338,29 +346,24 @@ For destructive actions:
 ## React Hook
 
 ```tsx
-import { useAgentChat } from '@/hooks'
+import { useAgentChat } from "@/hooks";
 
 function ChatComponent() {
-  const {
-    messages,
-    isLoading,
-    activeAgent,
-    sendMessage,
-    stopGeneration,
-  } = useAgentChat()
+  const { messages, isLoading, activeAgent, sendMessage, stopGeneration } =
+    useAgentChat();
 
   return (
     <div>
-      {messages.map(m => <Message key={m.id} {...m} />)}
-      {activeAgent && (
-        <Badge>{activeAgent.name} is thinking...</Badge>
-      )}
+      {messages.map((m) => (
+        <Message key={m.id} {...m} />
+      ))}
+      {activeAgent && <Badge>{activeAgent.name} is thinking...</Badge>}
       <ChatInput
-        onSend={content => sendMessage({ content })}
+        onSend={(content) => sendMessage({ content })}
         disabled={isLoading}
       />
     </div>
-  )
+  );
 }
 ```
 
@@ -369,7 +372,7 @@ function ChatComponent() {
 Metrics are automatically tracked to the `agent_metrics` table:
 
 ```sql
-SELECT 
+SELECT
   selected_agent,
   COUNT(*) as requests,
   AVG(total_time_ms) as avg_time,
@@ -389,14 +392,16 @@ npm test -- --testPathPattern=agents
 # Test a specific agent
 npm test -- src/lib/agents/domains/invoices
 ```
+
 // Default configuration
 const DEFAULT_AGENT_CONFIG: AgentConfig = {
-    maxConsultationDepth: 3,    // Max nested agent consultations
-    maxHandoffs: 5,             // Max agent-to-agent handoffs
-    routingConfidenceThreshold: 0.7,  // Min confidence for auto-routing
-    enableLogging: true,
-    enableMetrics: true,
+maxConsultationDepth: 3, // Max nested agent consultations
+maxHandoffs: 5, // Max agent-to-agent handoffs
+routingConfidenceThreshold: 0.7, // Min confidence for auto-routing
+enableLogging: true,
+enableMetrics: true,
 }
+
 ```
 
 ## Next Steps
@@ -405,3 +410,4 @@ const DEFAULT_AGENT_CONFIG: AgentConfig = {
 2. **LLM Classification**: Replace pattern matching with LLM for better intent detection
 3. **Metrics Dashboard**: Track agent performance and user satisfaction
 4. **Feedback Loop**: Learn from user corrections to improve agents
+```

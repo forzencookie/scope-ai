@@ -1,42 +1,43 @@
 # 🔍 Comprehensive Codebase Analysis Report
 
 > **Generated:** January 27, 2026  
-> **Scope:** Full architecture, code quality, and improvement opportunities
+> **Scope:** Full architecture, code quality, and improvement opportunities  
+> ⚠️ **Disclaimer:** This is a point-in-time analysis. The codebase may have changed since this report was generated.
 
 ---
 
 ## Executive Summary
 
-| Metric | Value |
-|--------|-------|
-| **Total Lines of Code** | 107,845 |
-| **Source Files** | 784 `.ts/.tsx` |
-| **Component Files** | 380 `.tsx` |
-| **Component Directories** | 87 folders |
-| **Lib Files** | 144 |
-| **Service Files** | 44 |
-| **Hooks** | 39 |
-| **API Routes** | 57 |
-| **Providers** | 13 |
-| **Database Migrations** | 38 |
-| **Test Files** | 11 (1.4% coverage) |
-| **TypeScript Errors** | 69 |
-| **`as any` Casts** | 112 |
-| **ESLint Disables** | 250 |
-| **TODO/FIXME Markers** | 16 |
+| Metric                    | Value              |
+| ------------------------- | ------------------ |
+| **Total Lines of Code**   | 107,845            |
+| **Source Files**          | 784 `.ts/.tsx`     |
+| **Component Files**       | 380 `.tsx`         |
+| **Component Directories** | 87 folders         |
+| **Lib Files**             | 144                |
+| **Service Files**         | 44                 |
+| **Hooks**                 | 39                 |
+| **API Routes**            | 57                 |
+| **Providers**             | 13                 |
+| **Database Migrations**   | 38                 |
+| **Test Files**            | 11 (1.4% coverage) |
+| **TypeScript Errors**     | 69                 |
+| **`as any` Casts**        | 112                |
+| **ESLint Disables**       | 250                |
+| **TODO/FIXME Markers**    | 16                 |
 
 ---
 
 ## 📊 Overall Grade: **B+ (81/100)**
 
-| Category | Score | Grade |
-|----------|-------|-------|
-| Architecture | 88 | A- |
-| Code Quality | 72 | C+ |
-| Testing | 35 | D |
-| Domain Design | 87 | A- |
-| DevEx | 82 | B+ |
-| Documentation | 85 | B+ |
+| Category      | Score | Grade |
+| ------------- | ----- | ----- |
+| Architecture  | 88    | A-    |
+| Code Quality  | 72    | C+    |
+| Testing       | 35    | D     |
+| Domain Design | 87    | A-    |
+| DevEx         | 82    | B+    |
+| Documentation | 85    | B+    |
 
 ---
 
@@ -71,6 +72,7 @@
 ```
 
 **Key Files:**
+
 - `src/lib/agents/base-agent.ts` - 510 lines (abstract base class)
 - `src/lib/agents/orchestrator/agent.ts` - 375 lines
 - `src/lib/agents/types.ts` - 428 lines
@@ -83,7 +85,7 @@
 ```
 src/lib/database/
 ├── supabase.ts          (browser client)
-├── supabase-server.ts   (SSR client)  
+├── supabase-server.ts   (SSR client)
 ├── supabase-auth.ts     (auth helpers)
 ├── user-scoped-db.ts    (RLS-respecting, 426 lines)
 ├── server-db.ts         (admin bypass)
@@ -188,44 +190,44 @@ src/app/api/
 
 ### Directory Structure
 
-| Directory | Files | Purpose |
-|-----------|-------|---------|
-| `components/ui/` | 52 | shadcn/ui primitives |
-| `components/bokforing/` | ~45 | Bookkeeping domain |
-| `components/agare/` | ~60 | Owners/shareholders |
-| `components/ai/` | ~25 | AI chat interface |
-| `components/loner/` | ~47 | Payroll domain |
-| `components/rapporter/` | ~28 | Reports domain |
-| `components/landing/` | ~20 | Marketing pages |
-| `components/shared/` | ~15 | Cross-domain shared |
-| `components/layout/` | ~10 | App shell |
-| `components/settings/` | ~10 | Settings components |
-| `components/installningar/` | ~14 | Settings tabs |
-| `components/handelser/` | ~14 | Events/timeline |
-| `components/parter/` | ~5 | Partners/parties |
+| Directory                   | Files | Purpose              |
+| --------------------------- | ----- | -------------------- |
+| `components/ui/`            | 52    | shadcn/ui primitives |
+| `components/bokforing/`     | ~45   | Bookkeeping domain   |
+| `components/agare/`         | ~60   | Owners/shareholders  |
+| `components/ai/`            | ~25   | AI chat interface    |
+| `components/loner/`         | ~47   | Payroll domain       |
+| `components/rapporter/`     | ~28   | Reports domain       |
+| `components/landing/`       | ~20   | Marketing pages      |
+| `components/shared/`        | ~15   | Cross-domain shared  |
+| `components/layout/`        | ~10   | App shell            |
+| `components/settings/`      | ~10   | Settings components  |
+| `components/installningar/` | ~14   | Settings tabs        |
+| `components/handelser/`     | ~14   | Events/timeline      |
+| `components/parter/`        | ~5    | Partners/parties     |
 
 ### Largest Files (Needs Refactoring)
 
-| File | Lines | Issue |
-|------|-------|-------|
-| `src/types/database.ts` | 3,377 | ✅ Auto-generated |
-| `src/data/mock-data.ts` | 1,104 | ⚠️ Large mock data |
-| `src/components/ui/sidebar.tsx` | 734 | ⚠️ Complex UI component |
-| `src/services/transactions-supabase.ts` | 547 | ⚠️ Could split |
-| `src/data/accounts.ts` | 541 | ✅ Chart of accounts (static) |
-| `src/lib/agents/base-agent.ts` | 510 | ✅ Acceptable for base class |
-| `src/services/processors/inkomstdeklaration-processor.ts` | 474 | ⚠️ Complex processor |
-| `src/components/ai/chat-input.tsx` | 468 | ⚠️ Could extract |
-| `src/hooks/use-transactions-query.ts` | 453 | ⚠️ Large hook |
-| `src/components/bokforing/dialogs/underlag.tsx` | 447 | ⚠️ Complex dialog |
-| `src/app/users/page.tsx` | 447 | ⚠️ Admin page |
-| `src/lib/company-types.ts` | 443 | ✅ Type definitions |
-| `src/lib/ai-tools/common/navigation.ts` | 437 | ⚠️ Could modularize |
-| `src/services/processors/investments-processor.ts` | 434 | ⚠️ Complex processor |
-| `src/lib/agents/types.ts` | 428 | ✅ Type definitions |
-| `src/lib/database/user-scoped-db.ts` | 426 | ✅ Acceptable for DB layer |
-| `src/components/ai/ai-overlay.tsx` | 425 | ⚠️ Complex overlay |
-| `src/components/landing/sections/hero/demo.tsx` | 422 | ⚠️ Demo animation |
+| File                                                      | Lines | Issue                         |
+| --------------------------------------------------------- | ----- | ----------------------------- |
+| `src/types/database.ts`                                   | 3,377 | ✅ Auto-generated             |
+| `src/data/mock-data.ts`                                   | 1,104 | ⚠️ Large mock data            |
+| `src/components/ui/sidebar.tsx`                           | 734   | ⚠️ Complex UI component       |
+| `src/services/transactions-supabase.ts`                   | 547   | ⚠️ Could split                |
+| `src/data/accounts.ts`                                    | 541   | ✅ Chart of accounts (static) |
+| `src/lib/agents/base-agent.ts`                            | 510   | ✅ Acceptable for base class  |
+| `src/services/processors/inkomstdeklaration-processor.ts` | 474   | ⚠️ Complex processor          |
+| `src/components/ai/chat-input.tsx`                        | 468   | ⚠️ Could extract              |
+| `src/hooks/use-transactions-query.ts`                     | 453   | ⚠️ Large hook                 |
+| `src/components/bokforing/dialogs/underlag.tsx`           | 447   | ⚠️ Complex dialog             |
+| `src/app/users/page.tsx`                                  | 447   | ⚠️ Admin page                 |
+| `src/lib/company-types.ts`                                | 443   | ✅ Type definitions           |
+| `src/lib/ai-tools/common/navigation.ts`                   | 437   | ⚠️ Could modularize           |
+| `src/services/processors/investments-processor.ts`        | 434   | ⚠️ Complex processor          |
+| `src/lib/agents/types.ts`                                 | 428   | ✅ Type definitions           |
+| `src/lib/database/user-scoped-db.ts`                      | 426   | ✅ Acceptable for DB layer    |
+| `src/components/ai/ai-overlay.tsx`                        | 425   | ⚠️ Complex overlay            |
+| `src/components/landing/sections/hero/demo.tsx`           | 422   | ⚠️ Demo animation             |
 
 ---
 
@@ -233,12 +235,12 @@ src/app/api/
 
 ### Type Safety Issues
 
-| Issue | Count | Severity |
-|-------|-------|----------|
-| TypeScript Errors | 69 | 🟠 High |
-| `as any` Casts | 112 | 🟡 Medium |
-| ESLint Disables | 250 | 🟠 High |
-| `@ts-expect-error` | 4 | 🟢 Low |
+| Issue              | Count | Severity  |
+| ------------------ | ----- | --------- |
+| TypeScript Errors  | 69    | 🟠 High   |
+| `as any` Casts     | 112   | 🟡 Medium |
+| ESLint Disables    | 250   | 🟠 High   |
+| `@ts-expect-error` | 4     | 🟢 Low    |
 
 ### Technical Debt Markers
 
@@ -263,14 +265,14 @@ TODO/FIXME Found (16):
 
 ### Custom Hooks (39 files)
 
-| Category | Hooks | Notes |
-|----------|-------|-------|
-| **Data Fetching** | `use-transactions-query`, `use-invoices`, `use-receipts`, `use-verifications`, `use-partners`, `use-members`, `use-employees` | TanStack Query based |
-| **Domain Logic** | `use-activity-log`, `use-compliance`, `use-corporate`, `use-financial-metrics`, `use-financial-reports`, `use-month-closing`, `use-tax-period` | Business logic encapsulation |
-| **AI/Chat** | `use-chat`, `use-ai-extraction`, `use-ai-usage`, `chat/use-send-message` | AI interaction |
-| **UI State** | `use-table`, `use-mobile`, `use-navigation`, `use-highlight`, `use-file-capture` | UI utilities |
-| **Auth/Subscription** | `use-auth`, `use-subscription` | Auth state |
-| **Realtime** | `use-realtime`, `use-events` | Supabase realtime |
+| Category              | Hooks                                                                                                                                          | Notes                        |
+| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------- |
+| **Data Fetching**     | `use-transactions-query`, `use-invoices`, `use-receipts`, `use-verifications`, `use-partners`, `use-members`, `use-employees`                  | TanStack Query based         |
+| **Domain Logic**      | `use-activity-log`, `use-compliance`, `use-corporate`, `use-financial-metrics`, `use-financial-reports`, `use-month-closing`, `use-tax-period` | Business logic encapsulation |
+| **AI/Chat**           | `use-chat`, `use-ai-extraction`, `use-ai-usage`, `chat/use-send-message`                                                                       | AI interaction               |
+| **UI State**          | `use-table`, `use-mobile`, `use-navigation`, `use-highlight`, `use-file-capture`                                                               | UI utilities                 |
+| **Auth/Subscription** | `use-auth`, `use-subscription`                                                                                                                 | Auth state                   |
+| **Realtime**          | `use-realtime`, `use-events`                                                                                                                   | Supabase realtime            |
 
 ### TanStack Query Usage
 
@@ -284,28 +286,28 @@ TODO/FIXME Found (16):
 
 ### Swedish Accounting Features
 
-| Domain | Status | Key Files |
-|--------|--------|-----------|
-| **Bokföring** (Bookkeeping) | ✅ Full | `bokforing/`, `use-verifications` |
-| **Kvitton** (Receipts) | ✅ Full | `receipts-provider`, `receipt-service` |
-| **Fakturor** (Invoices) | ✅ Full | `invoices-provider`, `invoice-service` |
-| **Leverantörsfakturor** | ✅ Full | `supplier-invoices/` |
-| **Löner** (Payroll) | ✅ Full | `loner/`, `payroll-service` |
-| **Förmåner** (Benefits) | ✅ Full | `benefit-service`, `formaner.ts` |
-| **Moms** (VAT) | ✅ Full | `vat-service`, `rapporter/moms` |
-| **Inkomstdeklaration** | ✅ Full | `inkomstdeklaration-processor` |
-| **K10** | ✅ Full | `rapporter/k10` |
-| **NE-bilaga** | ✅ Full | `ne-bilaga.tsx` |
-| **Inventarier** (Assets) | ✅ Full | `inventarie-service`, `asset-service` |
-| **Ägare** (Shareholders) | ✅ Full | `agare/`, `use-corporate` |
-| **Bolagsstämma** (AGM) | ✅ Full | `agare/bolagsstamma` |
-| **Periodiseringsfonder** | ✅ Full | Database table exists |
-| **SIE Import/Export** | ✅ Full | `api/sie/`, `parsers/sie-parser` |
+| Domain                      | Status  | Key Files                              |
+| --------------------------- | ------- | -------------------------------------- |
+| **Bokföring** (Bookkeeping) | ✅ Full | `bokforing/`, `use-verifications`      |
+| **Kvitton** (Receipts)      | ✅ Full | `receipts-provider`, `receipt-service` |
+| **Fakturor** (Invoices)     | ✅ Full | `invoices-provider`, `invoice-service` |
+| **Leverantörsfakturor**     | ✅ Full | `supplier-invoices/`                   |
+| **Löner** (Payroll)         | ✅ Full | `loner/`, `payroll-service`            |
+| **Förmåner** (Benefits)     | ✅ Full | `benefit-service`, `formaner.ts`       |
+| **Moms** (VAT)              | ✅ Full | `vat-service`, `rapporter/moms`        |
+| **Inkomstdeklaration**      | ✅ Full | `inkomstdeklaration-processor`         |
+| **K10**                     | ✅ Full | `rapporter/k10`                        |
+| **NE-bilaga**               | ✅ Full | `ne-bilaga.tsx`                        |
+| **Inventarier** (Assets)    | ✅ Full | `inventarie-service`, `asset-service`  |
+| **Ägare** (Shareholders)    | ✅ Full | `agare/`, `use-corporate`              |
+| **Bolagsstämma** (AGM)      | ✅ Full | `agare/bolagsstamma`                   |
+| **Periodiseringsfonder**    | ✅ Full | Database table exists                  |
+| **SIE Import/Export**       | ✅ Full | `api/sie/`, `parsers/sie-parser`       |
 
 ### Government Integrations
 
-| Agency | Status | Endpoint |
-|--------|--------|----------|
+| Agency       | Status         | Endpoint                        |
+| ------------ | -------------- | ------------------------------- |
 | Skatteverket | ✅ Implemented | `api/skatteverket/` (409 lines) |
 | Bolagsverket | ✅ Implemented | `api/bolagsverket/` (373 lines) |
 
@@ -331,13 +333,13 @@ src/lib/__tests__/
 
 ### Critical Testing Gaps
 
-| Area | Risk | Priority |
-|------|------|----------|
-| Tax calculations | 🔴 High | P0 |
-| Payroll processing | 🔴 High | P0 |
-| VAT calculations | 🔴 High | P0 |
-| Invoice processing | 🟠 Medium | P1 |
-| AI agent responses | 🟡 Low | P2 |
+| Area               | Risk      | Priority |
+| ------------------ | --------- | -------- |
+| Tax calculations   | 🔴 High   | P0       |
+| Payroll processing | 🔴 High   | P0       |
+| VAT calculations   | 🔴 High   | P0       |
+| Invoice processing | 🟠 Medium | P1       |
+| AI agent responses | 🟡 Low    | P2       |
 
 ---
 
@@ -381,35 +383,35 @@ src/lib/__tests__/
 
 ### 🔴 Critical (Before Production)
 
-| Action | Impact | Effort |
-|--------|--------|--------|
-| **Add tests for tax/payroll logic** | Prevent financial errors | High |
-| **Fix 69 TypeScript errors** | Compile-time safety | Medium |
-| **Audit 250 ESLint disables** | Code quality | Medium |
+| Action                              | Impact                   | Effort |
+| ----------------------------------- | ------------------------ | ------ |
+| **Add tests for tax/payroll logic** | Prevent financial errors | High   |
+| **Fix 69 TypeScript errors**        | Compile-time safety      | Medium |
+| **Audit 250 ESLint disables**       | Code quality             | Medium |
 
 ### 🟠 High Priority
 
-| Action | Impact | Effort |
-|--------|--------|--------|
-| **Reduce `as any` casts (112)** | Type safety | Medium |
-| **Split files >500 lines** | Maintainability | Low |
-| **Add pre-commit hooks** | Prevent bad commits | Low |
+| Action                          | Impact              | Effort |
+| ------------------------------- | ------------------- | ------ |
+| **Reduce `as any` casts (112)** | Type safety         | Medium |
+| **Split files >500 lines**      | Maintainability     | Low    |
+| **Add pre-commit hooks**        | Prevent bad commits | Low    |
 
 ### 🟡 Medium Priority
 
-| Action | Impact | Effort |
-|--------|--------|--------|
-| **Create shared `<DataGrid>` component** | DRY | Medium |
-| **Consolidate selection hook interfaces** | Consistency | Low |
-| **Add E2E tests** | User flow confidence | High |
+| Action                                    | Impact               | Effort |
+| ----------------------------------------- | -------------------- | ------ |
+| **Create shared `<DataGrid>` component**  | DRY                  | Medium |
+| **Consolidate selection hook interfaces** | Consistency          | Low    |
+| **Add E2E tests**                         | User flow confidence | High   |
 
 ### 🟢 Low Priority
 
-| Action | Impact | Effort |
-|--------|--------|--------|
-| **Clean up 16 TODOs** | Tech debt | Low |
-| **Standardize component patterns** | Consistency | Medium |
-| **Document API routes** | Developer onboarding | Low |
+| Action                             | Impact               | Effort |
+| ---------------------------------- | -------------------- | ------ |
+| **Clean up 16 TODOs**              | Tech debt            | Low    |
+| **Standardize component patterns** | Consistency          | Medium |
+| **Document API routes**            | Developer onboarding | Low    |
 
 ---
 
@@ -428,7 +430,7 @@ Target:      0 errors
 
 ```
 ✅ src/components/bokforing/dialogs/leverantor/ (modularized)
-✅ src/components/bokforing/dialogs/faktura/ (modularized)  
+✅ src/components/bokforing/dialogs/faktura/ (modularized)
 ✅ src/components/bokforing/dialogs/shared/ (created)
 ✅ src/components/settings/ (modularized)
 ```
@@ -492,44 +494,44 @@ Target:      0 errors
 
 ### Core
 
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| Next.js | 16.x | Framework |
-| React | 19.x | UI Library |
-| TypeScript | Latest | Type Safety |
-| Tailwind CSS | Latest | Styling |
+| Technology   | Version | Purpose     |
+| ------------ | ------- | ----------- |
+| Next.js      | 16.x    | Framework   |
+| React        | 19.x    | UI Library  |
+| TypeScript   | Latest  | Type Safety |
+| Tailwind CSS | Latest  | Styling     |
 
 ### Database & Auth
 
-| Technology | Purpose |
-|------------|---------|
-| Supabase | PostgreSQL + Auth + Realtime |
-| TanStack Query | Data fetching |
+| Technology     | Purpose                      |
+| -------------- | ---------------------------- |
+| Supabase       | PostgreSQL + Auth + Realtime |
+| TanStack Query | Data fetching                |
 
 ### AI/ML
 
-| Provider | Purpose |
-|----------|---------|
-| Anthropic Claude | Primary LLM |
-| OpenAI | Alternative LLM |
-| Google Gemini | Alternative LLM |
+| Provider         | Purpose         |
+| ---------------- | --------------- |
+| Anthropic Claude | Primary LLM     |
+| OpenAI           | Alternative LLM |
+| Google Gemini    | Alternative LLM |
 
 ### UI Components
 
-| Library | Purpose |
-|---------|---------|
-| Radix UI | Accessible primitives |
-| shadcn/ui | Component system |
-| Framer Motion | Animations |
-| Recharts | Charts |
-| Lucide | Icons |
+| Library       | Purpose               |
+| ------------- | --------------------- |
+| Radix UI      | Accessible primitives |
+| shadcn/ui     | Component system      |
+| Framer Motion | Animations            |
+| Recharts      | Charts                |
+| Lucide        | Icons                 |
 
 ### Payments
 
-| Provider | Purpose |
-|----------|---------|
-| Stripe | Subscriptions & billing |
+| Provider | Purpose                 |
+| -------- | ----------------------- |
+| Stripe   | Subscriptions & billing |
 
 ---
 
-*Last updated: January 27, 2026*
+_Last updated: January 27, 2026_
