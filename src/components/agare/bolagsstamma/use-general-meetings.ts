@@ -137,21 +137,31 @@ export function useGeneralMeetings() {
     })
 
     try {
-      await addDocument({
+      const docData = {
         type: 'general_meeting_minutes',
         title: `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${meetingData.year}`,
         date: meetingData.date || new Date().toISOString().split('T')[0],
         content,
-        status: 'draft', // Will be mapped to 'kallad' in the meetings transform
+        status: 'draft',
         source: 'manual'
-      })
+      }
+      
+      console.log('[createMeeting] Calling addDocument with:', docData)
+      
+      const result = await addDocument(docData)
+      
+      console.log('[createMeeting] addDocument result:', result)
+      
+      if (!result) {
+        throw new Error('No result returned from addDocument')
+      }
 
       toast.success(
         "Stämma skapad",
         `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma för ${meetingData.year} har planerats.`
       )
     } catch (error) {
-      console.error('Failed to create meeting:', error)
+      console.error('[createMeeting] Failed to create meeting:', error)
       toast.error("Fel", "Kunde inte skapa stämman. Försök igen.")
     }
   }

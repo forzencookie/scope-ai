@@ -59,12 +59,16 @@ export async function POST(request: NextRequest) {
         const supabase = userDb.client;
 
         if (action === 'document') {
+            // Note: corporate_documents doesn't have company_id column, only user_id
+            const insertData = { ...data, user_id: userDb.userId }
+            console.log('[Compliance API] Inserting document:', insertData)
             const { data: newDoc, error } = await supabase
                 .from('corporate_documents' as any)
-                .insert({ ...data, user_id: userDb.userId, company_id: userDb.companyId })
+                .insert(insertData)
                 .select()
                 .single();
             
+            console.log('[Compliance API] Insert result:', { newDoc, error })
             if (error) throw error;
             return NextResponse.json({ success: true, data: newDoc })
         }

@@ -67,12 +67,14 @@ export function useCompliance() {
     // Add Document Mutation
     const addDocumentMutation = useAsyncMutation(
         async (doc: Partial<CorporateDocument>) => {
+            console.log('[useCompliance] addDocument called with:', doc)
             const res = await fetch('/api/compliance', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ action: 'document', ...doc, created_by: userId })
             })
             const json = await res.json()
+            console.log('[useCompliance] API response:', res.status, json)
             if (!res.ok) throw new Error(json.error || 'Failed to add document')
             refetchDocs()
             return json.data as CorporateDocument
