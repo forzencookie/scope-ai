@@ -5,9 +5,12 @@ import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 
 export function useGeneralMeetings() {
-  const { documents: realDocuments, addDocument } = useCompliance()
+  const { documents: realDocuments, addDocument, refetchDocs } = useCompliance()
   const { addVerification } = useVerifications()
   const toast = useToast()
+
+  // Debug: Log what documents we're receiving
+  console.log('[useGeneralMeetings] realDocuments:', realDocuments)
 
   // Local state to track booked decisions (since we can't easily update the document content implementation-wise here)
   const [bookedDecisions, setBookedDecisions] = useState<string[]>([])
@@ -56,6 +59,9 @@ export function useGeneralMeetings() {
         }
       })
   }, [realDocuments, bookedDecisions])
+
+  // Debug: Log transformed meetings
+  console.log('[useGeneralMeetings] meetings:', meetings)
 
   // Calculate stats directly from meetings array (unified data source)
   const stats = useMemo(() => {
@@ -137,10 +143,15 @@ export function useGeneralMeetings() {
     })
 
     try {
+      // Ensure date is valid - use today if not provided
+      const meetingDate = meetingData.date && meetingData.date.trim() !== '' 
+        ? meetingData.date 
+        : new Date().toISOString().split('T')[0]
+      
       const docData = {
         type: 'general_meeting_minutes',
         title: `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${meetingData.year}`,
-        date: meetingData.date || new Date().toISOString().split('T')[0],
+        date: meetingDate,
         content,
         status: 'draft',
         source: 'manual'
@@ -155,6 +166,11 @@ export function useGeneralMeetings() {
       if (!result) {
         throw new Error('No result returned from addDocument')
       }
+
+      // Explicitly refetch to ensure UI updates
+      console.log('[createMeeting] Explicitly calling refetchDocs')
+      await refetchDocs()
+      console.log('[createMeeting] refetchDocs completed')
 
       toast.success(
         "Stämma skapad",
