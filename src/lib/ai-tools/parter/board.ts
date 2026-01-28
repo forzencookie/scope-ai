@@ -59,7 +59,7 @@ export const getBoardMembersTool = defineTool<Record<string, never>, BoardMember
                         substitutes
                     },
                     title: 'Styrelse',
-                    fullViewRoute: '/dashboard/parter?tab=styrelse',
+                    fullViewRoute: '/dashboard/agare?tab=styrelseprotokoll',
                 },
             }
         } catch (error) {
@@ -113,7 +113,7 @@ export const getBoardMeetingMinutesTool = defineTool<GetBoardMeetingMinutesParam
                     component: 'BoardMeetingMinutesList',
                     props: { minutes },
                     title: 'Styrelseprotokoll',
-                    fullViewRoute: '/dashboard/parter?tab=protokoll',
+                    fullViewRoute: '/dashboard/agare?tab=styrelseprotokoll',
                 },
             }
         } catch (error) {
@@ -175,7 +175,7 @@ export const getCompanyMeetingsTool = defineTool<GetCompanyMeetingsParams, Compa
                     component: 'CompanyMeetingsList',
                     props: { meetings },
                     title: 'Bolagsmöten',
-                    fullViewRoute: '/dashboard/parter?tab=stammoprotokoll',
+                    fullViewRoute: '/dashboard/agare?tab=bolagsstamma',
                 },
             }
         } catch (error) {

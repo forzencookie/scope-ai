@@ -1,18 +1,15 @@
-import { useState } from "react"
-import { Calendar, TrendingUp, Percent, Calculator, FileDown, ChevronUp, ChevronDown } from "lucide-react"
+import { Calendar, TrendingUp, Percent, Calculator, FileDown, FileText } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
-import { AppStatusBadge } from "@/components/ui/status-badge"
-import { formatCurrency } from "@/lib/utils"
-import { k10Declarations } from "@/components/loner/constants"
+import { GridTableHeader, GridTableRows } from "@/components/ui/grid-table"
 
 interface K10HistoryProps {
     onExport: () => void
 }
 
 export function K10History({ onExport }: K10HistoryProps) {
-    const [showAllHistory, setShowAllHistory] = useState(false)
-    const displayedHistory = showAllHistory ? k10Declarations : k10Declarations.slice(0, 5)
+    // TODO: In full implementation, this would fetch from k10declarations database table
+    // For now, show empty state as there's no historical data for new users
+    const hasHistory = false
 
     return (
         <div className="pt-6 border-t-2 border-border/60">
@@ -24,60 +21,29 @@ export function K10History({ onExport }: K10HistoryProps) {
                 </Button>
             </div>
 
-            <div className="w-full overflow-x-auto pb-4 -mx-2">
-                <div className="md:min-w-[800px] px-2">
-                    <GridTableHeader
-                        columns={[
-                            { label: "År", icon: Calendar, span: 2 },
-                            { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3, hiddenOnMobile: true },
-                            { label: "Utnyttjat", icon: Percent, align: "right", span: 3, hiddenOnMobile: true },
-                            { label: "Sparat", icon: Calculator, align: "right", span: 2 },
-                            { label: "Status", align: "center", span: 2 },
-                        ]}
-                    />
-
-                    <GridTableRows>
-                        {displayedHistory.map((k10) => (
-                            <GridTableRow key={k10.year}>
-                                <div className="col-span-2 font-medium text-sm">{k10.year}</div>
-                                <div className="col-span-3 text-right font-medium text-sm tabular-nums hidden md:block">
-                                    {formatCurrency(k10.gransbelopp)}
-                                </div>
-                                <div className="col-span-3 text-right font-medium text-sm tabular-nums hidden md:block">
-                                    {formatCurrency(k10.usedAmount)}
-                                </div>
-                                <div className="col-span-2 text-right font-medium text-sm tabular-nums text-green-600 dark:text-green-400">
-                                    +{formatCurrency(k10.savedAmount)}
-                                </div>
-                                <div className="col-span-2 flex justify-center">
-                                    <AppStatusBadge status={k10.status === "submitted" ? "Inskickad" : "Utkast"} />
-                                </div>
-                            </GridTableRow>
-                        ))}
-                    </GridTableRows>
+            {hasHistory ? (
+                <div className="w-full overflow-x-auto pb-4 -mx-2">
+                    <div className="md:min-w-[800px] px-2">
+                        <GridTableHeader
+                            columns={[
+                                { label: "År", icon: Calendar, span: 2 },
+                                { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3, hiddenOnMobile: true },
+                                { label: "Utnyttjat", icon: Percent, align: "right", span: 3, hiddenOnMobile: true },
+                                { label: "Sparat", icon: Calculator, align: "right", span: 2 },
+                                { label: "Status", align: "center", span: 2 },
+                            ]}
+                        />
+                        <GridTableRows>
+                            {/* Rows would be rendered here when data exists */}
+                            <div />
+                        </GridTableRows>
+                    </div>
                 </div>
-            </div>
-
-            {k10Declarations.length > 5 && (
-                <div className="flex justify-center py-2 border-t border-border/40">
-                    <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => setShowAllHistory(!showAllHistory)}
-                        className="text-muted-foreground hover:text-foreground text-xs"
-                    >
-                        {showAllHistory ? (
-                            <>
-                                Visa färre
-                                <ChevronUp className="ml-1.5 h-3 w-3" />
-                            </>
-                        ) : (
-                            <>
-                                Visa alla {k10Declarations.length} år
-                                <ChevronDown className="ml-1.5 h-3 w-3" />
-                            </>
-                        )}
-                    </Button>
+            ) : (
+                <div className="text-center py-8 text-muted-foreground">
+                    <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                    <p className="text-sm">Ingen K10-historik än.</p>
+                    <p className="text-xs mt-1">Dina K10-deklarationer kommer visas här efter inlämning.</p>
                 </div>
             )}
         </div>

@@ -14,7 +14,7 @@ import { PlanMeetingDialog } from "../dialogs/mote"
 import { SendNoticeDialog } from "../dialogs/kallelse"
 
 export function Bolagsstamma() {
-  const { meetings, stats, bookDividend } = useGeneralMeetings()
+  const { meetings, stats, bookDividend, createMeeting } = useGeneralMeetings()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [showCreateDialog, setShowCreateDialog] = useState(false)
@@ -71,6 +71,14 @@ export function Bolagsstamma() {
         onOpenChange={setShowCreateDialog}
         type="general"
         defaultAgenda={["Fastställande av dagordning", "Val av ordförande", "Val av protokollförare"]}
+        onSubmit={(data) => {
+          createMeeting({
+            date: data.date,
+            year: parseInt(data.year) || new Date().getFullYear(),
+            location: data.location || 'Ej angivet',
+            type: data.type as 'ordinarie' | 'extra',
+          })
+        }}
       />
       <SendNoticeDialog 
         open={showSendNoticeDialog} 

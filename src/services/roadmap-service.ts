@@ -192,3 +192,21 @@ export async function updateStep(stepId: string, updates: UpdateRoadmapStepInput
         if (found) saveLocalRoadmaps(roadmaps)
     }
 }
+
+export async function deleteRoadmap(id: string): Promise<void> {
+    try {
+        const supabase = getSupabaseClient()
+        // Steps are cascade deleted via foreign key
+        const { error } = await supabase
+            .from('roadmaps')
+            .delete()
+            .eq('id', id)
+
+        if (error) throw error
+    } catch {
+        // Fallback to local storage
+        const roadmaps = getLocalRoadmaps()
+        const filtered = roadmaps.filter(r => r.id !== id)
+        saveLocalRoadmaps(filtered)
+    }
+}

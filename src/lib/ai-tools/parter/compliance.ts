@@ -53,7 +53,7 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>(
                         component: 'ComplianceList' as any,
                         props: { documents: displayDocs },
                         title: 'Bolagsdokument',
-                        fullViewRoute: '/dashboard/parter',
+                        fullViewRoute: '/dashboard/agare',
                     },
                 }
             }
@@ -104,7 +104,7 @@ export const registerDividendTool = defineTool<RegisterDividendParams, any>({
             data: dividendData,
             message: `Registrerade utdelning på ${params.amount.toLocaleString('sv-SE')} kr för ${params.year}.`,
             navigation: {
-                route: '/dashboard/parter?tab=utdelning',
+                route: '/dashboard/agare?tab=utdelning',
                 label: 'Visa utdelning',
             },
         }
@@ -266,7 +266,7 @@ export const getSignatoriesTool = defineTool<Record<string, never>, Signatory[]>
                     },
                 },
                 navigation: {
-                    route: '/dashboard/parter?tab=firmatecknare',
+                    route: '/dashboard/agare?tab=firmatecknare',
                     label: 'Visa firmatecknare',
                 },
             }
@@ -627,7 +627,7 @@ export const prepareAgmTool = defineTool<PrepareAgmParams, AgmDocumentsResult>({
                 props: { data: result },
             },
             navigation: {
-                route: '/dashboard/parter?tab=stamma',
+                route: '/dashboard/agare?tab=bolagsstamma',
                 label: 'Hantera årsstämma',
             },
         }

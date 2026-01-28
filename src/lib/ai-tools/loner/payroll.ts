@@ -233,7 +233,7 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
                 component: 'AGIFormPreview',
                 props: { data: agiData },
                 title: 'AGI-rapporter',
-                fullViewRoute: '/dashboard/skatt?tab=agi',
+                fullViewRoute: '/dashboard/rapporter?tab=agi',
             },
         }
     },

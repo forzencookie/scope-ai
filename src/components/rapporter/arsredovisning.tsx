@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import {
     Calendar,
     Building2,
@@ -15,7 +15,6 @@ import { ListCard, ListCardItem } from "@/components/ui/section-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { ArsredovisningWizardDialog } from "./dialogs/assistent"
 import { CollapsibleTableHeader } from "@/components/ui/collapsible-table"
-import { reportSections } from "./constants"
 import { useVerifications } from "@/hooks/use-verifications"
 import { AnnualReportProcessor } from "@/services/processors/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
@@ -32,17 +31,55 @@ export function ArsredovisningContent() {
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewTitle, setPreviewTitle] = useState("")
     const [previewSections, setPreviewSections] = useState<ReportSection[]>([])
+    
+    // Calculate fiscal year dynamically
+    const currentYear = new Date().getFullYear()
+    const fiscalYear = currentYear - 1 // Annual report is for previous year
+
+    // Determine section statuses based on real data
+    const dynamicReportSections = useMemo(() => {
+        const hasVerifications = verifications.length > 0
+        const yearVerifications = verifications.filter(v => v.date.startsWith(fiscalYear.toString()))
+        const hasYearData = yearVerifications.length > 0
+        
+        return [
+            { 
+                name: "Förvaltningsberättelse", 
+                status: "pending", // Always needs manual completion
+                description: "Verksamhetsbeskrivning och väsentliga händelser" 
+            },
+            { 
+                name: "Resultaträkning", 
+                status: hasYearData ? "complete" : "pending",
+                description: "Intäkter, kostnader och årets resultat" 
+            },
+            { 
+                name: "Balansräkning", 
+                status: hasVerifications ? "complete" : "pending",
+                description: "Tillgångar, skulder och eget kapital" 
+            },
+            { 
+                name: "Noter", 
+                status: "pending", // Always needs manual completion
+                description: "Tilläggsupplysningar och redovisningsprinciper" 
+            },
+            { 
+                name: "Underskrifter", 
+                status: "pending",
+                description: "Styrelsens underskrifter" 
+            },
+        ]
+    }, [verifications, fiscalYear])
 
     const handleViewReport = (sectionName: string) => {
-        const year = 2024
         let sections: ReportSection[] = []
         let title = sectionName
 
         if (sectionName === "Resultaträkning") {
-            const lines = AnnualReportProcessor.calculateIncomeStatement(verifications, year)
+            const lines = AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear)
             sections = [{
                 id: "rr",
-                title: `Resultaträkning ${year}`,
+                title: `Resultaträkning ${fiscalYear}`,
                 items: lines.map((line, idx) => ({
                     id: String(idx + 1),
                     label: line.label,
@@ -52,10 +89,10 @@ export function ArsredovisningContent() {
             }]
             title = "Resultaträkning"
         } else if (sectionName === "Balansräkning") {
-            const lines = AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${year}-12-31`))
+            const lines = AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${fiscalYear}-12-31`))
             sections = [{
                 id: "br",
-                title: `Balansräkning ${year}-12-31`,
+                title: `Balansräkning ${fiscalYear}-12-31`,
                 items: lines.map((line, idx) => ({
                     id: String(idx + 1),
                     label: line.label,
@@ -80,8 +117,8 @@ export function ArsredovisningContent() {
     const stats: TaxReportStat[] = [
         {
             label: "Räkenskapsår",
-            value: "2024",
-            subtitle: "2024-01-01 – 2024-12-31",
+            value: fiscalYear.toString(),
+            subtitle: `${fiscalYear}-01-01 – ${fiscalYear}-12-31`,
             icon: Calendar,
         },
         {
@@ -92,8 +129,8 @@ export function ArsredovisningContent() {
         },
         {
             label: "Status",
-            value: "Under arbete",
-            subtitle: "Deadline: 30 jun 2025",
+            value: verifications.length > 0 ? "Under arbete" : "Ej påbörjad",
+            subtitle: `Deadline: 30 jun ${currentYear}`,
             icon: Clock,
         },
     ]
@@ -127,7 +164,7 @@ export function ArsredovisningContent() {
                         onOpenChange={setPreviewOpen}
                         title={previewTitle}
                         meta={{
-                            year: "2024",
+                            year: fiscalYear.toString(),
                             yearLabel: "Räkenskapsår",
                             companyName: company?.name || "Mitt Företag AB",
                             companyId: company?.orgNumber || "556000-0000",
@@ -146,7 +183,7 @@ export function ArsredovisningContent() {
                 </CollapsibleTableHeader>
 
                 <ListCard variant="minimal">
-                    {reportSections.map((section) => (
+                    {dynamicReportSections.map((section) => (
                         <ListCardItem
                             key={section.name}
                             onClick={() => handleViewReport(section.name)}

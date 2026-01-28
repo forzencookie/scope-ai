@@ -130,10 +130,18 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
 export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent | null> {
     const supabase = getSupabaseClient()
 
+    // Get current user for RLS security
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) {
+        console.error('Cannot emit event: no authenticated user')
+        return null
+    }
+
     // For hash linking, we'd ideally fetch the last event server-side or via a function.
     // For now, let's omit the hash chaining in the client-side code or implement a basic version.
 
     const dbPayload = {
+        user_id: user.id,
         timestamp: new Date().toISOString(),
         source: input.source,
         category: input.category,

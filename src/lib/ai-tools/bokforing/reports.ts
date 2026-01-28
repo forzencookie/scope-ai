@@ -35,7 +35,7 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
                 component: 'IncomeStatement',
                 props: { items },
                 title: 'Resultaträkning',
-                fullViewRoute: '/dashboard/rapporter/resultat',
+                fullViewRoute: '/dashboard/rapporter?tab=resultatrakning',
             },
         }
     },
@@ -61,7 +61,7 @@ export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFi
                 component: 'BalanceSheet',
                 props: { items },
                 title: 'Balansräkning',
-                fullViewRoute: '/dashboard/rapporter/balans',
+                fullViewRoute: '/dashboard/rapporter?tab=balansrakning',
             },
         }
     },

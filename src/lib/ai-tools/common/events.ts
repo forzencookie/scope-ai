@@ -232,7 +232,7 @@ export const getUpcomingDeadlinesTool = defineTool<{ days?: number }, UpcomingDe
                 daysUntil: 105,
                 category: 'tax',
                 priority: 'medium',
-                actionUrl: '/dashboard/rapporter/moms',
+                actionUrl: '/dashboard/rapporter?tab=momsdeklaration',
             },
             {
                 id: 'dl-3',
@@ -252,7 +252,7 @@ export const getUpcomingDeadlinesTool = defineTool<{ days?: number }, UpcomingDe
                 daysUntil: 154,
                 category: 'compliance',
                 priority: 'medium',
-                actionUrl: '/dashboard/parter?tab=stamma',
+                actionUrl: '/dashboard/agare?tab=bolagsstamma',
             },
             {
                 id: 'dl-5',
@@ -262,7 +262,7 @@ export const getUpcomingDeadlinesTool = defineTool<{ days?: number }, UpcomingDe
                 daysUntil: 185,
                 category: 'compliance',
                 priority: 'medium',
-                actionUrl: '/dashboard/rapporter/arsredovisning',
+                actionUrl: '/dashboard/rapporter?tab=arsredovisning',
             },
         ]
 

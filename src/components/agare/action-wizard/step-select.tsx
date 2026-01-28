@@ -7,12 +7,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 interface StepSelectProps {
     onSelect: (type: CorporateActionType) => void
+    /** Filter which action types are available. If not provided, all actions are shown. */
+    allowedActions?: CorporateActionType[]
 }
 
-export function StepSelect({ onSelect }: StepSelectProps) {
+export function StepSelect({ onSelect, allowedActions }: StepSelectProps) {
+    // Filter actions if allowedActions is provided, otherwise show all
+    const availableActions = allowedActions ? actionTypes.filter(t => allowedActions.includes(t)) : actionTypes
+
     return (
         <div className="grid gap-4 sm:grid-cols-2">
-            {actionTypes.map((actionType) => {
+            {availableActions.map((actionType) => {
                 const meta = corporateActionTypeMeta[actionType]
                 const Icon = actionIcons[actionType]
                 return (

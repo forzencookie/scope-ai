@@ -9,7 +9,7 @@ import {
     GridTableRow,
 } from "@/components/ui/grid-table"
 import type { Payslip } from "./use-payslips-logic"
-import { Calendar, User, Wallet, Banknote, CheckCircle2 } from "lucide-react"
+import { Calendar, User, Wallet, Banknote, CheckCircle2, FileText } from "lucide-react"
 
 interface PayslipsTableProps {
     data: Payslip[]
@@ -50,6 +50,13 @@ export function PayslipsTable({
                     }
                 />
                 <GridTableRows>
+                {data.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Inga lönebesked ännu</p>
+                        <p className="text-sm mt-1">Lönebesked visas här efter lönekörning.</p>
+                    </div>
+                )}
                 {data.map((slip) => (
                     <GridTableRow
                         key={slip.id}

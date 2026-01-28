@@ -1,5 +1,4 @@
 
-import { z } from "zod"
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
 
 interface VerificationRow {
@@ -14,16 +13,28 @@ export const createVerificationTool: AITool = {
     description: "Proposes a new manual journal entry (verification). Use this when user wants to book something manually. Requires balanced debit/credit rows.",
     requiresConfirmation: true,
     category: 'write',
-    parameters: z.object({
-        description: z.string().describe("Description of the transaction"),
-        date: z.string().optional().describe("Date YYYY-MM-DD. Defaults to today."),
-        rows: z.array(z.object({
-            account: z.string().describe("Account number (e.g. 1930)"),
-            description: z.string().optional().describe("Row specific description if different"),
-            debit: z.number().optional().describe("Debit amount"),
-            credit: z.number().optional().describe("Credit amount"),
-        })).describe("List of transaction rows. Must balance."),
-    }),
+    parameters: {
+        type: 'object',
+        properties: {
+            description: { type: 'string', description: 'Description of the transaction' },
+            date: { type: 'string', description: 'Date YYYY-MM-DD. Defaults to today.' },
+            rows: {
+                type: 'array',
+                description: 'List of transaction rows. Must balance.',
+                items: {
+                    type: 'object',
+                    properties: {
+                        account: { type: 'string', description: 'Account number (e.g. 1930)' },
+                        description: { type: 'string', description: 'Row specific description if different' },
+                        debit: { type: 'number', description: 'Debit amount' },
+                        credit: { type: 'number', description: 'Credit amount' }
+                    },
+                    required: ['account']
+                }
+            }
+        },
+        required: ['description', 'rows']
+    },
 
     execute: async (params: unknown, _context: InteractionContext) => {
         const { description, date, rows } = params as { description: string, date?: string, rows: VerificationRow[] }

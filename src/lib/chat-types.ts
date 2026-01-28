@@ -66,6 +66,15 @@ export type MessageDisplay =
             rows?: ComparisonRow[]
         } & Record<string, unknown>
     }
+    | {
+        type: 'ActionTrigger'
+        data: {
+            icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+            title: string
+            subtitle?: string
+            meta?: string
+        }
+    }
 
 export interface Message {
     id: string
@@ -76,8 +85,15 @@ export interface Message {
     attachments?: Array<{ name: string; type: string; dataUrl: string }>
     // Mentions for user messages
     mentions?: MentionItem[]
-    // Structured data for AI cards
+    // Structured data for AI cards (assistant) or action triggers (user)
     display?: MessageDisplay
+    // Display text for action triggers (shown instead of raw prompt)
+    actionTrigger?: {
+        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+        title: string
+        subtitle?: string
+        meta?: string
+    }
     confirmationRequired?: {
         id: string
         type: string

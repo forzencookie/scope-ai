@@ -3,7 +3,7 @@ import { useCompany } from "@/providers/company-provider"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useTaxPeriod } from "@/hooks/use-tax-period"
 import { useTaxParameters } from "@/hooks/use-tax-parameters"
-import { k10Declarations } from "@/components/loner/constants"
+import { useCompliance } from "@/hooks/use-compliance"
 
 export interface K10Data {
     year: string
@@ -17,11 +17,13 @@ export interface K10Data {
     agarandel: number
     egenLon: number
     klararLonekrav: boolean
+    hasData: boolean // Flag to indicate if real data exists
 }
 
 export function useK10Calculation() {
     const { company } = useCompany()
     const { verifications } = useVerifications()
+    const { shareholders } = useCompliance()
 
     // Get dynamic beskattningsår using shared hook
     const { taxYear } = useTaxPeriod({ 
@@ -37,12 +39,22 @@ export function useK10Calculation() {
         const ibb = params.ibb
         const schablonRate = params.schablonRate
         
-        const aktiekapital = 25000 // Common min since 2020
-        const omkostnadsbelopp = 25000 // Assumed equal to limits
-        const agarandel = 100 // Assumed 100% for single owner view
+        // Get aktiekapital from company data or use default minimum
+        const aktiekapital = company?.shareCapital || 25000
+        const omkostnadsbelopp = aktiekapital // Assumed equal to share capital for simplicity
+        
+        // Calculate ownership percentage from shareholders data
+        // If no shareholders data, assume 100%
+        const totalShares = shareholders.reduce((sum, s) => sum + (s.shares_count || 0), 0)
+        const primaryShareholder = shareholders.length > 0 ? shareholders[0] : null
+        const primaryShares = primaryShareholder?.shares_count || 0
+        const agarandel = totalShares > 0 ? Math.round((primaryShares / totalShares) * 100) : 100
 
         // Filter verifications for the tax year
         const yearVerifications = verifications.filter(v => v.date.startsWith(taxYear.year.toString()))
+        
+        // Check if we have any real data
+        const hasData = yearVerifications.length > 0 || shareholders.length > 0
 
         // Calculate Total Salaries (Löneunderlag) - Accounts 70xx-73xx
         // Debit increases expense (positive salary cost)
@@ -96,9 +108,10 @@ export function useK10Calculation() {
         // Total Gränsbelopp (Max of Main vs Simplification)
         const gransbelopp = Math.max(schablonbelopp, lonebaseratUtrymme)
 
-        // Saved space from previous years (from K10 declarations history)
-        const historicalData = k10Declarations.find(d => d.year === (taxYear.year - 1).toString())
-        const ingaendeSparat = historicalData ? historicalData.savedAmount : 0
+        // Saved space from previous years
+        // TODO: In a full implementation, this would come from the k10declarations database table
+        // For now, we start with 0 as this is calculated based on actual history
+        const ingaendeSparat = 0
 
         const totaltUtrymme = gransbelopp + ingaendeSparat
         const remainingUtrymme = totaltUtrymme - totalDividends
@@ -114,9 +127,10 @@ export function useK10Calculation() {
             omkostnadsbelopp,
             agarandel,
             egenLon,
-            klararLonekrav
+            klararLonekrav,
+            hasData
         }
-    }, [taxYear.year, verifications, params.ibb, params.schablonRate])
+    }, [taxYear.year, verifications, params.ibb, params.schablonRate, shareholders, company?.shareCapital])
 
     return {
         k10Data,

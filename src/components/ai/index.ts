@@ -6,6 +6,7 @@ export { TaskChecklist, createTaskItems } from './task-checklist'
 export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type MentionCategory } from './mention-popover'
 export { ActivityCard, type ActivityCardProps, type ActivityChange } from './activity-card'
 export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './comparison-table'
+export { ActionTriggerChip, type ActionTriggerDisplay, type ActionTriggerIcon } from './action-trigger-chip'
 
 // AI Overlay Experience
 export { AIOverlay } from './ai-overlay'

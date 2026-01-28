@@ -78,7 +78,7 @@ export const getShareholdersTool = defineTool<GetShareholdersParams, Shareholder
                             }))
                         }
                     },
-                    fullViewRoute: '/dashboard/parter?tab=aktiebok',
+                    fullViewRoute: '/dashboard/agare?tab=aktiebok',
                 },
             }
         } catch (error) {
@@ -278,7 +278,7 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
                 action: { toolName: 'transfer_shares', params },
             },
             navigation: {
-                route: '/dashboard/parter?tab=aktiebok',
+                route: '/dashboard/agare?tab=aktiebok',
                 label: 'Visa aktiebok',
             },
         }

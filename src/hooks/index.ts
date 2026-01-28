@@ -69,3 +69,7 @@ export type { ActivityLogEntry, ActivityAction, EntityType } from "./use-activit
 
 // Last updated timestamp hook
 export { useLastUpdated, useLastUpdatedTime, formatLastUpdated } from "./use-last-updated"
+
+// User preferences (settings persistence)
+export { usePreferences } from "./use-preferences"
+export type { UserPreferences } from "./use-preferences"

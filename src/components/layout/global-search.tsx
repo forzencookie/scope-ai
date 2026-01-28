@@ -19,7 +19,7 @@ const SEARCH_ITEMS: SearchItem[] = [
     { label: "Kvitton", href: "/dashboard/bokforing?tab=kvitton", keywords: ["receipts", "utgifter"] },
     { label: "Leverantörsfakturor", href: "/dashboard/bokforing?tab=leverantorsfakturor", keywords: ["supplier", "inköp"] },
     { label: "Rapporter", href: "/dashboard/rapporter", keywords: ["reports", "resultat", "balans"] },
-    { label: "Moms", href: "/dashboard/rapporter?tab=moms", keywords: ["vat", "skatt"] },
+    { label: "Moms", href: "/dashboard/rapporter?tab=momsdeklaration", keywords: ["vat", "skatt"] },
     { label: "Löner", href: "/dashboard/loner", keywords: ["payroll", "anställda", "lön"] },
 
     { label: "Ägare & Styrning", href: "/dashboard/agare", keywords: ["aktieägare", "styrelse", "bolagsstämma"] },

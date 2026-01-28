@@ -68,12 +68,20 @@ export function useFinancialReports() {
 
     // Sectioned data for CollapsibleTableSection components
     const incomeStatementSections = useMemo(() => {
-        if (isLoading || !plBalances.length) return null
+        if (isLoading) return null
+        // Return empty structure if no data
+        if (!plBalances.length) {
+            return FinancialReportProcessor.getEmptyIncomeStatementSections()
+        }
         return FinancialReportProcessor.calculateIncomeStatementSections(plBalances)
     }, [plBalances, isLoading])
 
     const balanceSheetSections = useMemo(() => {
-        if (isLoading || !bsBalances.length) return null
+        if (isLoading) return null
+        // Return empty structure if no data  
+        if (!bsBalances.length) {
+            return FinancialReportProcessor.getEmptyBalanceSheetSections()
+        }
         return FinancialReportProcessor.calculateBalanceSheetSections(bsBalances)
     }, [bsBalances, isLoading])
 

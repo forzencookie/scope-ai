@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       accountbalances: {
@@ -938,6 +963,7 @@ export type Database = {
           currency: string | null
           customer_address: string | null
           customer_email: string | null
+          customer_id: string | null
           customer_name: string
           customer_org_number: string | null
           due_date: string
@@ -964,6 +990,7 @@ export type Database = {
           currency?: string | null
           customer_address?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name: string
           customer_org_number?: string | null
           due_date: string
@@ -990,6 +1017,7 @@ export type Database = {
           currency?: string | null
           customer_address?: string | null
           customer_email?: string | null
+          customer_id?: string | null
           customer_name?: string
           customer_org_number?: string | null
           due_date?: string
@@ -1018,7 +1046,92 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "customerinvoices_customer_id_fkey"
+            columns: ["customer_id"]
+            isOneToOne: false
+            referencedRelation: "customers"
+            referencedColumns: ["id"]
+          },
         ]
+      }
+      customers: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          city: string | null
+          country: string | null
+          created_at: string | null
+          credit_limit: number | null
+          customer_number: string | null
+          default_account: string | null
+          email: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          org_number: string | null
+          our_reference: string | null
+          payment_terms: number | null
+          phone: string | null
+          postal_code: string | null
+          reference_person: string | null
+          updated_at: string | null
+          user_id: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          credit_limit?: number | null
+          customer_number?: string | null
+          default_account?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          org_number?: string | null
+          our_reference?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          postal_code?: string | null
+          reference_person?: string | null
+          updated_at?: string | null
+          user_id: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          city?: string | null
+          country?: string | null
+          created_at?: string | null
+          credit_limit?: number | null
+          customer_number?: string | null
+          default_account?: string | null
+          email?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          org_number?: string | null
+          our_reference?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          postal_code?: string | null
+          reference_person?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Relationships: []
       }
       dividends: {
         Row: {
@@ -2580,6 +2693,7 @@ export type Database = {
           issue_date: string | null
           ocr: string | null
           status: string | null
+          supplier_id: string | null
           supplier_name: string | null
           total_amount: number | null
           updated_at: string | null
@@ -2598,6 +2712,7 @@ export type Database = {
           issue_date?: string | null
           ocr?: string | null
           status?: string | null
+          supplier_id?: string | null
           supplier_name?: string | null
           total_amount?: number | null
           updated_at?: string | null
@@ -2616,11 +2731,110 @@ export type Database = {
           issue_date?: string | null
           ocr?: string | null
           status?: string | null
+          supplier_id?: string | null
           supplier_name?: string | null
           total_amount?: number | null
           updated_at?: string | null
           user_id?: string | null
           vat_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "supplierinvoices_supplier_id_fkey"
+            columns: ["supplier_id"]
+            isOneToOne: false
+            referencedRelation: "suppliers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      suppliers: {
+        Row: {
+          address_line1: string | null
+          address_line2: string | null
+          bank_account: string | null
+          bankgiro: string | null
+          bic: string | null
+          city: string | null
+          contact_person: string | null
+          country: string | null
+          created_at: string | null
+          default_account: string | null
+          email: string | null
+          iban: string | null
+          id: string
+          is_active: boolean | null
+          name: string
+          notes: string | null
+          org_number: string | null
+          our_reference: string | null
+          payment_terms: number | null
+          phone: string | null
+          plusgiro: string | null
+          postal_code: string | null
+          supplier_number: string | null
+          updated_at: string | null
+          user_id: string
+          vat_number: string | null
+          website: string | null
+        }
+        Insert: {
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_account?: string | null
+          bankgiro?: string | null
+          bic?: string | null
+          city?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string | null
+          default_account?: string | null
+          email?: string | null
+          iban?: string | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          notes?: string | null
+          org_number?: string | null
+          our_reference?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          plusgiro?: string | null
+          postal_code?: string | null
+          supplier_number?: string | null
+          updated_at?: string | null
+          user_id: string
+          vat_number?: string | null
+          website?: string | null
+        }
+        Update: {
+          address_line1?: string | null
+          address_line2?: string | null
+          bank_account?: string | null
+          bankgiro?: string | null
+          bic?: string | null
+          city?: string | null
+          contact_person?: string | null
+          country?: string | null
+          created_at?: string | null
+          default_account?: string | null
+          email?: string | null
+          iban?: string | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          notes?: string | null
+          org_number?: string | null
+          our_reference?: string | null
+          payment_terms?: number | null
+          phone?: string | null
+          plusgiro?: string | null
+          postal_code?: string | null
+          supplier_number?: string | null
+          updated_at?: string | null
+          user_id?: string
+          vat_number?: string | null
+          website?: string | null
         }
         Relationships: []
       }
@@ -2952,6 +3166,81 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_preferences: {
+        Row: {
+          compact_sidebar: boolean | null
+          created_at: string | null
+          currency: string | null
+          daily_summary: boolean | null
+          date_format: string | null
+          density: string | null
+          first_day_of_week: number | null
+          high_contrast: boolean | null
+          id: string
+          language: string | null
+          larger_text: boolean | null
+          marketing_emails: boolean | null
+          notify_important_dates: boolean | null
+          notify_mobile: boolean | null
+          notify_monthly_reports: boolean | null
+          notify_new_invoices: boolean | null
+          notify_payment_reminders: boolean | null
+          reduce_motion: boolean | null
+          text_mode: string | null
+          theme: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          compact_sidebar?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          daily_summary?: boolean | null
+          date_format?: string | null
+          density?: string | null
+          first_day_of_week?: number | null
+          high_contrast?: boolean | null
+          id?: string
+          language?: string | null
+          larger_text?: boolean | null
+          marketing_emails?: boolean | null
+          notify_important_dates?: boolean | null
+          notify_mobile?: boolean | null
+          notify_monthly_reports?: boolean | null
+          notify_new_invoices?: boolean | null
+          notify_payment_reminders?: boolean | null
+          reduce_motion?: boolean | null
+          text_mode?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          compact_sidebar?: boolean | null
+          created_at?: string | null
+          currency?: string | null
+          daily_summary?: boolean | null
+          date_format?: string | null
+          density?: string | null
+          first_day_of_week?: number | null
+          high_contrast?: boolean | null
+          id?: string
+          language?: string | null
+          larger_text?: boolean | null
+          marketing_emails?: boolean | null
+          notify_important_dates?: boolean | null
+          notify_mobile?: boolean | null
+          notify_monthly_reports?: boolean | null
+          notify_new_invoices?: boolean | null
+          notify_payment_reminders?: boolean | null
+          reduce_motion?: boolean | null
+          text_mode?: string | null
+          theme?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
       }
       usercredits: {
         Row: {
@@ -3407,6 +3696,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       event_category: [

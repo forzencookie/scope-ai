@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from "react"
+import { useMemo, useState } from "react"
 import { useCompliance } from "@/hooks/use-compliance"
 import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/ownership"
 import { useVerifications } from "@/hooks/use-verifications"
@@ -57,49 +57,35 @@ export function useGeneralMeetings() {
       })
   }, [realDocuments, bookedDecisions])
 
-  // Fetch stats from server
-  const [serverStats, setServerStats] = useState({
-    upcoming: 0,
-    completed: 0,
-    totalDecisions: 0,
-    nextMeetingDate: null as string | null,
-    daysUntilNext: null as number | null
-  })
-
-  useEffect(() => {
-    async function fetchStats() {
-      const { supabase } = await import('@/lib/database/supabase')
-      const { data, error } = await supabase.rpc('get_meeting_stats')
-
-      if (!error && data && data[0]) {
-        const stats = data[0]
-        setServerStats({
-          upcoming: stats.upcoming_meetings || 0,
-          completed: stats.held_meetings || 0,
-          totalDecisions: 0, // Not available in current RPC
-          nextMeetingDate: null, // Not available
-          daysUntilNext: null
-        })
-      }
-    }
-    fetchStats()
-  }, [])
-
-  // Calculate next meeting object for Alert Card (needs full type info)
-  const nextMeetingObject = useMemo(() => {
+  // Calculate stats directly from meetings array (unified data source)
+  const stats = useMemo(() => {
+    const upcoming = meetings.filter(m => m.status === 'kallad').length
+    const completed = meetings.filter(m => m.status === 'genomförd' || m.status === 'protokoll signerat').length
+    const totalDecisions = meetings.reduce((sum, m) => sum + (m.decisions?.length || 0), 0)
+    
+    // Find next upcoming meeting
     const sortedUpcoming = meetings
       .filter(m => m.status === 'kallad')
       .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    return sortedUpcoming[0] || null
+    const nextMeeting = sortedUpcoming[0] || null
+    
+    // Calculate days until next meeting
+    let daysUntilNext: number | null = null
+    if (nextMeeting) {
+      const today = new Date()
+      const meetingDate = new Date(nextMeeting.date)
+      const diffTime = meetingDate.getTime() - today.getTime()
+      daysUntilNext = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
+    }
+    
+    return {
+      upcoming,
+      completed,
+      totalDecisions,
+      nextMeeting,
+      daysUntilNext
+    }
   }, [meetings])
-
-  const stats = {
-    upcoming: serverStats.upcoming,
-    completed: serverStats.completed,
-    totalDecisions: serverStats.totalDecisions,
-    nextMeeting: nextMeetingObject ? nextMeetingObject : (serverStats.nextMeetingDate ? { date: serverStats.nextMeetingDate, type: 'ordinarie' as const } : null),
-    daysUntilNext: serverStats.daysUntilNext
-  }
 
   const bookDividend = (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => {
     if (!decision.amount) return
@@ -127,14 +113,54 @@ export function useGeneralMeetings() {
 
     toast.success(
       "Utdelning bokförd",
-      `Bokfört ${decision.amount} kr som skuld till aktieägare.`
+      `Bokfört ${decision.amount?.toLocaleString('sv-SE')} kr som skuld till aktieägare.`
     )
+  }
+
+  // Create a new meeting (saves to corporate_documents)
+  const createMeeting = async (meetingData: {
+    date: string
+    year: number
+    location: string
+    type: 'ordinarie' | 'extra'
+  }) => {
+    const content = JSON.stringify({
+      year: meetingData.year,
+      location: meetingData.location,
+      type: meetingData.type,
+      chairperson: 'Ej angivet',
+      secretary: 'Ej angivet',
+      attendeesCount: 0,
+      decisions: [],
+      sharesRepresented: 0,
+      votesRepresented: 0
+    })
+
+    try {
+      await addDocument({
+        type: 'general_meeting_minutes',
+        title: `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${meetingData.year}`,
+        date: meetingData.date || new Date().toISOString().split('T')[0],
+        content,
+        status: 'draft', // Will be mapped to 'kallad' in the meetings transform
+        source: 'manual'
+      })
+
+      toast.success(
+        "Stämma skapad",
+        `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma för ${meetingData.year} har planerats.`
+      )
+    } catch (error) {
+      console.error('Failed to create meeting:', error)
+      toast.error("Fel", "Kunde inte skapa stämman. Försök igen.")
+    }
   }
 
   return {
     meetings,
     stats,
     addDocument,
-    bookDividend
+    bookDividend,
+    createMeeting
   }
 }

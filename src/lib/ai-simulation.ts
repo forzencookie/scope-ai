@@ -177,7 +177,7 @@ const DEMO_SUGGESTIONS: SimulatedSuggestion[] = [
     title: "Okategoriserad transaktion",
     description: "Det finns 3 transaktioner som behöver kategoriseras",
     action: "Visa transaktioner",
-    actionUrl: "/dashboard/bokforing/transaktioner",
+    actionUrl: "/dashboard/bokforing?tab=transaktioner",
   },
   {
     id: "demo-2",
@@ -185,7 +185,7 @@ const DEMO_SUGGESTIONS: SimulatedSuggestion[] = [
     title: "Momsdeklaration snart",
     description: "Glöm inte att lämna in momsdeklarationen före den 12:e",
     action: "Se rapport",
-    actionUrl: "/dashboard/rapporter/moms",
+    actionUrl: "/dashboard/rapporter?tab=momsdeklaration",
   },
   {
     id: "demo-3",

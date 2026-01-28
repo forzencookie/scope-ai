@@ -29,7 +29,7 @@ export function BoardMeetingsStats({ heroData, onClick }: BoardMeetingsStatsProp
               {heroData?.label || 'Översikt'}
             </Badge>
             <CardTitle className="text-3xl font-bold tracking-tight">
-              {meeting ? `Styrelsemöte #${meeting.meetingNumber}` : 'Styrelseprotokoll'}
+              {meeting ? `Styrelsemöte #${meeting.meetingNumber}` : 'Nästa möte'}
             </CardTitle>
             <CardDescription className="text-base mt-2">
               {meeting ? (
@@ -44,12 +44,12 @@ export function BoardMeetingsStats({ heroData, onClick }: BoardMeetingsStatsProp
                   </span>
                 </span>
               ) : (
-                "Samlade protokoll och beslutsunderlag från styrelsemöten."
+                "Planera ditt första styrelsemöte för att komma igång."
               )}
             </CardDescription>
           </div>
           {meeting && (
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+             
             <AppStatusBadge status={getBoardMeetingStatusLabel(meeting.status)} />
           )}
         </div>

@@ -174,13 +174,18 @@ export function useCreatePayslipLogic({
 
             const saved = await response.json()
 
+            // Calculate employer contribution (arbetsgivaravgift) - 31.42%
+            const employerContribution = Math.round(finalSalary * 0.3142)
+
             // Create verification (ledger entries)
             await addVerification({
                 description: `Lön ${selectedEmp.name} ${currentPeriod}`,
                 date: new Date().toISOString().split('T')[0],
                 rows: [
                     { account: "7010", description: `Lön ${selectedEmp.name}`, debit: finalSalary, credit: 0 },
+                    { account: "7510", description: `Arbetsgivaravgift ${selectedEmp.name}`, debit: employerContribution, credit: 0 },
                     { account: "2710", description: `Personalskatt ${selectedEmp.name}`, debit: 0, credit: tax },
+                    { account: "2730", description: `Arbetsgivaravgift skuld ${selectedEmp.name}`, debit: 0, credit: employerContribution },
                     { account: "1930", description: `Utbetalning lön ${selectedEmp.name}`, debit: 0, credit: netSalary },
                 ],
             })

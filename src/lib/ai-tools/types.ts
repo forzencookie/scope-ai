@@ -15,7 +15,15 @@ export type FunctionParameters = {
         type: string
         description?: string
         enum?: string[]
-        items?: { type: string }
+        format?: string
+        items?: { 
+            type: string
+            properties?: Record<string, {
+                type: string
+                description?: string
+            }>
+            required?: string[]
+        }
     }>
     required?: string[]
 } | ZodTypeAny // Allow Zod schemas

@@ -18,6 +18,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import type { CorporateActionType } from "@/types/events"
 import { useLastUpdated } from "@/hooks/use-last-updated"
 import { cn } from "@/lib/utils"
 import { ActionWizard } from "@/components/agare"
@@ -96,8 +97,12 @@ function HandelserPageContent() {
     
     // Show year dropdown for views that need it
     const showYearDropdown = activeView === "folders" || activeView === "timeline" || activeView === "calendar"
-    // Show new action button for views that support it
-    const showNewAction = activeView !== "activity"
+    // Show new action button only for roadmap view (planning future actions)
+    // Other corporate actions should be created in their respective pages (Ägare, etc.)
+    const showNewAction = activeView === "roadmap"
+
+    // Roadmap view only allows creating roadmap items
+    const getAllowedActions = (): CorporateActionType[] => ["roadmap"]
 
     return (
         <div className="flex flex-col min-h-svh">
@@ -170,6 +175,7 @@ function HandelserPageContent() {
                 open={wizardOpen}
                 onOpenChange={setWizardOpen}
                 onComplete={handleActionComplete}
+                allowedActions={getAllowedActions()}
             />
 
             {/* View Content */}

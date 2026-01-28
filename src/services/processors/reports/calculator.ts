@@ -193,4 +193,38 @@ export const FinancialReportCalculator = {
       { title: "Kortfristiga skulder", items: shortLiabilities, total: shortLiabilities.reduce((sum, i) => sum + i.value, 0) },
     ]
   },
+
+  /**
+   * Get empty Income Statement sections with 0 values
+   * Used when there's no data to display but we still want to show the structure
+   */
+  getEmptyIncomeStatementSections(): FinancialSection[] {
+    return [
+      { title: "Rörelseintäkter", items: [], total: 0 },
+      { title: "Kostnader för material och varor", items: [], total: 0 },
+      { title: "Övriga externa kostnader", items: [], total: 0 },
+      { title: "Personalkostnader", items: [], total: 0 },
+      { title: "Avskrivningar", items: [], total: 0 },
+      { title: "Finansiella poster", items: [], total: 0 },
+      { title: "Skatt", items: [], total: 0 },
+      { title: "Årets resultat", items: [{ label: "Nettoresultat", value: 0 }], total: 0, isHighlight: true },
+    ]
+  },
+
+  /**
+   * Get empty Balance Sheet sections with 0 values
+   * Used when there's no data to display but we still want to show the structure
+   */
+  getEmptyBalanceSheetSections(): FinancialSection[] {
+    return [
+      { title: "Tillgångar", items: [], total: 0 },
+      { title: "Anläggningstillgångar", items: [], total: 0 },
+      { title: "Omsättningstillgångar", items: [], total: 0 },
+      { title: "Eget kapital och skulder", items: [], total: 0 },
+      { title: "Eget kapital", items: [], total: 0 },
+      { title: "Obeskattade reserver", items: [], total: 0 },
+      { title: "Långfristiga skulder", items: [], total: 0 },
+      { title: "Kortfristiga skulder", items: [], total: 0 },
+    ]
+  },
 }

@@ -63,7 +63,7 @@ export const calculateGransbeloppTool = defineTool({
                 component: 'K10Summary' as any,
                 props: { gransbelopp: Math.round(gransbelopp), year: params.year },
                 title: 'K10 Beräkning',
-                fullViewRoute: '/dashboard/skatt?tab=k10',
+                fullViewRoute: '/dashboard/rapporter?tab=k10',
             },
         }
     },

@@ -22,6 +22,8 @@ import {
 } from "@/components/ui/dialog"
 import { generateAnnualMeetingNoticePDF, type MeetingData } from "@/lib/generators/pdf-generator"
 import { useToast } from "@/components/ui/toast"
+import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
+import { formatDateLong } from "@/lib/utils"
 
 export type NoticeVariant = "association" | "corporate"
 
@@ -149,12 +151,53 @@ export function SendNoticeDialog({
                         </div>
                     )}
 
-                    <Card className="bg-muted/50">
+                    <Card 
+                        className="bg-muted/50 cursor-pointer hover:bg-muted/70 transition-colors"
+                        onClick={() => {
+                            // Close dialog
+                            onOpenChange(false)
+                            
+                            // Build the prompt for AI
+                            const meetingType = isAssociation ? 'årsmöte' : 'bolagsstämma'
+                            const meetingDate = meeting?.date ? formatDateLong(meeting.date) : 'kommande datum'
+                            const meetingLocation = meeting?.location || 'plats ej angiven'
+                            
+                            const prompt = `Generera en professionell kallelse till ${meeting?.type || 'ordinarie'} ${meetingType}:
+
+• Datum: ${meetingDate}
+• Plats: ${meetingLocation}
+• År: ${meeting?.year || new Date().getFullYear()}
+
+Inkludera:
+1. Korrekt juridisk formulering enligt ${isAssociation ? 'föreningens stadgar' : 'ABL'}
+2. Standard dagordning med alla obligatoriska punkter
+3. Information om anmälan och fullmakt
+4. Välformulerat avslut med styrelsens signatur
+
+Formatera kallelsen så den är redo att skickas ut.`
+
+                            // Dispatch event to open AI sidebar with action trigger
+                            const context: PageContext = {
+                                pageName: 'Kallelse',
+                                pageType: 'kvitto' as const, // Using existing type
+                                initialPrompt: prompt,
+                                autoSend: true,
+                                actionTrigger: {
+                                    icon: 'document',
+                                    title: 'Generera kallelse',
+                                    subtitle: `${meeting?.type === 'extra' ? 'Extra' : 'Ordinarie'} ${meetingType} • ${meeting?.year || new Date().getFullYear()}`,
+                                    meta: meetingLocation
+                                }
+                            }
+                            
+                            window.dispatchEvent(new CustomEvent(AI_CHAT_EVENT, { detail: context }))
+                        }}
+                    >
                         <CardContent className="pt-4">
                             <div className="flex items-start gap-2">
                                 <Sparkles className="h-4 w-4 mt-0.5 text-primary" />
                                 <div className="text-sm">
-                                    <p className="font-medium">AI-genererad kallelse</p>
+                                    <p className="font-medium">Förbättra med AI</p>
                                     <p className="text-muted-foreground">
                                         {isAssociation
                                             ? "Låt AI skapa kallelse med tydlig information om tid, plats och dagordning."

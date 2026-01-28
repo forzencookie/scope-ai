@@ -371,9 +371,9 @@ export const showPreviewTool = defineTool<ShowPreviewParams, null>({
         const componentMap: Record<ShowPreviewParams['type'], { component: string; route: string }> = {
             transactions: { component: 'TransactionsTable', route: '/dashboard/bokforing?tab=transaktioner' },
             payslips: { component: 'PayslipsTable', route: '/dashboard/loner?tab=lonebesked' },
-            vat: { component: 'VatSummary', route: '/dashboard/skatt?tab=momsdeklaration' },
-            income_statement: { component: 'IncomeStatement', route: '/dashboard/rapporter/resultat' },
-            balance_sheet: { component: 'BalanceSheet', route: '/dashboard/rapporter/balans' },
+            vat: { component: 'VatSummary', route: '/dashboard/rapporter?tab=momsdeklaration' },
+            income_statement: { component: 'IncomeStatement', route: '/dashboard/rapporter?tab=resultatrakning' },
+            balance_sheet: { component: 'BalanceSheet', route: '/dashboard/rapporter?tab=balansrakning' },
             employees: { component: 'EmployeeList', route: '/dashboard/loner?tab=lonebesked' },
         }
 
@@ -424,7 +424,7 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
                 component: 'DeadlinesList',
                 props: { deadlines },
                 title: 'Kommande deadlines',
-                fullViewRoute: '/dashboard/skatt',
+                fullViewRoute: '/dashboard/rapporter',
             },
         }
     },

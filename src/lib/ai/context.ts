@@ -29,6 +29,13 @@ export interface PageContext {
     initialPrompt: string
     /** Whether to auto-send the message on arrival */
     autoSend?: boolean
+    /** Action trigger display (shows chip instead of raw prompt) */
+    actionTrigger?: {
+        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+        title: string
+        subtitle?: string
+        meta?: string
+    }
 }
 
 /**

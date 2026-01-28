@@ -96,14 +96,14 @@ function getEntityLink(entityType: EntityType, entityId: string | null): string 
   if (!entityId) return null
 
   const routes: Record<EntityType, string> = {
-    transactions: `/dashboard/bokforing/transaktioner?id=${entityId}`,
-    customerinvoices: `/dashboard/bokforing/fakturor?id=${entityId}`,
-    supplierinvoices: `/dashboard/bokforing/fakturor?id=${entityId}`,
-    receipts: `/dashboard/bokforing/kvitton?id=${entityId}`,
-    verifications: `/dashboard/bokforing/verifikationer?id=${entityId}`,
-    payslips: `/dashboard/loner/lonebesked?id=${entityId}`,
-    employees: `/dashboard/loner/team?id=${entityId}`,
-    shareholders: `/dashboard/agare/aktiebok?id=${entityId}`,
+    transactions: `/dashboard/bokforing?tab=transaktioner&id=${entityId}`,
+    customerinvoices: `/dashboard/bokforing?tab=fakturor&id=${entityId}`,
+    supplierinvoices: `/dashboard/bokforing?tab=fakturor&id=${entityId}`,
+    receipts: `/dashboard/bokforing?tab=kvitton&id=${entityId}`,
+    verifications: `/dashboard/bokforing?tab=verifikationer&id=${entityId}`,
+    payslips: `/dashboard/loner?tab=lonebesked&id=${entityId}`,
+    employees: `/dashboard/loner?tab=team&id=${entityId}`,
+    shareholders: `/dashboard/agare?tab=aktiebok&id=${entityId}`,
     companies: `/dashboard/installningar`,
     profiles: `/dashboard/installningar`,
   }

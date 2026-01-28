@@ -17,6 +17,13 @@ interface SendMessageOptions {
     mentions?: MentionItem[]
     retryMessageId?: string
     confirmationId?: string
+    /** Action trigger display - shows chip instead of raw prompt */
+    actionTrigger?: {
+        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+        title: string
+        subtitle?: string
+        meta?: string
+    }
 }
 
 interface UseSendMessageOptions {
@@ -44,7 +51,8 @@ export function useSendMessage({
         files = [],
         mentions = [],
         retryMessageId,
-        confirmationId
+        confirmationId,
+        actionTrigger
     }: SendMessageOptions) => {
         const messageContent = content.trim()
         const hasFiles = files.length > 0
@@ -129,7 +137,8 @@ export function useSendMessage({
                     role: 'user',
                     content: messageContent,
                     attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
-                    mentions: mentions.length > 0 ? mentions : undefined
+                    mentions: mentions.length > 0 ? mentions : undefined,
+                    actionTrigger: actionTrigger
                 }
                 updatedMessages = [...updatedMessages, userMessage]
             }

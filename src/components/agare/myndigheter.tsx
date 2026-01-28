@@ -3,10 +3,8 @@
 import { useMemo } from 'react';
 import {
     ExternalLink,
-    Check,
     Clock,
     AlertCircle,
-    RefreshCw,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,7 +13,7 @@ import { useCompany } from '@/providers/company-provider';
 import { PageHeader } from '@/components/shared';
 
 // Authority connection types
-type AuthorityStatus = 'connected' | 'pending' | 'error' | 'not_connected';
+type AuthorityStatus = 'upcoming' | 'not_connected';
 
 interface AuthorityConnection {
     id: string;
@@ -23,41 +21,14 @@ interface AuthorityConnection {
     name: string;
     description: string;
     status: AuthorityStatus;
-    lastSync?: string;
-    registrationNumber?: string;
 }
 
-// const authorityMeta: Record<string, { icon: React.ElementType; colorClass: string; bgClass: string }> = {
-//     bolagsverket: {
-//         icon: Building2,
-//         colorClass: 'text-blue-600 dark:text-blue-400',
-//         bgClass: 'bg-blue-100 dark:bg-blue-950/50',
-//     },
-//     skatteverket: {
-//         icon: Building2,
-//         colorClass: 'text-orange-600 dark:text-orange-400',
-//         bgClass: 'bg-orange-100 dark:bg-orange-950/50',
-//     },
-// };
-
 const statusConfig: Record<AuthorityStatus, { label: string; colorClass: string; bgClass: string; icon: React.ElementType }> = {
-    connected: {
-        label: 'Ansluten',
-        colorClass: 'text-emerald-700 dark:text-emerald-400',
-        bgClass: 'bg-emerald-100 dark:bg-emerald-950/50',
-        icon: Check,
-    },
-    pending: {
-        label: 'Väntar',
+    upcoming: {
+        label: 'Kommande',
         colorClass: 'text-amber-700 dark:text-amber-400',
         bgClass: 'bg-amber-100 dark:bg-amber-950/50',
         icon: Clock,
-    },
-    error: {
-        label: 'Fel',
-        colorClass: 'text-red-700 dark:text-red-400',
-        bgClass: 'bg-red-100 dark:bg-red-950/50',
-        icon: AlertCircle,
     },
     not_connected: {
         label: 'Ej ansluten',
@@ -68,13 +39,10 @@ const statusConfig: Record<AuthorityStatus, { label: string; colorClass: string;
 };
 
 export function Myndigheter() {
-    const { company, companyType } = useCompany();
+    const { companyType } = useCompany();
 
-    // Build connections based on real company data
+    // Build connections - all marked as upcoming since API integration is not ready
     const connections = useMemo<AuthorityConnection[]>(() => {
-        const orgNumber = company?.orgNumber || '556123-4567';
-        const now = new Date().toISOString().slice(0, 16).replace('T', ' ');
-
         const result: AuthorityConnection[] = [];
 
         // Bolagsverket - all company types except EF (which uses personal number)
@@ -84,9 +52,7 @@ export function Myndigheter() {
                 authority: 'bolagsverket',
                 name: 'Bolagsverket',
                 description: 'Företagsregistrering, styrelse, firmatecknare',
-                status: 'connected',
-                lastSync: now,
-                registrationNumber: orgNumber,
+                status: 'upcoming',
             });
         }
 
@@ -95,18 +61,12 @@ export function Myndigheter() {
             id: '2',
             authority: 'skatteverket',
             name: 'Skatteverket',
-            description: company?.hasMomsRegistration
-                ? 'F-skatt, moms, arbetsgivardeklarationer'
-                : 'F-skatt, arbetsgivardeklarationer',
-            status: 'connected',
-            lastSync: now,
-            registrationNumber: companyType === 'ef'
-                ? '198505151234' // Personal number for EF
-                : orgNumber,
+            description: 'F-skatt, moms, arbetsgivardeklarationer',
+            status: 'upcoming',
         });
 
         return result;
-    }, [company, companyType]);
+    }, [companyType]);
 
     return (
         <div className="space-y-6">
@@ -159,33 +119,24 @@ export function Myndigheter() {
                                 </div>
                             </CardHeader>
                             <CardContent className="space-y-3">
-                                {connection.registrationNumber && (
-                                    <div className="text-sm">
-                                        <span className="text-muted-foreground">
-                                            {companyType === 'ef' && connection.authority === 'skatteverket'
-                                                ? 'Personnr: '
-                                                : 'Org.nr: '}
-                                        </span>
-                                        <span className="font-mono">{connection.registrationNumber}</span>
-                                    </div>
-                                )}
-                                {connection.lastSync && (
-                                    <div className="text-xs text-muted-foreground flex items-center gap-1">
-                                        <RefreshCw className="h-3 w-3" />
-                                        Senast synkad: {connection.lastSync}
-                                    </div>
-                                )}
+                                <p className="text-sm text-muted-foreground">
+                                    Integration med {connection.name} kommer snart. Du kommer kunna synkronisera 
+                                    företagsuppgifter automatiskt.
+                                </p>
                                 <div className="flex gap-2 pt-2">
                                     <Button
+                                        variant="outline"
                                         size="sm"
-                                        className="gap-2 px-4 bg-blue-100 dark:bg-blue-950/50 text-blue-600 dark:text-blue-400 hover:bg-blue-200 dark:hover:bg-blue-900/50"
+                                        className="gap-1.5"
+                                        onClick={() => window.open(
+                                            connection.authority === 'bolagsverket' 
+                                                ? 'https://bolagsverket.se' 
+                                                : 'https://skatteverket.se',
+                                            '_blank'
+                                        )}
                                     >
-                                        Synka
-                                        <RefreshCw className="h-3.5 w-3.5" />
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="gap-1.5 hover:bg-muted/50">
                                         <ExternalLink className="h-3.5 w-3.5" />
-                                        Öppna
+                                        Öppna {connection.name}
                                     </Button>
                                 </div>
                             </CardContent>

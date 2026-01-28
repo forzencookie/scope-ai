@@ -1,19 +1,30 @@
 
-import { z } from "zod"
 import { createRoadmap } from "@/services/roadmap-service"
 
 export const generateRoadmapTool = {
     name: "generate_roadmap",
     description: "Generate a structured step-by-step roadmap for a business goal (e.g., 'Start a company', 'Close fiscal year'). Creates a persistent plan in the database.",
-    parameters: z.object({
-        goal: z.string().describe("The high-level goal the user wants to achieve"),
-        context: z.string().optional().describe("Additional context about the user's situation (e.g., industry, company type)"),
-        steps: z.array(z.object({
-            title: z.string().describe("Title of the step"),
-            description: z.string().describe("Detailed description of what to do in this step"),
-            metadata: z.record(z.string(), z.any()).optional().describe("Metadata for the step, e.g., { action: 'register_company' } to link to specific app actions")
-        })).describe("The generated steps for the roadmap")
-    }),
+    parameters: {
+        type: 'object',
+        properties: {
+            goal: { type: 'string', description: 'The high-level goal the user wants to achieve' },
+            context: { type: 'string', description: 'Additional context about the user\'s situation (e.g., industry, company type)' },
+            steps: {
+                type: 'array',
+                description: 'The generated steps for the roadmap',
+                items: {
+                    type: 'object',
+                    properties: {
+                        title: { type: 'string', description: 'Title of the step' },
+                        description: { type: 'string', description: 'Detailed description of what to do in this step' },
+                        metadata: { type: 'object', description: 'Metadata for the step, e.g., { action: "register_company" } to link to specific app actions' }
+                    },
+                    required: ['title', 'description']
+                }
+            }
+        },
+        required: ['goal', 'steps']
+    },
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     execute: async (args: { goal: string; context?: string; steps: any[] }) => {
         try {

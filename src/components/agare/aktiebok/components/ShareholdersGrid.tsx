@@ -6,7 +6,8 @@ import {
     Hash,
     Vote,
     Calendar,
-    Percent
+    Percent,
+    Users
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -21,9 +22,10 @@ import { ShareholderDisplay } from "../types"
 
 interface ShareholdersGridProps {
     shareholders: ShareholderDisplay[]
+    onAddShareholder?: () => void
 }
 
-export function ShareholdersGrid({ shareholders }: ShareholdersGridProps) {
+export function ShareholdersGrid({ shareholders, onAddShareholder }: ShareholdersGridProps) {
     return (
         <div className="w-full overflow-x-auto pb-2">
             <div className="md:min-w-[800px]">
@@ -39,6 +41,21 @@ export function ShareholdersGrid({ shareholders }: ShareholdersGridProps) {
                 ]}
             />
             <GridTableRows>
+                {shareholders.length === 0 && (
+                    <div className="text-center py-12 text-muted-foreground">
+                        <Users className="h-12 w-12 mx-auto mb-4 opacity-50" />
+                        <p>Inga aktieägare registrerade ännu</p>
+                        {onAddShareholder && (
+                            <Button
+                                variant="outline"
+                                className="mt-4"
+                                onClick={onAddShareholder}
+                            >
+                                Lägg till aktieägare
+                            </Button>
+                        )}
+                    </div>
+                )}
                 {shareholders.map((shareholder) => (
                     <GridTableRow key={shareholder.id}>
                         {/* 1. Ägare */}

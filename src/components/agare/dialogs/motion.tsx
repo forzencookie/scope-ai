@@ -22,6 +22,21 @@ interface MotionDialogProps {
 }
 
 export function MotionDialog({ open, onOpenChange, onSubmit }: MotionDialogProps) {
+    const [title, setTitle] = React.useState("")
+    const [motioner, setMotioner] = React.useState("")
+    const [description, setDescription] = React.useState("")
+    const [date, setDate] = React.useState("")
+
+    // Reset form when dialog opens
+    React.useEffect(() => {
+        if (open) {
+            setTitle("")
+            setMotioner("")
+            setDescription("")
+            setDate(new Date().toISOString().split('T')[0])
+        }
+    }, [open])
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-lg" expandable>
@@ -34,22 +49,36 @@ export function MotionDialog({ open, onOpenChange, onSubmit }: MotionDialogProps
                 <div className="space-y-4 py-4">
                     <div className="space-y-2">
                         <Label>Rubrik</Label>
-                        <Input placeholder="Kort beskrivning av motionen" />
+                        <Input 
+                            placeholder="Kort beskrivning av motionen" 
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label>Motionär</Label>
-                        <Input placeholder="Namn på medlem som lämnat motionen" />
+                        <Input 
+                            placeholder="Namn på medlem som lämnat motionen" 
+                            value={motioner}
+                            onChange={(e) => setMotioner(e.target.value)}
+                        />
                     </div>
                     <div className="space-y-2">
                         <Label>Beskrivning</Label>
                         <Textarea
                             placeholder="Fullständig text för motionen..."
                             rows={4}
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
                         />
                     </div>
                     <div className="space-y-2">
                         <Label>Datum inlämnad</Label>
-                        <Input type="date" />
+                        <Input 
+                            type="date" 
+                            value={date}
+                            onChange={(e) => setDate(e.target.value)}
+                        />
                     </div>
                 </div>
                 <DialogFooter>
@@ -57,7 +86,7 @@ export function MotionDialog({ open, onOpenChange, onSubmit }: MotionDialogProps
                         Avbryt
                     </Button>
                     <Button onClick={() => {
-                        onSubmit?.({})
+                        onSubmit?.({ title, motioner, description, date })
                         onOpenChange(false)
                     }}>
                         Registrera motion

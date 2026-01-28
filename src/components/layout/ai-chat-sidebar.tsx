@@ -105,7 +105,11 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
             if (context) {
                 startNewConversation()
                 if (context.autoSend) {
-                    sendMessage({ content: context.initialPrompt })
+                    // Send with action trigger display if provided
+                    sendMessage({ 
+                        content: context.initialPrompt,
+                        actionTrigger: context.actionTrigger
+                    })
                 } else {
                     setTextareaValue(context.initialPrompt)
                 }

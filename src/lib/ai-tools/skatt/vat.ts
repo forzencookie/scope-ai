@@ -93,7 +93,7 @@ export const getVatReportTool = defineTool<{ period?: string; year?: number }, V
                     }
                 },
                 title: 'Momsdeklaration',
-                fullViewRoute: '/dashboard/skatt?tab=momsdeklaration',
+                fullViewRoute: '/dashboard/rapporter?tab=momsdeklaration',
             },
         }
     },
@@ -173,7 +173,7 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
                     }
                 },
                 title: 'Momsdeklaration',
-                fullViewRoute: '/dashboard/skatt?tab=momsdeklaration',
+                fullViewRoute: '/dashboard/rapporter?tab=momsdeklaration',
             },
         }
     },

@@ -16,7 +16,7 @@ interface BoardChangeFormProps {
 export function BoardChangeForm({ onBack, onSubmit }: BoardChangeFormProps) {
     const [newMember, setNewMember] = useState("")
     const [changeDate, setChangeDate] = useState(new Date().toISOString().split('T')[0])
-    const [boardMembers, setBoardMembers] = useState<string[]>(['Rice'])
+    const [boardMembers, setBoardMembers] = useState<string[]>([])
 
     const handleAddMember = () => {
         if (newMember) {

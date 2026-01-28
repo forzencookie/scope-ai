@@ -1,5 +1,4 @@
 
-import { z } from "zod"
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
 
 export const registerEmployeeTool: AITool = {
@@ -7,12 +6,16 @@ export const registerEmployeeTool: AITool = {
     description: "Proposes registering a new employee. Returns a preview card for user confirmation.",
     requiresConfirmation: true,
     category: 'write',
-    parameters: z.object({
-        name: z.string().describe("Full name of the employee"),
-        role: z.string().describe("Job title or role"),
-        email: z.string().email().describe("Work email address"),
-        salary: z.number().describe("Monthly salary in SEK"),
-    }),
+    parameters: {
+        type: 'object',
+        properties: {
+            name: { type: 'string', description: 'Full name of the employee' },
+            role: { type: 'string', description: 'Job title or role' },
+            email: { type: 'string', format: 'email', description: 'Work email address' },
+            salary: { type: 'number', description: 'Monthly salary in SEK' }
+        },
+        required: ['name', 'role', 'email', 'salary']
+    },
 
     execute: async (params: unknown, _context: InteractionContext) => {
         const { name, role, email, salary } = params as { name: string, role: string, email: string, salary: number }

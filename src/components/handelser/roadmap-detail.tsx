@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { ChevronDown, ArrowRight } from "lucide-react"
+import { ChevronDown, ArrowRight, Trash2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card } from "@/components/ui/card"
@@ -13,8 +13,19 @@ import {
     CollapsibleContent,
     CollapsibleTrigger,
 } from "@/components/ui/collapsible"
+import {
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
+    AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
 import type { Roadmap, RoadmapStep, RoadmapStepStatus } from "@/types/roadmap"
-import { updateStep } from "@/services/roadmap-service"
+import { updateStep, deleteRoadmap } from "@/services/roadmap-service"
 
 interface RoadmapDetailProps {
     roadmap: Roadmap
@@ -24,6 +35,7 @@ interface RoadmapDetailProps {
 
 export function RoadmapDetail({ roadmap, onUpdate, onBack }: RoadmapDetailProps) {
     const [expandedSteps, setExpandedSteps] = useState<Record<string, boolean>>({})
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const completedSteps = roadmap.steps?.filter(s => s.status === 'completed').length || 0
     const totalSteps = roadmap.steps?.length || 0
@@ -42,16 +54,52 @@ export function RoadmapDetail({ roadmap, onUpdate, onBack }: RoadmapDetailProps)
         }))
     }
 
+    const handleDelete = async () => {
+        setIsDeleting(true)
+        try {
+            await deleteRoadmap(roadmap.id)
+            onBack?.()
+        } finally {
+            setIsDeleting(false)
+        }
+    }
+
     // Sort steps by order_index
     const sortedSteps = [...(roadmap.steps || [])].sort((a, b) => a.order_index - b.order_index)
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex items-center gap-2 mb-4">
+            <div className="flex items-center justify-between mb-4">
                 <Button variant="ghost" size="sm" onClick={onBack} className="text-muted-foreground">
                     <ArrowRight className="h-4 w-4 mr-1 rotate-180" />
                     Tillbaka
                 </Button>
+                <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                        <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/10">
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Ta bort
+                        </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                        <AlertDialogHeader>
+                            <AlertDialogTitle>Ta bort plan?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                Är du säker på att du vill ta bort &quot;{roadmap.title}&quot;? Denna åtgärd kan inte ångras.
+                            </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                            <AlertDialogCancel>Avbryt</AlertDialogCancel>
+                            <AlertDialogAction 
+                                onClick={handleDelete}
+                                disabled={isDeleting}
+                                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                                {isDeleting ? 'Tar bort...' : 'Ta bort'}
+                            </AlertDialogAction>
+                        </AlertDialogFooter>
+                    </AlertDialogContent>
+                </AlertDialog>
             </div>
 
             <Card className="p-6 border-l-4 border-l-primary shadow-sm">
@@ -124,13 +172,6 @@ export function RoadmapDetail({ roadmap, onUpdate, onBack }: RoadmapDetailProps)
                                         <CollapsibleContent>
                                             <div className="pt-2 text-sm text-muted-foreground animate-in slide-in-from-top-1">
                                                 {step.description}
-                                                {step.metadata?.action && (
-                                                    <div className="mt-3">
-                                                        <Button size="sm" variant="secondary" className="text-xs">
-                                                            Utför åtgärd <ArrowRight className="ml-1.5 h-3 w-3" />
-                                                        </Button>
-                                                    </div>
-                                                )}
                                             </div>
                                         </CollapsibleContent>
                                     </div>

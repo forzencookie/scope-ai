@@ -121,14 +121,14 @@ export function useDynamicTasks() {
                     id: 'rap-1',
                     title: 'Kontrollera momssaldo',
                     completed: false,
-                    href: '/dashboard/skatt?tab=momsdeklaration',
+                    href: '/dashboard/rapporter?tab=momsdeklaration',
                     category: 'rapporter'
                 },
                 {
                     id: 'rap-2',
                     title: 'Granska avdragsposter',
                     completed: false,
-                    href: '/dashboard/skatt?tab=momsdeklaration',
+                    href: '/dashboard/rapporter?tab=momsdeklaration',
                     category: 'rapporter'
                 }
             ]
@@ -163,7 +163,7 @@ export function useDynamicTasks() {
                 id: 'lon-2',
                 title: `AGI-rapport att skicka in`,
                 completed: false,
-                href: '/dashboard/skatt?tab=agi',
+                href: '/dashboard/rapporter?tab=agi',
                 category: 'loner'
             })
         }

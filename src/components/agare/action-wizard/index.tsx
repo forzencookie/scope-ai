@@ -23,17 +23,20 @@ interface ActionWizardProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onComplete?: (actionType: CorporateActionType) => void
+    /** Filter which action types are available. If not provided, all actions are shown. */
+    allowedActions?: CorporateActionType[]
 }
 
 type WizardStep = 'select' | 'configure' | 'preview' | 'complete'
 
-export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardProps) {
+export function ActionWizard({ open, onOpenChange, onComplete, allowedActions }: ActionWizardProps) {
     const [step, setStep] = useState<WizardStep>('select')
     const [selectedAction, setSelectedAction] = useState<CorporateActionType | null>(null)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [actionData, setActionData] = useState<any>(null)
 
     const { shareholders, addDocument, isAddingDoc } = useCompliance()
+    const [isCreatingRoadmap, setIsCreatingRoadmap] = useState(false)
 
     const handleSelectAction = (actionType: CorporateActionType) => {
         setSelectedAction(actionType)
@@ -56,16 +59,24 @@ export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardPro
     const handleComplete = async () => {
         if (selectedAction) {
             if (selectedAction === 'roadmap') {
-                const { createRoadmap } = await import('@/services/roadmap-service')
-                await createRoadmap({
-                    title: actionData.roadmapTitle || 'Ny företagsplan',
-                    description: actionData.description,
-                    steps: [
-                        { title: 'Definiera mål', description: 'Beskriv vad du vill uppnå.' },
-                        { title: 'Nulägesanalys', description: 'Gå igenom nuvarande situation.' },
-                        { title: 'Genomförande', description: 'Utför planen.' }
-                    ]
-                })
+                if (isCreatingRoadmap) return // Prevent double submission
+                setIsCreatingRoadmap(true)
+                try {
+                    const { createRoadmap } = await import('@/services/roadmap-service')
+                    await createRoadmap({
+                        title: actionData.roadmapTitle || 'Ny företagsplan',
+                        description: actionData.description,
+                        steps: [
+                            { title: 'Planering', description: 'Definiera dina mål och gör en nulägesanalys.' },
+                            { title: 'Förberedelser', description: 'Samla nödvändig information och dokumentation.' },
+                            { title: 'Genomförande', description: 'Utför de planerade aktiviteterna.' }
+                        ]
+                    })
+                    setStep('complete')
+                } finally {
+                    setIsCreatingRoadmap(false)
+                }
+                return
             } else {
                 const meta = corporateActionTypeMeta[selectedAction]
                 await addDocument({
@@ -128,7 +139,7 @@ export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardPro
                 {/* Step content */}
                 <div className="py-2 min-h-[300px]">
                     {step === 'select' && (
-                        <StepSelect onSelect={handleSelectAction} />
+                        <StepSelect onSelect={handleSelectAction} allowedActions={allowedActions} />
                     )}
 
                     {step === 'configure' && selectedAction && (
@@ -143,14 +154,14 @@ export function ActionWizard({ open, onOpenChange, onComplete }: ActionWizardPro
                     {step === 'preview' && selectedAction && (
                         <StepPreview
                             selectedAction={selectedAction}
-                            isAddingDoc={isAddingDoc}
+                            isAddingDoc={isAddingDoc || isCreatingRoadmap}
                             onBack={() => setStep('configure')}
                             onComplete={handleComplete}
                         />
                     )}
 
-                    {step === 'complete' && (
-                        <StepComplete onClose={handleReset} />
+                    {step === 'complete' && selectedAction && (
+                        <StepComplete onClose={handleReset} actionType={selectedAction} />
                     )}
                 </div>
             </DialogContent>

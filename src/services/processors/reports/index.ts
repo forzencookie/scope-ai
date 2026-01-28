@@ -58,4 +58,6 @@ export const FinancialReportProcessor = {
   calculateBalanceSheet: FinancialReportCalculator.calculateBalanceSheet,
   calculateIncomeStatementSections: FinancialReportCalculator.calculateIncomeStatementSections,
   calculateBalanceSheetSections: FinancialReportCalculator.calculateBalanceSheetSections,
+  getEmptyIncomeStatementSections: FinancialReportCalculator.getEmptyIncomeStatementSections,
+  getEmptyBalanceSheetSections: FinancialReportCalculator.getEmptyBalanceSheetSections,
 }

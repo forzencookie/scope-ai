@@ -12,6 +12,7 @@ import { TransactionCard } from "@/components/ai/cards/TransactionCard"
 import { TaskChecklist } from "@/components/ai/cards/TaskChecklist"
 import { ActivityCard } from "@/components/ai/activity-card"
 import { ComparisonTable } from "@/components/ai/comparison-table"
+import { ActionTriggerChip } from "@/components/ai/action-trigger-chip"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import type { Message } from "@/lib/chat-types"
@@ -208,11 +209,26 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 >
                     {message.role === 'user' ? (
                         <div className="max-w-[85%] flex flex-col gap-2 items-end">
-                            {/* Text message */}
-                            {message.content && (
-                                <div className="rounded-lg px-3 py-1.5 bg-primary text-primary-foreground">
-                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                                </div>
+                            {/* Action Trigger Chip - shown instead of text for action triggers */}
+                            {message.actionTrigger ? (
+                                <ActionTriggerChip 
+                                    display={{
+                                        type: 'action-trigger',
+                                        icon: message.actionTrigger.icon,
+                                        title: message.actionTrigger.title,
+                                        subtitle: message.actionTrigger.subtitle,
+                                        meta: message.actionTrigger.meta
+                                    }}
+                                />
+                            ) : (
+                                <>
+                                    {/* Text message */}
+                                    {message.content && (
+                                        <div className="rounded-lg px-3 py-1.5 bg-primary text-primary-foreground">
+                                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                        </div>
+                                    )}
+                                </>
                             )}
                             {/* Mentions */}
                             {message.mentions && message.mentions.length > 0 && (
