@@ -149,12 +149,12 @@ export function useGeneralMeetings() {
         : new Date().toISOString().split('T')[0]
       
       const docData = {
-        type: 'general_meeting_minutes',
+        type: 'general_meeting_minutes' as const,
         title: `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${meetingData.year}`,
         date: meetingDate,
         content,
-        status: 'draft',
-        source: 'manual'
+        status: 'draft' as const,
+        source: 'manual' as const
       }
       
       console.log('[createMeeting] Calling addDocument with:', docData)
