@@ -20,7 +20,8 @@ export function useTaxParameters(year: number) {
 
         async function fetchParams() {
             try {
-                // Parallel fetch for better performance
+                // Ensure async — prevents state update before mount
+                await Promise.resolve()
                 const [ibb, rate] = await Promise.all([
                     taxService.getSystemParameter<number>('ibb', year),
                     taxService.getSystemParameter<number>('k10_schablon_rate', year)

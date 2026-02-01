@@ -31,7 +31,7 @@ export interface PageContext {
     autoSend?: boolean
     /** Action trigger display (shows chip instead of raw prompt) */
     actionTrigger?: {
-        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders' | 'audit'
         title: string
         subtitle?: string
         meta?: string
@@ -60,6 +60,23 @@ export function buildAIChatUrl(context: PageContext): string {
  * Custom event for opening AI chat with context
  */
 export const AI_CHAT_EVENT = "open-ai-chat"
+
+/**
+ * Pending AI context store.
+ * When the sidebar isn't mounted yet, context is stored here
+ * and consumed when the AI chat sidebar mounts.
+ */
+let _pendingAIContext: PageContext | null = null
+
+export function setPendingAIContext(context: PageContext | null) {
+    _pendingAIContext = context
+}
+
+export function consumePendingAIContext(): PageContext | null {
+    const context = _pendingAIContext
+    _pendingAIContext = null
+    return context
+}
 
 /**
  * Hook to navigate to AI chat with context

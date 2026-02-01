@@ -21,6 +21,9 @@ import { RoadmapCard } from "./cards/RoadmapCard"
 import { EmployeeCard } from "./cards/EmployeeCard"
 import { VerificationCard } from "./cards/VerificationCard"
 
+// Audit Cards
+import { BalanceAuditCard } from "./previews/bokforing/balance-audit-card"
+
 // Billing/Usage Cards
 import { AIUsageCard } from "./cards/AIUsageCard"
 import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
@@ -118,6 +121,11 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     deadlineslist: SmartListCard,
     benefitstable: SmartListCard,
     vatsummary: SmartListCard,
+
+    // Audit
+    balanceauditcard: BalanceAuditCard,
+    balanskontroll: BalanceAuditCard,
+    audit: BalanceAuditCard,
 
     // Billing/Usage
     aiusagecard: AIUsageCard,

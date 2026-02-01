@@ -170,7 +170,8 @@ export function CollapsibleTableRow({ item, className, children, neutral = false
                             : roundedValue < 0
                                 ? "text-red-600 dark:text-red-400"
                                 : "text-muted-foreground"
-                )}>n                    {formatNumber(roundedValue)} kr
+                )}>
+                    {formatNumber(roundedValue)} kr
                 </span>
             </div>
 
@@ -237,32 +238,41 @@ export function CollapsibleTableSection({
         }, ANIMATION_DURATION_MS)
     }, [isAnimating])
 
-    if (items.length === 0) return null
+    const isEmpty = items.length === 0
 
     return (
         <div className="space-y-1">
             {/* Section Header Button */}
             <button
-                onClick={handleToggle}
-                disabled={isAnimating}
+                onClick={isEmpty ? undefined : handleToggle}
+                disabled={isAnimating || isEmpty}
                 className={cn(
-                    "flex items-center gap-3 py-2 hover:bg-muted/30 rounded-sm px-2 -mx-2 transition-colors group w-full text-left",
+                    "flex items-center gap-3 py-2 rounded-sm px-2 -mx-2 transition-colors group w-full text-left",
+                    isEmpty ? "cursor-default" : "hover:bg-muted/30",
                     isAnimating && "pointer-events-none opacity-70"
                 )}
             >
                 <div className="flex items-center gap-3">
-                    {isOpen ? (
+                    {isEmpty ? (
+                        <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0" />
+                    ) : isOpen ? (
                         <ChevronDown className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     ) : (
                         <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors shrink-0" />
                     )}
-                    <span className="font-medium text-sm group-hover:text-foreground transition-colors text-muted-foreground">
+                    <span className={cn(
+                        "font-medium text-sm transition-colors",
+                        isEmpty ? "text-muted-foreground/50" : "text-muted-foreground group-hover:text-foreground"
+                    )}>
                         {title}
                     </span>
 
                     {!hideTotalHeader && (
                         neutral ? (
-                            <span className="font-medium text-sm tabular-nums text-foreground">
+                            <span className={cn(
+                                "font-medium text-sm tabular-nums",
+                                isEmpty ? "text-muted-foreground/50" : "text-foreground"
+                            )}>
                                 {formatNumber(displayTotal)} kr
                             </span>
                         ) : (
@@ -273,7 +283,7 @@ export function CollapsibleTableSection({
             </button>
 
             {/* Section Rows - with smooth animation */}
-            {isOpen && (
+            {isOpen && !isEmpty && (
                 <div className={cn(
                     "space-y-0.5 pl-6",
                     "transition-all duration-200 ease-in-out",

@@ -14,6 +14,7 @@ import { ActivityCard } from "@/components/ai/activity-card"
 import { ComparisonTable } from "@/components/ai/comparison-table"
 import { ActionTriggerChip } from "@/components/ai/action-trigger-chip"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
+import { BalanceAuditCard } from "@/components/ai/previews/bokforing/balance-audit-card"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import type { Message } from "@/lib/chat-types"
 import { useState } from "react"
@@ -175,6 +176,13 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                                 rows={message.display.data.rows || []}
                             />
                         )}
+                    </div>
+                )}
+
+                {/* Inline-only cards (always visible, no overlay) */}
+                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any).component === 'BalanceAuditCard') && (
+                    <div className="my-2">
+                        <BalanceAuditCard audit={(message.display.data as any)?.audit} data={(message.display.data as any)?.audit || message.display.data as any} />
                     </div>
                 )}
 

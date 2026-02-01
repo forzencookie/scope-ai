@@ -77,7 +77,7 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialogProps) {
   const [activeTab, setActiveTab] = React.useState("Konto")
-  const [isExpanded, setIsExpanded] = React.useState(false)
+  const [isExpanded, setIsExpanded] = React.useState(true)
   const { company, updateCompany } = useCompany()
   const { addToast } = useToast()
 

@@ -4,6 +4,7 @@ import { formatDateLong } from "@/lib/utils"
 
 interface MeetingStatsProps {
     stats: {
+        planerade?: number
         upcoming: number
         completed: number
         totalDecisions: number
@@ -14,13 +15,16 @@ interface MeetingStatsProps {
 }
 
 export function MeetingStats({ stats }: MeetingStatsProps) {
+    // Total upcoming = planerade + kallad
+    const totalUpcoming = (stats.planerade || 0) + stats.upcoming
+    
     return (
-        <StatCardGrid>
+        <StatCardGrid columns={4}>
             <StatCard
-                label="Kommande stämmor"
-                value={stats.upcoming}
+                label="Kommande möten"
+                value={totalUpcoming}
                 headerIcon={Calendar}
-                subtitle="Planerade möten"
+                subtitle={stats.planerade ? `${stats.planerade} planerade, ${stats.upcoming} kallade` : "Planerade möten"}
             />
             <StatCard
                 label="Genomförda"
@@ -35,15 +39,31 @@ export function MeetingStats({ stats }: MeetingStatsProps) {
                 subtitle="Fattade beslut i år"
             />
             <StatCard
-                label="Nästa stämma"
-                value={stats.daysUntilNext !== null ? `${stats.daysUntilNext} dagar` : "Ingen planerad"}
+                label="Nästa möte"
+                value={stats.daysUntilNext !== null ? `${stats.daysUntilNext} dagar` : "Inget planerat"}
                 headerIcon={Clock}
                 subtitle={stats.nextMeeting
                     ? `Datum: ${formatDateLong(stats.nextMeeting.date || "")}`
-                    : "Kalla till stämma"}
+                    : "Planera ett möte"}
                 change={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "Snart dags" : undefined}
                 changeType={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "negative" : "neutral"}
             />
         </StatCardGrid>
+    )
+}
+
+// Separate component for the "Nästa stämma" card to be used in a different layout
+export function NextMeetingCard({ stats }: MeetingStatsProps) {
+    return (
+        <StatCard
+            label="Nästa möte"
+            value={stats.daysUntilNext !== null ? `${stats.daysUntilNext} dagar` : "Inget planerat"}
+            headerIcon={Clock}
+            subtitle={stats.nextMeeting
+                ? `Datum: ${formatDateLong(stats.nextMeeting.date || "")}`
+                : "Planera ett möte"}
+            change={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "Snart dags" : undefined}
+            changeType={stats.daysUntilNext !== null && stats.daysUntilNext < 14 ? "negative" : "neutral"}
+        />
     )
 }

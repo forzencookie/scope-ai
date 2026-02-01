@@ -66,7 +66,7 @@ export function GridTableHeader({
                             )}
                             style={spanStyle}
                         >
-                            {Icon && <Icon className="h-3 w-3 flex-shrink-0" />}
+                            {Icon && <Icon className="h-3.5 w-3.5 flex-shrink-0" />}
                             <span className="truncate whitespace-nowrap">{col.label}</span>
                         </div>
                     )
@@ -100,7 +100,7 @@ export function GridTableHeader({
                                 align === 'center' && "justify-center"
                             )}
                         >
-                            {Icon && <Icon className="h-3 w-3 flex-shrink-0" />}
+                            {Icon && <Icon className="h-3.5 w-3.5 flex-shrink-0" />}
                             <span className="truncate whitespace-nowrap">{col.label}</span>
                         </div>
                     )

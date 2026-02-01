@@ -12,6 +12,7 @@ export * from './create-verification'
 export * from './inventarier'
 export * from './verifications'
 export * from './accounts'
+export * from './audit'
 
 import { transactionTools } from './transactions'
 import { invoiceTools } from './invoices'
@@ -21,6 +22,7 @@ import { createVerificationTool } from './create-verification'
 import { inventarierTools } from './inventarier'
 import { verificationExtendedTools } from './verifications'
 import { accountTools } from './accounts'
+import { auditTools } from './audit'
 
 export const bokforingTools = [
     ...transactionTools,
@@ -31,4 +33,5 @@ export const bokforingTools = [
     ...inventarierTools,
     ...verificationExtendedTools,
     ...accountTools,
+    ...auditTools,
 ]

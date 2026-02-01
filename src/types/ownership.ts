@@ -156,14 +156,24 @@ export interface GeneralMeeting {
   location: string;
   type: 'ordinarie' | 'extra';
   meetingType: 'bolagsstamma' | 'arsmote'; // AB vs Förening
+  meetingCategory: 'bolagsstamma' | 'styrelsemote'; // Distinguishes stämma from board meeting
   attendeesCount: number;
   sharesRepresented?: number; // AB only
   votesRepresented?: number; // AB only
   chairperson: string;
   secretary: string;
   decisions: GeneralMeetingDecision[];
-  status: 'kallad' | 'genomförd' | 'protokoll signerat';
+  status: 'planerad' | 'kallad' | 'genomförd' | 'protokoll signerat';
   documentUrl?: string;
+  // Kallelse-related fields
+  kallelseText?: string;
+  kallelseSavedAt?: string;
+  time?: string;
+  agenda?: string[];
+  // Board meeting specific fields
+  attendees?: string[];
+  absentees?: string[];
+  meetingNumber?: number;
 }
 
 export interface GeneralMeetingDecision {

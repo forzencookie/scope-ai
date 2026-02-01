@@ -2,25 +2,13 @@ import { useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useCompliance } from "@/hooks/use-compliance"
 import { useToast } from "@/components/ui/toast"
+import { useK10Calculation } from "@/components/rapporter/k10/use-k10-calculation"
 
 export function useDividendLogic() {
-    const { verifications, addVerification } = useVerifications()
+    const { addVerification } = useVerifications()
     const { documents: realDocuments, addDocument } = useCompliance()
     const toast = useToast()
-
-    // Calculate Salaries Basis from Ledger
-    const salaryBasis = useMemo(() => {
-        let total = 0
-        verifications.forEach(v => {
-            v.rows.forEach(r => {
-                const acc = parseInt(r.account)
-                if (acc >= 7000 && acc <= 7299) {
-                    total += r.debit 
-                }
-            })
-        })
-        return total
-    }, [verifications])
+    const { k10Data } = useK10Calculation()
 
     const realDividendHistory = useMemo(() => {
         const history: { year: number; amount: number; taxRate: string; tax: number; netAmount: number; status: string }[] = []
@@ -112,16 +100,22 @@ export function useDividendLogic() {
         )
     }
 
-    const stats = {
-        gransbelopp: 204325, 
-        planerad: 150000,
-        skatt: 30000,
-        netto: 120000,
-        sparad: 45000
-    }
+    const stats = useMemo(() => {
+        const currentYear = new Date().getFullYear()
+        const planerad = realDividendHistory
+            .filter(d => d.year === currentYear && d.status === 'planned')
+            .reduce((sum, d) => sum + d.amount, 0)
+        const skatt = Math.round(planerad * 0.2)
+        return {
+            gransbelopp: k10Data.gransbelopp,
+            planerad,
+            skatt,
+            netto: planerad - skatt,
+        }
+    }, [k10Data.gransbelopp, realDividendHistory])
 
     return {
-        salaryBasis,
+        k10Data,
         realDividendHistory,
         stats,
         registerDividend

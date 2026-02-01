@@ -558,22 +558,6 @@ export const PAGE_CONTEXTS: PageContext[] = [
         relatedTools: ['get_signatories'],
         keywords: ['firmatecknare', 'signatur', 'behörighet', 'teckna'],
     },
-    {
-        id: 'myndigheter',
-        title: 'Myndigheter',
-        shortTitle: 'Myndigheter',
-        category: 'agare',
-        url: '/dashboard/agare?tab=myndigheter',
-        icon: Building2,
-        description: 'Kontaktuppgifter och ärenden hos myndigheter (Bolagsverket, Skatteverket).',
-        aiCapabilities: [
-            'Visa kommande deadlines',
-            'Kontrollera registreringar',
-        ],
-        dataEntities: ['Registreringar', 'Deadlines'],
-        relatedTools: ['get_compliance_deadlines'],
-        keywords: ['myndighet', 'bolagsverket', 'skatteverket', 'registrering'],
-    },
 
     // =========================================================================
     // Övrigt
@@ -795,10 +779,6 @@ Kan skapa kallelse, dagordning och stämmoprotokoll.
 
     firmatecknare: `Användaren tittar på Firmatecknare-sidan.
 Använd 'get_board_members' för att visa firmatecknare och behörigheter.`,
-
-    myndigheter: `Användaren tittar på Myndigheter-sidan.
-Använd 'get_compliance_deadlines' för att visa kommande deadlines.
-Visar kontaktuppgifter och ärenden hos Bolagsverket och Skatteverket.`,
 
     agande: `Användaren tittar på Ägande-sidan.
 Använd 'get_shareholders' för att visa ägarstruktur.

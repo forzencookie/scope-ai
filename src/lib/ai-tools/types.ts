@@ -177,6 +177,8 @@ export interface AIDisplayInstruction {
     | 'MonthlyBreakdown'
     | 'KPIDisplay'
     | 'DashboardCounts'
+    // Audit
+    | 'BalanceAuditCard'
     // Generic Displays
     | 'DataTable'
 

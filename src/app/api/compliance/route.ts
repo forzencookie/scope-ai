@@ -73,6 +73,22 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ success: true, data: newDoc })
         }
 
+        if (action === 'document_update') {
+            const { id, ...updates } = data
+            console.log('[Compliance API] Updating document:', { id, updates })
+            const { data: updated, error } = await supabase
+                .from('corporate_documents' as any)
+                .update(updates)
+                .eq('id', id)
+                .eq('user_id', userDb.userId) // Ensure user owns this document
+                .select()
+                .single();
+            
+            console.log('[Compliance API] Update result:', { updated, error })
+            if (error) throw error;
+            return NextResponse.json({ success: true, data: updated })
+        }
+
         if (action === 'shareholder_update') {
             const { id, ...updates } = data
             const { data: updated, error } = await supabase

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/select"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { BAS_ACCOUNTS, BOOKING_CATEGORIES, type BookableEntity } from "./booking-types"
+import { isInventarieThresholdExceeded, getPriceBaseAmount } from "@/lib/swedish-tax-rules"
 
 interface BookingStepBookingProps {
     entity: BookableEntity
@@ -110,38 +111,49 @@ export function BookingStepBooking({
                 </div>
 
                 {/* Asset Registration Logic */}
-                {(entity.amount && parseFloat(entity.amount.replace(/[^0-9.-]/g, '')) > 25000) && (
-                    <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
-                        <Sparkles className="h-4 w-4 text-blue-600 mt-0.5" />
-                        <div className="space-y-2">
-                            <div className="text-sm">
-                                <p className="font-medium text-blue-800 dark:text-blue-200">
-                                    Registrera som inventarie?
-                                </p>
-                                <p className="text-blue-700 dark:text-blue-300 text-xs">
-                                    Beloppet överstiger ett halvt prisbasbelopp. Det kan vara fördelaktigt att skriva av denna kostnad över tid.
-                                </p>
+                {(() => {
+                    const cleanAmount = parseFloat(entity.amount.replace(/[^0-9.-]/g, ''))
+                    const isExpense = cleanAmount < 0
+                    const isHighValue = isInventarieThresholdExceeded(Math.abs(cleanAmount), entity.date)
+                    const isNotStock = !['Inköp varor', 'Material'].includes(category)
+                    const isNotIncome = !['Intäkter'].includes(category)
+
+                    if (isExpense && isHighValue && isNotStock && isNotIncome) {
+                        return (
+                            <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800">
+                                <Sparkles className="h-4 w-4 text-blue-600 mt-0.5" />
+                                <div className="space-y-2">
+                                    <div className="text-sm">
+                                        <p className="font-medium text-blue-800 dark:text-blue-200">
+                                            Registrera som inventarie?
+                                        </p>
+                                        <p className="text-blue-700 dark:text-blue-300 text-xs">
+                                            Beloppet ({Math.abs(cleanAmount).toLocaleString('sv-SE')} kr) överstiger ett halvt prisbasbelopp. Det är oftast fördelaktigt att skriva av denna kostnad över tid (avskrivningar).
+                                        </p>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="asset-reg"
+                                            className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                                            onChange={(e) => {
+                                                if (e.target.checked) {
+                                                    setDebitAccount("1210") // Maskiner och inventarier
+                                                } else {
+                                                    setDebitAccount("5410") // Förbrukningsinventarier
+                                                }
+                                            }}
+                                        />
+                                        <label htmlFor="asset-reg" className="text-sm font-medium text-blue-900 dark:text-blue-100 cursor-pointer">
+                                            Ja, lägg till i anläggningsregistret
+                                        </label>
+                                    </div>
+                                </div>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <input
-                                    type="checkbox"
-                                    id="asset-reg"
-                                    className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                                    onChange={(e) => {
-                                        if (e.target.checked) {
-                                            setDebitAccount("1210") // Maskiner och inventarier
-                                        } else {
-                                            setDebitAccount("5410") // Förbrukningsinventarier
-                                        }
-                                    }}
-                                />
-                                <label htmlFor="asset-reg" className="text-sm font-medium text-blue-900 dark:text-blue-100 cursor-pointer">
-                                    Ja, lägg till i anläggningsregistret
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                )}
+                        )
+                    }
+                    return null
+                })()}
             </div>
         </div>
     )

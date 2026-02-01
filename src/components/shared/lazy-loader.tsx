@@ -153,10 +153,6 @@ export const LazyMedlemsregister = createLazyComponent(
     "Laddar medlemsregister..."
 )
 
-export const LazyStyrelseprotokoll = createLazyComponent(
-    () => import("@/components/agare").then(m => ({ default: m.Styrelseprotokoll })),
-    "Laddar styrelseprotokoll..."
-)
 
 export const LazyBolagsstamma = createLazyComponent(
     () => import("@/components/agare").then(m => ({ default: m.Bolagsstamma })),
@@ -171,11 +167,6 @@ export const LazyArsmote = createLazyComponent(
 export const LazyFirmatecknare = createLazyComponent(
     () => import("@/components/agare").then(m => ({ default: m.Firmatecknare })),
     "Laddar firmatecknare..."
-)
-
-export const LazyMyndigheter = createLazyComponent(
-    () => import("@/components/agare").then(m => ({ default: m.Myndigheter })),
-    "Laddar myndigheter..."
 )
 
 export const LazyEgenavgifter = createLazyComponent(

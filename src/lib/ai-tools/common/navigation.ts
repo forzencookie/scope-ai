@@ -197,11 +197,6 @@ const ROUTES: Record<string, RouteInfo> = {
         label: 'Firmatecknare',
         aliases: ['firmatecknare', 'firmateckningsrätt', 'signatur'],
     },
-    authorities: {
-        path: '/dashboard/agare?tab=myndigheter',
-        label: 'Myndigheter',
-        aliases: ['myndigheter', 'bolagsverket', 'skatteverket'],
-    },
 
     // -------------------------------------------------------------------------
     // Settings

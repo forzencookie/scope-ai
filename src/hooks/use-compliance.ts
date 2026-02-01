@@ -10,7 +10,7 @@ export interface CorporateDocument {
     title: string
     date: string
     content: string
-    status: 'draft' | 'signed' | 'archived'
+    status: 'draft' | 'pending' | 'signed' | 'archived'
     source: 'manual' | 'ai'
 }
 
@@ -81,6 +81,23 @@ export function useCompliance() {
         }
     )
 
+    // Update Document Mutation
+    const updateDocumentMutation = useAsyncMutation(
+        async ({ id, ...updates }: Partial<CorporateDocument> & { id: string }) => {
+            console.log('[useCompliance] updateDocument called with:', { id, updates })
+            const res = await fetch('/api/compliance', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'document_update', id, ...updates })
+            })
+            const json = await res.json()
+            console.log('[useCompliance] API response:', res.status, json)
+            if (!res.ok) throw new Error(json.error || 'Failed to update document')
+            refetchDocs()
+            return json.data as CorporateDocument
+        }
+    )
+
     // Update Shareholder Mutation
     const updateShareholderMutation = useAsyncMutation(
         async ({ id, ...updates }: Partial<Shareholder> & { id: string }) => {
@@ -122,6 +139,8 @@ export function useCompliance() {
         refetchShareholders,
         addDocument: addDocumentMutation.execute,
         isAddingDoc: addDocumentMutation.isLoading,
+        updateDocument: updateDocumentMutation.execute,
+        isUpdatingDoc: updateDocumentMutation.isLoading,
         updateShareholder: updateShareholderMutation.execute,
         isUpdatingShareholder: updateShareholderMutation.isLoading,
         addShareholder: addShareholderMutation.execute,

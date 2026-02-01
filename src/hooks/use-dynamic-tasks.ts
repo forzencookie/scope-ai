@@ -82,7 +82,7 @@ export function useDynamicTasks() {
             tasks: bokforingTasks
         })
 
-        // 2. Rapporter / Myndigheter Goal
+        // 2. Rapporter Goal
         // Calculate next VAT deadline (Simplified logic)
         // In a real app use VatProcessor.getVatDeadline logic
         const now = new Date()

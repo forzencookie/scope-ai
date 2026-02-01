@@ -18,6 +18,7 @@ import {
 } from "./pixel-mascots"
 import { CardRenderer } from "./card-renderer"
 import { ConfirmationCard } from "./confirmation-card"
+import { WalkthroughOverlay } from "./walkthrough-overlay"
 import { Button } from "@/components/ui/button"
 import { Check, Pencil, X, Sparkles, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -34,7 +35,16 @@ export function AIOverlay({ className }: AIOverlayProps) {
         return null
     }
 
-    const { status, output, accept, requestEdit, hide, sceneType } = context
+    const { status, output, accept, requestEdit, hide, sceneType, walkthroughContent, closeWalkthrough } = context
+
+    // Walkthrough gets its own layout (not centered flex)
+    if (status === "walkthrough" && walkthroughContent) {
+        return (
+            <AnimatePresence>
+                <WalkthroughOverlay content={walkthroughContent} onClose={closeWalkthrough} />
+            </AnimatePresence>
+        )
+    }
 
     return (
         <AnimatePresence>

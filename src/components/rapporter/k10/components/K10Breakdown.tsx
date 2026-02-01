@@ -3,7 +3,6 @@
 import { useState } from "react"
 import { Calculator, AlertTriangle } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { cn, formatCurrency } from "@/lib/utils"
 import { K10Data } from "../use-k10-calculation"
 
@@ -15,9 +14,8 @@ export function K10Breakdown({ data }: K10BreakdownProps) {
     const [showBreakdown, setShowBreakdown] = useState(false)
 
     return (
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Gränsbelopp Calculation - Takes 2/3 width */}
-            <div className="lg:col-span-2">
+        <div>
+            <div>
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="flex items-center gap-2 font-semibold text-lg">
@@ -107,28 +105,6 @@ export function K10Breakdown({ data }: K10BreakdownProps) {
                 </div>
             </div>
 
-            {/* Info Card */ }
-            <Card className="bg-blue-50/50 dark:bg-blue-950/20 border-0 h-fit">
-                <CardHeader className="pb-3">
-                    <CardTitle className="text-base font-medium text-blue-900 dark:text-blue-100">
-                        Om K10 och 3:12-reglerna
-                    </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                    <p className="text-sm text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
-                        K10 används av delägare i fåmansföretag för att beräkna hur stor del av utdelningen
-                        som beskattas som kapitalinkomst (20%) respektive tjänsteinkomst (32-52%).
-                    </p>
-                    <p className="text-sm text-blue-800/80 dark:text-blue-200/80 leading-relaxed">
-                        Gränsbeloppet avgör tröskeln. Sparat utrymme kan användas kommande år.
-                    </p>
-                    <div className="pt-2">
-                        <p className="text-xs text-blue-700/70 dark:text-blue-300/70">
-                            💡 Tips: Maximera ditt lönebaserade utrymme genom att ta ut rätt lön innan årets slut.
-                        </p>
-                    </div>
-                </CardContent>
-            </Card>
         </div>
     )
 }

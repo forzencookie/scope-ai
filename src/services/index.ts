@@ -10,9 +10,6 @@ export * from "./transactions"
 export * from "./processors/invoice-processor"
 export * from "./processors/reports-processor"
 
-// Simulator services - for testing/demo
-export * from "./myndigheter-client"
-
 // Domain services (consolidated from lib/services)
 export * from "./asset-service"
 export * from "./benefit-service"

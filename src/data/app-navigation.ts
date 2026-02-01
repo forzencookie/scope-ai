@@ -240,15 +240,8 @@ export const navAgare: NavItem[] = [
         featureKey: "medlemsregister",
     },
     {
-        title: "Styrelseprotokoll",
-        titleEnkel: "Styrelse",
-        url: "/dashboard/agare?tab=styrelseprotokoll",
-        icon: FileText,
-        featureKey: "styrelseprotokoll",
-    },
-    {
-        title: "Bolagsstämma",
-        titleEnkel: "Bolagsstämma",
+        title: "Möten & Protokoll",
+        titleEnkel: "Möten",
         url: "/dashboard/agare?tab=bolagsstamma",
         icon: Landmark,
         featureKey: "bolagsstamma",
@@ -265,12 +258,6 @@ export const navAgare: NavItem[] = [
         titleEnkel: "Firmatecknare",
         url: "/dashboard/agare?tab=firmatecknare",
         icon: FileText,
-    },
-    {
-        title: "Myndigheter",
-        titleEnkel: "Myndigheter",
-        url: "/dashboard/agare?tab=myndigheter",
-        icon: Building2,
     },
 ]
 

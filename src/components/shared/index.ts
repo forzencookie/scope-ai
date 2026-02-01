@@ -59,11 +59,9 @@ export {
     LazyAktiebok,
     LazyDelagare,
     LazyMedlemsregister,
-    LazyStyrelseprotokoll,
     LazyBolagsstamma,
     LazyArsmote,
     LazyFirmatecknare,
-    LazyMyndigheter,
     LazyEgenavgifter,
     LazyDelagaruttag,
     // Statistik

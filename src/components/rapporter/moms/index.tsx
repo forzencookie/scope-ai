@@ -28,7 +28,7 @@ import { useVatReport } from "./use-vat-report"
 
 // Components
 import { MomsStats } from "./components/MomsStats"
-import { MomsGrid } from "./components/MomsGrid"
+import { MomsList } from "./components/MomsList"
 
 export function MomsdeklarationContent() {
     const navigateToAI = useNavigateToAIChat()
@@ -42,14 +42,14 @@ export function MomsdeklarationContent() {
         statusFilter, setStatusFilter,
         selectedReport, setSelectedReport,
         showAIDialog, setShowAIDialog,
-        
+
         // Data
         filteredPeriods,
-        
+
         // Selection
         selection,
         bulkActions,
-        
+
         // Actions
         refreshData,
         handleUpdateReport,
@@ -132,11 +132,17 @@ export function MomsdeklarationContent() {
                     </div>
                 </div>
 
-                {/* Main Grid */}
-                <MomsGrid 
+                {/* Main List */}
+                <MomsList
                     periods={filteredPeriods}
-                    selection={selection}
                     onSelectReport={setSelectedReport}
+                    onGenerateAI={(report) => {
+                        // Pre-select the report and trigger AI dialog
+                        // straightforward way:
+                        setShowAIDialog(true)
+                        // If we needed to set specific data for the wizard, we might need a state for 'wizardInitialData'
+                        // taking the latest calculated data from the report
+                    }}
                 />
 
                 <BulkActionToolbar

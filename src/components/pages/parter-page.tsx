@@ -14,18 +14,15 @@ import {
     LazyDelagare,
     LazyUtdelning,
     LazyMedlemsregister,
-    LazyStyrelseprotokoll,
     LazyBolagsstamma,
     LazyArsmote,
     LazyFirmatecknare,
-    LazyMyndigheter,
 } from '@/components/shared';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
     User,
     Users,
     BookOpen,
-    FileText,
     Vote,
     PenTool,
     Building2,
@@ -41,7 +38,7 @@ interface TabConfig {
     label: string;
     icon: LucideIcon;
     color: string;
-    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'styrelseprotokoll' | 'bolagsstamma' | 'arsmote' | 'utdelning' | 'agarinfo' | 'k10' | null;
+    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'bolagsstamma' | 'arsmote' | 'utdelning' | 'agarinfo' | 'k10' | null;
 }
 
 const allTabs: TabConfig[] = [
@@ -50,11 +47,9 @@ const allTabs: TabConfig[] = [
     { id: 'utdelning', label: 'Utdelning', icon: DollarSign, color: "bg-emerald-500", feature: 'utdelning' },
     { id: 'agarinfo', label: 'Ägarinfo', icon: Building2, color: "bg-blue-400", feature: 'agarinfo' },
     { id: 'medlemsregister', label: 'Medlemsregister', icon: Users, color: "bg-indigo-500", feature: 'medlemsregister' },
-    { id: 'styrelseprotokoll', label: 'Styrelseprotokoll', icon: FileText, color: "bg-amber-500", feature: 'styrelseprotokoll' },
-    { id: 'bolagsstamma', label: 'Bolagsstämma', icon: Vote, color: "bg-orange-500", feature: 'bolagsstamma' },
+    { id: 'bolagsstamma', label: 'Möten & Protokoll', icon: Vote, color: "bg-orange-500", feature: 'bolagsstamma' },
     { id: 'arsmote', label: 'Årsmöte', icon: Vote, color: "bg-teal-500", feature: 'arsmote' },
     { id: 'firmatecknare', label: 'Firmatecknare', icon: PenTool, color: "bg-cyan-500", feature: null },
-    { id: 'myndigheter', label: 'Myndigheter', icon: Building2, color: "bg-gray-500", feature: null },
 ];
 
 // Header configuration for each tab
@@ -79,13 +74,9 @@ const tabHeaders: Record<string, { title: string; description: string }> = {
         title: "Medlemsregister",
         description: "Förteckning över föreningens medlemmar och medlemsstatus."
     },
-    styrelseprotokoll: {
-        title: "Styrelseprotokoll",
-        description: "Samlade protokoll och beslutsunderlag från styrelsemöten."
-    },
     bolagsstamma: {
-        title: "Bolagsstämma",
-        description: "Protokoll, kallelser och beslut från bolagsstämmor."
+        title: "Möten & Protokoll",
+        description: "Bolagsstämmor och styrelsemöten med protokoll, kallelser och beslut."
     },
     arsmote: {
         title: "Årsmöte",
@@ -94,10 +85,6 @@ const tabHeaders: Record<string, { title: string; description: string }> = {
     firmatecknare: {
         title: "Firmatecknare",
         description: "Information om registrerade firmatecknare och deras befogenheter."
-    },
-    myndigheter: {
-        title: "Myndigheter",
-        description: "Kontaktuppgifter och registrerade ärenden hos Bolagsverket och Skatteverket."
     }
 };
 
@@ -157,7 +144,7 @@ function ParterPageContent() {
                     {/* Main Content */}
                     <div className="flex-1 min-w-0 max-w-6xl">
                         {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
-                        {!['aktiebok', 'styrelseprotokoll', 'bolagsstamma', 'medlemsregister'].includes(currentTab) && (
+                        {!['aktiebok', 'bolagsstamma', 'medlemsregister', 'utdelning', 'firmatecknare'].includes(currentTab) && (
                             <div className="pb-6">
                                 <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
                                 <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
@@ -183,11 +170,9 @@ function ParterPageContent() {
                             )
                         )}
                         {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
-                        {currentTab === 'styrelseprotokoll' && <LazyStyrelseprotokoll />}
                         {currentTab === 'bolagsstamma' && <LazyBolagsstamma />}
                         {currentTab === 'arsmote' && <LazyArsmote />}
                         {currentTab === 'firmatecknare' && <LazyFirmatecknare />}
-                        {currentTab === 'myndigheter' && <LazyMyndigheter />}
                     </div>
 
                     {/* Right Sidebar - Activity Panel */}

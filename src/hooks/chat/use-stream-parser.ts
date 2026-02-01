@@ -8,11 +8,39 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import type { Message, Conversation } from '@/lib/chat-types'
 
+/** Extract the AI's prose comment, stripping markdown/emoji formatting from tool output */
+function cleanAIComment(text: string): string {
+    if (!text) return ''
+    // Remove lines that are just emoji + bold check results (e.g. "✅ **Name**: desc")
+    const lines = text.split('\n').filter(line => {
+        const trimmed = line.trim()
+        if (!trimmed) return false
+        // Skip emoji-prefixed audit result lines
+        if (/^[✅⚠️❌🔍📊]/.test(trimmed)) return false
+        // Skip lines that are just bold markers
+        if (/^\*\*.*\*\*:?$/.test(trimmed)) return false
+        return true
+    })
+    // Strip remaining markdown bold
+    return lines.map(l => l.replace(/\*\*/g, '')).join(' ').trim()
+}
+
 interface StreamData {
     display?: unknown
     navigation?: { route: string }
     confirmationRequired?: unknown
     toolResults?: unknown[]
+    walkthrough?: {
+        title: string
+        summary: string
+        date?: string
+        sections: Array<{
+            heading: string
+            status: "pass" | "warning" | "fail"
+            description: string
+            details?: string
+        }>
+    }
 }
 
 interface UseStreamParserOptions {
@@ -57,7 +85,14 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                         fullContent += contentDelta
                     } else if (line.startsWith('D:')) {
                         const data = JSON.parse(line.slice(2)) as StreamData
-                        lastData = data
+                        // Merge data chunks instead of overwriting
+                        lastData = {
+                            ...lastData,
+                            ...data,
+                            display: data.display || lastData?.display,
+                            toolResults: data.toolResults || lastData?.toolResults,
+                            confirmationRequired: data.confirmationRequired || lastData?.confirmationRequired,
+                        }
 
                         // Handle immediate navigation
                         if (data.navigation) {
@@ -113,12 +148,33 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
             fullContent.includes('fel uppstod vid generering') ||
             (fullContent.includes('error') && fullContent.length < 100)
 
-        const hasStructuredOutput = lastData && (
+        // Display-only components that should render inline in chat, not in the overlay dialog
+        const inlineOnlyComponents = new Set<string>([
+        ])
+
+        // Check all data chunks for inline-only display components
+        const displayComponent = (lastData?.display as any)?.component || (lastData?.display as any)?.type || ''
+        const isInlineOnly = inlineOnlyComponents.has(displayComponent)
+
+        const hasStructuredOutput = lastData && !isInlineOnly && (
             lastData.display ||
             lastData.navigation ||
             (lastData.toolResults && lastData.toolResults.length > 0) ||
             lastData.confirmationRequired
         )
+
+        // Check for walkthrough content (e.g. balanskontroll)
+        const walkthroughData = lastData?.walkthrough || (lastData?.toolResults as any)?.[0]?.result?.walkthrough
+        console.log('[walkthrough debug]', { walkthroughData, fullContentLength: fullContent.length, fullContentPreview: fullContent.slice(0, 200), lastDataKeys: lastData ? Object.keys(lastData) : null })
+        if (walkthroughData) {
+            window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough', {
+                detail: {
+                    ...walkthroughData,
+                    aiComment: cleanAIComment(fullContent) || walkthroughData.aiComment,
+                }
+            }))
+            return
+        }
 
         if (isErrorResponse) {
             window.dispatchEvent(new CustomEvent('ai-dialog-error', {

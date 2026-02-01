@@ -22,7 +22,7 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { type SidebarMode } from "./app-sidebar"
-import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
+import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
 
 interface AIChatSidebarProps {
     mode?: SidebarMode
@@ -98,22 +98,47 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
         setShowHistory(false)
     }, [startNewConversation])
 
+    // Handle incoming AI context (from event or pending)
+    const handleAIContextRef = useRef((context: PageContext) => { })
+    useEffect(() => {
+        handleAIContextRef.current = (context: PageContext) => {
+            startNewConversation()
+            if (context.autoSend) {
+                sendMessage({
+                    content: context.initialPrompt,
+                    actionTrigger: context.actionTrigger
+                })
+            } else {
+                setTextareaValue(context.initialPrompt)
+            }
+            setShowHistory(false)
+        }
+    })
+
+    // On mount, check for pending context (set before this component mounted)
+    const mountedRef = useRef(false)
+    useEffect(() => {
+        if (mountedRef.current) return
+        mountedRef.current = true
+        const pending = consumePendingAIContext()
+        if (pending) {
+            handleAIContextRef.current(pending)
+        }
+    }, [])
+
     // Listen for global events to trigger chat actions
     useEffect(() => {
         const handleOpenAIChat = (e: Event) => {
+            // If there's pending context, it was already handled by mount effect
+            const pending = consumePendingAIContext()
+            if (pending) {
+                // Already handled or handle now
+                handleAIContextRef.current(pending)
+                return
+            }
             const context = (e as CustomEvent).detail as PageContext
             if (context) {
-                startNewConversation()
-                if (context.autoSend) {
-                    // Send with action trigger display if provided
-                    sendMessage({ 
-                        content: context.initialPrompt,
-                        actionTrigger: context.actionTrigger
-                    })
-                } else {
-                    setTextareaValue(context.initialPrompt)
-                }
-                setShowHistory(false)
+                handleAIContextRef.current(context)
             }
         }
 
@@ -171,7 +196,7 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
             window.removeEventListener("ai-chat-new-conversation", onNewConversationEvent)
             window.removeEventListener("ai-chat-focus-input", handleFocusInput)
         }
-    }, [sendMessage, startNewConversation, loadConversation])
+    }, [loadConversation])
 
     // When collapsed, show only icons
     if (isCollapsed) {

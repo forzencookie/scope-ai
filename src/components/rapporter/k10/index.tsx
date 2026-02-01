@@ -92,6 +92,9 @@ export function K10Content() {
                         </div>
                     </div>
 
+                    {/* Stats Grid */}
+                    <K10Stats data={k10Data} deadline={taxYear.deadlineLabel} />
+
                     <SectionCard
                         title="Optimera K10 med AI"
                         description="Låt AI analysera ditt löneunderlag och maximera ditt gränsbelopp för lågbeskattad utdelning."
@@ -101,10 +104,6 @@ export function K10Content() {
                         onAction={() => navigateToAI(getDefaultAIContext("k10"))}
                     />
 
-                    {/* Stats Grid */}
-                    <K10Stats data={k10Data} deadline={taxYear.deadlineLabel} />
-
-                    {/* Section Separator */}
                     <div className="border-b-2 border-border/60" />
 
                     {/* Breakdown Calculation */}

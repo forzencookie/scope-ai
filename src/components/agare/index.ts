@@ -7,13 +7,11 @@ export { Aktiebok } from './aktiebok'
 export { Delagare } from './delagare'
 
 // Governance
-export { Styrelseprotokoll } from './styrelseprotokoll'
 export { Bolagsstamma } from './bolagsstamma'
 export { Arsmote } from './arsmote'
 export { Medlemsregister } from './medlemsregister'
 
 // Corporate Actions & Compliance
 export { Firmatecknare } from './firmatecknare'
-export { Myndigheter } from './myndigheter'
 export { ActionWizard } from './action-wizard'
 export { UtdelningContent } from './utdelning'

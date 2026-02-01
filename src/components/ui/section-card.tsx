@@ -37,9 +37,9 @@ export function SectionCard({
     className,
     variant = "default",
 }: SectionCardProps) {
-    // If onAction is provided and variant is "ai", render AIActionButton automatically
-    const resolvedAction = action ?? (onAction && variant === "ai" ? (
-        <AIActionButton onClick={onAction}>{actionLabel}</AIActionButton>
+    // If onAction is provided and variant is "ai" or "success", render AIActionButton automatically
+    const resolvedAction = action ?? (onAction && (variant === "ai" || variant === "success") ? (
+        <AIActionButton onClick={onAction} variant={variant === "success" ? "success" : "default"}>{actionLabel}</AIActionButton>
     ) : null)
     return (
         <div

@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Sparkles, Save } from "lucide-react"
+import { Sparkles, Save, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -14,21 +14,29 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
-import { formatDateLong } from "@/lib/utils"
 
 export type MeetingType = "annual" | "general" | "board"
+
+export interface MeetingFormData {
+    date: string
+    year: string
+    time: string
+    location: string
+    type: "ordinarie" | "extra"
+    agenda: string[]
+}
 
 interface PlanMeetingDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     type: MeetingType
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSubmit?: (data: any) => Promise<void> | void
-    defaultAgenda: string[]
+    onSubmit?: (data: MeetingFormData) => Promise<void> | void
+    onSaveAndCreateKallelse?: (data: MeetingFormData) => Promise<void> | void
+    defaultAgenda?: string[]
 }
 
 // Full ABL-compliant agenda for bolagsstämma
-const FULL_ABL_AGENDA = [
+export const FULL_ABL_AGENDA = [
     "Stämmans öppnande",
     "Val av ordförande vid stämman",
     "Upprättande och godkännande av röstlängd",
@@ -50,6 +58,7 @@ export function PlanMeetingDialog({
     onOpenChange,
     type,
     onSubmit,
+    onSaveAndCreateKallelse,
     defaultAgenda
 }: PlanMeetingDialogProps) {
     const isAnnual = type === "annual"
@@ -66,7 +75,7 @@ export function PlanMeetingDialog({
     const [isSaving, setIsSaving] = React.useState(false)
 
     // Use full ABL agenda for corporate meetings
-    const agenda = isAnnual ? defaultAgenda : FULL_ABL_AGENDA
+    const agenda = isAnnual ? (defaultAgenda || FULL_ABL_AGENDA) : FULL_ABL_AGENDA
 
     // Reset state when dialog opens
     React.useEffect(() => {
@@ -80,15 +89,16 @@ export function PlanMeetingDialog({
         }
     }, [open])
 
-    const getMeetingData = () => ({
+    const getMeetingData = (): MeetingFormData => ({
         date,
         year,
         time,
         location,
-        type: meetingType
+        type: meetingType,
+        agenda
     })
 
-    // Just save the meeting
+    // Just save the meeting as Planerad
     const handleSave = async () => {
         setIsSaving(true)
         try {
@@ -99,53 +109,41 @@ export function PlanMeetingDialog({
         }
     }
 
-    // Save the meeting AND open AI to generate kallelse
-    const handleAIGenerate = async () => {
+    // Save the meeting AND proceed to kallelse step
+    const handleSaveAndCreateKallelse = async () => {
         setIsSaving(true)
         try {
-            // First save the meeting
-            await onSubmit?.(getMeetingData())
-            
-            // Then open AI sidebar with context to generate kallelse
-            const meetingDate = date || new Date().toISOString().split('T')[0]
-            const displayDate = formatDateLong(meetingDate)
-            
-            const context: PageContext = {
-                pageName: 'Bolagsstämma',
-                pageType: 'verifikation', // Using verifikation as closest match for corporate docs
-                initialPrompt: `Generera en formell kallelse till ${meetingType === 'ordinarie' ? 'ordinarie' : 'extra'} bolagsstämma.
-
-Mötesdetaljer:
-- Datum: ${displayDate}
-- Tid: ${time}
-- Plats: ${location || 'Ej angiven'}
-- År: ${year}
-
-Dagordning:
-${agenda.map((item, i) => `§ ${i + 1} ${item}`).join('\n')}
-
-Skapa en formell kallelse enligt ABL (Aktiebolagslagen) med:
-1. Rubrik med bolagsnamn och organisationsnummer
-2. Kallelse-text med datum, tid och plats
-3. Fullständig dagordning
-4. Information om anmälan och rösträtt
-5. Underskriftsrad för styrelsen
-
-Formatera dokumentet snyggt med tydlig struktur.`,
-                autoSend: true,
-                actionTrigger: {
-                    title: 'Generera kallelse',
-                    subtitle: `${meetingType === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${year}`,
-                    icon: 'meeting',
-                    meta: `${displayDate}${location ? ` • ${location}` : ''}`
-                }
-            }
-
-            window.dispatchEvent(new CustomEvent(AI_CHAT_EVENT, { detail: context }))
-            onOpenChange(false)
+            await onSaveAndCreateKallelse?.(getMeetingData())
+            // Dialog will be closed by parent when opening kallelse dialog
         } finally {
             setIsSaving(false)
         }
+    }
+
+    // Open AI sidebar to improve dagordning
+    const handleAIDagordning = () => {
+        const context: PageContext = {
+            pageName: 'Dagordning',
+            pageType: 'verifikation',
+            initialPrompt: `Hjälp mig förbättra dagordningen för en ${meetingType === 'ordinarie' ? 'ordinarie' : 'extra'} bolagsstämma.
+
+Nuvarande dagordning:
+${agenda.map((item, i) => `§ ${i + 1} ${item}`).join('\n')}
+
+Ge förslag på:
+1. Om några punkter saknas enligt ABL
+2. Om ordningen är korrekt
+3. Eventuella tillägg baserat på vanliga stämmobeslut
+
+Förklara kortfattat varför varje punkt behövs.`,
+            autoSend: true,
+            actionTrigger: {
+                title: 'Förbättra dagordning',
+                subtitle: `${meetingType === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma`,
+                icon: 'meeting'
+            }
+        }
+        window.dispatchEvent(new CustomEvent(AI_CHAT_EVENT, { detail: context }))
     }
 
     return (
@@ -204,7 +202,17 @@ Formatera dokumentet snyggt med tydlig struktur.`,
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <Label>Dagordning (enligt ABL)</Label>
+                        <div className="flex items-center justify-between">
+                            <Label>Dagordning (enligt ABL)</Label>
+                            <button
+                                type="button"
+                                onClick={handleAIDagordning}
+                                className="text-xs text-primary hover:text-primary/80 flex items-center gap-1 transition-colors"
+                            >
+                                <Sparkles className="h-3 w-3" />
+                                Förbättra med AI
+                            </button>
+                        </div>
                         <div className="max-h-48 overflow-y-auto border rounded-md p-3 space-y-1 bg-muted/30">
                             {agenda.map((item, index) => (
                                 <div key={index} className="text-sm flex items-start gap-2">
@@ -233,12 +241,12 @@ Formatera dokumentet snyggt med tydlig struktur.`,
                             Spara
                         </Button>
                         <Button 
-                            onClick={handleAIGenerate} 
+                            onClick={handleSaveAndCreateKallelse} 
                             disabled={isSaving}
                             className="flex-1 sm:flex-initial"
                         >
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            AI förslag
+                            Spara & skapa kallelse
+                            <ArrowRight className="h-4 w-4 ml-2" />
                         </Button>
                     </div>
                 </DialogFooter>

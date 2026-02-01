@@ -3,16 +3,16 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
-    Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger
+    Dialog, DialogContent, DialogHeader, DialogTitle
 } from "@/components/ui/dialog"
-import { DollarSign } from "lucide-react"
 
 interface RegisterDividendDialogProps {
+    open: boolean
+    onOpenChange: (open: boolean) => void
     onRegister: (year: number, amount: number) => Promise<void>
 }
 
-export function RegisterDividendDialog({ onRegister }: RegisterDividendDialogProps) {
-    const [open, setOpen] = useState(false)
+export function RegisterDividendDialog({ open, onOpenChange, onRegister }: RegisterDividendDialogProps) {
     const [year, setYear] = useState<string>(new Date().getFullYear().toString())
     const [amount, setAmount] = useState<string>("")
 
@@ -21,19 +21,13 @@ export function RegisterDividendDialog({ onRegister }: RegisterDividendDialogPro
         const y = parseInt(year)
         if (val && y) {
             await onRegister(y, val)
-            setOpen(false)
+            onOpenChange(false)
             setAmount("")
         }
     }
 
     return (
-        <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-                <Button size="sm" variant="outline" className="h-7 text-xs">
-                    <DollarSign className="h-3 w-3 mr-1" />
-                    Registrera utdelning
-                </Button>
-            </DialogTrigger>
+        <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>Registrera ny utdelning</DialogTitle>

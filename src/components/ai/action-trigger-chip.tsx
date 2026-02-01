@@ -1,23 +1,25 @@
 "use client"
 
 import { cn } from "@/lib/utils"
-import { 
-    FileText, 
-    Calendar, 
-    Receipt, 
+import {
+    FileText,
+    Calendar,
+    Receipt,
     FileSpreadsheet,
     Gavel,
     Users,
+    Scale,
     LucideIcon
 } from "lucide-react"
 
-export type ActionTriggerIcon = 
+export type ActionTriggerIcon =
     | 'document'
     | 'meeting'
     | 'receipt'
     | 'invoice'
     | 'decision'
     | 'shareholders'
+    | 'audit'
 
 const iconMap: Record<ActionTriggerIcon, LucideIcon> = {
     document: FileText,
@@ -26,6 +28,7 @@ const iconMap: Record<ActionTriggerIcon, LucideIcon> = {
     invoice: FileSpreadsheet,
     decision: Gavel,
     shareholders: Users,
+    audit: Scale,
 }
 
 export interface ActionTriggerDisplay {

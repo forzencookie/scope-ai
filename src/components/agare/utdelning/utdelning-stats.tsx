@@ -23,15 +23,18 @@ export function UtdelningStats({ stats }: UtdelningStatsProps) {
             />
             <StatCard
                 label="Planerad utdelning"
-                value={`${formatCurrency(stats.planerad)}`}
-                subtitle={stats.planerad <= stats.gransbelopp ? "Inom gränsbeloppet" : "Överstiger gränsbeloppet"}
+                value={stats.planerad > 0 ? formatCurrency(stats.planerad) : "Ingen planerad"}
+                subtitle={stats.planerad > 0
+                    ? (stats.planerad <= stats.gransbelopp ? "Inom gränsbeloppet" : "Överstiger gränsbeloppet")
+                    : "Registrera via knappen ovan"
+                }
                 headerIcon={DollarSign}
                 tooltip={termExplanations["Utdelning"]}
             />
             <StatCard
                 label="Skatt på utdelning"
-                value={`${formatCurrency(stats.skatt)}`}
-                subtitle="20% kapitalskatt"
+                value={stats.skatt > 0 ? formatCurrency(stats.skatt) : "–"}
+                subtitle={stats.skatt > 0 ? "20% kapitalskatt" : "Ingen utdelning planerad"}
                 headerIcon={Calculator}
             />
         </StatCardGrid>

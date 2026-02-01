@@ -1,64 +1,46 @@
-import { Calendar, Wallet, Calculator, DollarSign, CheckCircle2 } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { Calendar, Wallet, Calculator, CheckCircle2, DollarSign } from "lucide-react"
+import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 
-interface DividendTableProps {
+interface UtdelningsTabellProps {
     data: { year: number; amount: number; tax: number; netAmount: number; status: string }[]
-    className?: string
 }
 
-export function DividendTable({ data, className }: DividendTableProps) {
+const columns = [
+    { label: "År", icon: Calendar, span: 2 },
+    { label: "Belopp", icon: Wallet, span: 3, align: "right" as const },
+    { label: "Skatt", icon: Calculator, span: 2, align: "right" as const, hiddenOnMobile: true },
+    { label: "Netto", icon: DollarSign, span: 3, align: "right" as const },
+    { label: "Status", icon: CheckCircle2, span: 2, align: "right" as const },
+]
+
+export function UtdelningsTable({ data }: UtdelningsTabellProps) {
     return (
-        <table className={cn("w-full text-sm border-y-2 border-border/60", className)}>
-            <thead>
-                <tr className="bg-muted/30 text-muted-foreground">
-                    <th className="text-left px-3 py-2 font-medium">
-                        <span className="flex items-center gap-1.5">
-                            <Calendar className="h-3.5 w-3.5" />
-                            År
-                        </span>
-                    </th>
-                    <th className="text-right px-3 py-2 font-medium">
-                        <span className="flex items-center justify-end gap-1.5">
-                            <Wallet className="h-3.5 w-3.5" />
-                            Belopp
-                        </span>
-                    </th>
-                    <th className="text-right px-3 py-2 font-medium">
-                        <span className="flex items-center justify-end gap-1.5">
-                            <Calculator className="h-3.5 w-3.5" />
-                            Skatt
-                        </span>
-                    </th>
-                    <th className="text-right px-3 py-2 font-medium">
-                        <span className="flex items-center justify-end gap-1.5">
-                            <DollarSign className="h-3.5 w-3.5" />
-                            Netto
-                        </span>
-                    </th>
-                    <th className="text-right px-3 py-2 font-medium">
-                        <span className="flex items-center justify-end gap-1.5">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            Status
-                        </span>
-                    </th>
-                </tr>
-            </thead>
-            <tbody>
+        <>
+            <GridTableHeader columns={columns} />
+            {data.length === 0 ? (
+                <div className="py-12 mt-6 text-center">
+                    <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                    <h3 className="text-lg font-medium mb-2">Ingen utdelningshistorik</h3>
+                    <p className="text-muted-foreground">Registrera din första utdelning via knappen ovan.</p>
+                </div>
+            ) : (
+            <GridTableRows>
                 {data.map((row) => (
-                    <tr key={row.year} className="border-b border-border/40">
-                        <td className="px-3 py-2 font-medium">{row.year}</td>
-                        <td className="text-right px-3 py-2">{row.amount.toLocaleString("sv-SE")} kr</td>
-                        <td className="text-right px-3 py-2 text-red-600 dark:text-red-500/70">{row.tax.toLocaleString("sv-SE")} kr</td>
-                        <td className="text-right px-3 py-2 font-medium">{row.netAmount.toLocaleString("sv-SE")} kr</td>
-                        <td className="text-right px-3 py-2">
+                    <GridTableRow key={row.year}>
+                        <div className="col-span-2 font-medium">{row.year}</div>
+                        <div className="col-span-3 text-right">{row.amount.toLocaleString("sv-SE")} kr</div>
+                        <div className="col-span-2 text-right text-red-600 dark:text-red-500/70 hidden md:block">{row.tax.toLocaleString("sv-SE")} kr</div>
+                        <div className="col-span-3 text-right font-medium">{row.netAmount.toLocaleString("sv-SE")} kr</div>
+                        <div className="col-span-2 flex justify-end">
                             <AppStatusBadge
                                 status={row.status === "planned" || row.status === "planerad" ? "Planerad" : "Utbetald"}
                             />
-                        </td>
-                    </tr>
+                        </div>
+                    </GridTableRow>
                 ))}
-            </tbody>
-        </table>
+            </GridTableRows>
+            )}
+        </>
     )
 }

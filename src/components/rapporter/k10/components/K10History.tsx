@@ -21,26 +21,22 @@ export function K10History({ onExport }: K10HistoryProps) {
                 </Button>
             </div>
 
+            <GridTableHeader
+                columns={[
+                    { label: "År", icon: Calendar, span: 2 },
+                    { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3, hiddenOnMobile: true },
+                    { label: "Utnyttjat", icon: Percent, align: "right", span: 3, hiddenOnMobile: true },
+                    { label: "Sparat", icon: Calculator, align: "right", span: 2 },
+                    { label: "Status", align: "center", span: 2 },
+                ]}
+            />
             {hasHistory ? (
-                <div className="w-full overflow-x-auto pb-4 -mx-2">
-                    <div className="md:min-w-[800px] px-2">
-                        <GridTableHeader
-                            columns={[
-                                { label: "År", icon: Calendar, span: 2 },
-                                { label: "Gränsbelopp", icon: TrendingUp, align: "right", span: 3, hiddenOnMobile: true },
-                                { label: "Utnyttjat", icon: Percent, align: "right", span: 3, hiddenOnMobile: true },
-                                { label: "Sparat", icon: Calculator, align: "right", span: 2 },
-                                { label: "Status", align: "center", span: 2 },
-                            ]}
-                        />
-                        <GridTableRows>
-                            {/* Rows would be rendered here when data exists */}
-                            <div />
-                        </GridTableRows>
-                    </div>
-                </div>
+                <GridTableRows>
+                    {/* Rows would be rendered here when data exists */}
+                    <div />
+                </GridTableRows>
             ) : (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-12 mt-6 text-muted-foreground">
                     <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
                     <p className="text-sm">Ingen K10-historik än.</p>
                     <p className="text-xs mt-1">Dina K10-deklarationer kommer visas här efter inlämning.</p>

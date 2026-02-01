@@ -137,7 +137,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Payroll
       'lonebesked', 'agi', 'utdelning', 'k10',
       // Ownership & Governance
-      'aktiebok', 'agarinfo', 'styrelseprotokoll', 'bolagsstamma',
+      'aktiebok', 'agarinfo', 'bolagsstamma',
     ],
     inkomstdeklarationVariant: 'INK2',
     arsbokslutVariant: 'K2',
@@ -208,7 +208,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Payroll (if employees)
       'lonebesked', 'agi',
       // Ownership & Governance
-      'medlemsregister', 'styrelseprotokoll', 'arsmote',
+      'medlemsregister', 'bolagsstamma', 'arsmote',
     ],
     inkomstdeklarationVariant: 'forenklad',
     arsbokslutVariant: 'forenklat',
