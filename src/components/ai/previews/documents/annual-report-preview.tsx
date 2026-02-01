@@ -57,6 +57,15 @@ export function AnnualReportPreview({
     actions,
     className,
 }: AnnualReportPreviewProps) {
+    // Defensively handle missing data
+    if (!data) {
+        return (
+            <div className={`p-4 border border-dashed rounded-lg text-muted-foreground text-sm text-center ${className || ''}`}>
+                Ingen data tillgänglig för förhandsvisning av årsredovisning.
+            </div>
+        )
+    }
+
     return (
         <DocumentPreview
             title="Årsredovisning"
