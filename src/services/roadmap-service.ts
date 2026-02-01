@@ -79,6 +79,7 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
                     title: step.title,
                     description: step.description || null,
                     status: 'pending',
+                    due_date: step.due_date,
                     order_index: index,
                     metadata: step.metadata || null,
                     created_at: now,
@@ -111,6 +112,7 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
             title: step.title,
             description: step.description,
             status: 'pending',
+            due_date: step.due_date,
             order_index: index,
             metadata: step.metadata
         }))
