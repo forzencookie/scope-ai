@@ -82,11 +82,31 @@ export function useConversations() {
         window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
     }, [])
 
-    // Load a conversation
-    const loadConversation = useCallback((conversationId: string) => {
+    // Load a conversation (fetches messages if not already loaded)
+    const loadConversation = useCallback(async (conversationId: string) => {
         setCurrentConversationId(conversationId)
         window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [])
+
+        // Check if this conversation already has messages loaded
+        const existing = queryClient.getQueryData<Conversation[]>(conversationsQueryKey)
+        const conv = existing?.find(c => c.id === conversationId)
+        if (conv && conv.messages.length > 0) return
+
+        // Fetch messages from the server
+        try {
+            const res = await fetch(`/api/chat/history/${conversationId}`)
+            if (!res.ok) return
+            const data = await res.json()
+            const mapped = mapConversation(data)
+
+            // Update the conversation in cache with its messages
+            queryClient.setQueryData<Conversation[]>(conversationsQueryKey, (old = []) =>
+                old.map(c => c.id === conversationId ? { ...c, messages: mapped.messages } : c)
+            )
+        } catch (err) {
+            console.error('[useConversations] Failed to load messages:', err)
+        }
+    }, [queryClient])
 
     // Delete a conversation
     const deleteConversation = useCallback((conversationId: string) => {

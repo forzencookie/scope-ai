@@ -20,7 +20,7 @@ import { useToast } from "@/components/ui/toast"
 
 export function IntegrationsTab() {
     const { text } = useTextMode()
-    const { toast } = useToast()
+    const { success } = useToast()
     const [calendarOpen, setCalendarOpen] = useState(false)
     const [hasCopied, setHasCopied] = useState(false)
 
@@ -32,10 +32,7 @@ export function IntegrationsTab() {
     const handleCopy = () => {
         navigator.clipboard.writeText(calendarUrl)
         setHasCopied(true)
-        toast({
-            title: "Länk kopierad!",
-            description: "Klistra in länken i din kalender-app för att prenumerera.",
-        })
+        success("Länk kopierad!", "Klistra in länken i din kalender-app för att prenumerera.")
         setTimeout(() => setHasCopied(false), 2000)
     }
 
@@ -66,8 +63,8 @@ export function IntegrationsTab() {
                     name="Kalender"
                     description="Synkronisera viktiga datum (Google/Apple/Outlook)"
                     icon={Calendar}
-                    isConnected={false}
-                    onClick={() => setCalendarOpen(true)}
+                    connected={false}
+                    onConnect={() => setCalendarOpen(true)}
                 />
             </div>
 

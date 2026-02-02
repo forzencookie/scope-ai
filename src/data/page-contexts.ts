@@ -577,7 +577,7 @@ export const PAGE_CONTEXTS: PageContext[] = [
             'Sammanfatta aktivitet',
         ],
         dataEntities: ['Händelser', 'Deadlines', 'Planer'],
-        relatedTools: ['get_events', 'create_event', 'get_upcoming_deadlines', 'get_activity_summary'],
+        relatedTools: ['get_events', 'create_event', 'get_upcoming_deadlines', 'get_activity_summary', 'get_walkthrough_history', 'show_walkthrough'],
         keywords: ['händelse', 'kalender', 'deadline', 'påminnelse', 'aktivitet'],
     },
     {
@@ -792,7 +792,9 @@ Använd 'get_events' för att hämta händelser och deadlines.
 Använd 'create_event' för att skapa en ny händelse eller påminnelse.
 Använd 'get_upcoming_deadlines' för att visa kommande frister.
 Använd 'get_activity_summary' för att sammanfatta aktivitet.
-Använd 'export_to_calendar' för att exportera till iCal/Google Calendar.`,
+Använd 'export_to_calendar' för att exportera till iCal/Google Calendar.
+Använd 'get_walkthrough_history' för att söka bland sparade genomgångar (walkthroughs).
+Använd 'show_walkthrough' för att visa en tidigare sparad genomgång.`,
 
     installningar: `Användaren tittar på Inställningar-sidan.
 Använd 'get_subscription_status' för att visa prenumeration och plan.

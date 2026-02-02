@@ -35,14 +35,6 @@ export {
   processReportSections,
 } from './processors'
 
-// Mock Data
-export {
-  generateMockVATPeriods,
-  generateMockIncomeStatement,
-  generateMockBalanceSheet,
-  generateMockReportSections,
-} from './mock-data'
-
 // Calculator
 export { FinancialReportCalculator } from './calculator'
 

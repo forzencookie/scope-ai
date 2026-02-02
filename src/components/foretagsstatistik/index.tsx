@@ -15,23 +15,15 @@ import {
 } from "@/components/ui/tooltip"
 import { Card } from "@/components/ui/card"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import { monthlyRevenue, expenseCategories } from "./data"
+// removed mock imports
 import { useFinancialMetrics, type MonthlyMetric, type ExpenseCategory, type KPI } from "@/hooks/use-financial-metrics"
 
-// Map icon names to actual icons
-// const kpiIcons = {
-//     TrendingUp,
-//     Wallet,
-//     Shield,
-//     Droplets,
-// }
-
-// KPIs with resolved icons
+// KPIs with resolved icons (Placeholders)
 const kpis = [
-    { label: "Omsättning", value: "1,85 mkr", change: "+12%", positive: true, icon: TrendingUp },
-    { label: "Resultat", value: "379 tkr", change: "+8%", positive: true, icon: Wallet },
-    { label: "Soliditet", value: "42%", change: "+3%", positive: true, icon: Shield },
-    { label: "Kassalikviditet", value: "156%", change: "-2%", positive: false, icon: Droplets },
+    { label: "Omsättning", value: "-", change: "", positive: null as boolean | null, icon: TrendingUp },
+    { label: "Resultat", value: "-", change: "", positive: null as boolean | null, icon: Wallet },
+    { label: "Soliditet", value: "-", change: "", positive: null as boolean | null, icon: Shield },
+    { label: "Kassalikviditet", value: "-", change: "", positive: null as boolean | null, icon: Droplets },
 ]
 
 // Professional monochromatic blue/gray palette for bar charts
@@ -53,15 +45,8 @@ const barColors = [
 export function Foretagsstatistik() {
     const { monthlyMetrics, kpis: liveKpis, expenseDistribution, isLoading } = useFinancialMetrics()
 
-    // Fallback/Empty state handling if no data yet (optional, or just show 0s)
-    // Ensure fallback data matches MonthlyMetric interface
-    const fallbackMetrics: MonthlyMetric[] = monthlyRevenue.map(m => ({
-        ...m,
-        accumulatedProfit: 0 // Add missing property
-    }))
-
-    const displayMetrics = monthlyMetrics.length > 0 ? monthlyMetrics : fallbackMetrics
-    const maxRevenue = Math.max(...displayMetrics.map(m => m.revenue)) || 1 // Avoid divide by zero
+    const displayMetrics = monthlyMetrics
+    const maxRevenue = displayMetrics.length > 0 ? Math.max(...displayMetrics.map(m => m.revenue)) : 1
 
     // Map live KPIs to icons
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -70,9 +55,9 @@ export function Foretagsstatistik() {
         { ...liveKpis[1], icon: Wallet },     // Resultat
         { ...liveKpis[2], icon: Shield },     // Soliditet
         { ...liveKpis[3], icon: Droplets },   // Likviditet/Vinstmarginal mapping
-    ] : kpis.map(k => ({ ...k, raw: 0 })) // Add 'raw' property to fallback to match interface
+    ] : kpis.map(k => ({ ...k, raw: 0 } as any))
 
-    const displayExpenses = expenseDistribution.length > 0 ? expenseDistribution : expenseCategories
+    const displayExpenses = expenseDistribution
 
     if (isLoading) {
         return <div className="p-12 text-center text-muted-foreground">Laddar statistik...</div>

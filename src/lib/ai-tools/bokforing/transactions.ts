@@ -140,12 +140,6 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
             message: transactions.length > 0
                 ? `Hittade ${transactions.length} transaktioner.`
                 : 'Inga transaktioner hittades för den valda perioden.',
-            display: {
-                component: 'TransactionsTable',
-                props: { transactions: transactions },
-                title: 'Transaktioner',
-                fullViewRoute: '/dashboard/bokforing?tab=verifikationer',
-            },
         }
     },
 })
@@ -356,12 +350,6 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
                 action: { toolName: 'bulk_categorize_transactions', params },
                 requireCheckbox: true,
             },
-            display: {
-                component: 'TransactionsTable',
-                props: { transactions: transactions.slice(0, 10) },
-                title: `${count} transaktioner att kontera`,
-                fullViewRoute: '/dashboard/bokforing?tab=transaktioner',
-            },
         }
     },
 })
@@ -424,15 +412,6 @@ export const getTransactionsMissingReceiptsTool = defineTool<GetTransactionsMiss
             message: totalMissing > 0
                 ? `Hittade ${totalMissing} transaktioner över ${minAmount} kr som saknar kvitto.`
                 : `Inga transaktioner över ${minAmount} kr saknar kvitto. 🎉`,
-            display: {
-                component: 'TransactionsTable',
-                props: { 
-                    transactions,
-                    highlight: 'missing-receipt'
-                },
-                title: 'Transaktioner utan kvitto',
-                fullViewRoute: '/dashboard/bokforing?tab=transaktioner',
-            },
         }
     },
 })

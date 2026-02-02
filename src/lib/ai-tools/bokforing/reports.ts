@@ -6,8 +6,6 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import {
-    generateMockIncomeStatement,
-    generateMockBalanceSheet,
     type ProcessedFinancialItem,
 } from '@/services/processors/reports-processor'
 
@@ -22,21 +20,11 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        const items = generateMockIncomeStatement()
-        const result = items.find(i => i.label === 'Årets resultat')
-
+        // TODO: Query real financial data from Supabase
         return {
-            success: true,
-            data: items,
-            message: result
-                ? `Årets resultat: ${result.value.toLocaleString('sv-SE')} kr`
-                : 'Resultaträkning hämtad.',
-            display: {
-                component: 'IncomeStatement',
-                props: { items },
-                title: 'Resultaträkning',
-                fullViewRoute: '/dashboard/rapporter?tab=resultatrakning',
-            },
+            success: false,
+            data: [],
+            message: 'Ingen resultaträkning tillgänglig. Bokför transaktioner först.',
         }
     },
 })
@@ -48,21 +36,11 @@ export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFi
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        const items = generateMockBalanceSheet()
-        const total = items.find(i => i.label === 'Summa tillgångar')
-
+        // TODO: Query real financial data from Supabase
         return {
-            success: true,
-            data: items,
-            message: total
-                ? `Summa tillgångar: ${total.value.toLocaleString('sv-SE')} kr`
-                : 'Balansräkning hämtad.',
-            display: {
-                component: 'BalanceSheet',
-                props: { items },
-                title: 'Balansräkning',
-                fullViewRoute: '/dashboard/rapporter?tab=balansrakning',
-            },
+            success: false,
+            data: [],
+            message: 'Ingen balansräkning tillgänglig. Bokför transaktioner först.',
         }
     },
 })
@@ -134,47 +112,11 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, any
         required: ['period'],
     },
     execute: async (params) => {
-        // Mock data
-        const incomeStatement = generateMockIncomeStatement().map((item, i) => ({
-            id: `is-${i}`,
-            label: item.label,
-            amount: item.value,
-            type: (item.label === "Rörelsens intäkter" || item.label === "Summa rörelsens kostnader") ? "header" :
-                (item.label.includes("Summa") || item.label.includes("Resultat")) ? "sum" : "row",
-            level: item.label.startsWith("  ") ? 1 : 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        })) as any[]
-
-        const balanceSheet = generateMockBalanceSheet().map((item, i) => ({
-            id: `bs-${i}`,
-            label: item.label,
-            amount: item.value,
-            type: item.label.includes("Summa") ? "sum" : "row",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        })) as any[]
-
-        const reportData = {
-            companyName: "Din Företag AB",
-            reportType: "Resultat & Balans",
-            period: params.period,
-            comparisonPeriod: params.comparisonPeriod,
-            currency: "SEK",
-            incomeStatement: incomeStatement,
-            balanceSheetAssets: balanceSheet.slice(0, 5), // Mock split
-            balanceSheetEquityLiability: balanceSheet.slice(5),
-            resultBeforeTax: 150000,
-            netResult: 119400
-        }
-
+        // TODO: Query real financial data from Supabase
         return {
-            success: true,
-            data: reportData,
-            message: `Finansiell rapport för ${params.period} sammanställd.`,
-            display: {
-                component: 'FinancialReportPreview',
-                title: 'Finansiell Rapport',
-                props: { data: reportData }
-            }
+            success: false,
+            data: {},
+            message: `Ingen finansiell rapport tillgänglig för ${params.period}. Bokför transaktioner först.`,
         }
     }
 })
@@ -222,11 +164,6 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
             success: true,
             data: annualReportData,
             message: `Årsredovisning för ${params.year} skapad (utkast).`,
-            display: {
-                component: 'AnnualReportPreview',
-                title: 'Årsredovisning',
-                props: { data: annualReportData }
-            }
         }
     }
 })
@@ -267,56 +204,18 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         required: ['year'],
     },
     execute: async (params) => {
-        // In production, pull from actual bookkeeping data
-        const incomeStatement = generateMockIncomeStatement()
-        const resultItem = incomeStatement.find(i => i.label === 'Årets resultat')
-        const result = resultItem?.value || 150000
-
-        // Calculate corporate tax (20.6% for 2024+)
-        const taxRate = 0.206
-        const maxPeriodisering = Math.round(result * 0.25) // 25% to periodiseringsfond
-        const taxableAfterPeriodisering = result - maxPeriodisering
-        const corporateTax = Math.round(taxableAfterPeriodisering * taxRate)
-
-        const ink2Data: INK2Data = {
-            year: params.year,
-            companyName: "Din Företag AB",
-            orgNumber: "556123-4567",
-            fields: [
-                { field: '1.1', label: 'Nettoomsättning', value: 2450000, editable: false },
-                { field: '1.3', label: 'Övriga rörelseintäkter', value: 15000, editable: true },
-                { field: '2.1', label: 'Råvaror och förnödenheter', value: -850000, editable: false },
-                { field: '2.4', label: 'Personalkostnader', value: -980000, editable: false },
-                { field: '2.5', label: 'Avskrivningar', value: -85000, editable: false },
-                { field: '2.6', label: 'Övriga rörelsekostnader', value: -350000, editable: false },
-                { field: '3.1', label: 'Ränteintäkter', value: 2500, editable: false },
-                { field: '3.2', label: 'Räntekostnader', value: -12500, editable: false },
-                { field: '4.1', label: 'Resultat före skatt', value: result, editable: false },
-                { field: '4.2', label: 'Avsättning periodiseringsfond', value: -maxPeriodisering, editable: true },
-                { field: '4.3', label: 'Skattemässigt resultat', value: taxableAfterPeriodisering, editable: false },
-            ],
-            summary: {
-                taxableIncome: taxableAfterPeriodisering,
-                corporateTax,
-                periodiseringsfond: maxPeriodisering,
-            },
-            status: 'draft',
-        }
-
-        const message = params.includeOptimizations
-            ? `INK2 förberedd. Tips: Avsätt ${maxPeriodisering.toLocaleString('sv-SE')} kr till periodiseringsfond för att sänka skatten till ${corporateTax.toLocaleString('sv-SE')} kr.`
-            : `INK2 förberedd för ${params.year}. Bolagsskatt: ${corporateTax.toLocaleString('sv-SE')} kr.`
-
+        // TODO: Pull from actual bookkeeping data in Supabase
         return {
-            success: true,
-            data: ink2Data,
-            message,
-            display: {
-                component: 'INK2FormPreview',
-                title: `Inkomstdeklaration ${params.year}`,
-                props: { data: ink2Data },
-                fullViewRoute: '/dashboard/rapporter?tab=inkomstdeklaration',
+            success: false,
+            data: {
+                year: params.year,
+                companyName: '',
+                orgNumber: '',
+                fields: [],
+                summary: { taxableIncome: 0, corporateTax: 0 },
+                status: 'draft' as const,
             },
+            message: `Kan inte förbereda INK2 för ${params.year} — bokföringsdata saknas.`,
         }
     },
 })
@@ -351,48 +250,16 @@ export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResu
         required: ['year'],
     },
     execute: async (params) => {
-        // In production, calculate from actual bookkeeping
-        const incomeStatement = generateMockIncomeStatement()
-        const resultItem = incomeStatement.find(i => i.label === 'Årets resultat')
-        const result = resultItem?.value || 150000
-
-        const closingEntries = [
-            { description: 'Nollställ intäkter', debit: '3XXX', credit: '8999', amount: 2450000 },
-            { description: 'Nollställ kostnader', debit: '8999', credit: '4-7XXX', amount: 2300000 },
-            { description: 'Överför årets resultat', debit: '8999', credit: '2099', amount: result },
-        ]
-
-        const yearEndData: YearEndResult = {
-            year: params.year,
-            result,
-            closingEntries,
-            status: 'preview',
-        }
-
-        const confirmationRequest: AIConfirmationRequest = {
-            title: `Stäng räkenskapsår ${params.year}`,
-            description: 'Skapar bokslutsposter och låser perioden',
-            summary: [
-                { label: 'År', value: String(params.year) },
-                { label: 'Årets resultat', value: `${result.toLocaleString('sv-SE')} kr` },
-                { label: 'Antal bokslutsposter', value: String(closingEntries.length) },
-                { label: 'Ingående balanser', value: params.createOpeningBalances !== false ? 'Ja' : 'Nej' },
-            ],
-            action: { toolName: 'close_fiscal_year', params },
-            requireCheckbox: true,
-        }
-
+        // TODO: Calculate from actual bookkeeping data in Supabase
         return {
-            success: true,
-            data: yearEndData,
-            message: `Årsbokslut förberett. Resultat: ${result.toLocaleString('sv-SE')} kr.`,
-            confirmationRequired: confirmationRequest,
-            display: {
-                component: 'YearEndPreview',
-                title: `Årsbokslut ${params.year}`,
-                props: { data: yearEndData },
-                fullViewRoute: '/dashboard/rapporter?tab=arsbokslut',
+            success: false,
+            data: {
+                year: params.year,
+                result: 0,
+                closingEntries: [],
+                status: 'preview' as const,
             },
+            message: `Kan inte stänga räkenskapsår ${params.year} — bokföringsdata saknas.`,
         }
     },
 })
@@ -441,16 +308,6 @@ Styrelsen föreslår att årets resultat, 150 000 kr, balanseras i ny räkning.
             success: true,
             data: managementReport,
             message: `Förvaltningsberättelse för ${params.year} genererad.`,
-            display: {
-                component: 'DocumentPreview',
-                title: 'Förvaltningsberättelse',
-                props: {
-                    title: `Förvaltningsberättelse ${params.year}`,
-                    type: 'management_report',
-                    content: managementReport,
-                    format: 'markdown',
-                },
-            },
         }
     },
 })

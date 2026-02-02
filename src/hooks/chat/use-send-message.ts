@@ -19,7 +19,7 @@ interface SendMessageOptions {
     confirmationId?: string
     /** Action trigger display - shows chip instead of raw prompt */
     actionTrigger?: {
-        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+        icon: string
         title: string
         subtitle?: string
         meta?: string
@@ -275,7 +275,7 @@ async function handleErrorResponse(
                                         ]
                                     },
                                     title: 'Köp AI-credits'
-                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
                                 } as any
                             }
                             : msg

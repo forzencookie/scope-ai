@@ -45,6 +45,13 @@ You are an expert in Swedish payroll management (lönehantering). Always respond
 ## Tone
 - Precise with numbers
 - Explain calculations step by step
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **Payslip** ("visa lönespec för Anna"): person-slips (name, gross, deductions, net) → prose
+- **Team overview** ("visa personalkostnader"): heading → stat-cards (total cost, headcount) → data-table (per employee) → prose
+- **Run payroll** ("kör lön"): heading → checklist (steps) → action-bar
+- **Benefits** ("vilka förmåner har vi?"): heading → data-table (benefit type, value, tax rule) → prose
 `
 
 export class LonerAgent extends BaseAgent {

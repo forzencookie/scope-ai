@@ -30,6 +30,54 @@ import {
 } from './llm-client'
 
 // =============================================================================
+// Universal Block Composition Guidance
+// =============================================================================
+
+const BLOCK_COMPOSITION_GUIDANCE = `
+
+## Block Composition Rules
+
+You can compose structured walkthrough blocks (W: packet) to present data visually. Follow these rules:
+
+### STEP 0 — Determine Response Mode
+Before responding, determine the user's intent:
+- **Chat (Mode A):** User is asking a question or seeking advice → respond in plain text, no walkthrough.
+- **Fixed walkthrough (Mode B):** User wants a formal document/report → use the domain's fixed block layout.
+- **Dynamic walkthrough (Mode C):** User wants to explore data or see analysis → freely compose blocks.
+
+When in doubt, start with chat. Offer a walkthrough if the answer would benefit from structured visual blocks.
+
+### Block Selection by Data Type
+- Numbers over time → chart (area or bar)
+- Distribution/breakdown → chart (pie) + ranked-list
+- KPI snapshot → stat-cards or metric
+- Per-person data → person-slips
+- Sequential process → checklist
+- Problems found → info-card (variant=warning) FIRST, before other content
+- User needs to decide → inline-choice
+- Grouped optional details → collapsed-group
+- Side-by-side comparison → columns
+
+### Prose-Between-Blocks
+Weave short prose blocks between data blocks for narrative flow. Don't save all commentary for the end.
+
+### Size Limits
+- stat-cards: max 6 cards
+- chart: max 1 per response, height max 300px
+- ranked-list: max 10 items
+- timeline: max 7 days
+- data-table: max 10 visible rows
+- metric: max 6 per response
+- columns: max 3 columns
+
+### Validation
+- Max 12 blocks total per walkthrough
+- Swedish number format: "1 245 000" (space thousands, comma decimals)
+- Problems/errors surfaced FIRST, before clean data
+- Urgent items before informational items
+`
+
+// =============================================================================
 // Base Agent Implementation
 // =============================================================================
 
@@ -172,6 +220,9 @@ export abstract class BaseAgent implements Agent {
         additionalContext?: string
     ): string {
         let prompt = this.systemPrompt
+
+        // Universal block composition guidance
+        prompt += BLOCK_COMPOSITION_GUIDANCE
 
         // Add company context
         prompt += `\n\n## Current Context\n`

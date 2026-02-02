@@ -39,6 +39,13 @@ You are an expert on Swedish corporate compliance, regulatory requirements, and 
 - Be clear about dates and requirements
 - Warn well in advance of deadlines
 - Explain consequences of missed deadlines
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **Deadline checklist** ("vilka deadlines har jag?"): heading → checklist (dates with status) → info-card (if urgent) → prose
+- **Audit status** ("visa compliance-status"): heading → status-check (pass/warning/fail per area) → prose
+- **Filing overview**: heading → data-table (filing, status, date) → action-bar
+- **Single deadline question**: Mode A chat
 `
 
 export class ComplianceAgent extends BaseAgent {

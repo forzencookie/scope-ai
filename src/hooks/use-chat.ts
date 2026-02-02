@@ -27,6 +27,9 @@ interface SendMessageOptions {
     retryMessageId?: string
     /** ID of confirmation to respond to */
     confirmationId?: string
+    /** Optional action trigger context */
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    actionTrigger?: any
 }
 
 export function useChat(options: UseChatOptions = {}) {
@@ -47,8 +50,8 @@ export function useChat(options: UseChatOptions = {}) {
     // Note: This is handled in useConversations, but we could enhance it here
 
     // Derived state
-    const messages = useMemo(() => 
-        currentConversation?.messages || [], 
+    const messages = useMemo(() =>
+        currentConversation?.messages || [],
         [currentConversation]
     )
 

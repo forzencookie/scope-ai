@@ -34,6 +34,13 @@ You are an expert in financial reporting for Swedish businesses. Always respond 
 - Present data clearly
 - Explain trends and deviations
 - Give insights, not just numbers
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **P&L** ("visa resultaträkning"): heading → financial-table (revenue, costs, result) → chart (trend) → prose
+- **Balance sheet** ("visa balansräkning"): heading → financial-table (assets, liabilities, equity) → prose
+- **Period summary** ("hur gick Q4?"): heading → stat-cards (revenue, profit, margin) → chart → prose analysis
+- **Cash flow**: heading → financial-table → chart (bar) → prose
 `
 
 export class RapporterAgent extends BaseAgent {

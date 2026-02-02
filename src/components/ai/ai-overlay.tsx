@@ -19,9 +19,19 @@ import {
 import { CardRenderer } from "./card-renderer"
 import { ConfirmationCard } from "./confirmation-card"
 import { WalkthroughOverlay } from "./walkthrough-overlay"
+import { WalkthroughRenderer } from "./blocks"
 import { Button } from "@/components/ui/button"
 import { Check, Pencil, X, Sparkles, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
+import type { BlockProps } from "./blocks/types"
+
+function extractBlockLabel(block: BlockProps): string {
+    const props = block.props as Record<string, unknown>
+    if (typeof props?.title === 'string') return props.title
+    if (typeof props?.label === 'string') return props.label
+    if (typeof props?.text === 'string') return (props.text as string).slice(0, 40)
+    return block.type
+}
 
 interface AIOverlayProps {
     className?: string
@@ -35,9 +45,31 @@ export function AIOverlay({ className }: AIOverlayProps) {
         return null
     }
 
-    const { status, output, accept, requestEdit, hide, sceneType, walkthroughContent, closeWalkthrough } = context
+    const { status, output, accept, requestEdit, hide, sceneType, walkthroughContent, walkthroughBlocks, closeWalkthrough, isThinkingInBackground } = context
 
-    // Walkthrough gets its own layout (not centered flex)
+    const handleBlockEdit = useCallback((blockIndex: number, blockType: string) => {
+        const block = walkthroughBlocks?.blocks[blockIndex]
+        const label = block ? extractBlockLabel(block) : blockType
+        window.dispatchEvent(new CustomEvent("ai-chat-focus-input", {
+            detail: { prefill: `Ändra ${blockType} "${label}": ` }
+        }))
+    }, [walkthroughBlocks])
+
+    // Block-based walkthrough (new system)
+    if (status === "walkthrough-blocks" && walkthroughBlocks) {
+        return (
+            <AnimatePresence>
+                <WalkthroughRenderer
+                    response={walkthroughBlocks}
+                    onClose={closeWalkthrough}
+                    isThinking={isThinkingInBackground}
+                    onBlockEdit={handleBlockEdit}
+                />
+            </AnimatePresence>
+        )
+    }
+
+    // Legacy walkthrough (audit-style)
     if (status === "walkthrough" && walkthroughContent) {
         return (
             <AnimatePresence>
@@ -206,8 +238,8 @@ function ThinkingMessage({ messages }: ThinkingMessageProps) {
     )
 }
 
-// Need to import useState and useEffect
-import { useState, useEffect } from "react"
+// Need to import useState, useEffect, useCallback
+import { useState, useEffect, useCallback } from "react"
 
 // ============================================================================
 // Complete State - Output preview with actions

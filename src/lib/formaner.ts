@@ -13,7 +13,7 @@ import type {
     BenefitTaxImpact,
     BenefitCategory,
 } from './ai/tool-types'
-import { formanerCatalog } from './ai/tool-mock-data' // Static reference catalog as fallback
+import { formanerCatalog } from './ai/reference-data'
 
 // =============================================================================
 // Database Row Types

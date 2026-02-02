@@ -55,7 +55,7 @@ export interface EventActor {
  * Related entity that this event concerns
  */
 export interface RelatedEntity {
-    type: 'transaction' | 'invoice' | 'receipt' | 'document' | 'declaration' | 'report' | 'payroll'
+    type: 'transaction' | 'invoice' | 'receipt' | 'document' | 'declaration' | 'report' | 'payroll' | 'walkthrough'
     id: string
     label?: string           // Human-readable label
 }

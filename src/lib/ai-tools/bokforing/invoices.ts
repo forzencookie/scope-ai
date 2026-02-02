@@ -6,7 +6,6 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import type { AIDisplayInstruction } from '../types'
 import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoice-service'
 
 // Helper to get base URL for API calls
@@ -175,20 +174,12 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
 
             const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
-            const display: AIDisplayInstruction = {
-                component: 'InvoicesTable',
-                props: { invoices },
-                title: 'Kundfakturor',
-                fullViewRoute: '/dashboard/bokforing?tab=kundfakturor',
-            }
-
             return {
                 success: true,
                 data: invoices,
                 message: invoices.length > 0
                     ? `Hittade ${invoices.length} kundfakturor${totalCount > invoices.length ? ` (av ${totalCount})` : ''} på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`
                     : 'Inga kundfakturor hittades.',
-                display,
             }
         } catch (error) {
             console.error('Failed to fetch invoices:', error)
@@ -248,20 +239,12 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Inv
 
             const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
-            const display: AIDisplayInstruction = {
-                component: 'SupplierInvoicesTable',
-                props: { invoices },
-                title: 'Leverantörsfakturor',
-                fullViewRoute: '/dashboard/bokforing?tab=leverantorsfakturor',
-            }
-
             return {
                 success: true,
                 data: invoices,
                 message: invoices.length > 0
                     ? `Hittade ${invoices.length} leverantörsfakturor${totalCount > invoices.length ? ` (av ${totalCount})` : ''} på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`
                     : 'Inga leverantörsfakturor hittades.',
-                display,
             }
         } catch (error) {
             console.error('Failed to fetch supplier invoices:', error)
@@ -501,12 +484,6 @@ export const getOverdueInvoicesTool = defineTool<GetOverdueInvoicesParams, Invoi
             message: invoices.length > 0
                 ? `${invoices.length} förfallna fakturor på totalt ${totalOverdue.toLocaleString('sv-SE')} kr.`
                 : 'Inga förfallna fakturor. 🎉',
-            display: {
-                component: 'InvoicesTable',
-                props: { invoices, highlight: 'overdue' },
-                title: 'Förfallna fakturor',
-                fullViewRoute: '/dashboard/bokforing?tab=fakturor',
-            },
         }
     },
 })

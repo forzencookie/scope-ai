@@ -68,8 +68,7 @@ export function MomsList({ periods, onSelectReport, onGenerateAI }: MomsListProp
                                 </div>
 
                                 <AppStatusBadge
-                                    status={isSubmitted ? "Klar" : isOverdue ? "Försenad" : "Pågående"}
-                                    variant={isSubmitted ? "success" : isOverdue ? "destructive" : "default"}
+                                    status={isSubmitted ? "Klar" : isOverdue ? "Förfallen" : "Kommande"}
                                 />
 
                                 <ChevronRight className="h-4 w-4 text-muted-foreground/50" />

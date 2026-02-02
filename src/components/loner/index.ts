@@ -6,11 +6,11 @@
 export {
     termExplanations,
     allTabs,
-    payslips,
-    agiReports,
-    dividendHistory,
-    k10Declarations,
-    employees,
+    // payslips,
+    // agiReports,
+    // dividendHistory,
+    // k10Declarations,
+    // employees,
     type PayrollTabConfig
 } from "./constants"
 

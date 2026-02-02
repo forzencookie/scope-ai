@@ -22,7 +22,7 @@ export function EmailTab() {
     // Test Email State
     const [testEmail, setTestEmail] = useState("")
     const [isSending, setIsSending] = useState(false)
-    const { toast } = useToast()
+    const { success, error: toastError } = useToast()
 
     const handleSendTest = async () => {
         if (!testEmail) return
@@ -37,17 +37,10 @@ export function EmailTab() {
 
             if (!res.ok) throw new Error('Failed to send')
 
-            toast({
-                title: "Mail skickat!",
-                description: `Ett testmail har skickats till ${testEmail}`,
-            })
+            success("Mail skickat!", `Ett testmail har skickats till ${testEmail}`)
             setTestEmail("")
         } catch (error) {
-            toast({
-                title: "Kunde inte skicka",
-                description: "Kontrollera att API-nyckeln är korrekt konfigurerad.",
-                variant: "destructive"
-            })
+            toastError("Kunde inte skicka", "Kontrollera att API-nyckeln är korrekt konfigurerad.")
         } finally {
             setIsSending(false)
         }

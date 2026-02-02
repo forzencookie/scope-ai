@@ -98,29 +98,5 @@ export const timeRangeOptions = [
     { value: "6y", label: "Senaste 6 år" },
 ]
 
-// MOCK DATA (Migrated from rapporter/constants.ts)
+// MOCK DATA REMOVED
 
-// Monthly revenue data
-export const monthlyRevenue = [
-    { month: "Jan", revenue: 142000, expenses: 98000, profit: 44000 },
-    { month: "Feb", revenue: 156000, expenses: 112000, profit: 44000 },
-    { month: "Mar", revenue: 148000, expenses: 105000, profit: 43000 },
-    { month: "Apr", revenue: 165000, expenses: 118000, profit: 47000 },
-    { month: "Maj", revenue: 172000, expenses: 125000, profit: 47000 },
-    { month: "Jun", revenue: 158000, expenses: 108000, profit: 50000 },
-    { month: "Jul", revenue: 134000, expenses: 95000, profit: 39000 },
-    { month: "Aug", revenue: 145000, expenses: 102000, profit: 43000 },
-    { month: "Sep", revenue: 168000, expenses: 120000, profit: 48000 },
-    { month: "Okt", revenue: 175000, expenses: 128000, profit: 47000 },
-    { month: "Nov", revenue: 162000, expenses: 115000, profit: 47000 },
-    { month: "Dec", revenue: 125000, expenses: 88000, profit: 37000 },
-]
-
-// Expense categories
-export const expenseCategories = [
-    { category: "Personal", amount: 520000, percentage: 37 },
-    { category: "Lokalkostnader", amount: 180000, percentage: 13 },
-    { category: "Marknadsföring", amount: 95000, percentage: 7 },
-    { category: "IT & Teknik", amount: 125000, percentage: 9 },
-    { category: "Övriga kostnader", amount: 500000, percentage: 34 },
-]

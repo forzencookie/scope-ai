@@ -422,6 +422,108 @@ export const exportToCalendarTool = defineTool<ExportToCalendarParams, { exporte
 })
 
 // =============================================================================
+// Walkthrough History Tools
+// =============================================================================
+
+export interface GetWalkthroughHistoryParams {
+    search?: string
+    limit?: number
+}
+
+export interface WalkthroughHistoryItem {
+    id: string
+    title: string
+    subtitle?: string
+    timestamp: string
+}
+
+export const getWalkthroughHistoryTool = defineTool<GetWalkthroughHistoryParams, WalkthroughHistoryItem[]>({
+    name: 'get_walkthrough_history',
+    description: 'Hämta sparade walkthroughs (genomgångar). Kan sökas på titel.',
+    category: 'read',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            search: { type: 'string', description: 'Sök på titel (valfritt)' },
+            limit: { type: 'number', description: 'Max antal resultat (standard: 10)' },
+        },
+    },
+    execute: async (params) => {
+        const limit = params.limit || 10
+
+        const { events: dbEvents } = await getEventsFromDB({
+            limit,
+            search: params.search,
+        })
+
+        // Filter to walkthrough events only
+        const walkthroughEvents = dbEvents.filter(e => e.action === 'walkthrough_generated')
+
+        const items: WalkthroughHistoryItem[] = walkthroughEvents.map(e => ({
+            id: e.id,
+            title: e.title,
+            subtitle: e.description,
+            timestamp: e.timestamp.toISOString(),
+        }))
+
+        return {
+            success: true,
+            data: items,
+            message: items.length > 0
+                ? `Hittade ${items.length} sparade genomgångar.`
+                : 'Inga sparade genomgångar hittades.',
+        }
+    },
+})
+
+export interface ShowWalkthroughParams {
+    eventId: string
+}
+
+export const showWalkthroughTool = defineTool<ShowWalkthroughParams, Record<string, unknown>>({
+    name: 'show_walkthrough',
+    description: 'Visa en sparad walkthrough (genomgång) genom att hämta den från händelsehistoriken.',
+    category: 'read',
+    requiresConfirmation: false,
+    parameters: {
+        type: 'object',
+        properties: {
+            eventId: { type: 'string', description: 'ID för händelsen som innehåller walkthrough-data' },
+        },
+        required: ['eventId'],
+    },
+    execute: async (params) => {
+        const { events: allEvents } = await getEventsFromDB({ limit: 100 })
+        const event = allEvents.find(e => e.id === params.eventId)
+
+        if (!event) {
+            return {
+                success: false,
+                data: {},
+                message: 'Kunde inte hitta den angivna genomgången.',
+            }
+        }
+
+        const walkthroughBlocks = (event.metadata as Record<string, unknown>)?.walkthroughBlocks
+        if (!walkthroughBlocks) {
+            return {
+                success: false,
+                data: {},
+                message: 'Händelsen innehåller ingen sparad genomgång.',
+            }
+        }
+
+        return {
+            success: true,
+            data: walkthroughBlocks as Record<string, unknown>,
+            message: `Visar genomgång: "${event.title}"`,
+            walkthrough: walkthroughBlocks,
+        }
+    },
+})
+
+// =============================================================================
 // Export
 // =============================================================================
 
@@ -431,4 +533,6 @@ export const eventTools = [
     getUpcomingDeadlinesTool,
     getActivitySummaryTool,
     exportToCalendarTool,
+    getWalkthroughHistoryTool,
+    showWalkthroughTool,
 ]

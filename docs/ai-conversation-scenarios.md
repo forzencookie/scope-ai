@@ -100,7 +100,7 @@ AI:        Klart! Jag bokförde:
            Alla 3 är nu bokförda. Du kan stänga januari.
 ```
 
-**Modes used:** A → A (with actions)
+**Modes used:** A → A (Action)
 
 ---
 
@@ -183,7 +183,7 @@ AI:        Påminnelser skickade till:
            Jag meddelar dig om de betalar inom 7 dagar.
 ```
 
-**Modes used:** A → A (with actions)
+**Modes used:** A → A (Action)
 
 ---
 
@@ -215,7 +215,7 @@ AI:        Sparat! Fakturan ligger nu under Leverantörsfakturor → Mottagen.
            (Kontorsmaterial).
 ```
 
-**Modes used:** A → A → A (with actions)
+**Modes used:** A → A → A (Action)
 
 ---
 
@@ -271,7 +271,7 @@ AI:        Noterat: "Kundmöte med Erik Johansson, Acme AB — avtalsförhandlin
            Kvittot är sparat och bokfört. ✓
 ```
 
-**Modes used:** A → A → A (with actions)
+**Modes used:** A → A → A (Action)
 
 ---
 
@@ -320,7 +320,7 @@ AI:        Klart, jag bokför kvittot som 5410 (Förbrukningsinventarier),
            8 000 kr exkl moms. ✓
 ```
 
-**Modes used:** A → A (with action)
+**Modes used:** A → A (Action)
 
 ---
 
@@ -414,7 +414,7 @@ AI:        Klart! Verifikation V2026-0058 skapad:
            Bilen är borttagen ur tillgångsregistret.
 ```
 
-**Modes used:** A → A (with actions)
+**Modes used:** A → A (Action)
 
 ---
 
@@ -474,7 +474,7 @@ Användare: ja kör
 AI:        ✓ V2026-0063 bokförd. Automatisk återföring schemalagd 2026-02-01.
 ```
 
-**Modes used:** A → A → A (with action)
+**Modes used:** A → A → A (Action)
 
 ---
 
@@ -572,7 +572,7 @@ AI:        När du låser en månad:
 
 ---
 
-### Momsdeklaration
+## Rapporter
 
 ### Momsdeklaration
 
@@ -595,7 +595,7 @@ AI:        Ingen fara, det gäller din momsdeklaration för kvartal 3.
            Ska vi titta på detaljerna tillsammans så du ser att allt stämmer?
 ```
 
-**Modes used:** A → A (Edu) → C
+**Modes used:** A (Education) → C
 
 ---
 
@@ -660,7 +660,7 @@ AI:        Det beror på att du köpte maskinen kontant för 85 000 kr.
            verkligheten bättre.
 ```
 
-**Modes used:** A → A (Edu/Action)
+**Modes used:** A (Education + Action offer)
 
 ---
 
@@ -754,8 +754,246 @@ AI:        Just nu är soliditeten 42%.
 
 **Modes used:** A → A (Action)
 
+---
 
-## Löner
+### K10-deklaration
+
+**Scenario 1 — Beginner (Overwhelmed by complexity)**
+*Focus: Breaking down the K10 into understandable pieces.*
+
+```
+Användare: jag har fått brev från skatteverket om K10, vad är det ens?
+
+AI:        K10 är en bilaga till din privata deklaration. Den räknar ut
+           hur mycket utdelning du kan ta till 20% skatt istället för
+           full inkomstskatt (~50%).
+
+           Det låter komplicerat, men i praktiken behöver vi tre saker:
+           1. Ditt anskaffningsvärde (vad du betalade för aktierna)
+           2. Löneunderlaget i bolaget (om du vill använda huvudregeln)
+           3. Eventuellt sparat utdelningsutrymme från förra året
+
+           Jag har redan de flesta siffrorna. Vill du att vi går igenom
+           det steg för steg?
+
+Användare: ja men jag förstår inte skillnaden mellan förenklingsregeln
+           och huvudregeln
+
+AI:        Förenklingsregeln: Du får ett fast belopp (204 325 kr för 2026)
+           oavsett hur stort bolaget är. Enkelt, inga beräkningar.
+
+           Huvudregeln: Baseras på bolagets lönekostnad. Om du betalar
+           höga löner kan utrymmet bli mycket större — men du måste ta
+           ut minst 681 600 kr i egen lön (2026) för att kvalificera dig.
+
+           Ditt bolag betalade 1 020 000 kr i löner förra året, och du
+           tog ut 720 000 kr själv. Då kvalificerar du dig och
+           huvudregeln ger 510 000 kr — mer än dubbelt.
+
+           Ska vi fylla i K10:an med huvudregeln?
+
+Användare: ja kör på det
+
+AI:        → [FIXED WALKTHROUGH: K10-formulär med ifyllda fält,
+           beräkning steg-för-steg, sammanfattning av gränsbelopp,
+           knappar: Godkänn / Ändra / Ladda ner PDF]
+```
+
+**Modes used:** A → A → B
+
+---
+
+**Scenario 2 — Professional (Sparat utdelningsutrymme & optimering)**
+*Focus: Multi-year strategy and saved dividend space.*
+
+```
+Användare: jag sparade utrymme förra året, hur påverkar det i år?
+
+AI:        Ditt sparade utdelningsutrymme från 2025 var 312 000 kr.
+           Det räknas upp med statslåneräntan + 3% = 5,15% i år.
+
+           Sparat utrymme uppräknat: 328 068 kr
+           + Årets gränsbelopp (huvudregeln): 510 000 kr
+           = Totalt utrymme 2026: 838 068 kr
+
+           Det innebär att du kan ta ut 838 068 kr till 20% skatt.
+           Resten beskattas som inkomst av tjänst.
+
+           Vill du att jag simulerar olika utdelningsnivåer och visar
+           skatteeffekten?
+
+Användare: ja visa 500k, 800k och 1 miljon
+
+AI:        → [DYNAMIC WALKTHROUGH: jämförelsetabell med tre kolumner,
+           skatt per nivå, effektiv skattesats, diagram]
+```
+
+**Modes used:** A → C
+
+---
+
+### Årsbokslut
+
+**Scenario 1 — Beginner (Scared of the process)**
+*Focus: Demystifying year-end closing for a first-timer.*
+
+```
+Användare: det är dags för årsbokslut och jag har ingen aning om vad
+           jag ska göra, hjälp
+
+AI:        Lugnt, vi tar det tillsammans. Årsbokslut = att "stänga böckerna"
+           för hela räkenskapsåret. Det handlar om att se till att allt
+           stämmer innan du gör årsredovisningen.
+
+           Konkret behöver vi:
+           1. Stämma av alla bankkonton mot kontoutdrag
+           2. Inventera (om du har lager eller inventarier)
+           3. Bokföra avskrivningar
+           4. Periodisera kostnader/intäkter som hamnat i fel period
+           5. Beräkna och bokföra skatt
+
+           Jag kan göra det mesta automatiskt. Just nu ser det ut så här:
+           • Bankavstämning: ✓ Klar
+           • Avskrivningar: ✓ Beräknade, väntar på godkännande
+           • Periodiseringar: ⚠ 2 poster att granska
+           • Skatt: ⏳ Beräknas efter periodiseringarna
+
+           Ska vi börja med de 2 periodiseringarna?
+
+Användare: ja, men kan du förklara vad periodisering betyder igen?
+
+AI:        Periodisering = att flytta en kostnad eller intäkt till rätt
+           månad/år. Exempel: om du betalade försäkringen för hela 2027
+           redan i december 2026, ska den kostnaden ligga på 2027 — inte
+           2026.
+
+           Dina 2 poster:
+           1. Försäkringspremie 24 000 kr (betald dec, gäller jan-dec 2027)
+           2. Konsultintäkt 35 000 kr (arbete utfört dec, fakturerad jan)
+
+           Ska jag periodisera båda?
+
+Användare: ja gör det
+
+AI:        Klart!
+           • Försäkring: 24 000 kr flyttad till förutbetald kostnad (1710)
+           • Konsultintäkt: 35 000 kr uppbokad som upplupen intäkt (1790)
+
+           Nu kan jag beräkna skatten. Resultat före skatt: 285 000 kr.
+           Bolagsskatt (20,6%): 58 710 kr.
+
+           Ska jag bokföra skatten och göra klart bokslutet?
+```
+
+**Modes used:** A → A → A → A (Action)
+
+---
+
+**Scenario 2 — Intermediate (Specifika bokslutsposter)**
+*Focus: Handling specific year-end items efficiently.*
+
+```
+Användare: jag har en kundfordran på 45 000 kr som jag inte tror jag
+           får betalt, hur hanterar jag det i bokslutet?
+
+AI:        Om du bedömer att kunden inte kommer betala ska du göra en
+           nedskrivning av kundfordran. Det innebär:
+
+           • Konstaterad kundförlust: konto 6352
+           • Momsjustering: du får tillbaka momsen (9 000 kr)
+
+           Bokföring:
+           Debet  6352 Konstaterade kundförluster    45 000 kr
+           Kredit 1510 Kundfordringar                 45 000 kr
+           Debet  2650 Momsredovisning                 9 000 kr
+           Kredit 6352 Kundförlust (momsjustering)     9 000 kr
+
+           Har du dokumentation på att du försökt driva in skulden?
+           Det behövs vid revision.
+
+Användare: ja jag har skickat påminnelser och inkassokrav
+
+AI:        Bra, ladda upp dem så kopplar jag dem till verifikationen.
+           Ska jag bokföra nedskrivningen?
+```
+
+**Modes used:** A → A (Action)
+
+---
+
+### Årsredovisning
+
+**Scenario 1 — Beginner (Multi-step process overview)**
+*Focus: Explaining the full process from draft to submission.*
+
+```
+Användare: nu ska jag göra årsredovisning, var börjar jag?
+
+AI:        Årsredovisningen är det dokument du skickar till Bolagsverket.
+           Den består av:
+
+           1. **Förvaltningsberättelse** — kort text om vad bolaget gör
+           2. **Resultaträkning** — intäkter minus kostnader
+           3. **Balansräkning** — tillgångar, skulder, eget kapital
+           4. **Noter** — förklaringar till siffrorna
+
+           Siffrorna har jag redan från bokslutet. Det som återstår
+           är förvaltningsberättelsen — den behöver du skriva (eller
+           så hjälper jag dig med ett utkast).
+
+           Processen:
+           1. Jag skapar ett utkast → du granskar
+           2. Styrelsen godkänner (styrelseprotokoll)
+           3. Årsstämma fastställer
+           4. Du skickar in till Bolagsverket (senast 7 månader efter
+              räkenskapsårets slut)
+
+           Vill du att jag gör ett utkast nu?
+
+Användare: ja tack
+
+AI:        → [FIXED WALKTHROUGH: årsredovisnings-utkast med alla delar
+           ifyllda, redigerbar förvaltningsberättelse,
+           knappar: Redigera / Godkänn utkast / Exportera PDF]
+```
+
+**Modes used:** A → B
+
+---
+
+**Scenario 2 — Intermediate (Förvaltningsberättelse och noter)**
+*Focus: Getting the text parts right.*
+
+```
+Användare: kan du skriva förvaltningsberättelsen åt mig?
+
+AI:        Jag gör ett utkast baserat på bolagets siffror:
+
+           "Bolaget bedriver konsultverksamhet inom IT. Omsättningen
+           uppgick till 2 100 000 kr (fg år 1 810 000 kr), en ökning
+           med 16%. Resultatet efter finansiella poster uppgick till
+           285 000 kr. Bolagets ekonomiska ställning är god med en
+           soliditet om 42%. Väsentliga händelser under året inkluderar
+           inköp av ny server samt anställning av ytterligare en
+           utvecklare."
+
+           Stämmer det med verkligheten? Finns det något viktigt som
+           hänt som jag missat — t.ex. stora avtal, tvister, eller
+           planer för nästa år?
+
+Användare: lägg till att vi vann ett ramavtal med region stockholm
+
+AI:        Uppdaterat:
+           "...Väsentliga händelser under året inkluderar inköp av ny
+           server, anställning av ytterligare en utvecklare, samt att
+           bolaget tilldelades ett ramavtal med Region Stockholm."
+
+           Ska jag uppdatera utkastet och generera noterna automatiskt?
+```
+
+**Modes used:** A → A (Action)
+
+---
 
 ## Löner
 
@@ -827,6 +1065,222 @@ AI:        AGI-filen för februari är skapad.
 
 ---
 
+### Förmåner
+
+**Scenario 1 — Beginner (Friskvårdsbidrag)**
+*Focus: Explaining the benefit and its tax implications.*
+
+```
+Användare: kan jag ge friskvårdsbidrag till mina anställda?
+
+AI:        Ja! Friskvårdsbidrag är skattefritt för den anställde
+           upp till 5 000 kr per år (2026). Det täcker t.ex. gym,
+           simhall, yoga, massage (dock inte rent "välbefinnande"
+           utan fysisk aktivitet).
+
+           För företaget är det en avdragsgill personalkostnad.
+           Du bokför det på konto 7690 (Övriga personalkostnader).
+
+           Regler att tänka på:
+           • Alla anställda måste erbjudas samma belopp
+           • Den anställde betalar själv och lämnar kvitto
+           • Du som ägare/VD kan också få det (om du tar lön)
+
+           Vill du att jag lägger upp det som en förmån i lönesystemet?
+
+Användare: ja, 5000 kr till alla, men hur funkar det rent praktiskt?
+
+AI:        Praktiskt fungerar det så här:
+           1. Anna eller Erik betalar sitt gymkort
+           2. De lämnar kvittot till dig (eller laddar upp i Scope)
+           3. Du betalar ut beloppet skattefritt via nästa lön
+           4. Jag bokför det automatiskt
+
+           Jag lägger upp "Friskvårdsbidrag 5 000 kr/år" på båda.
+           Det syns som en separat rad på lönespecen. ✓
+```
+
+**Modes used:** A → A (Action)
+
+---
+
+**Scenario 2 — Intermediate (Tjänstebil som förmån)**
+*Focus: Calculating benefit value and tax impact.*
+
+```
+Användare: vad kostar det om jag ger erik en tjänstebil?
+
+AI:        Det beror på bilens nypris och drivmedel. Förmånsvärdet
+           beskattas som lön för Erik, och du betalar arbetsgivaravgifter
+           på det.
+
+           Exempel med en Volvo EX30 (nypris 380 000 kr, elbil):
+           • Förmånsvärde: ca 5 700 kr/mån (reducerat för elbil)
+           • Eriks extra skatt: ca 1 700 kr/mån
+           • Företagets extra kostnad (avgifter): ca 1 790 kr/mån
+
+           Plus leasingavgift, försäkring, etc.
+
+           Total kostnad för företaget: ca 9 500 kr/mån.
+           Jämfört med att Erik kör privat och ni ger milersättning
+           kan det vara billigare om han kör mycket.
+
+           Vill du att jag gör en jämförelse?
+```
+
+**Modes used:** A only
+
+---
+
+### Sjukfrånvaro
+
+**Scenario 1 — Beginner (Sjukanmälan första gången)**
+*Focus: Step-by-step sick leave handling.*
+
+```
+Användare: anna är sjukskriven, vad behöver jag göra?
+
+AI:        Okej, hoppas hon blir frisk snart. Här är vad som gäller:
+
+           Dag 1: Karensavdrag (Anna får inget för en del av lönen)
+           Dag 2-14: Du betalar sjuklön — 80% av lönen
+           Dag 15+: Försäkringskassan tar över (du anmäler dit)
+
+           Jag behöver veta:
+           1. Första sjukdagen?
+           2. Heltid eller deltidssjukskriven?
+
+Användare: hon blev sjuk igår, heltid
+
+AI:        Uppfattat. Jag registrerar sjukfrånvaro från igår.
+
+           Om hon är tillbaka inom 14 dagar hanterar jag allt automatiskt
+           i nästa lönekörning. Sjuklönen beräknas till ca 1 160 kr/dag
+           (80% av 36 250 kr/mån ÷ 25 arbetsdagar).
+
+           Karensavdraget blir ca 1 450 kr.
+
+           Om hon fortfarande är sjuk dag 15 påminner jag dig att
+           anmäla till Försäkringskassan. Vill du att jag förbereder
+           det underlaget redan nu?
+
+Användare: nej vi väntar, hon sa att hon är tillbaka på torsdag
+
+AI:        Bra, då blir det 3 sjukdagar. Jag räknar in det i
+           februarilönen automatiskt.
+```
+
+**Modes used:** A → A → A
+
+---
+
+**Scenario 2 — Intermediate (Längre sjukskrivning)**
+*Focus: Transition to Försäkringskassan and employer obligations.*
+
+```
+Användare: erik har varit sjuk i 12 dagar nu, vad händer om det
+           fortsätter?
+
+AI:        Om Erik inte är tillbaka senast dag 14 behöver du:
+
+           1. Anmäla till Försäkringskassan (senast dag 15)
+           2. Skicka med läkarintyg (Erik ska ha lämnat ett senast dag 8)
+           3. Upprätta en plan för återgång i arbete
+
+           Har Erik lämnat läkarintyg?
+
+Användare: ja det fick jag förra veckan
+
+AI:        Bra. Då förbereder jag Försäkringskassans anmälan nu så
+           den är redo om han inte är tillbaka på onsdag.
+
+           Ekonomisk effekt hittills:
+           • Sjuklön dag 2-14: ca 15 080 kr (du betalar)
+           • Från dag 15: Försäkringskassan betalar sjukpenning direkt
+             till Erik, men du betalar fortfarande semesterrätt och
+             pensionsavsättning.
+
+           Vill du se anmälan?
+```
+
+**Modes used:** A → A
+
+---
+
+### Egenavgifter (Enskild Firma)
+
+**Scenario 1 — Beginner (Förstå egenavgifter)**
+*Focus: Explaining how EF owners pay their own social fees.*
+
+```
+Användare: jag har enskild firma, varför betalar jag egenavgifter?
+
+AI:        Som enskild näringsidkare finns ingen arbetsgivare som
+           betalar arbetsgivaravgifter åt dig. Istället betalar du
+           egenavgifter själv — det är i princip samma sak men du
+           står för hela notan.
+
+           Egenavgifterna 2026 är 28,97% av ditt resultat (överskottet
+           i näringsverksamheten).
+
+           Exempel: Om ditt resultat är 400 000 kr betalar du
+           ca 115 880 kr i egenavgifter. De är avdragsgilla, så
+           det sänker din beskattningsbara inkomst.
+
+           Jag beräknar detta automatiskt i din deklaration. Vill
+           du se en prognos baserat på årets siffror hittills?
+
+Användare: ja
+
+AI:        Baserat på resultatet hittills (jan-sep): 310 000 kr.
+           Prognos helår: ca 415 000 kr.
+
+           Beräknade egenavgifter: 120 224 kr.
+           Schablonavdrag (karensdag): -1 200 kr om du inte har
+           sjukförsäkring.
+
+           Din preliminärskatt täcker detta — du ligger 2 000 kr
+           under, så du kan behöva jämka upp lite.
+```
+
+**Modes used:** A → A
+
+---
+
+**Scenario 2 — Intermediate (Jämföra EF vs AB)**
+*Focus: Helping user understand cost difference.*
+
+```
+Användare: vad hade det kostat om jag hade AB istället?
+
+AI:        Bra fråga. Med samma resultat (415 000 kr) ser jämförelsen
+           ut ungefär så här:
+
+           Enskild firma:
+           • Egenavgifter: 120 224 kr
+           • Inkomstskatt (ca 32%): ~94 000 kr
+           • Kvar: ~200 000 kr
+
+           Aktiebolag (lön + utdelning):
+           • Lön till dig: 300 000 kr
+           • Arbetsgivaravgifter: 94 290 kr
+           • Bolagsskatt (20,6% på resten): ~4 300 kr
+           • Utdelning (20% skatt): ~13 000 kr skatt
+           • Kvar: ~203 000 kr
+
+           Ungefär samma — men i AB får du sjukpenninggrundande inkomst
+           och möjlighet att spara vinst i bolaget till senare.
+
+           Det här är en förenklad jämförelse. Vill du att jag gör
+           en mer detaljerad kalkyl med dina faktiska siffror?
+```
+
+**Modes used:** A only
+
+---
+
+## Ägare & Styrning
+
 ### Utdelning & 3:12
 
 **Scenario 1 — Beginner (Understanding Concepts)**
@@ -834,17 +1288,17 @@ AI:        AGI-filen för februari är skapad.
 
 ```
 Användare: får jag ta ut utdelning i år?
- 
+
 AI:        Ja, om ditt bolag går med vinst och har sparat kapital!
-           
+
            Enligt 3:12-reglerna (förenklingsregeln) får du ta ut ca 204 325 kr (2026)
            till låg skatt (20%).
-           
+
            Det kräver att vi har fritt eget kapital i balansräkningen.
            Ska vi kolla hur mycket som finns tillgängligt?
 ```
 
-**Modes used:** A → A (Edu)
+**Modes used:** A (Education)
 
 ---
 
@@ -853,21 +1307,21 @@ AI:        Ja, om ditt bolag går med vinst och har sparat kapital!
 
 ```
 Användare: vad blir mitt gränsbelopp i år om jag kör huvudregeln?
- 
+
 AI:        Låt oss räkna på löneunderlaget.
-           
+
            Bolagets totala löner 2025 var: 1 020 000 kr.
            50% av löneunderlaget ger ett utrymme på 510 000 kr.
-           
+
            Huvudregeln (510 000 kr) är alltså mycket bättre än förenklingsregeln
            (204 325 kr) för dig i år.
-           
+
            Vi bör spara det utrymmet i K10:an. Ska jag förbereda underlaget?
 ```
 
 **Modes used:** A → A (Action)
 
-## Ägare & Styrning
+---
 
 ### Aktiebok
 
@@ -952,7 +1406,7 @@ AI:        Minst en gång om året (konstituerande möte) efter årsstämman.
            Vill du se den?
 ```
 
-**Modes used:** A → A (Assets)
+**Modes used:** A (Reference)
 
 ---
 
@@ -995,6 +1449,8 @@ AI:        Noterat i protokoll för Årsstämman 2026:
 
 **Modes used:** A → A (Action)
 
+---
+
 ## Händelser
 
 ### Tidslinje & Kalender
@@ -1014,7 +1470,7 @@ AI:        Här är en sammanfattning av februari:
            Det ser lugnt ut! Nästa viktiga datum är 12 mars (F-skatt).
 ```
 
-**Modes used:** A → A (Assets)
+**Modes used:** A (Reference)
 
 ---
 
@@ -1051,7 +1507,7 @@ AI:        Självklart! Grattis till firman! 🚀
            varje fredag eftermiddag, så det inte samlas på hög?
 ```
 
-**Modes used:** A → A (Plan/Action)
+**Modes used:** A → A (Action)
 
 ---
 
@@ -1070,28 +1526,68 @@ AI:        Enligt loggen:
            Vill du se det uppladdade registreringsbeviset?
 ```
 
-**Modes used:** A → A (Assets)
+**Modes used:** A (Reference)
+
+---
 
 ## Företagsstatistik
 
-**Scenario 1 — Intermediate (Trends)**
+**Scenario 1 — Beginner (Health check)**
+*Focus: Simple overview for a non-financial user.*
+
+```
+Användare: hur mår mitt företag egentligen?
+
+AI:        Korta svaret: bra! Här är de viktigaste nyckeltalen:
+
+           • Omsättning i år: 2,1 Mkr (+16% vs förra året)
+           • Vinstmarginal: 15,3%
+           • Kassalikviditet: 1,8x (du kan betala dina skulder)
+           • Soliditet: 42% (stark)
+
+           Det enda att bevaka är att kassalikviditeten sjunkit två
+           kvartal i rad — kan bero på att kunder betalar långsammare.
+
+           Vill du se en djupare analys?
+
+Användare: ja
+
+AI:        → [DYNAMIC WALKTHROUGH: stat-cards + area chart (12 mån trend)
+           + ranked-list (kostnadsposter) + ai-comment]
+```
+
+**Modes used:** A → C
+
+---
+
+**Scenario 2 — Intermediate (Trends)**
 *Focus: Visualizing long-term performance.*
 
 ```
 Användare: visa min omsättningsutveckling de senaste 3 åren
- 
-AI:        [Visar graf]
-           
-           Här ser du utvecklingen.
-           2023: 1.2 Mkr
-           2024: 1.8 Mkr (+50%)
-           2025: 2.1 Mkr (+16%)
-           
-           Du växer stadigt, men takten har avtagit något i år.
-           Ska vi titta på vilka produktkategorier som ökat mest?
+
+AI:        → [DYNAMIC WALKTHROUGH: area chart med 3 år,
+           stat-cards med tillväxt per år,
+           ai-comment: "Tillväxten avtar — från 50% till 16%"]
 ```
 
-**Modes used:** A → A (Analysis)
+**Modes used:** C (direct)
+
+---
+
+**Scenario 3 — Focused question (Narrow)**
+*Focus: Specific expense category.*
+
+```
+Användare: visa personalkostnader
+
+AI:        → [DYNAMIC WALKTHROUGH: pie chart (löner/avgifter/pension)
+           + ranked-list med 3 poster, ingen ai-comment behövs]
+```
+
+**Modes used:** C (direct, narrow)
+
+---
 
 ## Inställningar
 
@@ -1144,9 +1640,751 @@ AI:        Jag bjuder in revisor@firma.se som "Revisor" (läsrättigheter).
 
 **Modes used:** A → A (Action)
 
-## Företagsstatistik
+---
 
-_[To be added]_
+## Lärande & Förståelse
+
+*Conversations where users want to learn — not take action. The AI stays in Mode A throughout, explains clearly, and does NOT push the user toward walkthroughs or actions.*
+
+**Scenario 1 — Förklara resultaträkningen rad för rad**
+
+```
+Användare: kan du förklara resultaträkningen rad för rad? jag vill
+           förstå vad allt betyder
+
+AI:        Absolut. Vi tar det uppifrån:
+
+           **Nettoomsättning** (2 100 000 kr)
+           Alla intäkter från din huvudverksamhet — konsulttjänster i
+           ditt fall. Exklusive moms.
+
+           **Övriga rörelseintäkter** (5 000 kr)
+           Saker utanför kärnverksamheten, t.ex. ränta på skattekontot
+           eller en vinst vid försäljning av inventarier.
+
+           **Rörelsekostnader:**
+           • Personalkostnader (-1 020 000 kr): Löner + arbetsgivaravgifter
+             + pension för alla anställda.
+           • Övriga externa kostnader (-380 000 kr): Hyra, IT, telefon,
+             resor, konsulter — allt ni köper från andra företag.
+           • Avskrivningar (-9 000 kr): Värdeminskning på er server.
+
+           **Rörelseresultat** (696 000 kr)
+           Det som blir kvar efter alla driftskostnader. Det här är
+           "kärnan" — visar om verksamheten i sig är lönsam.
+
+           **Finansiella poster** (-2 000 kr)
+           Räntor på lån minus ränteintäkter.
+
+           **Resultat efter finansiella poster** (694 000 kr)
+           Vinsten innan skatt.
+
+           **Skatt** (-142 964 kr)
+           Bolagsskatt 20,6%.
+
+           **Årets resultat** (551 036 kr)
+           Det som faktiskt blir kvar i bolaget.
+
+           Vill du att jag förklarar någon post djupare?
+
+Användare: vad räknas som övriga externa kostnader egentligen?
+
+AI:        Det är i princip alla kostnader som inte är personal eller
+           varor. De vanligaste:
+
+           • Hyra och el (konto 5010-5090)
+           • Telefon och internet (6211-6214)
+           • Programvaror och IT-tjänster (6993)
+           • Resor och hotell (5800-5890)
+           • Revision och bokföring (6530)
+           • Representation (6071)
+           • Försäkringar (6310)
+           • Reklam och marknadsföring (5910)
+
+           I ditt fall är de tre största posterna hyra (180 000 kr),
+           konsultkostnader (95 000 kr) och IT-tjänster (42 000 kr).
+```
+
+**Modes used:** A only
+
+---
+
+**Scenario 2 — Skillnaden mellan K2 och K3**
+
+```
+Användare: vad är skillnaden mellan K2 och K3?
+
+AI:        K2 och K3 är regelverk som styr hur du gör din
+           årsredovisning. De flesta små bolag använder K2.
+
+           **K2 (förenklat)**
+           • För mindre bolag (under 2 av 3: 50 anställda, 40 Mkr
+             omsättning, 20 Mkr balansomslutning)
+           • Schablonregler — mindre valfrihet men enklare
+           • Inga uppskrivningar av tillgångar
+           • Begränsade noter
+
+           **K3 (fullständigt)**
+           • Standardregelverk — alla bolag får använda K3
+           • Mer rättvisande bild men kräver mer jobb
+           • Komponentavskrivning (t.ex. fastigheter)
+           • Fler notupplysningar
+
+           **Ditt bolag** passar utmärkt för K2. Du har 2 anställda
+           och 2,1 Mkr i omsättning — långt under gränserna.
+
+           En situation där K3 kan vara bättre: om du äger fastigheter
+           eller har immateriella tillgångar (patent, varumärken) som
+           du vill visa i balansräkningen.
+
+Användare: kan jag byta från K2 till K3 senare?
+
+AI:        Ja, du kan byta till K3 när som helst. Däremot om du byter
+           från K3 till K2 måste du vänta — du får bara byta tillbaka
+           en gång, och det krävs särskilda skäl.
+
+           Mitt råd: stanna på K2 tills du har en konkret anledning att
+           byta. Det sparar tid och pengar.
+```
+
+**Modes used:** A only
+
+---
+
+**Scenario 3 — Varför semesterskuld?**
+
+```
+Användare: varför behöver jag bokföra semesterskuld? anna har ju inte
+           tagit ut semester än
+
+AI:        Precis — och det är just därför. Semesterskulden representerar
+           det företaget är skyldigt Anna i semester som hon intjänat
+           men inte tagit ut.
+
+           Varje månad Anna jobbar tjänar hon in ca 12% av lönen som
+           semesterersättning. Det ackumuleras som en skuld i
+           balansräkningen.
+
+           Räkneexempel:
+           • Annas månadslön: 45 000 kr
+           • Semestertillägg per månad: ca 5 400 kr
+           • + arbetsgivaravgifter (31,42%): ca 1 697 kr
+           • Total skuld som byggs upp: ca 7 097 kr/mån
+
+           Om Anna slutar utan att ta ut semestern måste du betala ut
+           allt på en gång. Skulden visar att pengarna är "reserverade".
+
+           Det handlar om bokföringens matchningsprincip — kostnaden
+           ska ligga i samma period som arbetet utfördes, inte när
+           semestern tas ut.
+
+Användare: okej det var faktiskt logiskt, tack
+
+AI:        Inga problem. Det är en av de saker som känns onödiga men
+           som gör att resultaträkningen visar rätt bild varje månad.
+```
+
+**Modes used:** A only
+
+---
+
+## Frustration & Felhantering
+
+*Scenarios where users are upset, confused, or confidently wrong. The AI acknowledges feelings, diagnoses the actual problem, and corrects misconceptions gently.*
+
+### Frustrerade användare
+
+**Scenario 1 — "Varför stämmer inte detta?!"**
+
+```
+Användare: varför stämmer inte detta?! bankens saldo och bokföringen
+           visar olika siffror IGEN
+
+AI:        Jag förstår att det är frustrerande. Låt mig kolla direkt.
+
+           Bokfört saldo konto 1930: 142 500 kr
+           Du säger att banken visar ett annat belopp — vad står det?
+
+Användare: 144 200 kr!! det diffar med 1700 kr
+
+AI:        Okej, differens 1 700 kr. Jag söker igenom transaktionerna...
+
+           Hittade det. Det finns två Swish-inbetalningar den 28:e
+           (850 kr + 850 kr) som kom in efter att bankfilen senast
+           synkades. De finns i banken men inte i bokföringen ännu.
+
+           Det är alltså inte ett fel — det är en synkfördröjning.
+           Ska jag importera de två transaktionerna nu?
+
+Användare: ja gör det, men varför händer det hela tiden?
+
+AI:        Banksynken hämtar transaktioner en gång per dygn, runt
+           kl 06:00. Transaktioner som kommer in sent på dagen syns
+           först nästa morgon i Scope.
+
+           Om du vill kan jag ställa in synk två gånger per dag
+           istället. Då minskar risken för sådana diffar. Vill du det?
+```
+
+**Modes used:** A → A → A (Action)
+
+---
+
+**Scenario 2 — "Jag har försökt tre gånger"**
+
+```
+Användare: jag har försökt tre gånger att skicka in momsen och det
+           funkar inte, jag ger upp snart
+
+AI:        Det ska inte behöva vara så krångligt. Berätta vad som händer
+           — får du ett felmeddelande, eller hänger det sig?
+
+Användare: det står "XML-valideringsfel" varje gång
+
+AI:        Okej, det är ett formatfel i filen som skickas till
+           Skatteverket. Låt mig kolla din momsrapport...
+
+           Problemet: Du har en EU-försäljning (faktura #1051 till
+           Danmark) som saknar kundens VAT-nummer. Skatteverkets
+           system kräver det i ruta 35-39.
+
+           Lösning: Lägg till VAT-numret DK29403473 på fakturan,
+           så genererar jag en ny XML.
+
+           Ska jag uppdatera det och skapa filen direkt?
+
+Användare: ja snälla, tack
+
+AI:        Klart. Ny XML genererad med korrekta uppgifter.
+
+           Vill du att jag påminner dig om att lägga till VAT-nummer
+           på EU-fakturor framöver? Då slipper du det här.
+```
+
+**Modes used:** A → A → A (Action)
+
+---
+
+**Scenario 3 — "Programmet fattar ingenting"**
+
+```
+Användare: det här programmet fattar ingenting, jag skrev "hyra" men
+           den la det på helt fel konto
+
+AI:        Förstår att det känns fel. Låt mig se vad som hände.
+
+           Transaktionen "Hyra" på 15 000 kr bokfördes på konto 5020
+           (Hyra av inventarier och verktyg) istället för 5010
+           (Lokalhyra).
+
+           Det beror på att leverantören "FastRent AB" tidigare var
+           kopplad till maskinuthyrning. Jag uppdaterar kopplingen
+           så att framtida betalningar till FastRent hamnar på 5010.
+
+           Ska jag flytta den här transaktionen till rätt konto?
+
+Användare: ja, och se till att det inte händer igen
+
+AI:        Flyttad till 5010 (Lokalhyra). ✓
+
+           Jag har uppdaterat leverantörskopplingen. Alla framtida
+           betalningar till FastRent AB föreslås nu som 5010.
+
+           Om du hittar fler som hamnat fel — säg till, så rättar jag
+           och lär mig samtidigt.
+```
+
+**Modes used:** A → A (Action)
+
+---
+
+### Felaktiga antaganden
+
+**Scenario 1 — Fel skattesats**
+
+```
+Användare: jag ska fakturera 100 000 kr, då blir momsen 25 000 kr va?
+           vi kör väl alltid 25%?
+
+AI:        Nästan — men det beror på vad du säljer. 25% är standard
+           för de flesta tjänster och varor, men det finns undantag:
+
+           • 25% — konsulttjänster, IT, de flesta varor
+           • 12% — livsmedel, hotell, restaurang
+           • 6% — böcker, kultur, persontransport
+           • 0% — sjukvård, utbildning, försäkring
+
+           Eftersom du fakturerar konsulttjänster stämmer 25% i det
+           här fallet. Men om du t.ex. säljer en e-bok eller anordnar
+           en kurs kan det bli en annan sats.
+
+           Vill du att jag skapar fakturan?
+```
+
+**Modes used:** A only
+
+---
+
+**Scenario 2 — Fel deadline**
+
+```
+Användare: momsen ska in den sista i månaden va? jag har till den 31:a
+
+AI:        Inte riktigt — det beror på hur du redovisar. Du redovisar
+           moms kvartalsvis, och då är deadline den 12:e i andra
+           månaden efter kvartalets slut.
+
+           Dina deadlines 2026:
+           • Q1 (jan-mar): 12 maj
+           • Q2 (apr-jun): 17 augusti (12:e är lördag)
+           • Q3 (jul-sep): 12 november
+           • Q4 (okt-dec): 12 februari 2027
+
+           Nästa deadline är alltså 12 maj — inte 31 mars. Du har
+           gott om tid. Vill du att jag lägger in påminnelser?
+```
+
+**Modes used:** A only
+
+---
+
+**Scenario 3 — Fel bokföringsregel**
+
+```
+Användare: jag flyttade pengar mellan mina konton, det behöver jag
+           väl inte bokföra?
+
+AI:        Jo, det behöver du faktiskt. Även överföringar mellan
+           egna bankkonton ska bokföras — annars stämmer inte
+           kontosaldona i bokföringen.
+
+           Det är dock enkelt. En överföring på t.ex. 50 000 kr
+           från företagskontot till sparkontot:
+
+           Debet  1940 Bankkonto (sparkonto)    50 000 kr
+           Kredit 1930 Företagskonto             50 000 kr
+
+           Det påverkar inte resultatet — det är bara en flytt
+           mellan tillgångskonton. Men om du hoppar över det kommer
+           bankavstämningen att diffa.
+
+           Jag ser att du har 3 sådana överföringar som inte är
+           bokförda. Ska jag fixa dem?
+
+Användare: åh okej, ja gör det
+
+AI:        Klart! Tre interna överföringar bokförda. ✓
+           Sparkontot (1940) stämmer nu med kontoutdraget.
+```
+
+**Modes used:** A → A (Action)
+
+---
+
+## Tvärdomän (Cross-domain)
+
+*Conversations that span multiple modules. The AI connects the dots across Löner, Bokföring, Ägare, Moms, and Rapporter.*
+
+**Scenario 1 — "Jag ska anställa någon, vad kostar det?"**
+
+```
+Användare: jag funderar på att anställa en utvecklare, vad kostar det
+           egentligen?
+
+AI:        Bra fråga — det är mer än bara lönen. Låt oss räkna på
+           en månadslön på 40 000 kr:
+
+           **Lönekostnad (Löner)**
+           • Bruttolön: 40 000 kr
+           • Arbetsgivaravgifter (31,42%): 12 568 kr
+           • Tjänstepension (ca 4,5%): 1 800 kr
+           • Total lönekostnad/mån: 54 368 kr
+
+           **Bokföring**
+           • Årlig kostnad: ca 652 000 kr
+           • Du behöver säkerställa att kassaflödet klarar det —
+             du har idag ca 90 000 kr/mån i överskott.
+
+           **Ägare/3:12-effekt**
+           • Högre lönesumma ökar ditt gränsbelopp i K10.
+             Med 40 000 kr extra i lön ökar utdelningsutrymmet
+             med ca 240 000 kr/år (huvudregeln).
+
+           **Praktiskt**
+           • Du behöver registrera dig som arbetsgivare hos
+             Skatteverket (om du inte redan är det)
+           • F-skattesedel och AGI varje månad
+
+           Ska jag göra en detaljerad likviditetsprognos för att se
+           om ni klarar det?
+
+Användare: ja, och vad händer med 3:12 mer exakt?
+
+AI:        Med den nya anställningen ökar bolagets totala löner till
+           1 500 000 kr/år. 50% av det ger 750 000 kr i gränsbelopp
+           via huvudregeln — jämfört med 510 000 kr idag.
+
+           Det innebär 240 000 kr mer i lågbeskattad utdelning.
+           Skattebesparingen: ca 72 000 kr/år.
+
+           Så den "verkliga" kostnaden för anställningen är egentligen
+           652 000 - 72 000 = 580 000 kr/år.
+
+           Ska jag visa likviditetsprognosen?
+
+AI:        → [DYNAMIC WALKTHROUGH: likviditetsprognos 12 mån med/utan
+           anställning, break-even-punkt, 3:12-effekt markerad]
+```
+
+**Modes used:** A → A → C
+
+---
+
+**Scenario 2 — "Jag ska sälja bolaget"**
+
+```
+Användare: jag funderar på att sälja bolaget, vad behöver jag tänka på?
+
+AI:        Det är ett stort beslut! Det finns mycket att gå igenom.
+           Jag delar upp det i de delar som berör dig:
+
+           **Bokföring & Rapporter**
+           • All bokföring måste vara à jour och stämma
+           • Köparen vill se minst 3 års årsredovisningar
+           • Eventuella oklarheter (obs-konto, okonterade) måste lösas
+           • Du har 2 okonterade transaktioner och 1 obs-post just nu
+
+           **Ägare & Aktiebok**
+           • Aktieboken måste vara uppdaterad
+           • Om du har K10-utrymme sparat: använd det före försäljning
+           • Ditt sparade utrymme: 328 068 kr
+
+           **Skatt**
+           • Försäljning av kvalificerade andelar beskattas via K10
+           • Vinst inom gränsbeloppet: 20% skatt
+           • Vinst över gränsbeloppet: 2/3 beskattas som inkomst av
+             tjänst (ca 50%)
+           • Det finns ett "takbelopp" på ca 6,4 Mkr (100 IBB)
+
+           **Värdering**
+           • Jag kan göra en förenklad värdering baserat på
+             kassaflöde och multipel, men vid försäljning bör du
+             anlita en rådgivare.
+
+           Vill du att jag börjar med att städa bokföringen och
+           räkna på skatteeffekten?
+
+Användare: ja, och vad är bolaget värt ungefär?
+
+AI:        Förenklad kassaflödesvärdering:
+           • EBITDA (senaste 12 mån): 705 000 kr
+           • Multipel för IT-konsultbolag: 3-5x
+           • Indikativ värdering: 2,1 - 3,5 Mkr
+
+           Med ditt sparade K10-utrymme (328 068 kr) och årets
+           gränsbelopp (510 000 kr) kan du ta ut 838 068 kr till
+           20% skatt. Resten beskattas hårdare.
+
+           Det här är en grovuppskattning. Jag rekommenderar att
+           du tar in en oberoende värdering — men siffrorna ger
+           dig ett utgångsläge.
+```
+
+**Modes used:** A → A
+
+---
+
+**Scenario 3 — "Jag ska expandera utomlands"**
+
+```
+Användare: vi har fått en kund i Tyskland, vad behöver jag tänka på?
+
+AI:        Spännande! Tre huvudområden att hantera:
+
+           **Moms**
+           • Tjänsteförsäljning till tyskt företag: omvänd skattskyldighet
+             (reverse charge). Du fakturerar utan moms.
+           • Du MÅSTE ha kundens tyska VAT-nummer (DE + 9 siffror)
+           • Fakturan ska innehålla texten "Reverse charge, article
+             196 Council Directive 2006/112/EC"
+           • Transaktionen rapporteras i ruta 39 i momsdeklarationen
+           • Du ska även lämna en periodisk sammanställning till
+             Skatteverket (kvartalsvis om EU-försäljning < 500 000 kr/kvartal)
+
+           **Bokföring**
+           • Fakturan bokförs som vanlig intäkt men med momskod "EU-tjänst"
+           • Jag sätter korrekt momskod automatiskt om du anger
+             att kunden är i EU
+
+           **Rapporter**
+           • EU-försäljningen syns separat i momsrapporten
+           • Den periodiska sammanställningen genererar jag åt dig
+
+           Vill du skapa den första fakturan till den tyska kunden?
+
+Användare: ja, de heter TechGmbH, VAT-nummer DE123456789,
+           konsulttjänster 80 000 kr
+
+AI:        → [FIXED WALKTHROUGH: faktura utan moms, reverse charge-text,
+           VAT-nummer ifyllt, 80 000 kr,
+           knappar: Skapa utkast / Skapa & skicka]
+```
+
+**Modes used:** A → B
+
+---
+
+## AI-initierade konversationer (Proactive)
+
+*Scenarios where the AI reaches out first. These are triggered by system events — unpaid invoices, approaching deadlines, or unclosed periods.*
+
+**Scenario 1 — Obetalda fakturor förfaller imorgon**
+
+```
+AI:        Hej! Två leverantörsfakturor förfaller imorgon:
+
+           • Office Depot AB — 4 312,50 kr (kontorsmaterial)
+           • Telia — 1 890,00 kr (telefoni)
+           Totalt: 6 202,50 kr
+
+           Du har 92 000 kr på kontot, så det finns täckning.
+
+           Vill du att jag förbereder betalningarna?
+
+Användare: ja, betala båda
+
+AI:        Betalningsuppdrag skapat:
+           ✓ Office Depot AB — 4 312,50 kr (OCR: 7391028401)
+           ✓ Telia — 1 890,00 kr (OCR: 5520391847)
+
+           Betalning utförs imorgon bitti. Jag bokför dem automatiskt
+           när de är genomförda.
+```
+
+**Modes used:** A (AI-initierad) → A (Action)
+
+---
+
+**Scenario 2 — Momsdeadline om 3 dagar**
+
+```
+AI:        Påminnelse: momsdeklarationen för Q4 ska vara inne senast
+           den 12:e — det är om 3 dagar.
+
+           Din momsrapport är klar och ser bra ut:
+           • Utgående moms: 112 500 kr
+           • Ingående moms: 45 000 kr
+           • Att betala: 67 500 kr
+
+           Ska jag skapa XML-filen för uppladdning till Skatteverket?
+
+Användare: ja gör det
+
+AI:        XML skapad. ✓
+
+           Du kan ladda upp den direkt på skatteverket.se eller
+           så loggar du in via deras e-tjänst. Beloppet 67 500 kr
+           ska betalas till ditt skattekonto senast den 12:e.
+
+           Vill du att jag skapar en betalningspåminnelse i kalendern?
+```
+
+**Modes used:** A (AI-initierad) → A (Action)
+
+---
+
+**Scenario 3 — Oktober inte avslutad**
+
+```
+AI:        Hej! Jag noterade att oktober fortfarande är öppen.
+           Vi är nu i december, så det kan vara bra att stänga den.
+
+           Status:
+           • 2 okonterade transaktioner
+           • Bankavstämning: ej gjord
+           • Momsrapport: klar
+
+           Ska vi fixa de 2 transaktionerna och stämma av så du
+           kan stänga?
+
+Användare: vilka transaktioner är det?
+
+AI:        1. Swish 3 200 kr (15 okt) från "Johansson Bygg" — saknar konto
+           2. Kortbetalning 489 kr (22 okt) till "Amazon" — saknar konto
+
+           Nr 1 ser ut som en kundbetalning. Stämmer det?
+           Nr 2 gissar jag är kontorsmaterial eller IT.
+
+Användare: ja 1 är kund, 2 var en bok
+
+AI:        Bokfört:
+           • Swish 3 200 kr → 3011 (Försäljning tjänster)
+           • Amazon 489 kr → 6993 (Övriga externa tjänster)
+
+           Bankavstämning: ✓ stämmer nu.
+           Oktober kan stängas. Vill du låsa perioden?
+```
+
+**Modes used:** A (AI-initierad) → A → A (Action)
+
+---
+
+## Sessionsminne (Multi-session Continuity)
+
+*Scenarios where users reference previous conversations. The AI demonstrates memory and follows up on earlier topics.*
+
+**Scenario 1 — "Vi pratade om utdelning förra veckan"**
+
+```
+Användare: hej, vi pratade om utdelning förra veckan, hur gick det
+           med det?
+
+AI:        Ja, vi diskuterade utdelning den 24 januari. Du ville
+           kolla om du kunde ta ut 500 000 kr.
+
+           Vi kom fram till:
+           • Ditt gränsbelopp (huvudregeln): 510 000 kr
+           • Sparat utrymme: 328 068 kr
+           • Totalt utrymme: 838 068 kr
+           • 500 000 kr ryms alltså inom lågbeskattat utrymme (20%)
+
+           Du sa att du ville vänta till efter årsstämman. Stämman
+           är inte protokollförd ännu — vill du att jag förbereder
+           beslutet om vinstdisposition nu?
+
+Användare: ja gör det, och boka upp skulden också
+
+AI:        Protokollutkast skapat:
+           §7 "Stämman beslutar att dela ut 500 000 kr till aktieägarna."
+
+           Bokföring:
+           Debet  2098 Vinst/förlust föregående år    500 000 kr
+           Kredit 2898 Utdelning beslutad              500 000 kr
+
+           Utdelningen betalas ut först efter att protokollet signerats.
+           Signera och ladda upp — sen kan jag betala ut den. ✓
+```
+
+**Modes used:** A → A (Action)
+
+---
+
+**Scenario 2 — "Du sa att jag skulle fixa momsen"**
+
+```
+Användare: du sa att jag skulle fixa momsen, har du kollat om jag
+           gjort det?
+
+AI:        Ja, den 2 februari flaggade jag att momsdeklarationen
+           för Q4 behövde skickas in senast 12 februari.
+
+           Status: XML-filen skapades den 2:a, men den har inte
+           markerats som inskickad hos oss. Det kan betyda att:
+           1. Du laddade upp den på Skatteverket men inte bekräftade här
+           2. Du inte hann skicka in den ännu
+
+           Deadline är om 5 dagar. Skickade du in den?
+
+Användare: nej jag glömde, kan du hjälpa mig?
+
+AI:        Ingen fara, du har fortfarande 5 dagar. XML-filen från
+           förra gången är fortfarande giltig — inga nya transaktioner
+           har påverkat Q4.
+
+           Belopp att betala: 67 500 kr till skattekontot senast 12:e.
+
+           Steg:
+           1. Logga in på skatteverket.se
+           2. Gå till "Moms" → "Lämna momsdeklaration"
+           3. Ladda upp filen (jag skickar den till din mail nu)
+
+           Ska jag maila filen?
+```
+
+**Modes used:** A → A
+
+---
+
+## AI-ärlighet (Uncertainty)
+
+*Scenarios where the AI honestly admits it doesn't know something or needs to verify before answering.*
+
+**Scenario 1 — "Jag vet inte"**
+
+```
+Användare: om jag säljer kryptovaluta, hur beskattas det i bolaget?
+
+AI:        Ärligt talat — det här är ett område där reglerna har ändrats
+           flera gånger och det finns nyanser jag inte vill chansa på.
+
+           Det jag vet:
+           • Vinst vid försäljning av krypto beskattas som kapitalvinst
+             i bolaget (del av rörelseresultatet om det är rörelsetillgång)
+           • Hur det klassificeras (lagertillgång vs kapitalplacering)
+             påverkar beskattningen väsentligt
+           • Skatteverket har uppdaterat sin vägledning flera gånger
+
+           Det jag inte är säker på:
+           • Exakt klassificering för ditt specifika innehav
+           • Om det finns nya ställningstaganden från Skatteverket
+             som påverkar just din situation
+
+           Jag rekommenderar att du kollar med en skatterådgivare
+           för den specifika frågan, eller att vi tittar på Skatteverkets
+           senaste vägledning tillsammans.
+
+           Vill du att jag tar fram det jag hittar, med reservationen
+           att du bör dubbelkolla det?
+
+Användare: ja gör det
+
+AI:        Jag sammanställer vad jag hittar. Men jag vill vara tydlig:
+           jag kan inte garantera att informationen är komplett för
+           just krypto. Behandla det som ett utgångsläge, inte som
+           rådgivning.
+```
+
+**Modes used:** A only
+
+---
+
+**Scenario 2 — "Det beror på, jag behöver kolla"**
+
+```
+Användare: vi har fått en faktura i dollar, hur bokför jag den?
+
+AI:        Valutafakturor bokförs till kursen på fakturadagen. Men jag
+           behöver kolla ett par saker innan jag svarar exakt:
+
+           1. Vilken kurs gäller? Riksbankens mittkurs den dagen.
+              Jag kan slå upp den — vilket datum är fakturan?
+
+Användare: 15 januari, 12 000 USD
+
+AI:        Jag kollar kursen för 15 januari...
+
+           USD/SEK den 15 jan 2026: 10,42 kr
+           12 000 USD × 10,42 = 124 920 kr
+
+           Men — det uppstår en kursdifferens när du betalar, eftersom
+           kursen sannolikt är annorlunda då. Den differensen bokförs
+           som en finansiell post (konto 3960 eller 7960).
+
+           Jag är inte 100% säker på om du ska använda leverantörens
+           kurs eller Riksbankens vid betalning. Låt mig dubbelkolla
+           det i BFN:s vägledning...
+
+           Enligt BFNAR 2020:1 ska du använda transaktionsdagens kurs
+           (Riksbankens) vid den första bokföringen, och sen den
+           faktiska kursen vid betalning.
+
+           Ska jag bokföra fakturan nu med kursen 10,42?
+```
+
+**Modes used:** A → A
+
+---
+
 ## AI Guardrails & Safety
 
 This section is the **Constitution** for the AI agent. It defines strict rules for what the AI can and cannot do.

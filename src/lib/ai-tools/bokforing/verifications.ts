@@ -60,12 +60,6 @@ export const getVerificationsTool = defineTool<GetVerificationsParams, Verificat
                 success: true,
                 data: verifications,
                 message: `Hittade ${totalCount} verifikationer, visar ${verifications.length}.`,
-                display: {
-                    component: 'VerificationList',
-                    props: { verifications },
-                    title: 'Verifikationer',
-                    fullViewRoute: '/dashboard/bokforing?tab=verifikationer',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch verifications:', error)
@@ -197,19 +191,6 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
             },
             message: `Periodisering förberedd: ${monthlyAmount.toLocaleString('sv-SE')} kr/månad i ${params.months} månader.`,
             confirmationRequired: confirmationRequest,
-            display: {
-                component: 'PeriodizationPreview',
-                props: {
-                    description: params.description,
-                    totalAmount: params.totalAmount,
-                    monthlyAmount,
-                    entries,
-                    sourceAccount,
-                    targetAccount,
-                },
-                title: 'Periodisering',
-                fullViewRoute: '/dashboard/bokforing?tab=verifikationer',
-            },
         }
     },
 })

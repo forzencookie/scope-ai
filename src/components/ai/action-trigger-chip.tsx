@@ -20,8 +20,9 @@ export type ActionTriggerIcon =
     | 'decision'
     | 'shareholders'
     | 'audit'
+    | string
 
-const iconMap: Record<ActionTriggerIcon, LucideIcon> = {
+const iconMap: Record<string, LucideIcon> = {
     document: FileText,
     meeting: Calendar,
     receipt: Receipt,

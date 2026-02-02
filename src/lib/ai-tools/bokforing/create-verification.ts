@@ -44,19 +44,6 @@ export const createVerificationTool: AITool = {
         return {
             success: true,
             message: `Jag har förberett ett verifikat för "${description}". Vill du att jag bokför det?`,
-            display: {
-                component: "TransactionsTable",
-                props: {
-                    transactions: [{
-                        description,
-                        date,
-                        rows,
-                        id: 'preview',
-                        amount: 0,
-                        status: 'pending'
-                    }]
-                }
-            },
             confirmationRequired: {
                 title: `Vill du bokföra "${description}"?`,
                 description: "Detta skapar en verifikation i bokföringen.",

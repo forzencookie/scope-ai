@@ -1,7 +1,7 @@
 
 import { useMemo } from 'react'
 import { useTransactions } from '@/hooks/use-transactions-query'
-import { payslips, agiReports } from '@/components/loner/constants'
+// import { payslips, agiReports } from '@/components/loner/constants'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
 
 export interface DynamicTask {
@@ -135,8 +135,9 @@ export function useDynamicTasks() {
         })
 
         // 3. Löner Goal
-        const pendingPayslips = payslips.filter(p => p.status === 'pending').length
-        const pendingAgi = agiReports.filter(a => a.status === 'pending').length
+        // TODO: Fetch real payroll stats
+        const pendingPayslips = 0
+        const pendingAgi = 0
 
         const lonerTasks: DynamicTask[] = []
 

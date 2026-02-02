@@ -71,12 +71,6 @@ export const getAccountsTool = defineTool<GetAccountsParams, Account[]>({
                 message: params.accountClass 
                     ? `Hittade ${totalCount} konton i klass ${params.accountClass} (${classLabels[params.accountClass]}), visar ${accounts.length}.`
                     : `Hittade ${totalCount} konton, visar ${accounts.length}.`,
-                display: {
-                    component: 'AccountList',
-                    props: { accounts },
-                    title: 'Kontoplan',
-                    fullViewRoute: '/dashboard/bokforing?tab=kontoplan',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch accounts:', error)
@@ -162,12 +156,6 @@ export const getBalanceSheetSummaryTool = defineTool<{ year?: number }, AccountB
                     `Skulder ${summary.totalLiabilities.toLocaleString('sv-SE')} kr, ` +
                     `Eget kapital ${summary.totalEquity.toLocaleString('sv-SE')} kr. ` +
                     `Resultat: ${summary.netResult.toLocaleString('sv-SE')} kr.`,
-                display: {
-                    component: 'BalanceSheetSummary',
-                    props: { summary },
-                    title: 'Balansräkning',
-                    fullViewRoute: '/dashboard/rapporter?tab=balansrakning',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch balance sheet summary:', error)
@@ -203,12 +191,6 @@ export const getChartOfAccountsTool = defineTool<{ year?: number }, Record<strin
                 success: true,
                 data: chart,
                 message: `Kontoplanen innehåller ${totalAccounts} konton.`,
-                display: {
-                    component: 'ChartOfAccounts',
-                    props: { chart },
-                    title: 'Kontoplan (BAS)',
-                    fullViewRoute: '/dashboard/bokforing?tab=kontoplan',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch chart of accounts:', error)

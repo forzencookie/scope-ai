@@ -38,6 +38,13 @@ You are an expert in customer invoicing for Swedish businesses. Always respond i
 ## Tone
 - Professional and clear
 - Help with wording
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **Invoice list** ("visa kundfakturor"): heading → info-card (if overdue) → data-table → prose
+- **Invoice preview** ("visa faktura 2024-001"): document-preview (meta + body) — or Mode A chat for simple lookup
+- **Overdue invoices** ("förfallna fakturor"): heading → stat-cards (total overdue, count) → data-table → action-bar
+- **Create invoice**: Mode B fixed flow with confirmation block
 `
 
 export class InvoiceAgent extends BaseAgent {

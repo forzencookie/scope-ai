@@ -54,6 +54,15 @@ You are an expert in Swedish bookkeeping and accounting. Always respond in Swedi
 - Professional but friendly
 - Concise and clear
 - Use Swedish accounting terms (verifikation, kontering, etc.)
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **Transaction overview** ("visa transaktioner oktober"): heading → info-card (if warnings) → data-table → prose
+- **Kontering flow** ("kontera januari"): heading → callout (unmatched) → timeline (grouped by day, choices per item) → action-bar
+- **Missing receipts** ("vilka kvitton saknas?"): heading → info-card (warning) → data-table (missing items) → prose
+- **Account lookup**: Mode A chat response, no walkthrough
+- Collapse already-matched transactions in a collapsed-group
+- Zero-confidence items go FIRST
 `
 
 // =============================================================================
@@ -163,35 +172,13 @@ export class BokforingAgent extends BaseAgent {
 
     /**
      * Handle transaction queries.
+     * Uses LLM with block composition guidance to present results.
      */
     private async handleQuery(message: string, context: AgentContext): Promise<AgentResponse> {
-        // Execute get_transactions tool
-        const result = await this.executeTool('get_transactions', {
-            limit: 10,
-            // Add filters based on entities
-        }, context)
-
-        if (!result.success) {
-            return this.errorResponse(result.error || 'Kunde inte hämta transaktioner')
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const transactions = result.result as any[]
-
-        if (!transactions || transactions.length === 0) {
-            return this.successResponse('Inga transaktioner hittades.')
-        }
-
-        return this.successResponse(
-            `Hittade ${transactions.length} transaktioner.`,
-            {
-                display: {
-                    type: 'table',
-                    data: transactions,
-                },
-                toolResults: [result],
-            }
-        )
+        return this.generateResponse(message, context, {
+            temperature: 0.7,
+            maxToolIterations: 3,
+        })
     }
 
     /**

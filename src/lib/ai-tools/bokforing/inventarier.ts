@@ -50,15 +50,6 @@ export const getAssetsTool = defineTool<GetAssetsParams, Inventarie[]>({
             message: filtered.length > 0
                 ? `${filtered.length} inventarier med totalt inköpsvärde ${totalValue.toLocaleString('sv-SE')} kr.`
                 : 'Inga inventarier hittades.',
-            display: {
-                component: 'AssetPreview',
-                props: { 
-                    assets: filtered,
-                    summary: { count: totalCount, totalValue }
-                },
-                title: 'Inventarier',
-                fullViewRoute: '/dashboard/bokforing?tab=inventarier',
-            },
         }
     },
 })
@@ -133,20 +124,6 @@ export const createAssetTool = defineTool<CreateAssetParams, Inventarie>({
             data: asset,
             message: `Inventarie "${params.namn}" förberedd för registrering med ${livslangdAr} års avskrivning.`,
             confirmationRequired: confirmationRequest,
-            display: {
-                component: 'AssetPreview',
-                props: { 
-                    assets: [asset],
-                    showDepreciation: true,
-                    depreciation: {
-                        annual: arligAvskrivning,
-                        monthly: manatligAvskrivning,
-                        years: livslangdAr,
-                    }
-                },
-                title: 'Ny inventarie',
-                fullViewRoute: '/dashboard/bokforing?tab=inventarier',
-            },
         }
     },
 })
@@ -221,16 +198,6 @@ export const calculateDepreciationTool = defineTool<CalculateDepreciationParams,
                 assets: depreciationDetails,
             },
             message: `Avskrivning för ${period}: ${totalAmount.toLocaleString('sv-SE')} kr på ${assets.length} inventarier.`,
-            display: {
-                component: 'DepreciationPreview',
-                props: {
-                    period,
-                    totalAmount,
-                    assets: depreciationDetails,
-                },
-                title: 'Avskrivningsberäkning',
-                fullViewRoute: '/dashboard/bokforing?tab=inventarier',
-            },
         }
     },
 })

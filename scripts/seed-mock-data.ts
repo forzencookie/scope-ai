@@ -20,7 +20,7 @@ import {
     mockReceipts,
     mockInvoices,
     mockShareholders
-} from '@/data/mock-data'
+} from './mock-data'
 
 const supabase = createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -37,12 +37,12 @@ async function seed() {
 
     // 1. Get User - prefer explicit SEED_USER_ID for safety
     let userId = process.env.SEED_USER_ID
-    
+
     if (!userId) {
         // Fallback to first user (only safe for local development)
         const { data: { users } } = await supabase.auth.admin.listUsers()
         userId = users[0]?.id
-        
+
         if (!userId) {
             throw new Error(
                 'No user found. Either:\n' +
@@ -50,10 +50,10 @@ async function seed() {
                 '  2. Create a user first by signing up in the app'
             )
         }
-        
+
         console.warn('⚠️  Using first user in database. Set SEED_USER_ID for explicit targeting.')
     }
-    
+
     console.log(`User ID: ${userId}`)
 
     // 2. Ensure Company

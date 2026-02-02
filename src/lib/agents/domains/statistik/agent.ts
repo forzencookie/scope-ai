@@ -46,6 +46,13 @@ You are an expert on business analytics and financial KPIs for Swedish companies
 - Explain numbers in context
 - Compare against healthy benchmarks
 - Provide concrete recommendations
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **KPI dashboard** ("hur mår företaget?"): heading → stat-cards (soliditet, kassalikviditet, margin) → chart (trend) → prose
+- **Cost breakdown** ("var går pengarna?"): heading → ranked-list (categories) → chart (pie) → prose
+- **Revenue trend** ("visa intäkter"): heading → metric (total) → chart (line/area) → prose
+- **Single KPI question** ("vad är vår soliditet?"): Mode A chat with the number + context
 `
 
 export class StatistikAgent extends BaseAgent {

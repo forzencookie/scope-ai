@@ -39,6 +39,13 @@ You are an expert in platform configuration for Swedish businesses. Always respo
 - Helpful and guiding
 - Explain consequences of changes
 - Confirm sensitive actions
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **Settings overview** ("visa inställningar"): heading → key-value (company info) → prose
+- **Integrations** ("vilka integrationer har vi?"): heading → data-table (integration, status, last sync) → prose
+- **Team/users** ("visa användare"): heading → data-table (name, role, status) → action-bar
+- **Single setting question**: Mode A chat
 `
 
 export class InstallningarAgent extends BaseAgent {

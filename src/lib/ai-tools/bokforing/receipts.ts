@@ -79,12 +79,6 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
             message: data.length > 0
                 ? `Hittade ${data.length} kvitton.`
                 : 'Inga kvitton hittades.',
-            display: {
-                component: 'ReceiptsTable',
-                props: { receipts: data },
-                title: 'Kvitton',
-                fullViewRoute: '/dashboard/bokforing?tab=kvitton',
-            },
         }
     },
 })
@@ -246,12 +240,6 @@ export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, R
             message: data.length > 0
                 ? `${data.length} kvitton saknar kopplad transaktion.`
                 : 'Alla kvitton är kopplade till transaktioner. 🎉',
-            display: {
-                component: 'ReceiptsTable',
-                props: { receipts: data, highlight: 'unmatched' },
-                title: 'Okopplade kvitton',
-                fullViewRoute: '/dashboard/bokforing?tab=kvitton',
-            },
         }
     },
 })

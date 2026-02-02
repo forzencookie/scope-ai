@@ -31,7 +31,7 @@ export async function POST(
         }
 
         // 2. Prepare Ledger Entries
-        const amount = Math.abs(transaction.amount)
+        const amount = Math.abs(Number(transaction.amount))
         const entries: VerificationEntry[] = [
             {
                 account: debitAccount,

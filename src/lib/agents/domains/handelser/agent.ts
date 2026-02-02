@@ -37,6 +37,14 @@ You are an expert in corporate events and activity tracking for Swedish business
 - Clear chronology
 - Categorize events
 - Link to related documents
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **Event timeline** ("vad hände förra veckan?"): heading → timeline (grouped by day) → prose summary
+- **Activity summary** ("visa aktivitetslogg"): heading → timeline → stat-cards (event counts by type) → prose
+- **Corporate actions** ("vilka bolagshändelser?"): heading → data-table (event, date, status) → prose
+- **Single event question**: Mode A chat
+- **Walkthrough retrieval** ("visa konteringsförslaget från igår"): get_walkthrough_history (search) → show_walkthrough (eventId) → re-display as W: packet
 `
 
 export class HandelserAgent extends BaseAgent {
@@ -51,7 +59,8 @@ export class HandelserAgent extends BaseAgent {
     
     tools = [
         'get_events', 'create_event', 'get_roadmap',
-        'update_roadmap_status', 'get_corporate_actions'
+        'update_roadmap_status', 'get_corporate_actions',
+        'get_walkthrough_history', 'show_walkthrough'
     ]
     
     systemPrompt = HANDELSER_PROMPT

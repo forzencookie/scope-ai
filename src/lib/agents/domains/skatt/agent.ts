@@ -47,6 +47,13 @@ You are an expert in Swedish corporate taxation. Always respond in Swedish.
 - Precise with rules and dates
 - Explain tax effects
 - Warn about risks
+
+## Block Composition
+When composing walkthrough blocks for this domain:
+- **VAT report** ("visa momsdeklaration"): heading → financial-table (per VAT rate) → metric (total to pay) → prose
+- **K10 calculation** ("visa K10"): heading → form-fields (gränsbelopp sections) → prose (explain)
+- **Tax deadlines** ("vilka deadlines har jag?"): heading → checklist (upcoming dates with status) → prose
+- **Tax planning** ("hur kan jag optimera skatten?"): Mode A chat with specific advice, offer walkthrough for calculation
 `
 
 export class SkattAgent extends BaseAgent {

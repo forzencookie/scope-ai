@@ -24,38 +24,6 @@ import {
 // import type { FeatureKey } from "@/lib/company-types"
 import type { User, Team, NavItem } from "@/types"
 
-// ============================================
-// User Data
-// ============================================
-
-export const mockUser: User = {
-    id: "user-1",
-    name: "Rice",
-    email: "rice@scopeai.se",
-    avatar: "",
-    plan: "Pro",
-}
-
-// ============================================
-// Teams Data
-// ============================================
-
-export const mockTeams: Team[] = [
-    {
-        id: "team-1",
-        name: "Scope AI",
-        logo: Box,
-        plan: "Max",
-        companyType: "ab",
-    },
-    {
-        id: "team-2",
-        name: "Mitt Företag AB",
-        logo: Building2,
-        plan: "Free",
-        companyType: "ab",
-    },
-]
 
 // ============================================
 // Platform Navigation (Core)

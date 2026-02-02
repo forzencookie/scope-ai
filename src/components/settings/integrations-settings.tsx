@@ -12,6 +12,7 @@ import type { LucideIcon } from "lucide-react"
 export interface IntegrationCardProps {
     name: string
     description: string
+    icon?: LucideIcon
     connected?: boolean
     comingSoon?: boolean
     onConnect?: () => void
@@ -21,6 +22,7 @@ export interface IntegrationCardProps {
 export function IntegrationCard({
     name,
     description,
+    icon: Icon,
     connected = false,
     comingSoon = false,
     onConnect,
@@ -28,9 +30,12 @@ export function IntegrationCard({
 }: IntegrationCardProps) {
     return (
         <div className="flex items-center justify-between rounded-lg border-2 border-border/60 p-4">
-            <div>
-                <p className="font-medium text-sm">{name}</p>
-                <p className="text-xs text-muted-foreground">{description}</p>
+            <div className="flex items-center gap-3">
+                {Icon && <Icon className="h-5 w-5 text-muted-foreground" />}
+                <div>
+                    <p className="font-medium text-sm">{name}</p>
+                    <p className="text-xs text-muted-foreground">{description}</p>
+                </div>
             </div>
             {comingSoon ? (
                 <span className="text-xs text-muted-foreground text-left whitespace-nowrap">

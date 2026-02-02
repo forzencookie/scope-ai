@@ -13,6 +13,7 @@ const config: Config = {
     setupFilesAfterEnv: ["<rootDir>/jest.setup.ts"],
     moduleNameMapper: {
         "^@/(.*)$": "<rootDir>/src/$1",
+        "^lucide-react$": "<rootDir>/node_modules/lucide-react/dist/cjs/lucide-react.js",
     },
     testMatch: [
         "**/__tests__/**/*.[jt]s?(x)",
@@ -22,6 +23,10 @@ const config: Config = {
         "src/**/*.{js,jsx,ts,tsx}",
         "!src/**/*.d.ts",
         "!src/**/*.stories.{js,jsx,ts,tsx}",
+    ],
+    transformIgnorePatterns: [
+        "node_modules/(?!(lucide-react)/)",
+        "^.+\\.module\\.(css|sass|scss)$",
     ],
 }
 

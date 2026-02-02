@@ -67,9 +67,15 @@ export type MessageDisplay =
         } & Record<string, unknown>
     }
     | {
+        type: 'BalanceAuditCard'
+        data: {
+            audit: unknown // Define stricter type if exported
+        } & Record<string, unknown>
+    }
+    | {
         type: 'ActionTrigger'
         data: {
-            icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+            icon: string
             title: string
             subtitle?: string
             meta?: string
@@ -89,7 +95,7 @@ export interface Message {
     display?: MessageDisplay
     // Display text for action triggers (shown instead of raw prompt)
     actionTrigger?: {
-        icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders'
+        icon: string
         title: string
         subtitle?: string
         meta?: string

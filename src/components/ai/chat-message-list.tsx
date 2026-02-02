@@ -180,7 +180,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 )}
 
                 {/* Inline-only cards (always visible, no overlay) */}
-                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any).component === 'BalanceAuditCard') && (
+                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any)?.component === 'BalanceAuditCard') && (
                     <div className="my-2">
                         <BalanceAuditCard audit={(message.display.data as any)?.audit} data={(message.display.data as any)?.audit || message.display.data as any} />
                     </div>
@@ -219,7 +219,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                         <div className="max-w-[85%] flex flex-col gap-2 items-end">
                             {/* Action Trigger Chip - shown instead of text for action triggers */}
                             {message.actionTrigger ? (
-                                <ActionTriggerChip 
+                                <ActionTriggerChip
                                     display={{
                                         type: 'action-trigger',
                                         icon: message.actionTrigger.icon,

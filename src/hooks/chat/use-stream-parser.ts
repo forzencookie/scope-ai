@@ -25,6 +25,19 @@ function cleanAIComment(text: string): string {
     return lines.map(l => l.replace(/\*\*/g, '')).join(' ').trim()
 }
 
+interface WalkthroughBlock {
+    type: string
+    props: Record<string, unknown>
+    id?: string
+}
+
+interface WalkthroughBlockResponse {
+    mode: "fixed" | "dynamic"
+    title: string
+    subtitle?: string
+    blocks: WalkthroughBlock[]
+}
+
 interface StreamData {
     display?: unknown
     navigation?: { route: string }
@@ -41,6 +54,7 @@ interface StreamData {
             details?: string
         }>
     }
+    walkthroughBlocks?: WalkthroughBlockResponse
 }
 
 interface UseStreamParserOptions {
@@ -83,16 +97,22 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                     if (line.startsWith('T:')) {
                         const contentDelta = JSON.parse(line.slice(2))
                         fullContent += contentDelta
+                    } else if (line.startsWith('W:')) {
+                        const walkthroughData = JSON.parse(line.slice(2)) as WalkthroughBlockResponse
+                        lastData = {
+                            ...(lastData || {}),
+                            walkthroughBlocks: walkthroughData,
+                        } as StreamData
                     } else if (line.startsWith('D:')) {
                         const data = JSON.parse(line.slice(2)) as StreamData
                         // Merge data chunks instead of overwriting
                         lastData = {
-                            ...lastData,
+                            ...(lastData || {}),
                             ...data,
                             display: data.display || lastData?.display,
                             toolResults: data.toolResults || lastData?.toolResults,
                             confirmationRequired: data.confirmationRequired || lastData?.confirmationRequired,
-                        }
+                        } as StreamData
 
                         // Handle immediate navigation
                         if (data.navigation) {
@@ -163,7 +183,15 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
             lastData.confirmationRequired
         )
 
-        // Check for walkthrough content (e.g. balanskontroll)
+        // Check for block-based walkthrough (new system)
+        if (lastData?.walkthroughBlocks) {
+            window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough-blocks', {
+                detail: lastData.walkthroughBlocks
+            }))
+            return
+        }
+
+        // Check for walkthrough content (e.g. balanskontroll) — legacy
         const walkthroughData = lastData?.walkthrough || (lastData?.toolResults as any)?.[0]?.result?.walkthrough
         console.log('[walkthrough debug]', { walkthroughData, fullContentLength: fullContent.length, fullContentPreview: fullContent.slice(0, 200), lastDataKeys: lastData ? Object.keys(lastData) : null })
         if (walkthroughData) {

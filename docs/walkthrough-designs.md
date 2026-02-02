@@ -306,6 +306,35 @@ type WalkthroughBlock =
         variant: "default" | "outline";
         value: string;
       }>;
+    }
+  | {
+      type: "collapsed-group";
+      label: string;
+      count?: number;
+      defaultOpen?: boolean;
+      children: WalkthroughBlock[];
+    }
+  | {
+      type: "inline-choice";
+      question?: string;
+      options: Array<{ label: string; value: string }>;
+    }
+  | {
+      type: "annotation";
+      text: string;
+      variant: "muted" | "warning" | "success" | "error";
+    }
+  | {
+      type: "columns";
+      columns: WalkthroughBlock[][];
+      gap?: "sm" | "md" | "lg";
+    }
+  | {
+      type: "metric";
+      label: string;
+      value: string;
+      change?: string;
+      trend?: "up" | "down" | "neutral";
     };
 ```
 
@@ -506,6 +535,11 @@ FETCH FAILURE: If a database query fails:
 | `form-fields`       | Government form style with labeled boxes       | Max 4 sections              | Tax forms (moms, INK2)                              |
 | `legal-paragraphs`  | Numbered paragraphs (§) with formal language   | 1 (no item limit)           | Meeting minutes, resolutions                        |
 | `actions`           | Footer buttons                                 | 1 (max 3 buttons, required) | Always last block                                   |
+| `collapsed-group`   | Expand/collapse wrapper for child blocks       | No limit                    | Hide matched transactions, optional details         |
+| `inline-choice`     | Inline pill buttons for quick choices          | Max 3                       | Quick selections within any context                 |
+| `annotation`        | Small colored note/badge                       | No limit                    | Inline status labels, footnotes, tags               |
+| `columns`           | Side-by-side wrapper for 2-3 block groups      | Max 2                       | Comparing two periods, parallel summaries           |
+| `metric`            | Single number+label, lighter than stat-cards   | Max 6                       | Individual KPIs, headline numbers                   |
 
 ### Data-Fetching Tools
 
@@ -3089,3 +3123,55 @@ Mitt Foretag AB · 559XXX-XXXX
 | Bolagsstamma        | Meeting minutes (paragraphs)        | Formal, decision checkboxes at bottom      |
 | Arsmote             | Meeting invitation letter           | Dagordning list, attachments, send options |
 | Firmatecknare       | Registration certificate            | Official registry data, advisory callout   |
+
+---
+
+### Open-Ended Composition Guidance
+
+Beyond the fixed/dynamic walkthrough flows above, the AI should adapt its block composition based on the user's **intent type** within each domain. The three common intent types are:
+
+#### Intent: Browse / Overview
+The user wants to see a list or overview of items. Pattern: `heading → info-card (if warnings) → data-table → prose`
+
+Examples:
+- "visa transaktioner oktober" → heading + data-table + prose summary
+- "visa kundfakturor" → heading + info-card (overdue warning) + data-table
+- "vilka kvitton saknas?" → heading + data-table (missing) + prose
+
+#### Intent: Summary / Analysis
+The user wants to understand trends or get a high-level picture. Pattern: `heading → metric/stat-cards → chart → prose`
+
+Examples:
+- "hur gick oktober?" → heading + stat-cards + chart + prose analysis
+- "hur mår företaget?" → heading + metric cards + chart + ranked-list + prose
+- "visa personalkostnader" → heading + stat-cards + chart (trend) + ranked-list + prose
+
+#### Intent: Single Item
+The user asks about one specific item. Pattern: Mode A (chat text), no walkthrough unless complex.
+
+Examples:
+- "vad är transaktion #3891?" → chat response with key-value details
+- "visa faktura 2024-001" → document-preview block or chat
+
+#### Intent: Action Flow
+The user wants to perform an action on multiple items. Pattern: existing timeline/checklist-based layouts.
+
+Examples:
+- "kontera januari" → timeline with choices per transaction
+- "kör lön" → checklist with steps
+
+### Prose-Between-Blocks Pattern
+
+When composing dynamic walkthroughs, **weave `prose` blocks between data blocks** for narrative flow. Don't save all commentary for a single ai-comment at the end.
+
+Good pattern:
+```
+heading → stat-cards → prose (interpret the numbers) → chart → prose (explain trend) → action-bar
+```
+
+Bad pattern:
+```
+heading → stat-cards → chart → ranked-list → ai-comment (wall of text at the end)
+```
+
+The prose blocks should be short (1-2 sentences) and directly reference the data block above them. This creates a guided reading experience.

@@ -1,57 +1,13 @@
 /**
- * Mock Data for AI Tools
- * 
- * Sample data for periodiseringsfonder, förmåner catalog, and investments.
+ * Static Reference Data for AI Tools
+ *
+ * Catalog of Swedish employee benefits with tax rules, BAS accounts, and limits.
+ * Used as fallback when the formaner_catalog DB table is not populated.
  */
 
 import type {
-    Periodiseringsfond,
     FormanCatalogItem,
-    EmployeeBenefit,
-    ShareHolding,
 } from './tool-types'
-
-// =============================================================================
-// Periodiseringsfonder Mock Data
-// =============================================================================
-
-export const mockPeriodiseringsfonder: Periodiseringsfond[] = [
-    {
-        id: 'pf-2020',
-        companyId: 'demo-company',
-        year: 2020,
-        amount: 150000,
-        dissolvedAmount: 0,
-        expiresAt: new Date('2026-12-31'),
-        status: 'active',
-        notes: 'Avsatt för investeringar 2026',
-        createdAt: new Date('2021-03-15'),
-        updatedAt: new Date('2021-03-15'),
-    },
-    {
-        id: 'pf-2022',
-        companyId: 'demo-company',
-        year: 2022,
-        amount: 200000,
-        dissolvedAmount: 50000,
-        expiresAt: new Date('2028-12-31'),
-        status: 'partially_dissolved',
-        notes: 'Delvis återförd 2024',
-        createdAt: new Date('2023-03-15'),
-        updatedAt: new Date('2024-06-01'),
-    },
-    {
-        id: 'pf-2023',
-        companyId: 'demo-company',
-        year: 2023,
-        amount: 100000,
-        dissolvedAmount: 0,
-        expiresAt: new Date('2029-12-31'),
-        status: 'active',
-        createdAt: new Date('2024-03-15'),
-        updatedAt: new Date('2024-03-15'),
-    },
-]
 
 // =============================================================================
 // Förmåner Catalog (All Swedish Employee Benefits)
@@ -240,60 +196,5 @@ export const formanerCatalog: FormanCatalogItem[] = [
         formansvardeCalculation: 'Reducerat förmånsvärde vid bruttolöneavdrag',
         description: 'Cykel via bruttolöneavdrag',
         basAccount: '7399',
-    },
-]
-
-// =============================================================================
-// Employee Benefits Mock Data
-// =============================================================================
-
-export const mockEmployeeBenefits: EmployeeBenefit[] = [
-    {
-        id: 'eb-1',
-        companyId: 'demo-company',
-        employeeName: 'Anna Andersson',
-        benefitType: 'friskvard',
-        amount: 3500,
-        year: 2024,
-        formansvarde: 0, // Tax-free
-        createdAt: new Date('2024-03-01'),
-    },
-    {
-        id: 'eb-2',
-        companyId: 'demo-company',
-        employeeName: 'Erik Eriksson',
-        benefitType: 'tjanstebil',
-        amount: 0,
-        year: 2024,
-        formansvarde: 4500, // Monthly taxable value
-        notes: 'Volvo XC60, förmånsvärde 4500/mån',
-        createdAt: new Date('2024-01-01'),
-    },
-]
-
-// =============================================================================
-// Properties Mock Data
-// =============================================================================
-
-// =============================================================================
-// Share Holdings Mock Data
-// =============================================================================
-
-export const mockShareHoldings: ShareHolding[] = [
-    {
-        id: 'sh-1',
-        companyId: 'demo-company',
-        companyName: 'TechStartup AB',
-        orgNumber: '559123-4567',
-        holdingType: 'other',
-        sharesCount: 1000,
-        purchaseDate: new Date('2022-01-15'),
-        purchasePrice: 500000,
-        currentValue: 750000,
-        dividendReceived: 25000,
-        basAccount: '1350',
-        notes: 'Strategisk investering',
-        createdAt: new Date('2022-01-15'),
-        updatedAt: new Date('2024-01-01'),
     },
 ]

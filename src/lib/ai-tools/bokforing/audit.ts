@@ -379,12 +379,6 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
                 },
             },
             message,
-            display: {
-                component: 'BalanceAuditCard',
-                props: { audit: result },
-                title: 'Balanskontroll',
-                fullViewRoute: '/dashboard/rapporter?tab=balansrakning',
-            },
         }
     },
 })
