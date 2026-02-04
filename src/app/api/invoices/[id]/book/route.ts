@@ -13,7 +13,7 @@ export async function POST(
 ) {
     try {
         const userDb = await createUserScopedDb();
-        
+
         if (!userDb) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
@@ -21,7 +21,7 @@ export async function POST(
         const { id } = await params;
 
         // Find the invoice
-        const invoice = await userDb.supplierInvoices.getById(id);
+        const invoice = await userDb.customerInvoices.getById(id);
 
         if (!invoice) {
             return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -32,7 +32,7 @@ export async function POST(
         }
 
         // Update Invoice Status
-        await userDb.supplierInvoices.update(id, { status: 'skickad' });
+        await userDb.customerInvoices.update(id, { status: 'skickad' });
 
         // Create Verification
         const total = Number(invoice.total_amount) || 0;
@@ -43,7 +43,7 @@ export async function POST(
         const verification = await userDb.verifications.create({
             id: crypto.randomUUID(),
             date: new Date().toISOString().split('T')[0],
-            description: `Faktura ${id} - ${invoice.supplier_name}`,
+            description: `Faktura ${invoice.invoice_number || id} - ${invoice.customer_name}`,
             rows: [
                 { account: '1510', description: 'Kundfordringar', debit: r(total), credit: 0 },
                 { account: '3001', description: 'Försäljning inom Sverige', debit: 0, credit: r(net) },

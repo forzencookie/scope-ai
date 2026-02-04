@@ -166,15 +166,24 @@ export function useMonthClosing() {
             return d.getFullYear() === year && (d.getMonth() + 1) === month
         })
 
-        const uncategorizedCount = 0 // We don't have uncategorized concept yet in verifications directly
         const verificationCount = monthVerifications.length
 
-        // Ledger Balance for 1930 at end of month
-        // This is expensive to calc correctly without running total, but YTD is doable.
+        // Count discrepancies: verifications where debit != credit (unbalanced)
+        let discrepancyCount = 0
+        for (const v of monthVerifications) {
+            if (v.rows && Array.isArray(v.rows)) {
+                const totalDebit = v.rows.reduce((sum: number, row: { debit?: number }) => sum + (row.debit || 0), 0)
+                const totalCredit = v.rows.reduce((sum: number, row: { credit?: number }) => sum + (row.credit || 0), 0)
+                // Allow small floating point differences
+                if (Math.abs(totalDebit - totalCredit) > 0.01) {
+                    discrepancyCount++
+                }
+            }
+        }
 
         return {
             verificationCount,
-            uncategorizedCount
+            discrepancyCount
         }
     }
 

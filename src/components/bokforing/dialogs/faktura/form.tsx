@@ -225,22 +225,26 @@ export function LineItemsSection({
 interface PaymentTermsSectionProps {
     paymentTerms: string
     dueDate: string
+    currency: 'SEK' | 'EUR' | 'USD' | 'GBP' | 'NOK' | 'DKK'
     onPaymentTermsChange: (value: string) => void
     onDueDateChange: (value: string) => void
+    onCurrencyChange: (value: 'SEK' | 'EUR' | 'USD' | 'GBP' | 'NOK' | 'DKK') => void
 }
 
 export function PaymentTermsSection({
     paymentTerms,
     dueDate,
+    currency,
     onPaymentTermsChange,
     onDueDateChange,
+    onCurrencyChange,
 }: PaymentTermsSectionProps) {
     return (
         <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Betalningsvillkor
             </h3>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Betalningsvillkor</label>
                     <Select value={paymentTerms} onValueChange={onPaymentTermsChange}>
@@ -265,6 +269,22 @@ export function PaymentTermsSection({
                         min={new Date().toISOString().split('T')[0]}
                     />
                     <p className="text-xs text-muted-foreground">Lämna tomt för automatisk beräkning</p>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Valuta</label>
+                    <Select value={currency} onValueChange={(v) => onCurrencyChange(v as typeof currency)}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="SEK">SEK - Svenska kronor</SelectItem>
+                            <SelectItem value="EUR">EUR - Euro</SelectItem>
+                            <SelectItem value="USD">USD - US Dollar</SelectItem>
+                            <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                            <SelectItem value="NOK">NOK - Norska kronor</SelectItem>
+                            <SelectItem value="DKK">DKK - Danska kronor</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
             </div>
         </div>

@@ -87,7 +87,7 @@ export function MonthClosing() {
                             </div>
                             <div className="p-3 bg-background rounded-md border">
                                 <p className="text-xs text-muted-foreground">Avvikelser</p>
-                                <p className="text-xl font-bold text-green-600">0</p>
+                                <p className={`text-xl font-bold ${stats.discrepancyCount === 0 ? 'text-green-600' : 'text-red-600'}`}>{stats.discrepancyCount}</p>
                             </div>
                         </div>
 

@@ -57,6 +57,7 @@ export function InvoiceCreateDialog({
         setDueDate,
         setPaymentTerms,
         setNotes,
+        setCurrency,
         addLineItem,
         removeLineItem,
         updateLineItem,
@@ -84,6 +85,7 @@ export function InvoiceCreateDialog({
                 issueDate: today,
                 dueDate: calculatedDueDate,
                 status: INVOICE_STATUS_LABELS.DRAFT,
+                currency: formState.currency,
                 items: formState.lineItems
             }
 
@@ -168,8 +170,10 @@ export function InvoiceCreateDialog({
                         <PaymentTermsSection
                             paymentTerms={formState.paymentTerms}
                             dueDate={formState.dueDate}
+                            currency={formState.currency}
                             onPaymentTermsChange={setPaymentTerms}
                             onDueDateChange={setDueDate}
+                            onCurrencyChange={setCurrency}
                         />
 
                         <NotesSection

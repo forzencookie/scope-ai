@@ -11,21 +11,21 @@ import { processInvoices, type NakedInvoice } from "@/services/processors/invoic
 export async function GET() {
     try {
         const userDb = await createUserScopedDb();
-        
+
         if (!userDb) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         // Fetch invoices from database (RLS-protected)
-        const dbInvoices = await userDb.supplierInvoices.list({ limit: 100 });
-        
+        const dbInvoices = await userDb.customerInvoices.list({ limit: 100 });
+
         // Transform to NakedInvoice format for processor
         const nakedInvoices: NakedInvoice[] = dbInvoices.map(inv => ({
             id: inv.id,
-            customerName: inv.supplier_name || 'Unknown',
+            customerName: inv.customer_name || 'Unknown',
             invoiceNumber: inv.invoice_number || '',
             amount: inv.total_amount || 0,
-            issueDate: inv.issue_date || inv.created_at || '',
+            issueDate: inv.invoice_date || inv.created_at || '',
             dueDate: inv.due_date || '',
         }));
 

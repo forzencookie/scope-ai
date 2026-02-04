@@ -43,6 +43,14 @@ export interface UserScopedDb {
         update: (id: string, data: Tables['supplierinvoices']['Update']) => Promise<Tables['supplierinvoices']['Row'] | null>
     }
 
+    customerInvoices: {
+        list: (options?: { limit?: number }) => Promise<Tables['customerinvoices']['Row'][]>
+        getById: (id: string) => Promise<Tables['customerinvoices']['Row'] | null>
+        create: (data: Tables['customerinvoices']['Insert']) => Promise<Tables['customerinvoices']['Row'] | null>
+        update: (id: string, data: Tables['customerinvoices']['Update']) => Promise<Tables['customerinvoices']['Row'] | null>
+        getNextInvoiceNumber: () => Promise<string>
+    }
+
     verifications: {
         list: (options?: { limit?: number }) => Promise<Tables['verifications']['Row'][]>
         getById: (id: string) => Promise<Tables['verifications']['Row'] | null>
@@ -199,6 +207,51 @@ function createSupplierInvoicesAccessor(supabase: SupabaseClient<Database>, user
             const { data: updated, error } = await supabase.from('supplierinvoices').update(data).eq('id', id).select().single()
             if (error) console.error('[UserScopedDb] supplierInvoices.update error:', error)
             return updated
+        },
+    }
+}
+
+function createCustomerInvoicesAccessor(supabase: SupabaseClient<Database>, userId: string, companyId: string | null) {
+    return {
+        list: async (options?: { limit?: number }) => {
+            const query = supabase.from('customerinvoices').select('*').order('created_at', { ascending: false })
+            if (options?.limit) query.limit(options.limit)
+            const { data, error } = await query
+            if (error) console.error('[UserScopedDb] customerInvoices.list error:', error)
+            return data || []
+        },
+        getById: async (id: string) => {
+            const { data } = await supabase.from('customerinvoices').select('*').eq('id', id).single()
+            return data
+        },
+        create: async (data: Tables['customerinvoices']['Insert']) => {
+            const insertData = { ...data, user_id: data.user_id ?? userId, company_id: data.company_id ?? companyId ?? '' }
+            const { data: created, error } = await supabase.from('customerinvoices').insert(insertData).select().single()
+            if (error) console.error('[UserScopedDb] customerInvoices.create error:', error)
+            return created
+        },
+        update: async (id: string, data: Tables['customerinvoices']['Update']) => {
+            const { data: updated, error } = await supabase.from('customerinvoices').update(data).eq('id', id).select().single()
+            if (error) console.error('[UserScopedDb] customerInvoices.update error:', error)
+            return updated
+        },
+        getNextInvoiceNumber: async () => {
+            const year = new Date().getFullYear()
+            const { data, error } = await supabase
+                .from('customerinvoices')
+                .select('invoice_number')
+                .like('invoice_number', `FAK-${year}-%`)
+                .order('invoice_number', { ascending: false })
+                .limit(1)
+
+            if (error) console.error('[UserScopedDb] customerInvoices.getNextInvoiceNumber error:', error)
+
+            let nextNum = 1
+            if (data && data.length > 0) {
+                const lastNum = parseInt(data[0].invoice_number.split('-')[2]) || 0
+                nextNum = lastNum + 1
+            }
+            return `FAK-${year}-${String(nextNum).padStart(4, '0')}`
         },
     }
 }
@@ -467,6 +520,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
         transactions: createTransactionsAccessor(supabase, user.id, companyId),
         receipts: createReceiptsAccessor(supabase, user.id, companyId),
         supplierInvoices: createSupplierInvoicesAccessor(supabase, user.id, companyId),
+        customerInvoices: createCustomerInvoicesAccessor(supabase, user.id, companyId),
         verifications: createVerificationsAccessor(supabase, user.id, companyId),
         employees: createEmployeesAccessor(supabase, user.id),
         payslips: createPayslipsAccessor(supabase, user.id),

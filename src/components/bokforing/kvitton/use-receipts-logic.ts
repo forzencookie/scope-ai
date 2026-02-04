@@ -5,6 +5,8 @@ import { useBulkSelection, BulkAction } from "@/components/shared/bulk-action-to
 import { useDeleteConfirmation } from "@/components/shared/delete-confirm-dialog"
 import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
+import { useAuth } from "@/hooks/use-auth"
+import { uploadReceiptFile } from "@/services/upload-service"
 import { type Receipt } from '@/services/receipt-service'
 import { type BookingData } from "../dialogs/bokforing"
 import { BookOpen, Trash2, Archive, Download } from "lucide-react"
@@ -13,6 +15,7 @@ import { BookOpen, Trash2, Archive, Download } from "lucide-react"
 export function useReceiptsLogic() {
     const { text } = useTextMode()
     const { company } = useCompany()
+    const { user } = useAuth()
     const toast = useToast()
     const isInvoiceMethod = company?.accountingMethod === 'invoice'
 
@@ -25,7 +28,7 @@ export function useReceiptsLogic() {
 
     // Hooks
     const deleteConfirmation = useDeleteConfirmation()
-    
+
     const {
         receipts,
         isLoading,
@@ -67,6 +70,21 @@ export function useReceiptsLogic() {
 
     const handleSaveReceipt = useCallback(async (data: { supplier: string; date: string; amount: string | number; moms: string | number; category: string; status: string; file?: File | null, fileName?: string }) => {
         try {
+            let attachmentUrl: string | null = null
+
+            // Upload file if provided
+            if (data.file && user?.id) {
+                toast.info("Laddar upp...", "Sparar fil till molnet")
+                const uploadResult = await uploadReceiptFile(data.file, user.id)
+
+                if (!uploadResult.success) {
+                    toast.error("Uppladdning misslyckades", uploadResult.error)
+                    return
+                }
+
+                attachmentUrl = uploadResult.url
+            }
+
             const response = await fetch('/api/receipts/processed', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -77,7 +95,7 @@ export function useReceiptsLogic() {
                     moms: typeof data.moms === 'string' ? parseFloat(data.moms) || 0 : data.moms,
                     category: data.category,
                     status: data.status,
-                    attachment: data.file ? data.file.name : (data.fileName || null),
+                    attachment: attachmentUrl || data.fileName || null,
                 })
             })
 
@@ -95,7 +113,7 @@ export function useReceiptsLogic() {
             console.error('Error saving receipt:', error)
             toast.error("Fel", "Kunde inte spara underlaget")
         }
-    }, [fetchReceipts, toast])
+    }, [fetchReceipts, toast, user?.id])
 
     // Booking Logic
     const openBookingDialog = useCallback((receipt: Receipt) => {
@@ -198,7 +216,7 @@ export function useReceiptsLogic() {
         isLoading,
         bulkActions,
         bulkSelection,
-        
+
         // Pagination
         page, setPage, pageSize, totalCount,
 

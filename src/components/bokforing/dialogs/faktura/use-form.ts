@@ -27,6 +27,7 @@ export interface InvoiceFormState {
     dueDate: string
     paymentTerms: string
     notes: string
+    currency: 'SEK' | 'EUR' | 'USD' | 'GBP' | 'NOK' | 'DKK'
     lineItems: InvoiceLineItem[]
 }
 
@@ -47,6 +48,7 @@ const getInitialFormState = (): InvoiceFormState => ({
     dueDate: "",
     paymentTerms: "30",
     notes: "",
+    currency: 'SEK',
     lineItems: [{ id: '1', description: '', quantity: 1, unitPrice: 0, vatRate: 25 }]
 })
 
@@ -93,6 +95,10 @@ export function useInvoiceForm() {
 
     const setNotes = useCallback((value: string) => {
         setFormState(prev => ({ ...prev, notes: value }))
+    }, [])
+
+    const setCurrency = useCallback((value: InvoiceFormState['currency']) => {
+        setFormState(prev => ({ ...prev, currency: value }))
     }, [])
 
     // Line item operations
@@ -183,6 +189,7 @@ export function useInvoiceForm() {
         setDueDate,
         setPaymentTerms,
         setNotes,
+        setCurrency,
         // Line items
         addLineItem,
         removeLineItem,
