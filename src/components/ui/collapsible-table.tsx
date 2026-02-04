@@ -18,6 +18,7 @@ export interface CollapsibleTableItem {
     id?: string       // Optional code (e.g., "3.1" for tax forms)
     label: string     // Display name
     value: number     // Numerical amount
+    previousValue?: number // Previous year value for YoY comparison
     indent?: boolean  // Visual indentation
     sublabel?: string // Optional secondary text
     onClick?: () => void // Optional click handler
@@ -94,17 +95,24 @@ interface CollapsibleTableRowProps {
     className?: string
     children?: ReactNode
     neutral?: boolean  // If true, don't use green/red coloring
+    showComparative?: boolean // Show previous year value
 }
 
-export function CollapsibleTableRow({ item, className, children, neutral = false }: CollapsibleTableRowProps) {
+export function CollapsibleTableRow({ item, className, children, neutral = false, showComparative = false }: CollapsibleTableRowProps) {
     const [isOpen, setIsOpen] = useState(false)
     const [isAnimating, setIsAnimating] = useState(false)
     const lastToggle = useRef(0)
     const [, startTransition] = useTransition()
-    
+
     const safeValue = safeNumber(item.value)
     const roundedValue = Math.round(safeValue) === 0 ? 0 : Math.round(safeValue)
     const hasChildren = !!children
+
+    // Comparative calculations
+    const previousValue = safeNumber(item.previousValue ?? 0)
+    const roundedPrevious = Math.round(previousValue) === 0 ? 0 : Math.round(previousValue)
+    const change = roundedValue - roundedPrevious
+    const changePercent = roundedPrevious !== 0 ? ((change / Math.abs(roundedPrevious)) * 100) : 0
 
     const handleToggle = useCallback(() => {
         const now = Date.now()
@@ -161,18 +169,47 @@ export function CollapsibleTableRow({ item, className, children, neutral = false
                         )}
                     </div>
                 </div>
-                <span className={cn(
-                    "font-medium text-sm tabular-nums shrink-0 ml-4",
-                    neutral
-                        ? "text-foreground"
-                        : roundedValue > 0
-                            ? "text-green-600 dark:text-green-400"
-                            : roundedValue < 0
-                                ? "text-red-600 dark:text-red-400"
-                                : "text-muted-foreground"
-                )}>
-                    {formatNumber(roundedValue)} kr
-                </span>
+                {/* Values section */}
+                <div className="flex items-center gap-4 shrink-0 ml-4">
+                    {showComparative ? (
+                        <>
+                            {/* Current year */}
+                            <span className={cn(
+                                "font-medium text-sm tabular-nums w-24 text-right",
+                                neutral ? "text-foreground" : "text-foreground"
+                            )}>
+                                {formatNumber(roundedValue)} kr
+                            </span>
+                            {/* Previous year */}
+                            <span className="text-sm tabular-nums text-muted-foreground w-24 text-right">
+                                {formatNumber(roundedPrevious)} kr
+                            </span>
+                            {/* Change */}
+                            <span className={cn(
+                                "text-xs tabular-nums w-20 text-right",
+                                change > 0 ? "text-green-600 dark:text-green-400" :
+                                change < 0 ? "text-red-600 dark:text-red-400" :
+                                "text-muted-foreground"
+                            )}>
+                                {change !== 0 && (change > 0 ? "+" : "")}{formatNumber(change)}
+                                {roundedPrevious !== 0 && ` (${changePercent > 0 ? "+" : ""}${changePercent.toFixed(0)}%)`}
+                            </span>
+                        </>
+                    ) : (
+                        <span className={cn(
+                            "font-medium text-sm tabular-nums",
+                            neutral
+                                ? "text-foreground"
+                                : roundedValue > 0
+                                    ? "text-green-600 dark:text-green-400"
+                                    : roundedValue < 0
+                                        ? "text-red-600 dark:text-red-400"
+                                        : "text-muted-foreground"
+                        )}>
+                            {formatNumber(roundedValue)} kr
+                        </span>
+                    )}
+                </div>
             </div>
 
             {/* Nested Content - with smooth animation */}
@@ -199,18 +236,26 @@ interface CollapsibleTableSectionProps {
     title: string
     items: CollapsibleTableItem[]
     total?: number        // Can be manually provided or auto-calculated from items
+    previousTotal?: number // Previous year total for YoY comparison
     defaultOpen?: boolean
     hideTotalHeader?: boolean
     neutral?: boolean     // If true, don't use green/red coloring
+    showComparative?: boolean // Show previous year column
+    currentYear?: number  // Current year label
+    previousYear?: number // Previous year label
 }
 
 export function CollapsibleTableSection({
     title,
     items,
     total,
+    previousTotal,
     defaultOpen = true,
     hideTotalHeader = false,
-    neutral = false
+    neutral = false,
+    showComparative = false,
+    currentYear,
+    previousYear
 }: CollapsibleTableSectionProps) {
     const [isOpen, setIsOpen] = useState(defaultOpen)
     const [isAnimating, setIsAnimating] = useState(false)
@@ -289,8 +334,21 @@ export function CollapsibleTableSection({
                     "transition-all duration-200 ease-in-out",
                     "animate-in fade-in-0 slide-in-from-top-1"
                 )}>
+                    {/* Column headers for comparative view */}
+                    {showComparative && (
+                        <div className="flex items-center justify-end gap-4 py-1 text-xs text-muted-foreground border-b border-border/40 mb-1">
+                            <span className="w-24 text-right">{currentYear || 'I år'}</span>
+                            <span className="w-24 text-right">{previousYear || 'Förra året'}</span>
+                            <span className="w-20 text-right">Förändring</span>
+                        </div>
+                    )}
                     {items.map((item, idx) => (
-                        <CollapsibleTableRow key={item.id || `${item.label}-${idx}`} item={item} neutral={neutral} />
+                        <CollapsibleTableRow
+                            key={item.id || `${item.label}-${idx}`}
+                            item={item}
+                            neutral={neutral}
+                            showComparative={showComparative}
+                        />
                     ))}
                 </div>
             )}

@@ -81,6 +81,7 @@ export interface FinancialSectionItem {
   id?: string
   label: string
   value: number
+  previousValue?: number  // Previous year value for YoY comparison
 }
 
 /**
@@ -90,5 +91,6 @@ export interface FinancialSection {
   title: string
   items: FinancialSectionItem[]
   total: number
+  previousTotal?: number  // Previous year total for YoY comparison
   isHighlight?: boolean
 }

@@ -1,48 +1,61 @@
 
 import { useMemo, useState, useEffect } from "react"
 import { getSupabaseClient } from '@/lib/database/supabase'
-import { FinancialReportProcessor, AccountBalance } from "@/services/processors/reports-processor"
+import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports-processor"
 
 export function useFinancialReports() {
     const [isLoading, setIsLoading] = useState(true)
+    const [bsBalances, setBsBalances] = useState<AccountBalance[]>([])
+    const [plBalances, setPlBalances] = useState<AccountBalance[]>([])
+    const [prevBsBalances, setPrevBsBalances] = useState<AccountBalance[]>([])
+    const [prevPlBalances, setPrevPlBalances] = useState<AccountBalance[]>([])
 
     useEffect(() => {
         async function fetchBalances() {
             setIsLoading(true)
             const supabase = getSupabaseClient()
             const year = new Date().getFullYear()
-
-            // Fetch balances for P&L (Current Year)
-            // Ideally we'd fetch two sets: one for P&L (year only) and one for BalanceSheet (all time).
-            // But get_account_balances is flexible.
-            // For now, let's just fetch EVERYTHING from 2000-01-01 to End of Year to cover Balance Sheet needs.
-            // For P&L, we might need a separate call or filter in processor if we want strict period matching.
-            // Actually, the new Processor logic expects aggregated input.
-            // Let's make TWO calls to be precise.
+            const prevYear = year - 1
 
             try {
-                // 1. Balance Sheet: All time (effectively)
-                const { data: balanceSheetData, error: bsError } = await supabase
-                    .rpc('get_account_balances', {
+                // Fetch current year and previous year in parallel
+                const [
+                    bsResult,
+                    plResult,
+                    prevBsResult,
+                    prevPlResult
+                ] = await Promise.all([
+                    // Balance Sheet: All time to current year end
+                    supabase.rpc('get_account_balances', {
                         date_from: '2000-01-01',
                         date_to: new Date(year, 11, 31).toISOString().split('T')[0]
-                    })
-
-                // 2. P&L: Current Year
-                const { data: incomeData, error: plError } = await supabase
-                    .rpc('get_account_balances', {
+                    }),
+                    // P&L: Current Year
+                    supabase.rpc('get_account_balances', {
                         date_from: new Date(year, 0, 1).toISOString().split('T')[0],
                         date_to: new Date(year, 11, 31).toISOString().split('T')[0]
+                    }),
+                    // Balance Sheet: All time to previous year end
+                    supabase.rpc('get_account_balances', {
+                        date_from: '2000-01-01',
+                        date_to: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+                    }),
+                    // P&L: Previous Year
+                    supabase.rpc('get_account_balances', {
+                        date_from: new Date(prevYear, 0, 1).toISOString().split('T')[0],
+                        date_to: new Date(prevYear, 11, 31).toISOString().split('T')[0]
                     })
+                ])
 
-                if (bsError) throw bsError
-                if (plError) throw plError
+                if (bsResult.error) throw bsResult.error
+                if (plResult.error) throw plResult.error
+                if (prevBsResult.error) throw prevBsResult.error
+                if (prevPlResult.error) throw prevPlResult.error
 
-                // We return both sets or handle them. 
-                // Currently the hook interface just exposes the final calculations.
-                // Let's store them separately in state.
-                setBsBalances(balanceSheetData || [])
-                setPlBalances(incomeData || [])
+                setBsBalances(bsResult.data || [])
+                setPlBalances(plResult.data || [])
+                setPrevBsBalances(prevBsResult.data || [])
+                setPrevPlBalances(prevPlResult.data || [])
             } catch (error) {
                 console.error('Failed to fetch financial reports:', error)
             } finally {
@@ -52,9 +65,6 @@ export function useFinancialReports() {
 
         fetchBalances()
     }, [])
-
-    const [bsBalances, setBsBalances] = useState<AccountBalance[]>([])
-    const [plBalances, setPlBalances] = useState<AccountBalance[]>([])
 
     const incomeStatement = useMemo(() => {
         if (isLoading || !plBalances.length) return null
@@ -66,30 +76,68 @@ export function useFinancialReports() {
         return FinancialReportProcessor.calculateBalanceSheet(bsBalances)
     }, [bsBalances, isLoading])
 
-    // Sectioned data for CollapsibleTableSection components
+    // Sectioned data with YoY comparison
     const incomeStatementSections = useMemo(() => {
         if (isLoading) return null
-        // Return empty structure if no data
         if (!plBalances.length) {
             return FinancialReportProcessor.getEmptyIncomeStatementSections()
         }
-        return FinancialReportProcessor.calculateIncomeStatementSections(plBalances)
-    }, [plBalances, isLoading])
+        const currentSections = FinancialReportProcessor.calculateIncomeStatementSections(plBalances)
+        const previousSections = prevPlBalances.length
+            ? FinancialReportProcessor.calculateIncomeStatementSections(prevPlBalances)
+            : null
+
+        // Merge previous year data into current sections
+        return mergeComparativeData(currentSections, previousSections)
+    }, [plBalances, prevPlBalances, isLoading])
 
     const balanceSheetSections = useMemo(() => {
         if (isLoading) return null
-        // Return empty structure if no data  
         if (!bsBalances.length) {
             return FinancialReportProcessor.getEmptyBalanceSheetSections()
         }
-        return FinancialReportProcessor.calculateBalanceSheetSections(bsBalances)
-    }, [bsBalances, isLoading])
+        const currentSections = FinancialReportProcessor.calculateBalanceSheetSections(bsBalances)
+        const previousSections = prevBsBalances.length
+            ? FinancialReportProcessor.calculateBalanceSheetSections(prevBsBalances)
+            : null
+
+        return mergeComparativeData(currentSections, previousSections)
+    }, [bsBalances, prevBsBalances, isLoading])
+
+    // Current and previous year for display
+    const currentYear = new Date().getFullYear()
+    const previousYear = currentYear - 1
 
     return {
         incomeStatement,
         balanceSheet,
         incomeStatementSections,
         balanceSheetSections,
-        isLoading
+        isLoading,
+        currentYear,
+        previousYear
     }
+}
+
+/**
+ * Merge previous year data into current sections for YoY comparison
+ */
+function mergeComparativeData(
+    currentSections: FinancialSection[],
+    previousSections: FinancialSection[] | null
+): FinancialSection[] {
+    if (!previousSections) return currentSections
+
+    return currentSections.map((section, sectionIdx) => {
+        const prevSection = previousSections[sectionIdx]
+
+        return {
+            ...section,
+            previousTotal: prevSection?.total ?? 0,
+            items: section.items.map((item, itemIdx) => ({
+                ...item,
+                previousValue: prevSection?.items[itemIdx]?.value ?? 0
+            }))
+        }
+    })
 }

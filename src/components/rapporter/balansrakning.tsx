@@ -16,7 +16,7 @@ export function BalansrakningContent() {
     const { companyType } = useCompany()
     const navigateToAI = useNavigateToAIChat()
     const router = useRouter()
-    const { balanceSheetSections, isLoading } = useFinancialReports()
+    const { balanceSheetSections, isLoading, currentYear, previousYear } = useFinancialReports()
 
     const handleRunAudit = () => {
         const context: PageContext = {
@@ -27,7 +27,7 @@ export function BalansrakningContent() {
             actionTrigger: {
                 icon: 'audit',
                 title: 'Balanskontroll',
-                subtitle: `Balansräkning ${new Date().getFullYear()}`,
+                subtitle: `Balansräkning ${currentYear}`,
             }
         }
         navigateToAI(context)
@@ -58,6 +58,7 @@ export function BalansrakningContent() {
                             id: item.id,
                             label: item.label,
                             value: item.value,
+                            previousValue: item.previousValue,
                             onClick: item.id ? () => {
                                 const params = new URLSearchParams()
                                 params.set("tab", "verifikationer")
@@ -66,8 +67,12 @@ export function BalansrakningContent() {
                             } : undefined
                         }))}
                         total={section.total}
+                        previousTotal={section.previousTotal}
                         defaultOpen={true}
                         neutral={true}
+                        showComparative={true}
+                        currentYear={currentYear}
+                        previousYear={previousYear}
                     />
                 ))}
             </div>

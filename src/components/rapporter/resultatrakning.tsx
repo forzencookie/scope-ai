@@ -16,12 +16,12 @@ export function ResultatrakningContent() {
     const { companyType } = useCompany()
     const navigateToAI = useNavigateToAIChat()
     const router = useRouter()
-    const { incomeStatementSections, isLoading } = useFinancialReports()
+    const { incomeStatementSections, isLoading, currentYear, previousYear } = useFinancialReports()
 
     return (
         <ReportLayout
             title="Resultaträkning"
-            subtitle={`Räkenskapsår ${new Date().getFullYear()} • ${companyType.toUpperCase()}`}
+            subtitle={`Räkenskapsår ${currentYear} • ${companyType.toUpperCase()}`}
             isLoading={isLoading}
             loadingMessage="Laddar resultaträkning..."
             hasData={!!incomeStatementSections && incomeStatementSections.length > 0}
@@ -42,6 +42,7 @@ export function ResultatrakningContent() {
                             id: item.id,
                             label: item.label,
                             value: item.value,
+                            previousValue: item.previousValue,
                             onClick: item.id ? () => {
                                 const params = new URLSearchParams()
                                 params.set("tab", "verifikationer")
@@ -50,8 +51,12 @@ export function ResultatrakningContent() {
                             } : undefined
                         }))}
                         total={section.total}
+                        previousTotal={section.previousTotal}
                         defaultOpen={idx < 3}
                         neutral={true}
+                        showComparative={true}
+                        currentYear={currentYear}
+                        previousYear={previousYear}
                     />
                 ))}
             </div>
