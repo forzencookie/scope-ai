@@ -32,7 +32,7 @@ import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { formatNumber } from "@/lib/utils"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { SRUPreviewDialog } from "./dialogs/sru"
-import { InkomstWizardDialog } from "./dialogs/assistent"
+import { InkomstWizardDialog, type InkomstWizardData } from "./dialogs/inkomst-wizard-dialog"
 import { useCompany } from "@/providers/company-provider"
 
 
@@ -69,6 +69,26 @@ export function InkomstdeklarationContent() {
             result: arsResultat,
             status: INVOICE_STATUS_LABELS.DRAFT,
             deadline: taxYear.deadlineLabel,
+        }
+    }, [calculatedData, taxYear])
+
+    // Prepare data for wizard dialog
+    const wizardData = useMemo<InkomstWizardData>(() => {
+        const taxRate = 0.206 // 20.6% corporate tax
+        const taxableIncome = calculatedData.totals.taxableResult || calculatedData.totals.netIncome
+        return {
+            taxYear: taxYear.year,
+            deadline: taxYear.deadlineLabel,
+            incomeStatement: {
+                revenue: calculatedData.totals.revenue,
+                expenses: calculatedData.totals.expenses,
+                netIncome: calculatedData.totals.netIncome,
+            },
+            taxAdjustments: {
+                adjustments: taxableIncome - calculatedData.totals.netIncome,
+                taxableIncome: taxableIncome,
+                estimatedTax: Math.round(Math.max(0, taxableIncome) * taxRate),
+            },
         }
     }, [calculatedData, taxYear])
 
@@ -216,6 +236,13 @@ export function InkomstdeklarationContent() {
                     <InkomstWizardDialog
                         open={showAIDialog}
                         onOpenChange={setShowAIDialog}
+                        data={wizardData}
+                        onConfirm={() => {
+                            toast({
+                                title: "Inkomstdeklaration sparad",
+                                description: `INK2 för ${taxYear.year} har sparats som utkast.`,
+                            })
+                        }}
                     />
                 </>
             }

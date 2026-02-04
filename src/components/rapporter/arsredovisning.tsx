@@ -14,7 +14,7 @@ import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
 import { ListCard, ListCardItem } from "@/components/ui/section-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { ArsredovisningWizardDialog } from "./dialogs/assistent"
+import { ArsredovisningWizardDialog, type ArsredovisningWizardData } from "./dialogs/arsredovisning-wizard-dialog"
 import { CollapsibleTableHeader } from "@/components/ui/collapsible-table"
 import { useVerifications } from "@/hooks/use-verifications"
 import { AnnualReportProcessor } from "@/services/processors/annual-report-processor"
@@ -36,6 +36,28 @@ export function ArsredovisningContent() {
     // Calculate fiscal year dynamically
     const currentYear = new Date().getFullYear()
     const fiscalYear = currentYear - 1 // Annual report is for previous year
+
+    // Calculate financials from verifications
+    const financials = useMemo(() => {
+        const incomeLines = AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear)
+        const balanceLines = AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${fiscalYear}-12-31`))
+
+        // Find key figures
+        const revenue = incomeLines.find(l => l.label === "Nettoomsättning")?.value || 0
+        const netIncome = incomeLines.find(l => l.label === "Årets resultat")?.value || 0
+        const totalAssets = balanceLines.find(l => l.label === "Summa tillgångar")?.value || 0
+
+        return { revenue, netIncome, totalAssets }
+    }, [verifications, fiscalYear])
+
+    // Prepare data for wizard dialog
+    const wizardData = useMemo<ArsredovisningWizardData>(() => ({
+        fiscalYear,
+        fiscalYearRange: `${fiscalYear}-01-01 – ${fiscalYear}-12-31`,
+        deadline: `30 jun ${currentYear}`,
+        companyType: companyTypeFullName || "Aktiebolag",
+        financials,
+    }), [fiscalYear, currentYear, companyTypeFullName, financials])
 
     // Determine section statuses based on real data
     const dynamicReportSections = useMemo(() => {
@@ -172,6 +194,10 @@ export function ArsredovisningContent() {
                     <ArsredovisningWizardDialog
                         open={showAIDialog}
                         onOpenChange={setShowAIDialog}
+                        data={wizardData}
+                        onConfirm={() => {
+                            toast.success("Årsredovisning sparad", `Årsredovisning för ${fiscalYear} har sparats som utkast.`)
+                        }}
                     />
                     <ReportPreviewDialog
                         open={previewOpen}

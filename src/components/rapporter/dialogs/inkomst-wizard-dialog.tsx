@@ -1,30 +1,88 @@
 "use client"
 
 import { AIWizardDialog } from "./ai-wizard-dialog"
+import { formatNumber } from "@/lib/utils"
+
+export interface InkomstWizardData {
+    taxYear: number
+    deadline: string
+    incomeStatement: {
+        revenue: number
+        expenses: number
+        netIncome: number
+    }
+    taxAdjustments: {
+        adjustments: number
+        taxableIncome: number
+        estimatedTax: number
+    }
+}
 
 interface InkomstWizardDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onConfirm?: () => void
+    data?: InkomstWizardData
 }
 
-export function InkomstWizardDialog({ open, onOpenChange, onConfirm }: InkomstWizardDialogProps) {
+// Default data when none provided
+function getDefaultData(): InkomstWizardData {
+    const currentYear = new Date().getFullYear()
+    return {
+        taxYear: currentYear - 1,
+        deadline: `1 jul ${currentYear}`,
+        incomeStatement: {
+            revenue: 0,
+            expenses: 0,
+            netIncome: 0,
+        },
+        taxAdjustments: {
+            adjustments: 0,
+            taxableIncome: 0,
+            estimatedTax: 0,
+        },
+    }
+}
+
+export function InkomstWizardDialog({ open, onOpenChange, onConfirm, data }: InkomstWizardDialogProps) {
+    const reportData = data || getDefaultData()
+
+    const handleConfirm = async () => {
+        try {
+            const response = await fetch('/api/reports/income-declaration', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    taxYear: reportData.taxYear,
+                    data: reportData,
+                    status: 'draft',
+                }),
+            })
+
+            if (response.ok) {
+                onConfirm?.()
+            }
+        } catch (err) {
+            console.error("Failed to save income declaration:", err)
+        }
+    }
+
     return (
         <AIWizardDialog
             open={open}
             onOpenChange={onOpenChange}
-            onConfirm={onConfirm}
+            onConfirm={handleConfirm}
             step1={{
                 title: "Välj beskattningsår",
-                periodLabel: "Inkomstår 2024",
+                periodLabel: `Inkomstår ${reportData.taxYear}`,
                 periodSubtitle: "INK2 - Aktiebolag",
                 deadlineLabel: "Deadline",
-                deadline: "1 jul 2025",
+                deadline: reportData.deadline,
                 icon: <span className="text-primary">📅</span>,
                 summaryItems: [
-                    { label: "Rörelseintäkter", value: "1 420 000 kr" },
-                    { label: "Rörelsekostnader", value: "-1 041 000 kr" },
-                    { label: "Bokfört resultat", value: "379 000 kr" },
+                    { label: "Rörelseintäkter", value: `${formatNumber(reportData.incomeStatement.revenue)} kr` },
+                    { label: "Rörelsekostnader", value: `${formatNumber(-reportData.incomeStatement.expenses)} kr` },
+                    { label: "Bokfört resultat", value: `${formatNumber(reportData.incomeStatement.netIncome)} kr` },
                 ],
             }}
             step2={{
@@ -42,16 +100,16 @@ export function InkomstWizardDialog({ open, onOpenChange, onConfirm }: InkomstWi
                 },
             }}
             step3={{
-                title: "INK2 - Inkomstår 2024",
+                title: `INK2 - Inkomstår ${reportData.taxYear}`,
                 subtitle: "Aktiebolag",
                 icon: <span>📄</span>,
                 summaryRows: [
-                    { label: "Rörelseresultat", value: "379 000 kr" },
-                    { label: "Skattemässiga justeringar", value: "0 kr" },
-                    { label: "Beräknad skatt (20,6%)", value: "78 074 kr" },
+                    { label: "Rörelseresultat", value: `${formatNumber(reportData.incomeStatement.netIncome)} kr` },
+                    { label: "Skattemässiga justeringar", value: `${formatNumber(reportData.taxAdjustments.adjustments)} kr` },
+                    { label: "Beräknad skatt (20,6%)", value: `${formatNumber(reportData.taxAdjustments.estimatedTax)} kr` },
                 ],
                 resultLabel: "Skattemässigt resultat",
-                resultValue: "379 000 kr",
+                resultValue: `${formatNumber(reportData.taxAdjustments.taxableIncome)} kr`,
             }}
         />
     )

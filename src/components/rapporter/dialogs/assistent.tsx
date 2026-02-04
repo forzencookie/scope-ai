@@ -19,5 +19,5 @@ export {
 
 // Re-export specialized wizard dialogs
 export { MomsWizardDialog } from "./moms-wizard-dialog"
-export { InkomstWizardDialog } from "./inkomst-wizard-dialog"
-export { ArsredovisningWizardDialog } from "./arsredovisning-wizard-dialog"
+export { InkomstWizardDialog, type InkomstWizardData } from "./inkomst-wizard-dialog"
+export { ArsredovisningWizardDialog, type ArsredovisningWizardData } from "./arsredovisning-wizard-dialog"
