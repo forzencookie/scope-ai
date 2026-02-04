@@ -1,6 +1,6 @@
 "use client"
 
-import { Calculator } from "lucide-react"
+import { Calculator, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/toast"
@@ -80,6 +80,11 @@ export function K10Content() {
                                 Blankett K10 för fåmansföretag. Beräkna gränsbeloppet för 3:12-reglerna.
                             </p>
                         </div>
+                        <Button onClick={handleExport} size="sm" className="w-full sm:w-auto">
+                            <FileDown className="h-4 w-4 sm:mr-2" />
+                            <span className="hidden sm:inline">Exportera SRU</span>
+                            <span className="sm:hidden">SRU</span>
+                        </Button>
                     </div>
 
                     {/* Stats Grid */}
