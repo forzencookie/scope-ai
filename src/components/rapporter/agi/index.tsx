@@ -13,6 +13,7 @@ import {
 import { SectionCard } from "@/components/ui/section-card"
 import { BulkActionToolbar, PageHeader } from "@/components/shared"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
+import { useToast } from "@/components/ui/toast"
 import { useEmployerDeclaration } from "./use-employer-declaration"
 import { AgiStats } from "./components/AgiStats"
 import { AgiGrid } from "./components/AgiGrid"
@@ -20,6 +21,7 @@ import { Clock, CheckCircle2 } from "lucide-react"
 
 export function AGIContent() {
     const navigateToAI = useNavigateToAIChat()
+    const toast = useToast()
     const {
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
@@ -40,7 +42,11 @@ export function AGIContent() {
                     title="Arbetsgivardeklaration"
                     subtitle="Hantera AGI-rapporter och skicka till Skatteverket."
                     actions={
-                        <Button size="sm" className="w-full sm:w-auto">
+                        <Button
+                            size="sm"
+                            className="w-full sm:w-auto"
+                            onClick={() => navigateToAI(getDefaultAIContext('agi'))}
+                        >
                             <Plus className="h-4 w-4 mr-2" />
                             Ny period
                         </Button>

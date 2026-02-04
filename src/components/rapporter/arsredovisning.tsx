@@ -8,6 +8,7 @@ import {
     Download,
     Send,
     FileText,
+    Plus,
 } from "lucide-react"
 import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
@@ -144,14 +145,27 @@ export function ArsredovisningContent() {
             aiTitle="AI-årsredovisning"
             aiDescription="Genereras automatiskt från bokföringen enligt K2."
             actions={
-                <Button
-                    onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}
-                    size="sm"
-                    className="w-full sm:w-auto"
-                >
-                    <Send className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Skicka till Bolagsverket</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button
+                        onClick={() => setShowAIDialog(true)}
+                        size="sm"
+                        className="w-full sm:w-auto"
+                    >
+                        <Plus className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Skapa årsredovisning</span>
+                        <span className="sm:hidden">Skapa</span>
+                    </Button>
+                    <Button
+                        onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}
+                        size="sm"
+                        variant="outline"
+                        className="w-full sm:w-auto"
+                    >
+                        <Send className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Skicka till Bolagsverket</span>
+                        <span className="sm:hidden">Skicka</span>
+                    </Button>
+                </div>
             }
             dialogs={
                 <>

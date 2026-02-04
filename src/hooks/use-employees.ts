@@ -52,7 +52,7 @@ export function useEmployees() {
                     name: employee.name,
                     role: employee.role,
                     email: employee.email,
-                    salary: employee.salary,
+                    monthly_salary: employee.salary,
                     status: 'active'
                 })
                 .select()

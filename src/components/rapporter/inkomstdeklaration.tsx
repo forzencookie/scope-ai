@@ -7,6 +7,7 @@ import {
     Clock,
     Send,
     FileDown,
+    Plus,
 } from "lucide-react"
 import { useToast } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
@@ -31,6 +32,7 @@ import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { formatNumber } from "@/lib/utils"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { SRUPreviewDialog } from "./dialogs/sru"
+import { InkomstWizardDialog } from "./dialogs/assistent"
 import { useCompany } from "@/providers/company-provider"
 
 
@@ -45,6 +47,7 @@ export function InkomstdeklarationContent() {
     const { verifications } = useVerifications()
     const { company } = useCompany()
     const [showSRUPreview, setShowSRUPreview] = useState(false)
+    const [showAIDialog, setShowAIDialog] = useState(false)
     const [activeFilter, setActiveFilter] = useState<"all" | "incomeStatement" | "balanceSheet" | "taxAdjustments">("all")
 
     // Get dynamic beskattningsår using shared hook
@@ -191,17 +194,30 @@ export function InkomstdeklarationContent() {
             aiTitle="AI-inkomstdeklaration"
             aiDescription="INK2-fälten genereras automatiskt från bokföringen."
             actions={
-                <Button size="sm" onClick={handleSend} className="w-full sm:w-auto">
-                    <Send className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Skicka till Skatteverket</span>
-                    <span className="sm:hidden">Skicka</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <Button size="sm" onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
+                        <Plus className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Skapa deklaration</span>
+                        <span className="sm:hidden">Skapa</span>
+                    </Button>
+                    <Button size="sm" variant="outline" onClick={handleSend} className="w-full sm:w-auto">
+                        <Send className="h-4 w-4 sm:mr-2" />
+                        <span className="hidden sm:inline">Skicka till Skatteverket</span>
+                        <span className="sm:hidden">Skicka</span>
+                    </Button>
+                </div>
             }
             dialogs={
-                <SRUPreviewDialog
-                    open={showSRUPreview}
-                    onOpenChange={setShowSRUPreview}
-                />
+                <>
+                    <SRUPreviewDialog
+                        open={showSRUPreview}
+                        onOpenChange={setShowSRUPreview}
+                    />
+                    <InkomstWizardDialog
+                        open={showAIDialog}
+                        onOpenChange={setShowAIDialog}
+                    />
+                </>
             }
         >
             <CollapsibleTableContainer>
