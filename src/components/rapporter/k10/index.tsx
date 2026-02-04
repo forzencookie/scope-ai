@@ -1,6 +1,6 @@
 "use client"
 
-import { Send, Calculator } from "lucide-react"
+import { Calculator } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { useToast } from "@/components/ui/toast"
@@ -25,10 +25,6 @@ export function K10Content() {
     
     // Logic Hook
     const { k10Data, taxYear } = useK10Calculation()
-
-    const handleSubmit = () => {
-        toast.info("Kommer snart", "Integration med Skatteverket är under utveckling.")
-    }
 
     const handleExport = async () => {
         toast.info("Exporterar SRU", "Förbereder K10 SRU-filer...")
@@ -83,12 +79,6 @@ export function K10Content() {
                             <p className="text-muted-foreground">
                                 Blankett K10 för fåmansföretag. Beräkna gränsbeloppet för 3:12-reglerna.
                             </p>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            <Button onClick={handleSubmit} size="sm" className="w-full sm:w-auto">
-                                <Send className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Skicka till Skatteverket</span>
-                            </Button>
                         </div>
                     </div>
 

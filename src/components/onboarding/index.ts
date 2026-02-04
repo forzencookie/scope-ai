@@ -1,5 +1,6 @@
 // Onboarding Components
 export { OnboardingWizard, useOnboarding } from "./onboarding-wizard"
+export { OnboardingPage } from "./onboarding-page"
 export { CompanyTypeSelector } from "./company-type-selector"
 export { ProgressiveDisclosure } from "./progressive-disclosure"
 

@@ -5,7 +5,6 @@ import {
     Calendar,
     TrendingUp,
     Clock,
-    Send,
     FileDown,
     Plus,
 } from "lucide-react"
@@ -177,13 +176,6 @@ export function InkomstdeklarationContent() {
         return sections
     }, [calculatedData])
 
-    const handleSend = () => {
-        toast({
-            title: "Kommer snart",
-            description: "Integration med Skatteverket är under utveckling.",
-        })
-    }
-
     const taxReportStats: TaxReportStat[] = [
         {
             label: "Beskattningsår",
@@ -214,18 +206,11 @@ export function InkomstdeklarationContent() {
             aiTitle="AI-inkomstdeklaration"
             aiDescription="INK2-fälten genereras automatiskt från bokföringen."
             actions={
-                <div className="flex items-center gap-2">
-                    <Button size="sm" onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
-                        <Plus className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Skapa deklaration</span>
-                        <span className="sm:hidden">Skapa</span>
-                    </Button>
-                    <Button size="sm" variant="outline" onClick={handleSend} className="w-full sm:w-auto">
-                        <Send className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Skicka till Skatteverket</span>
-                        <span className="sm:hidden">Skicka</span>
-                    </Button>
-                </div>
+                <Button size="sm" onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Skapa deklaration</span>
+                    <span className="sm:hidden">Skapa</span>
+                </Button>
             }
             dialogs={
                 <>

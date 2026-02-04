@@ -10,7 +10,6 @@ import {
 } from "@/components/ui/sidebar"
 import { ToastProvider } from "@/components/ui/toast"
 import { useOnboarding } from "@/components/onboarding/onboarding-wizard"
-import { LazyOnboardingWizard } from "@/components/shared"
 import { CompanyProvider } from "@/providers/company-provider"
 import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ModelProvider } from "@/providers/model-provider"
@@ -326,9 +325,16 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
 }
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
-    const { showOnboarding, completeOnboarding, skipOnboarding } = useOnboarding()
+    const { shouldRedirect, isLoading } = useOnboarding()
     const [sidebarMode, setSidebarMode] = useState<SidebarMode>("navigation")
     const router = useRouter()
+
+    // Redirect to onboarding page if needed
+    useEffect(() => {
+        if (!isLoading && shouldRedirect) {
+            router.push('/onboarding')
+        }
+    }, [isLoading, shouldRedirect, router])
 
     // Listen for AI navigation events
     useEffect(() => {
@@ -377,14 +383,8 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </div>
             </SidebarProvider>
 
-            <LazyOnboardingWizard
-                isOpen={showOnboarding}
-                onClose={skipOnboarding}
-                onComplete={completeOnboarding}
-            />
-
-            {/* Show upgrade modal for demo users after onboarding */}
-            {!showOnboarding && <DemoUpgradeModal />}
+            {/* Show upgrade modal for demo users */}
+            <DemoUpgradeModal />
         </>
     )
 }

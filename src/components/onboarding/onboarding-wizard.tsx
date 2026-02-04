@@ -223,6 +223,7 @@ export function useOnboarding() {
   const [showOnboarding, setShowOnboarding] = React.useState(false)
   const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(true)
   const [isLoading, setIsLoading] = React.useState(true)
+  const [shouldRedirect, setShouldRedirect] = React.useState(false)
 
   // Fetch onboarding status from database on mount
   React.useEffect(() => {
@@ -231,7 +232,7 @@ export function useOnboarding() {
     async function fetchOnboardingStatus() {
       try {
         const response = await fetch('/api/onboarding/status')
-        
+
         if (!response.ok) {
           // If not authenticated or error, assume onboarding completed (don't block)
           console.warn('[Onboarding] Could not fetch status, assuming completed')
@@ -243,18 +244,15 @@ export function useOnboarding() {
         }
 
         const data: OnboardingStatus = await response.json()
-        
+
         if (mounted) {
           setHasCompletedOnboarding(!data.needsOnboarding)
-          
-          // Show onboarding dialog if user needs it
+
+          // Set redirect flag if user needs onboarding
           if (data.needsOnboarding) {
-            // Small delay for better UX (let dashboard load first)
-            setTimeout(() => {
-              if (mounted) setShowOnboarding(true)
-            }, 500)
+            setShouldRedirect(true)
           }
-          
+
           setIsLoading(false)
         }
       } catch (error) {
@@ -325,6 +323,7 @@ export function useOnboarding() {
     showOnboarding,
     hasCompletedOnboarding,
     isLoading,
+    shouldRedirect,
     completeOnboarding,
     skipOnboarding,
     resetOnboarding,
