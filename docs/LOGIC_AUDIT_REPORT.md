@@ -418,3 +418,39 @@ await addVerification({
 - `src/components/rapporter/`
 - `src/hooks/use-financial-reports.ts`
 - `src/services/processors/reports/`
+
+---
+
+## Planned Feature: Balanskontroll AI Audit
+
+> Previously documented in: balansrakning-audit-plan.md
+
+### Overview
+
+Replace the purple AI card on Balansräkning page with a green "Balanskontroll" card that triggers an AI-powered audit.
+
+### Flow
+
+```
+Balansräkning page → Green card "Kör kontroll" button
+  → dispatches AI_CHAT_EVENT with actionTrigger
+  → AI chat sidebar opens, shows ActionTriggerChip
+  → AI auto-sends prompt, calls run_balance_sheet_audit tool
+  → Tool gathers cross-domain data, runs checks
+  → AI responds with structured card + natural language
+```
+
+### Audit Checks (Swedish Accountant Checklist)
+
+| Check | Data Source | What to Verify |
+|-------|-------------|----------------|
+| Balansräkningsprov | get_account_balances | Tillgångar = EK + Skulder |
+| Momsavstämning | tax_reports + accounts | Reported VAT matches booked (2640/2650) |
+| Kundfordringar | invoices + account 1510 | Open invoices match balance, flag >90 days |
+| Leverantörsskulder | supplier_invoices + 2440 | Open bills match balance |
+| Löneavstämning | payslips + 2710/2730/2731 | Payroll liabilities match payslips |
+| Avskrivningar | accounts 1200-1299 vs 7800-7899 | Depreciation booked for fixed assets |
+| Eget kapital | shareholders + 2081/2090 | Matches shareholder register |
+| Periodiseringar | accounts 1700/2900 ranges | Accruals/prepayments at period end |
+
+### Implementation Status: NOT STARTED

@@ -7,96 +7,67 @@
 
 ## Priority Order
 
-| # | Plan | Status | Completed |
-|---|------|--------|-----------|
-| 1 | [Logic Audit Fixes](./LOGIC_AUDIT_REPORT.md) | ⏳ Pending | - |
+| # | Plan | Status |
+|---|------|--------|
+| 1 | [Logic Audit Fixes](./LOGIC_AUDIT_REPORT.md) | ⏳ Pending |
 
 ---
 
 ## Completed Plans
 
-| Plan | Completed Date |
-|------|----------------|
+See [CHANGELOG.md](./CHANGELOG.md) for detailed history.
+
+| Plan | Completed |
+|------|-----------|
 | Profiles RLS Recursion Fix | 2026-02-04 |
-| [AI Tools Migration](./ai-tools-migration-plan.md) | 2026-02-04 |
-| [Agent Refactor](./AGENT_REFACTOR_PLAN.md) (Phase 1-5) | 2026-02-04 |
-| [AI Tools Audit](./AI_TOOLS_AUDIT.md) | 2026-01-27 |
-| [Performance Fix Plan](./PERFORMANCE_FIX_PLAN.md) | 2026-01-28 |
+| Agent System Overhaul | 2026-02-04 |
+| AI Tools Migration | 2026-02-04 |
+| Performance Fixes | 2026-01-28 |
+| AI Tools Audit | 2026-01-27 |
+| Security Audit & Fixes | 2026-01-26 |
+
+**Skipped:** TypeScript Errors (app builds fine, cosmetic only)
 
 ---
 
-## Security & Architecture Assessment (2026-02-04)
-
-### Security Status: IMPROVED but needs ongoing attention
-
-**Fixed Issues:**
-- ✅ Profiles RLS recursion - was causing infinite loops, now uses `is_admin()` SECURITY DEFINER function
-- ✅ Multiple overlapping RLS policies consolidated
-- ✅ `(SELECT auth.uid())` pattern used for performance (single evaluation vs per-row)
-
-**Remaining Concerns:**
-1. **Events table** - Still flagged in Logic Audit as having security issues (user_id column added but verify RLS is properly enforced)
-2. **Settings persistence** - 8/10 settings tabs are decorative only (no data leak, but misleading UX)
-3. **Rate limiting tables** - Intentionally permissive for anon (correct design, but document why)
-
-### Data Leakage Risk: LOW
-
-- All user tables have RLS enabled with `user_id = auth.uid()` policies
-- Admin checks now use SECURITY DEFINER function (no recursion)
-- FK constraints to `auth.users(id)` ensure referential integrity
-- Service role access is properly scoped
-
-### Code Quality: MODERATE
-
-**Strengths:**
-- Clean separation of AI tools by domain (bokforing, loner, skatt, etc.)
-- Consistent tool interface pattern across all AI tools
-- TypeScript types generally well-defined
-
-**Areas for Improvement:**
-- 48 migrations with overlapping changes - consider squashing for new deployments
-- Some hardcoded mock data still present (see Logic Audit)
-- Test coverage appears limited
-
-### Architecture: GOOD
-
-**Strengths:**
-- Domain-driven organization (bokforing, loner, parter, skatt)
-- AI tools properly separated from UI components
-- Supabase RLS provides defense-in-depth
-
-**Recommendations:**
-1. Complete Logic Audit fixes (Phase 1 critical items first)
-2. Add integration tests for RLS policies
-3. Consider migration consolidation for cleaner history
-
----
-
-## Skipped / Low Priority
-
-| Plan | Reason |
-|------|--------|
-| [TypeScript Errors](./TYPESCRIPT_ERRORS_FIX_PLAN.md) | App builds fine, cosmetic only |
-
----
-
-## Reference Documentation
+## Documentation Structure
 
 | Document | Purpose |
 |----------|---------|
-| [Preview Features](./PREVIEW_FEATURES.md) | Lists features that are UI-complete but not connected to real backends |
+| **ROADMAP.md** | Project status tracker (this file) |
+| **CHANGELOG.md** | Historical record of completed work |
+| **ARCHITECTURE.md** | Technical reference (codebase, security, performance) |
+| **LOGIC_AUDIT_REPORT.md** | Pending fixes and implementation tasks |
+| **PREVIEW_FEATURES.md** | Features awaiting external integrations |
+| **ai-conversation-scenarios.md** | AI conversation examples (79KB) |
+| **walkthrough-designs.md** | UI design specifications (102KB) |
+| **ai-memory-architecture.md** | AI memory system design |
 
 ---
 
-## Workflow
+## Current Assessment (2026-02-04)
 
-When completing a plan:
+### Security: 8.5/10
+- ✅ RLS on all tables with `user_id = auth.uid()`
+- ✅ Profiles recursion fixed via `is_admin()` function
+- ✅ Admin checks use SECURITY DEFINER
+- ⚠️ Events table RLS needs verification
 
-1. Mark the plan as ✅ Complete in this file
-2. Add the completion date
-3. Edit the original plan doc to add a header like:
+### Code Quality: B+ (81/100)
+- ✅ Clean domain separation
+- ✅ Consistent AI tool patterns
+- ⚠️ 48 migrations need consolidation
+- ⚠️ Limited test coverage
 
-```markdown
-> **Status:** ✅ COMPLETE  
-> **Completed:** YYYY-MM-DD
-```
+### Architecture: A-
+- ✅ Domain-driven (bokforing, loner, skatt, parter)
+- ✅ Single unified AI agent (Scope Brain)
+- ✅ Supabase RLS defense-in-depth
+
+---
+
+## Next Steps
+
+1. Complete Logic Audit Phase 1 (critical blockers)
+2. Add integration tests for RLS policies
+3. Consider migration squashing for new deployments
