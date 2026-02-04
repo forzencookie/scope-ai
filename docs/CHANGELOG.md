@@ -4,6 +4,35 @@ Historical record of completed plans, audits, and major changes.
 
 ---
 
+## 2026-02-04: Logic & Functionality Audit Complete
+
+> Previously documented in: LOGIC_AUDIT_REPORT.md
+
+**Status:** 11/11 tasks complete (100%)
+
+| Task | Evidence |
+|------|----------|
+| Fix AI schema error | All tools use JSON Schema format |
+| Fix events table security | Migration `20260128100000_fix_events_security.sql` |
+| Settings persistence | `use-preferences.ts` hook, used in 5 tabs |
+| Fix payroll employer contributions | 7510/2730 in `use-create-payslip-logic.ts` |
+| Fix broken dialogs | MotionDialog passes form data |
+| Fix hardcoded "Rice" | Removed from codebase |
+| Connect theme to next-themes | `useTheme` in appearance-tab.tsx |
+| Balanskontroll AI Audit | `audit.ts` with `run_balance_sheet_audit` |
+| Add customers table | Migration `20260204000002_create_customers_table.sql` |
+| Add suppliers table | Migration `20260204000003_create_suppliers_table.sql` |
+| Add comparative periods | `use-financial-reports.ts` fetches YoY data |
+
+**Functionality summary:**
+- Bokföring: 95% UI, 90% Logic
+- Rapporter: 90% UI, 90% Logic (YoY comparatives added)
+- Fakturering: 90% UI, 85% Logic (Customer registry added)
+- Löner: 85% UI, 70% Logic (Employer contributions fixed)
+- AI Chat: 90% UI, 85% Logic (Schema errors fixed)
+
+---
+
 ## 2026-02-04: Profiles RLS Recursion Fix
 
 **Issue:** Profiles table RLS policies queried the profiles table itself to check admin status, causing infinite recursion.
@@ -134,3 +163,4 @@ These files were consolidated into this changelog on 2026-02-04:
 - `AI_TOOLS_AUDIT.md` → Deleted
 - `AI_AUDIT_COMPLETE.md` → Deleted
 - `TYPESCRIPT_ERRORS_FIX_PLAN.md` → Deleted
+- `LOGIC_AUDIT_REPORT.md` → Deleted
