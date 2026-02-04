@@ -45,21 +45,6 @@ export const getRoadmapsTool = defineTool<{ status?: string }, Roadmap[]>({
                 success: true,
                 data: filtered,
                 message: `Du har ${filtered.length} ${params.status ? (params.status === 'active' ? 'aktiva' : params.status === 'completed' ? 'slutförda' : 'pausade') : ''} planer.`,
-                display: {
-                    component: 'TaskChecklist',
-                    title: 'Affärsplaner',
-                    props: {
-                        items: withProgress.map(r => ({
-                            id: r.id,
-                            title: r.title,
-                            description: r.description,
-                            progress: r.progress,
-                            status: r.status,
-                            subtitle: `${r.completedSteps}/${r.totalSteps} steg klara`,
-                        })),
-                    },
-                    fullViewRoute: '/dashboard/handelser?view=roadmap',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch roadmaps:', error)
@@ -279,20 +264,6 @@ export const generateRoadmapSuggestionsTool = defineTool<{ goal: string; context
             success: true,
             data: suggestion,
             message: `Förslag för "${params.goal}": ${suggestion.suggestedSteps.length} steg, uppskattad tid ${suggestion.estimatedTotalDays} dagar.`,
-            display: {
-                component: 'TaskChecklist',
-                title: `Förslag: ${suggestion.title}`,
-                props: {
-                    items: suggestion.suggestedSteps.map((s, i) => ({
-                        id: String(i + 1),
-                        title: s.title,
-                        description: s.description,
-                        status: 'pending',
-                        subtitle: s.estimatedDays ? `~${s.estimatedDays} dagar` : undefined,
-                    })),
-                    showCreateButton: true,
-                },
-            },
         }
     },
 })

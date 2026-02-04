@@ -8,6 +8,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import {
     type ProcessedFinancialItem,
 } from '@/services/processors/reports-processor'
+import { companyService } from '@/services/company-service'
 
 // =============================================================================
 // Financial Statement Tools
@@ -15,7 +16,7 @@ import {
 
 export const getIncomeStatementTool = defineTool<Record<string, never>, ProcessedFinancialItem[]>({
     name: 'get_income_statement',
-    description: 'Hämta resultaträkning med intäkter, kostnader och årets resultat.',
+    description: 'Hämta resultaträkning med intäkter, kostnader och årets resultat. Visar hur lönsamt företaget är. Vanliga frågor: "hur går det", "vad är vinsten", "resultat i år".',
     category: 'read',
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
@@ -31,7 +32,7 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
 
 export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFinancialItem[]>({
     name: 'get_balance_sheet',
-    description: 'Hämta balansräkning med tillgångar, skulder och eget kapital.',
+    description: 'Hämta balansräkning med tillgångar, skulder och eget kapital. Visar företagets ekonomiska ställning. Använd för att kolla soliditet, likviditet, eller svara på "hur mycket pengar har vi", "vad är vi skyldiga".',
     category: 'read',
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
@@ -56,7 +57,7 @@ export interface ExportSIEParams {
 
 export const exportSIETool = defineTool<ExportSIEParams, { filename: string; url: string }>({
     name: 'export_sie',
-    description: 'Exportera bokföringen som SIE-fil. Kan användas för revision eller byte av bokföringsprogram.',
+    description: 'Exportera bokföringen som SIE-fil (svenskt standardformat). Använd för revision, byte av bokföringsprogram, eller när revisorn begär underlag. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -100,7 +101,7 @@ export interface FinancialReportParams {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const generateFinancialReportTool = defineTool<FinancialReportParams, any>({
     name: 'generate_financial_report',
-    description: 'Skapa en finansiell rapport (Resultat- och Balansräkning).',
+    description: 'Skapa en samlad finansiell rapport med resultat- och balansräkning för en period. Kan jämföra mot tidigare år.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -128,7 +129,7 @@ export interface AnnualReportParams {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
     name: 'draft_annual_report',
-    description: 'Skapa utkast för årsredovisning (K2).',
+    description: 'Skapa utkast för årsredovisning (K2). Innehåller förvaltningsberättelse, resultaträkning, balansräkning och noter. Använd när användaren vill göra sin årsredovisning eller frågar om bokslut.',
     category: 'write',
     requiresConfirmation: false, // Preview first
     parameters: {
@@ -138,13 +139,39 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
         },
         required: ['year'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
+        const userId = context?.userId
+        let companyName = ''
+        let orgNumber = ''
+        let fiscalYearEnd = '12-31'
+
+        if (userId) {
+            try {
+                const company = await companyService.getByUserId(userId)
+                if (company) {
+                    companyName = company.name
+                    orgNumber = company.orgNumber || ''
+                    fiscalYearEnd = company.fiscalYearEnd || '12-31'
+                }
+            } catch { /* use empty */ }
+        }
+
+        if (!companyName) {
+            return {
+                success: false,
+                data: {},
+                message: 'Företagsinformation saknas. Gå till Inställningar > Företag för att fylla i uppgifter.',
+            }
+        }
+
+        const [fyMonth, fyDay] = fiscalYearEnd.split('-')
+
         const annualReportData = {
-            companyName: "Din Företag AB",
-            orgNumber: "556123-4567",
+            companyName,
+            orgNumber,
             period: `${params.year}`,
             fiscalYearStart: `${params.year}-01-01`,
-            fiscalYearEnd: `${params.year}-12-31`,
+            fiscalYearEnd: `${params.year}-${fyMonth}-${fyDay}`,
             sections: {
                 managementReport: true,
                 incomeStatement: true,
@@ -152,18 +179,14 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
                 notes: true,
                 signatures: false
             },
-            keyFigures: [
-                { label: "Nettoomsättning (tkr)", currentYear: 2450, previousYear: 2100 },
-                { label: "Resultat efter finansnetto (tkr)", currentYear: 350, previousYear: 280 },
-                { label: "Soliditet (%)", currentYear: 45, previousYear: 42 },
-            ],
+            keyFigures: [],
             status: "draft"
         }
 
         return {
             success: true,
             data: annualReportData,
-            message: `Årsredovisning för ${params.year} skapad (utkast).`,
+            message: `Årsredovisning för ${params.year} skapad (utkast). Nyckeltal saknas — bokför transaktioner för att fylla i automatiskt.`,
         }
     }
 })
@@ -192,7 +215,7 @@ export interface INK2Data {
 
 export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
     name: 'prepare_ink2',
-    description: 'Förbered inkomstdeklaration (INK2) för aktiebolag. Beräknar skatt och visar skatteoptimering.',
+    description: 'Förbered inkomstdeklaration (INK2) för aktiebolag. Beräknar bolagsskatt och visar skatteoptimeringsförslag som periodiseringsfond. Använd när användaren vill deklarera eller frågar om skatt.',
     category: 'write',
     requiresConfirmation: false,
     parameters: {
@@ -238,7 +261,7 @@ export interface YearEndResult {
 
 export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResult>({
     name: 'close_fiscal_year',
-    description: 'Stäng räkenskapsåret. Skapar bokslutsposter och överför resultat till eget kapital.',
+    description: 'Stäng räkenskapsåret och skapa bokslutsposter. Överför årets resultat till eget kapital och skapar ingående balanser för nästa år. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -275,7 +298,7 @@ export interface GenerateManagementReportParams {
 
 export const generateManagementReportTool = defineTool<GenerateManagementReportParams, string>({
     name: 'generate_management_report',
-    description: 'Generera förvaltningsberättelse för årsredovisningen baserat på årets siffror.',
+    description: 'Generera förvaltningsberättelse för årsredovisningen. AI skriver texten baserat på årets siffror. Använd när användaren behöver hjälp att skriva förvaltningsberättelsen.',
     category: 'write',
     requiresConfirmation: false,
     parameters: {

@@ -20,15 +20,15 @@ export interface GetAccountsParams {
 
 export const getAccountsTool = defineTool<GetAccountsParams, Account[]>({
     name: 'get_accounts',
-    description: 'Hämta konton från kontoplanen (BAS). Kan filtreras på kontoklass och sökterm.',
+    description: 'Hämta konton från BAS-kontoplanen. Kan filtrera på kontoklass (1=Tillgångar, 2=Skulder, 3=Intäkter, 4-8=Kostnader) och sökterm. Använd för att hitta rätt konto att bokföra på.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
         type: 'object',
         properties: {
             search: { type: 'string', description: 'Sök på kontonummer eller kontonamn' },
-            accountClass: { 
-                type: 'string', 
+            accountClass: {
+                type: 'string',
                 enum: ['1', '2', '3', '4', '5', '6', '7', '8'],
                 description: 'Kontoklass: 1=Tillgångar, 2=Skulder/EK, 3=Intäkter, 4-8=Kostnader'
             },
@@ -68,7 +68,7 @@ export const getAccountsTool = defineTool<GetAccountsParams, Account[]>({
             return {
                 success: true,
                 data: accounts,
-                message: params.accountClass 
+                message: params.accountClass
                     ? `Hittade ${totalCount} konton i klass ${params.accountClass} (${classLabels[params.accountClass]}), visar ${accounts.length}.`
                     : `Hittade ${totalCount} konton, visar ${accounts.length}.`,
             }
@@ -93,7 +93,7 @@ export interface GetAccountBalanceParams {
 
 export const getAccountBalanceTool = defineTool<GetAccountBalanceParams, Account | null>({
     name: 'get_account_balance',
-    description: 'Hämta saldo för ett specifikt konto.',
+    description: 'Hämta saldo för ett specifikt bokföringskonto. Använd för att se aktuellt saldo på bankkonto, skattekonto, eller liknande.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -136,7 +136,7 @@ export const getAccountBalanceTool = defineTool<GetAccountBalanceParams, Account
 
 export const getBalanceSheetSummaryTool = defineTool<{ year?: number }, AccountBalanceSummary>({
     name: 'get_balance_sheet_summary',
-    description: 'Hämta en sammanfattning av balansräkningen: tillgångar, skulder, eget kapital.',
+    description: 'Hämta sammanfattning av balansräkningen: totala tillgångar, skulder, eget kapital och resultat. Använd för snabb överblick över bolagets ekonomiska ställning.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -173,7 +173,7 @@ export const getBalanceSheetSummaryTool = defineTool<{ year?: number }, AccountB
 
 export const getChartOfAccountsTool = defineTool<{ year?: number }, Record<string, Account[]>>({
     name: 'get_chart_of_accounts',
-    description: 'Hämta hela kontoplanen grupperad efter kontoklass.',
+    description: 'Hämta hela kontoplanen grupperad efter kontoklass. Använd för att se vilka konton som används eller för att exportera kontoplan.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {

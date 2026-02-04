@@ -1,5 +1,11 @@
 "use client"
 
+/**
+ * @deprecated Use BlockRenderer from ./blocks instead.
+ * This renderer is kept for backwards compatibility.
+ * New AI outputs use W: protocol and block primitives.
+ */
+
 import { cn } from "@/lib/utils"
 import { CARD_REGISTRY } from "./card-registry"
 
@@ -16,10 +22,10 @@ export interface CardRendererProps {
 
 export function CardRenderer({ display, className }: CardRendererProps) {
     const { type, data, component, props, title } = display
-    
+
     // Normalize card type
     const cardType = (type || component || "").toLowerCase()
-    
+
     // Get component from registry
     const Component = CARD_REGISTRY[cardType]
 
@@ -29,13 +35,13 @@ export function CardRenderer({ display, className }: CardRendererProps) {
     const cardProps = {
         // Spread data (e.g. { receipt: {...} } -> props.receipt)
         ...(typeof data === 'object' ? data : {}),
-        
+
         // Spread props
         ...(props || {}),
-        
+
         // Explicitly pass data as 'data' prop for components that expect it (like previews)
         data: data,
-        
+
         title: title,
         className
     }

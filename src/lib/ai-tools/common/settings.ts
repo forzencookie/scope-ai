@@ -9,7 +9,7 @@
 
 import { defineTool } from '../registry'
 import { settingsService } from '@/services/settings-service'
-import type { 
+import type {
     SubscriptionStatus as ServiceSubscriptionStatus,
     NotificationPreferences as ServiceNotificationPreferences,
     Integration as ServiceIntegration,
@@ -65,11 +65,6 @@ export const getSubscriptionStatusTool = defineTool<Record<string, never>, Subsc
             success: true,
             data: status,
             message: `Du har ${status.plan}-planen. Använt ${usagePercent}% av AI-förfrågningar (${status.usageThisMonth.aiRequests}/${status.usageThisMonth.aiRequestsLimit}) denna månad.`,
-            display: {
-                component: 'SubscriptionPreview',
-                title: 'Prenumeration',
-                props: { data: status },
-            },
             navigation: {
                 route: '/dashboard/installningar?tab=billing',
                 label: 'Hantera prenumeration',
@@ -217,19 +212,6 @@ export const listActiveIntegrationsTool = defineTool<Record<string, never>, Inte
             message: integrations.length === 0
                 ? 'Inga integrationer konfigurerade ännu.'
                 : `${connectedCount} av ${integrations.length} integrationer anslutna.`,
-            display: {
-                component: 'DataTable',
-                title: 'Aktiva integrationer',
-                props: {
-                    columns: ['Tjänst', 'Typ', 'Status', 'Senast synkad'],
-                    rows: integrations.map(i => [
-                        i.name,
-                        i.type === 'bank' ? 'Bank' : i.type === 'calendar' ? 'Kalender' : i.type === 'payment' ? 'Betalning' : i.type === 'email' ? 'E-post' : i.type === 'accounting' ? 'Bokföring' : 'Annat',
-                        i.status === 'connected' ? '🟢 Ansluten' : i.status === 'pending' ? '🟡 Väntar' : i.status === 'error' ? '🔴 Fel' : '⚪ Ej ansluten',
-                        i.lastSync ? new Date(i.lastSync).toLocaleString('sv-SE') : '-',
-                    ]),
-                },
-            },
             navigation: {
                 route: '/dashboard/installningar?tab=integrations',
                 label: 'Hantera integrationer',

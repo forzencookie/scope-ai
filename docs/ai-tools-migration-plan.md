@@ -1,5 +1,11 @@
 # AI Tools Migration Plan
 
+> **Status:** ✅ COMPLETE  
+> **Phase 1:** ✅ Complete (2026-01-XX) - Block primitives & renderer built  
+> **Phase 2:** ✅ Complete (2026-02-04) - All `display:` fields removed from tools  
+> **Phase 3:** ✅ Complete (2026-02-04) - System prompt enhanced with block library & domain guidance  
+> **Phase 4:** ✅ Complete (2026-02-04) - Deprecated types marked, legacy infrastructure preserved for fallback
+
 From hardcoded card displays to AI-composed block walkthroughs.
 
 ---

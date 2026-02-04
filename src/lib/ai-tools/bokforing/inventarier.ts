@@ -19,7 +19,7 @@ export interface GetAssetsParams {
 
 export const getAssetsTool = defineTool<GetAssetsParams, Inventarie[]>({
     name: 'get_assets',
-    description: 'Hämta inventarier och anläggningstillgångar. Kan filtreras på kategori eller status.',
+    description: 'Hämta inventarier och anläggningstillgångar (maskiner, datorer, möbler etc). Visar inköpspris, kvarvarande värde och avskrivningsstatus.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -69,7 +69,7 @@ export interface CreateAssetParams {
 
 export const createAssetTool = defineTool<CreateAssetParams, Inventarie>({
     name: 'create_asset',
-    description: 'Registrera en ny inventarie/anläggningstillgång. Skapar automatiskt avskrivningsplan.',
+    description: 'Registrera en ny inventarie/anläggningstillgång. Skapar automatiskt avskrivningsplan baserat på ekonomisk livslängd. Använd när användaren köpt dator, maskin, bil, eller annan utrustning över halva prisbasbeloppet. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -88,7 +88,7 @@ export const createAssetTool = defineTool<CreateAssetParams, Inventarie>({
         const inkopsdatum = params.inkopsdatum || new Date().toISOString().split('T')[0]
         const livslangdAr = params.livslangdAr ?? 5
         const kategori = params.kategori || 'Inventarier'
-        
+
         // Calculate annual depreciation
         const arligAvskrivning = Math.round(params.inkopspris / livslangdAr)
         const manatligAvskrivning = Math.round(arligAvskrivning / 12)
@@ -150,7 +150,7 @@ export interface DepreciationResult {
 
 export const calculateDepreciationTool = defineTool<CalculateDepreciationParams, DepreciationResult>({
     name: 'calculate_depreciation',
-    description: 'Beräkna avskrivning för inventarier. Kan beräkna för en period eller visa avskrivningsplan.',
+    description: 'Beräkna avskrivning för inventarier. Visar hur mycket som ska skrivas av varje månad/år och kvarvarande bokfört värde.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -162,16 +162,16 @@ export const calculateDepreciationTool = defineTool<CalculateDepreciationParams,
     },
     execute: async (params) => {
         const { inventarier } = await inventarieService.getInventarier({ limit: 100 })
-        
+
         // Filter active assets
         let assets = inventarier.filter(i => i.status === 'aktiv' || !i.status)
-        
+
         if (params.assetId) {
             assets = assets.filter(i => i.id === params.assetId)
         }
 
         const period = params.period || new Date().toLocaleString('sv-SE', { month: 'long', year: 'numeric' })
-        
+
         // Calculate monthly depreciation for each asset
         const depreciationDetails = assets.map(asset => {
             const monthlyDep = Math.round(asset.inkopspris / (asset.livslangdAr * 12))
@@ -179,7 +179,7 @@ export const calculateDepreciationTool = defineTool<CalculateDepreciationParams,
             const monthsOwned = 12 // Simplified
             const totalDepreciated = monthlyDep * monthsOwned
             const remainingValue = Math.max(0, asset.inkopspris - totalDepreciated)
-            
+
             return {
                 id: asset.id,
                 namn: asset.namn,
@@ -220,7 +220,7 @@ export interface BookDepreciationResult {
 
 export const bookDepreciationTool = defineTool<BookDepreciationParams, BookDepreciationResult>({
     name: 'book_depreciation',
-    description: 'Bokför månatliga avskrivningar för inventarier. Skapar verifikation automatiskt.',
+    description: 'Bokför månatliga/årliga avskrivningar för inventarier. Skapar verifikation automatiskt. Använd vid månadsavslut eller bokslut. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -233,7 +233,7 @@ export const bookDepreciationTool = defineTool<BookDepreciationParams, BookDepre
     },
     execute: async (params) => {
         const { inventarier } = await inventarieService.getInventarier({ limit: 100 })
-        
+
         let assets = inventarier.filter(i => i.status === 'aktiv' || !i.status)
         if (params.assetIds && params.assetIds.length > 0) {
             assets = assets.filter(i => params.assetIds!.includes(i.id))
@@ -292,7 +292,7 @@ export interface DisposeAssetResult {
 
 export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResult>({
     name: 'dispose_asset',
-    description: 'Avyttra/sälj en inventarie. Beräknar vinst/förlust och skapar bokföringsunderlag.',
+    description: 'Avyttra, sälj eller skrota en inventarie. Beräknar vinst/förlust vid försäljning och skapar korrekta bokföringsposter. Använd när användaren säljer bil, dator eller annan utrustning. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -310,14 +310,14 @@ export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResul
         const salePrice = params.salePrice ?? 0
         const reason = params.reason ?? 'såld'
         const disposeDate = params.disposeDate || new Date().toISOString().split('T')[0]
-        
+
         // Mock book value calculation (in production, calculate from depreciation)
         const bookValue = 5000 // Would be calculated
         const gainLoss = salePrice - bookValue
 
-        const gainLossText = gainLoss > 0 
+        const gainLossText = gainLoss > 0
             ? `Vinst: ${gainLoss.toLocaleString('sv-SE')} kr`
-            : gainLoss < 0 
+            : gainLoss < 0
                 ? `Förlust: ${Math.abs(gainLoss).toLocaleString('sv-SE')} kr`
                 : 'Inget resultat'
 

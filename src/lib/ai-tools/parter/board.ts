@@ -6,11 +6,11 @@
  */
 
 import { defineTool } from '../registry'
-import { 
-    boardService, 
-    BoardMember, 
+import {
+    boardService,
+    BoardMember,
     BoardMeetingMinutes,
-    CompanyMeeting 
+    CompanyMeeting
 } from '@/services/board-service'
 
 // =============================================================================
@@ -49,18 +49,6 @@ export const getBoardMembersTool = defineTool<Record<string, never>, BoardMember
                 success: true,
                 data: members,
                 message: summary,
-                display: {
-                    component: 'BoardMembersList',
-                    props: { 
-                        members,
-                        chairperson,
-                        ceo,
-                        regularMembers,
-                        substitutes
-                    },
-                    title: 'Styrelse',
-                    fullViewRoute: '/dashboard/agare?tab=styrelseprotokoll',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch board members:', error)
@@ -109,12 +97,6 @@ export const getBoardMeetingMinutesTool = defineTool<GetBoardMeetingMinutesParam
                 success: true,
                 data: minutes,
                 message: `Hittade ${totalCount} styrelseprotokoll, visar ${minutes.length}.`,
-                display: {
-                    component: 'BoardMeetingMinutesList',
-                    props: { minutes },
-                    title: 'Styrelseprotokoll',
-                    fullViewRoute: '/dashboard/agare?tab=styrelseprotokoll',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch board meeting minutes:', error)
@@ -168,15 +150,9 @@ export const getCompanyMeetingsTool = defineTool<GetCompanyMeetingsParams, Compa
             return {
                 success: true,
                 data: meetings,
-                message: params?.type 
+                message: params?.type
                     ? `Hittade ${totalCount} ${typeLabel[params.type]}, visar ${meetings.length}.`
                     : `Hittade ${totalCount} möten, visar ${meetings.length}.`,
-                display: {
-                    component: 'CompanyMeetingsList',
-                    props: { meetings },
-                    title: 'Bolagsmöten',
-                    fullViewRoute: '/dashboard/agare?tab=bolagsstamma',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch company meetings:', error)

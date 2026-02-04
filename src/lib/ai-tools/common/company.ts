@@ -20,18 +20,18 @@ function getBaseUrl() {
 export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | null>({
     name: 'get_company_info',
     description: 'Hämta information om företaget: namn, organisationsnummer, företagsform, räkenskapsår, momsinställningar.',
-    parameters: { 
-        type: 'object' as const, 
+    parameters: {
+        type: 'object' as const,
         properties: {
             userId: { type: 'string', description: 'User ID (optional, uses context if not provided)' }
-        } 
+        }
     },
     requiresConfirmation: false,
     category: 'read',
     execute: async (params, context) => {
         // Get user ID from params or context
         const userId = params?.userId || context?.userId
-        
+
         if (!userId) {
             return {
                 success: false,
@@ -74,18 +74,6 @@ export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | 
             success: true,
             data: company,
             message: `${company.name} (${company.orgNumber || 'Org.nr ej angivet'}) - ${companyTypeLabels[company.companyType] || company.companyType}. Räkenskapsår slutar ${company.fiscalYearEnd}. Moms: ${vatFrequencyLabels[company.vatFrequency] || company.vatFrequency}.`,
-            display: {
-                component: 'CompanyInfoCard',
-                props: { 
-                    company: {
-                        ...company,
-                        companyTypeLabel: companyTypeLabels[company.companyType],
-                        vatFrequencyLabel: vatFrequencyLabels[company.vatFrequency],
-                    }
-                },
-                title: 'Företagsinformation',
-                fullViewRoute: '/dashboard/installningar',
-            },
         }
     },
 })
@@ -111,7 +99,7 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const baseUrl = getBaseUrl()
-        
+
         // Fetch real data from API endpoints (these respect RLS)
         let employeeCount = 0
         const pendingVat = 0
@@ -122,7 +110,7 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
 
         try {
             // Fetch employees
-            const empRes = await fetch(`${baseUrl}/api/employees`, { 
+            const empRes = await fetch(`${baseUrl}/api/employees`, {
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/json' }
             })
@@ -178,12 +166,6 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
             success: true,
             data: stats,
             message: `Omsättning: ${revenue.toLocaleString('sv-SE')} kr. Resultat: ${profit.toLocaleString('sv-SE')} kr. ${stats.upcomingDeadlines} kommande deadlines.`,
-            display: {
-                component: 'CompanyStats',
-                props: { stats },
-                title: 'Företagsöversikt',
-                fullViewRoute: '/dashboard',
-            },
         }
     },
 })

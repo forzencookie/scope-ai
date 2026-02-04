@@ -206,29 +206,31 @@ function EnskildFirmaOwnerInfo() {
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Firmanamn</p>
-                                <p className="text-lg">{company?.name || 'Demo Enskild Firma'}</p>
+                                <p className="text-lg">{company?.name || <span className="text-muted-foreground italic">Ej angivet</span>}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Organisationsform</p>
                                 <p className="text-lg">Enskild firma (EF)</p>
                             </div>
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">Registreringsdatum</p>
-                                <p className="text-lg">2023-01-15</p>
-                            </div>
+                            {company?.registrationDate && (
+                                <div>
+                                    <p className="text-sm font-medium text-muted-foreground">Registreringsdatum</p>
+                                    <p className="text-lg">{company.registrationDate}</p>
+                                </div>
+                            )}
                         </div>
                         <div className="space-y-4">
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Företagare</p>
-                                <p className="text-lg">Anna Andersson</p>
-                            </div>
-                            <div>
-                                <p className="text-sm font-medium text-muted-foreground">F-skatt</p>
-                                <p className="text-lg text-green-600 dark:text-green-500/70">Godkänd</p>
+                                <p className="text-lg">{company?.contactPerson || <span className="text-muted-foreground italic">Ej angivet</span>}</p>
                             </div>
                             <div>
                                 <p className="text-sm font-medium text-muted-foreground">Momsregistrerad</p>
-                                <p className="text-lg text-green-600 dark:text-green-500/70">Ja</p>
+                                <p className="text-lg">{company?.hasMomsRegistration ? (
+                                    <span className="text-green-600 dark:text-green-500/70">Ja</span>
+                                ) : (
+                                    <span className="text-muted-foreground">Nej</span>
+                                )}</p>
                             </div>
                         </div>
                     </div>

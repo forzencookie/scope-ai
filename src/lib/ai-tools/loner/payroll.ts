@@ -6,6 +6,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll-service'
+import { companyService } from '@/services/company-service'
 
 // =============================================================================
 // Payslip Tools
@@ -18,7 +19,7 @@ export interface GetPayslipsParams {
 
 export const getPayslipsTool = defineTool<GetPayslipsParams, Payslip[]>({
     name: 'get_payslips',
-    description: 'Hämta lönebesked för anställda. Kan filtreras på period eller anställd.',
+    description: 'Hämta genererade lönebesked för anställda. Kan filtrera på period eller person. Använd för att visa tidigare utbetalningar eller skapa underlag till AGI.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -46,19 +47,13 @@ export const getPayslipsTool = defineTool<GetPayslipsParams, Payslip[]>({
             success: true,
             data: payslips,
             message: `Hittade ${payslips.length} lönebesked.`,
-            display: {
-                component: 'PayslipsTable',
-                props: { payslips },
-                title: 'Lönebesked',
-                fullViewRoute: '/dashboard/loner?tab=lonebesked',
-            },
         }
     },
 })
 
 export const getEmployeesTool = defineTool<Record<string, never>, Employee[]>({
     name: 'get_employees',
-    description: 'Hämta lista över alla anställda.',
+    description: 'Visa alla anställda med deras grundlön, anställningsform och roll. Använd för att få överblick eller inför lönekörning.',
     category: 'read',
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
@@ -69,12 +64,6 @@ export const getEmployeesTool = defineTool<Record<string, never>, Employee[]>({
             success: true,
             data: employees,
             message: `Du har ${employees.length} anställda.`,
-            display: {
-                component: 'EmployeeList',
-                props: { employees },
-                title: 'Anställda',
-                fullViewRoute: '/dashboard/loner?tab=personal',
-            },
         }
     },
 })
@@ -90,7 +79,7 @@ export interface RunPayrollParams {
 
 export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
     name: 'run_payroll',
-    description: 'Kör lönekörning för en period. Kräver bekräftelse.',
+    description: 'Kör lönekörning för en månad. Beräknar nettolön, skatt och arbetsgivaravgifter. Skapar lönebesked för alla eller valda anställda. Vanliga frågor: "gör lönerna", "kör lönerna för mars", "betala ut löner". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -101,7 +90,21 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         },
         required: ['period'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
+        // Fetch company info for display
+        let companyName = ''
+        let orgNumber = ''
+        const userId = context?.userId
+        if (userId) {
+            try {
+                const company = await companyService.getByUserId(userId)
+                if (company) {
+                    companyName = company.name
+                    orgNumber = company.orgNumber || ''
+                }
+            } catch { /* use empty */ }
+        }
+
         // Fetch real employees
         const realEmployees = await payrollService.getEmployees()
         let employees = [...realEmployees]
@@ -150,28 +153,6 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             data: payslips,
             message: `Lönekörning förberedd för ${payslips.length} anställda. Total: ${totalGross.toLocaleString('sv-SE')} kr.`,
             confirmationRequired: confirmationRequest,
-            display: {
-                component: "PayslipPreview",
-                title: "Förhandsgranska Lönekörning",
-                props: {
-                    company: {
-                        name: "Din Företag AB", // Should fetch from company settings 
-                        orgNumber: "556000-0000"
-                    },
-                    employee: {
-                        name: employees[0]?.name || "Anställd",
-                        role: employees[0]?.role,
-                        employeeId: employees[0]?.id
-                    },
-                    period: params.period,
-                    grossSalary: employees[0]?.monthlySalary || 0,
-                    netSalary: Math.round((employees[0]?.monthlySalary || 0) * 0.75),
-                    employerContributions: Math.round((employees[0]?.monthlySalary || 0) * 0.3142),
-                    // Just showing the first one as example for the preview
-                    // In reality maybe we want a carousel or summary?
-                    // For now, let's show the first payslip as the preview example
-                }
-            }
         }
     },
 })
@@ -184,7 +165,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
 
 export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
     name: 'get_agi_reports',
-    description: 'Hämta AGI-rapporter (arbetsgivardeklarationer). Kan filtreras på period.',
+    description: 'Visa arbetsgivardeklarationer (AGI) som skickats eller är klara för inskickning. Innehåller summor för utbetald lön, skatt och arbetsgivaravgifter.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -229,12 +210,6 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
             success: true,
             data: reports,
             message: `Hittade ${reports.length} AGI-rapporter. Senaste: Skatt ${r.totalTax.toLocaleString('sv-SE')} kr, arbetsgivaravgifter ${r.employerContributions.toLocaleString('sv-SE')} kr.`,
-            display: {
-                component: 'AGIFormPreview',
-                props: { data: agiData },
-                title: 'AGI-rapporter',
-                fullViewRoute: '/dashboard/rapporter?tab=agi',
-            },
         }
     },
 })
@@ -245,7 +220,7 @@ export interface SubmitAGIParams {
 
 export const submitAGITool = defineTool<SubmitAGIParams, { submitted: boolean; referenceNumber: string }>({
     name: 'submit_agi_declaration',
-    description: 'Skicka in arbetsgivardeklaration (AGI) till Skatteverket. Kräver alltid bekräftelse.',
+    description: 'Skicka arbetsgivardeklaration (AGI) till Skatteverket. Innehåller alla löner och skatteavdrag för perioden. Deadline: 12:e varje månad. Vanliga frågor: "skicka AGI", "skicka in löneuppgifter". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {

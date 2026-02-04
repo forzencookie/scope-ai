@@ -43,13 +43,6 @@ export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
             success: true,
             data: filtered,
             message: `Hittade ${filtered.length} tillgängliga förmåner.`,
-            display: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                component: 'BenefitsTable' as any,
-                props: { benefits: filtered },
-                title: 'Tillgängliga Förmåner',
-                fullViewRoute: '/dashboard/loner?tab=formaner',
-            },
         }
     },
 })

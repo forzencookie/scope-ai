@@ -22,7 +22,7 @@ export interface GetVerificationsParams {
 
 export const getVerificationsTool = defineTool<GetVerificationsParams, Verification[]>({
     name: 'get_verifications',
-    description: 'Hämta verifikationer från bokföringen. Kan filtreras på serie, datum och sökterm.',
+    description: 'Hämta verifikationer (bokföringsposter) från huvudboken. Kan filtreras på serie, datum och sökterm. Använd för att hitta specifika bokföringsposter eller förstå vad en viss post gäller.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -89,7 +89,7 @@ export const getVerificationStatsTool = defineTool<Record<string, never>, {
     execute: async () => {
         try {
             const stats = await verificationService.getStats()
-            
+
             return {
                 success: true,
                 data: stats,
@@ -151,15 +151,15 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
         const monthlyAmount = Math.round(params.totalAmount / params.months)
         const sourceAccount = params.sourceAccount || '1790'
         const targetAccount = params.targetAccount || '6310'
-        
+
         // Generate entries for each month
         const startDate = new Date(params.startDate)
         const entries: PeriodizationEntry[] = []
-        
+
         for (let i = 0; i < params.months; i++) {
             const entryDate = new Date(startDate)
             entryDate.setMonth(entryDate.getMonth() + i)
-            
+
             entries.push({
                 period: entryDate.toLocaleString('sv-SE', { month: 'long', year: 'numeric' }),
                 amount: monthlyAmount,
@@ -228,7 +228,7 @@ export const reverseVerificationTool = defineTool<ReverseVerificationParams, Rev
     execute: async (params) => {
         const reversalDate = params.reversalDate || new Date().toISOString().split('T')[0]
         const reversalId = `ver-${Date.now()}-rev`
-        
+
         // In production, fetch the original verification and swap debit/credit
         const mockAmount = 5000 // Would be fetched
 
@@ -285,8 +285,8 @@ export const createAccrualTool = defineTool<CreateAccrualParams, AccrualResult>(
     parameters: {
         type: 'object',
         properties: {
-            type: { 
-                type: 'string', 
+            type: {
+                type: 'string',
                 enum: ['upplupen_kostnad', 'upplupen_intakt', 'forutbetald_kostnad', 'forutbetald_intakt'],
                 description: 'Typ av periodavgränsning'
             },

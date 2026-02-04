@@ -141,13 +141,13 @@ export function downloadVatXML(report: VatReport, company: CompanyInfo): void {
 }
 
 /**
- * Default company info for demo/testing
+ * Empty company info placeholder — must be filled from company settings before export
  */
 export const defaultCompanyInfo: CompanyInfo = {
-    organisationsnummer: "556123-4567",
-    momsregistreringsnummer: "SE556123456701",
-    foretagsnamn: "Demo AB",
-    gatuadress: "Exempelgatan 1",
-    postnummer: "123 45",
-    postort: "Stockholm",
+    organisationsnummer: "",
+    momsregistreringsnummer: "",
+    foretagsnamn: "",
+    gatuadress: "",
+    postnummer: "",
+    postort: "",
 }

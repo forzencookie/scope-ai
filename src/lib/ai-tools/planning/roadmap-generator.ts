@@ -40,15 +40,6 @@ export const generateRoadmapTool = {
                 roadmapId: roadmap.id,
                 roadmapTitle: roadmap.title,
                 stepCount: roadmap.steps?.length,
-                display: {
-                    type: 'roadmap_preview',
-                    data: {
-                        id: roadmap.id,
-                        title: roadmap.title,
-                        description: roadmap.description,
-                        steps: roadmap.steps
-                    }
-                }
             }
         } catch (error) {
             console.error("Failed to generate roadmap:", error)

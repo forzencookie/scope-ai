@@ -28,7 +28,7 @@ export interface GetTransactionsParams {
 
 export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction[]>({
     name: 'get_transactions',
-    description: 'Hämta transaktioner från bokföringen. Kan filtreras på period, belopp och status.',
+    description: 'Hämta banktransaktioner för ett datumintervall. Använd för att visa kontoutdrag, hitta specifika betalningar, analysera utgifter, eller förbereda avstämning mot bokföring. Vanliga frågor: "visa mina transaktioner", "vad har jag köpt", "kontoutdrag januari".',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -121,7 +121,7 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
             if (res.ok) {
                 const data = await res.json()
                 transactions = (data.transactions || []).slice(0, params.limit || 10)
-                
+
                 // Apply amount filters client-side if provided
                 if (params.minAmount !== undefined) {
                     transactions = transactions.filter(t => Math.abs(Number(t.amount || 0)) >= params.minAmount!)
@@ -152,7 +152,7 @@ export interface CategorizeTransactionParams {
 
 export const categorizeTransactionTool = defineTool<CategorizeTransactionParams, { success: boolean }>({
     name: 'categorize_transaction',
-    description: 'Kategorisera en transaktion till ett konto.',
+    description: 'Kategorisera en enskild banktransaktion till ett BAS-konto. Använd efter att ha identifierat vilken typ av kostnad/intäkt transaktionen representerar. T.ex. "Spotify 169 kr" → konto 6993 (IT-tjänster).',
     category: 'write',
     requiresConfirmation: false,
     parameters: {
@@ -201,7 +201,7 @@ export interface CreatedTransaction {
 
 export const createTransactionTool = defineTool<CreateTransactionParams, CreatedTransaction>({
     name: 'create_transaction',
-    description: 'Skapa en manuell transaktion/verifikation.',
+    description: 'Skapa en manuell verifikation för poster som inte kommer via bank, t.ex. kontant betalning, ägarinsättning, periodisering, eller justering. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -265,7 +265,7 @@ export interface BulkCategorizeResult {
 
 export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, BulkCategorizeResult>({
     name: 'bulk_categorize_transactions',
-    description: 'Kontera flera transaktioner automatiskt. Kan kategorisera alla okonerade eller baserat på mönster.',
+    description: 'Kategorisera flera transaktioner på en gång. Använd när användaren säger "kontera januari", "bokför allt", eller vill snabbt hantera återkommande transaktioner som hyra, löner, eller prenumerationer. Föreslår konton baserat på leverantörsnamn. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -293,31 +293,31 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
     execute: async (params) => {
         // Fetch uncategorized transactions if no IDs provided
         let transactions: Transaction[] = []
-        
+
         try {
             const baseUrl = getBaseUrl()
             const queryParams = new URLSearchParams()
             queryParams.set('status', 'pending')
             queryParams.set('limit', '100')
-            
+
             const res = await fetch(`${baseUrl}/api/transactions?${queryParams}`, {
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/json' }
             })
-            
+
             if (res.ok) {
                 const data = await res.json()
                 transactions = data.transactions || []
-                
+
                 // Filter by pattern if provided
                 if (params.pattern) {
                     const pattern = params.pattern.toLowerCase()
-                    transactions = transactions.filter(t => 
+                    transactions = transactions.filter(t =>
                         t.name?.toLowerCase().includes(pattern) ||
                         (t as Transaction & { description?: string }).description?.toLowerCase().includes(pattern)
                     )
                 }
-                
+
                 // Filter by specific IDs if provided
                 if (params.transactionIds && params.transactionIds.length > 0) {
                     transactions = transactions.filter(t => params.transactionIds!.includes(t.id))
@@ -331,7 +331,7 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
         const confirmationSummary = [
             { label: 'Antal transaktioner', value: String(count) },
         ]
-        
+
         if (params.pattern) {
             confirmationSummary.push({ label: 'Mönster', value: params.pattern })
         }
@@ -365,7 +365,7 @@ export interface GetTransactionsMissingReceiptsParams {
 
 export const getTransactionsMissingReceiptsTool = defineTool<GetTransactionsMissingReceiptsParams, Transaction[]>({
     name: 'get_transactions_missing_receipts',
-    description: 'Visa transaktioner som saknar kvitto. Användbart för att säkerställa bokföringsunderlag.',
+    description: 'Lista transaktioner över 500 kr som saknar bifogat kvitto. Använd för att följa upp dokumentation inför bokslut eller revision. Vanliga frågor: "vilka kvitton saknas", "vad måste jag ladda upp".',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -384,16 +384,16 @@ export const getTransactionsMissingReceiptsTool = defineTool<GetTransactionsMiss
     execute: async (params) => {
         const minAmount = params.minAmount ?? 500
         const limit = params.limit ?? 20
-        
+
         let transactions: Transaction[] = []
-        
+
         try {
             const baseUrl = getBaseUrl()
             const res = await fetch(`${baseUrl}/api/transactions?limit=100&missingReceipt=true`, {
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/json' }
             })
-            
+
             if (res.ok) {
                 const data = await res.json()
                 transactions = (data.transactions || [])
@@ -434,7 +434,7 @@ export interface PaymentMatchResult {
 
 export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams, PaymentMatchResult>({
     name: 'match_payment_to_invoice',
-    description: 'Matcha en betalning (banktransaktion) mot en faktura. Markerar fakturan som betald.',
+    description: 'Koppla en inbetalning till en kundfaktura för att markera fakturan som betald och bokföra betalningen korrekt. Använd när du ser en betalning på kontot och vill stänga motsvarande faktura. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -458,7 +458,7 @@ export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams,
         // 3. Verify amounts match
         // 4. Create verification entries
         // 5. Mark invoice as paid
-        
+
         return {
             success: true,
             data: {

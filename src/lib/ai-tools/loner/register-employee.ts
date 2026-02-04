@@ -25,19 +25,6 @@ export const registerEmployeeTool: AITool = {
         return {
             success: true,
             message: `Jag har förberett registrering av ${name}. Ser det korrekt ut?`,
-            display: {
-                component: "EmployeeList",
-                props: {
-                    employees: [{
-                        name,
-                        role,
-                        email,
-                        salary,
-                        id: 'preview',
-                        status: 'active'
-                    }]
-                }
-            },
             confirmationRequired: {
                 title: `Registrera ${name}?`,
                 description: "Detta lägger till en ny anställd i systemet.",

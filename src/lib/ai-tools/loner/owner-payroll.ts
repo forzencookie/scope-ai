@@ -43,7 +43,7 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
     },
     execute: async (params) => {
         const year = params.year || new Date().getFullYear()
-        
+
         // 2024+ rates for egenavgifter
         const rates = {
             sjukforsakring: 0.0338,
@@ -58,7 +58,7 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
         // Schablonavdrag is 25% of egenavgifterna
         const totalRate = Object.values(rates).reduce((sum, r) => sum + r, 0)
         const schablonMultiplier = params.deductSchablon !== false ? 0.75 : 1
-        
+
         const baseForFees = params.income * schablonMultiplier
         const egenavgifter = Math.round(baseForFees * totalRate)
         const schablonAvdrag = Math.round(params.income * 0.25 * totalRate)
@@ -82,17 +82,6 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
                 breakdown,
             },
             message: `Egenavgifter på ${params.income.toLocaleString('sv-SE')} kr: ${egenavgifter.toLocaleString('sv-SE')} kr (ca ${(totalRate * 100 * schablonMultiplier).toFixed(1)}%).`,
-            display: {
-                component: 'SelfEmploymentPreview',
-                title: 'Egenavgifter',
-                props: {
-                    income: params.income,
-                    fees: egenavgifter,
-                    breakdown,
-                    year,
-                },
-                fullViewRoute: '/dashboard/loner?tab=egenavgifter',
-            },
         }
     },
 })
@@ -227,41 +216,41 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         // 2024+ constants
         const IBB = 74300 // Inkomstbasbelopp
         const PBB = 57300 // Prisbasbelopp
-        
+
         // Förenklingsregeln: 2.75 × IBB
         const forenklingsbelopp = Math.round(2.75 * IBB * (ownershipPercent / 100))
-        
+
         // Salary requirement for lönebaserat utrymme: 6 × IBB + 5% of company salaries
         const minSalaryForLoneutrymme = 6 * IBB
-        
+
         // Check if current salary qualifies for löneunderlag
         const qualifiesForLoneutrymme = currentSalary >= minSalaryForLoneutrymme
-        
+
         // Calculate optimal salary (just above 6 × IBB threshold)
         const optimalSalary = Math.max(currentSalary, Math.round(minSalaryForLoneutrymme * 1.05))
-        
+
         // Gränsbelopp (simplified)
-        const gransbelopp = qualifiesForLoneutrymme 
+        const gransbelopp = qualifiesForLoneutrymme
             ? Math.round(optimalSalary * 0.5 * (ownershipPercent / 100))
             : forenklingsbelopp
-        
+
         // Take the higher of förenkling or lönebaserat
         const effectiveGransbelopp = Math.max(forenklingsbelopp, gransbelopp)
-        
+
         // Calculate optimal dividend (up to gränsbelopp is taxed at 20%)
         const optimalDividend = Math.min(effectiveGransbelopp, companyProfit * 0.794 * (ownershipPercent / 100)) // After 20.6% corp tax
-        
+
         // Tax calculations
         const dividendTax = Math.round(optimalDividend * 0.20) // 20% on qualified dividends
         const salaryTax = Math.round(optimalSalary * 0.32) // ~32% marginal tax (simplified)
         const totalTax = dividendTax + salaryTax
-        
+
         // Compare to all salary
         const allSalaryTax = Math.round((optimalSalary + optimalDividend) * 0.52) // ~52% top marginal
         const savings = allSalaryTax - totalTax
 
-        const recommendation = optimalDividend > optimalSalary ? 'dividend' : 
-                              optimalDividend > 0 ? 'mix' : 'salary'
+        const recommendation = optimalDividend > optimalSalary ? 'dividend' :
+            optimalDividend > 0 ? 'mix' : 'salary'
 
         const explanation = `
 Med ${ownershipPercent}% ägande är ditt gränsbelopp ${effectiveGransbelopp.toLocaleString('sv-SE')} kr.
@@ -290,19 +279,6 @@ Med ${ownershipPercent}% ägande är ditt gränsbelopp ${effectiveGransbelopp.to
                 explanation,
             },
             message: `3:12-optimering för ${params.ownerName}: Gränsbelopp ${effectiveGransbelopp.toLocaleString('sv-SE')} kr. Besparing: ${savings.toLocaleString('sv-SE')} kr.`,
-            display: {
-                component: 'Optimization312Preview',
-                title: '3:12-optimering',
-                props: {
-                    ownerName: params.ownerName,
-                    gransbelopp: effectiveGransbelopp,
-                    optimalSalary,
-                    optimalDividend,
-                    savings,
-                    year,
-                },
-                fullViewRoute: '/dashboard/rapporter?tab=k10',
-            },
         }
     },
 })

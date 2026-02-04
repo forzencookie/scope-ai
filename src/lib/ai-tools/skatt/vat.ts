@@ -14,7 +14,7 @@ import { vatService, type VATDeclaration, type VATStats } from '@/services/vat-s
 
 export const getVatReportTool = defineTool<{ period?: string; year?: number }, VATDeclaration[]>({
     name: 'get_vat_report',
-    description: 'Hämta momsdeklarationer. Visar utgående och ingående moms samt nettobelopp.',
+    description: 'Visa momsdeklarationer med utgående och ingående moms. Beräknar nettobelopp att betala/få tillbaka. Använd för att förbereda momsredovisning. Vanliga frågor: "dags för momsen", "hur mycket moms ska jag betala", "momsrapporten".',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -27,12 +27,12 @@ export const getVatReportTool = defineTool<{ period?: string; year?: number }, V
     execute: async (params) => {
         // Fetch real VAT declarations from database
         const declarations = await vatService.getDeclarations(params.year)
-        
+
         // Filter by period string if provided
         let filtered = declarations
         if (params.period) {
             const periodLower = params.period.toLowerCase()
-            filtered = declarations.filter(d => 
+            filtered = declarations.filter(d =>
                 d.period.toLowerCase().includes(periodLower)
             )
         }
@@ -70,7 +70,7 @@ export const getVatReportTool = defineTool<{ period?: string; year?: number }, V
         const totalOutput = filtered.reduce((sum, d) => sum + d.outputVat, 0)
         const totalInput = filtered.reduce((sum, d) => sum + d.inputVat, 0)
         const totalNet = filtered.reduce((sum, d) => sum + d.netVat, 0)
-        
+
         const latestDeclaration = filtered[0]
         const action = totalNet > 0 ? 'betala' : 'få tillbaka'
         const message = filtered.length === 1
@@ -81,20 +81,6 @@ export const getVatReportTool = defineTool<{ period?: string; year?: number }, V
             success: true,
             data: filtered,
             message,
-            display: {
-                component: 'VatSummary',
-                props: {
-                    periods: filtered,
-                    summary: {
-                        outputVat: totalOutput,
-                        inputVat: totalInput,
-                        netVat: totalNet,
-                        dueDate: latestDeclaration.dueDate,
-                    }
-                },
-                title: 'Momsdeklaration',
-                fullViewRoute: '/dashboard/rapporter?tab=momsdeklaration',
-            },
         }
     },
 })
@@ -109,7 +95,7 @@ export interface SubmitVatParams {
 
 export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; referenceNumber: string }>({
     name: 'submit_vat_declaration',
-    description: 'Skicka in momsdeklaration till Skatteverket. Kräver alltid bekräftelse.',
+    description: 'Skicka momsdeklaration till Skatteverket för en period. Deadline: 12:e (26:e för stora företag). Visar förhandsgranskning innan bekräftelse. Vanliga frågor: "skicka momsen", "deklarera moms". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -123,10 +109,10 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
         // Fetch real data for the period
         const declarations = await vatService.getDeclarations()
         const periodLower = params.period.toLowerCase()
-        const matchingDeclaration = declarations.find(d => 
+        const matchingDeclaration = declarations.find(d =>
             d.period.toLowerCase().includes(periodLower)
         )
-        
+
         // Use real data if found, otherwise get current stats
         let vatData: { outputVat: number; inputVat: number; netVat: number }
         if (matchingDeclaration) {
@@ -162,19 +148,6 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
             data: { submitted: false, referenceNumber: '' },
             message: `Momsdeklaration för ${params.period} förberedd för inskickning.`,
             confirmationRequired: confirmationRequest,
-            display: {
-                component: 'VATFormPreview',
-                props: { 
-                    data: {
-                        period: params.period,
-                        totalOutputVAT: vatData.outputVat,
-                        totalInputVAT: vatData.inputVat,
-                        netVAT: vatData.netVat,
-                    }
-                },
-                title: 'Momsdeklaration',
-                fullViewRoute: '/dashboard/rapporter?tab=momsdeklaration',
-            },
         }
     },
 })

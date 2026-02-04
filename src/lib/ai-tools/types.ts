@@ -16,7 +16,7 @@ export type FunctionParameters = {
         description?: string
         enum?: string[]
         format?: string
-        items?: { 
+        items?: {
             type: string
             properties?: Record<string, {
                 type: string
@@ -91,6 +91,7 @@ export interface AIToolResult<T = unknown> {
     error?: string
 
     /** 
+     * @deprecated Use walkthrough blocks (W: protocol) instead.
      * Display instructions for the frontend.
      * If present, the AI workspace should render this component.
      */
@@ -110,7 +111,9 @@ export interface AIToolResult<T = unknown> {
 }
 
 /**
- * Instructions for rendering a component inline in the chat
+ * @deprecated Use block primitives (src/components/ai/blocks) instead.
+ * Instructions for rendering a component inline in the chat.
+ * The new system uses W: protocol and block-renderer.tsx.
  */
 export interface AIDisplayInstruction {
     /** Component type to render */

@@ -97,6 +97,13 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                     if (line.startsWith('T:')) {
                         const contentDelta = JSON.parse(line.slice(2))
                         fullContent += contentDelta
+                    } else if (line.startsWith('TH:')) {
+                        // Extended thinking from Sonnet - consume but don't display to user
+                        // This is internal reasoning, logged only in development
+                        if (process.env.NODE_ENV === 'development') {
+                            const thinking = JSON.parse(line.slice(3))
+                            console.debug('[AI Thinking]', thinking)
+                        }
                     } else if (line.startsWith('W:')) {
                         const walkthroughData = JSON.parse(line.slice(2)) as WalkthroughBlockResponse
                         lastData = {
@@ -211,9 +218,9 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
         } else if (hasStructuredOutput) {
             window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
                 detail: {
-                    contentType: (lastData?.display as { component?: string })?.component || 
+                    contentType: (lastData?.display as { component?: string })?.component ||
                         (lastData?.confirmationRequired ? 'confirmation' : 'action'),
-                    title: (lastData?.display as { title?: string })?.title || 
+                    title: (lastData?.display as { title?: string })?.title ||
                         (lastData?.confirmationRequired ? 'Bekräfta åtgärd' : 'Åtgärd slutförd'),
                     content: fullContent,
                     data: lastData,

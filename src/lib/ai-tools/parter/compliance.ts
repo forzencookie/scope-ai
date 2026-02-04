@@ -19,7 +19,7 @@ export interface GetComplianceDocsParams {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>({
     name: 'get_compliance_docs',
-    description: 'Hämta bolagsdokument som styrelseprotokoll eller stämmoprotokoll.',
+    description: 'Hämta bolagsdokument som styrelseprotokoll, stämmoprotokoll eller aktieboken. Använd för att hitta tidigare beslut, kontrollera ägande, eller förbereda intyg.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -48,13 +48,6 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>(
                     success: true,
                     data: displayDocs,
                     message: `Hittade ${docs.length} dokument, visar de senaste ${displayDocs.length}.`,
-                    display: {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        component: 'ComplianceList' as any,
-                        props: { documents: displayDocs },
-                        title: 'Bolagsdokument',
-                        fullViewRoute: '/dashboard/agare',
-                    },
                 }
             }
         } catch (error) {
@@ -78,7 +71,7 @@ export interface RegisterDividendParams {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const registerDividendTool = defineTool<RegisterDividendParams, any>({
     name: 'register_dividend',
-    description: 'Registrera ett utdelningsbeslut från bolagsstämma. Kräver bekräftelse.',
+    description: 'Registrera ett utdelningsbeslut från bolagsstämma. Skapar underlag för K10 och Skatteverket. Vanliga frågor: "ta utdelning", "bestämde 100 000 i utdelning". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -122,7 +115,7 @@ export interface DraftBoardMinutesParams {
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
     name: 'draft_board_minutes',
-    description: 'Skapa ett utkast till styrelseprotokoll eller stämmoprotokoll.',
+    description: 'Skapa utkast till styrelseprotokoll eller årsstämmoprotokoll. Fyller i mallen med beslut och närvarande. Använd när användaren behöver protokoll.',
     category: 'write',
     requiresConfirmation: false, // We use the preview as "drafting" step
     parameters: {
@@ -134,20 +127,54 @@ export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
         },
         required: ['type'],
     },
-    execute: async (params) => {
-        // Mock data for preview
+    execute: async (params, context) => {
+        // Fetch real company info and board members
+        let companyName = ''
+        let attendees: Array<{ name: string; role: string; present: boolean }> = []
+        let signatures: Array<{ role: string; name: string }> = []
+
+        const userId = context?.userId
+        if (userId) {
+            try {
+                const company = await companyService.getByUserId(userId)
+                if (company) companyName = company.name
+            } catch { /* use empty */ }
+
+            try {
+                const boardMembers = await boardService.getSignatories()
+                attendees = boardMembers.map(m => ({
+                    name: m.name,
+                    role: m.role,
+                    present: true,
+                }))
+                // First and last as chairman/secretary
+                if (boardMembers.length > 0) {
+                    signatures.push({ role: 'Ordförande', name: boardMembers[0].name })
+                }
+                if (boardMembers.length > 1) {
+                    signatures.push({ role: 'Sekreterare', name: boardMembers[boardMembers.length - 1].name })
+                }
+            } catch { /* use empty */ }
+        }
+
+        if (!companyName) {
+            return {
+                success: false,
+                data: {},
+                message: 'Företagsinformation saknas. Gå till Inställningar > Företag för att fylla i uppgifter.',
+            }
+        }
+
+        const meetingType = params.type === 'annual_general_meeting' ? "Årsstämma" : "Styrelsemöte"
+
         const boardMinutesData = {
-            companyName: "Din Företag AB",
-            meetingType: params.type === 'annual_general_meeting' ? "Årsstämma" : "Styrelsemöte",
-            meetingNumber: "1/2026",
+            companyName,
+            meetingType,
+            meetingNumber: "",
             date: params.date || new Date().toISOString().split('T')[0],
-            time: "10:00 - 11:30",
-            location: "Huvudkontoret",
-            attendees: [
-                { name: "Anna Andersson", role: "Chairman", present: true },
-                { name: "Erik Eriksson", role: "Member", present: true },
-                { name: "Lars Larsson", role: "Secretary", present: true },
-            ],
+            time: "",
+            location: "",
+            attendees,
             agenda: [
                 "Mötets öppnande",
                 "Val av ordförande och sekreterare",
@@ -163,31 +190,14 @@ export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
                 description: d,
                 decision: d,
                 type: "decision"
-            })) || [
-                    {
-                        id: "d-1",
-                        paragraph: "§5",
-                        title: "Beslut om firmateckning",
-                        description: "Styrelsen diskuterade bolagets firmateckning.",
-                        decision: "Styrelsen beslutar att firman tecknas av styrelsen gemensamt.",
-                        type: "decision"
-                    }
-                ],
-            signatures: [
-                { role: "Ordförande", name: "Anna Andersson" },
-                { role: "Sekreterare", name: "Lars Larsson" }
-            ]
+            })) || [],
+            signatures,
         }
 
         return {
             success: true,
             data: boardMinutesData,
-            message: `Utkast till ${boardMinutesData.meetingType} skapat.`,
-            display: {
-                component: "BoardMinutesPreview",
-                title: "Protokollutkast",
-                props: { data: boardMinutesData }
-            }
+            message: `Utkast till ${meetingType} skapat.`,
         }
     }
 })
@@ -207,7 +217,7 @@ export interface Signatory {
 
 export const getSignatoriesTool = defineTool<Record<string, never>, Signatory[]>({
     name: 'get_signatories',
-    description: 'Hämta lista över firmatecknare och deras behörigheter.',
+    description: 'Visa firmatecknare för bolaget och deras behörigheter (ensam/tillsammans). Hämtas från Bolagsverket via API.',
     category: 'read',
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
@@ -252,19 +262,6 @@ export const getSignatoriesTool = defineTool<Record<string, never>, Signatory[]>
                 success: true,
                 data: signatories,
                 message: `Bolaget har ${signatories.length} registrerade firmatecknare.`,
-                display: {
-                    component: 'DataTable',
-                    title: 'Firmatecknare',
-                    props: {
-                        columns: ['Namn', 'Roll', 'Teckningsrätt', 'Registrerad'],
-                        rows: signatories.map(s => [
-                            s.name,
-                            roleLabels[s.role] || s.role,
-                            rightsLabels[s.signingRights] || s.signingRights,
-                            s.registeredDate,
-                        ]),
-                    },
-                },
                 navigation: {
                     route: '/dashboard/agare?tab=firmatecknare',
                     label: 'Visa firmatecknare',
@@ -325,19 +322,19 @@ function calculateDeadlines(
 ): ComplianceDeadline[] {
     const today = new Date()
     const currentYear = today.getFullYear()
-    
+
     // Parse fiscal year end (MM-DD)
     const [fyMonth, fyDay] = fiscalYearEnd.split('-').map(Number)
-    
+
     // Determine the most recent fiscal year end date
     let fyEndDate = new Date(currentYear, fyMonth - 1, fyDay)
     if (fyEndDate > today) {
         fyEndDate = new Date(currentYear - 1, fyMonth - 1, fyDay)
     }
-    
+
     const deadlines: ComplianceDeadline[] = []
     let idCounter = 1
-    
+
     // Helper to calculate status
     const getStatus = (deadline: Date): ComplianceDeadline['status'] => {
         const daysUntil = Math.ceil((deadline.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
@@ -345,10 +342,10 @@ function calculateDeadlines(
         if (daysUntil <= 14) return 'due_soon'
         return 'upcoming'
     }
-    
+
     // Helper to format date as YYYY-MM-DD
     const formatDate = (date: Date): string => date.toISOString().split('T')[0]
-    
+
     // Only AB has AGM and Bolagsverket annual report requirements
     if (companyType === 'ab') {
         // AGM: 6 months after fiscal year end
@@ -365,7 +362,7 @@ function calculateDeadlines(
                 type: 'agm',
             })
         }
-        
+
         // Annual report to Bolagsverket: 7 months after fiscal year end
         const annualReportDeadline = new Date(fyEndDate)
         annualReportDeadline.setMonth(annualReportDeadline.getMonth() + 7)
@@ -381,7 +378,7 @@ function calculateDeadlines(
             })
         }
     }
-    
+
     // Income tax return: May 2 for previous year (most companies)
     // For broken fiscal year, different rules apply
     if (fyMonth === 12 && fyDay === 31) {
@@ -398,7 +395,7 @@ function calculateDeadlines(
             })
         }
     }
-    
+
     // VAT deadlines based on frequency
     if (vatFrequency === 'monthly') {
         // Monthly VAT: 26th of following month (or 12th for small amounts)
@@ -444,7 +441,7 @@ function calculateDeadlines(
             }
         }
     }
-    
+
     // Employer declarations (AGI): 12th of following month
     if (hasEmployees) {
         for (let i = 0; i < 3; i++) {
@@ -465,13 +462,13 @@ function calculateDeadlines(
             })
         }
     }
-    
+
     return deadlines.sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime())
 }
 
 export const getComplianceDeadlinesTool = defineTool<{ daysAhead?: number }, ComplianceDeadline[]>({
     name: 'get_compliance_deadlines',
-    description: 'Visa kommande deadlines för bolagsrättsliga och skattemässiga förpliktelser baserat på ditt räkenskapsår.',
+    description: 'Visa kommande deadlines för bolagsrättsliga och skattemässiga förpliktelser baserat på räkenskapsår. Inkluderar moms, AGI, årsredovisning och bolagsstämma. Vanliga frågor: "när ska momsen in", "vad har jag för deadlines", "nästa förfallodag".',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -483,14 +480,14 @@ export const getComplianceDeadlinesTool = defineTool<{ daysAhead?: number }, Com
     execute: async (params, context) => {
         const daysAhead = params.daysAhead || 90
         const today = new Date()
-        
+
         // Get company info for fiscal year and settings
         const userId = context?.userId
         let fiscalYearEnd = '12-31'
         let vatFrequency: 'monthly' | 'quarterly' | 'annually' = 'quarterly'
         let hasEmployees = false
         let companyType = 'ab'
-        
+
         if (userId) {
             try {
                 const company = await companyService.getByUserId(userId)
@@ -504,7 +501,7 @@ export const getComplianceDeadlinesTool = defineTool<{ daysAhead?: number }, Com
                 console.error('Failed to fetch company for deadlines:', error)
             }
         }
-        
+
         // Calculate all statutory deadlines
         const allDeadlines = calculateDeadlines(fiscalYearEnd, vatFrequency, hasEmployees, companyType)
 
@@ -527,22 +524,9 @@ export const getComplianceDeadlinesTool = defineTool<{ daysAhead?: number }, Com
         return {
             success: true,
             data: filteredDeadlines,
-            message: filteredDeadlines.length > 0 
+            message: filteredDeadlines.length > 0
                 ? `Du har ${filteredDeadlines.length} kommande deadlines inom ${daysAhead} dagar.`
                 : `Inga deadlines inom de kommande ${daysAhead} dagarna.`,
-            display: {
-                component: 'DataTable',
-                title: 'Kommande deadlines',
-                props: {
-                    columns: ['Deadline', 'Ärende', 'Myndighet', 'Status'],
-                    rows: filteredDeadlines.map(d => [
-                        d.deadline,
-                        d.title,
-                        d.authority,
-                        statusLabels[d.status] || d.status,
-                    ]),
-                },
-            },
         }
     },
 })
@@ -621,11 +605,6 @@ export const prepareAgmTool = defineTool<PrepareAgmParams, AgmDocumentsResult>({
             success: true,
             data: result,
             message: `Årsstämmounderlag för ${params.fiscalYear}: ${readyCount}/${totalCount} dokument klara.`,
-            display: {
-                component: 'AgmPreparationPreview',
-                title: `Årsstämma ${params.fiscalYear}`,
-                props: { data: result },
-            },
             navigation: {
                 route: '/dashboard/agare?tab=bolagsstamma',
                 label: 'Hantera årsstämma',

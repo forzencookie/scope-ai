@@ -349,9 +349,9 @@ export interface ShowPreviewParams {
     limit?: number
 }
 
-export const showPreviewTool = defineTool<ShowPreviewParams, null>({
+export const showPreviewTool = defineTool<ShowPreviewParams, { previewType: string; limit: number; route: string }>({
     name: 'show_preview',
-    description: 'Visa en förhandsgranskning av data direkt i chatten.',
+    description: 'Visa en förhandsgranskning av data direkt i chatten utan att navigera bort. Använd när användaren vill se en snabböversikt.',
     category: 'navigation',
     requiresConfirmation: false,
     parameters: {
@@ -363,25 +363,35 @@ export const showPreviewTool = defineTool<ShowPreviewParams, null>({
         required: ['type'],
     },
     execute: async (params) => {
-        const componentMap: Record<ShowPreviewParams['type'], { component: string; route: string }> = {
-            transactions: { component: 'TransactionsTable', route: '/dashboard/bokforing?tab=transaktioner' },
-            payslips: { component: 'PayslipsTable', route: '/dashboard/loner?tab=lonebesked' },
-            vat: { component: 'VatSummary', route: '/dashboard/rapporter?tab=momsdeklaration' },
-            income_statement: { component: 'IncomeStatement', route: '/dashboard/rapporter?tab=resultatrakning' },
-            balance_sheet: { component: 'BalanceSheet', route: '/dashboard/rapporter?tab=balansrakning' },
-            employees: { component: 'EmployeeList', route: '/dashboard/loner?tab=lonebesked' },
+        const routeMap: Record<ShowPreviewParams['type'], string> = {
+            transactions: '/dashboard/bokforing?tab=transaktioner',
+            payslips: '/dashboard/loner?tab=lonebesked',
+            vat: '/dashboard/rapporter?tab=momsdeklaration',
+            income_statement: '/dashboard/rapporter?tab=resultatrakning',
+            balance_sheet: '/dashboard/rapporter?tab=balansrakning',
+            employees: '/dashboard/loner?tab=lonebesked',
         }
 
-        const config = componentMap[params.type]
+        const labelMap: Record<ShowPreviewParams['type'], string> = {
+            transactions: 'transaktioner',
+            payslips: 'lönebesked',
+            vat: 'momsdeklaration',
+            income_statement: 'resultaträkning',
+            balance_sheet: 'balansräkning',
+            employees: 'anställda',
+        }
 
         return {
             success: true,
-            data: null,
-            message: `Visar ${params.type}...`,
-            display: {
-                component: config.component as 'TransactionsTable',
-                props: { limit: params.limit || 5 },
-                fullViewRoute: config.route,
+            data: {
+                previewType: params.type,
+                limit: params.limit || 5,
+                route: routeMap[params.type],
+            },
+            message: `Här är en översikt av ${labelMap[params.type]}. Klicka för att se alla.`,
+            navigation: {
+                route: routeMap[params.type],
+                label: `Visa alla ${labelMap[params.type]}`,
             },
         }
     },
@@ -401,11 +411,12 @@ export interface Deadline {
 
 export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
     name: 'get_upcoming_deadlines',
-    description: 'Hämta kommande deadlines för moms, AGI och andra deklarationer.',
+    description: 'Hämta kommande deadlines för moms, AGI och andra deklarationer. Använd när användaren frågar om kommande förfallodagar eller vad som behöver göras härnäst.',
     category: 'read',
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
     execute: async () => {
+        // TODO: Fetch real deadlines from taxcalendar table
         const deadlines: Deadline[] = [
             { type: 'Moms', period: 'Q4 2024', dueDate: '12 feb 2025', amount: 80000, status: 'Kommande' },
             { type: 'AGI', period: 'December 2024', dueDate: '12 jan 2025', amount: 47090, status: 'Väntar' },
@@ -415,12 +426,7 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
             success: true,
             data: deadlines,
             message: `Du har ${deadlines.length} kommande deadlines.`,
-            display: {
-                component: 'DeadlinesList',
-                props: { deadlines },
-                title: 'Kommande deadlines',
-                fullViewRoute: '/dashboard/rapporter',
-            },
+            // AI composes timeline or checklist blocks from this data
         }
     },
 })

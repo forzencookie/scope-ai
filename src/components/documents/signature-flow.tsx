@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     PenTool,
     Upload,
@@ -15,20 +15,14 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import type { SignatureRequest, SignatureStatus } from '@/types/documents';
+import { boardService } from '@/services/board-service';
 
-// Mock signatories for the flow
-interface SignatoryOption {
+export interface SignatoryOption {
     id: string;
     name: string;
     email: string;
     role: string;
 }
-
-const mockSignatoryOptions: SignatoryOption[] = [
-    { id: '1', name: 'Anna Andersson', email: 'anna@company.se', role: 'VD' },
-    { id: '2', name: 'Erik Eriksson', email: 'erik@company.se', role: 'Ordförande' },
-    { id: '3', name: 'Maria Magnusson', email: 'maria@company.se', role: 'Ledamot' },
-];
 
 const statusConfig: Record<SignatureStatus, { label: string; colorClass: string; bgClass: string; icon: LucideIcon }> = {
     pending: {
@@ -71,6 +65,20 @@ export function SignatureFlow({
     onUploadSigned,
 }: SignatureFlowProps) {
     const [selectedSignatories, setSelectedSignatories] = useState<string[]>([]);
+    const [signatoryOptions, setSignatoryOptions] = useState<SignatoryOption[]>([]);
+
+    useEffect(() => {
+        boardService.getSignatories().then(members => {
+            setSignatoryOptions(members.map(m => ({
+                id: m.id,
+                name: m.name,
+                email: m.email || '',
+                role: m.role,
+            })));
+        }).catch(() => {
+            // No signatories available
+        });
+    }, []);
 
     const toggleSignatory = (id: string) => {
         setSelectedSignatories(prev =>
@@ -80,7 +88,7 @@ export function SignatureFlow({
 
     const handleSendRequests = () => {
         selectedSignatories.forEach(id => {
-            const signatory = mockSignatoryOptions.find(s => s.id === id);
+            const signatory = signatoryOptions.find(s => s.id === id);
             if (signatory && onRequestSignature) {
                 onRequestSignature(signatory);
             }
@@ -145,7 +153,7 @@ export function SignatureFlow({
                 </CardHeader>
                 <CardContent className="space-y-4">
                     <div className="divide-y border rounded-lg">
-                        {mockSignatoryOptions.map((signatory) => {
+                        {signatoryOptions.map((signatory) => {
                             const isSelected = selectedSignatories.includes(signatory.id);
                             const isAlreadySigned = existingSignatures.some(
                                 s => s.signerId === signatory.id && s.status === 'signed'

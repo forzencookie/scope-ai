@@ -80,15 +80,9 @@ export const getEventsTool = defineTool<GetEventsParams, Event[]>({
         return {
             success: true,
             data: events,
-            message: events.length > 0 
+            message: events.length > 0
                 ? `Hittade ${events.length} händelser${totalCount > events.length ? ` (av totalt ${totalCount})` : ''}.`
                 : 'Inga händelser hittades för de valda filtren.',
-            display: {
-                component: 'DeadlinesList',
-                title: 'Händelser',
-                props: { events },
-                fullViewRoute: '/dashboard/handelser',
-            },
         }
     },
 })
@@ -135,7 +129,7 @@ export const createEventTool = defineTool<CreateEventParams, Event>({
     execute: async (params) => {
         // Create event in database using emitEvent
         const category = params.category || 'system'
-        
+
         const dbEvent = await emitEvent({
             source: 'user',
             category: category as EventCategory,
@@ -277,17 +271,6 @@ export const getUpcomingDeadlinesTool = defineTool<{ days?: number }, UpcomingDe
             success: true,
             data: filtered,
             message: `${filtered.length} deadlines inom ${days} dagar. ${urgentCount} är brådskande.`,
-            display: {
-                component: 'DeadlinesList',
-                title: 'Kommande deadlines',
-                props: {
-                    deadlines: filtered.map(d => ({
-                        ...d,
-                        urgency: d.daysUntil <= 14 ? 'urgent' : d.daysUntil <= 30 ? 'soon' : 'normal',
-                    })),
-                },
-                fullViewRoute: '/dashboard/handelser?view=roadmap',
-            },
         }
     },
 })
@@ -355,18 +338,6 @@ export const getActivitySummaryTool = defineTool<{ period?: 'week' | 'month' | '
             success: true,
             data: summary,
             message: `Under ${summary.period}: ${summary.totalEvents} händelser, varav ${summary.byType.milestone || 0} milstolpar.`,
-            display: {
-                component: 'CompanyStats',
-                title: `Aktivitetssammanfattning - ${periodLabels[period]}`,
-                props: {
-                    stats: [
-                        { label: 'Totalt händelser', value: summary.totalEvents },
-                        { label: 'Manuella åtgärder', value: summary.bySource.user },
-                        { label: 'AI-assisterade', value: summary.bySource.ai },
-                        { label: 'Automatiska', value: summary.bySource.integration },
-                    ],
-                },
-            },
         }
     },
 })

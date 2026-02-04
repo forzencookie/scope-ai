@@ -1,3 +1,12 @@
+/**
+ * @deprecated This card registry is being replaced by the block system.
+ * New AI outputs should use the W: protocol with block primitives.
+ * See: src/components/ai/blocks/block-renderer.tsx
+ * 
+ * This registry remains for backwards compatibility with:
+ * - Existing tool outputs that still use display field
+ * - Legacy 'complete' status in ai-overlay.tsx
+ */
 import { ComponentType } from "react"
 import { ActivityCard } from "./activity-card"
 import { ReceiptCard } from "./cards/ReceiptCard"
@@ -23,6 +32,7 @@ import { VerificationCard } from "./cards/VerificationCard"
 
 // Audit Cards
 import { BalanceAuditCard } from "./previews/bokforing/balance-audit-card"
+import { ResultatAuditCard } from "./previews/bokforing/resultat-audit-card"
 
 // Billing/Usage Cards
 import { AIUsageCard } from "./cards/AIUsageCard"
@@ -127,13 +137,16 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     balanskontroll: BalanceAuditCard,
     audit: BalanceAuditCard,
 
+    resultatauditcard: ResultatAuditCard,
+    resultatkontroll: ResultatAuditCard,
+
     // Billing/Usage
     aiusagecard: AIUsageCard,
     usage: AIUsageCard,
 
     buycreditsprompt: BuyCreditsPrompt,
     creditsprompt: BuyCreditsPrompt,
-    
+
     buycreditscheckout: BuyCreditsCheckout,
     creditscheckout: BuyCreditsCheckout,
     buyconfirm: BuyCreditsCheckout,

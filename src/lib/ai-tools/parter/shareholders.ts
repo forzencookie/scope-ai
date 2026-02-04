@@ -58,28 +58,6 @@ export const getShareholdersTool = defineTool<GetShareholdersParams, Shareholder
                 success: true,
                 data: shareholders,
                 message: `Aktieboken innehåller ${totalCount} aktieägare med totalt ${totalShares.toLocaleString('sv-SE')} aktier.`,
-                display: {
-                    component: 'ShareRegisterPreview',
-                    title: 'Utdrag ur Aktiebok',
-                    props: {
-                        data: {
-                            companyName: "Ditt Företag AB",
-                            orgNumber: "556XXX-XXXX",
-                            date: new Date().toISOString().split('T')[0],
-                            totalShares: summary.totalShares,
-                            totalCapital: summary.totalCapital,
-                            shareholders: shareholders.map(s => ({
-                                ...s,
-                                personalOrOrgNumber: s.personalOrOrgNumber,
-                                shareCount: s.sharesCount,
-                                shareClass: s.shareClass,
-                                votingRights: s.shareClass === 'A' ? 10 : 1,
-                                acquisitionDate: s.acquisitionDate || "N/A"
-                            }))
-                        }
-                    },
-                    fullViewRoute: '/dashboard/agare?tab=aktiebok',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch shareholders:', error)

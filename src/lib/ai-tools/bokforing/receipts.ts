@@ -32,7 +32,7 @@ interface Receipt {
 
 export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
     name: 'get_receipts',
-    description: 'Hämta kvitton från bokföringen. Kan filtreras på leverantör, status eller belopp.',
+    description: 'Hämta uppladdade kvitton. Kan filtrera på leverantör, status eller belopp. Använd för att hitta specifika kvitton eller se vilka som behöver hanteras.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -104,7 +104,7 @@ export interface CreatedReceipt {
 
 export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>({
     name: 'create_receipt',
-    description: 'Registrera ett nytt kvitto. Kräver bekräftelse.',
+    description: 'Registrera ett kvitto manuellt (om det inte laddades upp som bild). Använd för kvitton från kontantköp, lunch med kund, eller andra utgifter. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -158,7 +158,7 @@ export interface ReceiptMatchResult {
 
 export const matchReceiptToTransactionTool = defineTool<MatchReceiptToTransactionParams, ReceiptMatchResult>({
     name: 'match_receipt_to_transaction',
-    description: 'Koppla ett kvitto till en banktransaktion som underlag.',
+    description: 'Koppla ett kvitto till en banktransaktion som bokföringsunderlag. Använd när du har ett kvitto och vill länka det till rätt transaktion. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -202,7 +202,7 @@ export interface GetUnmatchedReceiptsParams {
 
 export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, Receipt[]>({
     name: 'get_unmatched_receipts',
-    description: 'Visa kvitton som inte är kopplade till någon transaktion.',
+    description: 'Lista kvitton som inte är kopplade till någon banktransaktion. Använd för att hitta kvitton som behöver matchas eller för att identifiera dubbletter.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -213,7 +213,7 @@ export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, R
     },
     execute: async (params) => {
         const limit = params.limit ?? 20
-        
+
         const { receipts } = await receiptService.getReceipts({
             limit,
             statuses: ['pending', 'verified']

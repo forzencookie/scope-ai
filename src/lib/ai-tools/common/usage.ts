@@ -59,7 +59,7 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
     // Get usage from database
     const { getSupabaseClient } = await import('@/lib/database/supabase')
     const supabase = getSupabaseClient()
-    
+
     const userId = context.userId
     if (!userId) {
       return {
@@ -98,7 +98,7 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
       .select('subscription_tier')
       .eq('id', userId)
       .single()
-    
+
     const tier = (profileData?.subscription_tier as keyof typeof TIER_TOKEN_LIMITS) || 'free'
     const tokenLimit = TIER_TOKEN_LIMITS[tier] || 0
 
@@ -109,11 +109,11 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
       .eq('user_id', userId)
       .eq('is_active', true)
       .gt('expires_at', new Date().toISOString())
-    
+
     const extraCredits = creditsData?.reduce((sum, row) => sum + (row.credits_remaining || 0), 0) || 0
-    
+
     const totalAvailable = tokenLimit + extraCredits
-    const usagePercent = totalAvailable > 0 
+    const usagePercent = totalAvailable > 0
       ? Math.round((effectiveTokensUsed / totalAvailable) * 100)
       : 0
 
@@ -157,8 +157,8 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
     return {
       success: true,
       data: result,
-      message: shouldShowReminder && reminderMessage 
-        ? reminderMessage 
+      message: shouldShowReminder && reminderMessage
+        ? reminderMessage
         : `AI-användning: ${usagePercent}% av månadsbudget`,
     }
   },
@@ -177,13 +177,13 @@ export const getUsageStatsTool = defineTool<Record<string, never>, UsageStatus>(
   execute: async (_params, context) => {
     // Same logic as checkUsageTool but always returns full data
     const result = await checkUsageTool.execute({}, context)
-    
+
     if (!result.success || !result.data) {
       return result
     }
 
     const data = result.data
-    
+
     // Format for display
     const formatTokens = (tokens: number): string => {
       if (tokens >= 1_000_000) return `${(tokens / 1_000_000).toFixed(1)}M`
@@ -199,16 +199,11 @@ export const getUsageStatsTool = defineTool<Record<string, never>, UsageStatus>(
 • Budget: ${formatTokens(data.totalAvailable)} tokens
 • Kvar: ${formatTokens(data.totalAvailable - data.tokensUsed)} tokens
 
-${data.thresholdLevel === 'exceeded' 
-  ? '⚠️ Du har överskridit din budget. Köp fler credits för att fortsätta.'
-  : data.thresholdLevel === 'critical'
-  ? '📊 Du närmar dig gränsen. Överväg att köpa fler credits.'
-  : 'Allt ser bra ut! Du har gott om tokens kvar.'}`,
-      display: {
-        component: 'AIUsageCard' as any,
-        props: { usage: data },
-        title: 'AI-användning',
-      },
+${data.thresholdLevel === 'exceeded'
+          ? '⚠️ Du har överskridit din budget. Köp fler credits för att fortsätta.'
+          : data.thresholdLevel === 'critical'
+            ? '📊 Du närmar dig gränsen. Överväg att köpa fler credits.'
+            : 'Allt ser bra ut! Du har gott om tokens kvar.'}`,
     }
   },
 })
@@ -258,7 +253,7 @@ Om användaren valt ett paket, returnera checkout-länken.`,
   category: 'read',
   execute: async (params, _context) => {
     const { CREDIT_PACKAGES } = await import('@/lib/subscription')
-    
+
     const packages = CREDIT_PACKAGES.map(pkg => ({
       tokens: pkg.tokens,
       price: pkg.price,
@@ -277,11 +272,6 @@ Om användaren valt ett paket, returnera checkout-länken.`,
 ${packages.map(p => `• **${p.label}** - ${p.price} kr${p.popular ? ' ⭐ Populär' : ''}${p.savings ? ` (${p.savings})` : ''}`).join('\n')}
 
 Vilket paket vill du köpa?`,
-        display: {
-          component: 'BuyCreditsPrompt' as any,
-          props: { packages },
-          title: 'Köp AI-credits',
-        },
       }
     }
 
@@ -298,18 +288,10 @@ Vilket paket vill du köpa?`,
     // Return display with buy button that triggers the checkout
     return {
       success: true,
-      data: { 
+      data: {
         packages,
       },
       message: `Du vill köpa **${selectedPackage.label}** för ${selectedPackage.price} kr. Klicka på knappen nedan för att gå till kassan.`,
-      display: {
-        component: 'BuyCreditsCheckout' as any,
-        props: { 
-          selectedPackage,
-          tokens: params.tokens,
-        },
-        title: 'Bekräfta köp',
-      },
     }
   },
 })

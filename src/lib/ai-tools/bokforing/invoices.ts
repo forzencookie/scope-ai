@@ -56,7 +56,7 @@ export interface CreatedInvoice {
 
 export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>({
     name: 'create_invoice',
-    description: 'Skapa en kundfaktura. Kräver bekräftelse innan skapande.',
+    description: 'Skapa en ny kundfaktura. Beräknar moms automatiskt (25% standard). Använd när användaren vill fakturera en kund för utfört arbete eller sålda varor. Vanliga frågor: "skapa faktura", "fakturera Acme", "jag behöver skicka en faktura". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -131,7 +131,7 @@ export interface GetInvoicesParams {
 
 export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>({
     name: 'get_customer_invoices',
-    description: 'Hämta kundfakturor. Kan filtreras på status eller kund.',
+    description: 'Hämta skickade kundfakturor. Kan filtrera på status (utkast/skickad/betald/förfallen) eller kundnamn. Använd för att se fakturastatus, hitta specifika fakturor, eller följa upp betalningar. Vanliga frågor: "visa mina fakturor", "fakturor till Acme".',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -154,7 +154,7 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
             let filtered = customerInvoices
             if (params.customer) {
                 const customerLower = params.customer.toLowerCase()
-                filtered = customerInvoices.filter(i => 
+                filtered = customerInvoices.filter(i =>
                     i.customer.toLowerCase().includes(customerLower)
                 )
             }
@@ -196,7 +196,7 @@ export interface GetSupplierInvoicesParams {
 
 export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Invoice[]>({
     name: 'get_supplier_invoices',
-    description: 'Hämta leverantörsfakturor. Kan filtreras på status eller leverantör.',
+    description: 'Hämta mottagna leverantörsfakturor (inkommande fakturor att betala). Kan filtrera på status eller leverantör. Använd för att se obetalda räkningar, förbereda betalningar, eller attestera fakturor.',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -219,7 +219,7 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Inv
             let filtered = supplierInvoices
             if (params.supplier) {
                 const supplierLower = params.supplier.toLowerCase()
-                filtered = supplierInvoices.filter(i => 
+                filtered = supplierInvoices.filter(i =>
                     i.supplierName.toLowerCase().includes(supplierLower)
                 )
             }
@@ -273,7 +273,7 @@ export interface InvoiceReminderResult {
 
 export const sendInvoiceReminderTool = defineTool<SendInvoiceReminderParams, InvoiceReminderResult>({
     name: 'send_invoice_reminder',
-    description: 'Skicka betalningspåminnelse på en förfallen faktura. Kan lägga till dröjsmålsavgift.',
+    description: 'Skicka betalningspåminnelse på förfallen kundfaktura. Stödjer tre nivåer: första påminnelse, andra påminnelse, och inkassokrav. Kan lägga till dröjsmålsavgift (60 kr). Använd när kunden inte betalat i tid.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -292,7 +292,7 @@ export const sendInvoiceReminderTool = defineTool<SendInvoiceReminderParams, Inv
 
         const reminderLabels = {
             1: 'Betalningspåminnelse',
-            2: 'Andra påminnelse', 
+            2: 'Andra påminnelse',
             3: 'Inkassokrav'
         }
 
@@ -339,7 +339,7 @@ export interface VoidInvoiceResult {
 
 export const voidInvoiceTool = defineTool<VoidInvoiceParams, VoidInvoiceResult>({
     name: 'void_invoice',
-    description: 'Makulera en faktura. Skapar en kreditfaktura om fakturan redan är bokförd.',
+    description: 'Makulera en felaktig faktura genom att skapa kreditfaktura. Använd när faktura har fel belopp, fel kund, eller inte ska skickas. Kan inte ångras. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -393,7 +393,7 @@ export interface BookInvoicePaymentResult {
 
 export const bookInvoicePaymentTool = defineTool<BookInvoicePaymentParams, BookInvoicePaymentResult>({
     name: 'book_invoice_payment',
-    description: 'Bokför betalning på en kundfaktura. Markerar fakturan som betald om hela beloppet betalas.',
+    description: 'Registrera att en kundfaktura är betald. Skapar verifikation, uppdaterar kundreskontran, och markerar fakturan som betald. Använd när betalning kommit in på bankkontot. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
     parameters: {
@@ -446,7 +446,7 @@ export interface GetOverdueInvoicesParams {
 
 export const getOverdueInvoicesTool = defineTool<GetOverdueInvoicesParams, Invoice[]>({
     name: 'get_overdue_invoices',
-    description: 'Visa förfallna kundfakturor som inte är betalda.',
+    description: 'Lista kundfakturor som passerat förfallodatum och inte betalats. Använd för uppföljning och beslut om påminnelser. Vanliga frågor: "har nån kund inte betalat", "vilka fakturor är förfallna", "obetalda fakturor".',
     category: 'read',
     requiresConfirmation: false,
     parameters: {
@@ -458,16 +458,16 @@ export const getOverdueInvoicesTool = defineTool<GetOverdueInvoicesParams, Invoi
     },
     execute: async (params) => {
         const limit = params.limit ?? 20
-        
+
         let invoices: Invoice[] = []
-        
+
         try {
             const baseUrl = getBaseUrl()
             const res = await fetch(`${baseUrl}/api/invoices?status=overdue&limit=${limit}`, {
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/json' }
             })
-            
+
             if (res.ok) {
                 const data = await res.json()
                 invoices = data.invoices || []

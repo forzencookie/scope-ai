@@ -5,10 +5,10 @@
  */
 
 import { defineTool } from '../registry'
-import { 
-    companyStatisticsService, 
+import {
+    companyStatisticsService,
     CompanyStatistics,
-    MonthlyFinancialSummary 
+    MonthlyFinancialSummary
 } from '@/services/company-statistics-service'
 
 // =============================================================================
@@ -48,12 +48,6 @@ export const getCompanyStatisticsTool = defineTool<GetCompanyStatisticsParams, C
                 success: true,
                 data: stats,
                 message: summaryLines.join('\n'),
-                display: {
-                    component: 'CompanyStatistics',
-                    props: { statistics: stats },
-                    title: 'Företagsstatistik',
-                    fullViewRoute: '/dashboard/foretagsstatistik',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch company statistics:', error)
@@ -83,7 +77,7 @@ export const getMonthlyBreakdownTool = defineTool<{ year?: number }, MonthlyFina
     execute: async (params) => {
         try {
             const monthly = await companyStatisticsService.getMonthlyBreakdown(params.year)
-            
+
             // Find best and worst months
             const sorted = [...monthly].sort((a, b) => b.netResult - a.netResult)
             const best = sorted[0]
@@ -95,12 +89,6 @@ export const getMonthlyBreakdownTool = defineTool<{ year?: number }, MonthlyFina
                 message: `Månadsuppdelning för ${params.year || new Date().getFullYear()}. ` +
                     `Bästa månad: ${best?.month} (${best?.netResult.toLocaleString('sv-SE')} kr). ` +
                     `Sämsta månad: ${worst?.month} (${worst?.netResult.toLocaleString('sv-SE')} kr).`,
-                display: {
-                    component: 'MonthlyBreakdown',
-                    props: { data: monthly },
-                    title: 'Månadsvis översikt',
-                    fullViewRoute: '/dashboard/foretagsstatistik',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch monthly breakdown:', error)
@@ -153,12 +141,6 @@ export const getKPIsTool = defineTool<{ year?: number }, KPIs>({
                     `📉 Skuldsättningsgrad: ${kpis.debtToEquity.toFixed(2)}`,
                     `💰 Avkastning på EK: ${formatPercent(kpis.returnOnEquity)}`,
                 ].join('\n'),
-                display: {
-                    component: 'KPIDisplay',
-                    props: { kpis },
-                    title: 'Nyckeltal (KPIs)',
-                    fullViewRoute: '/dashboard/foretagsstatistik',
-                },
             }
         } catch (error) {
             console.error('Failed to fetch KPIs:', error)

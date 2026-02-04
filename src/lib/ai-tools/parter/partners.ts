@@ -28,13 +28,6 @@ export const getPartnersTool = defineTool<Record<string, never>, any>({
                     data: data,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     message: `Hittade ${(data as any).partnerCount || 0} delägare.`,
-                    display: {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        component: 'PartnersGrid' as any,
-                        props: { stats: data },
-                        title: 'Delägare',
-                        fullViewRoute: '/dashboard/agare?tab=delagare',
-                    },
                 }
             }
         } catch (error) {
@@ -63,13 +56,6 @@ export const getMembersTool = defineTool<Record<string, never>, any>({
                     data: data,
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     message: `Föreningen har ${(data as any).totalMembers || 0} medlemmar, varav ${(data as any).activeMembers || 0} aktiva.`,
-                    display: {
-                        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                        component: 'MemberList' as any,
-                        props: { stats: data },
-                        title: 'Medlemsregister',
-                        fullViewRoute: '/dashboard/agare?tab=medlemsregister',
-                    },
                 }
             }
         } catch (error) {

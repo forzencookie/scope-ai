@@ -12,7 +12,7 @@ import { defineTool } from '../registry'
 
 export const calculateGransbeloppTool = defineTool({
     name: 'calculate_gransbelopp',
-    description: 'Beräkna gränsbeloppet för K10-deklaration baserat på löneunderlag och anskaffningsvärde.',
+    description: 'Beräkna gränsbeloppet för K10-deklaration (fåmansföretag). Visar hur mycket utdelning som kan beskattas som kapitalinkomst (20%) istället för tjänsteinkomst. Använder förenklingsregeln eller löneunderlag. Vanliga frågor: "hur mycket utdelning kan jag ta", "vad blir gränsbeloppet".',
     parameters: {
         type: 'object' as const,
         properties: {
@@ -58,13 +58,6 @@ export const calculateGransbeloppTool = defineTool({
                 usedForenkling: gransbelopp === forenklingsbeloppMax * (ownershipPercent / 100),
             },
             message: `Gränsbelopp ${params.year}: ${Math.round(gransbelopp).toLocaleString('sv-SE')} kr`,
-            display: {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                component: 'K10Summary' as any,
-                props: { gransbelopp: Math.round(gransbelopp), year: params.year },
-                title: 'K10 Beräkning',
-                fullViewRoute: '/dashboard/rapporter?tab=k10',
-            },
         }
     },
 })
