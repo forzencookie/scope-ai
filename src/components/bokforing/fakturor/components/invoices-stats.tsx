@@ -1,56 +1,54 @@
 import { ArrowDownLeft, ArrowUpRight, AlertTriangle } from "lucide-react"
-import { formatCurrency } from "@/lib/utils"
+import { formatCurrency, cn } from "@/lib/utils"
 
 export function InvoicesStats({
     incoming,
     outgoing,
     overdueCount,
+    onViewOverdue,
 }: {
     incoming: number
     outgoing: number
     overdueCount: number
+    onViewOverdue?: () => void
 }) {
     return (
-        <div className="flex flex-wrap items-center gap-4 md:gap-6 py-3 px-4 bg-muted/30 rounded-lg border border-border/40">
-            {/* Incoming */}
-            <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-md bg-green-500/10 flex items-center justify-center shrink-0">
-                    <ArrowDownLeft className="h-3.5 w-3.5 text-green-500" />
-                </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Incoming - Money to receive */}
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <ArrowDownLeft className="h-5 w-5 text-green-500" />
                 <div>
-                    <span className="text-xs text-muted-foreground">Att få</span>
-                    <p className="text-sm font-semibold tabular-nums">{formatCurrency(incoming)}</p>
+                    <p className="text-2xl font-bold tabular-nums">{formatCurrency(incoming)}</p>
+                    <p className="text-xs text-muted-foreground">Att få</p>
                 </div>
             </div>
 
-            <div className="hidden sm:block h-8 w-px bg-border/60" />
-
-            {/* Outgoing */}
-            <div className="flex items-center gap-2">
-                <div className="h-6 w-6 rounded-md bg-red-500/10 flex items-center justify-center shrink-0">
-                    <ArrowUpRight className="h-3.5 w-3.5 text-red-500" />
-                </div>
+            {/* Outgoing - Money to pay */}
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <ArrowUpRight className="h-5 w-5 text-red-500" />
                 <div>
-                    <span className="text-xs text-muted-foreground">Att betala</span>
-                    <p className="text-sm font-semibold tabular-nums">{formatCurrency(outgoing)}</p>
+                    <p className="text-2xl font-bold tabular-nums">{formatCurrency(outgoing)}</p>
+                    <p className="text-xs text-muted-foreground">Att betala</p>
                 </div>
             </div>
 
-            {/* Overdue warning - only show if there are overdue invoices */}
-            {overdueCount > 0 && (
-                <>
-                    <div className="h-8 w-px bg-border/60" />
-                    <div className="flex items-center gap-2">
-                        <div className="h-6 w-6 rounded-md bg-amber-500/10 flex items-center justify-center">
-                            <AlertTriangle className="h-3.5 w-3.5 text-amber-500" />
-                        </div>
-                        <div>
-                            <span className="text-xs text-muted-foreground">Förfallna</span>
-                            <p className="text-sm font-semibold">{overdueCount} st</p>
-                        </div>
-                    </div>
-                </>
-            )}
+            {/* Overdue count */}
+            <div
+                onClick={overdueCount > 0 ? onViewOverdue : undefined}
+                className={cn(
+                    "flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50 transition-colors",
+                    overdueCount > 0 && onViewOverdue && "cursor-pointer hover:bg-muted/50 hover:border-border/80"
+                )}
+            >
+                <AlertTriangle className={cn(
+                    "h-5 w-5",
+                    overdueCount > 0 ? "text-amber-500" : "text-muted-foreground"
+                )} />
+                <div>
+                    <p className="text-2xl font-bold tabular-nums">{overdueCount}</p>
+                    <p className="text-xs text-muted-foreground">Förfallna</p>
+                </div>
+            </div>
         </div>
     )
 }

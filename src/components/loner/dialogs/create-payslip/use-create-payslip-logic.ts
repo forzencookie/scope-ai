@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useMemo } from "react"
 import { useToast } from "@/components/ui/toast"
 import { useVerifications } from "@/hooks/use-verifications"
 
@@ -32,12 +32,18 @@ export interface PayslipCreateDialogProps {
     currentPeriod: string
 }
 
-interface PayslipEmployee {
+export interface PayslipEmployee {
     id: string
     name: string
     role: string
     lastSalary: number
     taxRate: number
+}
+
+export interface ManualPersonData {
+    name: string
+    role: string
+    salary: number
 }
 
 export function useCreatePayslipLogic({
@@ -59,6 +65,12 @@ export function useCreatePayslipLogic({
     const [customSalary, setCustomSalary] = useState("")
     const [aiDeductions, setAiDeductions] = useState<AiDeduction[]>([])
     const [isCreating, setIsCreating] = useState(false)
+
+    // New states for manual person entry
+    const [useManualEntry, setUseManualEntry] = useState(false)
+    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0 })
+    const [saveAsEmployee, setSaveAsEmployee] = useState(true)
+    const [searchQuery, setSearchQuery] = useState("")
 
     // Fetch real employees
     useEffect(() => {
@@ -85,12 +97,33 @@ export function useCreatePayslipLogic({
         if (open) fetchEmployees()
     }, [open])
 
-    const selectedEmp = employees.find(e => e.id === selectedEmployee)
+    // Filter employees by search query
+    const filteredEmployees = useMemo(() => {
+        if (!searchQuery.trim()) return employees
+        const query = searchQuery.toLowerCase()
+        return employees.filter(e =>
+            e.name.toLowerCase().includes(query) ||
+            e.role.toLowerCase().includes(query)
+        )
+    }, [employees, searchQuery])
+
+    // selectedEmp can be either from database or manual entry
+    const selectedEmp: PayslipEmployee | null = useManualEntry
+        ? (manualPerson.name && manualPerson.salary > 0
+            ? { id: 'manual', name: manualPerson.name, role: manualPerson.role, lastSalary: manualPerson.salary, taxRate: 0.30 }
+            : null)
+        : employees.find(e => e.id === selectedEmployee) || null
+
     const totalDeductions = aiDeductions.reduce((sum, d) => sum + d.amount, 0)
     const recommendedSalary = selectedEmp ? selectedEmp.lastSalary - totalDeductions : 0
     const finalSalary = useAIRecommendation ? recommendedSalary : (parseInt(customSalary) || recommendedSalary)
     const tax = Math.round(finalSalary * 0.24)
     const netSalary = finalSalary - tax
+
+    // Check if can proceed from step 1
+    const canProceedFromStep1 = useManualEntry
+        ? (manualPerson.name.trim().length > 0 && manualPerson.salary > 0)
+        : selectedEmployee !== null
 
     const resetDialog = () => {
         setStep(1)
@@ -101,6 +134,11 @@ export function useCreatePayslipLogic({
         setCustomSalary("")
         setAiDeductions([])
         setIsCreating(false)
+        // Reset manual entry states
+        setUseManualEntry(false)
+        setManualPerson({ name: "", role: "", salary: 0 })
+        setSaveAsEmployee(true)
+        setSearchQuery("")
     }
 
     const handleSendMessage = () => {
@@ -152,13 +190,35 @@ export function useCreatePayslipLogic({
         setIsCreating(true)
 
         try {
+            let employeeId = selectedEmp.id
+
+            // If manual entry and user wants to save as employee, create the employee first
+            if (useManualEntry && saveAsEmployee) {
+                const empResponse = await fetch('/api/employees', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        name: manualPerson.name,
+                        role: manualPerson.role || 'Anställd',
+                        monthly_salary: manualPerson.salary,
+                        status: 'active'
+                    })
+                })
+
+                if (empResponse.ok) {
+                    const empData = await empResponse.json()
+                    employeeId = empData.employee?.id || employeeId
+                    toast.success("Anställd sparad", `${manualPerson.name} har lagts till i teamet`)
+                }
+            }
+
             const payslipId = `LB-${Date.now()}`
             const response = await fetch('/api/payroll/payslips', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     id: payslipId,
-                    employee_id: selectedEmp.id,
+                    employee_id: employeeId !== 'manual' ? employeeId : null,
                     period: currentPeriod,
                     gross_salary: finalSalary,
                     tax_deduction: tax,
@@ -166,7 +226,9 @@ export function useCreatePayslipLogic({
                     bonuses: aiDeductions.filter(d => d.amount < 0).reduce((sum, d) => sum + Math.abs(d.amount), 0),
                     deductions: aiDeductions.filter(d => d.amount > 0).reduce((sum, d) => sum + d.amount, 0),
                     status: "draft",
-                    payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+                    payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                    // Store manual person data if not saved as employee
+                    manual_employee_name: useManualEntry && !saveAsEmployee ? manualPerson.name : null
                 })
             })
 
@@ -202,15 +264,22 @@ export function useCreatePayslipLogic({
     }
 
     return {
-        employees, isLoadingEmployees,
+        employees, filteredEmployees, isLoadingEmployees,
         step, setStep,
         selectedEmployee, setSelectedEmployee,
         selectedEmp,
-        
+        canProceedFromStep1,
+
+        // Manual entry
+        useManualEntry, setUseManualEntry,
+        manualPerson, setManualPerson,
+        saveAsEmployee, setSaveAsEmployee,
+        searchQuery, setSearchQuery,
+
         chatInput, setChatInput,
         chatMessages,
         handleSendMessage,
-        
+
         aiDeductions,
         totalDeductions,
         recommendedSalary,

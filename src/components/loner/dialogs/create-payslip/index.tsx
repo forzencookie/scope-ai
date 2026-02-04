@@ -18,15 +18,22 @@ export type { PayslipCreateDialogProps }
 
 export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
     const {
-        employees, isLoadingEmployees,
+        employees, filteredEmployees, isLoadingEmployees,
         step, setStep,
         selectedEmployee, setSelectedEmployee,
         selectedEmp,
-        
+        canProceedFromStep1,
+
+        // Manual entry
+        useManualEntry, setUseManualEntry,
+        manualPerson, setManualPerson,
+        saveAsEmployee, setSaveAsEmployee,
+        searchQuery, setSearchQuery,
+
         chatInput, setChatInput,
         chatMessages,
         handleSendMessage,
-        
+
         aiDeductions,
         recommendedSalary,
         customSalary, setCustomSalary,
@@ -73,9 +80,19 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
                         </DialogHeader>
                         <StepEmployeeSelect
                             employees={employees}
+                            filteredEmployees={filteredEmployees}
                             isLoading={isLoadingEmployees}
                             selectedEmployee={selectedEmployee}
                             setSelectedEmployee={setSelectedEmployee}
+                            useManualEntry={useManualEntry}
+                            setUseManualEntry={setUseManualEntry}
+                            manualPerson={manualPerson}
+                            setManualPerson={setManualPerson}
+                            saveAsEmployee={saveAsEmployee}
+                            setSaveAsEmployee={setSaveAsEmployee}
+                            searchQuery={searchQuery}
+                            setSearchQuery={setSearchQuery}
+                            canProceed={canProceedFromStep1}
                             onNext={() => setStep(2)}
                             onCancel={resetDialog}
                         />

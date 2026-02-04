@@ -1,6 +1,6 @@
 "use client"
 
-import { Calendar, Banknote, Wallet } from "lucide-react"
+import { Users, Banknote, Wallet } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 interface PayslipsStatsProps {
@@ -14,26 +14,32 @@ interface PayslipsStatsProps {
 
 export function PayslipsStats({ stats }: PayslipsStatsProps) {
     return (
-        <div className="flex flex-wrap items-center gap-4 py-3 px-4 rounded-lg bg-muted/30 border border-border/50">
-            <div className="flex items-center gap-2">
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold">{stats.currentPeriod}</span>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Employee Count */}
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <Users className="h-5 w-5 text-muted-foreground" />
+                <div>
+                    <p className="text-2xl font-bold tabular-nums">{stats.employeeCount}</p>
+                    <p className="text-xs text-muted-foreground">Antal anställda</p>
+                </div>
             </div>
-            <div className="h-4 w-px bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-                <span className="text-sm"><span className="font-semibold tabular-nums">{stats.employeeCount}</span> anställda</span>
+
+            {/* Total Gross */}
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <Banknote className="h-5 w-5 text-muted-foreground" />
+                <div>
+                    <p className="text-2xl font-bold tabular-nums">{formatCurrency(stats.totalGross)}</p>
+                    <p className="text-xs text-muted-foreground">Totalt brutto</p>
+                </div>
             </div>
-            <div className="h-4 w-px bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-                <Banknote className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold tabular-nums">{formatCurrency(stats.totalGross)}</span>
-                <span className="text-sm text-muted-foreground">brutto</span>
-            </div>
-            <div className="h-4 w-px bg-border hidden sm:block" />
-            <div className="flex items-center gap-2">
-                <Wallet className="h-4 w-4 text-red-500" />
-                <span className="text-sm font-semibold tabular-nums text-red-600 dark:text-red-400">{formatCurrency(stats.totalTax)}</span>
-                <span className="text-sm text-muted-foreground">skatt</span>
+
+            {/* Total Tax */}
+            <div className="flex items-center gap-3 p-4 rounded-lg bg-muted/30 border border-border/50">
+                <Wallet className="h-5 w-5 text-red-500" />
+                <div>
+                    <p className="text-2xl font-bold tabular-nums text-red-600 dark:text-red-400">{formatCurrency(stats.totalTax)}</p>
+                    <p className="text-xs text-muted-foreground">Skatt att betala</p>
+                </div>
             </div>
         </div>
     )
