@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useEffect, useState } from "react"
 import { useCompany } from "@/providers/company-provider"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useTaxPeriod } from "@/hooks/use-tax-period"
@@ -18,20 +18,47 @@ export interface K10Data {
     egenLon: number
     klararLonekrav: boolean
     hasData: boolean // Flag to indicate if real data exists
+    sparatUtdelningsutrymme: number // Saved space from previous K10 declarations
+}
+
+interface K10Report {
+    tax_year: number
+    data: {
+        remainingUtrymme?: number
+        gransbelopp?: number
+        totalDividends?: number
+    }
 }
 
 export function useK10Calculation() {
     const { company } = useCompany()
     const { verifications } = useVerifications()
     const { shareholders } = useCompliance()
+    const [k10History, setK10History] = useState<K10Report[]>([])
 
     // Get dynamic beskattningsår using shared hook
-    const { taxYear } = useTaxPeriod({ 
+    const { taxYear } = useTaxPeriod({
         fiscalYearEnd: company?.fiscalYearEnd || '12-31',
-        type: 'k10' 
+        type: 'k10'
     })
 
     const { params } = useTaxParameters(taxYear.year)
+
+    // Fetch K10 history to calculate sparat utdelningsutrymme
+    useEffect(() => {
+        async function fetchK10History() {
+            try {
+                const response = await fetch('/api/reports/k10')
+                if (response.ok) {
+                    const { reports } = await response.json()
+                    setK10History(reports || [])
+                }
+            } catch (error) {
+                console.error('Failed to fetch K10 history:', error)
+            }
+        }
+        fetchK10History()
+    }, [])
 
     // Calculate K10 using dynamic year & real ledger data
     const k10Data = useMemo<K10Data>(() => {
@@ -108,12 +135,16 @@ export function useK10Calculation() {
         // Total Gränsbelopp (Max of Main vs Simplification)
         const gransbelopp = Math.max(schablonbelopp, lonebaseratUtrymme)
 
-        // Saved space from previous years
-        // TODO: In a full implementation, this would come from the k10declarations database table
-        // For now, we start with 0 as this is calculated based on actual history
-        const ingaendeSparat = 0
+        // Calculate sparat utdelningsutrymme from previous K10 declarations
+        // Sum up remainingUtrymme from all previous years
+        const sparatUtdelningsutrymme = k10History
+            .filter(report => report.tax_year < taxYear.year)
+            .reduce((sum, report) => {
+                const remaining = report.data?.remainingUtrymme || 0
+                return sum + (remaining > 0 ? remaining : 0)
+            }, 0)
 
-        const totaltUtrymme = gransbelopp + ingaendeSparat
+        const totaltUtrymme = gransbelopp + sparatUtdelningsutrymme
         const remainingUtrymme = totaltUtrymme - totalDividends
 
         return {
@@ -128,9 +159,10 @@ export function useK10Calculation() {
             agarandel,
             egenLon,
             klararLonekrav,
-            hasData
+            hasData,
+            sparatUtdelningsutrymme
         }
-    }, [taxYear.year, verifications, params.ibb, params.schablonRate, shareholders, company?.shareCapital])
+    }, [taxYear.year, verifications, params.ibb, params.schablonRate, shareholders, company?.shareCapital, k10History])
 
     return {
         k10Data,

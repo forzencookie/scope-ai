@@ -1,4 +1,4 @@
-import { TrendingUp, DollarSign, Calculator } from "lucide-react"
+import { DollarSign, Calculator } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { termExplanations } from "@/components/loner/constants"
 import { formatCurrency } from "@/lib/utils"
@@ -12,20 +12,15 @@ interface UtdelningStatsProps {
 }
 
 export function UtdelningStats({ stats }: UtdelningStatsProps) {
+    const isOverLimit = stats.planerad > stats.gransbelopp
+
     return (
-        <StatCardGrid columns={3}>
-            <StatCard
-                label={`Gränsbelopp ${new Date().getFullYear()}`}
-                value={`${formatCurrency(stats.gransbelopp)}`}
-                subtitle="Schablonmetoden (2,75 IBB)"
-                headerIcon={TrendingUp}
-                tooltip={termExplanations["Gränsbelopp"]}
-            />
+        <StatCardGrid columns={2}>
             <StatCard
                 label="Planerad utdelning"
                 value={stats.planerad > 0 ? formatCurrency(stats.planerad) : "Ingen planerad"}
                 subtitle={stats.planerad > 0
-                    ? (stats.planerad <= stats.gransbelopp ? "Inom gränsbeloppet" : "Överstiger gränsbeloppet")
+                    ? (isOverLimit ? "Överstiger gränsbeloppet" : "Inom gränsbeloppet")
                     : "Registrera via knappen ovan"
                 }
                 headerIcon={DollarSign}

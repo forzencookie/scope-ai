@@ -73,20 +73,26 @@ export function InkomstdeklarationContent() {
 
     // Prepare data for wizard dialog
     const wizardData = useMemo<InkomstWizardData>(() => {
-        const taxRate = 0.206 // 20.6% corporate tax
-        const taxableIncome = calculatedData.totals.taxableResult || calculatedData.totals.netIncome
+        // Calculate ej avdragsgilla from representation (accounts 6070-6079)
+        const representationTotal = calculatedData.taxAdjustments
+            .find(f => f.field === "4.3c")?.value || 0
+
         return {
             taxYear: taxYear.year,
             deadline: taxYear.deadlineLabel,
-            incomeStatement: {
+            totals: {
                 revenue: calculatedData.totals.revenue,
                 expenses: calculatedData.totals.expenses,
                 netIncome: calculatedData.totals.netIncome,
+                taxableResult: calculatedData.totals.taxableResult,
+                totalAssets: calculatedData.totals.totalAssets,
+                totalEquityAndLiabilities: calculatedData.totals.totalEquityAndLiabilities,
             },
-            taxAdjustments: {
-                adjustments: taxableIncome - calculatedData.totals.netIncome,
-                taxableIncome: taxableIncome,
-                estimatedTax: Math.round(Math.max(0, taxableIncome) * taxRate),
+            adjustments: {
+                previousYearLoss: 0, // Would come from previous declaration
+                periodiseringsfondAvsattning: 0,
+                periodiseringsfondAterforing: 0,
+                ejAvdragsgillaKostnader: representationTotal,
             },
         }
     }, [calculatedData, taxYear])

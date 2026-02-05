@@ -110,7 +110,6 @@ export function useDividendLogic() {
             gransbelopp: k10Data.gransbelopp,
             planerad,
             skatt,
-            netto: planerad - skatt,
         }
     }, [k10Data.gransbelopp, realDividendHistory])
 

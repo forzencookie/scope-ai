@@ -33,12 +33,12 @@ export function ShareholdersGrid({ shareholders, onAddShareholder }: Shareholder
                     columns={[
                         { label: 'Aktieägare', icon: User, span: 3 },
                         { label: 'Typ', icon: Building2, span: 2, hiddenOnMobile: true },
-                        { label: 'Aktier', icon: Hash, span: 2, align: 'right' },
-                        { label: 'Ägarandel', icon: Percent, span: 1, align: 'right' },
-                        { label: 'Röster', icon: Vote, span: 2, align: 'right', hiddenOnMobile: true },
-                    { label: 'Anskaffning', icon: Calendar, span: 1, align: 'right', hiddenOnMobile: true },
-                    { label: '', span: 1 }, // Actions
-                ]}
+                        { label: 'Aktier', icon: Hash, span: 2, align: 'right', hiddenOnMobile: true },
+                        { label: 'Andel', icon: Percent, span: 2, align: 'right' },
+                        { label: 'Röster', icon: Vote, span: 1, align: 'right', hiddenOnMobile: true },
+                        { label: 'Datum', icon: Calendar, span: 1, align: 'right', hiddenOnMobile: true },
+                        { label: '', span: 1 }, // Actions
+                    ]}
             />
             <GridTableRows>
                 {shareholders.length === 0 && (
@@ -85,8 +85,8 @@ export function ShareholdersGrid({ shareholders, onAddShareholder }: Shareholder
                             </span>
                         </div>
 
-                        {/* 3. Aktier */}
-                        <div className="col-span-2">
+                        {/* 3. Aktier - hidden on mobile */}
+                        <div className="col-span-2 hidden md:block">
                             <div className="tabular-nums font-medium">{shareholder.shares.toLocaleString('sv-SE')}</div>
                             <div className="flex items-center gap-1.5 mt-1">
                                 <span className={cn(
@@ -100,18 +100,17 @@ export function ShareholdersGrid({ shareholders, onAddShareholder }: Shareholder
                             </div>
                         </div>
 
-                        {/* 4. Ägarandel */}
-                        <div className="col-span-1">
+                        {/* 4. Andel */}
+                        <div className="col-span-2">
                             <div className="font-medium tabular-nums">{shareholder.ownershipPercentage}%</div>
                         </div>
 
                         {/* 5. Röster - hidden on mobile */}
-                        <div className="col-span-2 hidden md:block">
+                        <div className="col-span-1 hidden md:block">
                             <div className="tabular-nums font-medium">{shareholder.votes.toLocaleString('sv-SE')}</div>
-                            <div className="text-xs text-muted-foreground">{shareholder.votesPercentage}% av röster</div>
                         </div>
 
-                        {/* 6. Anskaffning - hidden on mobile */}
+                        {/* 6. Datum - hidden on mobile */}
                         <div className="col-span-1 text-muted-foreground text-xs hidden md:block">
                             {formatDate(shareholder.acquisitionDate)}
                         </div>

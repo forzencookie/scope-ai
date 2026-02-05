@@ -85,8 +85,8 @@ export function Aktiebok() {
 
             {/* Mobile-only primary action button */}
             <div className="md:hidden w-full">
-                <Button 
-                    className="w-full" 
+                <Button
+                    className="w-full"
                     size="lg"
                     onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}
                 >
@@ -101,7 +101,7 @@ export function Aktiebok() {
             {activeTab === 'owners' && (
                 <div className="space-y-4 pt-6 md:pt-8 border-t-2 border-border/60">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
-                        <h2 className="text-sm md:text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.owners?.shareholdersTable || "Aktieägare"}</h2>
+                        <h2 className="text-sm md:text-base font-semibold text-muted-foreground">{text.owners?.shareholdersTable || "Aktieägare"}</h2>
                         <div className="flex items-center gap-2">
                             <SearchBar
                                 placeholder={text.owners?.searchOwners || "Sök ägare..."}
@@ -130,7 +130,7 @@ export function Aktiebok() {
             {activeTab === 'transactions' && (
                 <div className="space-y-4 pt-8 border-t-2 border-border/60">
                     <div className="flex items-center justify-between px-1">
-                        <h2 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">{text.owners?.transactionsTable || "Historik"}</h2>
+                        <h2 className="text-base font-semibold text-muted-foreground">Transaktioner</h2>
                         <div className="flex items-center gap-2">
                             <SearchBar
                                 placeholder={text.owners?.searchTransactions || "Sök..."}
@@ -147,26 +147,6 @@ export function Aktiebok() {
                                 <Users className="h-4 w-4 mr-2" />
                                 Aktieägare
                             </Button>
-
-                            <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                    <Button size="sm" className="h-8">
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Åtgärder
-                                    </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end">
-                                    <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
-                                        <Plus className="h-4 w-4 mr-2" />
-                                        Nyemission
-                                    </DropdownMenuItem>
-                                    <DropdownMenuSeparator />
-                                    <DropdownMenuItem>
-                                        <Download className="h-4 w-4 mr-2" />
-                                        Exportera transaktioner
-                                    </DropdownMenuItem>
-                                </DropdownMenuContent>
-                            </DropdownMenu>
                         </div>
                     </div>
 
