@@ -22,6 +22,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { useCompany } from '@/providers/company-provider';
 import { deriveSignatories, type Signatory } from './firmatecknare-logic';
+import { type Partner, type BoardMeeting, type OwnerInfo } from '@/types/ownership';
 import { useCompliance } from "@/hooks/use-compliance"
 import { usePartners } from "@/hooks/use-partners"
 import { useMembers } from "@/hooks/use-members"
@@ -64,35 +65,52 @@ export function Firmatecknare() {
             });
     }, [documents]);
 
-    const ownerInfo = useMemo(() => ({
-        kb: { partners: partners }, 
-        forening: { 
-            boardMembers: (members || [])
-                .filter(m => m.roles.some(r => r.toLowerCase().includes('styrelse') || r.toLowerCase().includes('ordförande')))
-                .map(m => ({
-                    name: m.name,
-                    role: m.roles.find(r => r.toLowerCase().includes('ordförande')) ? 'Ordförande' : 'Ordinarie ledamot',
-                    since: m.joinDate
-                }))
-        }, 
-        ef: { owner: { name: company?.contactPerson || 'Ägare' } }
-    }), [partners, members, company]);
+    const ownerInfo = useMemo((): OwnerInfo => ({
+        companyType: companyType as OwnerInfo['companyType'],
+        partners: partners as Partner[],
+        boardMembers: (members || [])
+            .filter(m => m.roles.some(r => r.toLowerCase().includes('styrelse') || r.toLowerCase().includes('ordförande')))
+            .map(m => ({
+                name: m.name,
+                role: m.roles.find(r => r.toLowerCase().includes('ordförande')) ? 'Ordförande' : 'Ordinarie ledamot',
+                since: m.joinDate
+            })),
+        owner: companyType === 'ef' ? {
+            name: company?.contactPerson || 'Ägare',
+            personalNumber: '',
+            address: '',
+            fSkatt: true,
+            momsRegistered: true,
+        } : undefined,
+    }), [companyType, partners, members, company]);
+
+    // Map API shareholders to the format expected by deriveSignatories
+    const mappedShareholders = useMemo(() => {
+        const totalShares = shareholders.reduce((sum, s) => sum + (s.shares_count || 0), 0) || 1
+        return shareholders.map(s => ({
+            id: s.id,
+            name: s.name,
+            personalNumber: s.ssn_org_nr,
+            type: 'person' as const,
+            shares: s.shares_count,
+            shareClass: (s.share_class || 'B') as 'A' | 'B',
+            ownershipPercentage: Math.round((s.shares_count / totalShares) * 100),
+            acquisitionDate: '',
+            acquisitionPrice: 0,
+            votes: s.shares_count * (s.share_class === 'A' ? 10 : 1),
+            votesPercentage: 0,
+        }))
+    }, [shareholders])
 
     // Derive signatories from real ownership data based on company type
     const signatories = useMemo<Signatory[]>(() => {
-        // cast to any to satisfy the shared logic types which might expect legacy mock structures
-        // In a full refactor, firmatecknare-logic.ts types should be updated to match API types perfectly.
         return deriveSignatories(companyType, {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            shareholders: shareholders as any[],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            partners: partners as any[],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            boardMeetings: boardMeetings as any[],
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            ownerInfo: ownerInfo as any
+            shareholders: mappedShareholders,
+            partners: partners as Partner[],
+            boardMeetings: boardMeetings as BoardMeeting[],
+            ownerInfo: ownerInfo as OwnerInfo
         });
-    }, [companyType, shareholders, partners, boardMeetings, ownerInfo]);
+    }, [companyType, mappedShareholders, partners, boardMeetings, ownerInfo]);
 
     const activeSignatories = signatories.filter(s => s.isActive);
     const ensamSignatories = activeSignatories.filter(s => s.signatureType === 'ensam');

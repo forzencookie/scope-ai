@@ -3335,10 +3335,15 @@ export type Database = {
           created_at: string | null
           date: string | null
           description: string | null
+          fiscal_year: number | null
           id: string
+          is_locked: boolean | null
           number: number | null
           rows: Json | null
           series: string | null
+          source_id: string | null
+          source_type: string | null
+          total_amount: number | null
           user_id: string | null
         }
         Insert: {
@@ -3346,10 +3351,15 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           description?: string | null
+          fiscal_year?: number | null
           id?: string
+          is_locked?: boolean | null
           number?: number | null
           rows?: Json | null
           series?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          total_amount?: number | null
           user_id?: string | null
         }
         Update: {
@@ -3357,13 +3367,72 @@ export type Database = {
           created_at?: string | null
           date?: string | null
           description?: string | null
+          fiscal_year?: number | null
           id?: string
+          is_locked?: boolean | null
           number?: number | null
           rows?: Json | null
           series?: string | null
+          source_id?: string | null
+          source_type?: string | null
+          total_amount?: number | null
           user_id?: string | null
         }
         Relationships: []
+      }
+      verification_lines: {
+        Row: {
+          id: string
+          verification_id: string
+          account_number: number
+          account_name: string | null
+          debit: number
+          credit: number
+          description: string | null
+          user_id: string
+          company_id: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          verification_id: string
+          account_number: number
+          account_name?: string | null
+          debit?: number
+          credit?: number
+          description?: string | null
+          user_id: string
+          company_id?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          verification_id?: string
+          account_number?: number
+          account_name?: string | null
+          debit?: number
+          credit?: number
+          description?: string | null
+          user_id?: string
+          company_id?: string | null
+          created_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_lines_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "verifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_lines_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          }
+        ]
       }
     }
     Views: {
@@ -3372,6 +3441,28 @@ export type Database = {
     Functions: {
       add_user_credits: {
         Args: { p_amount: number; p_user_id: string }
+        Returns: number
+      }
+      get_account_balances: {
+        Args: {
+          p_start_date?: string | null
+          p_end_date?: string | null
+          p_user_id?: string | null
+        }
+        Returns: {
+          account_number: number
+          account_name: string | null
+          total_debit: number
+          total_credit: number
+          balance: number
+        }[]
+      }
+      get_next_verification_number: {
+        Args: {
+          p_series?: string
+          p_fiscal_year?: number
+          p_user_id?: string | null
+        }
         Returns: number
       }
       check_rate_limit_atomic: {
@@ -3399,13 +3490,6 @@ export type Database = {
       consume_user_credits: {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
-      }
-      get_account_balances: {
-        Args: { date_from: string; date_to: string }
-        Returns: {
-          account: string
-          balance: number
-        }[]
       }
       get_agi_stats: { Args: { p_year?: number }; Returns: Json }
       get_benefit_stats: { Args: { target_year?: number }; Returns: Json }

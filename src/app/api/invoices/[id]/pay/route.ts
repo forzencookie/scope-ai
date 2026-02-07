@@ -1,11 +1,16 @@
 /**
  * Invoice Payment API
- * 
+ *
+ * Records customer payment on a booked invoice.
+ * Uses the bookkeeping engine to create proper payment journal entries.
+ *
  * Security: Uses user-scoped DB access with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { verificationService } from '@/services/verification-service';
+import { createPaymentReceivedEntry } from '@/lib/bookkeeping';
 
 export async function POST(
     req: NextRequest,
@@ -34,24 +39,37 @@ export async function POST(
         await userDb.customerInvoices.update(id, { status: 'betald' });
 
         const total = Number(invoice.total_amount) || 0;
-        const r = (n: number) => Math.round(n * 100) / 100;
 
-        // Create Verification
-        const verification = await userDb.verifications.create({
+        // Use the bookkeeping engine for payment received entry
+        const journalEntry = createPaymentReceivedEntry({
             date: new Date().toISOString().split('T')[0],
             description: `Betalning faktura ${invoice.invoice_number || id} - ${invoice.customer_name}`,
-            rows: [
-                { account: '1930', description: 'Företagskonto', debit: r(total), credit: 0 },
-                { account: '1510', description: 'Kundfordringar', debit: 0, credit: r(total) }
-            ]
+            amount: total,
+            invoiceReference: invoice.invoice_number || undefined,
+            series: 'A',
         });
 
-        // Create Bank Transaction
+        // Create verification with source tracking and relational lines
+        const verification = await verificationService.createVerification({
+            series: 'A',
+            date: journalEntry.date,
+            description: journalEntry.description,
+            entries: journalEntry.rows.map(row => ({
+                account: row.account,
+                debit: row.debit,
+                credit: row.credit,
+                description: row.description,
+            })),
+            sourceType: 'invoice',
+            sourceId: id,
+        });
+
+        // Create Bank Transaction record
         const transaction = await userDb.transactions.create({
             id: `TX-PAY-${Date.now()}`,
             date: new Date().toISOString(),
-            description: `Inbetalning ${id}`,
-            name: `Inbetalning ${id}`,
+            description: `Inbetalning ${invoice.invoice_number || id}`,
+            name: `Inbetalning ${invoice.invoice_number || id}`,
             amount: String(total),
             amount_value: total,
             status: 'Bokförd'

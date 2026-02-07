@@ -33,8 +33,8 @@ export function useCompanyStatistics() {
                     supabase.rpc('get_monthly_cashflow', { p_year: year }),
                     supabase.rpc('get_dashboard_counts'),
                     supabase.rpc('get_account_balances', {
-                        date_from: '2000-01-01',
-                        date_to: new Date().toISOString().split('T')[0]
+                        p_start_date: '2000-01-01',
+                        p_end_date: new Date().toISOString().split('T')[0]
                     })
                 ])
 
@@ -48,7 +48,10 @@ export function useCompanyStatistics() {
                         transactions: { total: 0, unbooked: 0 },
                         invoices: { sent: 0, overdue: 0, totalValue: 0 }
                     })
-                    setAccountBalances(balancesRes.data || [])
+                    setAccountBalances((balancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
+                        account: String(row.account_number),
+                        balance: row.balance
+                    })))
                 }
 
             } catch (err) {

@@ -235,25 +235,33 @@ export const verificationService = {
     },
 
     /**
-     * Create a new verification
+     * Create a new verification with journal lines persisted to both
+     * the JSONB rows column (backward compat) and the relational verification_lines table
      */
     async createVerification({
         series = 'A',
         date,
         description,
-        entries
+        entries,
+        sourceType,
+        sourceId,
     }: {
         series?: string
         date: string
         description: string
         entries: VerificationEntry[]
+        sourceType?: string
+        sourceId?: string
     }): Promise<Verification> {
         const supabase = getSupabaseClient()
-        
+
         // Get next number
         const year = new Date(date).getFullYear()
         const number = await this.getNextVerificationNumber(series, year)
 
+        const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
+
+        // 1. Insert the verification header
         const { data, error } = await supabase
             .from('verifications')
             .insert({
@@ -261,14 +269,39 @@ export const verificationService = {
                 number,
                 date,
                 description,
-                rows: entries as unknown as Json
+                rows: entries as unknown as Json,
+                source_type: sourceType || null,
+                source_id: sourceId || null,
+                total_amount: totalDebit,
+                fiscal_year: year,
             })
             .select()
             .single()
 
         if (error) throw error
 
-        const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
+        // 2. Insert verification_lines for relational querying (reports)
+        const { data: { user } } = await supabase.auth.getUser()
+        if (user && entries.length > 0) {
+            const lines = entries.map(entry => ({
+                verification_id: data.id,
+                account_number: parseInt(entry.account, 10),
+                account_name: entry.accountName || entry.description || null,
+                debit: entry.debit || 0,
+                credit: entry.credit || 0,
+                description: entry.description || null,
+                user_id: user.id,
+            }))
+
+            const { error: linesError } = await supabase
+                .from('verification_lines')
+                .insert(lines)
+
+            if (linesError) {
+                console.error('[VerificationService] Failed to insert verification_lines:', linesError)
+            }
+        }
+
         const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
 
         return {

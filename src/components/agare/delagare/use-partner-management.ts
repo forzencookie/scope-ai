@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePartners } from '@/hooks/use-partners';
 import { useVerifications } from '@/hooks/use-verifications';
-import { PARTNER_ACCOUNTS } from '@/types/withdrawal';
+import { getPartnerAccounts } from '@/types/withdrawal';
 import { useCompany } from '@/providers/company-provider';
 
 export function usePartnerManagement() {
@@ -22,9 +22,10 @@ export function usePartnerManagement() {
       })
     }
 
-    return partners.map(p => {
-      const accounts = PARTNER_ACCOUNTS[p.id];
-      if (!accounts) return p;
+    return partners.map((p, index) => {
+      // Each partner is assigned BAS accounts based on their position
+      // Partner 0: 2010/2013/2018, Partner 1: 2020/2023/2028, etc.
+      const accounts = getPartnerAccounts(index);
 
       const capitalDelta = accountBalances.get(accounts.capital) || 0;
       const depositDelta = accountBalances.get(accounts.deposit) || 0;
@@ -47,17 +48,20 @@ export function usePartnerManagement() {
 
   useEffect(() => {
     async function fetchStats() {
-      const { supabase } = await import('@/lib/database/supabase')
-      const { data, error } = await supabase.rpc('get_partner_stats')
+      try {
+        const { supabase } = await import('@/lib/database/supabase')
+        const { data, error } = await supabase.rpc('get_partner_stats')
 
-      if (!error && data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const stats = data as any
-        setRpcStats({
-          partnerCount: Number(stats.partnerCount) || 0,
-          totalCapital: Number(stats.totalCapital) || 0,
-          totalWithdrawals: Number(stats.totalWithdrawals) || 0
-        })
+        if (!error && data) {
+          const stats = data as Record<string, unknown>
+          setRpcStats({
+            partnerCount: Number(stats.partnerCount ?? stats.partner_count) || 0,
+            totalCapital: Number(stats.totalCapital ?? stats.total_capital) || 0,
+            totalWithdrawals: Number(stats.totalWithdrawals ?? stats.total_withdrawals) || 0
+          })
+        }
+      } catch {
+        // RPC may not exist yet - silently fall back to local calculation
       }
     }
     fetchStats()

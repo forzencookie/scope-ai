@@ -36,18 +36,23 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
             payslips,
         ] = await Promise.all([
             supabase.rpc('get_account_balances', {
-                date_from: dateFrom,
-                date_to: dateTo,
+                p_start_date: dateFrom,
+                p_end_date: dateTo,
             }),
             supabase.rpc('get_account_balances', {
-                date_from: prevDateFrom,
-                date_to: prevDateTo,
+                p_start_date: prevDateFrom,
+                p_end_date: prevDateTo,
             }),
             db.getPayslips(500),
         ])
 
-        const balances: Array<{ account: string; balance: number }> = currentBalances.data || []
-        const prevBalanceList: Array<{ account: string; balance: number }> = prevBalances.data || []
+        const mapBalances = (data: typeof currentBalances.data): Array<{ account: string; balance: number }> =>
+            (data || []).map((row: { account_number: number; balance: number }) => ({
+                account: String(row.account_number),
+                balance: row.balance,
+            }))
+        const balances = mapBalances(currentBalances.data)
+        const prevBalanceList = mapBalances(prevBalances.data)
 
         // Build account balance lookup
         const accountBalance = (start: number, end: number): number => {

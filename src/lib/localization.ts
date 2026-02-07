@@ -84,6 +84,7 @@ export const GENERAL_STATUS_LABELS = {
     PLANNED: "Planerad",
     PAID_OUT: "Utbetald",
     APPROVED: "Godkänd",
+    DECIDED: "Beslutad",
     // Verifikationer statuses
     TRANSACTION_LINKED: "Transaktion kopplad",
     TRANSACTION_MISSING: "Transaktion saknas",

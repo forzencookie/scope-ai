@@ -12,18 +12,25 @@ import { UtdelningsTable } from "./dividend-table"
 import { RegisterDividendDialog } from "./register-dividend-dialog"
 
 export function UtdelningContent() {
-    const { stats, k10Data, realDividendHistory, registerDividend } = useDividendLogic()
+    const {
+        stats,
+        k10Data,
+        realDividendHistory,
+        planDividend,
+        bookDividend,
+        payDividend,
+    } = useDividendLogic()
     const [showRegisterDialog, setShowRegisterDialog] = useState(false)
 
     return (
         <div className="space-y-6">
             <PageHeader
                 title="Utdelning"
-                subtitle="Hantera utdelning och K10-underlag."
+                subtitle="Planera, besluta och bokför utdelning till aktieägare."
                 actions={
                     <Button size="sm" onClick={() => setShowRegisterDialog(true)}>
                         <Plus className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Registrera utdelning</span>
+                        <span className="hidden sm:inline">Planera utdelning</span>
                         <span className="sm:hidden">Ny</span>
                     </Button>
                 }
@@ -36,7 +43,11 @@ export function UtdelningContent() {
             <div className="flex flex-col lg:flex-row gap-6">
                 <div className="flex-1 min-w-0">
                     <h2 className="font-medium mb-3">Utdelningshistorik</h2>
-                    <UtdelningsTable data={realDividendHistory} />
+                    <UtdelningsTable
+                        data={realDividendHistory}
+                        onBook={bookDividend}
+                        onPay={payDividend}
+                    />
                 </div>
                 <div className="shrink-0 lg:w-72">
                     <DividendCalculator k10Data={k10Data} />
@@ -46,7 +57,7 @@ export function UtdelningContent() {
             <RegisterDividendDialog
                 open={showRegisterDialog}
                 onOpenChange={setShowRegisterDialog}
-                onRegister={registerDividend}
+                onRegister={planDividend}
             />
         </div>
     )

@@ -16,6 +16,7 @@ export interface CorporateDocument {
 
 export interface Shareholder {
     id: string
+    created_at?: string
     name: string
     ssn_org_nr: string
     shares_count: number

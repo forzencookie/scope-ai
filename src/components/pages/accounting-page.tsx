@@ -4,6 +4,7 @@ import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
 import { transactionService, type TransactionStats } from '@/services/transaction-service'
+import { useCachedQuery } from '@/hooks/use-cached-query'
 import {
     TooltipProvider,
 } from "@/components/ui/tooltip"
@@ -98,16 +99,11 @@ function AccountingPageContent() {
         refetch: handleRefresh
     } = useTransactionsPaginated(50) // Default 50 items per page
 
-    const [transactionStats, setTransactionStats] = useState<TransactionStats | undefined>()
-
-    // Fetch stats separately (could be moved to a hook too)
-    useEffect(() => {
-        const fetchStats = async () => {
-            const statsData = await transactionService.getStats()
-            setTransactionStats(statsData)
-        }
-        fetchStats()
-    }, [])
+    const { data: transactionStats } = useCachedQuery<TransactionStats>({
+        cacheKey: 'transaction-stats',
+        queryFn: () => transactionService.getStats(),
+        ttlMs: 2 * 60 * 1000, // 2 min cache
+    })
 
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 
@@ -116,10 +112,6 @@ function AccountingPageContent() {
         setLastRefresh(new Date())
     }, [transactions])
 
-    // Auto-refresh every 5 seconds when on transactions tab
-    useEffect(() => {
-        if (currentTab !== "transaktioner") return
-    }, [currentTab])
 
     // Manual refresh function
     // handleRefresh is now from the hook
@@ -213,7 +205,7 @@ function AccountingPageContent() {
                                         <LazyTransactionsTable
                                             title="Transaktioner"
                                             transactions={transactions}
-                                            stats={transactionStats}
+                                            stats={transactionStats ?? undefined}
                                             onTransactionBooked={handleTransactionBooked}
                                             page={page}
                                             pageSize={pageSize}
@@ -223,7 +215,7 @@ function AccountingPageContent() {
                                         {/* Sidebar widgets - portals to PageSidebarSlot on xl+ */}
                                         <TransactionsSidebar 
                                             transactions={transactions}
-                                            stats={transactionStats}
+                                            stats={transactionStats ?? undefined}
                                         />
                                     </SectionErrorBoundary>
                                 )

@@ -1,20 +1,40 @@
-import { Calendar, Wallet, Calculator, CheckCircle2, DollarSign } from "lucide-react"
+import { Calendar, Wallet, Calculator, DollarSign, MoreHorizontal } from "lucide-react"
 import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
-import { AppStatusBadge } from "@/components/ui/status-badge"
+import { AppStatusBadge, type AppStatus } from "@/components/ui/status-badge"
+import { Button } from "@/components/ui/button"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
+import type { DividendDecision } from "./use-dividend-logic"
 
 interface UtdelningsTabellProps {
-    data: { year: number; amount: number; tax: number; netAmount: number; status: string }[]
+    data: DividendDecision[]
+    onBook?: (dividend: DividendDecision) => void
+    onPay?: (dividend: DividendDecision) => void
 }
 
 const columns = [
     { label: "År", icon: Calendar, span: 2 },
-    { label: "Belopp", icon: Wallet, span: 3, align: "right" as const },
+    { label: "Belopp", icon: Wallet, span: 2, align: "right" as const },
     { label: "Skatt", icon: Calculator, span: 2, align: "right" as const, hiddenOnMobile: true },
-    { label: "Netto", icon: DollarSign, span: 3, align: "right" as const },
-    { label: "Status", icon: CheckCircle2, span: 2, align: "right" as const },
+    { label: "Netto", icon: DollarSign, span: 2, align: "right" as const },
+    { label: "Status", span: 3 },
+    { label: "", span: 1 },
 ]
 
-export function UtdelningsTable({ data }: UtdelningsTabellProps) {
+function getStatusLabel(status: DividendDecision['status']): AppStatus {
+    switch (status) {
+        case 'planned': return 'Planerad'
+        case 'decided': return 'Beslutad'
+        case 'booked': return 'Bokförd'
+        default: return 'Planerad'
+    }
+}
+
+export function UtdelningsTable({ data, onBook, onPay }: UtdelningsTabellProps) {
     return (
         <>
             <GridTableHeader columns={columns} />
@@ -22,24 +42,51 @@ export function UtdelningsTable({ data }: UtdelningsTabellProps) {
                 <div className="py-12 mt-6 text-center">
                     <DollarSign className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
                     <h3 className="text-lg font-medium mb-2">Ingen utdelningshistorik</h3>
-                    <p className="text-muted-foreground">Registrera din första utdelning via knappen ovan.</p>
+                    <p className="text-muted-foreground">Planera din första utdelning via knappen ovan.</p>
                 </div>
             ) : (
-            <GridTableRows>
-                {data.map((row) => (
-                    <GridTableRow key={row.year}>
-                        <div className="col-span-2 font-medium">{row.year}</div>
-                        <div className="col-span-3 text-right">{row.amount.toLocaleString("sv-SE")} kr</div>
-                        <div className="col-span-2 text-right text-red-600 dark:text-red-500/70 hidden md:block">{row.tax.toLocaleString("sv-SE")} kr</div>
-                        <div className="col-span-3 text-right font-medium">{row.netAmount.toLocaleString("sv-SE")} kr</div>
-                        <div className="col-span-2 flex justify-end">
-                            <AppStatusBadge
-                                status={row.status === "planned" || row.status === "planerad" ? "Planerad" : "Utbetald"}
-                            />
-                        </div>
-                    </GridTableRow>
-                ))}
-            </GridTableRows>
+                <GridTableRows>
+                    {data.map((row) => (
+                        <GridTableRow key={row.id}>
+                            <div className="col-span-2 font-medium">{row.year}</div>
+                            <div className="col-span-2 text-right tabular-nums">{row.amount.toLocaleString("sv-SE")} kr</div>
+                            <div className="col-span-2 text-right text-red-600 dark:text-red-500/70 hidden md:block tabular-nums">
+                                {row.tax.toLocaleString("sv-SE")} kr
+                            </div>
+                            <div className="col-span-2 text-right font-medium tabular-nums">{row.netAmount.toLocaleString("sv-SE")} kr</div>
+                            <div className="col-span-3">
+                                <AppStatusBadge status={getStatusLabel(row.status)} />
+                            </div>
+                            <div className="col-span-1 flex justify-end">
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-8 w-8">
+                                            <MoreHorizontal className="h-4 w-4" />
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        {row.status === 'decided' && onBook && (
+                                            <DropdownMenuItem onClick={() => onBook(row)}>
+                                                Bokför utdelning
+                                            </DropdownMenuItem>
+                                        )}
+                                        {row.status === 'booked' && onPay && (
+                                            <DropdownMenuItem onClick={() => onPay(row)}>
+                                                Registrera utbetalning
+                                            </DropdownMenuItem>
+                                        )}
+                                        {row.status === 'planned' && (
+                                            <DropdownMenuItem disabled>
+                                                Väntar på stämmobeslut
+                                            </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem>Visa protokoll</DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </div>
+                        </GridTableRow>
+                    ))}
+                </GridTableRows>
             )}
         </>
     )

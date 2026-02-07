@@ -1,4 +1,4 @@
-export type StockTransactionType = 'Nyemission' | 'Köp' | 'Försäljning' | 'Gåva'
+export type StockTransactionType = 'Nyemission' | 'Köp' | 'Försäljning' | 'Gåva' | 'Arv' | 'Split'
 
 export interface AktiebokStats {
     totalShares: number

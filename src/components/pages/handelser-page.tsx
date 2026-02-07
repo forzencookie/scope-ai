@@ -9,7 +9,8 @@ import {
     List,
     Loader2,
     Map,
-    History
+    History,
+    BookCheck,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -29,6 +30,7 @@ import {
     EventsCalendar,
     EventsTimelineView,
     RoadmapView,
+    ManadsavslutView,
     useHandelserLogic,
     availableYears,
     type ViewType,
@@ -36,6 +38,7 @@ import {
 
 // View tabs configuration
 const viewTabs: { id: ViewType; label: string; icon: typeof FolderOpen }[] = [
+    { id: "manadsavslut", label: "Månadsavslut", icon: BookCheck },
     { id: "folders", label: "Mappar", icon: FolderOpen },
     { id: "timeline", label: "Tidslinje", icon: List },
     { id: "calendar", label: "Kalender", icon: Calendar },
@@ -45,6 +48,7 @@ const viewTabs: { id: ViewType; label: string; icon: typeof FolderOpen }[] = [
 
 // Tab-specific headers
 const tabHeaders: Record<ViewType, { title: string; subtitle: string }> = {
+    manadsavslut: { title: "Månadsavslut", subtitle: "Stäng perioder och lås verifikationer" },
     folders: { title: "Mappar", subtitle: "Företagshändelser organiserat per kvartal" },
     timeline: { title: "Tidslinje", subtitle: "Kronologisk vy över alla händelser" },
     calendar: { title: "Kalender", subtitle: "Se händelser i kalendervy" },
@@ -96,7 +100,7 @@ function HandelserPageContent() {
     const currentHeader = tabHeaders[activeView]
     
     // Show year dropdown for views that need it
-    const showYearDropdown = activeView === "folders" || activeView === "timeline" || activeView === "calendar"
+    const showYearDropdown = activeView === "folders" || activeView === "timeline" || activeView === "calendar" || activeView === "manadsavslut"
     // Show new action button only for roadmap view (planning future actions)
     // Other corporate actions should be created in their respective pages (Ägare, etc.)
     const showNewAction = activeView === "roadmap"
@@ -230,10 +234,15 @@ function HandelserPageContent() {
                         <RoadmapView onCreateNew={() => setWizardOpen(true)} />
                     )}
 
+                    {/* Månadsavslut View */}
+                    {activeView === "manadsavslut" && (
+                        <ManadsavslutView year={selectedYear} />
+                    )}
+
                     {/* Activity Log View */}
                     {activeView === "activity" && (
-                        <ActivityFeed 
-                            limit={50} 
+                        <ActivityFeed
+                            limit={50}
                             showTitle={false}
                             className="border-0 shadow-none bg-transparent"
                         />

@@ -3455,9 +3455,16 @@ export type Database = {
         Returns: boolean
       }
       get_account_balances: {
-        Args: { date_from: string; date_to: string }
+        Args: {
+          p_start_date?: string | null
+          p_end_date?: string | null
+          p_user_id?: string | null
+        }
         Returns: {
-          account: string
+          account_number: number
+          account_name: string | null
+          total_debit: number
+          total_credit: number
           balance: number
         }[]
       }

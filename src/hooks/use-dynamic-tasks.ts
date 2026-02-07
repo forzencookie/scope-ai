@@ -1,8 +1,8 @@
 
-import { useMemo } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { useTransactions } from '@/hooks/use-transactions-query'
-// import { payslips, agiReports } from '@/components/loner/constants'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export interface DynamicTask {
     id: string
@@ -21,8 +21,66 @@ export interface DynamicGoal {
     tasks: DynamicTask[]
 }
 
+interface StatCounts {
+    draftInvoices: number
+    overdueInvoices: number
+    pendingPayslips: number
+}
+
+function useStatCounts(): StatCounts & { isLoading: boolean } {
+    const [counts, setCounts] = useState<StatCounts>({
+        draftInvoices: 0,
+        overdueInvoices: 0,
+        pendingPayslips: 0,
+    })
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        async function fetchCounts() {
+            const supabase = getSupabaseClient()
+            const today = new Date().toISOString().split('T')[0]
+
+            try {
+                const [draftRes, overdueRes, payslipRes] = await Promise.all([
+                    // Draft customer invoices
+                    supabase
+                        .from('customerinvoices')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('status', 'DRAFT'),
+                    // Overdue unpaid invoices
+                    supabase
+                        .from('customerinvoices')
+                        .select('id', { count: 'exact', head: true })
+                        .lt('due_date', today)
+                        .not('status', 'in', '("PAID","CANCELLED")'),
+                    // Pending payslips
+                    supabase
+                        .from('payslips')
+                        .select('id', { count: 'exact', head: true })
+                        .eq('status', 'draft'),
+                ])
+
+                setCounts({
+                    draftInvoices: draftRes.count || 0,
+                    overdueInvoices: overdueRes.count || 0,
+                    pendingPayslips: payslipRes.count || 0,
+                })
+            } catch (err) {
+                console.error('Failed to fetch stat counts:', err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+
+        fetchCounts()
+    }, [])
+
+    return { ...counts, isLoading }
+}
+
 export function useDynamicTasks() {
     const { transactions, isLoading: isLoadingTransactions } = useTransactions()
+    const { draftInvoices, overdueInvoices, pendingPayslips, isLoading: isLoadingCounts } = useStatCounts()
 
     // Derived state for goals and tasks
     const goals = useMemo<DynamicGoal[]>(() => {
@@ -30,9 +88,6 @@ export function useDynamicTasks() {
 
         // 1. Bokföring Goal
         const pendingTransactions = transactions ? transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.TO_RECORD).length : 0
-        // TODO: Fetch invoice counts from API in future
-        const draftInvoices = 0
-        const overdueInvoices = 0
 
         const bokforingTasks: DynamicTask[] = []
 
@@ -83,14 +138,11 @@ export function useDynamicTasks() {
         })
 
         // 2. Rapporter Goal
-        // Calculate next VAT deadline (Simplified logic)
-        // In a real app use VatProcessor.getVatDeadline logic
         const now = new Date()
         const currentYear = now.getFullYear()
         let vatDeadline = new Date(currentYear, 1, 12) // Feb 12
         let vatPeriod = "Q4"
 
-        // Simple logic: if after Feb 12, next is May 12 (Q1)
         if (now > new Date(currentYear, 1, 12)) {
             vatDeadline = new Date(currentYear, 4, 12) // May 12
             vatPeriod = "Q1"
@@ -135,10 +187,6 @@ export function useDynamicTasks() {
         })
 
         // 3. Löner Goal
-        // TODO: Fetch real payroll stats
-        const pendingPayslips = 0
-        const pendingAgi = 0
-
         const lonerTasks: DynamicTask[] = []
 
         if (pendingPayslips > 0) {
@@ -159,16 +207,6 @@ export function useDynamicTasks() {
             })
         }
 
-        if (pendingAgi > 0) {
-            lonerTasks.push({
-                id: 'lon-2',
-                title: `AGI-rapport att skicka in`,
-                completed: false,
-                href: '/dashboard/rapporter?tab=agi',
-                category: 'loner'
-            })
-        }
-
         newGoals.push({
             id: 'goal-loner',
             name: 'Löneadministration',
@@ -179,11 +217,11 @@ export function useDynamicTasks() {
 
         return newGoals
 
-    }, [transactions])
+    }, [transactions, draftInvoices, overdueInvoices, pendingPayslips])
 
     return {
         goals,
-        isLoading: isLoadingTransactions,
-        refresh: () => { } // No-op as useTransactions updates automatically or via its own refetch
+        isLoading: isLoadingTransactions || isLoadingCounts,
+        refresh: () => { }
     }
 }

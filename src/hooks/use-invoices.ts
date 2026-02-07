@@ -11,7 +11,7 @@ export function useInvoices() {
 
     const fetchInvoices = useCallback(async () => {
         try {
-            const response = await fetch('/api/invoices', { cache: 'no-store' })
+            const response = await fetch('/api/invoices')
             const data = await response.json()
 
             if (data.invoices && Array.isArray(data.invoices)) {

@@ -95,9 +95,10 @@ export async function POST(request: NextRequest) {
 
         // Check if OpenAI is configured
         if (!process.env.OPENAI_API_KEY) {
-            console.log('[AI Extract] OpenAI not configured, returning mock data')
-            // Return mock data for development
-            return NextResponse.json(getMockData(documentType))
+            return NextResponse.json(
+                { error: 'AI extraction is not configured. Set OPENAI_API_KEY to enable OCR.' },
+                { status: 503 }
+            )
         }
 
         console.log(`[AI Extract] Processing ${documentType}: ${file.name}, size: ${file.size}`)
@@ -169,39 +170,5 @@ export async function POST(request: NextRequest) {
             error: 'Extraction failed',
             message: error instanceof Error ? error.message : 'Unknown error'
         }, { status: 500 })
-    }
-}
-
-function getMockData(documentType: string) {
-    // Return realistic mock data for development
-    switch (documentType) {
-        case 'supplier_invoice':
-            return {
-                success: true,
-                supplier: 'Exempelföretag AB',
-                invoiceNumber: 'F-' + Math.floor(10000 + Math.random() * 90000),
-                ocr: Math.floor(100000000 + Math.random() * 900000000).toString(),
-                issueDate: new Date().toISOString().split('T')[0],
-                dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-                amount: Math.floor(5000 + Math.random() * 20000),
-                vatAmount: Math.floor(1250 + Math.random() * 5000),
-                category: 'Konsulttjänster',
-                confidence: 85
-            }
-        case 'receipt':
-            return {
-                success: true,
-                supplier: 'Butik AB',
-                date: new Date().toISOString().split('T')[0],
-                amount: Math.floor(100 + Math.random() * 1000),
-                vatAmount: Math.floor(25 + Math.random() * 250),
-                category: 'Kontorsmaterial',
-                confidence: 90
-            }
-        default:
-            return {
-                success: true,
-                confidence: 0
-            }
     }
 }

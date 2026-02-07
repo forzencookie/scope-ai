@@ -5,6 +5,7 @@ export { EventsCalendar } from "./handelser-kalender"
 export { EventsTimelineView } from "./events-timeline-view"
 export { RoadmapView } from "./roadmap-view"
 export { RoadmapDetail } from "./roadmap-detail"
+export { ManadsavslutView } from "./manadsavslut-view"
 
 // Event UI components
 export { EventSourceBadge, EventStatusBadge, EventBadges } from "./event-badge"

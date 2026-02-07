@@ -2,13 +2,38 @@
  * Bokföring AI Tools - Reports
  *
  * Tools for financial reports (income statement, balance sheet, SIE export).
+ * All tools query real data from verification_lines via get_account_balances RPC.
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import {
     type ProcessedFinancialItem,
+    type AccountBalance,
 } from '@/services/processors/reports-processor'
+import { FinancialReportCalculator } from '@/services/processors/reports/calculator'
 import { companyService } from '@/services/company-service'
+import { getSupabaseAdmin } from '../../database/supabase'
+
+// =============================================================================
+// Shared helpers
+// =============================================================================
+
+async function fetchAccountBalances(startDate: string, endDate: string): Promise<AccountBalance[]> {
+    const supabase = getSupabaseAdmin()
+    const { data, error } = await supabase.rpc('get_account_balances', {
+        p_start_date: startDate,
+        p_end_date: endDate,
+    })
+    if (error) throw error
+    return (data || []).map((row: { account_number: number; balance: number }) => ({
+        account: String(row.account_number),
+        balance: row.balance,
+    }))
+}
+
+function formatSEK(amount: number): string {
+    return Math.abs(amount).toLocaleString('sv-SE', { maximumFractionDigits: 0 }) + ' kr'
+}
 
 // =============================================================================
 // Financial Statement Tools
@@ -21,11 +46,30 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        // TODO: Query real financial data from Supabase
+        const year = new Date().getFullYear()
+        const balances = await fetchAccountBalances(`${year}-01-01`, `${year}-12-31`)
+
+        if (!balances.length) {
+            return {
+                success: false,
+                data: [],
+                message: 'Ingen resultaträkning tillgänglig. Bokför transaktioner först.',
+            }
+        }
+
+        const items = FinancialReportCalculator.calculateIncomeStatement(balances)
+        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
+        const revenue = items.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0
+
+        const lines = items
+            .filter(i => !i.isHeader)
+            .map(i => `${i.label}: ${formatSEK(i.value)}`)
+            .join('\n')
+
         return {
-            success: false,
-            data: [],
-            message: 'Ingen resultaträkning tillgänglig. Bokför transaktioner först.',
+            success: true,
+            data: items,
+            message: `Resultaträkning ${year}:\n\n${lines}\n\nOmsättning: ${formatSEK(revenue)}, Årets resultat: ${formatSEK(netIncome)}.`,
         }
     },
 })
@@ -37,11 +81,30 @@ export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFi
     requiresConfirmation: false,
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        // TODO: Query real financial data from Supabase
+        const year = new Date().getFullYear()
+        const balances = await fetchAccountBalances('2000-01-01', `${year}-12-31`)
+
+        if (!balances.length) {
+            return {
+                success: false,
+                data: [],
+                message: 'Ingen balansräkning tillgänglig. Bokför transaktioner först.',
+            }
+        }
+
+        const items = FinancialReportCalculator.calculateBalanceSheet(balances)
+        const totalAssets = items.find(i => i.label === 'SUMMA TILLGÅNGAR')?.value ?? 0
+        const totalEqLiab = items.find(i => i.label === 'SUMMA EGET KAPITAL OCH SKULDER')?.value ?? 0
+
+        const lines = items
+            .filter(i => !i.isHeader)
+            .map(i => `${i.highlight ? '**' : ''}${i.label}: ${formatSEK(i.value)}${i.highlight ? '**' : ''}`)
+            .join('\n')
+
         return {
-            success: false,
-            data: [],
-            message: 'Ingen balansräkning tillgänglig. Bokför transaktioner först.',
+            success: true,
+            data: items,
+            message: `Balansräkning per ${year}-12-31:\n\n${lines}\n\nSumma tillgångar: ${formatSEK(totalAssets)}. Summa eget kapital och skulder: ${formatSEK(totalEqLiab)}.`,
         }
     },
 })
@@ -113,11 +176,49 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, any
         required: ['period'],
     },
     execute: async (params) => {
-        // TODO: Query real financial data from Supabase
+        const year = parseInt(params.period) || new Date().getFullYear()
+
+        const [plBalances, bsBalances] = await Promise.all([
+            fetchAccountBalances(`${year}-01-01`, `${year}-12-31`),
+            fetchAccountBalances('2000-01-01', `${year}-12-31`),
+        ])
+
+        if (!plBalances.length && !bsBalances.length) {
+            return {
+                success: false,
+                data: {},
+                message: `Ingen finansiell rapport tillgänglig för ${year}. Bokför transaktioner först.`,
+            }
+        }
+
+        const incomeStatement = FinancialReportCalculator.calculateIncomeStatement(plBalances)
+        const balanceSheet = FinancialReportCalculator.calculateBalanceSheet(bsBalances)
+
+        // Comparison period
+        let comparison = null
+        if (params.comparisonPeriod) {
+            const compYear = parseInt(params.comparisonPeriod)
+            if (compYear) {
+                const [compPl, compBs] = await Promise.all([
+                    fetchAccountBalances(`${compYear}-01-01`, `${compYear}-12-31`),
+                    fetchAccountBalances('2000-01-01', `${compYear}-12-31`),
+                ])
+                comparison = {
+                    year: compYear,
+                    incomeStatement: FinancialReportCalculator.calculateIncomeStatement(compPl),
+                    balanceSheet: FinancialReportCalculator.calculateBalanceSheet(compBs),
+                }
+            }
+        }
+
+        const netIncome = incomeStatement.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
+        const totalAssets = balanceSheet.find(i => i.label === 'SUMMA TILLGÅNGAR')?.value ?? 0
+
         return {
-            success: false,
-            data: {},
-            message: `Ingen finansiell rapport tillgänglig för ${params.period}. Bokför transaktioner först.`,
+            success: true,
+            data: { year, incomeStatement, balanceSheet, comparison },
+            message: `Finansiell rapport ${year}: Årets resultat ${formatSEK(netIncome)}, Totala tillgångar ${formatSEK(totalAssets)}.` +
+                (comparison ? ` Jämförelse med ${params.comparisonPeriod} inkluderad.` : ''),
         }
     }
 })
@@ -166,6 +267,21 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
 
         const [fyMonth, fyDay] = fiscalYearEnd.split('-')
 
+        // Fetch real financial data
+        const [plBalances, bsBalances] = await Promise.all([
+            fetchAccountBalances(`${params.year}-01-01`, `${params.year}-${fyMonth}-${fyDay}`),
+            fetchAccountBalances('2000-01-01', `${params.year}-${fyMonth}-${fyDay}`),
+        ])
+
+        const incomeStatement = FinancialReportCalculator.calculateIncomeStatementSections(plBalances)
+        const balanceSheet = FinancialReportCalculator.calculateBalanceSheetSections(bsBalances)
+
+        const netIncome = incomeStatement.find(s => s.isHighlight)?.total ?? 0
+        const totalAssets = balanceSheet.reduce((sum, s) => {
+            if (s.title === 'Anläggningstillgångar' || s.title === 'Omsättningstillgångar') return sum + s.total
+            return sum
+        }, 0)
+
         const annualReportData = {
             companyName,
             orgNumber,
@@ -179,14 +295,24 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
                 notes: true,
                 signatures: false
             },
-            keyFigures: [],
+            keyFigures: [
+                { label: 'Nettoomsättning', value: incomeStatement[0]?.total ?? 0 },
+                { label: 'Årets resultat', value: netIncome },
+                { label: 'Balansomslutning', value: totalAssets },
+            ],
+            incomeStatement,
+            balanceSheet,
             status: "draft"
         }
+
+        const hasData = plBalances.length > 0 || bsBalances.length > 0
 
         return {
             success: true,
             data: annualReportData,
-            message: `Årsredovisning för ${params.year} skapad (utkast). Nyckeltal saknas — bokför transaktioner för att fylla i automatiskt.`,
+            message: hasData
+                ? `Årsredovisning för ${params.year} skapad med riktiga siffror. Nettoomsättning: ${formatSEK(incomeStatement[0]?.total ?? 0)}, Årets resultat: ${formatSEK(netIncome)}, Balansomslutning: ${formatSEK(totalAssets)}.`
+                : `Årsredovisning för ${params.year} skapad (utkast). Nyckeltal saknas — bokför transaktioner för att fylla i automatiskt.`,
         }
     }
 })
@@ -226,19 +352,89 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         },
         required: ['year'],
     },
-    execute: async (params) => {
-        // TODO: Pull from actual bookkeeping data in Supabase
+    execute: async (params, context) => {
+        const userId = context?.userId
+        let companyName = ''
+        let orgNumber = ''
+
+        if (userId) {
+            try {
+                const company = await companyService.getByUserId(userId)
+                if (company) {
+                    companyName = company.name
+                    orgNumber = company.orgNumber || ''
+                }
+            } catch { /* use empty */ }
+        }
+
+        // Fetch P&L data for the tax year
+        const plBalances = await fetchAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
+
+        if (!plBalances.length) {
+            return {
+                success: false,
+                data: {
+                    year: params.year,
+                    companyName,
+                    orgNumber,
+                    fields: [],
+                    summary: { taxableIncome: 0, corporateTax: 0 },
+                    status: 'draft' as const,
+                },
+                message: `Kan inte förbereda INK2 för ${params.year} — bokföringsdata saknas.`,
+            }
+        }
+
+        // Calculate from real P&L
+        const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
+        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
+        const revenue = items.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0
+        const ebit = items.find(i => i.label === 'Rörelseresultat (EBIT)')?.value ?? 0
+        const financialItems = items.find(i => i.label === 'Finansiella poster')?.value ?? 0
+
+        // Swedish corporate tax rate 20.6%
+        const CORPORATE_TAX_RATE = 0.206
+        const taxableIncome = Math.max(0, netIncome)
+        const corporateTax = Math.round(taxableIncome * CORPORATE_TAX_RATE)
+
+        // Periodiseringsfond: max 25% of taxable income
+        const maxPeriodiseringsfond = params.includeOptimizations ? Math.round(taxableIncome * 0.25) : 0
+
+        const fields = [
+            { field: 'INK2R_3_1', label: 'Nettoomsättning', value: Math.abs(revenue), editable: true },
+            { field: 'INK2R_3_9', label: 'Övriga rörelseintäkter', value: 0, editable: true },
+            { field: 'INK2R_4_1', label: 'Rörelseresultat', value: ebit, editable: false },
+            { field: 'INK2R_5_1', label: 'Finansiella intäkter/kostnader', value: financialItems, editable: true },
+            { field: 'INK2R_6_1', label: 'Bokfört resultat', value: netIncome, editable: false },
+            { field: 'INK2R_7_1', label: 'Skattemässigt resultat', value: taxableIncome, editable: true },
+            { field: 'INK2R_8_1', label: 'Bolagsskatt (20.6%)', value: corporateTax, editable: false },
+        ]
+
+        if (params.includeOptimizations && maxPeriodiseringsfond > 0) {
+            fields.push({
+                field: 'INK2R_9_1',
+                label: 'Periodiseringsfond (max 25%)',
+                value: maxPeriodiseringsfond,
+                editable: true,
+            })
+        }
+
         return {
-            success: false,
+            success: true,
             data: {
                 year: params.year,
-                companyName: '',
-                orgNumber: '',
-                fields: [],
-                summary: { taxableIncome: 0, corporateTax: 0 },
+                companyName,
+                orgNumber,
+                fields,
+                summary: {
+                    taxableIncome,
+                    corporateTax,
+                    periodiseringsfond: maxPeriodiseringsfond || undefined,
+                },
                 status: 'draft' as const,
             },
-            message: `Kan inte förbereda INK2 för ${params.year} — bokföringsdata saknas.`,
+            message: `INK2 för ${params.year} förberedd. Bokfört resultat: ${formatSEK(netIncome)}, Skattepliktigt resultat: ${formatSEK(taxableIncome)}, Bolagsskatt: ${formatSEK(corporateTax)}.` +
+                (maxPeriodiseringsfond > 0 ? ` Möjlig periodiseringsfond: ${formatSEK(maxPeriodiseringsfond)}.` : ''),
         }
     },
 })
@@ -273,16 +469,69 @@ export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResu
         required: ['year'],
     },
     execute: async (params) => {
-        // TODO: Calculate from actual bookkeeping data in Supabase
+        // Fetch P&L for the year
+        const plBalances = await fetchAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
+
+        if (!plBalances.length) {
+            return {
+                success: false,
+                data: {
+                    year: params.year,
+                    result: 0,
+                    closingEntries: [],
+                    status: 'preview' as const,
+                },
+                message: `Kan inte stänga räkenskapsår ${params.year} — bokföringsdata saknas.`,
+            }
+        }
+
+        const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
+        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
+
+        // Preview closing entries
+        const closingEntries: YearEndResult['closingEntries'] = []
+
+        if (netIncome > 0) {
+            // Profit: Debit 8999 (Årets resultat) → Credit 2099 (Årets resultat)
+            closingEntries.push({
+                description: 'Överföring av årets vinst till eget kapital',
+                debit: '8999',
+                credit: '2099',
+                amount: netIncome,
+            })
+        } else if (netIncome < 0) {
+            // Loss: Debit 2099 → Credit 8999
+            closingEntries.push({
+                description: 'Överföring av årets förlust till eget kapital',
+                debit: '2099',
+                credit: '8999',
+                amount: Math.abs(netIncome),
+            })
+        }
+
+        const confirmationRequest: AIConfirmationRequest = {
+            title: `Stäng räkenskapsår ${params.year}`,
+            description: `Överför årets resultat (${formatSEK(netIncome)}) till eget kapital och lås alla verifikationer för ${params.year}.`,
+            summary: [
+                { label: 'Räkenskapsår', value: String(params.year) },
+                { label: 'Årets resultat', value: formatSEK(netIncome) },
+                { label: 'Antal bokslutsposter', value: String(closingEntries.length) },
+            ],
+            action: { toolName: 'close_fiscal_year', params },
+            requireCheckbox: true,
+            checkboxLabel: 'Jag bekräftar att jag vill stänga räkenskapsåret och låsa verifikationerna.',
+        }
+
         return {
-            success: false,
+            success: true,
             data: {
                 year: params.year,
-                result: 0,
-                closingEntries: [],
+                result: netIncome,
+                closingEntries,
                 status: 'preview' as const,
             },
-            message: `Kan inte stänga räkenskapsår ${params.year} — bokföringsdata saknas.`,
+            message: `Förhandsvisning av bokslut ${params.year}: Årets resultat ${formatSEK(netIncome)}. ${closingEntries.length} bokslutspost(er) kommer att skapas.`,
+            confirmationRequired: confirmationRequest,
         }
     },
 })
@@ -309,28 +558,57 @@ export const generateManagementReportTool = defineTool<GenerateManagementReportP
         },
         required: ['year'],
     },
-    execute: async (params) => {
-        // In production, this would use AI to generate text based on financial data
-        const managementReport = `
-## Förvaltningsberättelse
+    execute: async (params, context) => {
+        const userId = context?.userId
+        let companyName = 'Bolaget'
+
+        if (userId) {
+            try {
+                const company = await companyService.getByUserId(userId)
+                if (company) companyName = company.name
+            } catch { /* use default */ }
+        }
+
+        // Fetch real financial data for the report
+        const [plBalances, prevPlBalances] = await Promise.all([
+            fetchAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`),
+            fetchAccountBalances(`${params.year - 1}-01-01`, `${params.year - 1}-12-31`),
+        ])
+
+        const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
+        const prevItems = FinancialReportCalculator.calculateIncomeStatement(prevPlBalances)
+
+        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
+        const revenue = Math.abs(items.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0)
+        const prevRevenue = Math.abs(prevItems.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0)
+
+        const revenueChange = prevRevenue > 0
+            ? ((revenue - prevRevenue) / prevRevenue * 100).toFixed(0)
+            : null
+
+        const revenueComment = revenueChange
+            ? `Nettoomsättningen ${parseInt(revenueChange) >= 0 ? 'ökade' : 'minskade'} med ${Math.abs(parseInt(revenueChange))}% jämfört med föregående år.`
+            : `Nettoomsättningen uppgick till ${formatSEK(revenue)}.`
+
+        const resultDisposition = netIncome >= 0
+            ? `Styrelsen föreslår att årets resultat, ${formatSEK(netIncome)}, balanseras i ny räkning.`
+            : `Styrelsen föreslår att årets förlust, ${formatSEK(Math.abs(netIncome))}, balanseras i ny räkning.`
+
+        const managementReport = `## Förvaltningsberättelse
 
 ### Allmänt om verksamheten
-Bolaget bedriver konsultverksamhet inom IT och systemutveckling. Verksamheten bedrivs från bolagets lokaler i Stockholm.
+${companyName} har under räkenskapsåret ${params.year} bedrivit sin verksamhet i enlighet med bolagsordningen.
 
 ### Väsentliga händelser under räkenskapsåret
-Under ${params.year} har bolaget fortsatt att växa och nettoomsättningen ökade med 17% jämfört med föregående år. Bolaget har under året investerat i ny IT-utrustning och utökat personalstyrkan.
-
-### Framtida utveckling
-Bolaget ser positivt på den fortsatta utvecklingen och förväntar sig en fortsatt tillväxt under kommande år.
+${revenueComment} Årets resultat uppgick till ${formatSEK(netIncome)}.
 
 ### Resultatdisposition
-Styrelsen föreslår att årets resultat, 150 000 kr, balanseras i ny räkning.
-        `.trim()
+${resultDisposition}`
 
         return {
             success: true,
             data: managementReport,
-            message: `Förvaltningsberättelse för ${params.year} genererad.`,
+            message: `Förvaltningsberättelse för ${params.year} genererad baserat på verkliga siffror. Omsättning: ${formatSEK(revenue)}, Resultat: ${formatSEK(netIncome)}.`,
         }
     },
 })

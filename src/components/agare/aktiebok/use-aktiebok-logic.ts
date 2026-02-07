@@ -4,17 +4,29 @@ import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useCompliance } from "@/hooks/use-compliance"
-import { StockTransactionType, ShareholderDisplay } from "./types"
+import { StockTransactionType, ShareholderDisplay, TransactionDisplay } from "./types"
 
-const SHARE_REGEX = /(\d+) aktier/;
-const NAME_REGEX = /till (.+)$/;
+const SHARE_REGEX = /(\d+)\s*aktier/i
+const NAME_REGEX_TO = /till\s+(.+?)(?:\s*$|\s*från)/i
+const NAME_REGEX_FROM = /från\s+(.+?)(?:\s*$|\s*till)/i
+
+// Determine if identifier is org number (company) or personal number (person)
+function isCompany(ssnOrgNr: string): boolean {
+  if (!ssnOrgNr) return false
+  // Swedish org numbers start with digits 2-9 in position 3
+  // Personal numbers have digits 0-3 in position 3 (month)
+  const cleaned = ssnOrgNr.replace(/\D/g, '')
+  if (cleaned.length >= 3) {
+    const thirdDigit = parseInt(cleaned[2])
+    return thirdDigit >= 2
+  }
+  return false
+}
 
 export function useAktiebokLogic() {
-  const { addVerification } = useVerifications()
+  const { addVerification, verifications } = useVerifications()
   const toast = useToast()
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { shareholders: realShareholders, addShareholder } = useCompliance()
-  const { verifications } = useVerifications()
+  const { shareholders: realShareholders, addShareholder, updateShareholder, refetchShareholders } = useCompliance()
 
   // Local state
   const [searchQuery, setSearchQuery] = useState("")
@@ -28,15 +40,18 @@ export function useAktiebokLogic() {
   const [txShares, setTxShares] = useState("")
   const [txPrice, setTxPrice] = useState("")
   const [txTo, setTxTo] = useState("")
-  const [_txFrom, _setTxFrom] = useState("")
+  const [txToSsn, setTxToSsn] = useState("")
+  const [txFrom, setTxFrom] = useState("")
   const [txShareClass, setTxShareClass] = useState<'A' | 'B'>('B')
 
   // Derived stats
   const stats = useMemo(() => {
     const s = realShareholders || []
+    const totalShares = s.reduce((sum, sh) => sum + (sh.shares_count || 0), 0)
+    const totalVotes = s.reduce((sum, sh) => sum + ((sh.shares_count || 0) * (sh.share_class === 'A' ? 10 : 1)), 0)
     return {
-      totalShares: s.reduce((sum, sh) => sum + (sh.shares_count || 0), 0),
-      totalVotes: s.reduce((sum, sh) => sum + ((sh.shares_count || 0) * (sh.share_class === 'A' ? 10 : 1)), 0),
+      totalShares,
+      totalVotes,
       shareholderCount: s.length,
       totalValue: 0
     }
@@ -44,49 +59,79 @@ export function useAktiebokLogic() {
 
   // Map real shareholders to component format
   const shareholders = useMemo<ShareholderDisplay[]>(() => {
-    const total = stats.totalShares || 1
+    const totalShares = stats.totalShares || 1
+    const totalVotes = stats.totalVotes || 1
 
-    return (realShareholders || []).map(s => ({
-      id: s.id,
-      name: s.name,
-      personalNumber: s.ssn_org_nr,
-      type: 'person', // Default for now
-      shares: s.shares_count,
-      shareClass: (s.share_class || 'B') as 'A' | 'B',
-      ownershipPercentage: Math.round((s.shares_count / total) * 100),
-      acquisitionDate: '2024-01-01', // Placeholder
-      acquisitionPrice: 0,
-      votes: s.shares_count * (s.share_class === 'A' ? 10 : 1),
-      votesPercentage: 0 // Simplified
-    }))
-  }, [realShareholders, stats.totalShares])
+    return (realShareholders || []).map(s => {
+      const votes = s.shares_count * (s.share_class === 'A' ? 10 : 1)
+      return {
+        id: s.id,
+        name: s.name,
+        personalNumber: s.ssn_org_nr,
+        type: isCompany(s.ssn_org_nr) ? 'company' : 'person',
+        shares: s.shares_count,
+        shareClass: (s.share_class || 'B') as 'A' | 'B',
+        ownershipPercentage: Math.round((s.shares_count / totalShares) * 100),
+        acquisitionDate: s.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+        acquisitionPrice: 0,
+        votes,
+        votesPercentage: Math.round((votes / totalVotes) * 100)
+      }
+    })
+  }, [realShareholders, stats.totalShares, stats.totalVotes])
 
-  // Derive transactions
-  const transactions = useMemo(() => {
-    return verifications
-      .filter(v => v.sourceType === 'equity_issue' || v.description.toLowerCase().includes('nyemission'))
-      .map(v => {
-        const amountRow = v.rows.find(r => r.account === '1930')
-        const total = amountRow ? amountRow.debit : 0
-        const match = v.description.match(SHARE_REGEX)
-        const shares = match ? parseInt(match[1]) : 0
-        const price = shares > 0 ? total / shares : 0
-        const nameMatch = v.description.match(NAME_REGEX)
-        const toName = nameMatch ? nameMatch[1] : "Okänd"
+  // Derive transactions from verifications
+  const transactions = useMemo<TransactionDisplay[]>(() => {
+    // Filter verifications related to equity/share transactions
+    const equityVerifications = verifications.filter(v =>
+      v.sourceType === 'equity_issue' ||
+      v.sourceType === 'share_transfer' ||
+      v.description.toLowerCase().includes('nyemission') ||
+      v.description.toLowerCase().includes('aktier') ||
+      v.description.toLowerCase().includes('överlåtelse')
+    )
 
-        return {
-          id: String(v.id),
-          date: v.date,
-          type: 'Nyemission' as StockTransactionType,
-          fromShareholder: 'Bolaget',
-          toShareholder: toName,
-          shares: shares,
-          shareClass: 'B' as 'A' | 'B', // Assumption
-          pricePerShare: price,
-          totalPrice: total
-        }
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    return equityVerifications.map(v => {
+      // Parse shares from description
+      const shareMatch = v.description.match(SHARE_REGEX)
+      const shares = shareMatch ? parseInt(shareMatch[1]) : 0
+
+      // Parse names from description
+      const toMatch = v.description.match(NAME_REGEX_TO)
+      const fromMatch = v.description.match(NAME_REGEX_FROM)
+      const toName = toMatch ? toMatch[1].trim() : 'Okänd'
+      const fromName = fromMatch ? fromMatch[1].trim() : undefined
+
+      // Determine transaction type from sourceType or description
+      let type: StockTransactionType = 'Nyemission'
+      const desc = v.description.toLowerCase()
+      if (v.sourceType === 'share_transfer' || desc.includes('överlåtelse')) {
+        type = 'Köp'
+      } else if (desc.includes('gåva')) {
+        type = 'Gåva'
+      } else if (desc.includes('arv')) {
+        type = 'Arv'
+      } else if (desc.includes('split')) {
+        type = 'Split'
+      }
+
+      // Calculate total from bank account row
+      const bankRow = v.rows.find(r => r.account === '1930')
+      const total = bankRow ? (bankRow.debit || bankRow.credit || 0) : 0
+      const pricePerShare = shares > 0 ? total / shares : 0
+
+      return {
+        id: String(v.id),
+        date: v.date,
+        type,
+        fromShareholder: type === 'Nyemission' ? 'Bolaget' : (fromName || '—'),
+        toShareholder: toName,
+        shares,
+        shareClass: 'B' as 'A' | 'B', // Default, could parse from description
+        pricePerShare,
+        totalPrice: total
+      }
+    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }, [verifications])
 
   const filteredShareholders = useMemo(() => {
@@ -111,56 +156,152 @@ export function useAktiebokLogic() {
   }, [transactions, searchQuery])
 
   const handleSaveTransaction = async () => {
-    if (!txTo || !txShares || !txPrice) {
-      toast.error("Uppgifter saknas", "Fyll i alla obligatoriska fält.")
+    // Validate required fields based on transaction type
+    if (!txTo || !txShares) {
+      toast.error("Uppgifter saknas", "Fyll i mottagare och antal aktier.")
+      return
+    }
+
+    // For transfers (Köp, Gåva, Arv), we need a "from" shareholder
+    if (['Köp', 'Gåva', 'Arv'].includes(txType) && !txFrom) {
+      toast.error("Uppgifter saknas", "Ange vem som överlåter aktierna.")
+      return
+    }
+
+    // Nyemission requires price
+    if (txType === 'Nyemission' && !txPrice) {
+      toast.error("Uppgifter saknas", "Ange pris per aktie för nyemission.")
       return
     }
 
     setIsSubmitting(true)
 
     const shares = parseInt(txShares)
-    const price = parseFloat(txPrice)
+    const price = txPrice ? parseFloat(txPrice) : 0
     const total = shares * price
+    const quotaValue = 25 // Standard quota value, should come from company settings
 
     try {
-      const shareholder = realShareholders.find(s => s.name === txTo)
-      
-      // If we need to create new shareholder
-      if (!shareholder) {
-         // This logic was cut in read_file, but assumed handled or complex.
-         // Original file line 168+ would show more.
-         // I'll implement basic creation for now or assume existing logic.
-         // Wait, I saw `addShareholder` in useCompliance.
-         /* 
-         const newId = await addShareholder({...})
-         */
+      // Check if recipient shareholder exists, create if not
+      let toShareholder = realShareholders.find(s => s.name === txTo)
+
+      if (!toShareholder && txToSsn) {
+        // Create new shareholder
+        await addShareholder({
+          name: txTo,
+          ssn_org_nr: txToSsn,
+          shares_count: 0, // Will be updated after transaction
+          share_class: txShareClass,
+        })
+        await refetchShareholders()
+        toShareholder = realShareholders.find(s => s.name === txTo)
       }
 
-      await addVerification({
-        date: txDate,
-        description: `Nyemission ${shares} aktier till ${txTo}`,
-        sourceType: 'equity_issue',
-        rows: [
-          { account: "1930", description: "Insättning nyemission", debit: total, credit: 0 },
-          { account: "2081", description: "Aktiekapital", debit: 0, credit: shares * 25 }, // Quota value 25 assumption
-          { account: "2097", description: "Överkursfond", debit: 0, credit: total - (shares * 25) }
-        ]
-      })
+      // Handle different transaction types
+      switch (txType) {
+        case 'Nyemission': {
+          // New share issue: Cash in, share capital increases
+          await addVerification({
+            date: txDate,
+            description: `Nyemission ${shares} ${txShareClass}-aktier till ${txTo}`,
+            sourceType: 'equity_issue',
+            rows: [
+              { account: "1930", description: "Insättning nyemission", debit: total, credit: 0 },
+              { account: "2081", description: "Aktiekapital", debit: 0, credit: shares * quotaValue },
+              ...(total > shares * quotaValue ? [
+                { account: "2097", description: "Överkursfond", debit: 0, credit: total - (shares * quotaValue) }
+              ] : [])
+            ]
+          })
 
-      // Update shareholder in DB (mocked via useCompliance or requires real call)
-      // Since useCompliance logic handles fetches, we rely on verification + backend handling or direct mutation.
-      // Assuming addVerification triggers refetch or separate call needed.
+          // Update shareholder share count
+          if (toShareholder) {
+            await updateShareholder({
+              id: toShareholder.id,
+              shares_count: toShareholder.shares_count + shares,
+            })
+          }
+          break
+        }
 
-      toast.success("Transaktion registrerad", `Nyemission registrerad för ${txTo}`)
+        case 'Köp':
+        case 'Gåva':
+        case 'Arv': {
+          // Share transfer: No accounting entry for the company (between shareholders)
+          // But we record the transaction for the share register
+          const fromShareholder = realShareholders.find(s => s.name === txFrom)
+
+          if (!fromShareholder) {
+            toast.error("Fel", "Överlåtaren finns inte i aktieboken.")
+            setIsSubmitting(false)
+            return
+          }
+
+          if (fromShareholder.shares_count < shares) {
+            toast.error("Fel", "Överlåtaren har inte tillräckligt med aktier.")
+            setIsSubmitting(false)
+            return
+          }
+
+          // Record the transfer (informational verification, no accounting impact)
+          const typeLabel = txType === 'Köp' ? 'Överlåtelse' : txType
+          await addVerification({
+            date: txDate,
+            description: `${typeLabel} ${shares} ${txShareClass}-aktier från ${txFrom} till ${txTo}${price > 0 ? ` för ${total.toLocaleString('sv-SE')} kr` : ''}`,
+            sourceType: 'share_transfer',
+            rows: [] // No accounting rows for internal transfers
+          })
+
+          // Update both shareholders
+          await updateShareholder({
+            id: fromShareholder.id,
+            shares_count: fromShareholder.shares_count - shares,
+          })
+
+          if (toShareholder) {
+            await updateShareholder({
+              id: toShareholder.id,
+              shares_count: toShareholder.shares_count + shares,
+            })
+          }
+          break
+        }
+
+        case 'Split': {
+          // Stock split: multiply all shares by a factor
+          // For now, we just record it
+          await addVerification({
+            date: txDate,
+            description: `Aktiesplit ${shares}:1`,
+            sourceType: 'equity_issue',
+            rows: [] // No accounting impact, just share count change
+          })
+          break
+        }
+
+        default:
+          toast.error("Fel", "Okänd transaktionstyp")
+          setIsSubmitting(false)
+          return
+      }
+
+      await refetchShareholders()
+
+      toast.success("Transaktion registrerad", `${txType} registrerad för ${txTo}`)
       setShowAddDialog(false)
-      
+
       // Reset form
       setTxTo("")
+      setTxToSsn("")
+      setTxFrom("")
       setTxShares("")
       setTxPrice("")
+      setTxType('Nyemission')
     } catch (error) {
       console.error(error)
       toast.error("Ett fel uppstod", "Kunde inte spara transaktionen")
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -180,7 +321,8 @@ export function useAktiebokLogic() {
     txShares, setTxShares,
     txPrice, setTxPrice,
     txTo, setTxTo,
-    txFrom: _txFrom, setTxFrom: _setTxFrom,
+    txToSsn, setTxToSsn,
+    txFrom, setTxFrom,
     txShareClass, setTxShareClass,
     
     handleSaveTransaction

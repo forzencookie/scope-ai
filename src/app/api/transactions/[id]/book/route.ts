@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 import { verificationService, VerificationEntry } from '@/services/verification-service'
+import { createSimpleEntry } from '@/lib/bookkeeping'
+import type { SwedishVatRate } from '@/lib/bookkeeping'
 
 export async function POST(
     request: NextRequest,
@@ -15,7 +17,7 @@ export async function POST(
         }
 
         const body = await request.json()
-        const { category, debitAccount, creditAccount, description } = body
+        const { category, debitAccount, creditAccount, description, vatRate } = body
 
         if (!debitAccount || !creditAccount) {
             return NextResponse.json(
@@ -30,36 +32,43 @@ export async function POST(
             return NextResponse.json({ success: false, error: 'Transaction not found' }, { status: 404 })
         }
 
-        // 2. Prepare Ledger Entries
         const amount = Math.abs(Number(transaction.amount))
-        const entries: VerificationEntry[] = [
-            {
-                account: debitAccount,
-                debit: amount,
-                credit: 0
-            },
-            {
-                account: creditAccount,
-                debit: 0,
-                credit: amount
-            }
-        ]
+        const isIncome = Number(transaction.amount) > 0
 
-        // 3. Create Verification (Ledger Entry)
-        const verification = await verificationService.createVerification({
-            series: 'A', // Manual booking series
-            date: transaction.date,
-            description: description || transaction.description,
-            entries
+        // 2. Use the bookkeeping engine to generate proper journal entries
+        const journalEntry = createSimpleEntry({
+            date: transaction.date || new Date().toISOString().split('T')[0],
+            description: description || transaction.description || '',
+            amount,
+            debitAccount,
+            creditAccount,
+            vatRate: (vatRate || 0) as SwedishVatRate,
+            isIncome,
+            series: 'A',
         })
 
-        // 4. Update Transaction Status and Link Verification
-        // Note: We cast status to any because we know 'Bokförd' is valid but TS might complain if strict
+        // 3. Map engine output to verification entries
+        const entries: VerificationEntry[] = journalEntry.rows.map(row => ({
+            account: row.account,
+            debit: row.debit,
+            credit: row.credit,
+            description: row.description,
+        }))
+
+        // 4. Create Verification with source tracking
+        const verification = await verificationService.createVerification({
+            series: 'A',
+            date: journalEntry.date,
+            description: journalEntry.description,
+            entries,
+            sourceType: 'transaction',
+            sourceId: id,
+        })
+
+        // 5. Update Transaction Status
         const updated = await userDb.transactions.update(id, {
             status: 'Bokförd',
             category: category,
-            // verification_id: verification.id // Assuming column exists, if not it will be ignored by some ORMs but better safe
-            // We'll trust the update method handles partials
         })
 
         return NextResponse.json({

@@ -27,23 +27,23 @@ export function useFinancialReports() {
                 ] = await Promise.all([
                     // Balance Sheet: All time to current year end
                     supabase.rpc('get_account_balances', {
-                        date_from: '2000-01-01',
-                        date_to: new Date(year, 11, 31).toISOString().split('T')[0]
+                        p_start_date: '2000-01-01',
+                        p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
                     }),
                     // P&L: Current Year
                     supabase.rpc('get_account_balances', {
-                        date_from: new Date(year, 0, 1).toISOString().split('T')[0],
-                        date_to: new Date(year, 11, 31).toISOString().split('T')[0]
+                        p_start_date: new Date(year, 0, 1).toISOString().split('T')[0],
+                        p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
                     }),
                     // Balance Sheet: All time to previous year end
                     supabase.rpc('get_account_balances', {
-                        date_from: '2000-01-01',
-                        date_to: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+                        p_start_date: '2000-01-01',
+                        p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
                     }),
                     // P&L: Previous Year
                     supabase.rpc('get_account_balances', {
-                        date_from: new Date(prevYear, 0, 1).toISOString().split('T')[0],
-                        date_to: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+                        p_start_date: new Date(prevYear, 0, 1).toISOString().split('T')[0],
+                        p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
                     })
                 ])
 
@@ -52,10 +52,17 @@ export function useFinancialReports() {
                 if (prevBsResult.error) throw prevBsResult.error
                 if (prevPlResult.error) throw prevPlResult.error
 
-                setBsBalances(bsResult.data || [])
-                setPlBalances(plResult.data || [])
-                setPrevBsBalances(prevBsResult.data || [])
-                setPrevPlBalances(prevPlResult.data || [])
+                // Map DB result to AccountBalance format
+                const toAccountBalances = (data: typeof bsResult.data): AccountBalance[] =>
+                    (data || []).map(row => ({
+                        account: String(row.account_number),
+                        balance: row.balance
+                    }))
+
+                setBsBalances(toAccountBalances(bsResult.data))
+                setPlBalances(toAccountBalances(plResult.data))
+                setPrevBsBalances(toAccountBalances(prevBsResult.data))
+                setPrevPlBalances(toAccountBalances(prevPlResult.data))
             } catch (error) {
                 console.error('Failed to fetch financial reports:', error)
             } finally {

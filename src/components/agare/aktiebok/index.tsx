@@ -43,6 +43,7 @@ export function Aktiebok() {
         txShares, setTxShares,
         txPrice, setTxPrice,
         txTo, setTxTo,
+        txToSsn, setTxToSsn,
         txFrom, setTxFrom,
         txShareClass, setTxShareClass,
 
@@ -172,6 +173,8 @@ export function Aktiebok() {
                 setTxFrom={setTxFrom}
                 txTo={txTo}
                 setTxTo={setTxTo}
+                txToSsn={txToSsn}
+                setTxToSsn={setTxToSsn}
                 txShares={txShares}
                 setTxShares={setTxShares}
                 txShareClass={txShareClass}

@@ -57,6 +57,20 @@ export interface UserScopedDb {
         create: (data: Tables['verifications']['Insert']) => Promise<Tables['verifications']['Row'] | null>
     }
 
+    verificationLines: {
+        listByVerification: (verificationId: string) => Promise<Tables['verification_lines']['Row'][]>
+        create: (data: Tables['verification_lines']['Insert']) => Promise<Tables['verification_lines']['Row'] | null>
+        createMany: (lines: Tables['verification_lines']['Insert'][]) => Promise<Tables['verification_lines']['Row'][]>
+        listByAccount: (accountNumber: number, options?: { startDate?: string; endDate?: string }) => Promise<Tables['verification_lines']['Row'][]>
+        getAccountBalances: (options?: { startDate?: string; endDate?: string }) => Promise<{
+            account_number: number
+            account_name: string | null
+            total_debit: number
+            total_credit: number
+            balance: number
+        }[]>
+    }
+
     employees: {
         list: (options?: { limit?: number }) => Promise<Tables['employees']['Row'][]>
         getById: (id: string) => Promise<Tables['employees']['Row'] | null>
@@ -274,6 +288,62 @@ function createVerificationsAccessor(supabase: SupabaseClient<Database>, userId:
             const { data: created, error } = await supabase.from('verifications').insert(insertData).select().single()
             if (error) console.error('[UserScopedDb] verifications.create error:', error)
             return created
+        },
+    }
+}
+
+function createVerificationLinesAccessor(supabase: SupabaseClient<Database>, userId: string, companyId: string | null) {
+    return {
+        listByVerification: async (verificationId: string) => {
+            const { data, error } = await supabase
+                .from('verification_lines')
+                .select('*')
+                .eq('verification_id', verificationId)
+                .order('created_at', { ascending: true })
+            if (error) console.error('[UserScopedDb] verificationLines.listByVerification error:', error)
+            return data || []
+        },
+        create: async (data: Tables['verification_lines']['Insert']) => {
+            const insertData = { ...data, user_id: data.user_id ?? userId, company_id: data.company_id ?? companyId }
+            const { data: created, error } = await supabase.from('verification_lines').insert(insertData).select().single()
+            if (error) console.error('[UserScopedDb] verificationLines.create error:', error)
+            return created
+        },
+        createMany: async (lines: Tables['verification_lines']['Insert'][]) => {
+            const insertData = lines.map(line => ({
+                ...line,
+                user_id: line.user_id ?? userId,
+                company_id: line.company_id ?? companyId
+            }))
+            const { data, error } = await supabase.from('verification_lines').insert(insertData).select()
+            if (error) console.error('[UserScopedDb] verificationLines.createMany error:', error)
+            return data || []
+        },
+        listByAccount: async (accountNumber: number, options?: { startDate?: string; endDate?: string }) => {
+            let query = supabase
+                .from('verification_lines')
+                .select('*, verifications!inner(date)')
+                .eq('account_number', accountNumber)
+
+            if (options?.startDate) {
+                query = query.gte('verifications.date', options.startDate)
+            }
+            if (options?.endDate) {
+                query = query.lte('verifications.date', options.endDate)
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false })
+            if (error) console.error('[UserScopedDb] verificationLines.listByAccount error:', error)
+            return data || []
+        },
+        getAccountBalances: async (options?: { startDate?: string; endDate?: string }) => {
+            const { data, error } = await supabase.rpc('get_account_balances', {
+                p_start_date: options?.startDate || null,
+                p_end_date: options?.endDate || null,
+                p_user_id: userId,
+            })
+            if (error) console.error('[UserScopedDb] verificationLines.getAccountBalances error:', error)
+            return data || []
         },
     }
 }
@@ -522,6 +592,7 @@ export async function createUserScopedDb(): Promise<UserScopedDb | null> {
         supplierInvoices: createSupplierInvoicesAccessor(supabase, user.id, companyId),
         customerInvoices: createCustomerInvoicesAccessor(supabase, user.id, companyId),
         verifications: createVerificationsAccessor(supabase, user.id, companyId),
+        verificationLines: createVerificationLinesAccessor(supabase, user.id, companyId),
         employees: createEmployeesAccessor(supabase, user.id),
         payslips: createPayslipsAccessor(supabase, user.id),
         conversations: createConversationsAccessor(supabase, user.id),

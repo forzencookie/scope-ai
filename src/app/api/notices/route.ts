@@ -39,15 +39,10 @@ export async function POST(request: NextRequest) {
         const hasEmailService = !!process.env.RESEND_API_KEY || !!process.env.SENDGRID_API_KEY
 
         if (!hasEmailService) {
-            // In development/demo mode, simulate success
-            console.log('[Notices API] No email service configured, simulating success')
-            
-            return NextResponse.json({
-                success: true,
-                sent: body.recipients?.length || 0,
-                method: body.method,
-                message: 'Notice registered (email service not configured - demo mode)'
-            })
+            return NextResponse.json(
+                { error: 'E-posttjänst ej konfigurerad. Konfigurera RESEND_API_KEY eller SENDGRID_API_KEY.' },
+                { status: 503 }
+            )
         }
 
         // TODO: Integrate with email service

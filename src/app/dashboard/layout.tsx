@@ -16,8 +16,6 @@ import { ModelProvider } from "@/providers/model-provider"
 import { AIDialogProvider } from "@/providers/ai-overlay-provider"
 import { AIOverlay } from "@/components/ai"
 import { AuthGuard } from "@/components/auth/auth-guard"
-import { DemoBanner } from "@/components/shared/demo-banner"
-import { DemoUpgradeModal } from "@/components/billing/demo-upgrade-modal"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw, Home, BookOpen, PieChart, Users, Building2, Menu } from "lucide-react"
@@ -364,8 +362,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                     } as React.CSSProperties
                 }
             >
-                {/* Demo mode banner */}
-                <DemoBanner />
 
                 {/* Main layout */}
                 <div className="flex flex-1 w-full bg-sidebar mt-2">
@@ -383,8 +379,6 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </div>
             </SidebarProvider>
 
-            {/* Show upgrade modal for demo users */}
-            <DemoUpgradeModal />
         </>
     )
 }

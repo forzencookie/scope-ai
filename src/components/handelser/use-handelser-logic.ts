@@ -6,7 +6,7 @@ import { countEventsByQuarter, type Quarter } from "@/components/handelser"
 import type { EventSource, CorporateActionType } from "@/types/events"
 
 // View types
-export type ViewType = "folders" | "timeline" | "calendar" | "roadmap" | "activity"
+export type ViewType = "folders" | "timeline" | "calendar" | "roadmap" | "activity" | "manadsavslut"
 
 // Available years for the dropdown
 const currentYear = new Date().getFullYear()

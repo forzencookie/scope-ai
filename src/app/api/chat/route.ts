@@ -164,36 +164,13 @@ async function streamScopeBrainResponse(
 // Demo Mode Handler
 // =============================================================================
 
-async function handleDemoMode(messages: Array<{ role: string; content: string }>) {
-    const { getSimulatedChatResponse } = await import('@/lib/ai-simulation')
-    const latestUserMessage = messages[messages.length - 1]
-    const latestContent = latestUserMessage?.content || ''
-
-    const simulated = getSimulatedChatResponse(latestContent)
-
-    const stream = new ReadableStream({
-        async start(controller) {
-            const encoder = new TextEncoder()
-
-            await new Promise(r => setTimeout(r, simulated.delay))
-
-            const words = simulated.content.split(' ')
-            for (let i = 0; i < words.length; i++) {
-                const word = words[i] + (i < words.length - 1 ? ' ' : '')
-                controller.enqueue(encoder.encode(`T:${JSON.stringify(word)}\n`))
-                await new Promise(r => setTimeout(r, 20 + Math.random() * 30))
-            }
-
-            controller.enqueue(encoder.encode(`D:${JSON.stringify({ demoMode: true })}\n`))
-            controller.close()
-        }
-    })
-
-    return new Response(stream, {
-        headers: {
-            'Content-Type': 'text/event-stream',
-            'X-Demo-Mode': 'true'
-        }
+function handleDemoMode() {
+    return new Response(JSON.stringify({
+        error: 'AI-chatten kräver en aktiv prenumeration. Uppgradera för att använda AI-assistenten.',
+        code: 'DEMO_MODE',
+    }), {
+        status: 402,
+        headers: { 'Content-Type': 'application/json' }
     })
 }
 
@@ -271,7 +248,7 @@ export async function POST(request: NextRequest) {
 
         // === DEMO MODE HANDLING ===
         if (isDemoMode(authResult.userTier)) {
-            return await handleDemoMode(messageValidation.data)
+            return handleDemoMode()
         }
 
         // === BUDGET CHECK ===

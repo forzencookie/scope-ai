@@ -1,11 +1,16 @@
 /**
  * Invoice Booking API
- * 
+ *
+ * Uses the bookkeeping engine to create proper double-entry journal entries
+ * with source tracking for report aggregation.
+ *
  * Security: Uses user-scoped DB access with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { verificationService } from '@/services/verification-service';
+import { createSalesEntry } from '@/lib/bookkeeping';
 
 export async function POST(
     req: NextRequest,
@@ -34,21 +39,31 @@ export async function POST(
         // Update Invoice Status
         await userDb.customerInvoices.update(id, { status: 'skickad' });
 
-        // Create Verification
+        // Use the bookkeeping engine to generate proper journal entries
         const total = Number(invoice.total_amount) || 0;
-        const vat = total - (total / 1.25);
-        const net = total - vat;
-        const r = (n: number) => Math.round(n * 100) / 100;
-
-        const verification = await userDb.verifications.create({
-            id: crypto.randomUUID(),
+        const journalEntry = createSalesEntry({
             date: new Date().toISOString().split('T')[0],
-            description: `Faktura ${invoice.invoice_number || id} - ${invoice.customer_name}`,
-            rows: [
-                { account: '1510', description: 'Kundfordringar', debit: r(total), credit: 0 },
-                { account: '3001', description: 'Försäljning inom Sverige', debit: 0, credit: r(net) },
-                { account: '2611', description: 'Utgående moms 25%', debit: 0, credit: r(vat) }
-            ]
+            description: `${invoice.customer_name || 'Kund'}`,
+            grossAmount: total,
+            revenueAccount: '3001',
+            vatRate: 25,
+            invoiceNumber: invoice.invoice_number || undefined,
+            series: 'A',
+        });
+
+        // Create verification with source tracking and relational lines
+        const verification = await verificationService.createVerification({
+            series: 'A',
+            date: journalEntry.date,
+            description: journalEntry.description,
+            entries: journalEntry.rows.map(row => ({
+                account: row.account,
+                debit: row.debit,
+                credit: row.credit,
+                description: row.description,
+            })),
+            sourceType: 'invoice',
+            sourceId: id,
         });
 
         return NextResponse.json({ success: true, verification });

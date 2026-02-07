@@ -29,6 +29,8 @@ interface TransactionDialogProps {
     setTxFrom: (val: string) => void
     txTo: string
     setTxTo: (val: string) => void
+    txToSsn: string
+    setTxToSsn: (val: string) => void
     txShares: string
     setTxShares: (val: string) => void
     txShareClass: 'A' | 'B'
@@ -39,6 +41,8 @@ interface TransactionDialogProps {
     onSave: () => void
     isSubmitting?: boolean
 }
+
+const isTransferType = (type: StockTransactionType) => ['Köp', 'Gåva', 'Arv'].includes(type)
 
 export function TransactionDialog({
     open,
@@ -51,6 +55,8 @@ export function TransactionDialog({
     setTxFrom,
     txTo,
     setTxTo,
+    txToSsn,
+    setTxToSsn,
     txShares,
     setTxShares,
     txShareClass,
@@ -66,11 +72,15 @@ export function TransactionDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>
-                        Registrera {txType === 'Nyemission' ? 'Nyemission' : 'Överlåtelse'}
+                        {txType === 'Nyemission' ? 'Registrera nyemission' :
+                         txType === 'Split' ? 'Registrera aktiesplit' :
+                         `Registrera ${txType.toLowerCase()}`}
                     </DialogTitle>
                     <DialogDescription>
                         {txType === 'Nyemission'
-                            ? 'Registrera nya aktier och betalning.'
+                            ? 'Registrera nya aktier i bolaget. Skapar bokföringsunderlag.'
+                            : txType === 'Split'
+                            ? 'Registrera aktiesplit. Ändrar antal aktier utan att påverka aktiekapital.'
                             : 'Registrera ägarbyte mellan aktieägare.'}
                     </DialogDescription>
                 </DialogHeader>
@@ -86,6 +96,8 @@ export function TransactionDialog({
                                     <SelectItem value="Nyemission">Nyemission</SelectItem>
                                     <SelectItem value="Köp">Köp/Försäljning</SelectItem>
                                     <SelectItem value="Gåva">Gåva</SelectItem>
+                                    <SelectItem value="Arv">Arv</SelectItem>
+                                    <SelectItem value="Split">Aktiesplit</SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -95,12 +107,12 @@ export function TransactionDialog({
                         </div>
                     </div>
 
-                    {txType !== 'Nyemission' && (
+                    {isTransferType(txType) && (
                         <div className="space-y-2">
-                            <Label>Från (Säljare)</Label>
+                            <Label>Från (Överlåtare)</Label>
                             <Select value={txFrom} onValueChange={setTxFrom}>
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Välj säljare" />
+                                    <SelectValue placeholder="Välj överlåtare" />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {shareholders.map(s => (
@@ -111,27 +123,45 @@ export function TransactionDialog({
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <Label>{txType === 'Nyemission' ? 'Till (Tecknare)' : 'Till (Köpare)'}</Label>
-                        {txType === 'Nyemission' ? (
-                            <Input value={txTo} onChange={e => setTxTo(e.target.value)} placeholder="Namn på ny ägare..." />
-                        ) : (
-                            <Select value={txTo} onValueChange={setTxTo}>
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Välj köpare" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {shareholders.map(s => (
-                                        <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        )}
-                    </div>
+                    {txType !== 'Split' && (
+                        <>
+                            <div className="space-y-2">
+                                <Label>{txType === 'Nyemission' ? 'Till (Tecknare)' : 'Till (Mottagare)'}</Label>
+                                {txType === 'Nyemission' ? (
+                                    <Input value={txTo} onChange={e => setTxTo(e.target.value)} placeholder="Namn på aktieägare..." />
+                                ) : (
+                                    <>
+                                        <Select value={txTo} onValueChange={setTxTo}>
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Välj mottagare" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {shareholders.map(s => (
+                                                    <SelectItem key={s.id} value={s.name}>{s.name}</SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </>
+                                )}
+                            </div>
+
+                            {txType === 'Nyemission' && (
+                                <div className="space-y-2">
+                                    <Label>Person-/Organisationsnummer</Label>
+                                    <Input
+                                        value={txToSsn}
+                                        onChange={e => setTxToSsn(e.target.value)}
+                                        placeholder="YYYYMMDD-XXXX"
+                                    />
+                                    <p className="text-xs text-muted-foreground">Krävs för nya aktieägare.</p>
+                                </div>
+                            )}
+                        </>
+                    )}
 
                     <div className="grid grid-cols-2 gap-4">
                         <div className="space-y-2">
-                            <Label>Antal aktier</Label>
+                            <Label>{txType === 'Split' ? 'Splitförhållande (ex: 2 = 2:1)' : 'Antal aktier'}</Label>
                             <Input type="number" value={txShares} onChange={e => setTxShares(e.target.value)} placeholder="0" />
                         </div>
                         <div className="space-y-2">
@@ -148,10 +178,12 @@ export function TransactionDialog({
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <Label>Pris per aktie (kr)</Label>
-                        <Input type="number" value={txPrice} onChange={e => setTxPrice(e.target.value)} placeholder="0" />
-                    </div>
+                    {txType !== 'Split' && txType !== 'Arv' && (
+                        <div className="space-y-2">
+                            <Label>Pris per aktie (kr)</Label>
+                            <Input type="number" value={txPrice} onChange={e => setTxPrice(e.target.value)} placeholder="0" />
+                        </div>
+                    )}
                 </div>
                 <DialogFooter>
                     <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSubmitting}>

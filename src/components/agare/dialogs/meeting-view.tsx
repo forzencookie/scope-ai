@@ -365,25 +365,12 @@ function StepPlanerad({
                         />
                     </div>
 
-                    {/* Status change */}
-                    {canEdit && (
-                        <div className="pt-2">
-                            <Select
-                                value={meeting.status}
-                                onValueChange={(val) => handleStatusChange(val as GeneralMeeting['status'])}
-                            >
-                                <SelectTrigger className="w-48">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="planerad">Planerad</SelectItem>
-                                    {!isBoard && <SelectItem value="kallad">Kallad</SelectItem>}
-                                    <SelectItem value="genomförd">Genomförd</SelectItem>
-                                    <SelectItem value="protokoll signerat">Protokoll signerat</SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
+                    {/* Status indicator - read only, workflow enforced by steps */}
+                    <div className="pt-2">
+                        <p className="text-xs text-muted-foreground">
+                            Status ändras automatiskt när du går genom stegen.
+                        </p>
+                    </div>
                 </div>
 
                 {/* Right: Dokument */}
@@ -1013,6 +1000,8 @@ Formatera dokumentet professionellt och formellt.`
                             if (onUpdate) await onUpdate(meeting, { status: 'protokoll signerat' })
                             onAdvance('signerat')
                         }}
+                        disabled={!protokollText.trim()}
+                        title={!protokollText.trim() ? "Skriv protokollet först" : undefined}
                     >
                         <CheckCircle className="h-4 w-4 mr-1" />
                         Markera som signerat

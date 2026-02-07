@@ -95,6 +95,7 @@ export const GENERAL_STATUS_VARIANT: Record<GeneralStatus, StatusVariant> = {
     "Planerad": "info",
     "Utbetald": "success",
     "Godkänd": "success",
+    "Beslutad": "warning",
     // Verifikationer statuses
     "Transaktion kopplad": "success",
     "Transaktion saknas": "error",
