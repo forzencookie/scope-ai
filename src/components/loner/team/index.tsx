@@ -5,7 +5,7 @@ import { Users, Plus } from "lucide-react"
 import { PageHeader } from "@/components/shared"
 import { useTeamLogic } from "./use-team-logic"
 import { EmployeeCard } from "./employee-card"
-import { AddEmployeeDialog, ReportDialog } from "./dialogs"
+import { AddEmployeeDialog, ReportDialog, EmployeeDossierDialog } from "./dialogs"
 
 export default function TeamTab() {
     const {
@@ -32,10 +32,19 @@ export default function TeamTab() {
         km, setKm,
         desc, setDesc,
         hours, setHours,
-        handleReport
+        handleReport,
+
+        // Dossier
+        dossierOpen, setDossierOpen,
+        dossierEmployeeId,
+        handleOpenDossier,
+        payslipsCache,
+        dossierExpenses,
+        dossierBenefits,
     } = useTeamLogic()
 
     const selectedEmployeeObj = employees.find(e => e.id === selectedEmployee)
+    const dossierEmployee = employees.find(e => e.id === dossierEmployeeId) || null
 
     return (
         <div className="space-y-4 md:space-y-6">
@@ -84,6 +93,7 @@ export default function TeamTab() {
                                 setSelectedEmployee(emp.id)
                                 setReportDialogOpen(true)
                             }}
+                            onViewDossier={() => handleOpenDossier(emp.id)}
                         />
                     ))}
                 </div>
@@ -109,6 +119,17 @@ export default function TeamTab() {
                 desc={desc} setDesc={setDesc}
                 hours={hours} setHours={setHours}
                 onSubmit={handleReport}
+            />
+
+            <EmployeeDossierDialog
+                open={dossierOpen}
+                onOpenChange={setDossierOpen}
+                employee={dossierEmployee}
+                salaryHistory={payslipsCache}
+                expenses={dossierExpenses}
+                benefits={dossierBenefits}
+                balance={dossierEmployee ? (employeeBalances.balances[dossierEmployee.id] || 0) : 0}
+                mileage={dossierEmployee ? (employeeBalances.mileage[dossierEmployee.id] || 0) : 0}
             />
         </div>
     )

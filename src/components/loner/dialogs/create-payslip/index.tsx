@@ -40,7 +40,17 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
         useAIRecommendation, setUseAIRecommendation,
         finalSalary,
         tax,
+        taxRate,
         netSalary,
+        fackavgift,
+        akassa,
+        sempioneersattning,
+        employerContribution,
+        employerContributionRate,
+        isSenior,
+        pension,
+        pensionRate,
+        totalEmployerCost,
         isCreating,
         handleConfirmPayslip,
         resetDialog
@@ -135,7 +145,17 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
                             setUseAIRecommendation={setUseAIRecommendation}
                             finalSalary={finalSalary}
                             tax={tax}
+                            taxRate={taxRate}
                             netSalary={netSalary}
+                            fackavgift={fackavgift}
+                            akassa={akassa}
+                            sempioneersattning={sempioneersattning}
+                            employerContribution={employerContribution}
+                            employerContributionRate={employerContributionRate}
+                            isSenior={isSenior}
+                            pension={pension}
+                            pensionRate={pensionRate}
+                            totalEmployerCost={totalEmployerCost}
                             aiDeductions={aiDeductions}
                             isCreating={isCreating}
                             onConfirm={handleConfirmPayslip}

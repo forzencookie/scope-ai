@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { useToast } from "@/components/ui/toast"
+import { useCompany } from "@/providers"
 import {
   Dialog,
   DialogContent,
@@ -11,6 +12,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
+import { Info } from "lucide-react"
 import { type Partner } from "@/types/ownership"
 
 interface NewWithdrawalDialogProps {
@@ -28,6 +30,7 @@ interface NewWithdrawalDialogProps {
 
 export function NewWithdrawalDialog({ open, onOpenChange, partners, onSave }: NewWithdrawalDialogProps) {
   const toast = useToast()
+  const { company } = useCompany()
 
   const [newType, setNewType] = useState<'uttag' | 'insättning' | 'lön'>('uttag')
   const [newPartnerId, setNewPartnerId] = useState<string>("")
@@ -117,12 +120,27 @@ export function NewWithdrawalDialog({ open, onOpenChange, partners, onSave }: Ne
           </div>
           <div className="space-y-2">
             <Label>Beskrivning</Label>
-            <Input 
+            <Input
                placeholder="T.ex. Privatuttag november"
                value={newDesc}
                onChange={(e) => setNewDesc(e.target.value)}
             />
           </div>
+
+          {/* Bank instruction info */}
+          {newType === 'uttag' && newAmount && (
+            <div className="rounded-lg border bg-blue-50 dark:bg-blue-900/20 p-3 space-y-2">
+              <div className="flex items-center gap-2 text-sm font-medium">
+                <Info className="h-4 w-4 text-blue-600" />
+                <span>Utbetalningsinstruktion</span>
+              </div>
+              <div className="text-xs text-muted-foreground space-y-1 pl-6">
+                <p>Överför <strong>{parseFloat(newAmount).toLocaleString('sv-SE')} kr</strong> från företagets konto till delägarens privatkonto.</p>
+                <p>Ange &quot;{newDesc || 'Privatuttag'}&quot; som meddelande i bankens överföring.</p>
+                <p className="text-amber-600 dark:text-amber-400">Verifikation skapas automatiskt i bokföringen vid spara.</p>
+              </div>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Avbryt</Button>

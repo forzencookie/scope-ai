@@ -1,9 +1,11 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useToast } from "@/components/ui/toast"
 import { useEmployees } from "@/hooks/use-employees"
 import { useVerifications } from "@/hooks/use-verifications"
+import { getEmployeeBenefits } from "@/lib/formaner"
+import type { SalaryRecord, ExpenseRecord } from "./dialogs"
 
 export function useTeamLogic() {
     const toast = useToast()
@@ -13,6 +15,10 @@ export function useTeamLogic() {
     const [reportDialogOpen, setReportDialogOpen] = useState(false)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
     const [reportType, setReportType] = useState<'time' | 'expense' | 'mileage'>('time')
+    const [dossierOpen, setDossierOpen] = useState(false)
+    const [dossierEmployeeId, setDossierEmployeeId] = useState<string | null>(null)
+    const [payslipsCache, setPayslipsCache] = useState<SalaryRecord[]>([])
+    const [dossierBenefits, setDossierBenefits] = useState<string[]>([])
 
     // Form state
     const [amount, setAmount] = useState("")
@@ -52,6 +58,71 @@ export function useTeamLogic() {
         })
         return { balances, mileage }
     }, [verifications, employees])
+
+    // Fetch payslips and benefits for dossier
+    useEffect(() => {
+        if (!dossierOpen || !dossierEmployeeId) return
+        const emp = employees.find(e => e.id === dossierEmployeeId)
+
+        fetch('/api/payroll/payslips')
+            .then(res => res.json())
+            .then(data => {
+                if (data.payslips) {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const empSlips = data.payslips.filter((p: any) => p.employee_id === dossierEmployeeId)
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setPayslipsCache(empSlips.map((p: any) => ({
+                        period: p.period,
+                        grossSalary: Number(p.gross_salary),
+                        netSalary: Number(p.net_salary),
+                        tax: Number(p.tax_deduction),
+                        status: p.status
+                    })))
+                }
+            })
+            .catch(() => setPayslipsCache([]))
+
+        // Fetch assigned benefits for this employee
+        if (emp?.name) {
+            const year = new Date().getFullYear()
+            getEmployeeBenefits(emp.name, year)
+                .then(benefits => {
+                    setDossierBenefits(benefits.map(b => `${b.benefitType} — ${b.amount.toLocaleString('sv-SE')} kr`))
+                })
+                .catch(() => setDossierBenefits([]))
+        } else {
+            setDossierBenefits([])
+        }
+    }, [dossierOpen, dossierEmployeeId, employees])
+
+    // Derive expense history from verifications for dossier employee
+    const dossierExpenses = useMemo<ExpenseRecord[]>(() => {
+        if (!dossierEmployeeId) return []
+        const emp = employees.find(e => e.id === dossierEmployeeId)
+        if (!emp) return []
+
+        const records: ExpenseRecord[] = []
+        verifications.forEach(v => {
+            const isForEmployee = v.description.includes(emp.name) || v.rows.some(r => r.description.includes(emp.name))
+            if (!isForEmployee) return
+
+            const expenseRow = v.rows.find(r => r.account === '2820' && r.credit > 0)
+            const mileageRow = v.rows.find(r => r.account === '7330' && r.debit > 0)
+
+            if (expenseRow && !mileageRow) {
+                records.push({ date: v.date, description: v.description, amount: expenseRow.credit, type: 'expense' })
+            }
+            if (mileageRow) {
+                records.push({ date: v.date, description: v.description, amount: mileageRow.debit, type: 'mileage' })
+            }
+        })
+        return records.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+    }, [dossierEmployeeId, verifications, employees])
+
+    const handleOpenDossier = (empId: string) => {
+        setDossierEmployeeId(empId)
+        setDossierOpen(true)
+    }
 
     const handleAddEmployee = async () => {
         if (!newEmployee.name || !newEmployee.role) {
@@ -138,6 +209,14 @@ export function useTeamLogic() {
         newEmployeeDialogOpen, setNewEmployeeDialogOpen,
         newEmployee, setNewEmployee,
         isSaving,
+
+        // Dossier
+        dossierOpen, setDossierOpen,
+        dossierEmployeeId,
+        handleOpenDossier,
+        payslipsCache,
+        dossierExpenses,
+        dossierBenefits,
 
         // Handlers
         handleAddEmployee,

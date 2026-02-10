@@ -43,9 +43,10 @@ export function PayslipDetailsDialog({
 
     if (!payslip) return null
 
-    // Calculate employer contributions (31.42%)
+    // Calculate employer contributions (31.42%) + pension (4.5%)
     const employerContributions = Math.round(payslip.grossSalary * 0.3142)
-    const totalEmployerCost = payslip.grossSalary + employerContributions
+    const pensionCost = Math.round(payslip.grossSalary * 0.045)
+    const totalEmployerCost = payslip.grossSalary + employerContributions + pensionCost
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
@@ -96,6 +97,14 @@ export function PayslipDetailsDialog({
                                 {formatCurrency(employerContributions)}
                             </span>
                         </div>
+                        <div className="flex justify-between items-center py-2 border-b text-muted-foreground text-sm">
+                            <span>Tjänstepension (4,5%)</span>
+                            <span>{formatCurrency(Math.round(payslip.grossSalary * 0.045))}</span>
+                        </div>
+                        <div className="flex justify-between items-center py-2 border-b text-muted-foreground text-sm">
+                            <span>Semesterersättning (12%)</span>
+                            <span>{formatCurrency(Math.round(payslip.grossSalary * 0.12))}</span>
+                        </div>
                     </div>
 
                     {/* Net Salary Summary */}
@@ -113,11 +122,12 @@ export function PayslipDetailsDialog({
                     </div>
 
                     {/* Tax Rate Info */}
-                    <div className="bg-muted/30 p-3 rounded-md text-sm text-muted-foreground">
+                    <div className="bg-muted/30 p-3 rounded-md text-sm text-muted-foreground space-y-1">
                         <div className="flex items-center gap-2">
                             <FileText className="h-4 w-4" />
-                            <span>Skattesats: {Math.round((payslip.tax / payslip.grossSalary) * 100)}% (preliminärskatt)</span>
+                            <span>Skattesats: {payslip.grossSalary > 0 ? Math.round((payslip.tax / payslip.grossSalary) * 100) : 0}% (preliminärskatt)</span>
                         </div>
+                        <p className="text-xs pl-6">Skatten baseras på den anställdes kommunala skattesats och skattetabell.</p>
                     </div>
                 </div>
 

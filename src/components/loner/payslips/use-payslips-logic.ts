@@ -22,6 +22,19 @@ export function usePayslipsLogic() {
     const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
     const [viewDialogOpen, setViewDialogOpen] = useState(false)
     const [showAIDialog, setShowAIDialog] = useState(false)
+    const [employeeCount, setEmployeeCount] = useState(0)
+
+    // Fetch real employee count
+    useEffect(() => {
+        const fetchCount = async () => {
+            try {
+                const res = await fetch('/api/employees')
+                const data = await res.json()
+                if (data.employees) setEmployeeCount(data.employees.length)
+            } catch { /* ignore */ }
+        }
+        fetchCount()
+    }, [])
 
     // Fetch real payslips
     const fetchPayslips = async () => {
@@ -65,7 +78,8 @@ export function usePayslipsLogic() {
                 currentPeriod: "Ingen period",
                 employeeCount: 0,
                 totalGross: 0,
-                totalTax: 0
+                totalTax: 0,
+                totalEmployerContributions: 0
             }
         }
 
@@ -73,14 +87,16 @@ export function usePayslipsLogic() {
         const currentPeriod = periods[0] || "Okänd period"
 
         const periodSlips = allPayslips.filter(p => p.period === currentPeriod)
+        const totalGross = periodSlips.reduce((sum, p) => sum + p.grossSalary, 0)
 
         return {
             currentPeriod,
-            employeeCount: periodSlips.length,
-            totalGross: periodSlips.reduce((sum, p) => sum + p.grossSalary, 0),
-            totalTax: periodSlips.reduce((sum, p) => sum + p.tax, 0)
+            employeeCount,
+            totalGross,
+            totalTax: periodSlips.reduce((sum, p) => sum + p.tax, 0),
+            totalEmployerContributions: Math.round(totalGross * 0.3142)
         }
-    }, [allPayslips])
+    }, [allPayslips, employeeCount])
 
     const filteredPayslips = useMemo(() => {
         return allPayslips.filter(slip => {
@@ -115,8 +131,14 @@ export function usePayslipsLogic() {
         }
     }
 
-    const handlePayslipCreated = () => {
+    const handlePayslipCreated = async () => {
         fetchPayslips()
+        // Refresh employee count in case a new employee was saved
+        try {
+            const res = await fetch('/api/employees')
+            const data = await res.json()
+            if (data.employees) setEmployeeCount(data.employees.length)
+        } catch { /* ignore */ }
     }
 
     const handleDelete = (ids: string[]) => {

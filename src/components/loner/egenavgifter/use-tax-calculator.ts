@@ -1,7 +1,7 @@
 import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 
-// 2024 rates
+// 2025 rates (Skatteverket) — full rate with 7 karensdagar: 28.97%
 export const TAX_RATES = {
   egenavgifter: {
     sjukforsakring: 0.0388,
@@ -13,7 +13,7 @@ export const TAX_RATES = {
     allmänLöneAvgift: 0.1150,
   },
   fullRate: 0.2897,
-  reducedRate: 0.10,
+  reducedRate: 0.1021, // Only ålderspensionsavgift for born 1938-1958
   karensReduction: 0.0076,
 }
 

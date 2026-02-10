@@ -17,15 +17,16 @@ interface EmployeeCardProps {
     balance: number
     mileage: number
     onReport: () => void
+    onViewDossier: () => void
 }
 
 const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(val)
 }
 
-export function EmployeeCard({ employee, balance, mileage, onReport }: EmployeeCardProps) {
+export function EmployeeCard({ employee, balance, mileage, onReport, onViewDossier }: EmployeeCardProps) {
     return (
-        <Card className="overflow-hidden">
+        <Card className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={onViewDossier}>
             <CardHeader className="flex flex-row items-center gap-4 bg-muted/20 pb-4">
                 <Avatar className="h-12 w-12">
                     <AvatarImage src={`/avatars/${employee.id}.png`} />
@@ -64,7 +65,7 @@ export function EmployeeCard({ employee, balance, mileage, onReport }: EmployeeC
                 <Button
                     variant="outline"
                     className="w-full mt-2"
-                    onClick={onReport}
+                    onClick={(e) => { e.stopPropagation(); onReport() }}
                 >
                     <FileText className="h-4 w-4 mr-2" />
                     Rapportera

@@ -226,21 +226,25 @@ export interface OwnerInfo {
 export interface EgenavgifterCalculation {
   year: number;
   income: number; // Överskott av näringsverksamhet
-  // Rates for 2024
+  // Rates for 2025 (Skatteverket)
   rates: {
-    sjukforsakring: number; // 3.64%
-    foraldraforsakring: number; // 2.60%
-    alderspension: number; // 10.21%
-    efterlevandepension: number; // 0.60%
-    arbetsmarknad: number; // 0.10%
-    // Total: ~17.15% (varies by year)
+    sjukforsakring: number;       // 3.88%
+    foraldraforsakring: number;   // 2.60%
+    alderspension: number;        // 10.21%
+    efterlevandepension: number;  // 0.70%
+    arbetsmarknadsavgift: number; // 2.64%
+    arbetsskadeavgift: number;    // 0.20%
+    allmanLoneavgift: number;     // 11.50%
+    // Total: 28.97% (full rate, 7 karensdagar)
   };
   calculated: {
     sjukforsakring: number;
     foraldraforsakring: number;
     alderspension: number;
     efterlevandepension: number;
-    arbetsmarknad: number;
+    arbetsmarknadsavgift: number;
+    arbetsskadeavgift: number;
+    allmanLoneavgift: number;
     total: number;
   };
   // Deductions
@@ -248,14 +252,16 @@ export interface EgenavgifterCalculation {
   netEgenavgifter: number;
 }
 
-export function calculateEgenavgifter(income: number, year: number = 2024): EgenavgifterCalculation {
-  // 2024 rates
+export function calculateEgenavgifter(income: number, year: number = 2025): EgenavgifterCalculation {
+  // 2025 rates (Skatteverket) — full rate with 7 karensdagar
   const rates = {
-    sjukforsakring: 0.0364,
+    sjukforsakring: 0.0388,
     foraldraforsakring: 0.0260,
     alderspension: 0.1021,
-    efterlevandepension: 0.0060,
-    arbetsmarknad: 0.0010,
+    efterlevandepension: 0.0070,
+    arbetsmarknadsavgift: 0.0264,
+    arbetsskadeavgift: 0.0020,
+    allmanLoneavgift: 0.1150,
   };
 
   const calculated = {
@@ -263,7 +269,9 @@ export function calculateEgenavgifter(income: number, year: number = 2024): Egen
     foraldraforsakring: Math.round(income * rates.foraldraforsakring),
     alderspension: Math.round(income * rates.alderspension),
     efterlevandepension: Math.round(income * rates.efterlevandepension),
-    arbetsmarknad: Math.round(income * rates.arbetsmarknad),
+    arbetsmarknadsavgift: Math.round(income * rates.arbetsmarknadsavgift),
+    arbetsskadeavgift: Math.round(income * rates.arbetsskadeavgift),
+    allmanLoneavgift: Math.round(income * rates.allmanLoneavgift),
     total: 0,
   };
 
@@ -272,7 +280,9 @@ export function calculateEgenavgifter(income: number, year: number = 2024): Egen
     calculated.foraldraforsakring +
     calculated.alderspension +
     calculated.efterlevandepension +
-    calculated.arbetsmarknad;
+    calculated.arbetsmarknadsavgift +
+    calculated.arbetsskadeavgift +
+    calculated.allmanLoneavgift;
 
   const schablonavdrag = Math.round(calculated.total * 0.25);
   const netEgenavgifter = calculated.total - schablonavdrag;

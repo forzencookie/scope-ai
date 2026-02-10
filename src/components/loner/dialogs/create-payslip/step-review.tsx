@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils"
 import { AiDeduction } from "./use-create-payslip-logic"
 
 interface StepReviewProps {
-    selectedEmp: { name: string, role: string, lastSalary: number }
+    selectedEmp: { name: string, role: string, lastSalary: number, personalNumber?: string, employmentType?: string }
     recommendedSalary: number
     customSalary: string
     setCustomSalary: (v: string) => void
@@ -17,7 +17,17 @@ interface StepReviewProps {
     setUseAIRecommendation: (v: boolean) => void
     finalSalary: number
     tax: number
+    taxRate: number
     netSalary: number
+    fackavgift: number
+    akassa: number
+    sempioneersattning: number
+    employerContribution: number
+    employerContributionRate: number
+    isSenior: boolean
+    pension: number
+    pensionRate: number
+    totalEmployerCost: number
     aiDeductions: AiDeduction[]
     isCreating: boolean
     onConfirm: () => void
@@ -33,7 +43,17 @@ export function StepReview({
     setUseAIRecommendation,
     finalSalary,
     tax,
+    taxRate,
     netSalary,
+    fackavgift,
+    akassa,
+    sempioneersattning,
+    employerContribution,
+    employerContributionRate,
+    isSenior,
+    pension,
+    pensionRate,
+    totalEmployerCost,
     aiDeductions,
     isCreating,
     onConfirm,
@@ -100,18 +120,64 @@ export function StepReview({
                 </div>
             )}
 
-            <div className="grid grid-cols-3 gap-2 text-center pt-2">
-                <div className="bg-muted/20 p-2 rounded">
-                    <p className="text-xs text-muted-foreground">Brutto</p>
-                    <p className="font-semibold">{finalSalary.toLocaleString("sv-SE")}</p>
+            {/* Lönespecifikation */}
+            <div className="space-y-2 text-sm border rounded-lg p-3">
+                <h4 className="text-xs text-muted-foreground uppercase tracking-wider font-semibold mb-2">Lönespecifikation</h4>
+
+                {selectedEmp.personalNumber && (
+                    <div className="flex justify-between text-xs text-muted-foreground pb-1 border-b">
+                        <span>Personnr: {selectedEmp.personalNumber}</span>
+                        {selectedEmp.employmentType && <span className="capitalize">{selectedEmp.employmentType}</span>}
+                    </div>
+                )}
+
+                <div className="flex justify-between py-1">
+                    <span>Bruttolön</span>
+                    <span className="font-medium">{finalSalary.toLocaleString("sv-SE")} kr</span>
                 </div>
-                <div className="bg-muted/20 p-2 rounded">
-                    <p className="text-xs text-muted-foreground">Skatt (30%)</p>
-                    <p className="font-semibold text-red-600">-{tax.toLocaleString("sv-SE")}</p>
+                <div className="flex justify-between py-1 text-red-600">
+                    <span>Preliminärskatt ({Math.round(taxRate * 100)}%)</span>
+                    <span className="font-medium">-{tax.toLocaleString("sv-SE")} kr</span>
                 </div>
-                <div className="bg-primary/5 p-2 rounded border border-primary/20">
-                    <p className="text-xs text-muted-foreground">Utbetalning</p>
-                    <p className="font-bold text-primary">{netSalary.toLocaleString("sv-SE")}</p>
+                {fackavgift > 0 && (
+                    <div className="flex justify-between py-1 text-red-600">
+                        <span>Fackavgift</span>
+                        <span className="font-medium">-{fackavgift.toLocaleString("sv-SE")} kr</span>
+                    </div>
+                )}
+                {akassa > 0 && (
+                    <div className="flex justify-between py-1 text-red-600">
+                        <span>A-kassa</span>
+                        <span className="font-medium">-{akassa.toLocaleString("sv-SE")} kr</span>
+                    </div>
+                )}
+                <div className="flex justify-between py-1 border-t font-bold">
+                    <span>Nettolön (utbetalas)</span>
+                    <span className="text-primary">{netSalary.toLocaleString("sv-SE")} kr</span>
+                </div>
+
+                <div className="border-t pt-2 mt-1 space-y-1 text-muted-foreground">
+                    <div className="flex justify-between py-0.5">
+                        <span>Semesterersättning (12%)</span>
+                        <span>{sempioneersattning.toLocaleString("sv-SE")} kr</span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                        <span>Arbetsgivaravgift ({(employerContributionRate * 100).toFixed(2).replace('.', ',')}%){isSenior ? ' *' : ''}</span>
+                        <span>{employerContribution.toLocaleString("sv-SE")} kr</span>
+                    </div>
+                    <div className="flex justify-between py-0.5">
+                        <span>Tjänstepension ({(pensionRate * 100).toFixed(1).replace('.', ',')}%)</span>
+                        <span>{pension.toLocaleString("sv-SE")} kr</span>
+                    </div>
+                    <div className="flex justify-between py-0.5 font-medium text-foreground border-t pt-1">
+                        <span>Total kostnad arbetsgivare</span>
+                        <span>{totalEmployerCost.toLocaleString("sv-SE")} kr</span>
+                    </div>
+                    {isSenior && (
+                        <p className="text-xs text-amber-600 dark:text-amber-400 pt-1">
+                            * Reducerad avgift (10,21%) — anställd 66+ år, enbart ålderspensionsavgift
+                        </p>
+                    )}
                 </div>
             </div>
 

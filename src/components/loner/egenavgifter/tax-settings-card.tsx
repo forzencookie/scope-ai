@@ -51,7 +51,7 @@ export function TaxSettingsCard({
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="profit">Beräknad vinst 2024</Label>
+                <Label htmlFor="profit">Beräknad vinst {new Date().getFullYear()}</Label>
                 <div className="flex gap-2">
                   <div className="relative flex-1">
                     <Input

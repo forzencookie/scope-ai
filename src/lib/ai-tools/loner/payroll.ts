@@ -124,8 +124,8 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             year: new Date().getFullYear(), // Approximate
             month: new Date().getMonth() + 1, // Approximate
             grossSalary: emp.monthlySalary || 0,
-            taxDeduction: Math.round((emp.monthlySalary || 0) * 0.25),
-            netSalary: Math.round((emp.monthlySalary || 0) * 0.75),
+            taxDeduction: Math.round((emp.monthlySalary || 0) * ((emp.taxTable || 30) / 100)),
+            netSalary: Math.round((emp.monthlySalary || 0) * (1 - (emp.taxTable || 30) / 100)),
             bonuses: 0,
             otherDeductions: 0,
             status: 'draft',

@@ -72,9 +72,16 @@ export function useBenefitsLogic() {
         const totalCost = assignedBenefits.reduce((sum, b) => sum + (b.amount || 0), 0)
         const uniqueEmployees = new Set(assignedBenefits.map(b => b.employeeName)).size
         const activeBenefits = assignedBenefits.length
-        
-        // Simplified unused potential logic
-        const unusedPotential = 0
+
+        // Calculate unused potential: sum of max_amount for all tax-free benefits
+        // multiplied by employees without that benefit assigned
+        const taxFreeBenefits = benefits.filter(b => b.category === 'tax_free')
+        const unusedPotential = taxFreeBenefits.reduce((sum, benefit) => {
+            const maxAmount = benefit.maxAmount || 0
+            const assignedCount = assignedBenefits.filter(ab => ab.benefitType === benefit.id).length
+            const unassignedCount = Math.max(0, employeeCount - assignedCount)
+            return sum + (unassignedCount * maxAmount)
+        }, 0)
 
         return {
             totalCost,
@@ -84,7 +91,7 @@ export function useBenefitsLogic() {
             totalBenefits: activeBenefits,
             activeBenefits
         }
-    }, [assignedBenefits, employeeCount])
+    }, [assignedBenefits, employeeCount, benefits])
 
     const coveragePercent = stats.totalEmployees > 0
         ? Math.round((stats.employeesWithBenefits / stats.totalEmployees) * 100)

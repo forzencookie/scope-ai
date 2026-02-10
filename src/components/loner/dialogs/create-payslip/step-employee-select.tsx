@@ -62,7 +62,7 @@ export function StepEmployeeSelect({
             setSelectedEmployee("")
         } else {
             setUseManualEntry(false)
-            setManualPerson({ name: "", role: "", salary: 0 })
+            setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: "30", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
         }
     }
 
@@ -150,39 +150,132 @@ export function StepEmployeeSelect({
 
                 {/* New Person Tab */}
                 <TabsContent value="new" className="space-y-4 mt-4">
-                    <div className="space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="name">Namn *</Label>
-                            <Input
-                                id="name"
-                                placeholder="Anna Andersson"
-                                value={manualPerson.name}
-                                onChange={(e) => setManualPerson({ ...manualPerson, name: e.target.value })}
-                            />
+                    <ScrollArea className="h-[320px] pr-2">
+                    <div className="space-y-4 px-1">
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="name">Namn *</Label>
+                                <Input
+                                    id="name"
+                                    placeholder="Anna Andersson"
+                                    value={manualPerson.name}
+                                    onChange={(e) => setManualPerson({ ...manualPerson, name: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="personnr">Personnummer</Label>
+                                <Input
+                                    id="personnr"
+                                    placeholder="ÅÅÅÅMMDD-XXXX"
+                                    value={manualPerson.personalNumber}
+                                    onChange={(e) => setManualPerson({ ...manualPerson, personalNumber: e.target.value })}
+                                />
+                            </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <Label htmlFor="role">Roll</Label>
-                            <Input
-                                id="role"
-                                placeholder="T.ex. Utvecklare, Säljare"
-                                value={manualPerson.role}
-                                onChange={(e) => setManualPerson({ ...manualPerson, role: e.target.value })}
-                            />
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="role">Roll</Label>
+                                <Input
+                                    id="role"
+                                    placeholder="T.ex. Utvecklare"
+                                    value={manualPerson.role}
+                                    onChange={(e) => setManualPerson({ ...manualPerson, role: e.target.value })}
+                                />
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="empType">Anställningsform</Label>
+                                <select
+                                    id="empType"
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+                                    value={manualPerson.employmentType}
+                                    onChange={(e) => setManualPerson({ ...manualPerson, employmentType: e.target.value })}
+                                >
+                                    <option value="tillsvidare">Tillsvidare</option>
+                                    <option value="visstid">Visstid</option>
+                                    <option value="provanstallning">Provanställning</option>
+                                    <option value="timanstallning">Timanställning</option>
+                                </select>
+                            </div>
                         </div>
 
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="salary">Månadslön (brutto) *</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="salary"
+                                        type="number"
+                                        placeholder="35000"
+                                        value={manualPerson.salary || ""}
+                                        onChange={(e) => setManualPerson({ ...manualPerson, salary: parseInt(e.target.value) || 0 })}
+                                        className="pr-10"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="taxRate">Skattesats (%)</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="taxRate"
+                                        type="number"
+                                        placeholder="30"
+                                        value={manualPerson.taxRate}
+                                        onChange={(e) => setManualPerson({ ...manualPerson, taxRate: e.target.value })}
+                                        className="pr-8"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Pension */}
                         <div className="space-y-2">
-                            <Label htmlFor="salary">Månadslön (brutto) *</Label>
+                            <Label htmlFor="pensionRate">Tjänstepension (%)</Label>
                             <div className="relative">
                                 <Input
-                                    id="salary"
+                                    id="pensionRate"
                                     type="number"
-                                    placeholder="35000"
-                                    value={manualPerson.salary || ""}
-                                    onChange={(e) => setManualPerson({ ...manualPerson, salary: parseInt(e.target.value) || 0 })}
-                                    className="pr-10"
+                                    placeholder="4.5"
+                                    value={manualPerson.pensionRate}
+                                    onChange={(e) => setManualPerson({ ...manualPerson, pensionRate: e.target.value })}
+                                    className="pr-8"
                                 />
-                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
+                                <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
+                            </div>
+                            <p className="text-xs text-muted-foreground">Standard ITP1: 4,5%. Lämna tomt för standard.</p>
+                        </div>
+
+                        {/* Optional deductions */}
+                        <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                                <Label htmlFor="fackavgift">Fackavgift (kr/mån)</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="fackavgift"
+                                        type="number"
+                                        placeholder="0"
+                                        value={manualPerson.fackavgift === "0" ? "" : manualPerson.fackavgift}
+                                        onChange={(e) => setManualPerson({ ...manualPerson, fackavgift: e.target.value || "0" })}
+                                        className="pr-10"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
+                                </div>
+                            </div>
+                            <div className="space-y-2">
+                                <Label htmlFor="akassa">A-kassa (kr/mån)</Label>
+                                <div className="relative">
+                                    <Input
+                                        id="akassa"
+                                        type="number"
+                                        placeholder="0"
+                                        value={manualPerson.akassa === "0" ? "" : manualPerson.akassa}
+                                        onChange={(e) => setManualPerson({ ...manualPerson, akassa: e.target.value || "0" })}
+                                        className="pr-10"
+                                    />
+                                    <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">kr</span>
+                                </div>
                             </div>
                         </div>
 
@@ -200,6 +293,7 @@ export function StepEmployeeSelect({
                             </Label>
                         </div>
                     </div>
+                    </ScrollArea>
                 </TabsContent>
             </Tabs>
 

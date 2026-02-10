@@ -2,11 +2,13 @@
 
 import * as React from "react"
 import { useState, useMemo } from "react"
-import { Plus, Filter, Info } from "lucide-react"
+import { Plus, Filter, Info, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { LegalInfoCard } from "@/components/ui/legal-info-card"
 import { PageHeader } from "@/components/shared"
+import { useToast } from "@/components/ui/toast"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 import { WithdrawalStats } from "./withdrawal-stats"
 import { WithdrawalsGrid } from "./withdrawals-grid"
 import { NewWithdrawalDialog } from "./new-withdrawal-dialog"
@@ -21,12 +23,14 @@ import {
 } from "@/components/ui/dropdown-menu"
 
 export function DelagaruttagManager() {
-    const { 
-        withdrawals, 
-        overallStats, 
+    const {
+        withdrawals,
+        overallStats,
+        registerTransaction,
     } = useOwnerWithdrawals()
     
     const { partners } = usePartners()
+    const toast = useToast()
 
     const [searchQuery, setSearchQuery] = useState("")
     const [partnerFilter, setPartnerFilter] = useState<string | null>(null)
@@ -52,15 +56,30 @@ export function DelagaruttagManager() {
                 title="Delägare & Uttag"
                 subtitle="Hantera delägaruttag, insättningar och lån i bolaget."
                 actions={
-                    <Button size="sm" onClick={() => setShowAddDialog(true)}>
-                        <Plus className="mr-2 h-4 w-4" />
-                        Ny transaktion
-                    </Button>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={async () => {
+                            toast.info("Laddar ner", "Förbereder PDF...")
+                            try {
+                                await downloadElementAsPDF({ fileName: `delagaruttag-${new Date().toISOString().slice(0,10)}`, elementId: 'delagaruttag-content' })
+                                toast.success("Klart", "PDF har laddats ner.")
+                            } catch {
+                                toast.error("Fel", "Kunde inte skapa PDF.")
+                            }
+                        }}>
+                            <Download className="h-4 w-4 mr-2" />
+                            PDF
+                        </Button>
+                        <Button size="sm" onClick={() => setShowAddDialog(true)}>
+                            <Plus className="mr-2 h-4 w-4" />
+                            Ny transaktion
+                        </Button>
+                    </div>
                 }
             />
 
-            <WithdrawalStats 
-                stats={overallStats} 
+            <div id="delagaruttag-content" className="space-y-6">
+            <WithdrawalStats
+                stats={overallStats}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -126,15 +145,14 @@ export function DelagaruttagManager() {
                     </div>
                 </div>
             </div>
+            </div>
 
-            <NewWithdrawalDialog 
-                open={showAddDialog} 
+            <NewWithdrawalDialog
+                open={showAddDialog}
                 onOpenChange={setShowAddDialog}
                 partners={partners}
-                onSave={async (data) => {
-                    console.log('Save transaction:', data)
-                    // TODO: Implement save logic using db.addTransaction or similar
-                    return Promise.resolve()
+                onSave={async (type, partnerId, amount, date, description) => {
+                    await registerTransaction(type, partnerId, amount, date, description)
                 }}
             />
         </div>

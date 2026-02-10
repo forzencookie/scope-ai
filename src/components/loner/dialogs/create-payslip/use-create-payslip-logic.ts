@@ -38,12 +38,22 @@ export interface PayslipEmployee {
     role: string
     lastSalary: number
     taxRate: number
+    personalNumber?: string
+    employmentType?: string
+    taxTable?: number
+    pensionRate?: number // Tjänstepension as decimal (e.g. 0.045 = 4.5%)
 }
 
 export interface ManualPersonData {
     name: string
     role: string
     salary: number
+    personalNumber: string
+    employmentType: string
+    taxRate: string
+    pensionRate: string   // Tjänstepension % (default "4.5")
+    fackavgift: string    // Union fee kr/month (default "0")
+    akassa: string        // A-kassa kr/month (default "0")
 }
 
 export function useCreatePayslipLogic({
@@ -68,7 +78,7 @@ export function useCreatePayslipLogic({
 
     // New states for manual person entry
     const [useManualEntry, setUseManualEntry] = useState(false)
-    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0 })
+    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: "30", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
     const [saveAsEmployee, setSaveAsEmployee] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
 
@@ -80,12 +90,17 @@ export function useCreatePayslipLogic({
                 const res = await fetch('/api/employees')
                 const data = await res.json()
                 if (data.employees) {
-                    setEmployees(data.employees.map((e: { id: string; name: string; role: string; monthly_salary: number | string; tax_rate: number | string }): PayslipEmployee => ({
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    setEmployees(data.employees.map((e: any): PayslipEmployee => ({
                         id: e.id,
                         name: e.name,
                         role: e.role,
                         lastSalary: Number(e.monthly_salary),
-                        taxRate: Number(e.tax_rate)
+                        taxRate: Number(e.tax_rate) || 0.30,
+                        personalNumber: e.personal_number || undefined,
+                        employmentType: e.employment_type || undefined,
+                        taxTable: e.tax_table ? Number(e.tax_table) : undefined,
+                        pensionRate: e.pension_rate ? Number(e.pension_rate) : 0.045, // Default ITP1 4.5%
                     })))
                 }
             } catch (err) {
@@ -110,15 +125,49 @@ export function useCreatePayslipLogic({
     // selectedEmp can be either from database or manual entry
     const selectedEmp: PayslipEmployee | null = useManualEntry
         ? (manualPerson.name && manualPerson.salary > 0
-            ? { id: 'manual', name: manualPerson.name, role: manualPerson.role, lastSalary: manualPerson.salary, taxRate: 0.30 }
+            ? {
+                id: 'manual',
+                name: manualPerson.name,
+                role: manualPerson.role,
+                lastSalary: manualPerson.salary,
+                taxRate: (parseFloat(manualPerson.taxRate) || 30) / 100,
+                personalNumber: manualPerson.personalNumber || undefined,
+                employmentType: manualPerson.employmentType || undefined,
+                pensionRate: (parseFloat(manualPerson.pensionRate) || 4.5) / 100,
+            }
             : null)
         : employees.find(e => e.id === selectedEmployee) || null
 
     const totalDeductions = aiDeductions.reduce((sum, d) => sum + d.amount, 0)
     const recommendedSalary = selectedEmp ? selectedEmp.lastSalary - totalDeductions : 0
     const finalSalary = useAIRecommendation ? recommendedSalary : (parseInt(customSalary) || recommendedSalary)
-    const tax = Math.round(finalSalary * 0.24)
-    const netSalary = finalSalary - tax
+    const taxRate = selectedEmp?.taxRate || 0.30
+    const tax = Math.round(finalSalary * taxRate)
+
+    // Employee deductions (reduce net pay)
+    const fackavgift = useManualEntry ? (parseFloat(manualPerson.fackavgift) || 0) : 0
+    const akassa = useManualEntry ? (parseFloat(manualPerson.akassa) || 0) : 0
+    const netSalary = finalSalary - tax - fackavgift - akassa
+
+    // Derive age from personnummer for age-based employer contributions
+    const getAgeFromPersonnummer = (pnr?: string): number | null => {
+        if (!pnr || pnr.length < 8) return null
+        const digits = pnr.replace(/\D/g, '')
+        if (digits.length < 8) return null
+        const birthYear = parseInt(digits.substring(0, 4))
+        if (birthYear < 1900 || birthYear > 2100) return null
+        return new Date().getFullYear() - birthYear
+    }
+
+    // Legal breakdown for lönespecifikation
+    const employeeAge = getAgeFromPersonnummer(selectedEmp?.personalNumber)
+    const isSenior = employeeAge !== null && employeeAge >= 66
+    const employerContributionRate = isSenior ? 0.1021 : 0.3142 // Reduced for 66+: only ålderspensionsavgift
+    const sempioneersattning = Math.round(finalSalary * 0.12) // Semesterlagen: 12%
+    const employerContribution = Math.round(finalSalary * employerContributionRate)
+    const pensionRate = selectedEmp?.pensionRate || 0.045 // Default ITP1 4.5%
+    const pension = Math.round(finalSalary * pensionRate) // Employer cost
+    const totalEmployerCost = finalSalary + employerContribution + pension
 
     // Check if can proceed from step 1
     const canProceedFromStep1 = useManualEntry
@@ -136,7 +185,7 @@ export function useCreatePayslipLogic({
         setIsCreating(false)
         // Reset manual entry states
         setUseManualEntry(false)
-        setManualPerson({ name: "", role: "", salary: 0 })
+        setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: "30", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
         setSaveAsEmployee(true)
         setSearchQuery("")
     }
@@ -155,15 +204,22 @@ export function useCreatePayslipLogic({
             if (input.includes("sjuk")) {
                 const days = parseInt(input.match(/(\d+)/)?.[1] || "1")
                 const dailyRate = (selectedEmp?.lastSalary || 0) / 21
-                const deduction = Math.round(dailyRate * days * 0.2) // 80% is covered
-                newDeductions.push({ label: `Karensavdrag (${days} dag${days > 1 ? 'ar' : ''})`, amount: deduction })
-                response = `Noterat ${days} sjukdag${days > 1 ? 'ar' : ''}. Karensavdrag på ${deduction.toLocaleString('sv-SE')} kr tillämpas.`
+                // Day 1 = karensdag (full deduction), day 2-14 = 80% sjuklön from employer
+                const karensDeduction = Math.round(dailyRate) // 1 karensdag
+                const sickPayDays = Math.max(0, days - 1)
+                const sickDeduction = Math.round(dailyRate * sickPayDays * 0.2) // Employer pays 80%, deduct 20%
+                const totalSickDeduction = karensDeduction + sickDeduction
+                newDeductions.push({ label: `Sjukavdrag (${days} dag${days > 1 ? 'ar' : ''}, 1 karensdag)`, amount: totalSickDeduction })
+                response = `Noterat ${days} sjukdag${days > 1 ? 'ar' : ''}. 1 karensdag + ${sickPayDays} dag${sickPayDays !== 1 ? 'ar' : ''} sjuklön (80%). Avdrag: ${totalSickDeduction.toLocaleString('sv-SE')} kr.`
             }
             if (input.includes("övertid")) {
                 const hours = parseInt(input.match(/(\d+)/)?.[1] || "1")
-                const bonus = hours * 350
-                newDeductions.push({ label: `Övertid (${hours}h)`, amount: -bonus })
-                response = `Noterat ${hours} timmar övertid. ${bonus.toLocaleString('sv-SE')} kr extra läggs till.`
+                // Overtime rate: hourly rate × 1.5 (enkel övertid). Hourly = monthly / 168 (avg hours/month)
+                const hourlyRate = Math.round((selectedEmp?.lastSalary || 0) / 168)
+                const overtimeRate = Math.round(hourlyRate * 1.5)
+                const bonus = hours * overtimeRate
+                newDeductions.push({ label: `Övertid (${hours}h × ${overtimeRate} kr)`, amount: -bonus })
+                response = `Noterat ${hours} timmar övertid (${overtimeRate} kr/h). ${bonus.toLocaleString('sv-SE')} kr extra läggs till.`
             }
             if (input.includes("bonus")) {
                 const amount = parseInt(input.match(/(\d+)/)?.[1] || "0")
@@ -201,6 +257,9 @@ export function useCreatePayslipLogic({
                         name: manualPerson.name,
                         role: manualPerson.role || 'Anställd',
                         monthly_salary: manualPerson.salary,
+                        personal_number: manualPerson.personalNumber || null,
+                        employment_type: manualPerson.employmentType || 'tillsvidare',
+                        tax_rate: (parseFloat(manualPerson.taxRate) || 30) / 100,
                         status: 'active'
                     })
                 })
@@ -236,20 +295,30 @@ export function useCreatePayslipLogic({
 
             const saved = await response.json()
 
-            // Calculate employer contribution (arbetsgivaravgift) - 31.42%
-            const employerContribution = Math.round(finalSalary * 0.3142)
+            // Use the already-computed values (age-aware employer contribution rate)
+            const verificationRows = [
+                { account: "7010", description: `Lön ${selectedEmp.name}`, debit: finalSalary, credit: 0 },
+                { account: "7510", description: `Arbetsgivaravgift ${selectedEmp.name}${isSenior ? ' (reducerad)' : ''}`, debit: employerContribution, credit: 0 },
+                { account: "7411", description: `Tjänstepension ${selectedEmp.name}`, debit: pension, credit: 0 },
+                { account: "2710", description: `Personalskatt ${selectedEmp.name}`, debit: 0, credit: tax },
+                { account: "2730", description: `Arbetsgivaravgift skuld ${selectedEmp.name}`, debit: 0, credit: employerContribution },
+                { account: "2810", description: `Pensionsskuld ${selectedEmp.name}`, debit: 0, credit: pension },
+                { account: "1930", description: `Utbetalning lön ${selectedEmp.name}`, debit: 0, credit: netSalary },
+            ]
+
+            // Add union/A-kassa deduction rows if applicable
+            if (fackavgift > 0) {
+                verificationRows.push({ account: "2790", description: `Fackavgift ${selectedEmp.name}`, debit: 0, credit: fackavgift })
+            }
+            if (akassa > 0) {
+                verificationRows.push({ account: "2790", description: `A-kassa ${selectedEmp.name}`, debit: 0, credit: akassa })
+            }
 
             // Create verification (ledger entries)
             await addVerification({
                 description: `Lön ${selectedEmp.name} ${currentPeriod}`,
                 date: new Date().toISOString().split('T')[0],
-                rows: [
-                    { account: "7010", description: `Lön ${selectedEmp.name}`, debit: finalSalary, credit: 0 },
-                    { account: "7510", description: `Arbetsgivaravgift ${selectedEmp.name}`, debit: employerContribution, credit: 0 },
-                    { account: "2710", description: `Personalskatt ${selectedEmp.name}`, debit: 0, credit: tax },
-                    { account: "2730", description: `Arbetsgivaravgift skuld ${selectedEmp.name}`, debit: 0, credit: employerContribution },
-                    { account: "1930", description: `Utbetalning lön ${selectedEmp.name}`, debit: 0, credit: netSalary },
-                ],
+                rows: verificationRows,
             })
 
             toast.success("Lönebesked skapat!", `${selectedEmp.name}s lön för ${currentPeriod} har registrerats`)
@@ -287,7 +356,17 @@ export function useCreatePayslipLogic({
         useAIRecommendation, setUseAIRecommendation,
         finalSalary,
         tax,
+        taxRate,
         netSalary,
+        fackavgift,
+        akassa,
+        sempioneersattning,
+        employerContribution,
+        employerContributionRate,
+        isSenior,
+        pension,
+        pensionRate,
+        totalEmployerCost,
         isCreating,
         handleConfirmPayslip,
         resetDialog
