@@ -11,6 +11,7 @@
 
 ### GENERAL ARCHITECTURE
 *   **Performance:** We must strictly minimize unnecessary API calls and data fetches. Every request slows down the user experience. The architecture should be lean and efficient, fetching only what is needed, when it is needed.
+*   **Dynamic Data Sources:** Tables that display structured reference data (e.g., BAS kontoplan, tax rates, benefit types) must not be hardcoded inline. They should pull from a central, maintainable data source (database table or authoritative config) so that when the source is updated, all dependent views and components reflect the change automatically. For example, the BAS kontoplan evolves over time with new account classes — the app must be prepared for these changes without code modifications.
 
 ### AI MODE
 *   **Agent Capability:** The core philosophy is "Everything you can do manually, the AI can do for you." If a user can click a button to book a transaction, create an invoice, or update a setting, the AI agent must be able to trigger that same action via conversation.
@@ -22,7 +23,7 @@
 *   **Fakturor:** Kanban views and stat cards should reflect the invoice lifecycle accurately. For creation/import, ensure all elements for a legally sound invoice are present. For supplier invoices (leverantörsfakturor), vital info extraction is key. Improve the UI so that the invoice preview is available in the standard view, not just the expanded mode.
 *   **Kvitton:** The upload feature needs two distinct modes: Manual and OCR (currently it seems to favor OCR). This provides flexibility for the user.
 *   **Inventarier:** Fix the UI consistency: add a table title and separator like other pages. Move the 'Bokför avskrivning' (depreciation) button to this section for better workflow.
-*   **Verifikationer:** The ledger view lacks a proper header. Rethink the UX: instead of a flat table, use a collapsible structure similar to the P&L or Balance Sheet. It would be more intuitive to navigate by BAS accounts and open them to see the underlying verifications.
+*   **Verifikationer:** The ledger view needs a proper header. Use a clean flat table layout — a collapsible BAS-account structure was considered but rejected because the sheer number of accounts makes it inconvenient. The table should have clear columns (Nr, Datum, Konto, Beskrivning, Belopp) with search and filtering capabilities.
 
 ### LÖNER (Payroll)
 *   **Lönekontroll:** 'Antal anställda' must dynamically update from the Team page. When creating a new payroll run for a person not yet in the system, the dialog should prompt to add them as a team member. 'Total brutto' and 'Skatt att betala' should be derived from actual salary data, potentially feeding into the 'Inkomstdeklaration' later. The payroll wizard must capture every detail required to generate a legally compliant payslip for external payment processing.

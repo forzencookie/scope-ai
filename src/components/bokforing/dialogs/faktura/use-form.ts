@@ -24,8 +24,11 @@ export interface InvoiceFormState {
     address: string
     orgNumber: string
     reference: string
+    issueDate: string
     dueDate: string
     paymentTerms: string
+    bankgiro: string
+    plusgiro: string
     notes: string
     currency: 'SEK' | 'EUR' | 'USD' | 'GBP' | 'NOK' | 'DKK'
     lineItems: InvoiceLineItem[]
@@ -45,8 +48,11 @@ const getInitialFormState = (): InvoiceFormState => ({
     address: "",
     orgNumber: "",
     reference: "",
+    issueDate: new Date().toISOString().split('T')[0],
     dueDate: "",
     paymentTerms: "30",
+    bankgiro: "",
+    plusgiro: "",
     notes: "",
     currency: 'SEK',
     lineItems: [{ id: '1', description: '', quantity: 1, unitPrice: 0, vatRate: 25 }]
@@ -85,12 +91,24 @@ export function useInvoiceForm() {
         setFormState(prev => ({ ...prev, reference: value }))
     }, [])
 
+    const setIssueDate = useCallback((value: string) => {
+        setFormState(prev => ({ ...prev, issueDate: value }))
+    }, [])
+
     const setDueDate = useCallback((value: string) => {
         setFormState(prev => ({ ...prev, dueDate: value }))
     }, [])
 
     const setPaymentTerms = useCallback((value: string) => {
         setFormState(prev => ({ ...prev, paymentTerms: value }))
+    }, [])
+
+    const setBankgiro = useCallback((value: string) => {
+        setFormState(prev => ({ ...prev, bankgiro: value }))
+    }, [])
+
+    const setPlusgiro = useCallback((value: string) => {
+        setFormState(prev => ({ ...prev, plusgiro: value }))
     }, [])
 
     const setNotes = useCallback((value: string) => {
@@ -186,8 +204,11 @@ export function useInvoiceForm() {
         setAddress,
         setOrgNumber,
         setReference,
+        setIssueDate,
         setDueDate,
         setPaymentTerms,
+        setBankgiro,
+        setPlusgiro,
         setNotes,
         setCurrency,
         // Line items

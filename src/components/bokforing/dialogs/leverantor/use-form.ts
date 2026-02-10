@@ -7,12 +7,15 @@ import { type AiState } from "../shared/constants"
 
 export interface SupplierInvoiceFormState {
     supplier: string
+    supplierOrgNr: string
+    supplierAddress: string
     invoiceNumber: string
     ocr: string
     date: string
     dueDate: string
     amount: string
     vatAmount: string
+    currency: string
     category: string
     status: SupplierInvoiceStatus
     file: File | null
@@ -21,12 +24,15 @@ export interface SupplierInvoiceFormState {
 
 export const getInitialFormState = (): SupplierInvoiceFormState => ({
     supplier: "",
+    supplierOrgNr: "",
+    supplierAddress: "",
     invoiceNumber: "",
     ocr: "",
     date: new Date().toISOString().split('T')[0],
     dueDate: "",
     amount: "",
     vatAmount: "",
+    currency: "SEK",
     category: "Övriga kostnader",
     status: "Mottagen",
     file: null

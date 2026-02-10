@@ -5,6 +5,7 @@ import { FileText, Send } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
+import { useCompany } from "@/providers"
 import {
     Dialog,
     DialogContent,
@@ -41,6 +42,13 @@ export function InvoiceCreateDialog({
     existingInvoiceCount,
 }: InvoiceCreateDialogProps) {
     const toast = useToast()
+    const { company } = useCompany()
+
+    const invoiceNumber = `F-${String(existingInvoiceCount + 1).padStart(4, '0')}`
+    const companyName = company?.name || ""
+    const companyOrgNr = company?.orgNumber || ""
+    const companyAddress = [company?.address, company?.zipCode, company?.city].filter(Boolean).join(", ")
+    const companyVatNr = company?.vatNumber || ""
 
     const {
         formState,
@@ -54,8 +62,11 @@ export function InvoiceCreateDialog({
         setAddress,
         setOrgNumber,
         setReference,
+        setIssueDate,
         setDueDate,
         setPaymentTerms,
+        setBankgiro,
+        setPlusgiro,
         setNotes,
         setCurrency,
         addLineItem,
@@ -73,19 +84,26 @@ export function InvoiceCreateDialog({
         setIsCreating(true)
 
         try {
-            const today = new Date().toISOString().split('T')[0]
             const daysToAdd = parseInt(formState.paymentTerms) || 30
-            const calculatedDueDate = formState.dueDate || new Date(Date.now() + daysToAdd * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+            const issueDateStr = formState.issueDate || new Date().toISOString().split('T')[0]
+            const calculatedDueDate = formState.dueDate || new Date(new Date(issueDateStr).getTime() + daysToAdd * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
 
             const payload = {
+                invoiceNumber,
                 customer: formState.customer,
                 email: formState.email,
+                orgNumber: formState.orgNumber,
+                address: formState.address,
+                reference: formState.reference,
                 amount: invoiceTotals.total,
                 vatAmount: invoiceTotals.vatAmount,
-                issueDate: today,
+                issueDate: issueDateStr,
                 dueDate: calculatedDueDate,
                 status: INVOICE_STATUS_LABELS.DRAFT,
                 currency: formState.currency,
+                bankgiro: formState.bankgiro || undefined,
+                plusgiro: formState.plusgiro || undefined,
+                notes: formState.notes || undefined,
                 items: formState.lineItems
             }
 
@@ -168,28 +186,66 @@ export function InvoiceCreateDialog({
                         <div className="border-t" />
 
                         <PaymentTermsSection
+                            issueDate={formState.issueDate}
                             paymentTerms={formState.paymentTerms}
                             dueDate={formState.dueDate}
                             currency={formState.currency}
+                            bankgiro={formState.bankgiro}
+                            plusgiro={formState.plusgiro}
+                            onIssueDateChange={setIssueDate}
                             onPaymentTermsChange={setPaymentTerms}
                             onDueDateChange={setDueDate}
                             onCurrencyChange={setCurrency}
+                            onBankgiroChange={setBankgiro}
+                            onPlusgiroChange={setPlusgiro}
                         />
 
                         <NotesSection
                             notes={formState.notes}
                             onNotesChange={setNotes}
                         />
+
+                        {/* Inline Preview (standard view) */}
+                        {!expanded && (
+                            <>
+                                <div className="border-t" />
+                                <InvoicePreview
+                                    customer={formState.customer}
+                                    orgNumber={formState.orgNumber}
+                                    address={formState.address}
+                                    issueDate={formState.issueDate}
+                                    paymentTerms={formState.paymentTerms}
+                                    bankgiro={formState.bankgiro}
+                                    plusgiro={formState.plusgiro}
+                                    invoiceNumber={invoiceNumber}
+                                    companyName={companyName}
+                                    companyOrgNr={companyOrgNr}
+                                    companyAddress={companyAddress}
+                                    companyVatNr={companyVatNr}
+                                    lineItems={formState.lineItems}
+                                    subtotal={invoiceTotals.subtotal}
+                                    vatAmount={invoiceTotals.vatAmount}
+                                    total={invoiceTotals.total}
+                                />
+                            </>
+                        )}
                     </div>
 
-                    {/* Right Side - Invoice Preview (only when expanded) */}
+                    {/* Right Side - Invoice Preview (expanded view) */}
                     {expanded && (
                         <InvoicePreview
                             customer={formState.customer}
                             orgNumber={formState.orgNumber}
                             address={formState.address}
+                            issueDate={formState.issueDate}
                             paymentTerms={formState.paymentTerms}
-                            existingInvoiceCount={existingInvoiceCount}
+                            bankgiro={formState.bankgiro}
+                            plusgiro={formState.plusgiro}
+                            invoiceNumber={invoiceNumber}
+                            companyName={companyName}
+                            companyOrgNr={companyOrgNr}
+                            companyAddress={companyAddress}
+                            companyVatNr={companyVatNr}
                             lineItems={formState.lineItems}
                             subtotal={invoiceTotals.subtotal}
                             vatAmount={invoiceTotals.vatAmount}

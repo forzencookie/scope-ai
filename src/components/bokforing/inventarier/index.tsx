@@ -121,6 +121,16 @@ export function InventarierTable() {
             {/* Stats Cards */}
             <InventarierStats stats={stats} />
 
+            {/* Section Separator */}
+            <div className="border-b-2 border-border/60" />
+
+            {/* Table Title */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-1">
+                <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
+                    Alla tillgångar
+                </h3>
+            </div>
+
             {/* Assets Grid */}
             <InventarierGrid
                 inventarier={inventarier}

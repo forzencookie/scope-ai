@@ -223,27 +223,65 @@ export function LineItemsSection({
 }
 
 interface PaymentTermsSectionProps {
+    issueDate: string
     paymentTerms: string
     dueDate: string
     currency: 'SEK' | 'EUR' | 'USD' | 'GBP' | 'NOK' | 'DKK'
+    bankgiro: string
+    plusgiro: string
+    onIssueDateChange: (value: string) => void
     onPaymentTermsChange: (value: string) => void
     onDueDateChange: (value: string) => void
     onCurrencyChange: (value: 'SEK' | 'EUR' | 'USD' | 'GBP' | 'NOK' | 'DKK') => void
+    onBankgiroChange: (value: string) => void
+    onPlusgiroChange: (value: string) => void
 }
 
 export function PaymentTermsSection({
+    issueDate,
     paymentTerms,
     dueDate,
     currency,
+    bankgiro,
+    plusgiro,
+    onIssueDateChange,
     onPaymentTermsChange,
     onDueDateChange,
     onCurrencyChange,
+    onBankgiroChange,
+    onPlusgiroChange,
 }: PaymentTermsSectionProps) {
     return (
         <div className="space-y-4">
             <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
                 Betalningsvillkor
             </h3>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Fakturadatum</label>
+                    <Input
+                        type="date"
+                        value={issueDate}
+                        onChange={(e) => onIssueDateChange(e.target.value)}
+                    />
+                </div>
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Valuta</label>
+                    <Select value={currency} onValueChange={(v) => onCurrencyChange(v as typeof currency)}>
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="SEK">SEK - Svenska kronor</SelectItem>
+                            <SelectItem value="EUR">EUR - Euro</SelectItem>
+                            <SelectItem value="USD">USD - US Dollar</SelectItem>
+                            <SelectItem value="GBP">GBP - British Pound</SelectItem>
+                            <SelectItem value="NOK">NOK - Norska kronor</SelectItem>
+                            <SelectItem value="DKK">DKK - Danska kronor</SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+            </div>
             <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
                     <label className="text-sm font-medium">Betalningsvillkor</label>
@@ -268,23 +306,26 @@ export function PaymentTermsSection({
                         onChange={(e) => onDueDateChange(e.target.value)}
                         min={new Date().toISOString().split('T')[0]}
                     />
-                    <p className="text-xs text-muted-foreground">Lämna tomt för automatisk beräkning</p>
+                    <p className="text-xs text-muted-foreground">Tomt = auto</p>
+                </div>
+                <div />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                    <label className="text-sm font-medium">Bankgiro</label>
+                    <Input
+                        placeholder="1234-5678"
+                        value={bankgiro}
+                        onChange={(e) => onBankgiroChange(e.target.value)}
+                    />
                 </div>
                 <div className="space-y-2">
-                    <label className="text-sm font-medium">Valuta</label>
-                    <Select value={currency} onValueChange={(v) => onCurrencyChange(v as typeof currency)}>
-                        <SelectTrigger>
-                            <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="SEK">SEK - Svenska kronor</SelectItem>
-                            <SelectItem value="EUR">EUR - Euro</SelectItem>
-                            <SelectItem value="USD">USD - US Dollar</SelectItem>
-                            <SelectItem value="GBP">GBP - British Pound</SelectItem>
-                            <SelectItem value="NOK">NOK - Norska kronor</SelectItem>
-                            <SelectItem value="DKK">DKK - Danska kronor</SelectItem>
-                        </SelectContent>
-                    </Select>
+                    <label className="text-sm font-medium">Plusgiro</label>
+                    <Input
+                        placeholder="12 34 56-7"
+                        value={plusgiro}
+                        onChange={(e) => onPlusgiroChange(e.target.value)}
+                    />
                 </div>
             </div>
         </div>
@@ -315,8 +356,15 @@ interface InvoicePreviewProps {
     customer: string
     orgNumber: string
     address: string
+    issueDate: string
     paymentTerms: string
-    existingInvoiceCount: number
+    bankgiro: string
+    plusgiro: string
+    invoiceNumber: string
+    companyName: string
+    companyOrgNr: string
+    companyAddress: string
+    companyVatNr: string
     lineItems: InvoiceLineItem[]
     subtotal: number
     vatAmount: number
@@ -327,15 +375,24 @@ export function InvoicePreview({
     customer,
     orgNumber,
     address,
+    issueDate,
     paymentTerms,
-    existingInvoiceCount,
+    bankgiro,
+    plusgiro,
+    invoiceNumber,
+    companyName,
+    companyOrgNr,
+    companyAddress,
+    companyVatNr,
     lineItems,
     subtotal,
     vatAmount,
     total,
 }: InvoicePreviewProps) {
+    const dueDate = new Date(new Date(issueDate || Date.now()).getTime() + parseInt(paymentTerms) * 24 * 60 * 60 * 1000)
+
     return (
-        <div className="w-1/2 border-l pl-6">
+        <div className="w-full border-l pl-6">
             <div className="sticky top-0">
                 <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide mb-4">
                     Förhandsgranska
@@ -345,18 +402,21 @@ export function InvoicePreview({
                         <div>
                             <h2 className="text-xl font-bold">Faktura</h2>
                             <p className="text-sm text-muted-foreground mt-1">
-                                Fakturanummer: <span className="font-mono">UTKAST-{String(existingInvoiceCount + 1).padStart(3, '0')}</span>
+                                Nr: <span className="font-mono font-semibold">{invoiceNumber}</span>
                             </p>
                         </div>
                         <div className="text-right text-sm">
-                            <p>Fakturadatum: {new Date().toLocaleDateString('sv-SE')}</p>
-                            <p>Förfallodatum: {new Date(Date.now() + parseInt(paymentTerms) * 24 * 60 * 60 * 1000).toLocaleDateString('sv-SE')}</p>
+                            <p>Fakturadatum: {new Date(issueDate || Date.now()).toLocaleDateString('sv-SE')}</p>
+                            <p>Förfallodatum: {dueDate.toLocaleDateString('sv-SE')}</p>
                         </div>
                     </div>
                     <div className="grid grid-cols-2 gap-6 pt-4 border-t">
                         <div>
                             <p className="text-xs font-medium text-muted-foreground mb-1">FRÅN</p>
-                            <p className="font-medium">Ditt Företag AB</p>
+                            <p className="font-medium">{companyName || 'Företagsnamn'}</p>
+                            {companyOrgNr && <p className="text-sm text-muted-foreground">Org.nr: {companyOrgNr}</p>}
+                            {companyVatNr && <p className="text-sm text-muted-foreground">Moms.nr: {companyVatNr}</p>}
+                            {companyAddress && <p className="text-sm text-muted-foreground">{companyAddress}</p>}
                         </div>
                         <div>
                             <p className="text-xs font-medium text-muted-foreground mb-1">TILL</p>
@@ -401,6 +461,13 @@ export function InvoicePreview({
                             <span>{formatCurrency(total)}</span>
                         </div>
                     </div>
+                    {(bankgiro || plusgiro) && (
+                        <div className="pt-4 border-t text-sm">
+                            <p className="text-xs font-medium text-muted-foreground mb-1">BETALNING</p>
+                            {bankgiro && <p>Bankgiro: {bankgiro}</p>}
+                            {plusgiro && <p>Plusgiro: {plusgiro}</p>}
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

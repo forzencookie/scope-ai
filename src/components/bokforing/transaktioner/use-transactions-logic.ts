@@ -63,7 +63,11 @@ export function useTransactionsLogic({
             t.status === TRANSACTION_STATUSES.MISSING_DOCUMENTATION
         ).length
 
-        return { income, expenses, pending, totalCount: transactions.length }
+        const booked = transactions.filter(t =>
+            t.status === TRANSACTION_STATUSES.RECORDED
+        ).length
+
+        return { income, expenses, pending, booked, totalCount: transactions.length }
     }, [transactions, externalStats])
 
     // Booking Handlers

@@ -1,33 +1,26 @@
 "use client"
 
-import { memo, useState } from "react"
+import { memo } from "react"
 import {
     Plus,
     X,
     CreditCard,
-    List,
-    LayoutGrid,
 } from "lucide-react"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, PageHeader } from "@/components/shared"
 import { Button } from "@/components/ui/button"
 import { VerifikationDialog } from "../verifikation-dialog"
-import { cn } from "@/lib/utils"
 
 // Sub-components
 import { VerifikationerStats } from "./components/VerifikationerStats"
 import { VerifikationDetailsDialog } from "./components/VerifikationDetailsDialog"
 import { VerifikationerGrid } from "./components/VerifikationerGrid"
-import { AccountGroupView } from "./components/AccountGroupView"
 
 // Logic
 import { useVerificationsLogic } from "./use-verifications-logic"
 
-type ViewMode = "list" | "accounts"
-
 export const VerifikationerTable = memo(function VerifikationerTable() {
     const toast = useToast()
-    const [viewMode, setViewMode] = useState<ViewMode>("accounts")
 
     const {
         // State
@@ -59,35 +52,6 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                     : "Se alla bokförda transaktioner och verifikationer."}
                 actions={
                     <div className="hidden md:flex items-center gap-2">
-                        {/* View mode toggle */}
-                        {!accountParam && (
-                            <div className="flex items-center border rounded-md">
-                                <button
-                                    onClick={() => setViewMode("accounts")}
-                                    className={cn(
-                                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-l-md transition-colors",
-                                        viewMode === "accounts"
-                                            ? "bg-primary/10 text-primary"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    <LayoutGrid className="h-3.5 w-3.5" />
-                                    Kontoplan
-                                </button>
-                                <button
-                                    onClick={() => setViewMode("list")}
-                                    className={cn(
-                                        "flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium rounded-r-md transition-colors",
-                                        viewMode === "list"
-                                            ? "bg-primary/10 text-primary"
-                                            : "text-muted-foreground hover:text-foreground"
-                                    )}
-                                >
-                                    <List className="h-3.5 w-3.5" />
-                                    Lista
-                                </button>
-                            </div>
-                        )}
                         <Button size="sm" className="h-8 px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
                             <Plus className="h-3.5 w-3.5" />
                             Ny verifikation
@@ -145,43 +109,34 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                 }}
             />
 
-            {/* View Content */}
-            {viewMode === "accounts" && !accountParam ? (
-                <AccountGroupView
-                    verifications={verifikationer}
-                    onSelectAccount={(account) => setAccountFilter(account)}
-                />
-            ) : (
-                <>
-                    <VerifikationerGrid
-                        verifications={filteredVerifikationer}
-                        selection={selection}
-                        onViewDetails={handleViewDetails}
-                        onAccountFilter={(account) => setSearchQuery(account)}
-                    />
+            {/* Verifications Table */}
+            <VerifikationerGrid
+                verifications={filteredVerifikationer}
+                selection={selection}
+                onViewDetails={handleViewDetails}
+                onAccountFilter={(account) => setSearchQuery(account)}
+            />
 
-                    {/* Bulk Actions */}
-                    <BulkActionToolbar
-                        selectedCount={selection.selectedCount}
-                        selectedIds={selection.selectedIds}
-                        onClearSelection={selection.clearSelection}
-                        actions={[
-                            {
-                                id: "export",
-                                label: "Exportera",
-                                onClick: () => handleBulkAction("Export"),
-                                variant: "default"
-                            },
-                            {
-                                id: "print",
-                                label: "Skriv ut",
-                                onClick: () => handleBulkAction("Utskrift"),
-                                variant: "default"
-                            }
-                        ]}
-                    />
-                </>
-            )}
+            {/* Bulk Actions */}
+            <BulkActionToolbar
+                selectedCount={selection.selectedCount}
+                selectedIds={selection.selectedIds}
+                onClearSelection={selection.clearSelection}
+                actions={[
+                    {
+                        id: "export",
+                        label: "Exportera",
+                        onClick: () => handleBulkAction("Export"),
+                        variant: "default"
+                    },
+                    {
+                        id: "print",
+                        label: "Skriv ut",
+                        onClick: () => handleBulkAction("Utskrift"),
+                        variant: "default"
+                    }
+                ]}
+            />
         </div>
     )
 })
