@@ -17,6 +17,7 @@ export interface MonthStatus {
         vatReported: boolean
         declarationsDone: boolean
         allCategorized: boolean
+        notes?: string
     }
     locked_at?: string
     locked_by?: string
@@ -57,7 +58,7 @@ export function useMonthClosing() {
                                 // status in DB is 'open', 'closed', 'submitted'
                                 // we map 'closed' to 'locked' for our UI
                                 status: p.status === 'closed' ? 'locked' : (p.status as PeriodStatus),
-                                checks: (p.reconciliation_checks as unknown as { bankReconciled: boolean, vatReported: boolean, declarationsDone: boolean, allCategorized: boolean }) || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false },
+                                checks: (p.reconciliation_checks as unknown as MonthStatus['checks']) || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false },
                                 locked_at: p.locked_at || undefined,
                                 locked_by: p.locked_by || undefined
                             }
@@ -155,8 +156,15 @@ export function useMonthClosing() {
         })
     }
 
-    // derived: Calculate status based on checks? Or just let user control?
-    // Let's keep it manual but powered by checks.
+    const saveNotes = (year: number, month: number, notes: string) => {
+        const period = getPeriod(year, month)
+        savePeriod(year, month, {
+            checks: {
+                ...period.checks,
+                notes
+            }
+        })
+    }
 
     // Calculate Real Data for Checks (Bank Diff)
     const getVerificationStats = (year: number, month: number) => {
@@ -192,6 +200,7 @@ export function useMonthClosing() {
         lockPeriod,
         unlockPeriod,
         toggleCheck,
+        saveNotes,
         getVerificationStats
     }
 }
