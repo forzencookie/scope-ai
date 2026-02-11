@@ -8,7 +8,6 @@ import { useCachedQuery } from '@/hooks/use-cached-query'
 import {
     TooltipProvider,
 } from "@/components/ui/tooltip"
-import { MonthClosing } from "@/components/bokforing/month-closing"
 import { Loader2 } from "lucide-react"
 
 import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
@@ -53,14 +52,6 @@ const allTabs = [
         color: "bg-amber-500",
         feature: null, // Available to all
     },
-    {
-        id: "bokslut",
-        labelEnkel: "Månadsavslut",
-        labelAvancerad: "Månadsavslut",
-        color: "bg-rose-500",
-        feature: null,
-    },
-
     {
         id: "inventarier",
         labelEnkel: "Inventarier",
@@ -229,10 +220,6 @@ function AccountingPageContent() {
 
                             {currentTab === "inventarier" && (
                                 <LazyInventarierTable />
-                            )}
-
-                            {currentTab === "bokslut" && (
-                                <MonthClosing />
                             )}
 
                             {currentTab === "verifikationer" && (

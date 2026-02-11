@@ -38,7 +38,7 @@ interface TabConfig {
     label: string;
     icon: LucideIcon;
     color: string;
-    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'bolagsstamma' | 'arsmote' | 'utdelning' | 'agarinfo' | 'k10' | null;
+    feature: 'aktiebok' | 'delagare' | 'medlemsregister' | 'bolagsstamma' | 'arsmote' | 'utdelning' | 'agarinfo' | 'firmatecknare' | 'k10' | null;
 }
 
 const allTabs: TabConfig[] = [
@@ -49,7 +49,7 @@ const allTabs: TabConfig[] = [
     { id: 'medlemsregister', label: 'Medlemsregister', icon: Users, color: "bg-indigo-500", feature: 'medlemsregister' },
     { id: 'bolagsstamma', label: 'Möten & Protokoll', icon: Vote, color: "bg-orange-500", feature: 'bolagsstamma' },
     { id: 'arsmote', label: 'Årsmöte', icon: Vote, color: "bg-teal-500", feature: 'arsmote' },
-    { id: 'firmatecknare', label: 'Firmatecknare', icon: PenTool, color: "bg-cyan-500", feature: null },
+    { id: 'firmatecknare', label: 'Firmatecknare', icon: PenTool, color: "bg-cyan-500", feature: 'firmatecknare' },
 ];
 
 // Header configuration for each tab

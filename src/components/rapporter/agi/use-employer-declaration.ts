@@ -1,12 +1,11 @@
-import { useState, useMemo } from "react"
+import { useState, useMemo, useEffect } from "react"
 import { useCompany } from "@/providers/company-provider"
-import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { generateAgiXML } from "@/lib/generators/agi-generator"
-import { parseISO, format, getYear, getMonth } from "date-fns"
+import { format } from "date-fns"
 import { sv } from "date-fns/locale"
 import { BulkAction } from "@/components/shared/bulk-action-toolbar"
-import { Trash2, Send, Download } from "lucide-react"
+import { Trash2, Download } from "lucide-react"
 
 export interface AGIReport {
     period: string
@@ -20,64 +19,82 @@ export interface AGIReport {
 
 export function useEmployerDeclaration() {
     const { company } = useCompany()
-    const { verifications } = useVerifications()
     const toast = useToast()
 
     // State
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [payslips, setPayslips] = useState<any[]>([])
+    const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string | null>(null)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-    // 1. Generate AGI reports from verifications
+    // Fetch real payslip data
+    useEffect(() => {
+        async function fetchPayslips() {
+            setIsLoading(true)
+            try {
+                const res = await fetch('/api/payroll/payslips')
+                const data = await res.json()
+                setPayslips(data.payslips || [])
+            } catch (err) {
+                console.error('Failed to fetch payslips for AGI:', err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchPayslips()
+    }, [])
+
+    // 1. Generate AGI reports from real payslip data
     const agiReportsState = useMemo<AGIReport[]>(() => {
-        const reportsMap = new Map<string, AGIReport>()
+        const reportsMap = new Map<string, AGIReport & { employeeIds: Set<string> }>()
 
-        verifications.forEach(v => {
-            const date = parseISO(v.date)
-            const period = format(date, "MMMM yyyy", { locale: sv })
-            const periodKey = format(date, "yyyy-MM")
+        payslips.forEach(p => {
+            const period: string = p.period // e.g. "2025-01"
+            if (!period) return
 
-            if (!reportsMap.has(periodKey)) {
-                // Calculate due date (12th of next month)
-                const nextMonth = new Date(getYear(date), getMonth(date) + 1, 12)
+            if (!reportsMap.has(period)) {
+                // Parse "2025-01" -> Date for formatting
+                const [year, month] = period.split('-').map(Number)
+                const date = new Date(year, month - 1, 1)
+                const periodName = format(date, "MMMM yyyy", { locale: sv })
+
+                // Due date: 12th of next month
+                const nextMonth = new Date(year, month, 12)
                 const dueDate = format(nextMonth, "d MMM yyyy", { locale: sv })
 
-                reportsMap.set(periodKey, {
-                    period: period.charAt(0).toUpperCase() + period.slice(1),
+                reportsMap.set(period, {
+                    period: periodName.charAt(0).toUpperCase() + periodName.slice(1),
                     dueDate,
                     status: "pending",
                     employees: 0,
                     totalSalary: 0,
                     tax: 0,
-                    contributions: 0
+                    contributions: 0,
+                    employeeIds: new Set()
                 })
             }
 
-            const report = reportsMap.get(periodKey)!
+            const report = reportsMap.get(period)!
+            const gross = Number(p.gross_salary) || 0
 
-            v.rows.forEach(row => {
-                const acc = parseInt(row.account)
-                if (acc >= 7000 && acc <= 7399) {
-                    report.totalSalary += row.debit
-                    if (row.debit > 0) report.employees += 1
-                }
-                if (acc === 2710) {
-                    report.tax += row.credit
-                }
-                if (acc >= 2730 && acc <= 2739) {
-                    report.contributions += row.credit
-                }
-            })
+            report.totalSalary += gross
+            report.tax += Number(p.tax_deduction) || 0
+            report.contributions += Math.round(gross * 0.3142)
+
+            // Track unique employees per period
+            const empId = p.employee_id || p.id
+            if (empId) report.employeeIds.add(String(empId))
         })
 
         return Array.from(reportsMap.entries())
             .sort((a, b) => b[0].localeCompare(a[0]))
-            .map(([_, report]) => {
-                // Ensure at least 1 employee if salary exists
-                if (report.employees === 0 && report.totalSalary > 0) report.employees = 1
-                return report
+            .map(([, report]) => {
+                const { employeeIds, ...rest } = report
+                return { ...rest, employees: employeeIds.size || (rest.totalSalary > 0 ? 1 : 0) }
             })
-    }, [verifications])
+    }, [payslips])
 
     // 2. Stats derived from calculated reports
     const stats = useMemo(() => {
@@ -150,15 +167,6 @@ export function useEmployerDeclaration() {
             },
         },
         {
-            id: "send",
-            label: "Skicka till Skatteverket",
-            icon: Send,
-            onClick: async () => {
-                toast.info("Kommer snart", "Inlämning direkt till Skatteverket via API är under utveckling.")
-                clearSelection()
-            },
-        },
-        {
             id: "download",
             label: "Ladda ner XML",
             icon: Download,
@@ -197,17 +205,18 @@ export function useEmployerDeclaration() {
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
         selectedIds,
-        
+        isLoading,
+
         // Data
         agiReportsState,
         filteredReports,
         stats,
-        
+
         // Selection Handlers
         toggleSelection,
         toggleAll,
         clearSelection,
-        
+
         // Actions
         bulkActions
     }

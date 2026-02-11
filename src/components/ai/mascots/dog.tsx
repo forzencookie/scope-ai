@@ -1,21 +1,18 @@
 "use client"
 
-import { motion } from "framer-motion"
 import { cn } from "@/lib/utils"
 import { MascotProps } from "./types"
 import { pixelPerfectStyle } from "./styles"
 
 export function PixelDog({ className, size = 64 }: MascotProps) {
     return (
-        <motion.svg
+        <svg
             width={size}
             height={size}
             viewBox="0 0 16 16"
             shapeRendering="crispEdges"
             className={cn("", className)}
             style={pixelPerfectStyle}
-            animate={{ y: [0, -2, 0] }}
-            transition={{ duration: 0.8, repeat: Infinity, ease: "easeInOut" }}
         >
             {/* Ears - floppy dog ears */}
             <rect x="2" y="3" width="3" height="2" className="fill-amber-600 dark:fill-amber-500" />
@@ -44,7 +41,7 @@ export function PixelDog({ className, size = 64 }: MascotProps) {
             {/* Feet */}
             <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
             <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
-        </motion.svg>
+        </svg>
     )
 }
 

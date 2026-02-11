@@ -72,9 +72,13 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
         framtidsutsikter: initialData.forvaltningsberattelse?.framtidsutsikter || "",
         // Resultatdisposition
         utdelning: initialData.resultatdisposition?.utdelning || 0,
+        // Noter
+        redovisningsprinciper: "Årsredovisningen har upprättats enligt årsredovisningslagen och BFNAR 2016:10 Årsredovisning i mindre företag (K2).\n\nTillämpade principer är oförändrade jämfört med föregående år.",
+        medelAnstallda: 0,
+        overigaNoter: "",
     })
 
-    const [step, setStep] = useState<1 | 2 | 3>(1)
+    const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Calculate resultatdisposition
@@ -83,7 +87,7 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
     const tillBalanserat = balanserat + arsResultat - formData.utdelning
 
     const handleInputChange = (field: keyof typeof formData, value: string | number) => {
-        if (field === 'utdelning') {
+        if (field === 'utdelning' || field === 'medelAnstallda') {
             const numValue = parseInt(String(value).replace(/\D/g, '')) || 0
             setFormData(prev => ({ ...prev, [field]: numValue }))
         } else {
@@ -98,6 +102,9 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
             vasentligaHandelser: initialData.forvaltningsberattelse?.vasentligaHandelser || "",
             framtidsutsikter: initialData.forvaltningsberattelse?.framtidsutsikter || "",
             utdelning: initialData.resultatdisposition?.utdelning || 0,
+            redovisningsprinciper: "Årsredovisningen har upprättats enligt årsredovisningslagen och BFNAR 2016:10 Årsredovisning i mindre företag (K2).\n\nTillämpade principer är oförändrade jämfört med föregående år.",
+            medelAnstallda: 0,
+            overigaNoter: "",
         })
         setIsSubmitting(false)
         onOpenChange(false)
@@ -126,6 +133,11 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                             utdelning: formData.utdelning,
                             tillBalanserat,
                         },
+                        noter: {
+                            redovisningsprinciper: formData.redovisningsprinciper,
+                            medelAnstallda: formData.medelAnstallda,
+                            overigaNoter: formData.overigaNoter,
+                        },
                     },
                     status: 'draft',
                 }),
@@ -147,14 +159,14 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
             <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
                 {/* Step indicator */}
                 <div className="flex items-center justify-center gap-2 mb-2">
-                    {[1, 2, 3].map((s) => (
+                    {[1, 2, 3, 4].map((s) => (
                         <div key={s} className="flex items-center gap-2">
                             <div className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium ${
                                 step >= s ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground"
                             }`}>
-                                {s}
+                                {step > s ? <CheckCircle2 className="h-4 w-4" /> : s}
                             </div>
-                            {s < 3 && <div className={`w-8 h-0.5 ${step > s ? "bg-primary" : "bg-muted"}`} />}
+                            {s < 4 && <div className={`w-8 h-0.5 ${step > s ? "bg-primary" : "bg-muted"}`} />}
                         </div>
                     ))}
                 </div>
@@ -334,14 +346,85 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                                 Tillbaka
                             </Button>
                             <Button className="flex-1" onClick={() => setStep(3)}>
+                                Nästa
+                            </Button>
+                        </div>
+                    </>
+                )}
+
+                {/* Step 3: Noter */}
+                {step === 3 && (
+                    <>
+                        <DialogHeader>
+                            <DialogTitle>Noter</DialogTitle>
+                        </DialogHeader>
+
+                        <div className="space-y-4 py-4">
+                            <p className="text-sm text-muted-foreground">
+                                Tilläggsupplysningar enligt K2-regelverket. Not 1 är obligatorisk.
+                            </p>
+
+                            <div className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="redovisningsprinciper" className="text-xs">
+                                        Not 1. Redovisningsprinciper
+                                    </Label>
+                                    <Textarea
+                                        id="redovisningsprinciper"
+                                        value={formData.redovisningsprinciper}
+                                        onChange={(e) => handleInputChange('redovisningsprinciper', e.target.value)}
+                                        className="min-h-[100px]"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Standardtext för K2 är förifyld. Redigera vid behov.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="medelAnstallda" className="text-xs">
+                                        Not 2. Medelantal anställda
+                                    </Label>
+                                    <Input
+                                        id="medelAnstallda"
+                                        type="number"
+                                        value={formData.medelAnstallda || ""}
+                                        onChange={(e) => handleInputChange('medelAnstallda', e.target.value)}
+                                        className="h-9 max-w-[120px]"
+                                        placeholder="0"
+                                    />
+                                    <p className="text-xs text-muted-foreground">
+                                        Genomsnittligt antal anställda under räkenskapsåret.
+                                    </p>
+                                </div>
+
+                                <div className="space-y-1.5">
+                                    <Label htmlFor="overigaNoter" className="text-xs">
+                                        Övriga noter (valfritt)
+                                    </Label>
+                                    <Textarea
+                                        id="overigaNoter"
+                                        value={formData.overigaNoter}
+                                        onChange={(e) => handleInputChange('overigaNoter', e.target.value)}
+                                        placeholder="T.ex. noter om anläggningstillgångar, ställda säkerheter, ansvarsförbindelser..."
+                                        className="min-h-[80px]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <Button variant="outline" className="flex-1" onClick={() => setStep(2)}>
+                                Tillbaka
+                            </Button>
+                            <Button className="flex-1" onClick={() => setStep(4)}>
                                 Granska
                             </Button>
                         </div>
                     </>
                 )}
 
-                {/* Step 3: Confirm */}
-                {step === 3 && (
+                {/* Step 4: Confirm */}
+                {step === 4 && (
                     <>
                         <DialogHeader>
                             <DialogTitle>Bekräfta årsredovisning</DialogTitle>
@@ -394,8 +477,8 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                                         <span>Resultatdisposition</span>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
-                                        <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-                                        <span className="text-muted-foreground">Noter (genereras automatiskt)</span>
+                                        <CheckCircle2 className={`h-4 w-4 ${formData.redovisningsprinciper ? 'text-green-600' : 'text-muted-foreground'}`} />
+                                        <span>Noter ({formData.redovisningsprinciper ? 'ifyllda' : 'ej ifyllda'})</span>
                                     </div>
                                 </div>
                             </div>
@@ -406,7 +489,7 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                         </div>
 
                         <div className="flex gap-3">
-                            <Button variant="outline" className="flex-1" onClick={() => setStep(2)} disabled={isSubmitting}>
+                            <Button variant="outline" className="flex-1" onClick={() => setStep(3)} disabled={isSubmitting}>
                                 Tillbaka
                             </Button>
                             <Button className="flex-1" onClick={handleConfirm} disabled={isSubmitting}>

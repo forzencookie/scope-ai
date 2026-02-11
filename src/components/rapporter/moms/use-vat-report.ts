@@ -5,7 +5,7 @@ import { VatProcessor, type VatReport } from "@/services/processors/vat-processo
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useToast } from "@/components/ui/toast"
 import { BulkAction } from "@/components/shared/bulk-action-toolbar"
-import { Trash2, Send, Download } from "lucide-react"
+import { Trash2, Download } from "lucide-react"
 
 export function useVatReport() {
     const { company } = useCompany()
@@ -150,14 +150,6 @@ export function useVatReport() {
                 setVatPeriods(prev => prev.filter(p => !ids.includes(p.period)))
                 toast.success("Rapporter borttagna", `${ids.length} momsrapport(er) har tagits bort`)
                 selection.clearSelection()
-            },
-        },
-        {
-            id: "send",
-            label: "Skicka till Skatteverket",
-            icon: Send,
-            onClick: (_ids) => {
-                toast.info("Kommer snart", "Inlämning direkt till Skatteverket via API är under utveckling.")
             },
         },
         {

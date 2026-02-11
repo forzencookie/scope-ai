@@ -27,15 +27,16 @@ export function SRUPreviewDialog({ open, onOpenChange }: SRUPreviewDialogProps) 
     const { company } = useCompany()
 
     // Company info for the processor (from context)
+    const fiscalYear = new Date().getFullYear() - 1
     const companyInfo: CompanyInfo = useMemo(() => ({
         orgnr: company?.orgNumber || "556000-0000",
         name: company?.name || "Företag AB",
-        fiscalYearStart: new Date(2024, 0, 1),
-        fiscalYearEnd: new Date(2024, 11, 31),
-    }), [company])
+        fiscalYearStart: new Date(fiscalYear, 0, 1),
+        fiscalYearEnd: new Date(fiscalYear, 11, 31),
+    }), [company, fiscalYear])
 
     // Tax period - must match fiscal year end
-    const taxPeriod: TaxPeriod = "2024P4"
+    const taxPeriod: TaxPeriod = `${fiscalYear}P4` as TaxPeriod
 
     // Generate SRU package
     const { sruPackage } = useMemo(() => {

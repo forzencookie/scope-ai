@@ -12,7 +12,6 @@ import { type MentionItem } from "@/components/ai/mention-popover"
 import { getGreeting } from "@/lib/chat-utils"
 import { Plus, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
 import {
     SidebarGroup,
     SidebarGroupContent,
@@ -289,8 +288,8 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
                             >
                                 <svg width="48" height="48" viewBox="0 0 16 16" shapeRendering="crispEdges">
                                     {/* Ears */}
-                                    <rect x="2" y="2" width="2" height="3" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-pulse")} />
-                                    <rect x="12" y="2" width="2" height="3" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-pulse")} />
+                                    <rect x="2" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500" />
+                                    <rect x="12" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500" />
                                     {/* Head */}
                                     <rect x="3" y="4" width="10" height="6" className="fill-amber-400 dark:fill-amber-300" />
                                     {/* Face markings */}
@@ -325,8 +324,8 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
                                     <rect x="4" y="10" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
                                     {/* Chest */}
                                     <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
-                                    {/* Tail - wags when focused */}
-                                    <rect x="12" y="11" width="2" height="2" className={cn("fill-amber-600 dark:fill-amber-500", isInputFocused && "animate-[pixel-wiggle_0.3s_ease-in-out_infinite]")} />
+                                    {/* Tail */}
+                                    <rect x="12" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500" />
                                     {/* Feet */}
                                     <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
                                     <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />

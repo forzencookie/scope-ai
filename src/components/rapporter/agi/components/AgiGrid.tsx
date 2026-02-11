@@ -9,7 +9,7 @@ import {
     TableHeader,
     TableRow,
 } from "@/components/ui/table"
-import { ArrowRight, Download, Send } from "lucide-react"
+import { ArrowRight, Download } from "lucide-react"
 import { AGIReport } from "../use-employer-declaration"
 import { useToast } from "@/components/ui/toast"
 import { generateAgiXML } from "@/lib/generators/agi-generator"
@@ -51,10 +51,6 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
         URL.revokeObjectURL(url)
         
         toast.success("AGI fil nerladdad", `AGI fil för ${report.period} sparades`)
-    }
-
-    const handleSend = () => {
-        toast.info("Kommer snart", "Inlämning direkt till Skatteverket via API är under utveckling.")
     }
 
     return (
@@ -117,13 +113,6 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
                                             onClick={() => handleDownload(report)}
                                         >
                                             <Download className="h-4 w-4" />
-                                        </Button>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            onClick={handleSend}
-                                        >
-                                            <Send className="h-4 w-4" />
                                         </Button>
                                         <Button variant="ghost" size="icon">
                                             <ArrowRight className="h-4 w-4" />

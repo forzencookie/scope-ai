@@ -184,6 +184,33 @@ export const INK2R_FIELDS = {
 } as const
 
 // =============================================================================
+// K10 (Kvalificerade andelar) Field Codes
+// =============================================================================
+
+/** K10 blankett field codes for 3:12-reglerna */
+export const K10_FIELDS = {
+    // Andelsuppgifter
+    OMKOSTNADSBELOPP: 3200,        // Omkostnadsbelopp (acquisition cost)
+    AGARANDEL: 3210,               // Ägarandel (ownership %)
+
+    // Gränsbelopp
+    SCHABLONBELOPP: 3310,          // Förenklingsregeln (2.75 × IBB × ägarandel)
+    LONEBASERAT_UTRYMME: 3320,     // Lönebaserat utrymme (50% × löner × ägarandel)
+    SPARAT_UTRYMME: 3400,          // Sparat utdelningsutrymme (from prior years)
+    TOTALT_GRANSBELOPP: 3420,      // Total gränsbelopp
+
+    // Utdelning
+    UTDELNING: 3430,               // Mottagen utdelning
+    KAPITALINKOMST: 3440,          // Del som beskattas som kapital (within gränsbelopp)
+    TJANSTEINKOMST: 3450,          // Del som beskattas som tjänst (above gränsbelopp)
+    KVARSTAENDE_UTRYMME: 3460,     // Kvarstående utdelningsutrymme
+
+    // Löneunderlag
+    EGEN_LON: 3510,                // Egen lön
+    KLARAR_LONEKRAV: 3520,         // Lönevillkoret uppfyllt (1 = ja, 0 = nej)
+} as const
+
+// =============================================================================
 // Complete SRU Data Package
 // =============================================================================
 

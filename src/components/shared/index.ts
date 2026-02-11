@@ -19,6 +19,8 @@ export type { TabConfig } from "./layout/page-tabs-layout"
 export { ReportLayout } from "./layout/report-layout"
 export { TaxReportLayout } from "./layout/tax-report-layout"
 export type { TaxReportStat, TaxReportLayoutProps } from "./layout/tax-report-layout"
+export { ReportWizardShell } from "./report-wizard-shell"
+export type { ReportWizardShellProps, ReportStatus } from "./report-wizard-shell"
 
 // Tier components
 export { TierBadge, TierIndicator } from "./tier-badge"

@@ -1,17 +1,17 @@
 "use client"
 
-import { useState, useMemo } from "react"
-// import { useRouter } from "next/navigation"
+import { useState, useMemo, useEffect } from "react"
 import {
     Calendar,
     TrendingUp,
     Clock,
     Bot,
-    Send,
     FileDown,
     Percent,
     Calculator,
     Info,
+    Loader2,
+    ClipboardEdit,
 } from "lucide-react"
 import { formatCurrency, cn } from "@/lib/utils"
 import { useToast } from "@/components/ui/toast"
@@ -31,9 +31,10 @@ import {
 } from "@/components/ui/collapsible-table"
 import { SectionCard } from "@/components/ui/section-card"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
-import { useVerifications } from "@/hooks/use-verifications"
+import { getSupabaseClient } from "@/lib/database/supabase"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)
@@ -45,38 +46,74 @@ import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 // R25-R45: Tax adjustments and final result
 
 
-// Mock calculated data - in production this would come from verifications/ledger
 function useNECalculation() {
-    const { verifications: _ } = useVerifications()
+    const [balances, setBalances] = useState<{ account: string; balance: number }[]>([])
+    const [isLoading, setIsLoading] = useState(true)
 
-    // Calculate from verifications (simplified - would use proper account mappings)
+    // NE-bilaga is for the previous tax year (filed in spring of current year)
+    const taxYear = new Date().getFullYear() - 1
+
+    useEffect(() => {
+        async function fetchBalances() {
+            setIsLoading(true)
+            const supabase = getSupabaseClient()
+            try {
+                const { data, error } = await supabase.rpc('get_account_balances', {
+                    p_start_date: `${taxYear}-01-01`,
+                    p_end_date: `${taxYear}-12-31`
+                })
+                if (error) throw error
+                setBalances((data || []).map((row: { account_number: string | number; balance: number }) => ({
+                    account: String(row.account_number),
+                    balance: row.balance
+                })))
+            } catch (err) {
+                console.error('Failed to fetch NE balances:', err)
+            } finally {
+                setIsLoading(false)
+            }
+        }
+        fetchBalances()
+    }, [taxYear])
+
     return useMemo(() => {
+        // Sum account balances in a BAS account range
+        // RPC returns credit - debit: revenue (3xxx) is positive, costs (4xxx+) are negative
+        const sumRange = (start: number, end: number) =>
+            balances
+                .filter(b => { const n = parseInt(b.account); return n >= start && n <= end })
+                .reduce((sum, b) => sum + b.balance, 0)
+
         // Revenue section (R1-R5)
-        const nettoomsattning = 850000  // From accounts 30xx-34xx
-        const ovrigaIntakter = 12500    // From accounts 39xx
+        const nettoomsattning = sumRange(3000, 3499)
+        const ovrigaIntakter = sumRange(3500, 3999)
         const summaIntakter = nettoomsattning + ovrigaIntakter
 
-        // Cost section (R6-R13)
-        const varuinköp = -245000       // From accounts 40xx
-        const ovrigaKostnader = -180000 // From accounts 50xx-69xx
-        const personalKostnader = 0     // EF typically no employees
-        const avskrivningar = -35000    // From accounts 78xx
-        const summaKostnader = varuinköp + ovrigaKostnader + personalKostnader + avskrivningar
+        // Cost section (R7-R11) — values are negative from RPC
+        const varuinkop = sumRange(4000, 4999)
+        const ovrigaKostnader = sumRange(5000, 6999)
+        const personalKostnader = sumRange(7000, 7699)
+        const avskrivningar = sumRange(7700, 7999)
+        const summaKostnader = varuinkop + ovrigaKostnader + personalKostnader + avskrivningar
 
-        // Result before egenavgifter (R14)
+        // R12: Result before egenavgifter
         const resultatForeEgenavgifter = summaIntakter + summaKostnader
 
-        // Egenavgifter calculation
+        // R13: Schablonavdrag for egenavgifter (25% of result × rate, only on profit)
         const egenavgifterRate = 0.2897 // 28.97%
-        const schablonavdrag = Math.round(resultatForeEgenavgifter * 0.25 * egenavgifterRate)
+        const schablonavdrag = resultatForeEgenavgifter > 0
+            ? Math.round(resultatForeEgenavgifter * 0.25 * egenavgifterRate)
+            : 0
 
-        // Periodiseringsfond (optional tax deferral)
-        const periodiseringsfond = Math.round(resultatForeEgenavgifter * 0.30) // Max 30%
-        const aterforing = 85000 // From previous years
+        // Periodiseringsfond (R14/R15) — would need separate user input or account 2150
+        const periodiseringsfond = 0
+        const aterforing = 0
 
-        // Final taxable result
+        // R24: Taxable result (överskott av näringsverksamhet)
         const resultatEfterAvdrag = resultatForeEgenavgifter - schablonavdrag - periodiseringsfond + aterforing
-        const egenavgifter = Math.round(resultatEfterAvdrag * egenavgifterRate)
+        const egenavgifter = resultatEfterAvdrag > 0
+            ? Math.round(resultatEfterAvdrag * egenavgifterRate)
+            : 0
         const slutligtResultat = resultatEfterAvdrag - egenavgifter
 
         return {
@@ -86,8 +123,9 @@ function useNECalculation() {
             R6: summaIntakter,
 
             // Costs
-            R7: varuinköp,
+            R7: varuinkop,
             R8: ovrigaKostnader,
+            R9: personalKostnader,
             R10: avskrivningar,
             R11: summaKostnader,
 
@@ -108,9 +146,11 @@ function useNECalculation() {
                 costs: summaKostnader,
                 result: resultatForeEgenavgifter,
                 taxableResult: slutligtResultat,
-            }
+            },
+            isLoading,
+            taxYear,
         }
-    }, [])
+    }, [balances, isLoading, taxYear])
 }
 
 // =============================================================================
@@ -118,11 +158,13 @@ function useNECalculation() {
 // =============================================================================
 
 export function NEBilagaContent() {
-    // const router = useRouter()
     const navigateToAI = useNavigateToAIChat()
     const { addToast: toast } = useToast()
     const neData = useNECalculation()
     const [showAdjustments, setShowAdjustments] = useState(true)
+    const [wizardOpen, setWizardOpen] = useState(false)
+
+    const deadlineYear = neData.taxYear + 1
 
     // Income statement items for Table2Section
     const revenueItems: CollapsibleTableItem[] = [
@@ -133,6 +175,7 @@ export function NEBilagaContent() {
     const costItems: CollapsibleTableItem[] = [
         { label: "R7. Varuinköp", value: neData.R7 },
         { label: "R8. Övriga externa kostnader", value: neData.R8 },
+        { label: "R9. Personalkostnader", value: neData.R9 },
         { label: "R10. Avskrivningar", value: neData.R10 },
     ]
 
@@ -142,13 +185,6 @@ export function NEBilagaContent() {
         { label: "R15. Återföring periodiseringsfond", value: neData.R15 },
     ]
 
-    const handleSend = () => {
-        toast({
-            title: "Kommer snart",
-            description: "Integration med Skatteverket är under utveckling.",
-        })
-    }
-
     const handleExport = async () => {
         toast({
             title: "Exporterar NE-bilaga",
@@ -156,7 +192,7 @@ export function NEBilagaContent() {
         })
         try {
             await downloadElementAsPDF({
-                fileName: `NE-bilaga-2024`,
+                fileName: `NE-bilaga-${neData.taxYear}`,
                 elementId: 'ne-bilaga-content'
             })
             toast({
@@ -183,10 +219,16 @@ export function NEBilagaContent() {
                         </div>
                     </div>
 
+                    {neData.isLoading ? (
+                        <div className="flex items-center justify-center py-12">
+                            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                            <span className="ml-2 text-muted-foreground">Hämtar bokföringsdata...</span>
+                        </div>
+                    ) : (
                     <StatCardGrid columns={4}>
                         <StatCard
                             label="Beskattningsår"
-                            value="2024"
+                            value={String(neData.taxYear)}
                             subtitle="NE-bilaga"
                             headerIcon={Calendar}
                         />
@@ -205,10 +247,11 @@ export function NEBilagaContent() {
                         <StatCard
                             label="Status"
                             value={INVOICE_STATUS_LABELS.DRAFT}
-                            subtitle="Deadline: 2 maj 2025"
+                            subtitle={`Deadline: 2 maj ${deadlineYear}`}
                             headerIcon={Clock}
                         />
                     </StatCardGrid>
+                    )}
 
                     {/* Section Separator */}
                     <div className="border-b-2 border-border/60" />
@@ -349,9 +392,9 @@ export function NEBilagaContent() {
                             <FileDown className="h-4 w-4 mr-2" />
                             Ladda ner PDF
                         </Button>
-                        <Button onClick={handleSend}>
-                            <Send className="h-4 w-4 mr-2" />
-                            Skicka till Skatteverket
+                        <Button onClick={() => setWizardOpen(true)}>
+                            <ClipboardEdit className="h-4 w-4 mr-2" />
+                            Generera
                         </Button>
                     </div>
 
@@ -368,6 +411,29 @@ export function NEBilagaContent() {
                     </div>
                 </div>
             </main>
+
+            <NEBilagaWizardDialog
+                open={wizardOpen}
+                onOpenChange={setWizardOpen}
+                data={{
+                    R1: neData.R1,
+                    R5: neData.R5,
+                    R6: neData.R6,
+                    R7: neData.R7,
+                    R8: neData.R8,
+                    R9: neData.R9,
+                    R10: neData.R10,
+                    R11: neData.R11,
+                    R12: neData.R12,
+                    R13: neData.R13,
+                    R14: neData.R14,
+                    R15: neData.R15,
+                    R24: neData.R24,
+                    egenavgifter: neData.egenavgifter,
+                    slutligtResultat: neData.slutligtResultat,
+                    taxYear: neData.taxYear,
+                }}
+            />
         </TooltipProvider>
     )
 }

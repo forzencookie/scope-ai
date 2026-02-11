@@ -105,6 +105,7 @@ export type FeatureKey =
   | 'styrelseprotokoll'
   | 'bolagsstamma'
   | 'arsmote'
+  | 'firmatecknare'
 
 
 // Company type metadata
@@ -135,9 +136,9 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Reports (all) - AB uses Årsredovisning (K2/K3)
       'momsdeklaration', 'inkomstdeklaration', 'arsredovisning', 'resultatrakning', 'balansrakning',
       // Payroll
-      'lonebesked', 'agi', 'utdelning', 'k10',
+      'lonebesked', 'agi', 'k10',
       // Ownership & Governance
-      'aktiebok', 'agarinfo', 'bolagsstamma',
+      'aktiebok', 'agarinfo', 'bolagsstamma', 'utdelning', 'firmatecknare',
     ],
     inkomstdeklarationVariant: 'INK2',
     arsbokslutVariant: 'K2',
@@ -172,7 +173,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Payroll
       'lonebesked', 'agi', 'delagaruttag',
       // Ownership
-      'delagare',
+      'delagare', 'firmatecknare',
     ],
     inkomstdeklarationVariant: 'N3A',
     arsbokslutVariant: 'forenklat',
@@ -190,7 +191,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Payroll
       'lonebesked', 'agi', 'delagaruttag',
       // Ownership
-      'delagare',
+      'delagare', 'firmatecknare',
     ],
     inkomstdeklarationVariant: 'N3B',
     arsbokslutVariant: 'forenklat',
@@ -208,7 +209,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Payroll (if employees)
       'lonebesked', 'agi',
       // Ownership & Governance
-      'medlemsregister', 'bolagsstamma', 'arsmote',
+      'medlemsregister', 'bolagsstamma', 'arsmote', 'firmatecknare',
     ],
     inkomstdeklarationVariant: 'forenklad',
     arsbokslutVariant: 'forenklat',
@@ -376,7 +377,7 @@ export const featureInfo: Record<FeatureKey, FeatureInfo> = {
     key: 'utdelning',
     label: 'Utdelning',
     description: 'Hantera utdelning till delägare',
-    category: 'payroll',
+    category: 'ownership',
   },
   k10: {
     key: 'k10',
@@ -437,6 +438,12 @@ export const featureInfo: Record<FeatureKey, FeatureInfo> = {
     key: 'arsmote',
     label: 'Årsmöte',
     description: 'Protokoll och dokument för årsmöte',
+    category: 'ownership',
+  },
+  firmatecknare: {
+    key: 'firmatecknare',
+    label: 'Firmatecknare',
+    description: 'Register över behöriga firmatecknare',
     category: 'ownership',
   },
 

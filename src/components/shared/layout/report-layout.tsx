@@ -34,6 +34,8 @@ interface ReportLayoutProps {
     children: ReactNode
     /** Footer content */
     footer?: ReactNode
+    /** ID for the content wrapper (used by PDF export) */
+    contentId?: string
 }
 
 /**
@@ -57,6 +59,7 @@ export function ReportLayout({
     actions,
     children,
     footer,
+    contentId,
 }: ReportLayoutProps) {
     if (isLoading) {
         return (
@@ -72,7 +75,7 @@ export function ReportLayout({
     }
 
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
+        <main id={contentId} className="flex-1 flex flex-col p-4 md:p-6 bg-background">
             <CollapsibleTableContainer>
                 {/* Page Heading */}
                 <div className="flex flex-col gap-4 md:gap-6">

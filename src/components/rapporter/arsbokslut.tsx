@@ -1,11 +1,11 @@
 "use client"
 
-import { useMemo } from "react"
+import { useState, useMemo } from "react"
 import {
     Building2,
     Clock,
     Eye,
-    Send,
+    ClipboardEdit,
     Download,
     Calendar,
 } from "lucide-react"
@@ -22,6 +22,7 @@ import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-ba
 import { useToast } from "@/components/ui/toast"
 import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
+import { ArsbokslutWizardDialog } from "./dialogs/arsbokslut-wizard-dialog"
 
 
 // =============================================================================
@@ -30,6 +31,8 @@ import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 export function ArsbokslutContent() {
     const toast = useToast()
     const { companyTypeName } = useCompany()
+    const [wizardOpen, setWizardOpen] = useState(false)
+    const fiscalYear = new Date().getFullYear() - 1
     const { text } = useTextMode()
     const { accountBalances, totals, isLoading } = useAccountBalances()
 
@@ -120,8 +123,8 @@ export function ArsbokslutContent() {
     const stats: TaxReportStat[] = [
         {
             label: text.reports.fiscalYear,
-            value: "2024",
-            subtitle: "2024-01-01 – 2024-12-31",
+            value: String(fiscalYear),
+            subtitle: `${fiscalYear}-01-01 – ${fiscalYear}-12-31`,
             icon: Calendar,
         },
         {
@@ -133,7 +136,7 @@ export function ArsbokslutContent() {
         {
             label: text.reports.reportStatus,
             value: text.reports.workInProgress,
-            subtitle: `${text.reports.deadline}: 2 maj 2025`,
+            subtitle: `${text.reports.deadline}: 30 jun ${fiscalYear + 1}`,
             icon: Clock,
         },
     ]
@@ -157,8 +160,8 @@ export function ArsbokslutContent() {
             <div id="arsbokslut-content" className="space-y-6">
                 {/* Header with Actions */}
                 <CollapsibleTableHeader
-                    title="Årsbokslut 2024"
-                    subtitle="Räkenskapsår 2024-01-01 – 2024-12-31"
+                    title={`Årsbokslut ${fiscalYear}`}
+                    subtitle={`Räkenskapsår ${fiscalYear}-01-01 – ${fiscalYear}-12-31`}
                 >
                     <Button variant="outline" size="sm" className="h-9">
                         <Eye className="mr-2 h-4 w-4" />
@@ -167,7 +170,7 @@ export function ArsbokslutContent() {
                     <Button variant="outline" size="sm" className="h-9" onClick={async () => {
                         toast.info("Förbereder PDF", "Vänta...")
                         try {
-                            await downloadElementAsPDF({ fileName: 'arsbokslut-2024', elementId: 'arsbokslut-content' })
+                            await downloadElementAsPDF({ fileName: `arsbokslut-${fiscalYear}`, elementId: 'arsbokslut-content' })
                             toast.success("Klart", "Årsbokslut har laddats ner som PDF.")
                         } catch {
                             toast.error("Fel", "Kunde inte skapa PDF.")
@@ -176,9 +179,9 @@ export function ArsbokslutContent() {
                         <Download className="mr-2 h-4 w-4" />
                         Exportera PDF
                     </Button>
-                    <Button size="sm" className="h-9" onClick={() => toast.info("Kommer snart", "Integration med Bolagsverket är under utveckling.")}>
-                        <Send className="mr-2 h-4 w-4" />
-                        Skicka till Bolagsverket
+                    <Button size="sm" className="h-9" onClick={() => setWizardOpen(true)}>
+                        <ClipboardEdit className="mr-2 h-4 w-4" />
+                        Generera
                     </Button>
                 </CollapsibleTableHeader>
 
@@ -223,6 +226,31 @@ export function ArsbokslutContent() {
                     </CollapsibleTableContainer>
                 </div>
             </div>
+
+            <ArsbokslutWizardDialog
+                open={wizardOpen}
+                onOpenChange={setWizardOpen}
+                data={{
+                    sales: Math.round(sales),
+                    materials: Math.round(materials),
+                    externalExpenses: Math.round(externalExpenses),
+                    personnel: Math.round(personnel),
+                    depreciations: Math.round(depreciations),
+                    financialItems: Math.round(financialItems),
+                    result,
+                    fixedAssets: Math.round(fixedAssets),
+                    receivables: Math.round(receivables),
+                    cash: Math.round(cash),
+                    totalAssets,
+                    equity: Math.round(equity),
+                    payables: Math.round(payables),
+                    taxes: Math.round(taxes),
+                    otherLiabilities: Math.round(otherLiabilities),
+                    totalEqLiab,
+                    fiscalYear: String(fiscalYear),
+                    companyType: companyTypeName,
+                }}
+            />
         </TaxReportLayout>
     )
 }

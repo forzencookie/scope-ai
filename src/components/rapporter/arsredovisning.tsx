@@ -123,6 +123,27 @@ export function ArsredovisningContent() {
                 }))
             }]
             title = "Balansräkning"
+        } else if (sectionName === "Förvaltningsberättelse") {
+            sections = [{
+                id: "fb",
+                title: `Förvaltningsberättelse ${fiscalYear}`,
+                items: [
+                    { id: "1", label: "Allmänt om verksamheten", value: 0, highlight: true },
+                    { id: "2", label: "Väsentliga händelser under året", value: 0, highlight: true },
+                    { id: "3", label: "Resultatdisposition", value: 0, highlight: true },
+                ]
+            }]
+            title = "Förvaltningsberättelse"
+        } else if (sectionName === "Noter") {
+            sections = [{
+                id: "noter",
+                title: `Noter ${fiscalYear}`,
+                items: [
+                    { id: "1", label: "Not 1. Redovisningsprinciper", value: 0, highlight: true },
+                    { id: "2", label: "Not 2. Medelantal anställda", value: 0, highlight: true },
+                ]
+            }]
+            title = "Noter"
         } else {
             sections = [{
                 id: "placeholder",

@@ -1,11 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Calculator, Plus } from "lucide-react"
+import { Calculator, Plus, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { SectionCard } from "@/components/ui/section-card"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
+import { useCompany } from "@/providers/company-provider"
+import { useToast } from "@/components/ui/toast"
+import { downloadSRUPackage, createK10Declaration } from "@/lib/generators/sru-generator"
 
 // Logic
 import { useK10Calculation } from "./use-k10-calculation"
@@ -18,11 +21,45 @@ import { K10WizardDialog } from "../dialogs/k10-wizard-dialog"
 
 export function K10Content() {
     const navigateToAI = useNavigateToAIChat()
+    const { company } = useCompany()
+    const toast = useToast()
     const [isWizardOpen, setIsWizardOpen] = useState(false)
     const [refreshKey, setRefreshKey] = useState(0)
 
     // Logic Hook
     const { k10Data, taxYear } = useK10Calculation()
+
+    const handleExportSRU = async () => {
+        toast.info("Exporterar", "Förbereder K10 SRU-filer...")
+        try {
+            const declaration = createK10Declaration({
+                orgnr: company?.orgNumber || '000000-0000',
+                companyName: company?.name || 'Företag',
+                taxYear: taxYear.year,
+                omkostnadsbelopp: k10Data.omkostnadsbelopp,
+                agarandel: k10Data.agarandel,
+                schablonbelopp: k10Data.schablonbelopp,
+                lonebaseratUtrymme: k10Data.lonebaseratUtrymme,
+                sparatUtdelningsutrymme: k10Data.sparatUtdelningsutrymme,
+                gransbelopp: k10Data.gransbelopp,
+                totalDividends: k10Data.totalDividends,
+                remainingUtrymme: k10Data.remainingUtrymme,
+                egenLon: k10Data.egenLon,
+                klararLonekrav: k10Data.klararLonekrav,
+            })
+
+            await downloadSRUPackage({
+                sender: {
+                    orgnr: company?.orgNumber || '000000-0000',
+                    name: company?.name || 'Företag',
+                },
+                declarations: [declaration],
+            })
+            toast.success("Klart", "K10 SRU-filer har laddats ner.")
+        } catch {
+            toast.error("Fel", "Kunde inte generera SRU-filer.")
+        }
+    }
 
     const handleWizardConfirm = () => {
         setIsWizardOpen(false)
@@ -41,11 +78,18 @@ export function K10Content() {
                                 Blankett K10 för fåmansföretag. Beräkna gränsbeloppet för 3:12-reglerna.
                             </p>
                         </div>
-                        <Button onClick={() => setIsWizardOpen(true)} size="sm" className="w-full sm:w-auto">
-                            <Plus className="h-4 w-4 sm:mr-2" />
-                            <span className="hidden sm:inline">Skapa blankett</span>
-                            <span className="sm:hidden">Ny</span>
-                        </Button>
+                        <div className="flex gap-2 w-full sm:w-auto">
+                            <Button variant="outline" onClick={handleExportSRU} size="sm" className="w-full sm:w-auto">
+                                <FileDown className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Exportera SRU</span>
+                                <span className="sm:hidden">SRU</span>
+                            </Button>
+                            <Button onClick={() => setIsWizardOpen(true)} size="sm" className="w-full sm:w-auto">
+                                <Plus className="h-4 w-4 sm:mr-2" />
+                                <span className="hidden sm:inline">Skapa blankett</span>
+                                <span className="sm:hidden">Ny</span>
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Stats Grid */}

@@ -5,8 +5,11 @@ import { CollapsibleTableSection } from "@/components/ui/collapsible-table"
 import { ReportLayout } from "@/components/shared"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useRouter } from "next/navigation"
-import { FileBarChart } from "lucide-react"
+import { FileBarChart, Download } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/toast"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 
 // ============================================
 // Resultaträkning Component
@@ -16,7 +19,21 @@ export function ResultatrakningContent() {
     const { companyType } = useCompany()
     const navigateToAI = useNavigateToAIChat()
     const router = useRouter()
+    const toast = useToast()
     const { incomeStatementSections, isLoading, currentYear, previousYear } = useFinancialReports()
+
+    const handleExportPDF = async () => {
+        toast.info("Exporterar", "Förbereder PDF...")
+        try {
+            await downloadElementAsPDF({
+                fileName: `Resultatrakning-${currentYear}`,
+                elementId: 'resultatrakning-content'
+            })
+            toast.success("Klart", "Resultaträkning har laddats ner som PDF.")
+        } catch {
+            toast.error("Fel", "Kunde inte skapa PDF.")
+        }
+    }
 
     return (
         <ReportLayout
@@ -25,6 +42,13 @@ export function ResultatrakningContent() {
             isLoading={isLoading}
             loadingMessage="Laddar resultaträkning..."
             hasData={!!incomeStatementSections && incomeStatementSections.length > 0}
+            contentId="resultatrakning-content"
+            actions={
+                <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                    <Download className="h-4 w-4 mr-2" />
+                    PDF
+                </Button>
+            }
             ai={{
                 title: "Analysera resultatet",
                 description: "Låt AI gå igenom dina intäkter och kostnader för att hitta avvikelser och förbättringsmöjligheter.",

@@ -1,7 +1,6 @@
 "use client"
 
 import {
-    Send,
     Wallet,
     Users,
     Banknote,
@@ -27,7 +26,6 @@ interface AGIDetailsDialogProps {
     report: AGIReport | null
     open: boolean
     onOpenChange: (open: boolean) => void
-    onSend: (period: string) => void
 }
 
 export function AGIDetailsDialog({
@@ -101,15 +99,6 @@ export function AGIDetailsDialog({
                     <Button variant="outline" onClick={() => onOpenChange(false)}>
                         Stäng
                     </Button>
-                    {report.status === "pending" && (
-                        <Button onClick={() => {
-                            toast.info("Kommer snart", "Integration med Skatteverket är under utveckling.")
-                            onOpenChange(false)
-                        }}>
-                            <Send className="h-4 w-4 mr-2" />
-                            Skicka till Skatteverket
-                        </Button>
-                    )}
                 </div>
             </DialogContent>
         </Dialog>

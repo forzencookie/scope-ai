@@ -13,6 +13,7 @@ import type {
     SRUDeclaration,
     SRUField
 } from '@/types/sru'
+import { K10_FIELDS } from '@/types/sru'
 
 // =============================================================================
 // Constants
@@ -299,6 +300,59 @@ export function createINK2Declaration(data: INK2Data): SRUDeclaration {
     return {
         blankettType: 'INK2',
         period: data.taxPeriod,
+        orgnr: data.orgnr,
+        name: data.companyName,
+        systemInfo: `Scope AI ${formatDate(new Date())}`,
+        fields,
+    }
+}
+
+// =============================================================================
+// Helper: Create K10 Declaration from K10 Data
+// =============================================================================
+
+export interface K10SRUData {
+    orgnr: string
+    companyName: string
+    taxYear: number
+    omkostnadsbelopp: number
+    agarandel: number
+    schablonbelopp: number
+    lonebaseratUtrymme: number
+    sparatUtdelningsutrymme: number
+    gransbelopp: number
+    totalDividends: number
+    remainingUtrymme: number
+    egenLon: number
+    klararLonekrav: boolean
+}
+
+/**
+ * Create a K10 declaration from K10 calculation data
+ */
+export function createK10Declaration(data: K10SRUData): SRUDeclaration {
+    const fields: SRUField[] = [
+        { code: K10_FIELDS.OMKOSTNADSBELOPP, value: data.omkostnadsbelopp },
+        { code: K10_FIELDS.AGARANDEL, value: data.agarandel },
+        { code: K10_FIELDS.SCHABLONBELOPP, value: data.schablonbelopp },
+        { code: K10_FIELDS.LONEBASERAT_UTRYMME, value: data.lonebaseratUtrymme },
+        { code: K10_FIELDS.SPARAT_UTRYMME, value: data.sparatUtdelningsutrymme },
+        { code: K10_FIELDS.TOTALT_GRANSBELOPP, value: data.gransbelopp },
+        { code: K10_FIELDS.UTDELNING, value: data.totalDividends },
+        { code: K10_FIELDS.EGEN_LON, value: data.egenLon },
+        { code: K10_FIELDS.KLARAR_LONEKRAV, value: data.klararLonekrav ? 1 : 0 },
+    ]
+
+    // Split dividend into capital vs service income
+    const capitalPart = Math.min(data.totalDividends, data.gransbelopp)
+    const servicePart = Math.max(0, data.totalDividends - data.gransbelopp)
+    fields.push({ code: K10_FIELDS.KAPITALINKOMST, value: capitalPart })
+    fields.push({ code: K10_FIELDS.TJANSTEINKOMST, value: servicePart })
+    fields.push({ code: K10_FIELDS.KVARSTAENDE_UTRYMME, value: Math.max(0, data.remainingUtrymme) })
+
+    return {
+        blankettType: 'K10',
+        period: `${data.taxYear}P4` as `${number}P${1 | 2 | 3 | 4}`,
         orgnr: data.orgnr,
         name: data.companyName,
         systemInfo: `Scope AI ${formatDate(new Date())}`,

@@ -12,7 +12,6 @@
 
 import { useState, useEffect } from "react"
 import {
-    Send,
     Download,
     FileText,
     Info,
@@ -377,15 +376,6 @@ export function MomsDetailDialog({
                         </Button>
                     </div>
 
-                    {editedReport.status === "upcoming" && (
-                        <Button
-                            className="gap-2 bg-yellow-500 hover:bg-yellow-600 text-black border-yellow-600"
-                            onClick={() => toast.info("Kommer snart", "Integration med Skatteverket är under utveckling.")}
-                        >
-                            <Send className="h-4 w-4" />
-                            Skicka till Skatteverket
-                        </Button>
-                    )}
                 </div>
             </DialogContent>
         </Dialog>

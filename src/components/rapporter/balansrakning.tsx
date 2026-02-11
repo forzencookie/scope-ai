@@ -5,8 +5,12 @@ import { CollapsibleTableSection } from "@/components/ui/collapsible-table"
 import { ReportLayout } from "@/components/shared"
 import { useNavigateToAIChat, type PageContext } from "@/lib/ai/context"
 import { useRouter } from "next/navigation"
+import { Download } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"
 import { SectionCard } from "@/components/ui/section-card"
+import { Button } from "@/components/ui/button"
+import { useToast } from "@/components/ui/toast"
+import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 
 // ============================================
 // Balansräkning Component
@@ -16,7 +20,21 @@ export function BalansrakningContent() {
     const { companyType } = useCompany()
     const navigateToAI = useNavigateToAIChat()
     const router = useRouter()
+    const toast = useToast()
     const { balanceSheetSections, isLoading, currentYear, previousYear } = useFinancialReports()
+
+    const handleExportPDF = async () => {
+        toast.info("Exporterar", "Förbereder PDF...")
+        try {
+            await downloadElementAsPDF({
+                fileName: `Balansrakning-${currentYear}`,
+                elementId: 'balansrakning-content'
+            })
+            toast.success("Klart", "Balansräkning har laddats ner som PDF.")
+        } catch {
+            toast.error("Fel", "Kunde inte skapa PDF.")
+        }
+    }
 
     const handleRunAudit = () => {
         const context: PageContext = {
@@ -40,6 +58,13 @@ export function BalansrakningContent() {
             isLoading={isLoading}
             loadingMessage="Laddar balansräkning..."
             hasData={!!balanceSheetSections && balanceSheetSections.length > 0}
+            contentId="balansrakning-content"
+            actions={
+                <Button variant="outline" size="sm" onClick={handleExportPDF}>
+                    <Download className="h-4 w-4 mr-2" />
+                    PDF
+                </Button>
+            }
         >
             <SectionCard
                 title="Balanskontroll"
