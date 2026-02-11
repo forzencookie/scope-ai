@@ -1,6 +1,6 @@
 import { Calendar, TrendingUp, Percent, Clock } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import { formatCurrency } from "@/lib/utils"
+import { ResponsiveCurrency } from "@/components/ui/responsive-currency"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { K10Data } from "../use-k10-calculation"
 
@@ -20,13 +20,13 @@ export function K10Stats({ data, deadline }: K10StatsProps) {
             />
             <StatCard
                 label="Gränsbelopp"
-                value={formatCurrency(data.gransbelopp)}
+                value={<ResponsiveCurrency amount={data.gransbelopp} />}
                 subtitle="Totalt beräknat"
                 headerIcon={TrendingUp}
             />
             <StatCard
                 label="Utnyttjat"
-                value={formatCurrency(data.totalDividends)}
+                value={<ResponsiveCurrency amount={data.totalDividends} />}
                 subtitle="I utdelning"
                 headerIcon={Percent}
             />

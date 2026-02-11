@@ -74,4 +74,3 @@
     3.  **AI Interview:** A final 'Chat with AI' phase where the agent interviews the user to gather extra context or data for a 'head start'. The AI then pre-populates the database so the app is fully ready when the user enters the dashboard.
 
 ---
-please also fix the unesarry api calls and data featches that may ruin the quality of the code and the speed of the app. 

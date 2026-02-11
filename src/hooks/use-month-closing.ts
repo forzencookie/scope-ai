@@ -22,13 +22,13 @@ export interface MonthStatus {
     status: PeriodStatus
     manualChecks: Record<string, boolean>
     notes?: string
+    dayNotes?: Record<string, string>
     locked_at?: string
     locked_by?: string
 }
 
-const supabase = getSupabaseClient()
-
 export function useMonthClosing() {
+    const supabase = getSupabaseClient()
     const { verifications } = useVerifications()
     const { company } = useCompany()
     const [periods, setPeriods] = useState<MonthStatus[]>([])
@@ -56,6 +56,7 @@ export function useMonthClosing() {
                             // Migrate old JSONB format to new format
                             const raw = (p.reconciliation_checks as Record<string, unknown>) || {}
                             const { manualChecks, notes } = migrateOldChecks(raw)
+                            const dayNotes = (raw.dayNotes as Record<string, string>) || undefined
 
                             return {
                                 id: p.id,
@@ -64,6 +65,7 @@ export function useMonthClosing() {
                                 status: p.status === 'closed' ? 'locked' : (p.status as PeriodStatus),
                                 manualChecks,
                                 notes,
+                                dayNotes,
                                 locked_at: p.locked_at || undefined,
                                 locked_by: p.locked_by || undefined
                             }
@@ -111,9 +113,12 @@ export function useMonthClosing() {
         try {
             const dbStatus = updated.status === 'locked' ? 'closed' : updated.status
 
-            const reconciliationPayload: Record<string, boolean | string> = { ...updated.manualChecks }
+            const reconciliationPayload: Record<string, boolean | string | Record<string, string>> = { ...updated.manualChecks }
             if (updated.notes) {
                 reconciliationPayload.notes = updated.notes
+            }
+            if (updated.dayNotes && Object.keys(updated.dayNotes).length > 0) {
+                reconciliationPayload.dayNotes = updated.dayNotes
             }
 
             const { error } = await supabase
@@ -164,6 +169,19 @@ export function useMonthClosing() {
         savePeriod(year, month, { notes })
     }
 
+    const getDayNote = (year: number, month: number, day: number): string => {
+        const period = getPeriod(year, month)
+        return period.dayNotes?.[String(day)] || ""
+    }
+
+    const saveDayNote = (year: number, month: number, day: number, text: string) => {
+        const period = getPeriod(year, month)
+        const dayNotes = { ...period.dayNotes, [String(day)]: text }
+        // Remove empty entries
+        if (!text) delete dayNotes[String(day)]
+        savePeriod(year, month, { dayNotes })
+    }
+
     // Verification stats (discrepancy count for auto checks)
     const getVerificationStats = (year: number, month: number) => {
         const monthVerifications = verifications.filter(v => {
@@ -187,18 +205,9 @@ export function useMonthClosing() {
         return { verificationCount, discrepancyCount }
     }
 
-    // Fetch pending transaction counts from API (stored per "YYYY-MM" key)
-    const fetchPendingCounts = useCallback(async (year: number) => {
-        try {
-            const res = await fetch(`/api/manadsavslut?year=${year}`)
-            if (!res.ok) return
-            const data = await res.json()
-            if (data.pendingTransactions) {
-                setPendingCounts(data.pendingTransactions)
-            }
-        } catch {
-            // silently fail
-        }
+    // Set pending transaction counts (provided by caller to avoid duplicate fetches)
+    const updatePendingCounts = useCallback((counts: Record<string, number>) => {
+        setPendingCounts(counts)
     }, [])
 
     /**
@@ -235,9 +244,11 @@ export function useMonthClosing() {
         unlockPeriod,
         toggleCheck,
         saveNotes,
+        getDayNote,
+        saveDayNote,
         getVerificationStats,
         getResolvedChecks,
         getCheckProgress,
-        fetchPendingCounts,
+        updatePendingCounts,
     }
 }

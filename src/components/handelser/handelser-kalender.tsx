@@ -14,6 +14,7 @@ interface EventsCalendarProps {
     month: number
     onMonthChange: (year: number, month: number) => void
     onEventClick?: (event: HändelseEvent) => void
+    onDayClick?: (date: Date) => void
 }
 
 const weekDays = ["Mån", "Tis", "Ons", "Tor", "Fre", "Lör", "Sön"]
@@ -28,6 +29,7 @@ export function EventsCalendar({
     month,
     onMonthChange,
     onEventClick,
+    onDayClick,
 }: EventsCalendarProps) {
     // Build calendar grid
     const calendarDays = useMemo(() => {
@@ -126,11 +128,15 @@ export function EventsCalendar({
                 {/* Day cells */}
                 <div className="grid grid-cols-7 gap-1">
                     {calendarDays.map((cell, idx) => (
-                        <div
+                        <button
                             key={idx}
+                            type="button"
+                            disabled={!cell.date}
+                            onClick={() => cell.date && onDayClick?.(cell.date)}
                             className={cn(
-                                "min-h-[64px] sm:min-h-[96px] p-1 rounded-lg border border-transparent",
-                                cell.date && "hover:border-border/60 hover:bg-muted/30 transition-colors",
+                                "min-h-[64px] sm:min-h-[96px] p-1 rounded-lg border border-transparent text-left",
+                                cell.date && "hover:border-border/60 hover:bg-muted/30 transition-colors cursor-pointer",
+                                !cell.date && "cursor-default",
                                 isToday(cell.date) && "bg-primary/5 border-primary/30"
                             )}
                         >
@@ -146,9 +152,20 @@ export function EventsCalendar({
                                         {cell.events.slice(0, 2).map((event) => {
                                             const meta = eventSourceMeta[event.source]
                                             return (
-                                                <button
+                                                <span
                                                     key={event.id}
-                                                    onClick={() => onEventClick?.(event)}
+                                                    role="button"
+                                                    tabIndex={0}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation()
+                                                        onEventClick?.(event)
+                                                    }}
+                                                    onKeyDown={(e) => {
+                                                        if (e.key === 'Enter' || e.key === ' ') {
+                                                            e.stopPropagation()
+                                                            onEventClick?.(event)
+                                                        }
+                                                    }}
                                                     className={cn(
                                                         "block w-full text-left text-[10px] px-1 py-0.5 rounded truncate",
                                                         meta.bgClass,
@@ -156,7 +173,7 @@ export function EventsCalendar({
                                                     )}
                                                 >
                                                     {event.title}
-                                                </button>
+                                                </span>
                                             )
                                         })}
                                         {cell.events.length > 2 && (
@@ -167,7 +184,7 @@ export function EventsCalendar({
                                     </div>
                                 </>
                             )}
-                        </div>
+                        </button>
                     ))}
                 </div>
             </Card>

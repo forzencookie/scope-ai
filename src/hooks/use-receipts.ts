@@ -1,5 +1,5 @@
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useEffect, useRef } from "react"
 import { receiptService, type Receipt } from '@/services/receipt-service'
 import { useAsync } from "./use-async"
 import { useCachedQuery } from "./use-cached-query"
@@ -10,7 +10,9 @@ export function useReceiptsPaginated(
 ) {
     const [page, setPage] = useState(1)
     const [searchQuery, _setSearchQuery] = useState("")
+    const [debouncedSearch, setDebouncedSearch] = useState("")
     const [statusFilter, _setStatusFilter] = useState<string[]>([])
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
     // Total count for pagination
     const [totalCount, setTotalCount] = useState(0)
@@ -19,6 +21,15 @@ export function useReceiptsPaginated(
         _setSearchQuery(value)
         setPage(1)
     }, [])
+
+    // Debounce search to avoid fetching on every keystroke
+    useEffect(() => {
+        if (debounceRef.current) clearTimeout(debounceRef.current)
+        debounceRef.current = setTimeout(() => {
+            setDebouncedSearch(searchQuery)
+        }, 300)
+        return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
+    }, [searchQuery])
 
     const setStatusFilter = useCallback((value: string[] | ((prev: string[]) => string[])) => {
         _setStatusFilter(value)
@@ -32,13 +43,6 @@ export function useReceiptsPaginated(
         setPage(1)
     }
 
-    /* 
-    // Old effect caused double render
-    useEffect(() => {
-        setPage(p => p !== 1 ? 1 : p)
-    }, [startDate])
-    */
-
     const {
         data: receipts,
         isLoading,
@@ -50,14 +54,14 @@ export function useReceiptsPaginated(
         const { receipts, totalCount } = await receiptService.getReceipts({
             limit: pageSize,
             offset,
-            search: searchQuery,
+            search: debouncedSearch,
             statuses: statusFilter,
             startDate
         })
 
         setTotalCount(totalCount)
         return receipts
-    }, [] as Receipt[], [page, pageSize, searchQuery, statusFilter, startDate])
+    }, [] as Receipt[], [page, pageSize, debouncedSearch, statusFilter, startDate])
 
     return {
         receipts,

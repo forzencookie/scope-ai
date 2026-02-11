@@ -5,7 +5,7 @@
 
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import type { HändelseEvent, EventFilters, EventSource, CreateEventInput } from '@/types/events'
 import {
     getEvents,
@@ -57,30 +57,42 @@ export function useEvents(initialFilters?: EventFilters): UseEventsReturn {
     const [filters, setFilters] = useState<EventFilters>(initialFilters || {})
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<Error | null>(null)
+    const pendingRefreshRef = useRef<Promise<void> | null>(null)
+    const filtersRef = useRef(filters)
+    filtersRef.current = filters
 
-    // Load events
+    // Load events (deduplicated — concurrent calls share the same promise)
     const refresh = useCallback(async () => {
-        setIsLoading(true)
-        setError(null)
-        try {
-            const [eventsData, counts] = await Promise.all([
-                getEvents(filters),
-                getEventCountsBySource()
-            ])
-            setEvents(eventsData.events)
-            setCountsBySource(counts)
-        } catch (err) {
-            console.error('Failed to fetch events:', err)
-            setError(err instanceof Error ? err : new Error('Failed to fetch events'))
-        } finally {
-            setIsLoading(false)
-        }
-    }, [filters])
+        if (pendingRefreshRef.current) return pendingRefreshRef.current
+
+        const promise = (async () => {
+            setIsLoading(true)
+            setError(null)
+            try {
+                const [eventsData, counts] = await Promise.all([
+                    getEvents(filtersRef.current),
+                    getEventCountsBySource()
+                ])
+                setEvents(eventsData.events)
+                setCountsBySource(counts)
+            } catch (err) {
+                console.error('Failed to fetch events:', err)
+                setError(err instanceof Error ? err : new Error('Failed to fetch events'))
+            } finally {
+                setIsLoading(false)
+                pendingRefreshRef.current = null
+            }
+        })()
+
+        pendingRefreshRef.current = promise
+        return promise
+    }, [])
 
     // Initial load and when filters change
     useEffect(() => {
+        pendingRefreshRef.current = null // allow new fetch on filter change
         refresh()
-    }, [refresh])
+    }, [filters, refresh])
 
     // Listen for new events (realtime or local optimistics)
     useEffect(() => {

@@ -1,77 +1,74 @@
 
-import { useMemo, useState, useEffect } from "react"
+import { useMemo } from "react"
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports-processor"
+import { useCachedQuery } from "./use-cached-query"
+
+interface BalanceData {
+    bsBalances: AccountBalance[]
+    plBalances: AccountBalance[]
+    prevBsBalances: AccountBalance[]
+    prevPlBalances: AccountBalance[]
+}
+
+async function fetchAllBalances(): Promise<BalanceData> {
+    const supabase = getSupabaseClient()
+    const year = new Date().getFullYear()
+    const prevYear = year - 1
+
+    const [bsResult, plResult, prevBsResult, prevPlResult] = await Promise.all([
+        // Balance Sheet: All time to current year end
+        supabase.rpc('get_account_balances', {
+            p_start_date: '2000-01-01',
+            p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
+        }),
+        // P&L: Current Year
+        supabase.rpc('get_account_balances', {
+            p_start_date: new Date(year, 0, 1).toISOString().split('T')[0],
+            p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
+        }),
+        // Balance Sheet: All time to previous year end
+        supabase.rpc('get_account_balances', {
+            p_start_date: '2000-01-01',
+            p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+        }),
+        // P&L: Previous Year
+        supabase.rpc('get_account_balances', {
+            p_start_date: new Date(prevYear, 0, 1).toISOString().split('T')[0],
+            p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+        })
+    ])
+
+    if (bsResult.error) throw bsResult.error
+    if (plResult.error) throw plResult.error
+    if (prevBsResult.error) throw prevBsResult.error
+    if (prevPlResult.error) throw prevPlResult.error
+
+    const toAccountBalances = (data: typeof bsResult.data): AccountBalance[] =>
+        (data || []).map(row => ({
+            account: String(row.account_number),
+            balance: row.balance
+        }))
+
+    return {
+        bsBalances: toAccountBalances(bsResult.data),
+        plBalances: toAccountBalances(plResult.data),
+        prevBsBalances: toAccountBalances(prevBsResult.data),
+        prevPlBalances: toAccountBalances(prevPlResult.data),
+    }
+}
 
 export function useFinancialReports() {
-    const [isLoading, setIsLoading] = useState(true)
-    const [bsBalances, setBsBalances] = useState<AccountBalance[]>([])
-    const [plBalances, setPlBalances] = useState<AccountBalance[]>([])
-    const [prevBsBalances, setPrevBsBalances] = useState<AccountBalance[]>([])
-    const [prevPlBalances, setPrevPlBalances] = useState<AccountBalance[]>([])
+    const { data: balances, isLoading } = useCachedQuery<BalanceData>({
+        cacheKey: `financial-reports-${new Date().getFullYear()}`,
+        queryFn: fetchAllBalances,
+        ttlMs: 3 * 60 * 1000, // 3 minutes — balances don't change frequently
+    })
 
-    useEffect(() => {
-        async function fetchBalances() {
-            setIsLoading(true)
-            const supabase = getSupabaseClient()
-            const year = new Date().getFullYear()
-            const prevYear = year - 1
-
-            try {
-                // Fetch current year and previous year in parallel
-                const [
-                    bsResult,
-                    plResult,
-                    prevBsResult,
-                    prevPlResult
-                ] = await Promise.all([
-                    // Balance Sheet: All time to current year end
-                    supabase.rpc('get_account_balances', {
-                        p_start_date: '2000-01-01',
-                        p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
-                    }),
-                    // P&L: Current Year
-                    supabase.rpc('get_account_balances', {
-                        p_start_date: new Date(year, 0, 1).toISOString().split('T')[0],
-                        p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
-                    }),
-                    // Balance Sheet: All time to previous year end
-                    supabase.rpc('get_account_balances', {
-                        p_start_date: '2000-01-01',
-                        p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
-                    }),
-                    // P&L: Previous Year
-                    supabase.rpc('get_account_balances', {
-                        p_start_date: new Date(prevYear, 0, 1).toISOString().split('T')[0],
-                        p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
-                    })
-                ])
-
-                if (bsResult.error) throw bsResult.error
-                if (plResult.error) throw plResult.error
-                if (prevBsResult.error) throw prevBsResult.error
-                if (prevPlResult.error) throw prevPlResult.error
-
-                // Map DB result to AccountBalance format
-                const toAccountBalances = (data: typeof bsResult.data): AccountBalance[] =>
-                    (data || []).map(row => ({
-                        account: String(row.account_number),
-                        balance: row.balance
-                    }))
-
-                setBsBalances(toAccountBalances(bsResult.data))
-                setPlBalances(toAccountBalances(plResult.data))
-                setPrevBsBalances(toAccountBalances(prevBsResult.data))
-                setPrevPlBalances(toAccountBalances(prevPlResult.data))
-            } catch (error) {
-                console.error('Failed to fetch financial reports:', error)
-            } finally {
-                setIsLoading(false)
-            }
-        }
-
-        fetchBalances()
-    }, [])
+    const bsBalances = balances?.bsBalances ?? []
+    const plBalances = balances?.plBalances ?? []
+    const prevBsBalances = balances?.prevBsBalances ?? []
+    const prevPlBalances = balances?.prevPlBalances ?? []
 
     const incomeStatement = useMemo(() => {
         if (isLoading || !plBalances.length) return null

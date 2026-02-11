@@ -1,6 +1,6 @@
 "use client"
 
-import { Suspense } from "react"
+import { Suspense, useState } from "react"
 import {
     Calendar,
     ChevronLeft,
@@ -21,6 +21,7 @@ import {
     EventsCalendar,
     RoadmapView,
     ManadsavslutView,
+    DayDetailDialog,
     useHandelserLogic,
     availableYears,
     type ViewType,
@@ -44,6 +45,7 @@ const tabHeaders: Record<ViewType, { title: string; subtitle: string }> = {
 
 function HandelserPageContent() {
     const logic = useHandelserLogic()
+    const [selectedDay, setSelectedDay] = useState<Date | null>(null)
 
     const {
         activeView,
@@ -153,15 +155,27 @@ function HandelserPageContent() {
                 <div className="max-w-4xl w-full space-y-4">
                     {/* Calendar View */}
                     {activeView === "calendar" && (
-                        <EventsCalendar
-                            events={yearEvents}
-                            year={selectedYear}
-                            month={calendarMonth}
-                            onMonthChange={(y, m) => {
-                                setSelectedYear(y)
-                                setCalendarMonth(m)
-                            }}
-                        />
+                        <>
+                            <EventsCalendar
+                                events={yearEvents}
+                                year={selectedYear}
+                                month={calendarMonth}
+                                onMonthChange={(y, m) => {
+                                    setSelectedYear(y)
+                                    setCalendarMonth(m)
+                                }}
+                                onDayClick={(date) => setSelectedDay(date)}
+                            />
+                            {selectedDay && (
+                                <DayDetailDialog
+                                    open={selectedDay !== null}
+                                    onOpenChange={(open) => { if (!open) setSelectedDay(null) }}
+                                    date={selectedDay}
+                                    events={yearEvents}
+                                    onDateChange={(d) => setSelectedDay(d)}
+                                />
+                            )}
+                        </>
                     )}
 
                     {/* Roadmap View */}

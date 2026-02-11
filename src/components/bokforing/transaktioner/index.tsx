@@ -86,7 +86,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 totalCount={stats.totalCount}
                 income={stats.income}
                 expenses={stats.expenses}
-                booked={stats.booked ?? 0}
             />
 
             <NewTransactionDialog

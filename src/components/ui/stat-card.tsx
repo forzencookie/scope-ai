@@ -14,7 +14,7 @@ export interface StatCardProps {
     /** Main label/title */
     label: string
     /** Main value to display */
-    value: string | number
+    value: React.ReactNode
     /** Optional subtitle or secondary info */
     subtitle?: string
     /** Optional icon to display */
@@ -60,7 +60,7 @@ export function StatCard({
     const cardContent = (
         <div
             className={cn(
-                "bg-card rounded-lg p-4 transition-colors border-2 border-border/60",
+                "bg-card rounded-lg p-4 transition-colors border-2 border-border/60 overflow-hidden min-w-0",
                 href && "hover:bg-muted/30 cursor-pointer",
                 className
             )}
@@ -97,7 +97,7 @@ export function StatCard({
                     </div>
                     {iconPosition === "inline" && (
                         <div className="flex items-center justify-between w-full mt-1">
-                            <p className="text-2xl font-semibold">{value}</p>
+                            <p className="text-2xl font-semibold truncate min-w-0">{value}</p>
                             {Icon && (
                                 <div className={cn(
                                     "h-10 w-10 rounded-lg flex items-center justify-center bg-muted/50",
@@ -112,7 +112,7 @@ export function StatCard({
                 {/* Legacy right-icon support removed to enforce consistency */}
             </div>
 
-            {iconPosition === "right" && <p className="text-2xl font-semibold mt-1">{value}</p>}
+            {iconPosition === "right" && <p className="text-2xl font-semibold mt-1 truncate">{value}</p>}
 
             {(subtitle || change) && (
                 <div className={cn("mt-1 flex items-center gap-2", iconPosition === "inline" && "mt-0")}>
@@ -131,7 +131,7 @@ export function StatCard({
                         </div>
                     )}
                     {subtitle && (
-                        <p className="text-sm text-muted-foreground">{subtitle}</p>
+                        <p className="text-sm text-muted-foreground truncate">{subtitle}</p>
                     )}
                 </div>
             )}

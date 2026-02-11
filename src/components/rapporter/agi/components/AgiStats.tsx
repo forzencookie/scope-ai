@@ -1,6 +1,7 @@
 import { Calendar, Wallet, Users } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
-import { formatCurrency } from "@/lib/utils"
+import { ResponsiveCurrency } from "@/components/ui/responsive-currency"
+import { formatCurrencyCompact } from "@/lib/formatters"
 
 interface AgiStatsProps {
     stats: {
@@ -24,14 +25,14 @@ export function AgiStats({ stats }: AgiStatsProps) {
             />
             <StatCard
                 label="Att betala"
-                value={formatCurrency(stats.tax + stats.contributions)}
-                subtitle={`${formatCurrency(stats.tax)} skatt, ${formatCurrency(stats.contributions)} arbetsgivaravg.`}
+                value={<ResponsiveCurrency amount={stats.tax + stats.contributions} />}
+                subtitle={`${formatCurrencyCompact(stats.tax)} skatt, ${formatCurrencyCompact(stats.contributions)} avg.`}
                 headerIcon={Wallet}
             />
             <StatCard
                 label="Anställda"
                 value={`${stats.employees}`}
-                subtitle={`Bruttolön: ${formatCurrency(stats.totalSalary)}`}
+                subtitle={`Bruttolön: ${formatCurrencyCompact(stats.totalSalary)}`}
                 headerIcon={Users}
             />
         </StatCardGrid>

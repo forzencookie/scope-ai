@@ -15,6 +15,7 @@ import {
     X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatSEK, formatSEKCompact } from "@/lib/formatters"
 import { useMonthClosing } from "@/hooks/use-month-closing"
 import { MonthReviewDialog } from "./month-review-dialog"
 
@@ -44,10 +45,6 @@ const MONTH_NAMES_SV = [
     'Juli', 'Augusti', 'September', 'Oktober', 'November', 'December'
 ]
 
-function formatSEK(amount: number): string {
-    return amount.toLocaleString('sv-SE', { maximumFractionDigits: 0 }) + ' kr'
-}
-
 // Build default 12-month grid (used when API hasn't loaded or fails)
 function buildDefaultSummaries(year: number): MonthlySummary[] {
     return Array.from({ length: 12 }, (_, i) => ({
@@ -71,24 +68,24 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
     const [selectedMonth, setSelectedMonth] = useState<number>(defaultMonth)
     const [dialogMonth, setDialogMonth] = useState<number | null>(null)
 
-    const { toggleCheck, getVerificationStats, getResolvedChecks, getCheckProgress, fetchPendingCounts } = useMonthClosing()
+    const { toggleCheck, getVerificationStats, getResolvedChecks, getCheckProgress, updatePendingCounts } = useMonthClosing()
 
-    const fetchSummaries = useCallback(async () => {
+    const fetchMonthData = useCallback(async () => {
         try {
             const res = await fetch(`/api/manadsavslut?year=${year}`)
             if (!res.ok) return
             const data = await res.json()
             if (data.summaries?.length) setSummaries(data.summaries)
+            if (data.pendingTransactions) updatePendingCounts(data.pendingTransactions)
         } catch {
             // Grid stays with defaults
         }
-    }, [year])
+    }, [year, updatePendingCounts])
 
     useEffect(() => {
         setSummaries(buildDefaultSummaries(year))
-        fetchSummaries()
-        fetchPendingCounts(year)
-    }, [year, fetchSummaries, fetchPendingCounts])
+        fetchMonthData()
+    }, [year, fetchMonthData])
 
     const currentMonth = now.getFullYear() === year ? now.getMonth() + 1 : 0
 
@@ -112,7 +109,9 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
 
                     const rc = getResolvedChecks(year, summary.month)
                     const p = getCheckProgress(rc)
+                    const manualCompleted = rc.filter(c => c.type === 'manual' && c.value).length
                     const allDone = p.completed === p.total && p.total > 0
+                    const hasProgress = manualCompleted > 0
 
                     return (
                         <button
@@ -135,7 +134,8 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                                 isCurrent ? "bg-blue-500" :
                                 allDone && isPast ? "bg-green-400/40 dark:bg-green-500/30" :
                                 allDone ? "bg-green-500" :
-                                p.completed > 0 ? "bg-yellow-400" :
+                                hasProgress ? "bg-yellow-400" :
+                                isPast ? "bg-white dark:bg-gray-400" :
                                 "border-2 border-gray-300 dark:border-gray-500"
                             )} />
                             {summary.verificationCount > 0 && (
@@ -198,32 +198,35 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                         </div>
 
                         {selectedSummary && (selectedSummary.revenue > 0 || selectedSummary.expenses > 0) && (
-                            <div className="grid grid-cols-3 gap-3">
-                                <div className="p-2.5 rounded-md bg-green-50 dark:bg-green-950/30">
+                            <div className="grid grid-cols-3 gap-2 min-w-0">
+                                <div className="p-2 rounded-md bg-green-50 dark:bg-green-950/30 overflow-hidden">
                                     <div className="flex items-center gap-1 text-xs text-green-700 dark:text-green-400 mb-0.5">
-                                        <TrendingUp className="h-3 w-3" />
-                                        Intäkter
+                                        <TrendingUp className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">Intäkter</span>
                                     </div>
-                                    <p className="text-sm font-semibold text-green-700 dark:text-green-400">
-                                        {formatSEK(selectedSummary.revenue)}
+                                    <p className="text-sm font-semibold text-green-700 dark:text-green-400 truncate" title={formatSEK(selectedSummary.revenue)}>
+                                        <span className="hidden sm:inline">{formatSEK(selectedSummary.revenue)}</span>
+                                        <span className="sm:hidden">{formatSEKCompact(selectedSummary.revenue)}</span>
                                     </p>
                                 </div>
-                                <div className="p-2.5 rounded-md bg-red-50 dark:bg-red-950/30">
+                                <div className="p-2 rounded-md bg-red-50 dark:bg-red-950/30 overflow-hidden">
                                     <div className="flex items-center gap-1 text-xs text-red-600 dark:text-red-400 mb-0.5">
-                                        <TrendingDown className="h-3 w-3" />
-                                        Kostnader
+                                        <TrendingDown className="h-3 w-3 shrink-0" />
+                                        <span className="truncate">Kostnader</span>
                                     </div>
-                                    <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                                        {formatSEK(selectedSummary.expenses)}
+                                    <p className="text-sm font-semibold text-red-600 dark:text-red-400 truncate" title={formatSEK(selectedSummary.expenses)}>
+                                        <span className="hidden sm:inline">{formatSEK(selectedSummary.expenses)}</span>
+                                        <span className="sm:hidden">{formatSEKCompact(selectedSummary.expenses)}</span>
                                     </p>
                                 </div>
-                                <div className="p-2.5 rounded-md bg-muted/30">
-                                    <div className="text-xs text-muted-foreground mb-0.5">Resultat</div>
+                                <div className="p-2 rounded-md bg-muted/30 overflow-hidden">
+                                    <div className="text-xs text-muted-foreground mb-0.5 truncate">Resultat</div>
                                     <p className={cn(
-                                        "text-sm font-semibold",
+                                        "text-sm font-semibold truncate",
                                         selectedSummary.result >= 0 ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                    )}>
-                                        {formatSEK(selectedSummary.result)}
+                                    )} title={formatSEK(selectedSummary.result)}>
+                                        <span className="hidden sm:inline">{formatSEK(selectedSummary.result)}</span>
+                                        <span className="sm:hidden">{formatSEKCompact(selectedSummary.result)}</span>
                                     </p>
                                 </div>
                             </div>
@@ -234,11 +237,11 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                             <Button
                                 variant="outline"
                                 size="sm"
-                                className="w-full gap-2"
+                                className="w-full gap-2 overflow-hidden"
                                 onClick={() => setDialogMonth(selectedMonth)}
                             >
-                                <ExternalLink className="h-3.5 w-3.5" />
-                                Öppna fullständig månadsöversikt
+                                <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                                <span className="truncate">Öppna fullständig månadsöversikt</span>
                             </Button>
                         </div>
                     </CardContent>

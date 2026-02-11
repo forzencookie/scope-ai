@@ -18,6 +18,7 @@ import { AppStatusBadge } from "@/components/ui/status-badge"
 import type { AppStatus } from "@/lib/status-types"
 import { Loader2, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, FileCheck, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { formatSEK, formatSEKCompact } from "@/lib/formatters"
 import { useMonthClosing } from "@/hooks/use-month-closing"
 import { PixelDogStatic } from "@/components/ai/mascots/dog"
 
@@ -54,10 +55,6 @@ interface MonthReviewDialogProps {
     year: number
     month: number // 1-12
     onMonthChange: (month: number) => void
-}
-
-function formatSEK(amount: number): string {
-    return amount.toLocaleString('sv-SE', { maximumFractionDigits: 0 }) + ' kr'
 }
 
 export function MonthReviewDialog({
@@ -201,32 +198,35 @@ export function MonthReviewDialog({
                 {!isFutureMonth && !isLoading && data && (
                     <div className="space-y-5">
                         {/* Financial summary */}
-                        <div className="grid grid-cols-3 gap-3">
-                            <div className="p-3 rounded-lg bg-green-50 dark:bg-green-950/30 text-center">
+                        <div className="grid grid-cols-3 gap-2 min-w-0">
+                            <div className="p-2.5 rounded-lg bg-green-50 dark:bg-green-950/30 text-center overflow-hidden">
                                 <div className="flex items-center justify-center gap-1 text-xs text-green-700 dark:text-green-400 mb-1">
-                                    <TrendingUp className="h-3 w-3" />
-                                    Intäkter
+                                    <TrendingUp className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">Intäkter</span>
                                 </div>
-                                <p className="text-sm font-semibold text-green-700 dark:text-green-400">
-                                    {formatSEK(data.financial.revenue)}
+                                <p className="text-sm font-semibold text-green-700 dark:text-green-400 truncate" title={formatSEK(data.financial.revenue)}>
+                                    <span className="hidden sm:inline">{formatSEK(data.financial.revenue)}</span>
+                                    <span className="sm:hidden">{formatSEKCompact(data.financial.revenue)}</span>
                                 </p>
                             </div>
-                            <div className="p-3 rounded-lg bg-red-50 dark:bg-red-950/30 text-center">
+                            <div className="p-2.5 rounded-lg bg-red-50 dark:bg-red-950/30 text-center overflow-hidden">
                                 <div className="flex items-center justify-center gap-1 text-xs text-red-600 dark:text-red-400 mb-1">
-                                    <TrendingDown className="h-3 w-3" />
-                                    Kostnader
+                                    <TrendingDown className="h-3 w-3 shrink-0" />
+                                    <span className="truncate">Kostnader</span>
                                 </div>
-                                <p className="text-sm font-semibold text-red-600 dark:text-red-400">
-                                    {formatSEK(data.financial.expenses)}
+                                <p className="text-sm font-semibold text-red-600 dark:text-red-400 truncate" title={formatSEK(data.financial.expenses)}>
+                                    <span className="hidden sm:inline">{formatSEK(data.financial.expenses)}</span>
+                                    <span className="sm:hidden">{formatSEKCompact(data.financial.expenses)}</span>
                                 </p>
                             </div>
-                            <div className="p-3 rounded-lg bg-muted/50 text-center">
-                                <div className="text-xs text-muted-foreground mb-1">Resultat</div>
+                            <div className="p-2.5 rounded-lg bg-muted/50 text-center overflow-hidden">
+                                <div className="text-xs text-muted-foreground mb-1 truncate">Resultat</div>
                                 <p className={cn(
-                                    "text-sm font-semibold",
+                                    "text-sm font-semibold truncate",
                                     data.financial.result >= 0 ? "text-green-700 dark:text-green-400" : "text-red-600 dark:text-red-400"
-                                )}>
-                                    {formatSEK(data.financial.result)}
+                                )} title={formatSEK(data.financial.result)}>
+                                    <span className="hidden sm:inline">{formatSEK(data.financial.result)}</span>
+                                    <span className="sm:hidden">{formatSEKCompact(data.financial.result)}</span>
                                 </p>
                             </div>
                         </div>

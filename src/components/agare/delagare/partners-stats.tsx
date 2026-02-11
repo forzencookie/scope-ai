@@ -1,4 +1,5 @@
 import { formatCurrency, cn } from '@/lib/utils';
+import { formatCurrencyCompact } from '@/lib/formatters';
 import { Wallet, Users, TrendingDown } from 'lucide-react';
 import { type Partner } from '@/types/ownership';
 
@@ -83,20 +84,26 @@ export function PartnersStats({ stats, enrichedPartners, totalWithdrawals }: Par
 
           {/* Right: Key Metrics */}
           <div className="grid grid-cols-3 gap-3 lg:w-auto lg:min-w-[360px]">
-            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-              <Users className="h-4 w-4 text-muted-foreground mb-1" />
+            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50 overflow-hidden">
+              <Users className="h-4 w-4 text-muted-foreground mb-1 shrink-0" />
               <p className="text-xl font-bold tabular-nums">{stats.totalOwners}</p>
-              <p className="text-xs text-muted-foreground">Delägare</p>
+              <p className="text-xs text-muted-foreground truncate">Delägare</p>
             </div>
-            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-              <Wallet className="h-4 w-4 text-muted-foreground mb-1" />
-              <p className="text-xl font-bold tabular-nums">{formatCurrency(stats.totalCapital)}</p>
-              <p className="text-xs text-muted-foreground">Kapital</p>
+            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50 overflow-hidden">
+              <Wallet className="h-4 w-4 text-muted-foreground mb-1 shrink-0" />
+              <p className="text-xl font-bold tabular-nums truncate" title={formatCurrency(stats.totalCapital)}>
+                <span className="hidden sm:inline">{formatCurrency(stats.totalCapital)}</span>
+                <span className="sm:hidden">{formatCurrencyCompact(stats.totalCapital)}</span>
+              </p>
+              <p className="text-xs text-muted-foreground truncate">Kapital</p>
             </div>
-            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50">
-              <TrendingDown className="h-4 w-4 text-muted-foreground mb-1" />
-              <p className="text-xl font-bold tabular-nums">{formatCurrency(totalWithdrawals)}</p>
-              <p className="text-xs text-muted-foreground">Uttag i år</p>
+            <div className="flex flex-col p-3 rounded-lg bg-background/60 border border-border/50 overflow-hidden">
+              <TrendingDown className="h-4 w-4 text-muted-foreground mb-1 shrink-0" />
+              <p className="text-xl font-bold tabular-nums truncate" title={formatCurrency(totalWithdrawals)}>
+                <span className="hidden sm:inline">{formatCurrency(totalWithdrawals)}</span>
+                <span className="sm:hidden">{formatCurrencyCompact(totalWithdrawals)}</span>
+              </p>
+              <p className="text-xs text-muted-foreground truncate">Uttag i år</p>
             </div>
           </div>
         </div>
