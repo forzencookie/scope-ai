@@ -1,9 +1,17 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, useCallback } from "react"
 import { useVerifications } from "./use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { getSupabaseClient } from '@/lib/database/supabase'
+import {
+    getApplicableChecks,
+    resolveChecks,
+    getCheckProgress,
+    migrateOldChecks,
+    type ChecklistCompanyProfile,
+    type ResolvedCheck,
+} from '@/lib/checklist-engine'
 
 export type PeriodStatus = 'open' | 'review' | 'locked'
 
@@ -12,13 +20,8 @@ export interface MonthStatus {
     year: number
     month: number // 1-12
     status: PeriodStatus
-    checks: {
-        bankReconciled: boolean
-        vatReported: boolean
-        declarationsDone: boolean
-        allCategorized: boolean
-        notes?: string
-    }
+    manualChecks: Record<string, boolean>
+    notes?: string
     locked_at?: string
     locked_by?: string
 }
@@ -29,6 +32,7 @@ export function useMonthClosing() {
     const { verifications } = useVerifications()
     const { company } = useCompany()
     const [periods, setPeriods] = useState<MonthStatus[]>([])
+    const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({})
 
     // Load periods from Supabase
     useEffect(() => {
@@ -37,7 +41,6 @@ export function useMonthClosing() {
         let isMounted = true
         async function loadPeriods() {
             try {
-                // Fetch ONLY monthly periods from the consolidated table
                 const { data, error } = await supabase
                     .from('financialperiods')
                     .select('*')
@@ -46,19 +49,21 @@ export function useMonthClosing() {
                 if (isMounted) {
                     if (!error && data) {
                         setPeriods(data.map(p => {
-                            // Map 2024-M01 -> year 2024, month 1
                             const parts = p.id.split('-M')
                             const year = parseInt(parts[0])
                             const month = parseInt(parts[1])
+
+                            // Migrate old JSONB format to new format
+                            const raw = (p.reconciliation_checks as Record<string, unknown>) || {}
+                            const { manualChecks, notes } = migrateOldChecks(raw)
 
                             return {
                                 id: p.id,
                                 year,
                                 month,
-                                // status in DB is 'open', 'closed', 'submitted'
-                                // we map 'closed' to 'locked' for our UI
                                 status: p.status === 'closed' ? 'locked' : (p.status as PeriodStatus),
-                                checks: (p.reconciliation_checks as unknown as MonthStatus['checks']) || { bankReconciled: false, vatReported: false, declarationsDone: false, allCategorized: false },
+                                manualChecks,
+                                notes,
                                 locked_at: p.locked_at || undefined,
                                 locked_by: p.locked_by || undefined
                             }
@@ -74,17 +79,12 @@ export function useMonthClosing() {
         return () => { isMounted = false }
     }, [company?.id])
 
-    const getPeriod = (year: number, month: number) => {
+    const getPeriod = (year: number, month: number): MonthStatus => {
         return periods.find(p => p.year === year && p.month === month) || {
             year,
             month,
             status: 'open' as PeriodStatus,
-            checks: {
-                bankReconciled: false,
-                vatReported: false,
-                declarationsDone: false,
-                allCategorized: false
-            }
+            manualChecks: {},
         }
     }
 
@@ -107,10 +107,14 @@ export function useMonthClosing() {
             }
         })
 
-        // Persist to financial_periods
+        // Persist — serialize manualChecks + notes into reconciliation_checks JSONB
         try {
-            // Map our UI 'locked' back to DB 'closed'
             const dbStatus = updated.status === 'locked' ? 'closed' : updated.status
+
+            const reconciliationPayload: Record<string, boolean | string> = { ...updated.manualChecks }
+            if (updated.notes) {
+                reconciliationPayload.notes = updated.notes
+            }
 
             const { error } = await supabase
                 .from('financialperiods')
@@ -120,9 +124,9 @@ export function useMonthClosing() {
                     type: 'monthly',
                     name: `Månadsbokslut ${year}-${month}`,
                     start_date: `${year}-${month.toString().padStart(2, '0')}-01`,
-                    end_date: `${year}-${month.toString().padStart(2, '0')}-28`, // simplified
+                    end_date: `${year}-${month.toString().padStart(2, '0')}-28`,
                     status: dbStatus,
-                    reconciliation_checks: updated.checks,
+                    reconciliation_checks: reconciliationPayload,
                     locked_at: updated.locked_at,
                     locked_by: updated.locked_by
                 }, { onConflict: 'id' })
@@ -146,29 +150,22 @@ export function useMonthClosing() {
         savePeriod(year, month, { status: 'open', locked_at: undefined })
     }
 
-    const toggleCheck = (year: number, month: number, check: keyof MonthStatus['checks']) => {
+    const toggleCheck = (year: number, month: number, checkId: string) => {
         const period = getPeriod(year, month)
         savePeriod(year, month, {
-            checks: {
-                ...period.checks,
-                [check]: !period.checks[check]
+            manualChecks: {
+                ...period.manualChecks,
+                [checkId]: !period.manualChecks[checkId]
             }
         })
     }
 
     const saveNotes = (year: number, month: number, notes: string) => {
-        const period = getPeriod(year, month)
-        savePeriod(year, month, {
-            checks: {
-                ...period.checks,
-                notes
-            }
-        })
+        savePeriod(year, month, { notes })
     }
 
-    // Calculate Real Data for Checks (Bank Diff)
+    // Verification stats (discrepancy count for auto checks)
     const getVerificationStats = (year: number, month: number) => {
-        // Filter verifications for this month
         const monthVerifications = verifications.filter(v => {
             const d = new Date(v.date)
             return d.getFullYear() === year && (d.getMonth() + 1) === month
@@ -176,23 +173,60 @@ export function useMonthClosing() {
 
         const verificationCount = monthVerifications.length
 
-        // Count discrepancies: verifications where debit != credit (unbalanced)
         let discrepancyCount = 0
         for (const v of monthVerifications) {
             if (v.rows && Array.isArray(v.rows)) {
                 const totalDebit = v.rows.reduce((sum: number, row: { debit?: number }) => sum + (row.debit || 0), 0)
                 const totalCredit = v.rows.reduce((sum: number, row: { credit?: number }) => sum + (row.credit || 0), 0)
-                // Allow small floating point differences
                 if (Math.abs(totalDebit - totalCredit) > 0.01) {
                     discrepancyCount++
                 }
             }
         }
 
-        return {
-            verificationCount,
-            discrepancyCount
+        return { verificationCount, discrepancyCount }
+    }
+
+    // Fetch pending transaction counts from API (stored per "YYYY-MM" key)
+    const fetchPendingCounts = useCallback(async (year: number) => {
+        try {
+            const res = await fetch(`/api/manadsavslut?year=${year}`)
+            if (!res.ok) return
+            const data = await res.json()
+            if (data.pendingTransactions) {
+                setPendingCounts(data.pendingTransactions)
+            }
+        } catch {
+            // silently fail
         }
+    }, [])
+
+    /**
+     * Build fully resolved checks for a given month.
+     * Returns the list of ResolvedCheck[] with auto values computed.
+     */
+    const getResolvedChecks = (year: number, month: number): ResolvedCheck[] => {
+        if (!company) return []
+
+        const profile: ChecklistCompanyProfile = {
+            companyType: company.companyType,
+            hasEmployees: company.hasEmployees,
+            hasMomsRegistration: company.hasMomsRegistration,
+            vatFrequency: company.vatFrequency,
+            fiscalYearEnd: company.fiscalYearEnd,
+        }
+
+        const definitions = getApplicableChecks(profile, year, month)
+        const period = getPeriod(year, month)
+
+        const periodKey = `${year}-${String(month).padStart(2, '0')}`
+        const pending = pendingCounts[periodKey] ?? 0
+
+        const autoStates: Record<string, boolean> = {
+            no_pending_transactions: pending === 0,
+        }
+
+        return resolveChecks(definitions, period.manualChecks, autoStates)
     }
 
     return {
@@ -201,6 +235,9 @@ export function useMonthClosing() {
         unlockPeriod,
         toggleCheck,
         saveNotes,
-        getVerificationStats
+        getVerificationStats,
+        getResolvedChecks,
+        getCheckProgress,
+        fetchPendingCounts,
     }
 }

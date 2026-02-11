@@ -16,9 +16,9 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import type { AppStatus } from "@/lib/status-types"
-import { Loader2, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, FileCheck } from "lucide-react"
+import { Loader2, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, FileCheck, Check, X } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { useMonthClosing, type MonthStatus } from "@/hooks/use-month-closing"
+import { useMonthClosing } from "@/hooks/use-month-closing"
 import { PixelDogStatic } from "@/components/ai/mascots/dog"
 
 const MONTH_NAMES_SV = [
@@ -73,7 +73,7 @@ export function MonthReviewDialog({
     const notesTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
     const userEditingRef = useRef(false)
 
-    const { getPeriod, toggleCheck, saveNotes } = useMonthClosing()
+    const { getPeriod, toggleCheck, saveNotes, getResolvedChecks, getCheckProgress } = useMonthClosing()
     const period = getPeriod(year, month)
 
     // Is this month in the future?
@@ -82,8 +82,7 @@ export function MonthReviewDialog({
         (year === now.getFullYear() && month > now.getMonth() + 1)
 
     // Load notes from period when month changes or when period data arrives
-    // Don't overwrite if user is actively typing (debounce pending)
-    const savedNotes = period.checks.notes
+    const savedNotes = period.notes
     useEffect(() => {
         if (!userEditingRef.current) {
             setNotesValue(savedNotes || "")
@@ -144,18 +143,15 @@ export function MonthReviewDialog({
     const canGoPrev = month > 1
     const canGoNext = month < 12
 
-    const checksCompleted = [
-        period.checks.bankReconciled,
-        period.checks.vatReported,
-        period.checks.declarationsDone,
-        period.checks.allCategorized,
-    ].filter(Boolean).length
+    // Dynamic checks
+    const resolvedChecks = getResolvedChecks(year, month)
+    const progress = getCheckProgress(resolvedChecks)
 
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-center gap-4 pt-2">
                         <Button
                             variant="ghost"
                             size="icon"
@@ -165,7 +161,7 @@ export function MonthReviewDialog({
                         >
                             <ChevronLeft className="h-4 w-4" />
                         </Button>
-                        <DialogTitle className="text-center">
+                        <DialogTitle className="text-center min-w-[10rem]">
                             {MONTH_NAMES_SV[month - 1]} {year}
                         </DialogTitle>
                         <Button
@@ -277,56 +273,51 @@ export function MonthReviewDialog({
                             />
                         </div>
 
-                        {/* Checklist */}
+                        {/* Dynamic Checklist */}
                         <div>
                             <h4 className="text-sm font-medium flex items-center gap-2 mb-3">
                                 <FileCheck className="h-4 w-4" />
                                 Avstämningskoll
                                 <span className="text-xs text-muted-foreground font-normal">
-                                    {checksCompleted}/4
+                                    {progress.completed}/{progress.total}
                                 </span>
                             </h4>
                             <div className="grid gap-2 grid-cols-2">
-                                <div className="flex items-center gap-2.5 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                    <Checkbox
-                                        id={`dlg-bank-${month}`}
-                                        checked={period.checks.bankReconciled}
-                                        onCheckedChange={() => toggleCheck(year, month, 'bankReconciled')}
-                                    />
-                                    <Label htmlFor={`dlg-bank-${month}`} className="text-sm cursor-pointer">
-                                        Bankkonto (1930) avstämt
-                                    </Label>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                    <Checkbox
-                                        id={`dlg-vat-${month}`}
-                                        checked={period.checks.vatReported}
-                                        onCheckedChange={() => toggleCheck(year, month, 'vatReported')}
-                                    />
-                                    <Label htmlFor={`dlg-vat-${month}`} className="text-sm cursor-pointer">
-                                        Momsredovisning kontrollerad
-                                    </Label>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                    <Checkbox
-                                        id={`dlg-decl-${month}`}
-                                        checked={period.checks.declarationsDone}
-                                        onCheckedChange={() => toggleCheck(year, month, 'declarationsDone')}
-                                    />
-                                    <Label htmlFor={`dlg-decl-${month}`} className="text-sm cursor-pointer">
-                                        Arbetsgivardeklaration klar
-                                    </Label>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                                    <Checkbox
-                                        id={`dlg-cat-${month}`}
-                                        checked={period.checks.allCategorized}
-                                        onCheckedChange={() => toggleCheck(year, month, 'allCategorized')}
-                                    />
-                                    <Label htmlFor={`dlg-cat-${month}`} className="text-sm cursor-pointer">
-                                        Inget okategoriserat
-                                    </Label>
-                                </div>
+                                {resolvedChecks.map((check) => (
+                                    <div key={check.id} className="flex items-center gap-2.5 p-2 rounded-md hover:bg-muted/50 transition-colors">
+                                        {check.type === 'manual' ? (
+                                            <Checkbox
+                                                id={`dlg-${check.id}-${month}`}
+                                                checked={check.value}
+                                                onCheckedChange={() => toggleCheck(year, month, check.id)}
+                                            />
+                                        ) : (
+                                            <div className={cn(
+                                                "h-4 w-4 rounded-[3px] border flex items-center justify-center shrink-0",
+                                                check.value
+                                                    ? "border-green-500 bg-green-50 dark:bg-green-950/40"
+                                                    : "border-red-400 bg-red-50 dark:bg-red-950/40"
+                                            )}>
+                                                {check.value
+                                                    ? <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                                    : <X className="h-3 w-3 text-red-500 dark:text-red-400" />
+                                                }
+                                            </div>
+                                        )}
+                                        <Label
+                                            htmlFor={check.type === 'manual' ? `dlg-${check.id}-${month}` : undefined}
+                                            className={cn(
+                                                "text-sm",
+                                                check.type === 'manual' && "cursor-pointer"
+                                            )}
+                                        >
+                                            {check.label}
+                                            {check.type === 'auto' && (
+                                                <Badge variant="outline" className="ml-1.5 text-[9px] py-0 px-1 font-normal">AUTO</Badge>
+                                            )}
+                                        </Label>
+                                    </div>
+                                ))}
                             </div>
                         </div>
                     </div>

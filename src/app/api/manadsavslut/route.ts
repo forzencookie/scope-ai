@@ -47,6 +47,23 @@ export async function GET(request: NextRequest) {
 
         if (vError) throw vError
 
+        // Fetch pending (unbookmarked) transaction counts per month
+        const { data: pendingRows } = await userDb.client
+            .from('transactions')
+            .select('date')
+            .eq('status', 'Att bokföra')
+            .gte('date', `${year}-01-01`)
+            .lte('date', `${year}-12-31`)
+
+        // Build a map of "YYYY-MM" → count
+        const pendingTransactions: Record<string, number> = {}
+        if (pendingRows) {
+            for (const row of pendingRows) {
+                const key = (row.date as string).substring(0, 7) // "YYYY-MM"
+                pendingTransactions[key] = (pendingTransactions[key] || 0) + 1
+            }
+        }
+
         // Fetch account balances per month (12 parallel calls)
         const monthBalancePromises = Array.from({ length: 12 }, (_, i) => {
             const m = i + 1
@@ -104,7 +121,7 @@ export async function GET(request: NextRequest) {
             }
         })
 
-        return NextResponse.json({ summaries, year })
+        return NextResponse.json({ summaries, year, pendingTransactions })
     } catch (error) {
         console.error("Failed to fetch monthly summaries:", error)
         return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })

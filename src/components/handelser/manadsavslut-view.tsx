@@ -11,6 +11,8 @@ import {
     TrendingDown,
     FileCheck,
     ExternalLink,
+    Check,
+    X,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useMonthClosing } from "@/hooks/use-month-closing"
@@ -69,7 +71,7 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
     const [selectedMonth, setSelectedMonth] = useState<number>(defaultMonth)
     const [dialogMonth, setDialogMonth] = useState<number | null>(null)
 
-    const { getPeriod, toggleCheck, getVerificationStats } = useMonthClosing()
+    const { toggleCheck, getVerificationStats, getResolvedChecks, getCheckProgress, fetchPendingCounts } = useMonthClosing()
 
     const fetchSummaries = useCallback(async () => {
         try {
@@ -85,22 +87,17 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
     useEffect(() => {
         setSummaries(buildDefaultSummaries(year))
         fetchSummaries()
-    }, [year, fetchSummaries])
+        fetchPendingCounts(year)
+    }, [year, fetchSummaries, fetchPendingCounts])
 
     const currentMonth = now.getFullYear() === year ? now.getMonth() + 1 : 0
 
-    // Selected month data
+    // Selected month data — dynamic checks
     const selectedSummary = summaries.find(s => s.month === selectedMonth) || summaries[0]
-    const period = getPeriod(year, selectedMonth)
-    const checks = period.checks
     const stats = getVerificationStats(year, selectedMonth)
-    const checksCompleted = [
-        checks.bankReconciled,
-        checks.vatReported,
-        checks.declarationsDone,
-        checks.allCategorized,
-    ].filter(Boolean).length
-    const allChecked = checksCompleted === 4
+    const resolvedChecks = getResolvedChecks(year, selectedMonth)
+    const progress = getCheckProgress(resolvedChecks)
+    const allChecked = progress.completed === progress.total && progress.total > 0
     const isFutureSelected = selectedMonth > currentMonth && year === now.getFullYear()
 
     return (
@@ -113,10 +110,9 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                     const isPast = !isCurrent && !isFuture
                     const isSelected = summary.month === selectedMonth
 
-                    const p = getPeriod(year, summary.month)
-                    const c = p.checks
-                    const done = [c.bankReconciled, c.vatReported, c.declarationsDone, c.allCategorized].filter(Boolean).length
-                    const allDone = done === 4
+                    const rc = getResolvedChecks(year, summary.month)
+                    const p = getCheckProgress(rc)
+                    const allDone = p.completed === p.total && p.total > 0
 
                     return (
                         <button
@@ -136,15 +132,10 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                             </span>
                             <div className={cn(
                                 "h-3 w-3 rounded-full",
-                                // Current month → blue filled
                                 isCurrent ? "bg-blue-500" :
-                                // All 4 checks done + past → dimmed/subtle green
                                 allDone && isPast ? "bg-green-400/40 dark:bg-green-500/30" :
-                                // All 4 checks done → solid green
                                 allDone ? "bg-green-500" :
-                                // Some checks done (in progress) → yellow
-                                done > 0 ? "bg-yellow-400" :
-                                // Future / no checks → white border, no fill
+                                p.completed > 0 ? "bg-yellow-400" :
                                 "border-2 border-gray-300 dark:border-gray-500"
                             )} />
                             {summary.verificationCount > 0 && (
@@ -184,7 +175,7 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                                     allChecked && "bg-green-100 text-green-800 hover:bg-green-100 dark:bg-green-900 dark:text-green-300"
                                 )}
                             >
-                                {allChecked ? "KLAR" : `${checksCompleted}/4`}
+                                {allChecked ? "KLAR" : `${progress.completed}/${progress.total}`}
                             </Badge>
                         </div>
                     </CardHeader>
@@ -253,7 +244,7 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                     </CardContent>
                 </Card>
 
-                {/* Right: Checklist card */}
+                {/* Right: Dynamic Checklist card */}
                 <Card>
                     <CardHeader className="pb-3">
                         <CardTitle className="flex items-center gap-2 text-base">
@@ -263,69 +254,49 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                         <CardDescription>Åtgärder innan stängning</CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-3">
-                        <div className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                            <Checkbox
-                                id={`grid-bank-${selectedMonth}`}
-                                checked={checks.bankReconciled}
-                                onCheckedChange={() => toggleCheck(year, selectedMonth, 'bankReconciled')}
-                            />
-                            <div className="grid gap-1 leading-none">
-                                <Label htmlFor={`grid-bank-${selectedMonth}`} className="font-medium cursor-pointer text-sm">
-                                    Avstämning Bankkonto (1930)
-                                </Label>
-                                <p className="text-xs text-muted-foreground">
-                                    Kontrollera att bokfört saldo stämmer med kontoutdraget.
-                                </p>
+                        {resolvedChecks.length === 0 && (
+                            <p className="text-sm text-muted-foreground">Inga kontroller att visa.</p>
+                        )}
+                        {resolvedChecks.map((check) => (
+                            <div key={check.id} className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
+                                {check.type === 'manual' ? (
+                                    <Checkbox
+                                        id={`grid-${check.id}-${selectedMonth}`}
+                                        checked={check.value}
+                                        onCheckedChange={() => toggleCheck(year, selectedMonth, check.id)}
+                                    />
+                                ) : (
+                                    <div className={cn(
+                                        "mt-0.5 h-4 w-4 rounded-[3px] border flex items-center justify-center shrink-0",
+                                        check.value
+                                            ? "border-green-500 bg-green-50 dark:bg-green-950/40"
+                                            : "border-red-400 bg-red-50 dark:bg-red-950/40"
+                                    )}>
+                                        {check.value
+                                            ? <Check className="h-3 w-3 text-green-600 dark:text-green-400" />
+                                            : <X className="h-3 w-3 text-red-500 dark:text-red-400" />
+                                        }
+                                    </div>
+                                )}
+                                <div className="grid gap-1 leading-none">
+                                    <Label
+                                        htmlFor={check.type === 'manual' ? `grid-${check.id}-${selectedMonth}` : undefined}
+                                        className={cn(
+                                            "font-medium text-sm",
+                                            check.type === 'manual' && "cursor-pointer"
+                                        )}
+                                    >
+                                        {check.label}
+                                        {check.type === 'auto' && (
+                                            <Badge variant="outline" className="ml-2 text-[9px] py-0 px-1 font-normal">AUTO</Badge>
+                                        )}
+                                    </Label>
+                                    <p className="text-xs text-muted-foreground">
+                                        {check.description}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                            <Checkbox
-                                id={`grid-vat-${selectedMonth}`}
-                                checked={checks.vatReported}
-                                onCheckedChange={() => toggleCheck(year, selectedMonth, 'vatReported')}
-                            />
-                            <div className="grid gap-1 leading-none">
-                                <Label htmlFor={`grid-vat-${selectedMonth}`} className="font-medium cursor-pointer text-sm">
-                                    Momsredovisning
-                                </Label>
-                                <p className="text-xs text-muted-foreground">
-                                    Momsrapport skapad och kontrollerad (Konto 2650).
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                            <Checkbox
-                                id={`grid-decl-${selectedMonth}`}
-                                checked={checks.declarationsDone}
-                                onCheckedChange={() => toggleCheck(year, selectedMonth, 'declarationsDone')}
-                            />
-                            <div className="grid gap-1 leading-none">
-                                <Label htmlFor={`grid-decl-${selectedMonth}`} className="font-medium cursor-pointer text-sm">
-                                    Arbetsgivardeklaration
-                                </Label>
-                                <p className="text-xs text-muted-foreground">
-                                    Löner och avgifter bokförda och rapporterade.
-                                </p>
-                            </div>
-                        </div>
-
-                        <div className="flex items-start gap-3 p-2 rounded-md hover:bg-muted/50 transition-colors">
-                            <Checkbox
-                                id={`grid-cat-${selectedMonth}`}
-                                checked={checks.allCategorized}
-                                onCheckedChange={() => toggleCheck(year, selectedMonth, 'allCategorized')}
-                            />
-                            <div className="grid gap-1 leading-none">
-                                <Label htmlFor={`grid-cat-${selectedMonth}`} className="font-medium cursor-pointer text-sm">
-                                    Inget okategoriserat
-                                </Label>
-                                <p className="text-xs text-muted-foreground">
-                                    Inga transaktioner på OBS-kontot.
-                                </p>
-                            </div>
-                        </div>
+                        ))}
                     </CardContent>
                 </Card>
             </div>
