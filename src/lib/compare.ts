@@ -56,6 +56,6 @@ export function compareValuesWithDirection(
 ): number {
     const result = compareValues(aVal, bVal)
     // Only apply direction to actual comparisons, not null handling
-    if (aVal == null || bVal == null) return result
+    if (aVal == null || bVal == null || result === 0) return result
     return result * direction
 }

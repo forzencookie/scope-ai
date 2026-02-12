@@ -18,16 +18,26 @@ const config: Config = {
         "**/__tests__/**/*.[jt]s?(x)",
         "**/?(*.)+(spec|test).[jt]s?(x)",
     ],
+    testPathIgnorePatterns: [
+        "/node_modules/",
+        "src/components/loner/dialogs/spec.tsx", // Component file, not a test
+    ],
     collectCoverageFrom: [
         "src/**/*.{js,jsx,ts,tsx}",
         "!src/**/*.d.ts",
         "!src/**/*.stories.{js,jsx,ts,tsx}",
     ],
-    transformIgnorePatterns: [
-        "node_modules/(?!(lucide-react)/)",
-        "^.+\\.module\\.(css|sass|scss)$",
-    ],
 }
 
-// createJestConfig is exported this way to ensure that next/jest can load the Next.js config which is async
-export default createJestConfig(config)
+// Override after next/jest merges its config — next/jest's own transformIgnorePatterns
+// would block lucide-react from being transformed, causing ESM import errors.
+const jestConfig = async () => {
+    const nextConfig = await createJestConfig(config)()
+    nextConfig.transformIgnorePatterns = [
+        "/node_modules/(?!(lucide-react|jspdf|fflate|fast-png)/)",
+        "^.+\\.module\\.(css|sass|scss)$",
+    ]
+    return nextConfig
+}
+
+export default jestConfig

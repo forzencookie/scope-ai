@@ -25,7 +25,7 @@ describe('Chat API Validation Logic', () => {
             const result = validateChatMessages([])
             
             expect(result.valid).toBe(false)
-            expect(result.error).toContain('at least one message')
+            expect(result.error).toContain('At least one message')
         })
 
         it('should reject invalid roles', () => {
@@ -55,7 +55,7 @@ describe('Chat API Validation Logic', () => {
             const result = validateChatMessages(messages)
             
             expect(result.valid).toBe(false)
-            expect(result.error).toContain('too long')
+            expect(result.error).toContain('exceeds maximum length')
         })
 
         it('should reject too many messages', () => {

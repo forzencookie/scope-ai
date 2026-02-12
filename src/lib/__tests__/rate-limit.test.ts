@@ -3,7 +3,7 @@
  */
 
 // Mock Supabase before importing rate-limit
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/database/supabase', () => ({
     supabase: {
         from: jest.fn(() => ({
             select: jest.fn().mockReturnThis(),

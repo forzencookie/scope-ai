@@ -1,4 +1,9 @@
 import "@testing-library/jest-dom"
+import { TextEncoder, TextDecoder } from "util"
+
+// Polyfill TextEncoder/TextDecoder for jsdom (used by jspdf/iobuffer)
+global.TextEncoder = TextEncoder
+global.TextDecoder = TextDecoder as typeof global.TextDecoder
 
 // Mock window.matchMedia
 Object.defineProperty(window, "matchMedia", {

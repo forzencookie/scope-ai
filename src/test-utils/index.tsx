@@ -1,6 +1,7 @@
 import { ReactElement, ReactNode } from "react"
 import { render, RenderOptions } from "@testing-library/react"
 import { DataProvider, DataProviderProps } from "@/providers"
+import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ToastProvider } from "@/components/ui/toast"
 import type { Transaction, Invoice, Receipt, QuickStat, PendingTask } from "@/types"
 import { TRANSACTION_STATUS_LABELS, INVOICE_STATUS_LABELS, RECEIPT_STATUS_LABELS } from "@/lib/localization"
@@ -166,15 +167,17 @@ export function renderWithProviders(
     { providerProps, ...renderOptions }: CustomRenderOptions = {}
 ) {
     const Wrapper = ({ children }: { children: ReactNode }) => (
-        <ToastProvider>
-            <DataProvider
-                initialTransactions={providerProps?.initialTransactions ?? []}
-                initialInvoices={providerProps?.initialInvoices ?? []}
-                initialReceipts={providerProps?.initialReceipts ?? []}
-            >
-                {children}
-            </DataProvider>
-        </ToastProvider>
+        <TextModeProvider>
+            <ToastProvider>
+                <DataProvider
+                    initialTransactions={providerProps?.initialTransactions ?? []}
+                    initialInvoices={providerProps?.initialInvoices ?? []}
+                    initialReceipts={providerProps?.initialReceipts ?? []}
+                >
+                    {children}
+                </DataProvider>
+            </ToastProvider>
+        </TextModeProvider>
     )
 
     return {

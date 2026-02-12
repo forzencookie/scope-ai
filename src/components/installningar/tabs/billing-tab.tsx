@@ -1,6 +1,7 @@
 "use client"
 
-import { CreditCard, Sparkles, Zap, AlertCircle, TrendingUp } from "lucide-react"
+import { useState, useEffect, useCallback } from "react"
+import { CreditCard, Sparkles, Zap, AlertCircle, TrendingUp, Loader2, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
@@ -39,10 +40,10 @@ function UsageBar() {
                             Demo-läge – Simulerad AI
                         </p>
                         <p className="text-sm text-muted-foreground mt-1">
-                            Du använder simulerade AI-svar. Uppgradera till Pro för att få tillgång till 
+                            Du använder simulerade AI-svar. Uppgradera till Pro för att få tillgång till
                             riktig AI med {formatTokens(TIER_TOKEN_LIMITS.pro)} tokens per månad.
                         </p>
-                        <Button size="sm" className="mt-3">
+                        <Button size="sm" className="mt-3" onClick={() => handleUpgrade()}>
                             <Sparkles className="h-4 w-4 mr-2" />
                             Uppgradera till Pro
                         </Button>
@@ -70,8 +71,8 @@ function UsageBar() {
             </div>
 
             <div className="space-y-2">
-                <Progress 
-                    value={usage.usagePercent} 
+                <Progress
+                    value={usage.usagePercent}
                     className={cn(
                         "h-3",
                         isOver && "[&>div]:bg-red-500",
@@ -107,38 +108,73 @@ function UsageBar() {
             )}
 
             <div className="text-xs text-muted-foreground">
-                Perioden återställs {usage.periodEnd.toLocaleDateString("sv-SE", { 
-                    day: "numeric", 
-                    month: "long" 
+                Perioden återställs {usage.periodEnd.toLocaleDateString("sv-SE", {
+                    day: "numeric",
+                    month: "long"
                 })}
             </div>
         </div>
     )
 }
 
+async function handleUpgrade() {
+    try {
+        const response = await fetch("/api/stripe/checkout", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ tier: "pro" }),
+        })
+        const data = await response.json()
+        if (data.url) {
+            window.location.href = data.url
+        }
+    } catch (error) {
+        console.error("[Billing] Failed to create checkout:", error)
+    }
+}
+
 function BuyCreditsSection() {
     const { isDemo } = useSubscription()
+    const [loadingPackage, setLoadingPackage] = useState<number | null>(null)
 
     if (isDemo) return null
 
+    const handleBuyCredits = async (tokens: number) => {
+        setLoadingPackage(tokens)
+        try {
+            const response = await fetch("/api/stripe/credits", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ tokens }),
+            })
+            const data = await response.json()
+            if (data.url) {
+                window.location.href = data.url
+            }
+        } catch (error) {
+            console.error("[Billing] Failed to create credit checkout:", error)
+        } finally {
+            setLoadingPackage(null)
+        }
+    }
+
     return (
-        <SettingsSection 
-            title="Köp extra credits" 
+        <SettingsSection
+            title="Köp extra credits"
             description="Om du förbrukar din månadskvot kan du köpa extra tokens"
         >
             <div className="grid gap-3 sm:grid-cols-3">
                 {CREDIT_PACKAGES.map((pkg) => (
                     <button
                         key={pkg.tokens}
+                        disabled={loadingPackage !== null}
                         className={cn(
                             "relative rounded-lg border-2 p-4 text-left transition-colors",
                             "hover:border-primary hover:bg-accent/50",
+                            "disabled:opacity-50 disabled:cursor-not-allowed",
                             pkg.popular && "border-primary bg-primary/5"
                         )}
-                        onClick={() => {
-                            // TODO: Integrate with Stripe
-                            alert(`Köp ${pkg.label} för ${pkg.price} kr`)
-                        }}
+                        onClick={() => handleBuyCredits(pkg.tokens)}
                     >
                         {pkg.popular && (
                             <span className="absolute -top-2 left-3 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-full">
@@ -151,7 +187,13 @@ function BuyCreditsSection() {
                             </span>
                         )}
                         <div className="font-semibold">{pkg.label}</div>
-                        <div className="text-2xl font-bold mt-1">{pkg.price} kr</div>
+                        <div className="text-2xl font-bold mt-1">
+                            {loadingPackage === pkg.tokens ? (
+                                <Loader2 className="h-6 w-6 animate-spin" />
+                            ) : (
+                                `${pkg.price} kr`
+                            )}
+                        </div>
                         <div className="text-xs text-muted-foreground mt-1">
                             {(pkg.price / (pkg.tokens / 1000000)).toFixed(0)} kr/1M tokens
                         </div>
@@ -165,9 +207,71 @@ function BuyCreditsSection() {
     )
 }
 
+interface BillingItem {
+    id: string
+    date: string
+    description: string
+    amount: string
+    status: "Betald" | "Obetald" | "Väntande"
+    type: "subscription" | "credits"
+    invoiceUrl?: string
+    receiptUrl?: string
+}
+
+interface PaymentMethodInfo {
+    brand: string
+    last4: string
+    expMonth: number
+    expYear: number
+}
+
+function useBillingHistory() {
+    const [items, setItems] = useState<BillingItem[]>([])
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethodInfo | null>(null)
+    const [loading, setLoading] = useState(true)
+
+    const fetch_ = useCallback(async () => {
+        try {
+            const response = await fetch("/api/stripe/billing-history")
+            if (response.ok) {
+                const data = await response.json()
+                setItems(data.items || [])
+                setPaymentMethod(data.paymentMethod || null)
+            }
+        } catch (error) {
+            console.error("[Billing] Failed to fetch billing history:", error)
+        } finally {
+            setLoading(false)
+        }
+    }, [])
+
+    useEffect(() => { fetch_() }, [fetch_])
+
+    return { items, paymentMethod, loading }
+}
+
 export function BillingTab() {
     const { text } = useTextMode()
     const { tierName, isDemo } = useSubscription()
+    const { items: billingItems, paymentMethod, loading: billingLoading } = useBillingHistory()
+    const [portalLoading, setPortalLoading] = useState(false)
+
+    const openPortal = async () => {
+        setPortalLoading(true)
+        try {
+            const response = await fetch("/api/stripe/portal", {
+                method: "POST",
+            })
+            const data = await response.json()
+            if (data.url) {
+                window.location.href = data.url
+            }
+        } catch (error) {
+            console.error("[Billing] Failed to open portal:", error)
+        } finally {
+            setPortalLoading(false)
+        }
+    }
 
     return (
         <div className="space-y-6">
@@ -185,14 +289,23 @@ export function BillingTab() {
                             {isDemo ? "Gratis" : "449 kr/månad"}
                         </p>
                     </div>
-                    <span className={cn(
-                        "text-xs px-2 py-1 rounded-full",
-                        isDemo 
-                            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                            : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                    )}>
-                        {isDemo ? "Demo" : text.settings.active}
-                    </span>
+                    <div className="flex items-center gap-2">
+                        {!isDemo && (
+                            <Button variant="outline" size="sm" onClick={openPortal} disabled={portalLoading}>
+                                {portalLoading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                                Hantera prenumeration
+                                <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                        )}
+                        <span className={cn(
+                            "text-xs px-2 py-1 rounded-full",
+                            isDemo
+                                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
+                                : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
+                        )}>
+                            {isDemo ? "Demo" : text.settings.active}
+                        </span>
+                    </div>
                 </div>
             </div>
 
@@ -210,12 +323,27 @@ export function BillingTab() {
                     <div className="flex items-center justify-between rounded-lg border-2 border-border/60 p-4">
                         <div className="flex items-center gap-3">
                             <CreditCard className="h-5 w-5 text-muted-foreground" />
-                            <div>
-                                <p className="text-sm font-medium">•••• •••• •••• 4242</p>
-                                <p className="text-xs text-muted-foreground">{text.settings.expires} 12/26</p>
-                            </div>
+                            {billingLoading ? (
+                                <div className="animate-pulse">
+                                    <div className="h-4 bg-muted rounded w-32 mb-1" />
+                                    <div className="h-3 bg-muted rounded w-20" />
+                                </div>
+                            ) : paymentMethod ? (
+                                <div>
+                                    <p className="text-sm font-medium">
+                                        •••• •••• •••• {paymentMethod.last4}
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} — {text.settings.expires} {paymentMethod.expMonth}/{paymentMethod.expYear}
+                                    </p>
+                                </div>
+                            ) : (
+                                <p className="text-sm text-muted-foreground">Inget betalkort registrerat</p>
+                            )}
                         </div>
-                        <Button variant="ghost" size="sm">{text.actions.edit}</Button>
+                        <Button variant="ghost" size="sm" onClick={openPortal} disabled={portalLoading}>
+                            {portalLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : text.actions.edit}
+                        </Button>
                     </div>
                 </SettingsSection>
             )}
@@ -223,38 +351,32 @@ export function BillingTab() {
             {/* Billing History - only show for paid users */}
             {!isDemo && (
                 <SettingsSection title={text.settings.billingHistory}>
-                    <div className="space-y-1">
-                        <BillingHistoryRow
-                            date="2024-01-01"
-                            id="INV24001"
-                            paymentMethod="Visa"
-                            cardLastFour="4242"
-                            amount="299 kr"
-                            status="Betald"
-                            onDownloadReceipt={() => alert("Laddar ner kvitto...")}
-                            onViewInvoice={() => alert("Öppnar faktura...")}
-                        />
-                        <BillingHistoryRow
-                            date="2023-12-01"
-                            id="INV23012"
-                            paymentMethod="Visa"
-                            cardLastFour="4242"
-                            amount="299 kr"
-                            status="Betald"
-                            onDownloadReceipt={() => alert("Laddar ner kvitto...")}
-                            onViewInvoice={() => alert("Öppnar faktura...")}
-                        />
-                        <BillingHistoryRow
-                            date="2023-11-01"
-                            id="INV23011"
-                            paymentMethod="Mastercard"
-                            cardLastFour="8888"
-                            amount="299 kr"
-                            status="Betald"
-                            onDownloadReceipt={() => alert("Laddar ner kvitto...")}
-                            onViewInvoice={() => alert("Öppnar faktura...")}
-                        />
-                    </div>
+                    {billingLoading ? (
+                        <div className="space-y-3 animate-pulse">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-8 bg-muted rounded" />
+                            ))}
+                        </div>
+                    ) : billingItems.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center">
+                            Ingen betalningshistorik ännu.
+                        </p>
+                    ) : (
+                        <div className="space-y-1">
+                            {billingItems.map((item) => (
+                                <BillingHistoryRow
+                                    key={item.id}
+                                    date={new Date(item.date).toLocaleDateString("sv-SE")}
+                                    id={item.id}
+                                    paymentMethod={item.type === "credits" ? "Credits" : "Prenumeration"}
+                                    amount={item.amount}
+                                    status={item.status}
+                                    onDownloadReceipt={item.receiptUrl ? () => window.open(item.receiptUrl, "_blank") : undefined}
+                                    onViewInvoice={item.invoiceUrl ? () => window.open(item.invoiceUrl, "_blank") : undefined}
+                                />
+                            ))}
+                        </div>
+                    )}
                 </SettingsSection>
             )}
         </div>

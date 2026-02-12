@@ -16,7 +16,7 @@ const mockOnAuthStateChange = jest.fn()
 const mockResetPassword = jest.fn()
 const mockUpdatePassword = jest.fn()
 
-jest.mock('@/lib/supabase-auth', () => ({
+jest.mock('@/lib/database/supabase-auth', () => ({
     signIn: (...args: unknown[]) => mockSignIn(...args),
     signUp: (...args: unknown[]) => mockSignUp(...args),
     signOut: (...args: unknown[]) => mockSignOut(...args),
@@ -149,7 +149,9 @@ describe('useAuth', () => {
                 expect(result.current.loading).toBe(false)
             })
 
-            expect(result.current.signIn).toBe(mockSignIn)
+            expect(typeof result.current.signIn).toBe('function')
+            await result.current.signIn('a@b.com', 'pass')
+            expect(mockSignIn).toHaveBeenCalledWith('a@b.com', 'pass')
         })
 
         it('should expose signUp function', async () => {
@@ -159,7 +161,9 @@ describe('useAuth', () => {
                 expect(result.current.loading).toBe(false)
             })
 
-            expect(result.current.signUp).toBe(mockSignUp)
+            expect(typeof result.current.signUp).toBe('function')
+            await result.current.signUp('a@b.com', 'pass')
+            expect(mockSignUp).toHaveBeenCalledWith('a@b.com', 'pass')
         })
 
         it('should expose signOut function', async () => {
@@ -169,7 +173,9 @@ describe('useAuth', () => {
                 expect(result.current.loading).toBe(false)
             })
 
-            expect(result.current.signOut).toBe(mockSignOut)
+            expect(typeof result.current.signOut).toBe('function')
+            await result.current.signOut()
+            expect(mockSignOut).toHaveBeenCalled()
         })
 
         it('should expose signInWithOAuth function', async () => {
@@ -179,7 +185,9 @@ describe('useAuth', () => {
                 expect(result.current.loading).toBe(false)
             })
 
-            expect(result.current.signInWithOAuth).toBe(mockSignInWithOAuth)
+            expect(typeof result.current.signInWithOAuth).toBe('function')
+            await result.current.signInWithOAuth('google')
+            expect(mockSignInWithOAuth).toHaveBeenCalledWith('google')
         })
 
         it('should expose resetPassword function', async () => {
@@ -189,7 +197,9 @@ describe('useAuth', () => {
                 expect(result.current.loading).toBe(false)
             })
 
-            expect(result.current.resetPassword).toBe(mockResetPassword)
+            expect(typeof result.current.resetPassword).toBe('function')
+            await result.current.resetPassword('test@example.com')
+            expect(mockResetPassword).toHaveBeenCalledWith('test@example.com')
         })
 
         it('should expose updatePassword function', async () => {
@@ -199,7 +209,9 @@ describe('useAuth', () => {
                 expect(result.current.loading).toBe(false)
             })
 
-            expect(result.current.updatePassword).toBe(mockUpdatePassword)
+            expect(typeof result.current.updatePassword).toBe('function')
+            await result.current.updatePassword('newpass123')
+            expect(mockUpdatePassword).toHaveBeenCalledWith('newpass123')
         })
     })
 

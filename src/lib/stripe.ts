@@ -241,10 +241,13 @@ export async function addUserCredits(
     const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()
 
-    const { error } = await supabase.rpc('add_user_credits', {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase.rpc('add_user_credits' as any, {
         p_user_id: userId,
-        p_amount: credits,
-    })
+        p_credits: credits,
+        p_stripe_payment_id: stripePaymentId ?? null,
+        p_price_paid_cents: pricePaidCents ?? null,
+    } as any)
 
     if (error) {
         console.error('[Stripe] Failed to add credits:', error)

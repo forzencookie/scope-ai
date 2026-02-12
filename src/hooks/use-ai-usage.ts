@@ -103,8 +103,15 @@ export function useAIUsage(): UseAIUsageReturn {
         }
       }
 
-      // TODO: Fetch extra credits from a credits table when implemented
-      const extraCredits = 0
+      // Fetch purchased credits from usercredits table
+      const { data: creditsData, error: creditsError } = await supabase
+        .rpc("get_user_credits", { p_user_id: user.id })
+
+      if (creditsError) {
+        console.error("Failed to fetch credits:", creditsError)
+      }
+
+      const extraCredits = creditsData ?? 0
 
       const tokenLimit = TIER_TOKEN_LIMITS[tier] || 0
       const totalAvailable = tokenLimit + extraCredits

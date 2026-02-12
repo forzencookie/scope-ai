@@ -15,7 +15,7 @@ const mockResetPasswordForEmail = jest.fn()
 const mockUpdateUser = jest.fn()
 const mockOnAuthStateChange = jest.fn()
 
-jest.mock('@/lib/supabase', () => ({
+jest.mock('@/lib/database/supabase', () => ({
     supabase: {
         auth: {
             signUp: (...args: unknown[]) => mockSignUp(...args),
@@ -71,6 +71,9 @@ describe('Supabase Auth Functions', () => {
             expect(mockSignUp).toHaveBeenCalledWith({
                 email: 'test@example.com',
                 password: 'password123',
+                options: {
+                    emailRedirectTo: expect.stringContaining('/auth/callback'),
+                },
             })
             expect(result.user).toEqual(mockUser)
             expect(result.session).toEqual(mockSession)
