@@ -18,6 +18,7 @@ import {
     ShareStructureStep,
     ShareholdersStep,
     PartnersStep,
+    ProfileStep,
     BankStep,
     ImportHistoryStep,
     DocumentsStep,
@@ -155,6 +156,8 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
                         onDataChange={(data) => { partnersRef.current = data }}
                     />
                 )
+            case "profile":
+                return <ProfileStep />
             case "bank":
                 return <BankStep />
             case "import-history":

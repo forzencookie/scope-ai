@@ -1,10 +1,12 @@
 "use client"
 
 import * as React from "react"
+import { useRef, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { useTextMode } from "@/providers/text-mode-provider"
+import { Loader2 } from "lucide-react"
 import {
     SettingsPageHeader,
     SettingsFormField,
@@ -25,10 +27,49 @@ interface AccountTabProps {
     formData: SettingsFormData
     setFormData: React.Dispatch<React.SetStateAction<SettingsFormData>>
     onSave: () => void
+    avatarUrl?: string
+    onAvatarChange?: (url: string) => void
 }
 
-export function AccountTab({ formData, setFormData, onSave }: AccountTabProps) {
+export function AccountTab({ formData, setFormData, onSave, avatarUrl, onAvatarChange }: AccountTabProps) {
     const { text } = useTextMode()
+    const fileInputRef = useRef<HTMLInputElement>(null)
+    const [isUploading, setIsUploading] = useState(false)
+
+    const initials = formData.name
+        ? formData.name.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)
+        : 'U'
+
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploading(true)
+        try {
+            const form = new FormData()
+            form.append('file', file)
+
+            const response = await fetch('/api/user/avatar', {
+                method: 'POST',
+                body: form,
+            })
+
+            if (response.ok) {
+                const { avatar_url } = await response.json()
+                onAvatarChange?.(avatar_url)
+            } else {
+                const err = await response.json()
+                console.error('[Avatar] Upload failed:', err)
+            }
+        } catch (error) {
+            console.error('[Avatar] Upload error:', error)
+        } finally {
+            setIsUploading(false)
+            // Reset input so the same file can be re-selected
+            if (fileInputRef.current) fileInputRef.current.value = ''
+        }
+    }
+
     return (
         <div className="space-y-6">
             <SettingsPageHeader
@@ -38,11 +79,32 @@ export function AccountTab({ formData, setFormData, onSave }: AccountTabProps) {
 
             <div className="flex items-center gap-4">
                 <Avatar className="h-16 w-16">
-                    <AvatarImage src="" alt={text.settings.profilePicture} />
-                    <AvatarFallback className="text-lg">JS</AvatarFallback>
+                    <AvatarImage src={avatarUrl || ""} alt={text.settings.profilePicture} />
+                    <AvatarFallback className="text-lg">{initials}</AvatarFallback>
                 </Avatar>
                 <div className="space-y-1">
-                    <Button variant="outline" size="sm">{text.settings.changePicture}</Button>
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
+                        className="hidden"
+                        onChange={handleAvatarUpload}
+                    />
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => fileInputRef.current?.click()}
+                        disabled={isUploading}
+                    >
+                        {isUploading ? (
+                            <>
+                                <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                Laddar upp...
+                            </>
+                        ) : (
+                            text.settings.changePicture
+                        )}
+                    </Button>
                     <p className="text-xs text-muted-foreground">{text.settings.pictureHint}</p>
                 </div>
             </div>

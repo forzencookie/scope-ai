@@ -66,6 +66,52 @@ export async function uploadReceiptFile(file: File, userId: string): Promise<Upl
 }
 
 /**
+ * Upload an avatar image to Supabase Storage
+ * Replaces existing avatar (upsert). Public bucket for direct URL access.
+ */
+export async function uploadAvatarFile(file: File, userId: string): Promise<UploadResult> {
+    try {
+        const supabase = getSupabaseClient()
+
+        const extension = file.name.split('.').pop() || 'jpg'
+        const path = `${userId}/avatar.${extension}`
+
+        const { data, error } = await supabase.storage
+            .from('avatars')
+            .upload(path, file, {
+                cacheControl: '3600',
+                upsert: true // Replace existing avatar
+            })
+
+        if (error) {
+            console.error('Avatar upload error:', error)
+            return { success: false, error: error.message }
+        }
+
+        const { data: urlData } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(data.path)
+
+        // Append cache-buster so browser shows the new image immediately
+        const url = `${urlData.publicUrl}?t=${Date.now()}`
+
+        // Update profile avatar_url
+        await supabase
+            .from('profiles')
+            .update({ avatar_url: url })
+            .eq('id', userId)
+
+        return { success: true, url, path: data.path }
+    } catch (error) {
+        console.error('Avatar upload error:', error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown upload error'
+        }
+    }
+}
+
+/**
  * Get a signed URL for a private receipt file
  * 
  * @param path - The file path in storage

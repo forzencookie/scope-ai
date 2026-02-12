@@ -95,6 +95,9 @@ export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialo
     }
   }, [defaultTab])
 
+  // Avatar state
+  const [avatarUrl, setAvatarUrl] = React.useState<string>("")
+
   // Local form state
   const [formData, setFormData] = React.useState({
     name: "",
@@ -105,6 +108,16 @@ export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialo
     phone: "",
     contactPerson: "",
   })
+
+  // Fetch profile (avatar) on mount
+  React.useEffect(() => {
+    fetch('/api/user/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+      })
+      .catch(() => {})
+  }, [])
 
   // Sync with company data when it loads
   React.useEffect(() => {
@@ -133,7 +146,7 @@ export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialo
   const renderTabContent = () => {
     switch (activeTab) {
       case "Konto":
-        return <AccountTab formData={formData} setFormData={setFormData} onSave={handleSave} />
+        return <AccountTab formData={formData} setFormData={setFormData} onSave={handleSave} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} />
       case "Företagsinformation":
         return <CompanyTab formData={formData} setFormData={setFormData} onSave={handleSave} />
       case "Integrationer":

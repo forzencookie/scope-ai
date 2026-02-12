@@ -5,6 +5,7 @@ import {
   Users,
   Landmark,
   UploadCloud,
+  UserCircle,
 } from "lucide-react"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 import type { OnboardingStep } from "./types"
@@ -87,6 +88,15 @@ export const onboardingSteps: OnboardingStep[] = [
     bgColor: "bg-blue-500/10",
     companyTypes: ["hb", "kb"],
     hasPartners: true,
+  },
+  {
+    id: "profile",
+    title: "Din profil",
+    description: "Välj en profilbild och hur du vill att appen ska se ut. Du kan ändra detta när som helst i inställningarna.",
+    icon: UserCircle,
+    color: "text-pink-600",
+    bgColor: "bg-pink-500/10",
+    optional: true,
   },
   {
     id: "bank",

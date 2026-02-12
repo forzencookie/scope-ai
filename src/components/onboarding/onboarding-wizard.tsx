@@ -21,6 +21,7 @@ import {
   ShareStructureStep,
   ShareholdersStep,
   PartnersStep,
+  ProfileStep,
   BankStep,
   ImportHistoryStep,
   DocumentsStep,
@@ -133,6 +134,8 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
             onDataChange={(data) => { partnersRef.current = data }}
           />
         )
+      case "profile":
+        return <ProfileStep />
       case "bank":
         return <BankStep />
       case "import-history":
