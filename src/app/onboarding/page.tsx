@@ -1,7 +1,7 @@
 "use client"
 
-import { useEffect } from "react"
 import { useRouter } from "next/navigation"
+import { CompanyProvider } from "@/providers/company-provider"
 import { OnboardingPage } from "@/components/onboarding/onboarding-page"
 
 export default function Onboarding() {
@@ -20,7 +20,6 @@ export default function Onboarding() {
             }
         } catch (error) {
             console.error('[Onboarding] Error completing:', error)
-            // Still redirect on error
             router.push('/dashboard')
         }
     }
@@ -39,9 +38,11 @@ export default function Onboarding() {
     }
 
     return (
-        <OnboardingPage
-            onComplete={handleComplete}
-            onSkip={handleSkip}
-        />
+        <CompanyProvider>
+            <OnboardingPage
+                onComplete={handleComplete}
+                onSkip={handleSkip}
+            />
+        </CompanyProvider>
     )
 }

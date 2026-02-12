@@ -1,14 +1,16 @@
 "use client"
 
 import * as React from "react"
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { useCompany } from "@/providers/company-provider"
 import { onboardingSteps } from "./step-config"
 import type { OnboardingWizardProps } from "./types"
+import type { OnboardingShareholder, OnboardingPartner } from "./onboarding-page"
 
 // Step renderers
 import {
@@ -31,23 +33,59 @@ import {
 // ============================================================================
 
 export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWizardProps) {
+  const { companyType, updateCompany } = useCompany()
   const [currentStep, setCurrentStep] = useState(0)
   const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
-  const [onboardingMode, setOnboardingMode] = useState<"fresh" | "existing">("fresh")
-  
+
+  const shareholdersRef = useRef<OnboardingShareholder[]>([])
+  const partnersRef = useRef<OnboardingPartner[]>([])
+
   const step = onboardingSteps[currentStep]
   const isLastStep = currentStep === onboardingSteps.length - 1
   const isFirstStep = currentStep === 0
+
+  const seedData = useCallback(async () => {
+    const shareholders = shareholdersRef.current
+    const partners = partnersRef.current
+    if (shareholders.length === 0 && partners.length === 0) return
+
+    try {
+      await fetch("/api/onboarding/seed", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          companyType,
+          shareholders: shareholders.length > 0
+            ? shareholders.map(s => ({
+                name: s.name, ssn_org_nr: s.ssn,
+                shares_count: s.shares, shares_percentage: 0, share_class: s.shareClass,
+              }))
+            : undefined,
+          partners: partners.length > 0
+            ? partners.map(p => ({
+                name: p.name, ssn_org_nr: p.ssn,
+                type: p.type, capital_contribution: p.capitalContribution, ownership_percentage: 0,
+              }))
+            : undefined,
+        }),
+      })
+    } catch (error) {
+      console.error("[Onboarding] Failed to seed data:", error)
+    }
+  }, [companyType])
 
   const handleNext = useCallback(() => {
     setCompletedSteps(prev => new Set([...prev, step.id]))
 
     if (isLastStep) {
-      onComplete()
+      seedData().then(() => {
+        updateCompany({ onboardingComplete: true })
+        onComplete()
+      })
     } else {
       setCurrentStep(prev => prev + 1)
     }
-  }, [isLastStep, onComplete, step.id])
+  }, [isLastStep, onComplete, step.id, seedData, updateCompany])
 
   const handleSkip = useCallback(() => {
     setCurrentStep(prev => prev + 1)
@@ -59,9 +97,10 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
   }, [isFirstStep])
 
   const handleSelectMode = useCallback((mode: "fresh" | "existing") => {
-    setOnboardingMode(mode)
-    handleNext()
-  }, [handleNext])
+    updateCompany({ onboardingMode: mode })
+    setCompletedSteps(prev => new Set([...prev, step.id]))
+    setCurrentStep(prev => prev + 1)
+  }, [step.id, updateCompany])
 
   if (!isOpen) return null
 
@@ -77,13 +116,23 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
       case "company-type":
         return <CompanyTypeStep />
       case "company":
-        return <CompanyInfoStep step={step} />
+        return <CompanyInfoStep />
       case "share-structure":
         return <ShareStructureStep />
       case "shareholders":
-        return <ShareholdersStep />
+        return (
+          <ShareholdersStep
+            initialData={shareholdersRef.current}
+            onDataChange={(data) => { shareholdersRef.current = data }}
+          />
+        )
       case "partners":
-        return <PartnersStep />
+        return (
+          <PartnersStep
+            initialData={partnersRef.current}
+            onDataChange={(data) => { partnersRef.current = data }}
+          />
+        )
       case "bank":
         return <BankStep />
       case "import-history":
@@ -234,7 +283,6 @@ export function useOnboarding() {
         const response = await fetch('/api/onboarding/status')
 
         if (!response.ok) {
-          // If not authenticated or error, assume onboarding completed (don't block)
           console.warn('[Onboarding] Could not fetch status, assuming completed')
           if (mounted) {
             setHasCompletedOnboarding(true)
@@ -247,18 +295,15 @@ export function useOnboarding() {
 
         if (mounted) {
           setHasCompletedOnboarding(!data.needsOnboarding)
-
-          // Set redirect flag if user needs onboarding
           if (data.needsOnboarding) {
             setShouldRedirect(true)
           }
-
           setIsLoading(false)
         }
       } catch (error) {
         console.error('[Onboarding] Error fetching status:', error)
         if (mounted) {
-          setHasCompletedOnboarding(true) // Fail open - don't block user
+          setHasCompletedOnboarding(true)
           setIsLoading(false)
         }
       }
@@ -299,11 +344,10 @@ export function useOnboarding() {
       })
 
       if (response.ok) {
-        setHasCompletedOnboarding(true) // Treat as "done" for UI purposes
+        setHasCompletedOnboarding(true)
         setShowOnboarding(false)
       } else {
         console.error('[Onboarding] Failed to skip onboarding')
-        // Still close the dialog even if API fails
         setShowOnboarding(false)
       }
     } catch (error) {
@@ -313,8 +357,6 @@ export function useOnboarding() {
   }, [])
 
   const resetOnboarding = React.useCallback(() => {
-    // This is mainly for dev/testing - reset state locally
-    // In production, would need an admin endpoint to clear profile columns
     setHasCompletedOnboarding(false)
     setShowOnboarding(true)
   }, [])

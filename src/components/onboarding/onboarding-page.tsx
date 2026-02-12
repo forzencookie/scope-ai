@@ -1,11 +1,12 @@
 "use client"
 
-import { useState, useCallback } from "react"
+import { useState, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, CheckCircle2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { useCompany } from "@/providers/company-provider"
 import { onboardingSteps } from "./step-config"
 
 // Step renderers
@@ -28,24 +29,87 @@ interface OnboardingPageProps {
     onSkip: () => void
 }
 
+// Shareholder/Partner types matching the seed API
+interface OnboardingShareholder {
+    name: string
+    ssn: string
+    shares: number
+    shareClass: "A" | "B"
+}
+
+interface OnboardingPartner {
+    name: string
+    ssn: string
+    type: "komplementär" | "kommanditdelägare"
+    capitalContribution: number
+}
+
+export type { OnboardingShareholder, OnboardingPartner }
+
 export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
+    const { companyType, updateCompany } = useCompany()
     const [currentStep, setCurrentStep] = useState(0)
     const [completedSteps, setCompletedSteps] = useState<Set<string>>(new Set())
-    const [onboardingMode, setOnboardingMode] = useState<"fresh" | "existing">("fresh")
+
+    // Collected data from steps (persisted via ref so it survives step transitions)
+    const shareholdersRef = useRef<OnboardingShareholder[]>([])
+    const partnersRef = useRef<OnboardingPartner[]>([])
 
     const step = onboardingSteps[currentStep]
     const isLastStep = currentStep === onboardingSteps.length - 1
     const isFirstStep = currentStep === 0
 
+    // Seed shareholders/partners to database
+    const seedData = useCallback(async () => {
+        const shareholders = shareholdersRef.current
+        const partners = partnersRef.current
+
+        if (shareholders.length === 0 && partners.length === 0) return
+
+        try {
+            await fetch("/api/onboarding/seed", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    companyType,
+                    shareholders: shareholders.length > 0
+                        ? shareholders.map(s => ({
+                            name: s.name,
+                            ssn_org_nr: s.ssn,
+                            shares_count: s.shares,
+                            shares_percentage: 0, // will be computed by DB
+                            share_class: s.shareClass,
+                        }))
+                        : undefined,
+                    partners: partners.length > 0
+                        ? partners.map(p => ({
+                            name: p.name,
+                            ssn_org_nr: p.ssn,
+                            type: p.type,
+                            capital_contribution: p.capitalContribution,
+                            ownership_percentage: 0,
+                        }))
+                        : undefined,
+                }),
+            })
+        } catch (error) {
+            console.error("[Onboarding] Failed to seed data:", error)
+        }
+    }, [companyType])
+
     const handleNext = useCallback(() => {
         setCompletedSteps(prev => new Set([...prev, step.id]))
 
         if (isLastStep) {
-            onComplete()
+            // Seed collected data before completing
+            seedData().then(() => {
+                updateCompany({ onboardingComplete: true })
+                onComplete()
+            })
         } else {
             setCurrentStep(prev => prev + 1)
         }
-    }, [isLastStep, onComplete, step.id])
+    }, [isLastStep, onComplete, step.id, seedData, updateCompany])
 
     const handleSkip = useCallback(() => {
         setCurrentStep(prev => prev + 1)
@@ -57,9 +121,10 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
     }, [isFirstStep])
 
     const handleSelectMode = useCallback((mode: "fresh" | "existing") => {
-        setOnboardingMode(mode)
-        handleNext()
-    }, [handleNext])
+        updateCompany({ onboardingMode: mode })
+        setCompletedSteps(prev => new Set([...prev, step.id]))
+        setCurrentStep(prev => prev + 1)
+    }, [step.id, updateCompany])
 
     const Icon = step.icon
 
@@ -73,13 +138,23 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
             case "company-type":
                 return <CompanyTypeStep />
             case "company":
-                return <CompanyInfoStep step={step} />
+                return <CompanyInfoStep />
             case "share-structure":
                 return <ShareStructureStep />
             case "shareholders":
-                return <ShareholdersStep />
+                return (
+                    <ShareholdersStep
+                        initialData={shareholdersRef.current}
+                        onDataChange={(data) => { shareholdersRef.current = data }}
+                    />
+                )
             case "partners":
-                return <PartnersStep />
+                return (
+                    <PartnersStep
+                        initialData={partnersRef.current}
+                        onDataChange={(data) => { partnersRef.current = data }}
+                    />
+                )
             case "bank":
                 return <BankStep />
             case "import-history":
