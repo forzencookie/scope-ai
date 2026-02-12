@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { tokens } = body
+        const { tokens, embedded } = body
 
         // Validate tokens matches a package
         const creditPackage = CREDIT_PACKAGES.find(p => p.tokens === tokens)
@@ -36,38 +36,56 @@ export async function POST(request: NextRequest) {
 
         const stripe = getStripe()
         
-        // Use dynamic pricing (price_data) - no need to create products in Stripe Dashboard
+        const lineItems = [
+            {
+                price_data: {
+                    currency: 'sek',
+                    product_data: {
+                        name: `AI Credits - ${creditPackage.label}`,
+                        description: `${creditPackage.label} för Scope AI-assistenten`,
+                    },
+                    unit_amount: creditPackage.price * 100, // Stripe uses öre (cents)
+                },
+                quantity: 1,
+            },
+        ]
+
+        const metadata = {
+            supabase_user_id: auth.userId,
+            credit_tokens: tokens.toString(),
+            credit_price_sek: creditPackage.price.toString(),
+            purchase_type: 'credits',
+        }
+
+        if (embedded) {
+            // Embedded checkout mode — return clientSecret
+            const session = await stripe.checkout.sessions.create({
+                customer: customerId,
+                ui_mode: 'embedded',
+                mode: 'payment',
+                line_items: lineItems,
+                return_url: `${origin}/dashboard/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+                metadata,
+            })
+
+            return NextResponse.json({ clientSecret: session.client_secret })
+        }
+
+        // Standard redirect mode
         const session = await stripe.checkout.sessions.create({
             customer: customerId,
-            mode: 'payment', // One-time payment, not subscription
-            line_items: [
-                {
-                    price_data: {
-                        currency: 'sek',
-                        product_data: {
-                            name: `AI Credits - ${creditPackage.label}`,
-                            description: `${creditPackage.label} för Scope AI-assistenten`,
-                        },
-                        unit_amount: creditPackage.price * 100, // Stripe uses öre (cents)
-                    },
-                    quantity: 1,
-                },
-            ],
+            mode: 'payment',
+            line_items: lineItems,
             success_url: `${origin}/dashboard?credits=success&tokens=${tokens}`,
             cancel_url: `${origin}/dashboard?credits=cancelled`,
-            metadata: {
-                supabase_user_id: auth.userId,
-                credit_tokens: tokens.toString(),
-                credit_price_sek: creditPackage.price.toString(),
-                purchase_type: 'credits',
-            },
+            metadata,
         })
 
         if (!session.url) {
             throw new Error('Failed to create checkout session')
         }
 
-        return NextResponse.json({ 
+        return NextResponse.json({
             url: session.url,
             sessionId: session.id,
         })

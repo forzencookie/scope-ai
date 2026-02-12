@@ -117,45 +117,17 @@ function UsageBar() {
     )
 }
 
-async function handleUpgrade() {
-    try {
-        const response = await fetch("/api/stripe/checkout", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tier: "pro" }),
-        })
-        const data = await response.json()
-        if (data.url) {
-            window.location.href = data.url
-        }
-    } catch (error) {
-        console.error("[Billing] Failed to create checkout:", error)
-    }
+function handleUpgrade() {
+    window.location.href = "/dashboard/checkout?type=subscription&tier=pro"
 }
 
 function BuyCreditsSection() {
     const { isDemo } = useSubscription()
-    const [loadingPackage, setLoadingPackage] = useState<number | null>(null)
 
     if (isDemo) return null
 
-    const handleBuyCredits = async (tokens: number) => {
-        setLoadingPackage(tokens)
-        try {
-            const response = await fetch("/api/stripe/credits", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ tokens }),
-            })
-            const data = await response.json()
-            if (data.url) {
-                window.location.href = data.url
-            }
-        } catch (error) {
-            console.error("[Billing] Failed to create credit checkout:", error)
-        } finally {
-            setLoadingPackage(null)
-        }
+    const handleBuyCredits = (tokens: number) => {
+        window.location.href = `/dashboard/checkout?type=credits&tokens=${tokens}`
     }
 
     return (
@@ -167,11 +139,9 @@ function BuyCreditsSection() {
                 {CREDIT_PACKAGES.map((pkg) => (
                     <button
                         key={pkg.tokens}
-                        disabled={loadingPackage !== null}
                         className={cn(
                             "relative rounded-lg border-2 p-4 text-left transition-colors",
                             "hover:border-primary hover:bg-accent/50",
-                            "disabled:opacity-50 disabled:cursor-not-allowed",
                             pkg.popular && "border-primary bg-primary/5"
                         )}
                         onClick={() => handleBuyCredits(pkg.tokens)}
@@ -188,11 +158,7 @@ function BuyCreditsSection() {
                         )}
                         <div className="font-semibold">{pkg.label}</div>
                         <div className="text-2xl font-bold mt-1">
-                            {loadingPackage === pkg.tokens ? (
-                                <Loader2 className="h-6 w-6 animate-spin" />
-                            ) : (
-                                `${pkg.price} kr`
-                            )}
+                            {pkg.price} kr
                         </div>
                         <div className="text-xs text-muted-foreground mt-1">
                             {(pkg.price / (pkg.tokens / 1000000)).toFixed(0)} kr/1M tokens

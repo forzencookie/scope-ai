@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, Suspense } from "react"
+import { Suspense } from "react"
 import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Check, Sparkles, Zap, Crown, Loader2 } from "lucide-react"
@@ -65,9 +65,8 @@ const plans = [
 
 function PlanSelectionContent() {
   const router = useRouter()
-  const [loading, setLoading] = useState<string | null>(null)
 
-  const handleSelectPlan = async (planId: string) => {
+  const handleSelectPlan = (planId: string) => {
     if (planId === "enterprise") {
       // TODO: Show contact/waitlist form
       return
@@ -80,22 +79,7 @@ function PlanSelectionContent() {
     }
 
     if (planId === "pro") {
-      setLoading("pro")
-      try {
-        const response = await fetch("/api/stripe/checkout", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ tier: "pro" }),
-        })
-        const data = await response.json()
-        if (data.url) {
-          window.location.href = data.url
-        }
-      } catch (error) {
-        console.error("Failed to create checkout:", error)
-      } finally {
-        setLoading(null)
-      }
+      router.push("/dashboard/checkout?type=subscription&tier=pro")
     }
   }
 
@@ -126,7 +110,6 @@ function PlanSelectionContent() {
         <div className="grid md:grid-cols-3 gap-6">
           {plans.map((plan, index) => {
             const Icon = plan.icon
-            const isLoading = loading === plan.id
 
             return (
               <motion.div
@@ -188,7 +171,7 @@ function PlanSelectionContent() {
 
                 <button
                   onClick={() => handleSelectPlan(plan.id)}
-                  disabled={plan.comingSoon || isLoading}
+                  disabled={plan.comingSoon}
                   className={cn(
                     "w-full py-3 text-sm font-medium rounded-lg transition-colors",
                     plan.highlight
@@ -198,14 +181,7 @@ function PlanSelectionContent() {
                         : "bg-white text-stone-900 border border-stone-200 hover:border-stone-300 hover:bg-stone-50"
                   )}
                 >
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                      Laddar...
-                    </span>
-                  ) : (
-                    plan.cta
-                  )}
+                  {plan.cta}
                 </button>
 
                 {plan.note && (

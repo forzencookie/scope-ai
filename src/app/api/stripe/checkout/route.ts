@@ -1,12 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
+import Stripe from 'stripe'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { createCheckoutSession, PRICE_IDS } from '@/lib/stripe'
+import { createCheckoutSession, PRICE_IDS, getOrCreateCustomer, getStripe } from '@/lib/stripe'
 
 /**
  * POST /api/stripe/checkout
- * 
+ *
  * Creates a Stripe Checkout session for subscription upgrade.
- * Body: { tier: 'pro' | 'enterprise', discountCode?: string }
+ * Body: { tier: 'pro' | 'enterprise', discountCode?: string, embedded?: boolean }
+ *
+ * When embedded=true, returns { clientSecret } for use with EmbeddedCheckout.
+ * Otherwise returns { url } for redirect-based checkout.
  */
 export async function POST(request: NextRequest) {
     try {
@@ -17,7 +21,7 @@ export async function POST(request: NextRequest) {
         }
 
         const body = await request.json()
-        const { tier, discountCode } = body
+        const { tier, discountCode, embedded } = body
 
         if (!tier || !['pro', 'enterprise'].includes(tier)) {
             return ApiResponse.badRequest('Invalid tier. Must be "pro" or "enterprise"')
@@ -30,6 +34,43 @@ export async function POST(request: NextRequest) {
 
         const origin = request.headers.get('origin') || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
 
+        if (embedded) {
+            // Embedded checkout mode — return clientSecret
+            const customerId = await getOrCreateCustomer(auth.userId, auth.email)
+            const stripe = getStripe()
+
+            const sessionConfig: Stripe.Checkout.SessionCreateParams = {
+                customer: customerId,
+                ui_mode: 'embedded',
+                mode: 'subscription',
+                line_items: [
+                    {
+                        price: PRICE_IDS[tier as 'pro' | 'enterprise'],
+                        quantity: 1,
+                    },
+                ],
+                return_url: `${origin}/dashboard/checkout/return?session_id={CHECKOUT_SESSION_ID}`,
+                metadata: {
+                    supabase_user_id: auth.userId,
+                    tier,
+                },
+                subscription_data: {
+                    metadata: {
+                        supabase_user_id: auth.userId,
+                    },
+                },
+            }
+
+            if (discountCode) {
+                sessionConfig.discounts = [{ promotion_code: discountCode }]
+            }
+
+            const session = await stripe.checkout.sessions.create(sessionConfig)
+
+            return NextResponse.json({ clientSecret: session.client_secret })
+        }
+
+        // Standard redirect mode
         const checkoutUrl = await createCheckoutSession({
             userId: auth.userId,
             email: auth.email,

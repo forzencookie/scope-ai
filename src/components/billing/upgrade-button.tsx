@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Loader2, Sparkles, Crown, Zap } from 'lucide-react'
 
@@ -32,7 +33,7 @@ export function UpgradeButton({
     size = 'default',
     className,
 }: UpgradeButtonProps) {
-    const [loading, setLoading] = useState(false)
+    const router = useRouter()
     const config = TIER_CONFIG[tier]
     const Icon = config.icon
 
@@ -45,43 +46,18 @@ export function UpgradeButton({
         return null
     }
 
-    const handleUpgrade = async () => {
-        setLoading(true)
-
-        try {
-            const response = await fetch('/api/stripe/checkout', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ tier }),
-            })
-
-            const data = await response.json()
-
-            if (data.url) {
-                window.location.href = data.url
-            } else {
-                console.error('No checkout URL returned')
-                setLoading(false)
-            }
-        } catch (error) {
-            console.error('Failed to create checkout session:', error)
-            setLoading(false)
-        }
+    const handleUpgrade = () => {
+        router.push(`/dashboard/checkout?type=subscription&tier=${tier}`)
     }
 
     return (
         <Button
             onClick={handleUpgrade}
-            disabled={loading}
             variant={variant}
             size={size}
             className={className}
         >
-            {loading ? (
-                <Loader2 className="h-4 w-4 animate-spin mr-2" />
-            ) : (
-                <Icon className="h-4 w-4 mr-2" />
-            )}
+            <Icon className="h-4 w-4 mr-2" />
             {config.label}
         </Button>
     )

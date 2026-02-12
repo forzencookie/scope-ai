@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Check, CreditCard } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -17,11 +16,10 @@ const TIER_MAP: Record<string, 'free' | 'pro' | 'enterprise'> = {
 
 export function Pricing() {
   const [billing, setBilling] = useState<"monthly" | "yearly">("monthly")
-  const [loadingTier, setLoadingTier] = useState<string | null>(null)
   const { isAuthenticated } = useAuth()
   const router = useRouter()
 
-  const handleSelectPlan = async (tierName: string, isComingSoon: boolean) => {
+  const handleSelectPlan = (tierName: string, isComingSoon: boolean) => {
     if (isComingSoon) return
     
     const tier = TIER_MAP[tierName]
@@ -32,24 +30,9 @@ export function Pricing() {
       return
     }
 
-    // Paid tier - if logged in, go directly to Stripe checkout
+    // Paid tier - if logged in, go to embedded checkout
     if (isAuthenticated) {
-      setLoadingTier(tierName)
-      try {
-        const response = await fetch('/api/stripe/checkout', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ tier }),
-        })
-        const data = await response.json()
-        if (data.url) {
-          window.location.href = data.url
-        }
-      } catch (error) {
-        console.error('Failed to create checkout session:', error)
-      } finally {
-        setLoadingTier(null)
-      }
+      router.push(`/dashboard/checkout?type=subscription&tier=${tier}`)
     } else {
       // Not logged in - go to register with plan param
       router.push(`/register?plan=${tier}`)
@@ -125,7 +108,7 @@ export function Pricing() {
 
               <button
                 onClick={() => handleSelectPlan(tier.name, tier.price === "Kommer snart")}
-                disabled={tier.price === "Kommer snart" || loadingTier === tier.name}
+                disabled={tier.price === "Kommer snart"}
                 className={cn(
                   "w-full py-3 text-sm font-medium rounded-lg transition-colors border text-center block",
                   tier.highlight
@@ -134,7 +117,7 @@ export function Pricing() {
                       ? "bg-stone-100 text-stone-400 border-stone-200 cursor-not-allowed"
                       : "bg-white text-stone-900 border-stone-200 hover:border-stone-300 hover:bg-stone-50"
                 )}>
-                {loadingTier === tier.name ? "Laddar..." : tier.price === "Kommer snart" ? "Meddela mig" : "Kom igång"}
+                {tier.price === "Kommer snart" ? "Meddela mig" : "Kom igång"}
               </button>
             </div>
           ))}
