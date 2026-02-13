@@ -14,6 +14,7 @@ import type {
     BenefitCategory,
 } from './ai/tool-types'
 import { formanerCatalog } from './ai/reference-data'
+import { taxService, FALLBACK_TAX_RATES } from '@/services/tax-service'
 
 // =============================================================================
 // Database Row Types
@@ -227,9 +228,14 @@ export async function calculateBenefitTaxImpact(
     const taxFree = benefit?.taxFree ?? false
     const formansvarde = taxFree ? 0 : calculateFormansvarde(benefitType, amount)
 
-    // Approximate tax calculations
-    const employeeTaxRate = 0.32 // Marginal rate
-    const employerFeesRate = 0.3142 // Arbetsgivaravgifter
+    // Fetch current rates (with fallback)
+    const currentYear = new Date().getFullYear()
+    let employerFeesRate = FALLBACK_TAX_RATES.employerContributionRate
+    try {
+        const rates = await taxService.getAllTaxRates(currentYear)
+        employerFeesRate = rates.employerContributionRate
+    } catch { /* use fallback */ }
+    const employeeTaxRate = 0.32 // Marginal rate (varies per individual, approximate)
 
     const employeeTax = formansvarde * employeeTaxRate
     const employerFees = taxFree ? 0 : formansvarde * employerFeesRate
@@ -247,19 +253,21 @@ export async function calculateBenefitTaxImpact(
 }
 
 /**
- * Calculate förmånsvärde for taxable benefits
+ * Calculate förmånsvärde for taxable benefits.
+ * Uses cached rates when available, falls back to constants.
  */
-function calculateFormansvarde(benefitType: string, amount: number): number {
-    // Simplified calculations - in reality these are more complex
+function calculateFormansvarde(benefitType: string, amount: number, rates?: { formansvardeKost: number; formansvardeLunch: number }): number {
+    const kostRate = rates?.formansvardeKost ?? FALLBACK_TAX_RATES.formansvardeKost
+    const lunchRate = rates?.formansvardeLunch ?? FALLBACK_TAX_RATES.formansvardeLunch
+
     switch (benefitType) {
         case 'kost':
-            return 260 // Fixed daily rate 2024
+            return kostRate
         case 'lunch':
-            return 130 // Fixed daily rate 2024
+            return lunchRate
         case 'drivmedel':
             return amount * 1.2 // 120% of market price
         case 'tjanstebil':
-            // Would need car details - return amount as placeholder
             return amount
         default:
             return amount

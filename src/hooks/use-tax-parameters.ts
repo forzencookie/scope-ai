@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { taxService } from '@/services/tax-service'
+import { taxService, FALLBACK_TAX_RATES, type TaxRates } from '@/services/tax-service'
 
 export interface TaxParameters {
     ibb: number
@@ -46,4 +46,38 @@ export function useTaxParameters(year: number) {
     }, [year])
 
     return { params, isLoading }
+}
+
+/**
+ * Hook to fetch all tax rates for a given year.
+ * Used by client components that need employer contribution rates,
+ * corporate tax, egenavgifter, mileage, etc.
+ */
+export function useAllTaxRates(year: number) {
+    const [rates, setRates] = useState<TaxRates>(FALLBACK_TAX_RATES)
+    const [isLoading, setIsLoading] = useState(true)
+
+    useEffect(() => {
+        let mounted = true
+
+        async function fetchRates() {
+            try {
+                await Promise.resolve()
+                const fetched = await taxService.getAllTaxRates(year)
+                if (mounted) {
+                    setRates(fetched)
+                }
+            } catch (error) {
+                console.error('Failed to load tax rates', error)
+            } finally {
+                if (mounted) setIsLoading(false)
+            }
+        }
+
+        fetchRates()
+
+        return () => { mounted = false }
+    }, [year])
+
+    return { rates, isLoading }
 }

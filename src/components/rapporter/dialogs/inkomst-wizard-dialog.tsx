@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { formatNumber } from "@/lib/utils"
 import { CheckCircle2, AlertCircle } from "lucide-react"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
 export interface InkomstWizardData {
     taxYear: number
@@ -65,6 +66,7 @@ function getDefaultData(): InkomstWizardData {
 
 export function InkomstWizardDialog({ open, onOpenChange, onConfirm, data }: InkomstWizardDialogProps) {
     const initialData = data || getDefaultData()
+    const { rates: taxRates } = useAllTaxRates(initialData.taxYear)
 
     // Editable adjustments
     const [formData, setFormData] = useState({
@@ -79,7 +81,7 @@ export function InkomstWizardDialog({ open, onOpenChange, onConfirm, data }: Ink
 
     // Calculate adjusted taxable result
     const bokfortResultat = initialData.totals.netIncome
-    const taxRate = 0.206 // 20.6% corporate tax
+    const taxRate = taxRates.corporateTaxRate
 
     // Max periodiseringsfond: 25% of profit (if positive)
     const maxPeriodiseringsfond = bokfortResultat > 0 ? Math.round(bokfortResultat * 0.25) : 0
@@ -292,7 +294,7 @@ export function InkomstWizardDialog({ open, onOpenChange, onConfirm, data }: Ink
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span>Beräknad skatt (20,6%)</span>
+                                    <span>Beräknad skatt ({(taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',')}%)</span>
                                     <span className="font-medium">{formatNumber(estimatedTax)} kr</span>
                                 </div>
                             </div>

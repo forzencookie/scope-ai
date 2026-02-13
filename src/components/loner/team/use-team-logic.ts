@@ -5,12 +5,14 @@ import { useToast } from "@/components/ui/toast"
 import { useEmployees } from "@/hooks/use-employees"
 import { useVerifications } from "@/hooks/use-verifications"
 import { getEmployeeBenefits } from "@/lib/formaner"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import type { SalaryRecord, ExpenseRecord } from "./dialogs"
 
 export function useTeamLogic() {
     const toast = useToast()
     const { verifications, addVerification } = useVerifications()
     const { employees, isLoading, addEmployee } = useEmployees()
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
 
     const [reportDialogOpen, setReportDialogOpen] = useState(false)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
@@ -169,7 +171,7 @@ export function useTeamLogic() {
         } else if (reportType === 'mileage') {
             const dist = parseFloat(km)
             if (!dist) return
-            const krVal = dist * 2.5 // 25 kr/mil => 2.5 kr/km
+            const krVal = dist * taxRates.mileageRate
 
             await addVerification({
                 date: new Date().toISOString().split('T')[0],

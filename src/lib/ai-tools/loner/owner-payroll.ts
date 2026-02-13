@@ -8,6 +8,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
+import { taxService, FALLBACK_TAX_RATES } from '@/services/tax-service'
 
 // =============================================================================
 // Calculate Self-Employment Fees Tool
@@ -43,20 +44,10 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
     },
     execute: async (params) => {
         const year = params.year || new Date().getFullYear()
+        const taxRates = await taxService.getAllTaxRates(year)
 
-        // 2024+ rates for egenavgifter
-        const rates = {
-            sjukforsakring: 0.0338,
-            foraldraforsakring: 0.0244,
-            alderspension: 0.1021,
-            efterlevandepension: 0.0060,
-            arbetsmarknadsavgift: 0.0064,
-            arbetsskadeforsakring: 0.0022,
-            // Total: 28.97%
-        }
-
-        // Schablonavdrag is 25% of egenavgifterna
-        const totalRate = Object.values(rates).reduce((sum, r) => sum + r, 0)
+        const components = taxRates.egenavgiftComponents
+        const totalRate = taxRates.egenavgifterFull
         const schablonMultiplier = params.deductSchablon !== false ? 0.75 : 1
 
         const baseForFees = params.income * schablonMultiplier
@@ -64,12 +55,12 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
         const schablonAvdrag = Math.round(params.income * 0.25 * totalRate)
 
         const breakdown = [
-            { label: 'Sjukförsäkring', rate: '3.38%', amount: Math.round(baseForFees * rates.sjukforsakring) },
-            { label: 'Föräldraförsäkring', rate: '2.44%', amount: Math.round(baseForFees * rates.foraldraforsakring) },
-            { label: 'Ålderspension', rate: '10.21%', amount: Math.round(baseForFees * rates.alderspension) },
-            { label: 'Efterlevandepension', rate: '0.60%', amount: Math.round(baseForFees * rates.efterlevandepension) },
-            { label: 'Arbetsmarknadsavgift', rate: '0.64%', amount: Math.round(baseForFees * rates.arbetsmarknadsavgift) },
-            { label: 'Arbetsskadeförsäkring', rate: '0.22%', amount: Math.round(baseForFees * rates.arbetsskadeforsakring) },
+            { label: 'Sjukförsäkring', rate: `${(components.sjukforsakring * 100).toFixed(2)}%`, amount: Math.round(baseForFees * components.sjukforsakring) },
+            { label: 'Föräldraförsäkring', rate: `${(components.foraldraforsakring * 100).toFixed(2)}%`, amount: Math.round(baseForFees * components.foraldraforsakring) },
+            { label: 'Ålderspension', rate: `${(components.alderspension * 100).toFixed(2)}%`, amount: Math.round(baseForFees * components.alderspension) },
+            { label: 'Efterlevandepension', rate: `${(components.efterlevandepension * 100).toFixed(2)}%`, amount: Math.round(baseForFees * components.efterlevandepension) },
+            { label: 'Arbetsmarknadsavgift', rate: `${(components.arbetsmarknadsavgift * 100).toFixed(2)}%`, amount: Math.round(baseForFees * components.arbetsmarknadsavgift) },
+            { label: 'Arbetsskadeavgift', rate: `${(components.arbetsskadeavgift * 100).toFixed(2)}%`, amount: Math.round(baseForFees * components.arbetsskadeavgift) },
         ]
 
         return {
@@ -120,7 +111,7 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
         },
         required: ['amount'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const type = params.type || 'uttag'
         const date = params.date || new Date().toISOString().split('T')[0]
         const ownerName = params.ownerName || 'Delägare'
@@ -131,12 +122,52 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
             'uttag': 'Privat uttag',
         }
 
-        const accounts = {
+        const accountMap = {
+            'lön': { debit: '7210', credit: '1930' },
+            'utdelning': { debit: '2098', credit: '1930' },
+            'uttag': { debit: '2013', credit: '1930' },
+        }
+
+        const accountLabels = {
             'lön': { debit: '7210 (Löner)', credit: '1930 (Bank)' },
-            'utdelning': { debit: '2091 (Utdelning)', credit: '1930 (Bank)' },
+            'utdelning': { debit: '2098 (Vinst föregående år)', credit: '1930 (Bank)' },
             'uttag': { debit: '2013 (Privata uttag)', credit: '1930 (Bank)' },
         }
 
+        // If confirmed, persist verification to database
+        if (context?.isConfirmed) {
+            try {
+                const { verificationService } = await import('@/services/verification-service')
+                const accounts = accountMap[type]
+
+                const verification = await verificationService.createVerification({
+                    series: 'A',
+                    date,
+                    description: `${typeLabels[type]} — ${ownerName}`,
+                    entries: [
+                        { account: accounts.debit, debit: params.amount, credit: 0, description: typeLabels[type] },
+                        { account: accounts.credit, debit: 0, credit: params.amount, description: `Utbetalning ${ownerName}` },
+                    ],
+                    sourceType: 'ai',
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        id: verification?.id || `withdrawal-${Date.now()}`,
+                        amount: params.amount,
+                        type,
+                        date,
+                        verificationId: verification?.id || '',
+                    },
+                    message: `${typeLabels[type]} på ${params.amount.toLocaleString('sv-SE')} kr bokförd för ${ownerName}. Verifikation skapad.`,
+                }
+            } catch (error) {
+                return { success: false, error: 'Kunde inte bokföra uttaget.' }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: typeLabels[type],
             description: `Registrera ${type} för ${ownerName}`,
@@ -145,23 +176,23 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
                 { label: 'Delägare', value: ownerName },
                 { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
                 { label: 'Datum', value: date },
-                { label: 'Konto debet', value: accounts[type].debit },
-                { label: 'Konto kredit', value: accounts[type].credit },
+                { label: 'Konto debet', value: accountLabels[type].debit },
+                { label: 'Konto kredit', value: accountLabels[type].credit },
             ],
             action: { toolName: 'register_owner_withdrawal', params },
-            requireCheckbox: type === 'utdelning', // Extra confirmation for dividends
+            requireCheckbox: type === 'utdelning',
         }
 
         return {
             success: true,
             data: {
-                id: `withdrawal-${Date.now()}`,
+                id: 'pending',
                 amount: params.amount,
                 type,
                 date,
-                verificationId: `ver-${Date.now()}`,
+                verificationId: '',
             },
-            message: `${typeLabels[type]} på ${params.amount.toLocaleString('sv-SE')} kr förberett för ${ownerName}.`,
+            message: `${typeLabels[type]} på ${params.amount.toLocaleString('sv-SE')} kr förberett för ${ownerName}. Bekräfta för att bokföra.`,
             confirmationRequired: confirmationRequest,
         }
     },
@@ -213,9 +244,8 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         const companyProfit = params.companyProfit || 500000
         const currentSalary = params.annualSalary || 0
 
-        // 2024+ constants
-        const IBB = 74300 // Inkomstbasbelopp
-        const PBB = 57300 // Prisbasbelopp
+        const taxRates = await taxService.getAllTaxRates(year)
+        const IBB = taxRates.ibb
 
         // Förenklingsregeln: 2.75 × IBB
         const forenklingsbelopp = Math.round(2.75 * IBB * (ownershipPercent / 100))
@@ -237,12 +267,13 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         // Take the higher of förenkling or lönebaserat
         const effectiveGransbelopp = Math.max(forenklingsbelopp, gransbelopp)
 
-        // Calculate optimal dividend (up to gränsbelopp is taxed at 20%)
-        const optimalDividend = Math.min(effectiveGransbelopp, companyProfit * 0.794 * (ownershipPercent / 100)) // After 20.6% corp tax
+        // Calculate optimal dividend (up to gränsbelopp is taxed at kapitalskatt rate)
+        const afterCorpTax = 1 - taxRates.corporateTaxRate
+        const optimalDividend = Math.min(effectiveGransbelopp, companyProfit * afterCorpTax * (ownershipPercent / 100))
 
         // Tax calculations
-        const dividendTax = Math.round(optimalDividend * 0.20) // 20% on qualified dividends
-        const salaryTax = Math.round(optimalSalary * 0.32) // ~32% marginal tax (simplified)
+        const dividendTax = Math.round(optimalDividend * taxRates.dividendTaxKapital)
+        const salaryTax = Math.round(optimalSalary * 0.32) // ~32% marginal tax (varies per individual)
         const totalTax = dividendTax + salaryTax
 
         // Compare to all salary

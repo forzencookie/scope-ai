@@ -7,6 +7,7 @@
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll-service'
 import { companyService } from '@/services/company-service'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Payslip Tools
@@ -115,26 +116,84 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             )
         }
 
-        // Ensure salary is a number
-        const payslips: Payslip[] = employees.map(emp => ({
-            id: `new-${emp.id}`,
-            period: params.period,
-            employeeName: emp.name,
-            employeeId: emp.id,
-            year: new Date().getFullYear(), // Approximate
-            month: new Date().getMonth() + 1, // Approximate
-            grossSalary: emp.monthlySalary || 0,
-            taxDeduction: Math.round((emp.monthlySalary || 0) * ((emp.taxTable || 30) / 100)),
-            netSalary: Math.round((emp.monthlySalary || 0) * (1 - (emp.taxTable || 30) / 100)),
-            bonuses: 0,
-            otherDeductions: 0,
-            status: 'draft',
-            sentAt: undefined
-        }))
+        // Calculate payslips from real employee data
+        const payslips: Payslip[] = employees.map(emp => {
+            const gross = emp.monthlySalary || 0
+            const taxRate = (emp.taxTable || 30) / 100
+            const tax = Math.round(gross * taxRate)
+            return {
+                id: `new-${emp.id}`,
+                period: params.period,
+                employeeName: emp.name,
+                employeeId: emp.id,
+                year: new Date().getFullYear(),
+                month: new Date().getMonth() + 1,
+                grossSalary: gross,
+                taxDeduction: tax,
+                netSalary: gross - tax,
+                bonuses: 0,
+                otherDeductions: 0,
+                status: 'draft',
+                sentAt: undefined,
+            }
+        })
 
         const totalGross = payslips.reduce((sum, p) => sum + p.grossSalary, 0)
         const totalNet = payslips.reduce((sum, p) => sum + p.netSalary, 0)
+        const totalTax = payslips.reduce((sum, p) => sum + p.taxDeduction, 0)
 
+        // If confirmed, persist all payslips to database
+        if (context?.isConfirmed) {
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+            const savedPayslips: Payslip[] = []
+            const errors: string[] = []
+            const currentYear = new Date().getFullYear()
+            const rates = await taxService.getAllTaxRates(currentYear)
+
+            for (const payslip of payslips) {
+                try {
+                    const employerContribution = Math.round(payslip.grossSalary * rates.employerContributionRate)
+                    const res = await fetch(`${baseUrl}/api/payroll/payslips`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            employee_id: payslip.employeeId,
+                            employee_name: payslip.employeeName,
+                            period: payslip.period,
+                            gross_salary: payslip.grossSalary,
+                            tax_deduction: payslip.taxDeduction,
+                            net_salary: payslip.netSalary,
+                            employer_contributions: employerContribution,
+                            employer_contribution_rate: rates.employerContributionRate,
+                            bonuses: payslip.bonuses,
+                            deductions: payslip.otherDeductions,
+                            status: 'draft',
+                            payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        }),
+                    })
+
+                    if (res.ok) {
+                        const data = await res.json()
+                        savedPayslips.push({ ...payslip, id: data.payslip?.id || payslip.id })
+                    } else {
+                        errors.push(`${payslip.employeeName}: Kunde inte spara`)
+                    }
+                } catch {
+                    errors.push(`${payslip.employeeName}: Nätverksfel`)
+                }
+            }
+
+            return {
+                success: errors.length === 0,
+                data: savedPayslips,
+                message: errors.length === 0
+                    ? `Lönekörning klar! ${savedPayslips.length} lönebesked sparade. Total brutto: ${totalGross.toLocaleString('sv-SE')} kr.`
+                    : `${savedPayslips.length} av ${payslips.length} lönebesked sparade. Fel: ${errors.join('; ')}`,
+                ...(errors.length > 0 ? { error: errors.join('; ') } : {}),
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Kör lönekörning',
             description: `Lönekörning för ${params.period}`,
@@ -142,6 +201,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 { label: 'Period', value: params.period },
                 { label: 'Antal anställda', value: String(payslips.length) },
                 { label: 'Total bruttolön', value: `${totalGross.toLocaleString('sv-SE')} kr` },
+                { label: 'Total skatt', value: `${totalTax.toLocaleString('sv-SE')} kr` },
                 { label: 'Total nettolön', value: `${totalNet.toLocaleString('sv-SE')} kr` },
             ],
             action: { toolName: 'run_payroll', params },
@@ -151,7 +211,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         return {
             success: true,
             data: payslips,
-            message: `Lönekörning förberedd för ${payslips.length} anställda. Total: ${totalGross.toLocaleString('sv-SE')} kr.`,
+            message: `Lönekörning förberedd för ${payslips.length} anställda. Total: ${totalGross.toLocaleString('sv-SE')} kr. Bekräfta för att spara.`,
             confirmationRequired: confirmationRequest,
         }
     },

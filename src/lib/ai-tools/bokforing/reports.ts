@@ -13,6 +13,7 @@ import {
 import { FinancialReportCalculator } from '@/services/processors/reports/calculator'
 import { companyService } from '@/services/company-service'
 import { getSupabaseAdmin } from '../../database/supabase'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Shared helpers
@@ -392,10 +393,9 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         const ebit = items.find(i => i.label === 'Rörelseresultat (EBIT)')?.value ?? 0
         const financialItems = items.find(i => i.label === 'Finansiella poster')?.value ?? 0
 
-        // Swedish corporate tax rate 20.6%
-        const CORPORATE_TAX_RATE = 0.206
+        const rates = await taxService.getAllTaxRates(params.year)
         const taxableIncome = Math.max(0, netIncome)
-        const corporateTax = Math.round(taxableIncome * CORPORATE_TAX_RATE)
+        const corporateTax = Math.round(taxableIncome * rates.corporateTaxRate)
 
         // Periodiseringsfond: max 25% of taxable income
         const maxPeriodiseringsfond = params.includeOptimizations ? Math.round(taxableIncome * 0.25) : 0
@@ -407,7 +407,7 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
             { field: 'INK2R_5_1', label: 'Finansiella intäkter/kostnader', value: financialItems, editable: true },
             { field: 'INK2R_6_1', label: 'Bokfört resultat', value: netIncome, editable: false },
             { field: 'INK2R_7_1', label: 'Skattemässigt resultat', value: taxableIncome, editable: true },
-            { field: 'INK2R_8_1', label: 'Bolagsskatt (20.6%)', value: corporateTax, editable: false },
+            { field: 'INK2R_8_1', label: `Bolagsskatt (${(rates.corporateTaxRate * 100).toFixed(1)}%)`, value: corporateTax, editable: false },
         ]
 
         if (params.includeOptimizations && maxPeriodiseringsfond > 0) {

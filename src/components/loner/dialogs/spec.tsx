@@ -15,6 +15,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { useToast } from "@/components/ui/toast"
 import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
 interface Payslip {
     id: string | number
@@ -40,11 +41,11 @@ export function PayslipDetailsDialog({
     onSend
 }: PayslipDetailsDialogProps) {
     const toast = useToast()
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
 
     if (!payslip) return null
 
-    // Calculate employer contributions (31.42%) + pension (4.5%)
-    const employerContributions = Math.round(payslip.grossSalary * 0.3142)
+    const employerContributions = Math.round(payslip.grossSalary * taxRates.employerContributionRate)
     const pensionCost = Math.round(payslip.grossSalary * 0.045)
     const totalEmployerCost = payslip.grossSalary + employerContributions + pensionCost
 
@@ -91,7 +92,7 @@ export function PayslipDetailsDialog({
                         <div className="flex justify-between items-center py-2 border-b">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Building2 className="h-4 w-4" />
-                                <span>Arbetsgivaravgifter (31,42%)</span>
+                                <span>Arbetsgivaravgifter ({(taxRates.employerContributionRate * 100).toFixed(2).replace('.', ',')}%)</span>
                             </div>
                             <span className="font-medium text-muted-foreground">
                                 {formatCurrency(employerContributions)}
@@ -99,11 +100,11 @@ export function PayslipDetailsDialog({
                         </div>
                         <div className="flex justify-between items-center py-2 border-b text-muted-foreground text-sm">
                             <span>Tjänstepension (4,5%)</span>
-                            <span>{formatCurrency(Math.round(payslip.grossSalary * 0.045))}</span>
+                            <span>{formatCurrency(pensionCost)}</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b text-muted-foreground text-sm">
-                            <span>Semesterersättning (12%)</span>
-                            <span>{formatCurrency(Math.round(payslip.grossSalary * 0.12))}</span>
+                            <span>Semesterersättning ({(taxRates.vacationPayRate * 100).toFixed(0)}%)</span>
+                            <span>{formatCurrency(Math.round(payslip.grossSalary * taxRates.vacationPayRate))}</span>
                         </div>
                     </div>
 

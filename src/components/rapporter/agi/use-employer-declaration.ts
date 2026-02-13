@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from "react"
 import { useCompany } from "@/providers/company-provider"
 import { useToast } from "@/components/ui/toast"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import { generateAgiXML } from "@/lib/generators/agi-generator"
 import { format } from "date-fns"
 import { sv } from "date-fns/locale"
@@ -20,6 +21,7 @@ export interface AGIReport {
 export function useEmployerDeclaration() {
     const { company } = useCompany()
     const toast = useToast()
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
 
     // State
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -81,7 +83,7 @@ export function useEmployerDeclaration() {
 
             report.totalSalary += gross
             report.tax += Number(p.tax_deduction) || 0
-            report.contributions += Math.round(gross * 0.3142)
+            report.contributions += Math.round(gross * taxRates.employerContributionRate)
 
             // Track unique employees per period
             const empId = p.employee_id || p.id
@@ -94,7 +96,7 @@ export function useEmployerDeclaration() {
                 const { employeeIds, ...rest } = report
                 return { ...rest, employees: employeeIds.size || (rest.totalSalary > 0 ? 1 : 0) }
             })
-    }, [payslips])
+    }, [payslips, taxRates.employerContributionRate])
 
     // 2. Stats derived from calculated reports
     const stats = useMemo(() => {

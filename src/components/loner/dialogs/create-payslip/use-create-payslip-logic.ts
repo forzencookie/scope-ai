@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from "react"
 import { useToast } from "@/components/ui/toast"
 import { useVerifications } from "@/hooks/use-verifications"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
 export interface AiDeduction {
     label: string
@@ -64,6 +65,7 @@ export function useCreatePayslipLogic({
 }: PayslipCreateDialogProps) {
     const toast = useToast()
     const { addVerification } = useVerifications()
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
 
     const [employees, setEmployees] = useState<PayslipEmployee[]>([])
     const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
@@ -162,8 +164,8 @@ export function useCreatePayslipLogic({
     // Legal breakdown for lönespecifikation
     const employeeAge = getAgeFromPersonnummer(selectedEmp?.personalNumber)
     const isSenior = employeeAge !== null && employeeAge >= 66
-    const employerContributionRate = isSenior ? 0.1021 : 0.3142 // Reduced for 66+: only ålderspensionsavgift
-    const sempioneersattning = Math.round(finalSalary * 0.12) // Semesterlagen: 12%
+    const employerContributionRate = isSenior ? taxRates.employerContributionRateSenior : taxRates.employerContributionRate
+    const sempioneersattning = Math.round(finalSalary * taxRates.vacationPayRate)
     const employerContribution = Math.round(finalSalary * employerContributionRate)
     const pensionRate = selectedEmp?.pensionRate || 0.045 // Default ITP1 4.5%
     const pension = Math.round(finalSalary * pensionRate) // Employer cost
@@ -260,7 +262,8 @@ export function useCreatePayslipLogic({
                         personal_number: manualPerson.personalNumber || null,
                         employment_type: manualPerson.employmentType || 'tillsvidare',
                         tax_rate: (parseFloat(manualPerson.taxRate) || 30) / 100,
-                        status: 'active'
+                        pension_rate: (parseFloat(manualPerson.pensionRate) || 4.5) / 100,
+                        status: 'active',
                     })
                 })
 
@@ -282,12 +285,15 @@ export function useCreatePayslipLogic({
                     gross_salary: finalSalary,
                     tax_deduction: tax,
                     net_salary: netSalary,
+                    employer_contributions: employerContribution,
                     bonuses: aiDeductions.filter(d => d.amount < 0).reduce((sum, d) => sum + Math.abs(d.amount), 0),
                     deductions: aiDeductions.filter(d => d.amount > 0).reduce((sum, d) => sum + d.amount, 0),
                     status: "draft",
                     payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     // Store manual person data if not saved as employee
-                    manual_employee_name: useManualEntry && !saveAsEmployee ? manualPerson.name : null
+                    manual_employee_name: useManualEntry && !saveAsEmployee ? manualPerson.name : null,
+                    // Client creates its own (more detailed) verification with age-based rates, pension, etc.
+                    skip_verification: true,
                 })
             })
 

@@ -1,6 +1,7 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
 export type Payslip = {
     id: string | number
@@ -14,6 +15,7 @@ export type Payslip = {
 }
 
 export function usePayslipsLogic() {
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
     const [allPayslips, setAllPayslips] = useState<Payslip[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -94,9 +96,9 @@ export function usePayslipsLogic() {
             employeeCount,
             totalGross,
             totalTax: periodSlips.reduce((sum, p) => sum + p.tax, 0),
-            totalEmployerContributions: Math.round(totalGross * 0.3142)
+            totalEmployerContributions: Math.round(totalGross * taxRates.employerContributionRate)
         }
-    }, [allPayslips, employeeCount])
+    }, [allPayslips, employeeCount, taxRates.employerContributionRate])
 
     const filteredPayslips = useMemo(() => {
         return allPayslips.filter(slip => {

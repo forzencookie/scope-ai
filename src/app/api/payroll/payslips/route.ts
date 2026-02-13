@@ -10,8 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
 import { verificationService } from '@/services/verification-service';
-
-const EMPLOYER_CONTRIBUTION_RATE = 0.3142 // 31.42% arbetsgivaravgift
+import { taxService, FALLBACK_TAX_RATES } from '@/services/tax-service';
 
 export async function GET() {
     try {
@@ -50,12 +49,23 @@ export async function POST(req: NextRequest) {
         }
 
         // Auto-create salary verification if we have the necessary salary data
+        // Skip if client indicates it will create the verification itself (skip_verification=true)
         const grossSalary = Number(body.gross_salary) || 0
         const taxDeduction = Number(body.tax_deduction) || 0
         const netSalary = Number(body.net_salary) || (grossSalary - taxDeduction)
 
-        if (grossSalary > 0) {
-            const employerContribution = Math.round(grossSalary * EMPLOYER_CONTRIBUTION_RATE)
+        if (grossSalary > 0 && !body.skip_verification) {
+            // Fetch tax rates from system_parameters
+            const currentYear = new Date().getFullYear()
+            const rates = await taxService.getAllTaxRates(currentYear)
+
+            // Use client-provided employer contribution if available, otherwise calculate
+            const employerContributionRate = body.employer_contribution_rate != null
+                ? Number(body.employer_contribution_rate)
+                : rates.employerContributionRate
+            const employerContribution = body.employer_contributions != null
+                ? Number(body.employer_contributions)
+                : Math.round(grossSalary * employerContributionRate)
             const employeeName = body.manual_employee_name || body.employee_name || 'Anställd'
             const period = body.period || new Date().toISOString().slice(0, 7)
 

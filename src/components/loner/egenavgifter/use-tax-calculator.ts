@@ -1,7 +1,12 @@
 import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
+import type { TaxRates } from "@/services/tax-service"
 
-// 2025 rates (Skatteverket) — full rate with 7 karensdagar: 28.97%
+/**
+ * @deprecated Use useAllTaxRates() hook instead. Kept for backwards compatibility with components
+ * that import TAX_RATES directly — these should be migrated to the hook.
+ */
 export const TAX_RATES = {
   egenavgifter: {
     sjukforsakring: 0.0388,
@@ -13,7 +18,7 @@ export const TAX_RATES = {
     allmänLöneAvgift: 0.1150,
   },
   fullRate: 0.2897,
-  reducedRate: 0.1021, // Only ålderspensionsavgift for born 1938-1958
+  reducedRate: 0.1021,
   karensReduction: 0.0076,
 }
 
@@ -33,6 +38,8 @@ function formatComponentName(key: string): string {
       efterlevandepension: 'Efterlevandepensionsavgift',
       arbetsmarknadsavgift: 'Arbetsmarknadsavgift',
       arbetsskadeavgift: 'Arbetsskadeavgift',
+      allmanLoneavgift: 'Allmän löneavgift',
+      // Legacy keys
       allmänLöneAvgift: 'Allmän löneavgift',
     }
     return names[key] || key
@@ -41,6 +48,7 @@ function formatComponentName(key: string): string {
 
 export function useTaxCalculator() {
     const { verifications } = useVerifications()
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
     const [annualProfit, setAnnualProfit] = useState<number>(500000)
     const [isReduced, setIsReduced] = useState(false)
     const [includeKarensReduction, setIncludeKarensReduction] = useState(false)
@@ -65,21 +73,21 @@ export function useTaxCalculator() {
     }, [verifications])
 
     const calculation = useMemo(() => {
-        let rate = isReduced ? TAX_RATES.reducedRate : TAX_RATES.fullRate
+        let rate = isReduced ? taxRates.egenavgifterReduced : taxRates.egenavgifterFull
         if (includeKarensReduction && !isReduced) {
-          rate -= TAX_RATES.karensReduction
+          rate -= taxRates.egenavgifterKarensReduction
         }
-    
+
         const avgifter = Math.round(annualProfit * rate)
         const nettoEfterAvgifter = annualProfit - avgifter
         const monthlyNet = Math.round(nettoEfterAvgifter / 12)
-    
-        const components = !isReduced ? Object.entries(TAX_RATES.egenavgifter).map(([key, pct]) => ({
+
+        const components = !isReduced ? Object.entries(taxRates.egenavgiftComponents).map(([key, pct]) => ({
           name: formatComponentName(key),
-          rate: pct,
-          amount: Math.round(annualProfit * pct),
+          rate: pct as number,
+          amount: Math.round(annualProfit * (pct as number)),
         })) : []
-    
+
         return {
           rate,
           avgifter,
@@ -87,7 +95,7 @@ export function useTaxCalculator() {
           monthlyNet,
           components,
         }
-      }, [annualProfit, isReduced, includeKarensReduction])
+      }, [annualProfit, isReduced, includeKarensReduction, taxRates])
 
     const monthlyData: MonthlyData[] = useMemo(() => {
         const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Maj', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']

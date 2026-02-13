@@ -1,5 +1,6 @@
 
 import { Verification } from "@/hooks/use-verifications"
+import { FALLBACK_TAX_RATES } from '@/services/tax-service'
 
 export interface ReportLine {
     label: string
@@ -41,8 +42,7 @@ export const AnnualReportProcessor = {
 
         const operatingResult = revenue + goodsCost + otherExternalCosts + personnelCosts + depreciation
         const resultAfterFinancial = operatingResult + financialItems
-        // Tax (20.6%) - Simplified
-        const tax = resultAfterFinancial > 0 ? Math.round(resultAfterFinancial * -0.206) : 0
+        const tax = resultAfterFinancial > 0 ? Math.round(resultAfterFinancial * -FALLBACK_TAX_RATES.corporateTaxRate) : 0
         const netResult = resultAfterFinancial + tax
 
         return [

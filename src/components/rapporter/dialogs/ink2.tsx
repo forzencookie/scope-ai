@@ -2,6 +2,7 @@
 
 import { ink2Fields } from "../constants"
 import { ReportPreviewDialog } from "./rapport"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
 interface Ink2PreviewDialogProps {
     open: boolean
@@ -9,6 +10,8 @@ interface Ink2PreviewDialogProps {
 }
 
 export function Ink2PreviewDialog({ open, onOpenChange }: Ink2PreviewDialogProps) {
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear() - 1)
+
     const totalCalculated = ink2Fields
         .filter(f => f.field === "4.1")
         .reduce((sum, f) => sum + f.value, 0)
@@ -70,7 +73,7 @@ export function Ink2PreviewDialog({ open, onOpenChange }: Ink2PreviewDialogProps
                 label: "Skattemässigt resultat",
                 value: totalCalculated,
                 subItems: [
-                    { label: "Beräknad skatt (20,6%)", value: Math.round(totalCalculated * 0.206) }
+                    { label: `Beräknad skatt (${(taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',')}%)`, value: Math.round(totalCalculated * taxRates.corporateTaxRate) }
                 ]
             }}
             status="Utkast"

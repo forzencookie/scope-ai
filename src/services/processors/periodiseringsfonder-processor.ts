@@ -7,6 +7,7 @@
 
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
 import type { Periodiseringsfond, CreatePeriodiseringsfondInput, TaxSavingsCalculation } from './ai-tool-types'
+import { FALLBACK_TAX_RATES } from '@/services/tax-service'
 
 // =============================================================================
 // Database Row Types
@@ -186,7 +187,7 @@ export function calculateTaxSavings(
     // AB: Max 25% of profit, taxed at 20.6%
     // EF/Enskild: Max 30% of profit, taxed at marginal income tax
     const _maxPercentage = companyType === 'AB' ? 0.25 : 0.30
-    const taxRate = companyType === 'AB' ? 0.206 : 0.32 // Approximate marginal rate for EF
+    const taxRate = companyType === 'AB' ? FALLBACK_TAX_RATES.corporateTaxRate : 0.32 // Approximate marginal rate for EF
 
     const taxSaved = amount * taxRate
     const expiresAt = new Date(year + 6, 11, 31)
