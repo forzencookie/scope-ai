@@ -47,8 +47,3 @@ export function getPartnerAccounts(partnerIndex: number): { capital: string, wit
   }
 }
 
-// Legacy static mapping (kept for backwards compatibility)
-export const PARTNER_ACCOUNTS: Record<string, { capital: string, withdrawal: string, deposit: string }> = {
-  'p-1': { capital: '2010', withdrawal: '2013', deposit: '2018' },
-  'p-2': { capital: '2020', withdrawal: '2023', deposit: '2028' },
-}
