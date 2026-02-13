@@ -22,6 +22,8 @@ export interface Shareholder {
     shares_count: number
     shares_percentage: number
     share_class?: 'A' | 'B'
+    share_number_from?: number
+    share_number_to?: number
 }
 
 export function useCompliance() {

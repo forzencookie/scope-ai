@@ -18,6 +18,8 @@ export interface ShareholderDisplay {
     acquisitionDate: string
     votes: number
     votesPercentage: number
+    shareNumberFrom?: number
+    shareNumberTo?: number
 }
 
 export interface TransactionDisplay {

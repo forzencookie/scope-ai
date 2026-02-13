@@ -32,7 +32,7 @@ export function ShareholdersGrid({ shareholders, onAddShareholder }: Shareholder
                 <GridTableHeader
                     columns={[
                         { label: 'Aktieägare', icon: User, span: 3 },
-                        { label: 'Typ', icon: Building2, span: 2, hiddenOnMobile: true },
+                        { label: 'Aktienr', icon: Hash, span: 2, hiddenOnMobile: true },
                         { label: 'Aktier', icon: Hash, span: 2, align: 'right', hiddenOnMobile: true },
                         { label: 'Andel', icon: Percent, span: 2, align: 'right' },
                         { label: 'Röster', icon: Vote, span: 1, align: 'right', hiddenOnMobile: true },
@@ -73,16 +73,15 @@ export function ShareholdersGrid({ shareholders, onAddShareholder }: Shareholder
                             </div>
                         </div>
 
-                        {/* 2. Typ - hidden on mobile */}
+                        {/* 2. Aktienummer - hidden on mobile */}
                         <div className="col-span-2 hidden md:block">
-                            <span className={cn(
-                                "inline-flex px-2 py-0.5 rounded-full text-xs font-medium border",
-                                shareholder.type === 'person'
-                                    ? "bg-violet-50 text-violet-600 border-violet-100 dark:bg-violet-950/30 dark:text-violet-400 dark:border-violet-900"
-                                    : "bg-purple-50 text-purple-600 border-purple-100"
-                            )}>
-                                {shareholder.type === 'person' ? 'Privatperson' : 'Bolag'}
-                            </span>
+                            {shareholder.shareNumberFrom && shareholder.shareNumberTo ? (
+                                <div className="tabular-nums text-sm">
+                                    {shareholder.shareNumberFrom}–{shareholder.shareNumberTo}
+                                </div>
+                            ) : (
+                                <span className="text-xs text-muted-foreground">—</span>
+                            )}
                         </div>
 
                         {/* 3. Aktier - hidden on mobile */}

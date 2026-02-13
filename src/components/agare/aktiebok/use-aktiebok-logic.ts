@@ -59,6 +59,18 @@ export function useAktiebokLogic() {
     }
   }, [realShareholders])
 
+  // Calculate next available share number
+  const nextShareNumber = useMemo(() => {
+    if (!realShareholders?.length) return 1
+    let maxNumber = 0
+    for (const s of realShareholders) {
+      if (s.share_number_to && s.share_number_to > maxNumber) {
+        maxNumber = s.share_number_to
+      }
+    }
+    return maxNumber + 1
+  }, [realShareholders])
+
   // Map real shareholders to component format
   const shareholders = useMemo<ShareholderDisplay[]>(() => {
     const totalShares = stats.totalShares || 1
@@ -77,7 +89,9 @@ export function useAktiebokLogic() {
         acquisitionDate: s.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
         acquisitionPrice: 0,
         votes,
-        votesPercentage: Math.round((votes / totalVotes) * 100)
+        votesPercentage: Math.round((votes / totalVotes) * 100),
+        shareNumberFrom: s.share_number_from,
+        shareNumberTo: s.share_number_to,
       }
     })
   }, [realShareholders, stats.totalShares, stats.totalVotes])
@@ -201,13 +215,17 @@ export function useAktiebokLogic() {
         toShareholder = realShareholders.find(s => s.name === txTo)
       }
 
+      // Auto-assign share number range for new shares
+      const newShareFrom = nextShareNumber
+      const newShareTo = nextShareNumber + shares - 1
+
       // Handle different transaction types
       switch (txType) {
         case 'Nyemission': {
           // New share issue: Cash in, share capital increases
           await addVerification({
             date: txDate,
-            description: `Nyemission ${shares} ${txShareClass}-aktier till ${txTo}`,
+            description: `Nyemission ${shares} ${txShareClass}-aktier till ${txTo} (aktienr ${newShareFrom}–${newShareTo})`,
             sourceType: 'equity_issue',
             rows: [
               { account: "1930", description: "Insättning nyemission", debit: total, credit: 0 },
@@ -218,11 +236,13 @@ export function useAktiebokLogic() {
             ]
           })
 
-          // Update shareholder share count
+          // Update shareholder share count and share number range
           if (toShareholder) {
             await updateShareholder({
               id: toShareholder.id,
               shares_count: toShareholder.shares_count + shares,
+              share_number_from: toShareholder.share_number_from ?? newShareFrom,
+              share_number_to: newShareTo,
             })
           }
           break
