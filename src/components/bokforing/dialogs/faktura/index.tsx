@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { FileText, Send } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { FileText, Send, Eye } from "lucide-react"
+import { cn, formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { useCompany } from "@/providers"
@@ -49,6 +49,8 @@ export function InvoiceCreateDialog({
     const companyOrgNr = company?.orgNumber || ""
     const companyAddress = [company?.address, company?.zipCode, company?.city].filter(Boolean).join(", ")
     const companyVatNr = company?.vatNumber || ""
+
+    const [showPreviewDialog, setShowPreviewDialog] = React.useState(false)
 
     const {
         formState,
@@ -205,28 +207,32 @@ export function InvoiceCreateDialog({
                             onNotesChange={setNotes}
                         />
 
-                        {/* Inline Preview (standard view) */}
+                        {/* Preview Card (non-expanded view) — opens separate dialog */}
                         {!expanded && (
                             <>
                                 <div className="border-t" />
-                                <InvoicePreview
-                                    customer={formState.customer}
-                                    orgNumber={formState.orgNumber}
-                                    address={formState.address}
-                                    issueDate={formState.issueDate}
-                                    paymentTerms={formState.paymentTerms}
-                                    bankgiro={formState.bankgiro}
-                                    plusgiro={formState.plusgiro}
-                                    invoiceNumber={invoiceNumber}
-                                    companyName={companyName}
-                                    companyOrgNr={companyOrgNr}
-                                    companyAddress={companyAddress}
-                                    companyVatNr={companyVatNr}
-                                    lineItems={formState.lineItems}
-                                    subtotal={invoiceTotals.subtotal}
-                                    vatAmount={invoiceTotals.vatAmount}
-                                    total={invoiceTotals.total}
-                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPreviewDialog(true)}
+                                    className="w-full text-left rounded-lg border-2 border-dashed border-muted-foreground/20 hover:border-primary/40 hover:bg-accent/30 transition-colors p-4 group"
+                                >
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="h-10 w-10 rounded-md bg-primary/10 flex items-center justify-center group-hover:bg-primary/20 transition-colors">
+                                                <Eye className="h-5 w-5 text-primary" />
+                                            </div>
+                                            <div>
+                                                <p className="text-sm font-medium">Förhandsgranska faktura</p>
+                                                <p className="text-xs text-muted-foreground">
+                                                    {formState.customer || 'Ingen kund'} — {formatCurrency(invoiceTotals.total)}
+                                                </p>
+                                            </div>
+                                        </div>
+                                        <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
+                                            Visa &rarr;
+                                        </span>
+                                    </div>
+                                </button>
                             </>
                         )}
                     </div>
@@ -267,6 +273,36 @@ export function InvoiceCreateDialog({
                     </Button>
                 </DialogFooter>
             </DialogContent>
+
+            {/* Separate Preview Dialog (non-expanded mode) */}
+            <Dialog open={showPreviewDialog} onOpenChange={setShowPreviewDialog}>
+                <DialogContent className="max-w-2xl max-h-[85vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="flex items-center gap-2">
+                            <Eye className="h-5 w-5" />
+                            Förhandsgranskning
+                        </DialogTitle>
+                    </DialogHeader>
+                    <InvoicePreview
+                        customer={formState.customer}
+                        orgNumber={formState.orgNumber}
+                        address={formState.address}
+                        issueDate={formState.issueDate}
+                        paymentTerms={formState.paymentTerms}
+                        bankgiro={formState.bankgiro}
+                        plusgiro={formState.plusgiro}
+                        invoiceNumber={invoiceNumber}
+                        companyName={companyName}
+                        companyOrgNr={companyOrgNr}
+                        companyAddress={companyAddress}
+                        companyVatNr={companyVatNr}
+                        lineItems={formState.lineItems}
+                        subtotal={invoiceTotals.subtotal}
+                        vatAmount={invoiceTotals.vatAmount}
+                        total={invoiceTotals.total}
+                    />
+                </DialogContent>
+            </Dialog>
         </Dialog>
     )
 }
