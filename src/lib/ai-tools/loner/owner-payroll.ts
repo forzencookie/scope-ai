@@ -272,12 +272,15 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         const optimalDividend = Math.min(effectiveGransbelopp, companyProfit * afterCorpTax * (ownershipPercent / 100))
 
         // Tax calculations
+        // Note: These marginal tax rates are approximations for individual income tax.
+        // They vary by municipality (kommunalskatt) and income level (statlig skatt).
+        // A proper implementation would look up the user's specific kommun tax rate.
         const dividendTax = Math.round(optimalDividend * taxRates.dividendTaxKapital)
-        const salaryTax = Math.round(optimalSalary * 0.32) // ~32% marginal tax (varies per individual)
+        const salaryTax = Math.round(optimalSalary * 0.32) // ~32% average marginal tax
         const totalTax = dividendTax + salaryTax
 
         // Compare to all salary
-        const allSalaryTax = Math.round((optimalSalary + optimalDividend) * 0.52) // ~52% top marginal
+        const allSalaryTax = Math.round((optimalSalary + optimalDividend) * 0.52) // ~52% top marginal rate
         const savings = allSalaryTax - totalTax
 
         const recommendation = optimalDividend > optimalSalary ? 'dividend' :

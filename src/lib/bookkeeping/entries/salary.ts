@@ -6,6 +6,7 @@
 import type { JournalEntry, JournalEntryLine } from '../types'
 import { roundToOre } from '../validation'
 import { generateEntryId } from '../utils'
+import { FALLBACK_TAX_RATES } from '@/services/tax-service'
 
 /**
  * Swedish salary components
@@ -15,7 +16,7 @@ export interface SalaryComponents {
   grossSalary: number
   /** Preliminary tax withheld (preliminärskatt) */
   preliminaryTax: number
-  /** Employer social contributions (arbetsgivaravgifter, ~31.42%) */
+  /** Employer social contributions (arbetsgivaravgifter) */
   employerContributions: number
   /** Optional: pension contributions */
   pensionContribution?: number
@@ -40,16 +41,16 @@ export interface SalaryEntryParams {
 
 /**
  * Calculate Swedish employer contributions (arbetsgivaravgifter)
- * Standard rate is 31.42% for 2024
+ * Rate is loaded from system_parameters when available, with fallback.
  * 
  * @param grossSalary Gross salary amount
- * @param rate Optional custom rate (default 31.42%)
+ * @param rate Optional custom rate as decimal (e.g. 0.3142). Default from FALLBACK_TAX_RATES.
  */
 export function calculateEmployerContributions(
   grossSalary: number,
-  rate: number = 31.42
+  rate: number = FALLBACK_TAX_RATES.employerContributionRate
 ): number {
-  return roundToOre(grossSalary * (rate / 100))
+  return roundToOre(grossSalary * rate)
 }
 
 /**

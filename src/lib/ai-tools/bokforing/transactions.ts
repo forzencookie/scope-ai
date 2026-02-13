@@ -230,15 +230,72 @@ export const createTransactionTool = defineTool<CreateTransactionParams, Created
         },
         required: ['amount', 'description'],
     },
-    execute: async (params) => {
-        const transaction: CreatedTransaction = {
-            id: `tx-${Date.now()}`,
-            ...params
+    execute: async (params, context) => {
+        const date = params.date || new Date().toISOString().split('T')[0]
+
+        // If confirmed, persist to database
+        if (context?.isConfirmed) {
+            try {
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+                const res = await fetch(`${baseUrl}/api/transactions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        description: params.description,
+                        amount: params.amount,
+                        date,
+                        counterparty: params.category || null,
+                        status: 'pending',
+                    }),
+                })
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    return { success: false, error: err.error || 'Kunde inte skapa transaktion.' }
+                }
+
+                const data = await res.json()
+                return {
+                    success: true,
+                    data: {
+                        id: data.transaction?.id || data.id,
+                        amount: params.amount,
+                        description: params.description,
+                        date,
+                        account: params.account,
+                        category: params.category,
+                    },
+                    message: `Transaktion skapad: ${params.description} (${params.amount.toLocaleString('sv-SE')} kr). Sparad i databasen.`,
+                }
+            } catch (error) {
+                return { success: false, error: 'Kunde inte spara transaktion.' }
+            }
         }
+
+        // Preflight: return confirmation request
         return {
             success: true,
-            data: transaction,
-            message: `Skapade transaktion: ${params.description} (${params.amount} kr)`,
+            data: {
+                id: 'pending',
+                amount: params.amount,
+                description: params.description,
+                date,
+                account: params.account,
+                category: params.category,
+            },
+            message: `Transaktion förberedd: ${params.description} (${params.amount.toLocaleString('sv-SE')} kr). Bekräfta för att spara.`,
+            confirmationRequired: {
+                title: 'Skapa transaktion',
+                description: params.description,
+                summary: [
+                    { label: 'Beskrivning', value: params.description },
+                    { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
+                    { label: 'Datum', value: date },
+                    ...(params.account ? [{ label: 'Konto', value: params.account }] : []),
+                ],
+                action: { toolName: 'create_transaction', params },
+                requireCheckbox: false,
+            },
         }
     },
 })

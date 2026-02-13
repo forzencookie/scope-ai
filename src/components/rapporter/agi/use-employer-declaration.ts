@@ -50,7 +50,10 @@ export function useEmployerDeclaration() {
 
     // 1. Generate AGI reports from real payslip data
     const agiReportsState = useMemo<AGIReport[]>(() => {
-        const reportsMap = new Map<string, AGIReport & { employeeIds: Set<string> }>()
+        const reportsMap = new Map<string, AGIReport & {
+            employeeIds: Set<string>,
+            employeeDataMap: Map<string, { name: string; personalNumber: string; grossSalary: number; taxDeduction: number }>
+        }>()
 
         payslips.forEach(p => {
             const period: string = p.period // e.g. "2025-01"
@@ -74,27 +77,54 @@ export function useEmployerDeclaration() {
                     totalSalary: 0,
                     tax: 0,
                     contributions: 0,
-                    employeeIds: new Set()
+                    employeeIds: new Set(),
+                    employeeDataMap: new Map(),
                 })
             }
 
             const report = reportsMap.get(period)!
             const gross = Number(p.gross_salary) || 0
+            const tax = Number(p.tax_deduction) || 0
 
             report.totalSalary += gross
-            report.tax += Number(p.tax_deduction) || 0
+            report.tax += tax
             report.contributions += Math.round(gross * taxRates.employerContributionRate)
 
-            // Track unique employees per period
+            // Track unique employees and their data per period
             const empId = p.employee_id || p.id
-            if (empId) report.employeeIds.add(String(empId))
+            if (empId) {
+                report.employeeIds.add(String(empId))
+                const existing = report.employeeDataMap.get(String(empId))
+                if (existing) {
+                    existing.grossSalary += gross
+                    existing.taxDeduction += tax
+                } else {
+                    report.employeeDataMap.set(String(empId), {
+                        name: p.employee_name || '',
+                        personalNumber: p.personal_number || '',
+                        grossSalary: gross,
+                        taxDeduction: tax,
+                    })
+                }
+            }
         })
 
         return Array.from(reportsMap.entries())
             .sort((a, b) => b[0].localeCompare(a[0]))
             .map(([, report]) => {
-                const { employeeIds, ...rest } = report
-                return { ...rest, employees: employeeIds.size || (rest.totalSalary > 0 ? 1 : 0) }
+                const { employeeIds, employeeDataMap, ...rest } = report
+                return {
+                    ...rest,
+                    employees: employeeIds.size || (rest.totalSalary > 0 ? 1 : 0),
+                    // Store individual data for XML generation (not part of AGIReport type but accessible via cast)
+                    individualData: Array.from(employeeDataMap.values()).map(emp => ({
+                        personalNumber: emp.personalNumber,
+                        name: emp.name,
+                        grossSalary: emp.grossSalary,
+                        taxDeduction: emp.taxDeduction,
+                        employerContribution: Math.round(emp.grossSalary * taxRates.employerContributionRate),
+                    })),
+                }
             })
     }, [payslips, taxRates.employerContributionRate])
 
@@ -176,13 +206,16 @@ export function useEmployerDeclaration() {
                 const reports = agiReportsState.filter(r => ids.includes(r.period))
 
                 reports.forEach(report => {
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const reportWithData = report as any
                     const xml = generateAgiXML({
                         period: report.period,
                         orgNumber: company?.orgNumber || "556000-0000",
                         totalSalary: report.totalSalary,
                         tax: report.tax,
                         contributions: report.contributions,
-                        employees: report.employees
+                        employees: report.employees,
+                        individualData: reportWithData.individualData,
                     })
 
                     const blob = new Blob([xml], { type: "text/xml" })

@@ -35,6 +35,7 @@ import { getSupabaseClient } from "@/lib/database/supabase"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
+import { taxService, FALLBACK_TAX_RATES } from "@/services/tax-service"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)
@@ -49,31 +50,37 @@ import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
 function useNECalculation() {
     const [balances, setBalances] = useState<{ account: string; balance: number }[]>([])
     const [isLoading, setIsLoading] = useState(true)
+    const [egenavgifterRate, setEgenavgifterRate] = useState(FALLBACK_TAX_RATES.egenavgifterFull)
 
     // NE-bilaga is for the previous tax year (filed in spring of current year)
     const taxYear = new Date().getFullYear() - 1
 
     useEffect(() => {
-        async function fetchBalances() {
+        async function fetchData() {
             setIsLoading(true)
             const supabase = getSupabaseClient()
             try {
-                const { data, error } = await supabase.rpc('get_account_balances', {
-                    p_start_date: `${taxYear}-01-01`,
-                    p_end_date: `${taxYear}-12-31`
-                })
-                if (error) throw error
-                setBalances((data || []).map((row: { account_number: string | number; balance: number }) => ({
+                // Fetch balances and tax rates in parallel
+                const [balanceResult, taxRates] = await Promise.all([
+                    supabase.rpc('get_account_balances', {
+                        p_start_date: `${taxYear}-01-01`,
+                        p_end_date: `${taxYear}-12-31`
+                    }),
+                    taxService.getAllTaxRates(taxYear),
+                ])
+                if (balanceResult.error) throw balanceResult.error
+                setBalances((balanceResult.data || []).map((row: { account_number: string | number; balance: number }) => ({
                     account: String(row.account_number),
                     balance: row.balance
                 })))
+                setEgenavgifterRate(taxRates.egenavgifterFull)
             } catch (err) {
-                console.error('Failed to fetch NE balances:', err)
+                console.error('Failed to fetch NE data:', err)
             } finally {
                 setIsLoading(false)
             }
         }
-        fetchBalances()
+        fetchData()
     }, [taxYear])
 
     return useMemo(() => {
@@ -100,7 +107,6 @@ function useNECalculation() {
         const resultatForeEgenavgifter = summaIntakter + summaKostnader
 
         // R13: Schablonavdrag for egenavgifter (25% of result × rate, only on profit)
-        const egenavgifterRate = 0.2897 // 28.97%
         const schablonavdrag = resultatForeEgenavgifter > 0
             ? Math.round(resultatForeEgenavgifter * 0.25 * egenavgifterRate)
             : 0
@@ -115,6 +121,9 @@ function useNECalculation() {
             ? Math.round(resultatEfterAvdrag * egenavgifterRate)
             : 0
         const slutligtResultat = resultatEfterAvdrag - egenavgifter
+
+        // Format rate for display (e.g. 0.2897 → "28,97")
+        const egenavgifterRateDisplay = (egenavgifterRate * 100).toFixed(2).replace('.', ',')
 
         return {
             // Revenue
@@ -140,6 +149,10 @@ function useNECalculation() {
             egenavgifter,
             slutligtResultat,
 
+            // Tax rate info
+            egenavgifterRate,
+            egenavgifterRateDisplay,
+
             // Stats
             totals: {
                 revenue: summaIntakter,
@@ -150,7 +163,7 @@ function useNECalculation() {
             isLoading,
             taxYear,
         }
-    }, [balances, isLoading, taxYear])
+    }, [balances, isLoading, taxYear, egenavgifterRate])
 }
 
 // =============================================================================
@@ -225,32 +238,32 @@ export function NEBilagaContent() {
                             <span className="ml-2 text-muted-foreground">Hämtar bokföringsdata...</span>
                         </div>
                     ) : (
-                    <StatCardGrid columns={4}>
-                        <StatCard
-                            label="Beskattningsår"
-                            value={String(neData.taxYear)}
-                            subtitle="NE-bilaga"
-                            headerIcon={Calendar}
-                        />
-                        <StatCard
-                            label="Resultat före egenavgifter"
-                            value={formatCurrency(neData.R12)}
-                            subtitle="R12"
-                            headerIcon={TrendingUp}
-                        />
-                        <StatCard
-                            label="Beräknade egenavgifter"
-                            value={formatCurrency(neData.egenavgifter)}
-                            subtitle="28,97%"
-                            headerIcon={Percent}
-                        />
-                        <StatCard
-                            label="Status"
-                            value={INVOICE_STATUS_LABELS.DRAFT}
-                            subtitle={`Deadline: 2 maj ${deadlineYear}`}
-                            headerIcon={Clock}
-                        />
-                    </StatCardGrid>
+                        <StatCardGrid columns={4}>
+                            <StatCard
+                                label="Beskattningsår"
+                                value={String(neData.taxYear)}
+                                subtitle="NE-bilaga"
+                                headerIcon={Calendar}
+                            />
+                            <StatCard
+                                label="Resultat före egenavgifter"
+                                value={formatCurrency(neData.R12)}
+                                subtitle="R12"
+                                headerIcon={TrendingUp}
+                            />
+                            <StatCard
+                                label="Beräknade egenavgifter"
+                                value={formatCurrency(neData.egenavgifter)}
+                                subtitle={`${neData.egenavgifterRateDisplay}%`}
+                                headerIcon={Percent}
+                            />
+                            <StatCard
+                                label="Status"
+                                value={INVOICE_STATUS_LABELS.DRAFT}
+                                subtitle={`Deadline: 2 maj ${deadlineYear}`}
+                                headerIcon={Clock}
+                            />
+                        </StatCardGrid>
                     )}
 
                     {/* Section Separator */}
@@ -364,7 +377,7 @@ export function NEBilagaContent() {
                                     <span className="font-medium tabular-nums">{formatCurrency(neData.R24)}</span>
                                 </div>
                                 <div className="flex justify-between items-center py-2 border-b">
-                                    <span className="text-muted-foreground">Egenavgifter (28,97%)</span>
+                                    <span className="text-muted-foreground">Egenavgifter ({neData.egenavgifterRateDisplay}%)</span>
                                     <span className="font-medium tabular-nums text-red-600 dark:text-red-400">
                                         -{formatCurrency(neData.egenavgifter)}
                                     </span>
@@ -432,6 +445,8 @@ export function NEBilagaContent() {
                     egenavgifter: neData.egenavgifter,
                     slutligtResultat: neData.slutligtResultat,
                     taxYear: neData.taxYear,
+                    egenavgifterRate: neData.egenavgifterRate,
+                    egenavgifterRateDisplay: neData.egenavgifterRateDisplay,
                 }}
             />
         </TooltipProvider>

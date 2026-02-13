@@ -134,7 +134,7 @@ export const shareholderService = {
 
         const shareholders: Shareholder[] = data.map((row) => {
             const sharesCount = row.shares_count || row.shares || 0
-            const ownershipPct = row.ownership_percentage || row.share_percentage || 
+            const ownershipPct = row.ownership_percentage || row.share_percentage ||
                 (totalShares > 0 ? (sharesCount / totalShares) * 100 : 0)
 
             return {
@@ -309,7 +309,7 @@ export const shareholderService = {
     },
 
     /**
-     * Add a new shareholder
+     * Add a new shareholder with auto-assigned share numbers
      */
     async addShareholder({
         name,
@@ -319,7 +319,9 @@ export const shareholderService = {
         email,
         phone,
         isBoardMember = false,
-        boardRole
+        boardRole,
+        shareNumberFrom,
+        shareNumberTo,
     }: {
         name: string
         personalOrOrgNumber: string
@@ -329,22 +331,49 @@ export const shareholderService = {
         phone?: string
         isBoardMember?: boolean
         boardRole?: string
+        shareNumberFrom?: number
+        shareNumberTo?: number
     }) {
         const supabase = getSupabaseClient()
 
+        // Auto-assign share numbers if not explicitly provided
+        let assignedFrom = shareNumberFrom
+        let assignedTo = shareNumberTo
+
+        if (!assignedFrom && !assignedTo && sharesCount > 0) {
+            // Find the highest share number currently assigned
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            const { data: maxRow } = await (supabase as any)
+                .from('shareholders')
+                .select('share_number_to')
+                .not('share_number_to', 'is', null)
+                .order('share_number_to', { ascending: false })
+                .limit(1)
+                .single()
+
+            const maxNumber = maxRow?.share_number_to || 0
+            assignedFrom = maxNumber + 1
+            assignedTo = maxNumber + sharesCount
+        }
+
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const insertData: any = {
+            name,
+            ssn_org_nr: personalOrOrgNumber,
+            shares: sharesCount,
+            shares_count: sharesCount,
+            share_class: shareClass,
+            email,
+            phone,
+            is_board_member: isBoardMember,
+            board_role: boardRole,
+            share_number_from: assignedFrom || null,
+            share_number_to: assignedTo || null,
+        }
+
         const { data, error } = await supabase
             .from('shareholders')
-            .insert({
-                name,
-                ssn_org_nr: personalOrOrgNumber,
-                shares: sharesCount,
-                shares_count: sharesCount,
-                share_class: shareClass,
-                email,
-                phone,
-                is_board_member: isBoardMember,
-                board_role: boardRole
-            })
+            .insert(insertData)
             .select()
             .single()
 
@@ -363,7 +392,9 @@ export const shareholderService = {
             email: data.email,
             phone: data.phone,
             acquisitionDate: data.acquisition_date,
-            acquisitionPrice: data.acquisition_price
+            acquisitionPrice: data.acquisition_price,
+            shareNumberFrom: assignedFrom,
+            shareNumberTo: assignedTo,
         }
     }
 }

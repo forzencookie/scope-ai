@@ -235,6 +235,30 @@ export const verificationService = {
     },
 
     /**
+     * Check if a period (month) is locked.
+     * A period is locked if any verification in that month has is_locked = true
+     * (set by månadsavslut / period close).
+     */
+    async isPeriodLocked(date: string): Promise<boolean> {
+        const supabase = getSupabaseClient()
+        const d = new Date(date)
+        const year = d.getFullYear()
+        const month = d.getMonth() + 1
+        const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`
+        const endOfMonth = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
+
+        const { data } = await supabase
+            .from('verifications')
+            .select('id')
+            .gte('date', startOfMonth)
+            .lte('date', endOfMonth)
+            .eq('is_locked', true)
+            .limit(1)
+
+        return (data?.length || 0) > 0
+    },
+
+    /**
      * Create a new verification with journal lines persisted to both
      * the JSONB rows column (backward compat) and the relational verification_lines table
      */
@@ -253,6 +277,14 @@ export const verificationService = {
         sourceType?: string
         sourceId?: string
     }): Promise<Verification> {
+        // Period lock check — prevent booking in locked months
+        const locked = await this.isPeriodLocked(date)
+        if (locked) {
+            const d = new Date(date)
+            const monthName = d.toLocaleString('sv-SE', { month: 'long', year: 'numeric' })
+            throw new Error(`Perioden ${monthName} är låst. Kan inte skapa verifikationer i en stängd period.`)
+        }
+
         const supabase = getSupabaseClient()
 
         // Get next number

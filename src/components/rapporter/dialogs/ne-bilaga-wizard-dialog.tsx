@@ -26,6 +26,8 @@ interface NEBilagaData {
     egenavgifter: number
     slutligtResultat: number
     taxYear: number
+    egenavgifterRate: number
+    egenavgifterRateDisplay: string
 }
 
 interface NEBilagaWizardDialogProps {
@@ -77,7 +79,8 @@ export function NEBilagaWizardDialog({
     const summaKostnader = form.R7 + form.R8 + form.R9 + form.R10
     const resultatForeEgenavgifter = summaIntakter + summaKostnader
 
-    const egenavgifterRate = 0.2897
+    const egenavgifterRate = data.egenavgifterRate
+    const egenavgifterRateDisplay = data.egenavgifterRateDisplay
     const schablonavdrag = resultatForeEgenavgifter > 0
         ? Math.round(resultatForeEgenavgifter * 0.25 * egenavgifterRate)
         : 0
@@ -300,7 +303,7 @@ export function NEBilagaWizardDialog({
                             <span className="font-medium">{formatNumber(resultatForeEgenavgifter)} kr</span>
                         </div>
                         <div className="flex justify-between">
-                            <span>R13. Schablonavdrag (25% × 28,97%)</span>
+                            <span>R13. Schablonavdrag (25% × {egenavgifterRateDisplay}%)</span>
                             <span className="font-medium">-{formatNumber(schablonavdrag)} kr</span>
                         </div>
                         <div className="flex justify-between font-semibold border-t pt-2">
@@ -374,7 +377,7 @@ export function NEBilagaWizardDialog({
                                 <span className="text-2xl font-bold">{formatNumber(resultatEfterAvdrag)} kr</span>
                             </div>
                             <div className="flex justify-between items-baseline mt-2">
-                                <span className="text-sm text-muted-foreground">Egenavgifter (28,97%)</span>
+                                <span className="text-sm text-muted-foreground">Egenavgifter ({egenavgifterRateDisplay}%)</span>
                                 <span className="font-medium text-red-600">-{formatNumber(egenavgifter)} kr</span>
                             </div>
                             <div className="flex justify-between items-baseline mt-1">

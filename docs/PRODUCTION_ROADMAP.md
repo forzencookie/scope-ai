@@ -2,7 +2,7 @@
 
 **Date:** 2026-02-06
 **Purpose:** Transform the current prototype (shell + partial logic) into a production-grade Swedish accounting application.
-**Methodology:** Synthesized from APP_FEATURE_SPEC.md (founder vision), ACCOUNTING_APP_AUDIT.md (technical gaps), APP_STORYBOARD_2026.md (UX flows), and a full codebase scan (~823 TypeScript files, 52 API routes, 60+ AI tools, Supabase backend with RLS).
+**Methodology:** Synthesized from FOUNDER_VISION.md (founder vision), CODEBASE_AUDIT.md (technical gaps), APP_STORYBOARD_2026.md (UX flows), and a full codebase scan (~823 TypeScript files, 52 API routes, 60+ AI tools, Supabase backend with RLS).
 
 ---
 

@@ -31,8 +31,8 @@ Add a new onboarding step after company setup:
 - Dark/light mode preference
 - Uses Supabase Storage for images, `profiles` table for preferences
 
-### 1c. AI Interview (deferred)
-A chat phase where the AI interviews the user to gather context and pre-populate data. Depends on the full app working — build last.
+### 1c. Guided App Tour (replaces AI Interview)
+~~AI Interview~~ — Originally planned as a chat phase where the AI interviews the user. Replaced with a **guided first-login walkthrough**: after onboarding completes, the user gets an interactive step-by-step tour of the dashboard. Spotlight highlights one component at a time (sidebar sections, AI chat, reports, etc.) with tooltips explaining each area. Only the highlighted element is clickable — everything else is dimmed. Think Linear/Notion/Figma onboarding. Build after core features are production-solid.
 
 ---
 
@@ -74,7 +74,7 @@ Replace Stripe hosted checkout with Stripe Embedded Checkout (`@stripe/react-str
 
 | Feature | Reason |
 |---------|--------|
-| AI Interview | Needs working app to pre-populate — build last |
+| Guided App Tour | Replaces AI Interview — interactive first-login walkthrough with spotlight highlights. Build after core features are solid |
 | Bank integration | Tink/Plaid is a separate project |
 | Team email invites | Email infrastructure is a whole thing |
 | Document upload persistence | Needs file categorization design first |
@@ -91,4 +91,4 @@ Replace Stripe hosted checkout with Stripe Embedded Checkout (`@stripe/react-str
 5. **Phase 3b** — Credits tracking table + real balance
 6. **Phase 3c** — Real billing history from Stripe
 7. **Phase 3d** — Embedded checkout page
-8. **Phase 1c** — AI Interview (last, coolest)
+8. **Phase 1c** — Guided App Tour (deferred — after core features are production-ready)

@@ -45,10 +45,16 @@ export async function POST(req: Request) {
         const employee = await userDb.employees.create({
             name: body.name,
             role: body.role || null,
-            // email: body.email || null, // Not in schema
-            monthly_salary: Number(body.salary) || 0,
+            email: body.email || null,
+            phone: body.phone || null,
+            personal_number: body.personal_number || null,
+            monthly_salary: Number(body.monthly_salary ?? body.salary) || 0,
+            employment_type: body.employment_type || null,
+            tax_rate: body.tax_rate != null ? Number(body.tax_rate) : 0.30,
+            tax_table: body.tax_table != null ? Number(body.tax_table) : null,
+            tax_column: body.tax_column != null ? Number(body.tax_column) : null,
             status: body.status || 'active',
-            start_date: body.employment_date || new Date().toISOString().split('T')[0],
+            start_date: body.employment_date || body.start_date || new Date().toISOString().split('T')[0],
             user_id: userDb.userId,
         });
 

@@ -208,6 +208,52 @@ Key indexes for common queries:
 
 ---
 
+## Coding Standards
+
+### TypeScript Rules
+- **No `any`:** Use `unknown` or define a distinct type.
+- **Interfaces over Types:** Use `interface` for object definitions (better error messages).
+- **Explicitness:** Return types mandatory for exported functions.
+
+### Component Guidelines
+- **Filenames:** Kebab-case (`invoice-list.tsx`, not `InvoiceList.tsx`).
+- **Exports:** Named Exports (`export function InvoiceList`), not Default Exports.
+- **Props:** Define `interface ComponentProps` right above the component.
+
+### CSS / Tailwind
+- **Utility First:** Use Tailwind utilities. Use `cn()` helper for conditional classes.
+- **Mobile First:** `class="flex flex-col md:flex-row"` (defaults to mobile, overrides for desktop).
+
+### Error Handling
+- **UI:** Use `useToast` for user-facing success/error messages.
+- **Logging:** Log errors to console in dev; ensure no PII is logged.
+
+---
+
+## UX Patterns
+
+### Design Philosophy
+- **Clean & Professional:** Lots of whitespace, crisp borders, subtle shadows.
+- **Native Feel:** Should feel like part of the OS, not a website.
+- **Dark Mode First:** Branding leans on dark/cosmic themes ("Scope").
+
+### Core Components (Shadcn/UI)
+- `Button`: Variants `default`, `secondary`, `ghost`, `destructive`.
+- `Card`: Primary content container.
+- `Dialog`: Modals / critical confirmations.
+- `Sheet`: Side-drawers (e.g., editing a row).
+
+### Shell Layout
+- **Sidebar:** Fixed left navigation.
+- **AI Overlay:** Persistent layer that can slide over any content.
+- **Main Content:** Centered, max-width constrained for readability.
+
+### Key UX Flows
+- **Walkthrough:** The primary way complex data is presented. See `WALKTHROUGH_DESIGNS.md`.
+- **Drill-down:** Clicking a Card opens a Sheet or redirects to a Detail View.
+
+---
+
 ## File Migration Notes
 
 These files were consolidated into this document on 2026-02-04:

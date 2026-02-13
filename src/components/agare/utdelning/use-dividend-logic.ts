@@ -18,10 +18,49 @@ export interface DividendDecision {
 }
 
 export function useDividendLogic() {
-    const { addVerification } = useVerifications()
+    const { verifications, addVerification } = useVerifications()
     const { documents: realDocuments, addDocument, updateDocument } = useCompliance()
     const toast = useToast()
     const { k10Data } = useK10Calculation()
+
+    // ABL 17:3 — Calculate distributable equity from free equity accounts (2090-2099)
+    // Credit balance = positive equity, debit reduces it
+    const distributableEquity = useMemo(() => {
+        return verifications.reduce((sum, v) => {
+            return sum + v.rows.reduce((rowSum, r) => {
+                const acc = parseInt(r.account)
+                if (acc >= 2090 && acc <= 2099) {
+                    // Credits increase equity, debits decrease it
+                    return rowSum + (r.credit || 0) - (r.debit || 0)
+                }
+                return rowSum
+            }, 0)
+        }, 0)
+    }, [verifications])
+
+    // Calculate dividend tax respecting gränsbelopp from K10
+    // Within gränsbelopp: 20% capital gains tax
+    // Above gränsbelopp: taxed as tjänsteinkomst (~32% municipal + potential state tax ~52%)
+    const calculateDividendTax = (amount: number): { tax: number; taxRate: string } => {
+        const gransbelopp = k10Data.gransbelopp || 0
+
+        if (gransbelopp <= 0 || amount <= gransbelopp) {
+            // Entire amount within gränsbelopp — 20% flat
+            return { tax: Math.round(amount * 0.2), taxRate: '20%' }
+        }
+
+        // Split: part within gränsbelopp at 20%, excess as tjänsteinkomst
+        const capitalPart = gransbelopp
+        const incomePart = amount - gransbelopp
+        const capitalTax = Math.round(capitalPart * 0.2)
+        // Tjänsteinkomst approximation: ~32% municipal tax (varies by municipality)
+        // Conservative estimate; actual rate depends on marginal tax bracket
+        const incomeTax = Math.round(incomePart * 0.32)
+        const totalTax = capitalTax + incomeTax
+        const effectiveRate = Math.round((totalTax / amount) * 100)
+
+        return { tax: totalTax, taxRate: `~${effectiveRate}% (blandat)` }
+    }
 
     // Parse dividend decisions from meeting documents
     const realDividendHistory = useMemo<DividendDecision[]>(() => {
@@ -43,7 +82,7 @@ export function useDividendLogic() {
                 .filter((d: any) => d.type === 'dividend' && d.amount)
                 .forEach((d: any) => {
                     const amount = d.amount || 0
-                    const tax = Math.round(amount * 0.2)
+                    const { tax, taxRate } = calculateDividendTax(amount)
 
                     // Determine status based on meeting status and booked flag
                     let status: 'planned' | 'decided' | 'booked' = 'planned'
@@ -57,7 +96,7 @@ export function useDividendLogic() {
                         id: `${meeting.id}-${d.id}`,
                         year: Number(meeting.year || new Date(meeting.date).getFullYear()),
                         amount,
-                        taxRate: '20%',
+                        taxRate,
                         tax,
                         netAmount: amount - tax,
                         status,
@@ -69,11 +108,22 @@ export function useDividendLogic() {
         })
 
         return history.sort((a, b) => b.year - a.year)
-    }, [realDocuments])
+    }, [realDocuments, k10Data.gransbelopp])
 
     // Step 1: Plan a dividend (creates draft meeting)
     const planDividend = async (year: number, amount: number, meetingDate?: string) => {
         if (!amount || !year) return
+
+        // ABL 17:3 solvency check — cannot distribute more than distributable equity
+        if (distributableEquity < amount) {
+            toast.error(
+                "Otillräckligt fritt eget kapital",
+                `Utdelningsbart kapital: ${distributableEquity.toLocaleString('sv-SE')} kr. ` +
+                `Föreslagen utdelning: ${amount.toLocaleString('sv-SE')} kr. ` +
+                `Enligt ABL 17:3 kan bolaget inte dela ut mer än det fria egna kapitalet.`
+            )
+            return
+        }
 
         const date = meetingDate || new Date().toISOString().split('T')[0]
         const decisionId = `div-${Math.random().toString(36).substr(2, 9)}`
@@ -111,14 +161,25 @@ export function useDividendLogic() {
             return
         }
 
+        // ABL 17:3 solvency check at booking time (equity may have changed since planning)
+        if (distributableEquity < dividend.amount) {
+            toast.error(
+                "Otillräckligt fritt eget kapital",
+                `Utdelningsbart kapital: ${distributableEquity.toLocaleString('sv-SE')} kr. ` +
+                `Beslutad utdelning: ${dividend.amount.toLocaleString('sv-SE')} kr. ` +
+                `Utdelningen överskrider fritt eget kapital (ABL 17:3).`
+            )
+            return
+        }
+
         // Create accounting entries:
-        // Step 1: Record liability - Debit 2091 (Balanserad vinst) → Credit 2898 (Utdelningsskuld)
+        // Step 1: Record liability - Debit 2098 (Vinst föregående år) → Credit 2898 (Utdelningsskuld)
         await addVerification({
             description: `Beslutad utdelning ${dividend.year}`,
             date: dividend.meetingDate,
             rows: [
                 {
-                    account: "2091",
+                    account: "2098",
                     debit: dividend.amount,
                     credit: 0,
                     description: "Minskning av fritt eget kapital",
@@ -208,7 +269,7 @@ export function useDividendLogic() {
             .reduce((sum, d) => sum + d.amount, 0)
 
         const totalActive = planerad + beslutad
-        const skatt = Math.round(totalActive * 0.2)
+        const { tax: skatt } = calculateDividendTax(totalActive)
 
         return {
             gransbelopp: k10Data.gransbelopp,
@@ -223,6 +284,7 @@ export function useDividendLogic() {
         k10Data,
         realDividendHistory,
         stats,
+        distributableEquity,
         // Actions
         planDividend,
         bookDividend,

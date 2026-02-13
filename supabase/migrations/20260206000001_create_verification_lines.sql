@@ -141,7 +141,7 @@ AS $$
     ORDER BY vl.account_number;
 $$;
 
-COMMENT ON FUNCTION get_account_balances IS 'Aggregates debit/credit totals per BAS account for Resultaträkning and Balansräkning';
+COMMENT ON FUNCTION get_account_balances(DATE, DATE, UUID) IS 'Aggregates debit/credit totals per BAS account for Resultaträkning and Balansräkning';
 
 -- ============================================================================
 -- 6. Database function: get_next_verification_number
@@ -166,7 +166,7 @@ AS $$
       AND user_id = p_user_id;
 $$;
 
-COMMENT ON FUNCTION get_next_verification_number IS 'Returns next sequential verification number for BFL-compliant gap-free numbering';
+COMMENT ON FUNCTION get_next_verification_number(TEXT, INTEGER, UUID) IS 'Returns next sequential verification number for BFL-compliant gap-free numbering';
 
 -- ============================================================================
 -- 7. Migrate existing JSONB rows data into verification_lines

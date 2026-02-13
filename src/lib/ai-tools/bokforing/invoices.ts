@@ -85,19 +85,71 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
         },
         required: ['customerName', 'amount', 'description'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const vatRate = params.vatRate ?? 0.25
         const vatAmount = Math.round(params.amount * vatRate)
         const totalAmount = params.amount + vatAmount
+        const dueDate = params.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+        const vatPercent = Math.round(vatRate * 100)
 
+        // If confirmed, persist to database via API
+        if (context?.isConfirmed) {
+            try {
+                const baseUrl = getBaseUrl()
+                const res = await fetch(`${baseUrl}/api/invoices`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        customer: params.customerName,
+                        amount: totalAmount,
+                        vatAmount,
+                        issueDate: new Date().toISOString().split('T')[0],
+                        dueDate,
+                        status: 'Utkast',
+                        items: [{
+                            id: '1',
+                            description: params.description,
+                            quantity: 1,
+                            unitPrice: params.amount,
+                            vatRate: vatPercent,
+                        }],
+                    }),
+                })
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    return { success: false, error: err.error || 'Kunde inte skapa faktura.' }
+                }
+
+                const data = await res.json()
+                return {
+                    success: true,
+                    data: {
+                        id: data.invoice?.dbId || data.invoice?.id,
+                        customerName: params.customerName,
+                        amount: params.amount,
+                        vatAmount,
+                        totalAmount,
+                        description: params.description,
+                        dueDate,
+                        status: 'draft' as const,
+                    },
+                    message: `Faktura skapad för ${params.customerName}. Totalt: ${totalAmount.toLocaleString('sv-SE')} kr. Sparad som utkast.`,
+                }
+            } catch (error) {
+                return { success: false, error: 'Kunde inte spara faktura till databasen.' }
+            }
+        }
+
+        // Preflight: return confirmation request
         const invoice: CreatedInvoice = {
-            id: `inv-${Date.now()}`,
+            id: `pending`,
             customerName: params.customerName,
             amount: params.amount,
             vatAmount,
             totalAmount,
             description: params.description,
-            dueDate: params.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            dueDate,
             status: 'draft',
         }
 
@@ -107,7 +159,7 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
             summary: [
                 { label: 'Kund', value: params.customerName },
                 { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
-                { label: 'Moms', value: `${vatAmount.toLocaleString('sv-SE')} kr` },
+                { label: 'Moms', value: `${vatAmount.toLocaleString('sv-SE')} kr (${vatPercent}%)` },
                 { label: 'Totalt', value: `${totalAmount.toLocaleString('sv-SE')} kr` },
             ],
             action: { toolName: 'create_invoice', params },
@@ -117,7 +169,7 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
         return {
             success: true,
             data: invoice,
-            message: `Faktura förberedd för ${params.customerName}. Totalt: ${totalAmount} kr.`,
+            message: `Faktura förberedd för ${params.customerName}. Totalt: ${totalAmount} kr. Bekräfta för att spara.`,
             confirmationRequired: confirmationRequest,
         }
     },
@@ -406,16 +458,46 @@ export const bookInvoicePaymentTool = defineTool<BookInvoicePaymentParams, BookI
         },
         required: ['invoiceId', 'amount'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const paymentDate = params.paymentDate || new Date().toISOString().split('T')[0]
-        const verificationId = `ver-${Date.now()}`
+
+        // If confirmed, persist the booking
+        if (context?.isConfirmed) {
+            try {
+                const baseUrl = getBaseUrl()
+                // Book the invoice via the booking API
+                const res = await fetch(`${baseUrl}/api/invoices/${params.invoiceId}/book`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                })
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    return { success: false, error: err.error || 'Kunde inte bokföra betalning.' }
+                }
+
+                const data = await res.json()
+                return {
+                    success: true,
+                    data: {
+                        booked: true,
+                        invoiceId: params.invoiceId,
+                        verificationId: data.verification?.id || '',
+                        remainingAmount: 0,
+                    },
+                    message: `Betalning på ${params.amount.toLocaleString('sv-SE')} kr bokförd. Verifikation skapad.`,
+                }
+            } catch (error) {
+                return { success: false, error: 'Kunde inte bokföra betalning.' }
+            }
+        }
 
         return {
             success: true,
             data: {
                 booked: false,
                 invoiceId: params.invoiceId,
-                verificationId,
+                verificationId: '',
                 remainingAmount: 0,
             },
             message: `Betalning på ${params.amount.toLocaleString('sv-SE')} kr förberedd för bokföring.`,

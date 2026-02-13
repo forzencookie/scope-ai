@@ -139,6 +139,8 @@ class AIToolRegistry {
             }
             // Clear the pending confirmation
             this.pendingConfirmations.delete(options.confirmationId)
+            // Mark context as confirmed so the tool knows to persist
+            context.isConfirmed = true
         }
 
         // Execute the tool

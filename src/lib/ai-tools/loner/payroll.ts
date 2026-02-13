@@ -8,6 +8,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll-service'
 import { companyService } from '@/services/company-service'
 import { taxService } from '@/services/tax-service'
+import { getEmployeeBenefits } from '@/lib/formaner'
 
 // =============================================================================
 // Payslip Tools
@@ -117,16 +118,35 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         }
 
         // Calculate payslips from real employee data
-        const payslips: Payslip[] = employees.map(emp => {
+        // Fetch tax rates and employee benefits for accurate employer contributions
+        const currentYear = new Date().getFullYear()
+        const rates = await taxService.getAllTaxRates(currentYear)
+
+        const payslips: Payslip[] = []
+        for (const emp of employees) {
             const gross = emp.monthlySalary || 0
             const taxRate = (emp.taxTable || 30) / 100
             const tax = Math.round(gross * taxRate)
-            return {
+
+            // Fetch taxable benefits for this employee
+            let benefitTaxValue = 0
+            try {
+                const empBenefits = await getEmployeeBenefits(emp.name, currentYear)
+                benefitTaxValue = empBenefits
+                    .filter(b => b.formansvarde && b.formansvarde > 0)
+                    .reduce((sum, b) => sum + (b.formansvarde || 0), 0)
+                // Monthly average (benefits are stored yearly or monthly)
+                if (benefitTaxValue > 0) {
+                    benefitTaxValue = Math.round(benefitTaxValue / 12)
+                }
+            } catch { /* no benefits */ }
+
+            payslips.push({
                 id: `new-${emp.id}`,
                 period: params.period,
                 employeeName: emp.name,
                 employeeId: emp.id,
-                year: new Date().getFullYear(),
+                year: currentYear,
                 month: new Date().getMonth() + 1,
                 grossSalary: gross,
                 taxDeduction: tax,
@@ -135,8 +155,8 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 otherDeductions: 0,
                 status: 'draft',
                 sentAt: undefined,
-            }
-        })
+            })
+        }
 
         const totalGross = payslips.reduce((sum, p) => sum + p.grossSalary, 0)
         const totalNet = payslips.reduce((sum, p) => sum + p.netSalary, 0)
@@ -152,7 +172,20 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
 
             for (const payslip of payslips) {
                 try {
-                    const employerContribution = Math.round(payslip.grossSalary * rates.employerContributionRate)
+                    // Include taxable benefits in employer contribution basis
+                    let benefitTaxValue = 0
+                    try {
+                        const empBenefits = await getEmployeeBenefits(payslip.employeeName, currentYear)
+                        benefitTaxValue = empBenefits
+                            .filter(b => b.formansvarde && b.formansvarde > 0)
+                            .reduce((sum, b) => sum + (b.formansvarde || 0), 0)
+                        if (benefitTaxValue > 0) {
+                            benefitTaxValue = Math.round(benefitTaxValue / 12)
+                        }
+                    } catch { /* no benefits */ }
+
+                    const employerContributionBasis = payslip.grossSalary + benefitTaxValue
+                    const employerContribution = Math.round(employerContributionBasis * rates.employerContributionRate)
                     const res = await fetch(`${baseUrl}/api/payroll/payslips`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
@@ -253,15 +286,28 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
         const r = reports[0];
 
         // Transform the latest/first report to AGIData format for preview
+        // Fetch employees to sum taxable benefits
+        let totalBenefits = 0
+        try {
+            const employees = await payrollService.getEmployees()
+            const currentYear = new Date().getFullYear()
+            for (const emp of employees) {
+                const empBenefits = await getEmployeeBenefits(emp.name, currentYear)
+                totalBenefits += empBenefits
+                    .filter(b => b.formansvarde && b.formansvarde > 0)
+                    .reduce((sum, b) => sum + (b.formansvarde || 0), 0)
+            }
+        } catch { /* no benefits data */ }
+
+        const totalGrossPay = (r as any).totalGrossPay || 0
         const agiData = {
             period: r.period,
             employeeCount: r.employeeCount || 0,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            totalGrossPay: (r as any).totalGrossPay || 0,
-            totalBenefits: 0, // Mock for now
+            totalGrossPay,
+            totalBenefits,
             totalTaxDeduction: r.totalTax || 0,
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            employerFeeBasis: (r as any).totalGrossPay || 0,
+            employerFeeBasis: totalGrossPay + totalBenefits,
             totalEmployerFee: r.employerContributions || 0,
             // totalToPay calculated in component
         }

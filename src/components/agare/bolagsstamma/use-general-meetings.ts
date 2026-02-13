@@ -173,7 +173,7 @@ export function useGeneralMeetings() {
       date: meeting.date,
       rows: [
         {
-          account: "2091", // Balanserad vinst/förlust
+          account: "2098", // Vinst eller förlust från föregående år
           debit: decision.amount,
           credit: 0,
           description: "Minskning av fritt eget kapital"

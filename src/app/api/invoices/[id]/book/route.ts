@@ -4,13 +4,28 @@
  * Uses the bookkeeping engine to create proper double-entry journal entries
  * with source tracking for report aggregation.
  *
+ * Supports per-line VAT rates from invoice items — groups line items by
+ * VAT rate and creates correct revenue + output VAT entries for each group.
+ *
  * Security: Uses user-scoped DB access with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
 import { verificationService } from '@/services/verification-service';
-import { createSalesEntry } from '@/lib/bookkeeping';
+import { getVatAccount } from '@/lib/bookkeeping/vat';
+import type { SwedishVatRate } from '@/lib/bookkeeping/types';
+
+interface InvoiceLineItem {
+    description?: string;
+    quantity?: number;
+    unitPrice?: number;
+    vatRate?: number;
+}
+
+function isValidVatRate(rate: number): rate is SwedishVatRate {
+    return rate === 0 || rate === 6 || rate === 12 || rate === 25;
+}
 
 export async function POST(
     req: NextRequest,
@@ -39,29 +54,92 @@ export async function POST(
         // Update Invoice Status
         await userDb.customerInvoices.update(id, { status: 'skickad' });
 
-        // Use the bookkeeping engine to generate proper journal entries
         const total = Number(invoice.total_amount) || 0;
-        const journalEntry = createSalesEntry({
-            date: new Date().toISOString().split('T')[0],
-            description: `${invoice.customer_name || 'Kund'}`,
-            grossAmount: total,
-            revenueAccount: '3001',
-            vatRate: 25,
-            invoiceNumber: invoice.invoice_number || undefined,
-            series: 'A',
+        const date = new Date().toISOString().split('T')[0];
+        const customerName = invoice.customer_name || 'Kund';
+        const invoiceNumber = invoice.invoice_number || undefined;
+        const description = invoiceNumber ? `${customerName} (Faktura ${invoiceNumber})` : customerName;
+
+        const entries: { account: string; debit: number; credit: number; description: string }[] = [];
+
+        // Debit: Customer receivable for full gross amount
+        entries.push({
+            account: '1510',
+            debit: total,
+            credit: 0,
+            description: invoiceNumber ? `Kundfaktura ${invoiceNumber}` : 'Kundfordran',
         });
+
+        // Parse line items to get per-line VAT rates
+        const items = invoice.items as InvoiceLineItem[] | null;
+
+        if (items && Array.isArray(items) && items.length > 0) {
+            // Group line items by VAT rate
+            const vatGroups = new Map<SwedishVatRate, number>();
+            for (const item of items) {
+                const qty = Number(item.quantity) || 0;
+                const price = Number(item.unitPrice) || 0;
+                const lineNet = Math.round(qty * price * 100) / 100;
+                const rawRate = Number(item.vatRate) ?? 25;
+                const vatRate: SwedishVatRate = isValidVatRate(rawRate) ? rawRate : 25;
+
+                vatGroups.set(vatRate, (vatGroups.get(vatRate) || 0) + lineNet);
+            }
+
+            // Credit: Revenue and output VAT per VAT rate group
+            for (const [vatRate, netAmount] of vatGroups) {
+                const roundedNet = Math.round(netAmount * 100) / 100;
+
+                entries.push({
+                    account: '3001',
+                    debit: 0,
+                    credit: roundedNet,
+                    description: vatRate > 0 ? `Försäljning (exkl moms ${vatRate}%)` : 'Försäljning (momsfri)',
+                });
+
+                if (vatRate > 0) {
+                    const vatAmount = Math.round(roundedNet * (vatRate / 100) * 100) / 100;
+                    const vatAccount = getVatAccount(vatRate, 'output');
+
+                    entries.push({
+                        account: vatAccount,
+                        debit: 0,
+                        credit: vatAmount,
+                        description: `Utgående moms ${vatRate}%`,
+                    });
+                }
+            }
+        } else {
+            // Fallback: use invoice-level vat_rate or derive from total vs vat_amount
+            const invoiceVatRate = Number(invoice.vat_rate);
+            const vatRate: SwedishVatRate = isValidVatRate(invoiceVatRate) ? invoiceVatRate : 25;
+            const vatMultiplier = vatRate / 100;
+            const netAmount = Math.round((total / (1 + vatMultiplier)) * 100) / 100;
+            const vatAmount = Math.round((total - netAmount) * 100) / 100;
+
+            entries.push({
+                account: '3001',
+                debit: 0,
+                credit: netAmount,
+                description: `Försäljning (exkl moms ${vatRate}%)`,
+            });
+
+            if (vatRate > 0) {
+                entries.push({
+                    account: getVatAccount(vatRate, 'output'),
+                    debit: 0,
+                    credit: vatAmount,
+                    description: `Utgående moms ${vatRate}%`,
+                });
+            }
+        }
 
         // Create verification with source tracking and relational lines
         const verification = await verificationService.createVerification({
             series: 'A',
-            date: journalEntry.date,
-            description: journalEntry.description,
-            entries: journalEntry.rows.map(row => ({
-                account: row.account,
-                debit: row.debit,
-                credit: row.credit,
-                description: row.description,
-            })),
+            date,
+            description,
+            entries,
             sourceType: 'invoice',
             sourceId: id,
         });

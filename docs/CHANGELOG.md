@@ -4,6 +4,45 @@ Historical record of completed plans, audits, and major changes.
 
 ---
 
+## 2026-02-13: Documentation Consolidation
+
+Reduced 32 docs to 20. Dissolved `ai-context/` folder. Renamed files for consistency.
+
+| Action | Files |
+|--------|-------|
+| **Deleted (superseded)** | `ROADMAP.md`, `REMAINING_GAPS.md`, `ACCOUNTING_APP_AUDIT.md`, `VISION_VS_CODEBASE_GAP_ANALYSIS.md`, `ai-memory-architecture.md` |
+| **Merged then deleted** | `FOUNDER_INTERVIEW_2026_02_12.md` → `FOUNDER_VISION.md`, `ai-context/coding-standards.md` + `ai-context/ux-patterns.md` → `ARCHITECTURE.md`, `ai-context/tech-stack.md`, `ai-context/project-structure.md`, `ai-context/business-domain.md`, `ai-context/README.md` |
+| **Moved** | `ai-context/feature-map.md` → `FEATURE_MAP.md` |
+| **Renamed** | `FOUNDERVISION.md` → `FOUNDER_VISION.md`, `HANDELSER.md` → `HANDELSER_OVERVIEW.md`, `CODEBASE_AUDIT_2026_02_12.md` → `CODEBASE_AUDIT.md`, `ai-architecture-v2.md` → `AI_ARCHITECTURE.md`, `walkthrough-designs.md` → `WALKTHROUGH_DESIGNS.md` |
+
+---
+
+## 2026-02-13: Production Readiness Phases A–G
+
+Seven fixes applied to close critical blockers identified in CODEBASE_AUDIT:
+
+| Phase | Fix | Impact |
+|-------|-----|--------|
+| A | Tax rate centralization | `tax_parameters` table + `useTaxParameters()` hook |
+| B | Benefits flow to payslips/AGI | Förmånsvärde included in payslip generation and AGI |
+| C | Closing entry engine | `closing-entry-service.ts` — transfers P&L result to 2099 |
+| D | AGI individuppgifter | Per-employee KU data with personnummer and tax |
+| E | Verification corrections & accruals | Fiscal year selection, accrual support |
+| F | Period lock enforcement | Booking APIs reject entries in locked periods |
+| G | Aktienummer auto-assignment | Sequential `share_number_from`/`share_number_to` per ABL 5:2 |
+
+Overall production readiness updated from ~70% to ~80%.
+
+---
+
+## 2026-02-12: Full Codebase Audit
+
+> Details in: CODEBASE_AUDIT.md
+
+Category-by-category code scan. Critical fixes applied same day: AI write persistence, invoice per-line VAT, dividend account/tax/equity check, employee data persistence.
+
+---
+
 ## 2026-02-04: Logic & Functionality Audit Complete
 
 > Previously documented in: LOGIC_AUDIT_REPORT.md

@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo } from "react"
+import { useState, useMemo, useCallback } from "react"
 import {
     Building2,
     Clock,
@@ -8,6 +8,8 @@ import {
     ClipboardEdit,
     Download,
     Calendar,
+    Lock,
+    Loader2,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -20,6 +22,7 @@ import { useCompany } from "@/providers/company-provider"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
 import { useToast } from "@/components/ui/toast"
+import { formatCurrency } from "@/lib/utils"
 import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { ArsbokslutWizardDialog } from "./dialogs/arsbokslut-wizard-dialog"
@@ -32,9 +35,65 @@ export function ArsbokslutContent() {
     const toast = useToast()
     const { companyTypeName } = useCompany()
     const [wizardOpen, setWizardOpen] = useState(false)
+    const [isClosing, setIsClosing] = useState(false)
     const fiscalYear = new Date().getFullYear() - 1
     const { text } = useTextMode()
     const { accountBalances, totals, isLoading } = useAccountBalances()
+
+    // Closing entry handler
+    const handleCreateClosingEntries = useCallback(async () => {
+        setIsClosing(true)
+        try {
+            // Preview first
+            const companyType = companyTypeName?.toLowerCase().includes('enskild') ? 'EF' : 'AB'
+            const previewRes = await fetch(`/api/closing-entries?year=${fiscalYear}&companyType=${companyType}`)
+            const preview = await previewRes.json()
+
+            if (!previewRes.ok) {
+                toast.error('Fel', preview.error || 'Kunde inte förhandsgranska')
+                return
+            }
+
+            if (preview.alreadyClosed) {
+                toast.error('Redan stängt', `Räkenskapsåret ${fiscalYear} har redan bokslutsposter. Ta bort serie Y-verifikationer för att köra om.`)
+                return
+            }
+
+            // Show confirmation
+            const confirmed = window.confirm(
+                `Skapa bokslutsposter för ${fiscalYear}?\n\n` +
+                `Intäkter: ${formatCurrency(preview.totalRevenue)}\n` +
+                `Kostnader: ${formatCurrency(preview.totalExpenses)}\n` +
+                (preview.corporateTax > 0 ? `Bolagsskatt: ${formatCurrency(preview.corporateTax)}\n` : '') +
+                `Årets resultat: ${formatCurrency(preview.netResult)}\n\n` +
+                `${preview.revenueEntries.length + preview.expenseEntries.length + preview.resultTransfer.length + (preview.taxEntry?.length || 0)} rader skapas i serie Y.`
+            )
+
+            if (!confirmed) return
+
+            // Execute
+            const execRes = await fetch('/api/closing-entries', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ year: fiscalYear, companyType }),
+            })
+            const execResult = await execRes.json()
+
+            if (!execRes.ok) {
+                toast.error('Fel', execResult.error || 'Kunde inte skapa bokslutsposter')
+                return
+            }
+
+            toast.success('Bokslutsposter skapade',
+                `${execResult.verificationIds.length} verifikationer skapade. Årets resultat: ${formatCurrency(execResult.netResult)}`
+            )
+        } catch (err) {
+            toast.error('Fel', 'Ett oväntat fel uppstod')
+            console.error('Closing entries error:', err)
+        } finally {
+            setIsClosing(false)
+        }
+    }, [fiscalYear, companyTypeName, toast])
 
     // P&L Calculations
     const sales = accountBalances
@@ -182,6 +241,20 @@ export function ArsbokslutContent() {
                     <Button size="sm" className="h-9" onClick={() => setWizardOpen(true)}>
                         <ClipboardEdit className="mr-2 h-4 w-4" />
                         Generera
+                    </Button>
+                    <Button
+                        size="sm"
+                        className="h-9"
+                        variant="default"
+                        onClick={handleCreateClosingEntries}
+                        disabled={isClosing || isLoading}
+                    >
+                        {isClosing ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        ) : (
+                            <Lock className="mr-2 h-4 w-4" />
+                        )}
+                        Skapa bokslutsposter
                     </Button>
                 </CollapsibleTableHeader>
 

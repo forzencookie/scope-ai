@@ -167,7 +167,11 @@ export function AGIFormPreview({
                 />
                 <FormFieldRow
                     code="487"
-                    label="Arbetsgivaravgift (31.42%)" // Typical label, though varies by age
+                    label={
+                        data.employerFeeBasis > 0
+                            ? `Arbetsgivaravgift (${((data.totalEmployerFee / data.employerFeeBasis) * 100).toFixed(2)}%)`
+                            : "Arbetsgivaravgift"
+                    }
                     value={formatCurrency(data.totalEmployerFee)}
                     status="valid"
                 />
