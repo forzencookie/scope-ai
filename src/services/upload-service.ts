@@ -112,6 +112,45 @@ export async function uploadAvatarFile(file: File, userId: string): Promise<Uplo
 }
 
 /**
+ * Upload a company logo to Supabase Storage
+ * Replaces existing logo (upsert). Public bucket for direct URL access.
+ */
+export async function uploadCompanyLogo(file: File, userId: string): Promise<UploadResult> {
+    try {
+        const supabase = getSupabaseClient()
+
+        const extension = file.name.split('.').pop() || 'png'
+        const path = `${userId}/logo.${extension}`
+
+        const { data, error } = await supabase.storage
+            .from('company-logos')
+            .upload(path, file, {
+                cacheControl: '3600',
+                upsert: true
+            })
+
+        if (error) {
+            console.error('Company logo upload error:', error)
+            return { success: false, error: error.message }
+        }
+
+        const { data: urlData } = supabase.storage
+            .from('company-logos')
+            .getPublicUrl(data.path)
+
+        const url = `${urlData.publicUrl}?t=${Date.now()}`
+
+        return { success: true, url, path: data.path }
+    } catch (error) {
+        console.error('Company logo upload error:', error)
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : 'Unknown upload error'
+        }
+    }
+}
+
+/**
  * Get a signed URL for a private receipt file
  * 
  * @param path - The file path in storage

@@ -44,6 +44,8 @@ interface CompanyInfo {
   // Member/Partner Settings (Förening/HB/KB)
   memberFee: number          // Annual member fee
   capitalContribution: number // Insats/capital contribution
+  // Branding
+  logoUrl?: string
   // Onboarding State
   onboardingMode: 'fresh' | 'existing'
   onboardingComplete: boolean

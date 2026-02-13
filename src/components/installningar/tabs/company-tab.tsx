@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { Trash2, Download } from "lucide-react"
+import { Trash2, Download, Upload, Building2 } from "lucide-react"
 import {
     Dialog,
     DialogContent,
@@ -47,6 +47,37 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
     const [confirmText, setConfirmText] = React.useState("")
     const [isDeleting, setIsDeleting] = React.useState(false)
     const [isExporting, setIsExporting] = React.useState(false)
+    const [isUploadingLogo, setIsUploadingLogo] = React.useState(false)
+    const logoInputRef = React.useRef<HTMLInputElement>(null)
+
+    const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsUploadingLogo(true)
+        try {
+            const formData = new FormData()
+            formData.append('file', file)
+
+            const res = await fetch('/api/company/logo', {
+                method: 'POST',
+                body: formData,
+            })
+
+            if (res.ok) {
+                const data = await res.json()
+                updateCompany({ logoUrl: data.logo_url })
+            } else {
+                const err = await res.json()
+                alert(err.message || 'Kunde inte ladda upp logotyp')
+            }
+        } catch {
+            alert('Ett fel uppstod vid uppladdning')
+        } finally {
+            setIsUploadingLogo(false)
+            if (logoInputRef.current) logoInputRef.current.value = ''
+        }
+    }
 
     const handleSIEExport = async () => {
         setIsExporting(true)
@@ -118,6 +149,47 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                 description={text.settings.companyTypeDesc}
             >
                 <CompanyTypeSelector showDescription={false} columns={2} />
+            </SettingsSection>
+
+            <Separator />
+
+            <SettingsSection
+                title="Logotyp"
+                description="Visas på fakturor och lönebesked"
+            >
+                <div className="flex items-center gap-4">
+                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted/30">
+                        {company?.logoUrl ? (
+                            // eslint-disable-next-line @next/next/no-img-element
+                            <img
+                                src={company.logoUrl}
+                                alt="Företagslogotyp"
+                                className="h-full w-full object-contain"
+                            />
+                        ) : (
+                            <Building2 className="h-6 w-6 text-muted-foreground/50" />
+                        )}
+                    </div>
+                    <div className="space-y-1">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => logoInputRef.current?.click()}
+                            disabled={isUploadingLogo}
+                        >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {isUploadingLogo ? 'Laddar upp...' : 'Ladda upp logotyp'}
+                        </Button>
+                        <p className="text-xs text-muted-foreground">PNG, JPG, SVG. Max 2 MB.</p>
+                        <input
+                            ref={logoInputRef}
+                            type="file"
+                            accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                            className="hidden"
+                            onChange={handleLogoUpload}
+                        />
+                    </div>
+                </div>
             </SettingsSection>
 
             <Separator />
