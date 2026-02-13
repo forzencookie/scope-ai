@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 import { useCompliance } from "@/hooks/use-compliance"
+import { useCompany } from "@/providers/company-provider"
 import { StockTransactionType, ShareholderDisplay, TransactionDisplay } from "./types"
 
 const SHARE_REGEX = /(\d+)\s*aktier/i
@@ -27,6 +28,7 @@ export function useAktiebokLogic() {
   const { addVerification, verifications } = useVerifications()
   const toast = useToast()
   const { shareholders: realShareholders, addShareholder, updateShareholder, refetchShareholders } = useCompliance()
+  const { company } = useCompany()
 
   // Local state
   const [searchQuery, setSearchQuery] = useState("")
@@ -179,7 +181,9 @@ export function useAktiebokLogic() {
     const shares = parseInt(txShares)
     const price = txPrice ? parseFloat(txPrice) : 0
     const total = shares * price
-    const quotaValue = 25 // Standard quota value, should come from company settings
+    const quotaValue = (company?.totalShares ?? 0) > 0
+      ? (company?.shareCapital ?? 0) / (company?.totalShares ?? 1)
+      : 0
 
     try {
       // Check if recipient shareholder exists, create if not
