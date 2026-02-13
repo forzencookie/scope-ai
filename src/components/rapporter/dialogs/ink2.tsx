@@ -1,6 +1,5 @@
 "use client"
 
-import { ink2Fields } from "../constants"
 import { ReportPreviewDialog } from "./rapport"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
@@ -12,46 +11,27 @@ interface Ink2PreviewDialogProps {
 export function Ink2PreviewDialog({ open, onOpenChange }: Ink2PreviewDialogProps) {
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear() - 1)
 
-    const totalCalculated = ink2Fields
-        .filter(f => f.field === "4.1")
-        .reduce((sum, f) => sum + f.value, 0)
-
+    // Empty sections — real data comes from the InkomstWizardDialog or prepare_ink2 AI tool
     const sections = [
         {
             id: "1",
             title: "1. Intäkter",
-            items: ink2Fields.filter(f => f.field.startsWith("1.")).map(f => ({
-                id: f.field,
-                label: f.label,
-                value: f.value
-            }))
+            items: []
         },
         {
             id: "2",
             title: "2. Kostnader",
-            items: ink2Fields.filter(f => f.field.startsWith("2.")).map(f => ({
-                id: f.field,
-                label: f.label,
-                value: f.value
-            }))
+            items: []
         },
         {
             id: "3",
             title: "3. Finansiella poster",
-            items: ink2Fields.filter(f => f.field.startsWith("3.")).map(f => ({
-                id: f.field,
-                label: f.label,
-                value: f.value
-            }))
+            items: []
         },
         {
             id: "4",
             title: "4. Skattemässiga justeringar",
-            items: ink2Fields.filter(f => f.field.startsWith("4.")).map(f => ({
-                id: f.field,
-                label: f.label,
-                value: f.value
-            }))
+            items: []
         }
     ]
 
@@ -62,18 +42,18 @@ export function Ink2PreviewDialog({ open, onOpenChange }: Ink2PreviewDialogProps
             title="Inkomstdeklaration 2 (INK2)"
             subtitle="Aktiebolag, ekonomiska föreningar m.fl."
             meta={{
-                year: "2024",
+                year: String(new Date().getFullYear() - 1),
                 yearLabel: "Inkomstår",
-                companyName: "Mitt Bolag AB",
-                companyId: "556000-0000",
-                location: "Storgatan 12, 123 45 Stockholm"
+                companyName: "",
+                companyId: "",
+                location: ""
             }}
             sections={sections}
             summary={{
                 label: "Skattemässigt resultat",
-                value: totalCalculated,
+                value: 0,
                 subItems: [
-                    { label: `Beräknad skatt (${(taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',')}%)`, value: Math.round(totalCalculated * taxRates.corporateTaxRate) }
+                    { label: `Beräknad skatt (${(taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',')}%)`, value: 0 }
                 ]
             }}
             status="Utkast"
