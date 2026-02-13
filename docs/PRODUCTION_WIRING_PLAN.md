@@ -515,23 +515,27 @@ Phase 1 (Accounting Spine) ✅ DONE
     ├── Phase 2 (Reports) ✅ DONE
     ├── Phase 3 (Cross-Module) ✅ DONE
     │       └── Phase 4 (UI/UX Cleanup) ✅ DONE
-    ├── Phase 5 (Dynamic Data & Hardcode Elimination)
-    │       ├── 5.1 Förmåner backend table (CRITICAL)
-    │       ├── 5.2 Tax parameters table (CRITICAL)
-    │       ├── 5.3 Remove report demo data (CRITICAL)
-    │       ├── 5.4 Dynamic dividend tax (HIGH)
-    │       ├── 5.5 Dynamic quota value (HIGH)
-    │       ├── 5.6 Scalable partner accounts (MEDIUM)
-    │       └── 5.7 Configurable mileage rate (LOW)
-    └── Phase 6 (Founder Vision UI/UX Gaps)
-            ├── 6.1 Bokföring UI (upload, previews, headers)
-            ├── 6.2 Löner UI (employee count, prompts)
-            ├── 6.3 Årsbokslut manual + AI mode
-            ├── 6.4 Kalender day-click dialog
-            ├── 6.5 PDF downloads (aktiebok, minutes, receipts)
-            ├── 6.6 Company logo + profile picture
-            ├── 6.7 Custom Stripe checkout + receipts
-            └── 6.8 Onboarding AI interview phase
+    ├── Phase 5 (Dynamic Data & Hardcode Elimination) ✅ DONE
+    │       ├── 5.1 Förmåner backend table ✅ DONE (formaner_catalog table created)
+    │       ├── 5.2 Tax parameters table ✅ DONE (15+ rates centralized)
+    │       ├── 5.3 Remove report demo data ✅ DONE (constants.ts gutted)
+    │       ├── 5.4 Dynamic dividend tax ✅ DONE (via system_parameters)
+    │       ├── 5.5 Dynamic quota value ✅ DONE (from company shareCapital)
+    │       ├── 5.6 Scalable partner accounts ✅ DONE (3+ partners supported)
+    │       └── 5.7 Configurable mileage rate ✅ DONE (via system_parameters)
+    └── Phase 6 (Founder Vision UI/UX Gaps) — PARTIAL
+            ├── 6.1b Invoice preview in dialog ✅ DONE (clickable card in non-expanded)
+            ├── 6.6a Company logo upload ✅ DONE (settings + storage + API)
+            ├── 6.7b Payment receipt downloads ✅ DONE (Stripe billing-history wired)
+            ├── Aktienummer ABL 5:2 compliance ✅ DONE (share number ranges)
+            ├── 6.1a Upload simplification — pending
+            ├── 6.2 Löner UI gaps — pending
+            ├── 6.3 Årsbokslut manual + AI mode — pending
+            ├── 6.4 Kalender day-click dialog — pending (exists, needs comments)
+            ├── 6.5 PDF downloads (aktiebok, minutes, receipts) — pending
+            ├── 6.6b User profile picture — done (previous session)
+            ├── 6.7a Custom Stripe checkout ✅ DONE (embedded checkout)
+            └── 6.8 Onboarding AI interview — deferred
 ```
 
 Phases 1-4 are complete. Phase 5 eliminates hardcoded data. Phase 6 closes all remaining UI/UX gaps from the founder vision.
@@ -549,16 +553,16 @@ Phases 1-4 are complete. Phase 5 eliminates hardcoded data. Phase 6 closes all r
 6. ✅ Use AI to fill in Momsdeklaration → agent fetches real data from the system
 7. ✅ Close a month → lock verifications, see summary in Händelser
 
-**Phase 5 (Pending):** Additionally:
-8. Change tax year → all rates update automatically
-9. Add/remove benefits from a backend catalog
-10. No component shows fake placeholder financial numbers
+**Phase 5 (Complete):** Additionally:
+8. ✅ Change tax year → all rates update automatically (system_parameters + useAllTaxRates hook)
+9. ✅ Add/remove benefits from a backend catalog (formaner_catalog table)
+10. ✅ No component shows fake placeholder financial numbers (constants.ts cleaned)
 
-**Phase 6 (Pending):** Full founder vision:
-11. Upload and import transactions via Manual or OCR (two modes only)
-12. See invoice preview directly on Kanban card
-13. Click any calendar day → see events + add comments
-14. Download aktiebok PDF, meeting minutes, dividend receipts
-15. Company logo on all generated documents
-16. Custom branded Stripe checkout (not hosted redirect)
-17. AI interviews user during onboarding to pre-populate data
+**Phase 6 (Partial):** Founder vision progress:
+11. Upload and import transactions via Manual or OCR — pending
+12. ✅ Invoice preview accessible in non-expanded dialog (clickable card opens preview)
+13. Click any calendar day → events + comments — day detail exists, comments pending
+14. Download aktiebok PDF, meeting minutes, dividend receipts — pending
+15. ✅ Company logo upload in settings
+16. ✅ Custom branded Stripe checkout (embedded)
+17. AI interviews user during onboarding — deferred
