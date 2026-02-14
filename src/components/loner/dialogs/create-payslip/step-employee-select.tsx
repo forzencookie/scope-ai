@@ -64,7 +64,7 @@ export function StepEmployeeSelect({
             setSelectedEmployee("")
         } else {
             setUseManualEntry(false)
-            setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, pensionRate: "4.5", fackavgift: "0", akassa: "0" })
+            setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, kommun: "", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
         }
     }
 
@@ -217,18 +217,30 @@ export function StepEmployeeSelect({
                                 </div>
                             </div>
                             <div className="space-y-2">
+                                <Label htmlFor="kommun">Kommun</Label>
+                                <Input
+                                    id="kommun"
+                                    type="text"
+                                    placeholder="t.ex. Stockholm"
+                                    value={manualPerson.kommun}
+                                    onChange={(e) => setManualPerson({ ...manualPerson, kommun: e.target.value })}
+                                />
+                                <p className="text-xs text-muted-foreground">Folkbokföringskommun. Avgör kommunalskatt.</p>
+                            </div>
+                            <div className="space-y-2">
                                 <Label htmlFor="taxRate">Skattesats (%)</Label>
                                 <div className="relative">
                                     <Input
                                         id="taxRate"
                                         type="number"
-                                        placeholder="30"
+                                        placeholder={defaultTaxPercent}
                                         value={manualPerson.taxRate}
                                         onChange={(e) => setManualPerson({ ...manualPerson, taxRate: e.target.value })}
                                         className="pr-8"
                                     />
                                     <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">%</span>
                                 </div>
+                                <p className="text-xs text-muted-foreground">Från skattsedeln. Fråga Scooby om du inte vet.</p>
                             </div>
                         </div>
 

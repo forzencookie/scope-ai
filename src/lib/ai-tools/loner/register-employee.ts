@@ -15,6 +15,7 @@ export const registerEmployeeTool: AITool = {
             email: { type: 'string', format: 'email', description: 'Work email address' },
             salary: { type: 'number', description: 'Monthly salary in SEK' },
             personalNumber: { type: 'string', description: 'Personnummer (YYYYMMDD-XXXX)' },
+            kommun: { type: 'string', description: 'Folkbokföringskommun — determines kommunalskatt rate. E.g. "Stockholm", "Göteborg".' },
             taxTable: { type: 'number', description: 'SKV tax table number (29-40). Used for SFL 11 kap compliant withholding.' },
             taxColumn: { type: 'number', description: 'SKV tax table column (1-6, default 1)' },
         },
@@ -22,8 +23,8 @@ export const registerEmployeeTool: AITool = {
     },
 
     execute: async (params: unknown, context: InteractionContext) => {
-        const { name, role, email, salary, personalNumber, taxTable, taxColumn } = params as {
-            name: string, role: string, email: string, salary: number, personalNumber?: string, taxTable?: number, taxColumn?: number
+        const { name, role, email, salary, personalNumber, kommun, taxTable, taxColumn } = params as {
+            name: string, role: string, email: string, salary: number, personalNumber?: string, kommun?: string, taxTable?: number, taxColumn?: number
         }
 
         // If confirmed, persist to database
@@ -43,6 +44,7 @@ export const registerEmployeeTool: AITool = {
                         email,
                         monthly_salary: salary,
                         personal_number: personalNumber || null,
+                        kommun: kommun || null,
                         tax_rate: defaultTaxRate,
                         tax_table: taxTable || null,
                         tax_column: taxColumn || null,
@@ -78,6 +80,7 @@ export const registerEmployeeTool: AITool = {
                     { label: "Roll", value: role },
                     { label: "E-post", value: email },
                     { label: "Månadslön", value: `${salary.toLocaleString('sv-SE')} kr` },
+                    ...(kommun ? [{ label: "Kommun", value: kommun }] : []),
                 ],
                 action: {
                     toolName: "register_employee",

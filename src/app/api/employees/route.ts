@@ -54,6 +54,7 @@ export async function POST(req: Request) {
             tax_rate: body.tax_rate != null ? Number(body.tax_rate) : await taxService.getAllTaxRates(new Date().getFullYear()).then(r => r?.marginalTaxRateApprox ?? 0.32),
             tax_table: body.tax_table != null ? Number(body.tax_table) : null,
             tax_column: body.tax_column != null ? Number(body.tax_column) : null,
+            kommun: body.kommun || null,
             status: body.status || 'active',
             start_date: body.employment_date || body.start_date || new Date().toISOString().split('T')[0],
             user_id: userDb.userId,

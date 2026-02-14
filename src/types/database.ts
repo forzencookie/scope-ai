@@ -1319,6 +1319,7 @@ export type Database = {
           end_date: string | null
           hourly_rate: number | null
           id: string
+          kommun: string | null
           monthly_salary: number
           name: string
           personal_number: string | null
@@ -1341,6 +1342,7 @@ export type Database = {
           end_date?: string | null
           hourly_rate?: number | null
           id?: string
+          kommun?: string | null
           monthly_salary?: number
           name: string
           personal_number?: string | null
@@ -1363,6 +1365,7 @@ export type Database = {
           end_date?: string | null
           hourly_rate?: number | null
           id?: string
+          kommun?: string | null
           monthly_salary?: number
           name?: string
           personal_number?: string | null

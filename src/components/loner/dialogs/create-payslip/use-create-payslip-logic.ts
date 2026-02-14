@@ -45,6 +45,7 @@ export interface PayslipEmployee {
     taxTable?: number
     taxColumn?: number
     pensionRate?: number // Tjänstepension as decimal (e.g. 0.045 = 4.5%)
+    kommun?: string // Folkbokföringskommun — determines kommunalskatt
 }
 
 export interface ManualPersonData {
@@ -54,6 +55,7 @@ export interface ManualPersonData {
     personalNumber: string
     employmentType: string
     taxRate: string
+    kommun: string        // Folkbokföringskommun
     pensionRate: string   // Tjänstepension % (default "4.5")
     fackavgift: string    // Union fee kr/month (default "0")
     akassa: string        // A-kassa kr/month (default "0")
@@ -84,7 +86,7 @@ export function useCreatePayslipLogic({
     const [useManualEntry, setUseManualEntry] = useState(false)
     // Default tax rate derives from system_parameters (marginalTaxRateApprox)
     const defaultTaxPercent = taxRates ? String(Math.round(taxRates.marginalTaxRateApprox * 100)) : "32"
-    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, pensionRate: "4.5", fackavgift: "0", akassa: "0" })
+    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, kommun: "", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
     const [saveAsEmployee, setSaveAsEmployee] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
 
@@ -109,6 +111,7 @@ export function useCreatePayslipLogic({
                         taxTable: e.tax_table ? Number(e.tax_table) : undefined,
                         taxColumn: e.tax_column ? Number(e.tax_column) : undefined,
                         pensionRate: e.pension_rate ? Number(e.pension_rate) : 0.045, // Default ITP1 4.5%
+                        kommun: e.kommun || undefined,
                     })))
                 }
             } catch (err) {
@@ -142,6 +145,7 @@ export function useCreatePayslipLogic({
                 personalNumber: manualPerson.personalNumber || undefined,
                 employmentType: manualPerson.employmentType || undefined,
                 pensionRate: (parseFloat(manualPerson.pensionRate) || 4.5) / 100,
+                kommun: manualPerson.kommun || undefined,
             }
             : null)
         : employees.find(e => e.id === selectedEmployee) || null
@@ -232,7 +236,7 @@ export function useCreatePayslipLogic({
         setIsCreating(false)
         // Reset manual entry states
         setUseManualEntry(false)
-        setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, pensionRate: "4.5", fackavgift: "0", akassa: "0" })
+        setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, kommun: "", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
         setSaveAsEmployee(true)
         setSearchQuery("")
     }
@@ -306,8 +310,9 @@ export function useCreatePayslipLogic({
                         monthly_salary: manualPerson.salary,
                         personal_number: manualPerson.personalNumber || null,
                         employment_type: manualPerson.employmentType || 'tillsvidare',
-                        tax_rate: (parseFloat(manualPerson.taxRate) || 30) / 100,
+                        tax_rate: (parseFloat(manualPerson.taxRate) || parseFloat(defaultTaxPercent)) / 100,
                         pension_rate: (parseFloat(manualPerson.pensionRate) || 4.5) / 100,
+                        kommun: manualPerson.kommun || null,
                         status: 'active',
                     })
                 })
@@ -384,9 +389,10 @@ export function useCreatePayslipLogic({
     }
 
     // Tax method description for UI
+    const kommunLabel = selectedEmp?.kommun ? ` (${selectedEmp.kommun})` : ''
     const taxMethodLabel = taxMethod === 'table' && selectedEmp?.taxTable
-        ? `Skattetabell ${selectedEmp.taxTable}, kolumn ${selectedEmp.taxColumn || 1}`
-        : `Schablonberäkning ${Math.round(taxRate * 100)}%`
+        ? `Skattetabell ${selectedEmp.taxTable}, kolumn ${selectedEmp.taxColumn || 1}${kommunLabel}`
+        : `Kommunalskatt ${Math.round(taxRate * 100)}%${kommunLabel}`
 
     return {
         employees, filteredEmployees, isLoadingEmployees,
