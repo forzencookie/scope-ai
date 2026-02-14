@@ -1,17 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Trash2, Download, Upload, Building2 } from "lucide-react"
-import {
-    Dialog,
-    DialogContent,
-    DialogDescription,
-    DialogFooter,
-    DialogHeader,
-    DialogTitle,
-} from "@/components/ui/dialog"
+import { Download, Upload, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import {
     Select,
@@ -43,9 +34,6 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
     const { text } = useTextMode()
     const { company, updateCompany } = useCompany()
     const accountingMethod = company?.accountingMethod || 'invoice'
-    const [showDeleteDialog, setShowDeleteDialog] = React.useState(false)
-    const [confirmText, setConfirmText] = React.useState("")
-    const [isDeleting, setIsDeleting] = React.useState(false)
     const [isExporting, setIsExporting] = React.useState(false)
     const [isUploadingLogo, setIsUploadingLogo] = React.useState(false)
     const logoInputRef = React.useRef<HTMLInputElement>(null)
@@ -113,27 +101,6 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
             alert('Kunde inte exportera SIE-fil. Försök igen.')
         } finally {
             setIsExporting(false)
-        }
-    }
-
-    const handleDelete = async () => {
-        setIsDeleting(true)
-        try {
-            const res = await fetch('/api/cleanup', { method: 'DELETE' })
-            if (res.ok) {
-                localStorage.removeItem('scope-ai-company')
-                localStorage.removeItem('chat-history')
-                setTimeout(() => {
-                    window.location.reload()
-                }, 500)
-            } else {
-                alert("Kunde inte radera data.")
-                setIsDeleting(false)
-            }
-        } catch (e) {
-            console.error(e)
-            alert("Ett fel uppstod.")
-            setIsDeleting(false)
         }
     }
 
@@ -306,64 +273,6 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     icon={Download}
                 />
             </SettingsSection>
-
-            <Separator />
-
-            <SettingsSection
-                title="Datahantering"
-                description="Hantera din företagsdata och återställning"
-            >
-                <SettingsActionCard
-                    title="Nollställ all data"
-                    description="Permanent radering av all data"
-                    actionLabel="Radera allt"
-                    onAction={() => setShowDeleteDialog(true)}
-                    variant="destructive"
-                    icon={Trash2}
-                />
-            </SettingsSection>
-
-            <Dialog open={showDeleteDialog} onOpenChange={setShowDeleteDialog}>
-                <DialogContent className="sm:max-w-[425px] border-none">
-                    <DialogHeader>
-                        <DialogTitle className="text-destructive flex items-center gap-2">
-                            <Trash2 className="h-5 w-5" />
-                            Nollställ all data
-                        </DialogTitle>
-                        <DialogDescription className="pt-2">
-                            Detta kommer permanent radera alla kvitton, transaktioner, leverantörsfakturor och chatthistorik.
-                            <br /><br />
-                            Verifikationer i stängda (låsta) perioder bevaras enligt BFL 7 kap.
-                            <br /><br />
-                            Detta går <strong>INTE</strong> att ångra. Du måste logga in igen efter radering.
-                        </DialogDescription>
-                    </DialogHeader>
-
-                    <div className="py-4 space-y-4">
-                        <div className="space-y-2">
-                            <Label htmlFor="confirm-delete">Skriv <strong>radera</strong> för att bekräfta</Label>
-                            <Input
-                                id="confirm-delete"
-                                value={confirmText}
-                                onChange={(e) => setConfirmText(e.target.value)}
-                                placeholder="radera"
-                                autoComplete="off"
-                            />
-                        </div>
-                    </div>
-
-                    <DialogFooter>
-                        <Button variant="outline" onClick={() => setShowDeleteDialog(false)} disabled={isDeleting}>Avbryt</Button>
-                        <Button
-                            variant="destructive"
-                            disabled={confirmText.toLowerCase() !== 'radera' || isDeleting}
-                            onClick={handleDelete}
-                        >
-                            {isDeleting ? "Raderar..." : "Jag förstår, radera allt"}
-                        </Button>
-                    </DialogFooter>
-                </DialogContent>
-            </Dialog>
 
             <SettingsSaveButton onClick={onSave} />
         </div>
