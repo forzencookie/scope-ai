@@ -28,6 +28,7 @@ interface NEBilagaData {
     taxYear: number
     egenavgifterRate: number
     egenavgifterRateDisplay: string
+    periodiseringsfondMaxRate?: number
 }
 
 interface NEBilagaWizardDialogProps {
@@ -86,7 +87,7 @@ export function NEBilagaWizardDialog({
         : 0
 
     const maxPeriodiseringsfond = resultatForeEgenavgifter > 0
-        ? Math.round(resultatForeEgenavgifter * 0.30)
+        ? Math.round(resultatForeEgenavgifter * (data.periodiseringsfondMaxRate ?? 0.30))
         : 0
 
     const resultatEfterAvdrag = resultatForeEgenavgifter - schablonavdrag - form.periodiseringsfond + form.aterforingPeriodiseringsfond

@@ -1,5 +1,6 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
+import { taxService } from '@/services/tax-service'
 
 export const registerEmployeeTool: AITool = {
     name: "register_employee",
@@ -28,6 +29,10 @@ export const registerEmployeeTool: AITool = {
         // If confirmed, persist to database
         if (context?.isConfirmed) {
             try {
+                const year = new Date().getFullYear()
+                const rates = await taxService.getAllTaxRates(year)
+                const defaultTaxRate = rates?.marginalTaxRateApprox ?? 0.32
+
                 const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
                 const res = await fetch(`${baseUrl}/api/employees`, {
                     method: 'POST',
@@ -38,7 +43,7 @@ export const registerEmployeeTool: AITool = {
                         email,
                         monthly_salary: salary,
                         personal_number: personalNumber || null,
-                        tax_rate: 0.30,
+                        tax_rate: defaultTaxRate,
                         tax_table: taxTable || null,
                         tax_column: taxColumn || null,
                         status: 'active',

@@ -400,8 +400,8 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         const taxableIncome = Math.max(0, netIncome)
         const corporateTax = Math.round(taxableIncome * rates.corporateTaxRate)
 
-        // Periodiseringsfond: max 25% of taxable income
-        const maxPeriodiseringsfond = params.includeOptimizations ? Math.round(taxableIncome * 0.25) : 0
+        // Periodiseringsfond: max percentage from tax parameters (IL 30 kap)
+        const maxPeriodiseringsfond = params.includeOptimizations ? Math.round(taxableIncome * rates.periodiseringsfondMaxAB) : 0
 
         const fields = [
             { field: 'INK2R_3_1', label: 'Nettoomsättning', value: Math.abs(revenue), editable: true },
@@ -416,7 +416,7 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         if (params.includeOptimizations && maxPeriodiseringsfond > 0) {
             fields.push({
                 field: 'INK2R_9_1',
-                label: 'Periodiseringsfond (max 25%)',
+                label: `Periodiseringsfond (max ${(rates.periodiseringsfondMaxAB * 100).toFixed(0)}%)`,
                 value: maxPeriodiseringsfond,
                 editable: true,
             })

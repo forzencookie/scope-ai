@@ -6,6 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { taxService } from '@/services/tax-service';
 
 export async function GET() {
     try {
@@ -50,7 +51,7 @@ export async function POST(req: Request) {
             personal_number: body.personal_number || null,
             monthly_salary: Number(body.monthly_salary ?? body.salary) || 0,
             employment_type: body.employment_type || null,
-            tax_rate: body.tax_rate != null ? Number(body.tax_rate) : 0.30,
+            tax_rate: body.tax_rate != null ? Number(body.tax_rate) : await taxService.getAllTaxRates(new Date().getFullYear()).then(r => r?.marginalTaxRateApprox ?? 0.32),
             tax_table: body.tax_table != null ? Number(body.tax_table) : null,
             tax_column: body.tax_column != null ? Number(body.tax_column) : null,
             status: body.status || 'active',

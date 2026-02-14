@@ -191,9 +191,9 @@ export async function calculateTaxSavings(
         return null
     }
 
-    // AB: Max 25% of profit, taxed at corporate rate
-    // EF/Enskild: Max 30% of profit, taxed at marginal income tax
-    const taxRate = companyType === 'AB' ? rates.corporateTaxRate : 0.32 // Approximate marginal rate for EF
+    // AB: taxed at corporate rate
+    // EF/Enskild: taxed at approximate marginal income tax
+    const taxRate = companyType === 'AB' ? rates.corporateTaxRate : rates.marginalTaxRateApprox
 
     const taxSaved = amount * taxRate
     const expiresAt = new Date(year + 6, 11, 31)

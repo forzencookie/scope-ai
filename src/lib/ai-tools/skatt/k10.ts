@@ -5,6 +5,7 @@
  */
 
 import { defineTool } from '../registry'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // K10 Calculation Tools
@@ -26,8 +27,12 @@ export const calculateGransbeloppTool = defineTool({
     requiresConfirmation: false,
     category: 'read',
     execute: async (params: { year: number; acquisitionValue?: number; annualSalary?: number; ownershipPercent?: number }) => {
-        const IBB = 74300 // Inkomstbasbelopp 2024
+        const rates = await taxService.getAllTaxRates(params.year)
+        if (!rates) {
+            return { success: false, error: `Skattesatser för ${params.year} saknas i databasen — kan inte beräkna gränsbelopp.` }
+        }
 
+        const IBB = rates.ibb
         const acquisitionValue = params.acquisitionValue || 25000
         const annualSalary = params.annualSalary || 0
         const ownershipPercent = params.ownershipPercent || 100
@@ -40,8 +45,8 @@ export const calculateGransbeloppTool = defineTool({
         const hasLoneutrymme = annualSalary >= minSalaryForLoneutrymme
         const loneutrymme = hasLoneutrymme ? annualSalary * 0.5 * (ownershipPercent / 100) : 0
 
-        // Räntebaserat: 9.76% * anskaffningsvärde
-        const rantebaserat = acquisitionValue * 0.0976 * (ownershipPercent / 100)
+        // Räntebaserat: rate * anskaffningsvärde
+        const rantebaserat = acquisitionValue * rates.rantebaseratRate * (ownershipPercent / 100)
 
         // Total gränsbelopp is max of förenkling or (löne + ränte)
         const huvudregel = loneutrymme + rantebaserat

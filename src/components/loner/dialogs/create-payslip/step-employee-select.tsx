@@ -27,6 +27,7 @@ interface StepEmployeeSelectProps {
     onNext: () => void
     onCancel: () => void
     isLoading: boolean
+    defaultTaxPercent?: string
 }
 
 export function StepEmployeeSelect({
@@ -45,7 +46,8 @@ export function StepEmployeeSelect({
     canProceed,
     onNext,
     onCancel,
-    isLoading
+    isLoading,
+    defaultTaxPercent = "32"
 }: StepEmployeeSelectProps) {
     if (isLoading) {
         return <div className="p-8 text-center text-muted-foreground">Laddar anställda...</div>
@@ -62,7 +64,7 @@ export function StepEmployeeSelect({
             setSelectedEmployee("")
         } else {
             setUseManualEntry(false)
-            setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: "30", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
+            setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, pensionRate: "4.5", fackavgift: "0", akassa: "0" })
         }
     }
 

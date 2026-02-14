@@ -29,6 +29,7 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
         manualPerson, setManualPerson,
         saveAsEmployee, setSaveAsEmployee,
         searchQuery, setSearchQuery,
+        defaultTaxPercent,
 
         chatInput, setChatInput,
         chatMessages,
@@ -106,6 +107,7 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
                             canProceed={canProceedFromStep1}
                             onNext={() => setStep(2)}
                             onCancel={resetDialog}
+                            defaultTaxPercent={defaultTaxPercent}
                         />
                     </>
                 )}

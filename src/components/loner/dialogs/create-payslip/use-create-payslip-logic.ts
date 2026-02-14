@@ -82,7 +82,9 @@ export function useCreatePayslipLogic({
 
     // New states for manual person entry
     const [useManualEntry, setUseManualEntry] = useState(false)
-    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: "30", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
+    // Default tax rate derives from system_parameters (marginalTaxRateApprox)
+    const defaultTaxPercent = taxRates ? String(Math.round(taxRates.marginalTaxRateApprox * 100)) : "32"
+    const [manualPerson, setManualPerson] = useState<ManualPersonData>({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, pensionRate: "4.5", fackavgift: "0", akassa: "0" })
     const [saveAsEmployee, setSaveAsEmployee] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
 
@@ -95,12 +97,13 @@ export function useCreatePayslipLogic({
                 const data = await res.json()
                 if (data.employees) {
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const fallbackRate = taxRates?.marginalTaxRateApprox ?? 0.32
                     setEmployees(data.employees.map((e: any): PayslipEmployee => ({
                         id: e.id,
                         name: e.name,
                         role: e.role,
                         lastSalary: Number(e.monthly_salary),
-                        taxRate: Number(e.tax_rate) || 0.30,
+                        taxRate: Number(e.tax_rate) || fallbackRate,
                         personalNumber: e.personal_number || undefined,
                         employmentType: e.employment_type || undefined,
                         taxTable: e.tax_table ? Number(e.tax_table) : undefined,
@@ -135,7 +138,7 @@ export function useCreatePayslipLogic({
                 name: manualPerson.name,
                 role: manualPerson.role,
                 lastSalary: manualPerson.salary,
-                taxRate: (parseFloat(manualPerson.taxRate) || 30) / 100,
+                taxRate: (parseFloat(manualPerson.taxRate) || parseFloat(defaultTaxPercent)) / 100,
                 personalNumber: manualPerson.personalNumber || undefined,
                 employmentType: manualPerson.employmentType || undefined,
                 pensionRate: (parseFloat(manualPerson.pensionRate) || 4.5) / 100,
@@ -146,7 +149,7 @@ export function useCreatePayslipLogic({
     const totalDeductions = aiDeductions.reduce((sum, d) => sum + d.amount, 0)
     const recommendedSalary = selectedEmp ? selectedEmp.lastSalary - totalDeductions : 0
     const finalSalary = useAIRecommendation ? recommendedSalary : (parseInt(customSalary) || recommendedSalary)
-    const taxRate = selectedEmp?.taxRate || 0.30
+    const taxRate = selectedEmp?.taxRate || (taxRates?.marginalTaxRateApprox ?? 0.32)
 
     // SKV tax table lookup (SFL 11 kap)
     const [skvTaxDeduction, setSkvTaxDeduction] = useState<number | null>(null)
@@ -229,7 +232,7 @@ export function useCreatePayslipLogic({
         setIsCreating(false)
         // Reset manual entry states
         setUseManualEntry(false)
-        setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: "30", pensionRate: "4.5", fackavgift: "0", akassa: "0" })
+        setManualPerson({ name: "", role: "", salary: 0, personalNumber: "", employmentType: "tillsvidare", taxRate: defaultTaxPercent, pensionRate: "4.5", fackavgift: "0", akassa: "0" })
         setSaveAsEmployee(true)
         setSearchQuery("")
     }
@@ -397,6 +400,7 @@ export function useCreatePayslipLogic({
         manualPerson, setManualPerson,
         saveAsEmployee, setSaveAsEmployee,
         searchQuery, setSearchQuery,
+        defaultTaxPercent,
 
         chatInput, setChatInput,
         chatMessages,

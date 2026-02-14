@@ -282,11 +282,11 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         // They vary by municipality (kommunalskatt) and income level (statlig skatt).
         // A proper implementation would look up the user's specific kommun tax rate.
         const dividendTax = Math.round(optimalDividend * taxRates.dividendTaxKapital)
-        const salaryTax = Math.round(optimalSalary * 0.32) // ~32% average marginal tax
+        const salaryTax = Math.round(optimalSalary * taxRates.marginalTaxRateApprox)
         const totalTax = dividendTax + salaryTax
 
-        // Compare to all salary
-        const allSalaryTax = Math.round((optimalSalary + optimalDividend) * 0.52) // ~52% top marginal rate
+        // Compare to all salary (top marginal rate for high earners)
+        const allSalaryTax = Math.round((optimalSalary + optimalDividend) * taxRates.topMarginalTaxRate)
         const savings = allSalaryTax - totalTax
 
         const recommendation = optimalDividend > optimalSalary ? 'dividend' :

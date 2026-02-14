@@ -175,6 +175,12 @@ export const taxService = {
                 formansvardeKost: rateMap['formansvarde_kost'] ?? 0,
                 formansvardeLunch: rateMap['formansvarde_lunch'] ?? 0,
                 ibb: rateMap['ibb'],
+                rantebaseratRate: rateMap['rantebaserat_rate'] ?? 0.0976,
+                periodiseringsfondMaxAB: rateMap['periodiseringsfond_max_ab'] ?? 0.25,
+                periodiseringsfondMaxEF: rateMap['periodiseringsfond_max_ef'] ?? 0.30,
+                marginalTaxRateApprox: rateMap['marginal_tax_rate_approx'] ?? 0.32,
+                topMarginalTaxRate: rateMap['top_marginal_tax_rate'] ?? 0.52,
+                drivmedelFormansvardeMultiplier: rateMap['drivmedel_formansvarde_multiplier'] ?? 1.2,
             }
         } catch (error) {
             console.error(`[tax-service] Failed to fetch tax rates for year ${year}:`, error)
@@ -209,4 +215,16 @@ export interface TaxRates {
     formansvardeKost: number
     formansvardeLunch: number
     ibb: number
+    /** K10 räntebaserat utrymme rate (statslåneränta + 9 pp) */
+    rantebaseratRate: number
+    /** Max periodiseringsfond for AB (IL 30 kap) */
+    periodiseringsfondMaxAB: number
+    /** Max periodiseringsfond for EF (IL 30 kap) */
+    periodiseringsfondMaxEF: number
+    /** Approximate average marginal tax rate (kommunal + landsting) */
+    marginalTaxRateApprox: number
+    /** Top marginal rate including statlig inkomstskatt */
+    topMarginalTaxRate: number
+    /** Drivmedelsförmån multiplier (e.g. 1.2 = 120%) */
+    drivmedelFormansvardeMultiplier: number
 }

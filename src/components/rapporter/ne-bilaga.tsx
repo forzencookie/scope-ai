@@ -51,6 +51,7 @@ function useNECalculation() {
     const [balances, setBalances] = useState<{ account: string; balance: number }[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [egenavgifterRate, setEgenavgifterRate] = useState<number | null>(null)
+    const [periodiseringsfondMaxRate, setPeriodiseringsfondMaxRate] = useState(0.30)
     const [rateError, setRateError] = useState<string | null>(null)
 
     // NE-bilaga is for the previous tax year (filed in spring of current year)
@@ -77,6 +78,7 @@ function useNECalculation() {
                 })))
                 if (taxRates) {
                     setEgenavgifterRate(taxRates.egenavgifterFull)
+                    setPeriodiseringsfondMaxRate(taxRates.periodiseringsfondMaxEF)
                 } else {
                     setRateError(`Egenavgiftssatser för ${taxYear} saknas i databasen.`)
                 }
@@ -170,10 +172,11 @@ function useNECalculation() {
                 result: resultatForeEgenavgifter,
                 taxableResult: slutligtResultat,
             },
+            periodiseringsfondMaxRate,
             isLoading,
             taxYear,
         }
-    }, [balances, isLoading, taxYear, egenavgifterRate, rateError])
+    }, [balances, isLoading, taxYear, egenavgifterRate, periodiseringsfondMaxRate, rateError])
 }
 
 // =============================================================================
@@ -457,6 +460,7 @@ export function NEBilagaContent() {
                     taxYear: neData.taxYear,
                     egenavgifterRate: neData.egenavgifterRate,
                     egenavgifterRateDisplay: neData.egenavgifterRateDisplay,
+                    periodiseringsfondMaxRate: neData.periodiseringsfondMaxRate,
                 }}
             />
         </TooltipProvider>

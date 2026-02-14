@@ -234,7 +234,7 @@ export async function calculateBenefitTaxImpact(
         throw new Error(`Skattesatser för ${currentYear} saknas — kan inte beräkna förmånsskatt.`)
     }
     const employerFeesRate = rates.employerContributionRate
-    const employeeTaxRate = 0.32 // Marginal rate (varies per individual, approximate)
+    const employeeTaxRate = rates.marginalTaxRateApprox
 
     const employeeTax = formansvarde * employeeTaxRate
     const employerFees = taxFree ? 0 : formansvarde * employerFeesRate
@@ -255,9 +255,10 @@ export async function calculateBenefitTaxImpact(
  * Calculate förmånsvärde for taxable benefits.
  * Rates must be provided — no silent fallbacks.
  */
-function calculateFormansvarde(benefitType: string, amount: number, rates?: { formansvardeKost: number; formansvardeLunch: number }): number {
+function calculateFormansvarde(benefitType: string, amount: number, rates?: { formansvardeKost: number; formansvardeLunch: number; drivmedelFormansvardeMultiplier?: number }): number {
     const kostRate = rates?.formansvardeKost ?? 0
     const lunchRate = rates?.formansvardeLunch ?? 0
+    const drivmedelMultiplier = rates?.drivmedelFormansvardeMultiplier ?? 1.2
 
     switch (benefitType) {
         case 'kost':
@@ -265,7 +266,7 @@ function calculateFormansvarde(benefitType: string, amount: number, rates?: { fo
         case 'lunch':
             return lunchRate
         case 'drivmedel':
-            return amount * 1.2 // 120% of market price
+            return amount * drivmedelMultiplier
         case 'tjanstebil':
             return amount
         default:

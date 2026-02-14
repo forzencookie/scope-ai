@@ -45,7 +45,7 @@ export interface PayslipPreviewProps {
     grossSalary: number
     /** Deductions and additions */
     adjustments?: PayslipDeduction[]
-    /** Tax rate (as decimal, e.g., 0.30 for 30%) */
+    /** Tax rate (as decimal, e.g., 0.32 for 32%) */
     taxRate?: number
     /** Calculated tax amount (if provided, overrides taxRate calculation) */
     taxAmount?: number
@@ -82,7 +82,7 @@ export function PayslipPreview({
     period,
     grossSalary,
     adjustments = [],
-    taxRate = 0.30,
+    taxRate = 0.32,
     taxAmount,
     netSalary,
     paymentDate,
