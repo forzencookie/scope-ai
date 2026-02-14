@@ -8,7 +8,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { taxService, FALLBACK_TAX_RATES } from '@/services/tax-service'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Calculate Self-Employment Fees Tool
@@ -45,6 +45,9 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
     execute: async (params) => {
         const year = params.year || new Date().getFullYear()
         const taxRates = await taxService.getAllTaxRates(year)
+        if (!taxRates) {
+            return { success: false, error: `Skattesatser för ${year} saknas i databasen — kan inte beräkna egenavgifter.` }
+        }
 
         const components = taxRates.egenavgiftComponents
         const totalRate = taxRates.egenavgifterFull
@@ -245,6 +248,9 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         const currentSalary = params.annualSalary || 0
 
         const taxRates = await taxService.getAllTaxRates(year)
+        if (!taxRates) {
+            return { success: false, error: `Skattesatser för ${year} saknas i databasen — kan inte beräkna 3:12-optimering.` }
+        }
         const IBB = taxRates.ibb
 
         // Förenklingsregeln: 2.75 × IBB

@@ -73,6 +73,9 @@ export function useTaxCalculator() {
     }, [verifications])
 
     const calculation = useMemo(() => {
+        if (!taxRates) {
+          return { rate: 0, avgifter: 0, nettoEfterAvgifter: annualProfit, monthlyNet: Math.round(annualProfit / 12), components: [], error: 'Skattesatser ej tillgängliga' }
+        }
         let rate = isReduced ? taxRates.egenavgifterReduced : taxRates.egenavgifterFull
         if (includeKarensReduction && !isReduced) {
           rate -= taxRates.egenavgifterKarensReduction

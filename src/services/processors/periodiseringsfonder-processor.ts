@@ -7,7 +7,7 @@
 
 import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
 import type { Periodiseringsfond, CreatePeriodiseringsfondInput, TaxSavingsCalculation } from './ai-tool-types'
-import { FALLBACK_TAX_RATES } from '@/services/tax-service'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Database Row Types
@@ -175,19 +175,25 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
 // =============================================================================
 
 /**
- * Calculate tax savings from creating a periodiseringsfond
+ * Calculate tax savings from creating a periodiseringsfond.
+ * Requires tax rates from the database — returns null if unavailable.
  * @param amount Amount to set aside
  * @param companyType AB (25%, 20.6% tax) or EF/Enskild (30%, income tax)
  */
-export function calculateTaxSavings(
+export async function calculateTaxSavings(
     amount: number,
     companyType: 'AB' | 'EF' | 'EnskildFirma' = 'AB',
     year: number = new Date().getFullYear()
-): TaxSavingsCalculation {
-    // AB: Max 25% of profit, taxed at 20.6%
+): Promise<TaxSavingsCalculation | null> {
+    const rates = await taxService.getAllTaxRates(year)
+    if (!rates) {
+        console.error(`[periodiseringsfonder] Cannot calculate tax savings: rates for ${year} unavailable`)
+        return null
+    }
+
+    // AB: Max 25% of profit, taxed at corporate rate
     // EF/Enskild: Max 30% of profit, taxed at marginal income tax
-    const _maxPercentage = companyType === 'AB' ? 0.25 : 0.30
-    const taxRate = companyType === 'AB' ? FALLBACK_TAX_RATES.corporateTaxRate : 0.32 // Approximate marginal rate for EF
+    const taxRate = companyType === 'AB' ? rates.corporateTaxRate : 0.32 // Approximate marginal rate for EF
 
     const taxSaved = amount * taxRate
     const expiresAt = new Date(year + 6, 11, 31)

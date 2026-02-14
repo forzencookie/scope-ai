@@ -45,7 +45,7 @@ export function PayslipDetailsDialog({
 
     if (!payslip) return null
 
-    const employerContributions = Math.round(payslip.grossSalary * taxRates.employerContributionRate)
+    const employerContributions = Math.round(payslip.grossSalary * (taxRates?.employerContributionRate ?? 0))
     const pensionCost = Math.round(payslip.grossSalary * 0.045)
     const totalEmployerCost = payslip.grossSalary + employerContributions + pensionCost
 
@@ -92,7 +92,7 @@ export function PayslipDetailsDialog({
                         <div className="flex justify-between items-center py-2 border-b">
                             <div className="flex items-center gap-2 text-muted-foreground">
                                 <Building2 className="h-4 w-4" />
-                                <span>Arbetsgivaravgifter ({(taxRates.employerContributionRate * 100).toFixed(2).replace('.', ',')}%)</span>
+                                <span>Arbetsgivaravgifter ({taxRates ? (taxRates.employerContributionRate * 100).toFixed(2).replace('.', ',') : '—'}%)</span>
                             </div>
                             <span className="font-medium text-muted-foreground">
                                 {formatCurrency(employerContributions)}
@@ -103,8 +103,8 @@ export function PayslipDetailsDialog({
                             <span>{formatCurrency(pensionCost)}</span>
                         </div>
                         <div className="flex justify-between items-center py-2 border-b text-muted-foreground text-sm">
-                            <span>Semesterersättning ({(taxRates.vacationPayRate * 100).toFixed(0)}%)</span>
-                            <span>{formatCurrency(Math.round(payslip.grossSalary * taxRates.vacationPayRate))}</span>
+                            <span>Semesterersättning ({taxRates ? (taxRates.vacationPayRate * 100).toFixed(0) : '—'}%)</span>
+                            <span>{formatCurrency(Math.round(payslip.grossSalary * (taxRates?.vacationPayRate ?? 0)))}</span>
                         </div>
                     </div>
 

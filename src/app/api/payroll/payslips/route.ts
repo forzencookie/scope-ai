@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
 import { verificationService } from '@/services/verification-service';
-import { taxService, FALLBACK_TAX_RATES } from '@/services/tax-service';
+import { taxService } from '@/services/tax-service';
 
 export async function GET() {
     try {
@@ -59,10 +59,17 @@ export async function POST(req: NextRequest) {
             const currentYear = new Date().getFullYear()
             const rates = await taxService.getAllTaxRates(currentYear)
 
+            if (!rates && body.employer_contribution_rate == null) {
+                return NextResponse.json(
+                    { error: "Skattesatser saknas i databasen — kan inte beräkna arbetsgivaravgifter." },
+                    { status: 503 }
+                );
+            }
+
             // Use client-provided employer contribution if available, otherwise calculate
             const employerContributionRate = body.employer_contribution_rate != null
                 ? Number(body.employer_contribution_rate)
-                : rates.employerContributionRate
+                : rates!.employerContributionRate
             const employerContribution = body.employer_contributions != null
                 ? Number(body.employer_contributions)
                 : Math.round(grossSalary * employerContributionRate)

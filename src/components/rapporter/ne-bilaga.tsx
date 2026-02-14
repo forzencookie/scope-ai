@@ -35,7 +35,7 @@ import { getSupabaseClient } from "@/lib/database/supabase"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
 import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
-import { taxService, FALLBACK_TAX_RATES } from "@/services/tax-service"
+import { taxService } from "@/services/tax-service"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)
@@ -50,7 +50,8 @@ import { taxService, FALLBACK_TAX_RATES } from "@/services/tax-service"
 function useNECalculation() {
     const [balances, setBalances] = useState<{ account: string; balance: number }[]>([])
     const [isLoading, setIsLoading] = useState(true)
-    const [egenavgifterRate, setEgenavgifterRate] = useState(FALLBACK_TAX_RATES.egenavgifterFull)
+    const [egenavgifterRate, setEgenavgifterRate] = useState<number | null>(null)
+    const [rateError, setRateError] = useState<string | null>(null)
 
     // NE-bilaga is for the previous tax year (filed in spring of current year)
     const taxYear = new Date().getFullYear() - 1
@@ -58,6 +59,7 @@ function useNECalculation() {
     useEffect(() => {
         async function fetchData() {
             setIsLoading(true)
+            setRateError(null)
             const supabase = getSupabaseClient()
             try {
                 // Fetch balances and tax rates in parallel
@@ -73,7 +75,11 @@ function useNECalculation() {
                     account: String(row.account_number),
                     balance: row.balance
                 })))
-                setEgenavgifterRate(taxRates.egenavgifterFull)
+                if (taxRates) {
+                    setEgenavgifterRate(taxRates.egenavgifterFull)
+                } else {
+                    setRateError(`Egenavgiftssatser för ${taxYear} saknas i databasen.`)
+                }
             } catch (err) {
                 console.error('Failed to fetch NE data:', err)
             } finally {
@@ -107,8 +113,9 @@ function useNECalculation() {
         const resultatForeEgenavgifter = summaIntakter + summaKostnader
 
         // R13: Schablonavdrag for egenavgifter (25% of result × rate, only on profit)
-        const schablonavdrag = resultatForeEgenavgifter > 0
-            ? Math.round(resultatForeEgenavgifter * 0.25 * egenavgifterRate)
+        const effectiveRate = egenavgifterRate ?? 0
+        const schablonavdrag = (resultatForeEgenavgifter > 0 && effectiveRate > 0)
+            ? Math.round(resultatForeEgenavgifter * 0.25 * effectiveRate)
             : 0
 
         // Periodiseringsfond (R14/R15) — would need separate user input or account 2150
@@ -117,13 +124,15 @@ function useNECalculation() {
 
         // R24: Taxable result (överskott av näringsverksamhet)
         const resultatEfterAvdrag = resultatForeEgenavgifter - schablonavdrag - periodiseringsfond + aterforing
-        const egenavgifter = resultatEfterAvdrag > 0
-            ? Math.round(resultatEfterAvdrag * egenavgifterRate)
+        const egenavgifter = (resultatEfterAvdrag > 0 && effectiveRate > 0)
+            ? Math.round(resultatEfterAvdrag * effectiveRate)
             : 0
         const slutligtResultat = resultatEfterAvdrag - egenavgifter
 
         // Format rate for display (e.g. 0.2897 → "28,97")
-        const egenavgifterRateDisplay = (egenavgifterRate * 100).toFixed(2).replace('.', ',')
+        const egenavgifterRateDisplay = effectiveRate > 0
+            ? (effectiveRate * 100).toFixed(2).replace('.', ',')
+            : '—'
 
         return {
             // Revenue
@@ -150,8 +159,9 @@ function useNECalculation() {
             slutligtResultat,
 
             // Tax rate info
-            egenavgifterRate,
+            egenavgifterRate: effectiveRate,
             egenavgifterRateDisplay,
+            rateError,
 
             // Stats
             totals: {
@@ -163,7 +173,7 @@ function useNECalculation() {
             isLoading,
             taxYear,
         }
-    }, [balances, isLoading, taxYear, egenavgifterRate])
+    }, [balances, isLoading, taxYear, egenavgifterRate, rateError])
 }
 
 // =============================================================================

@@ -1,6 +1,6 @@
 
 import { Verification } from "@/hooks/use-verifications"
-import { FALLBACK_TAX_RATES } from '@/services/tax-service'
+import type { TaxRates } from '@/services/tax-service'
 
 export interface ReportLine {
     label: string
@@ -14,8 +14,9 @@ export const AnnualReportProcessor = {
     /**
      * Calculates Income Statement (Resultaträkning) for a given year.
      * Based on K2 regulations (simplified).
+     * @param taxRates Required — caller must fetch from taxService.getAllTaxRates()
      */
-    calculateIncomeStatement(verifications: Verification[], year: number): ReportLine[] {
+    calculateIncomeStatement(verifications: Verification[], year: number, taxRates?: TaxRates | null): ReportLine[] {
         let revenue = 0
         let goodsCost = 0
         let otherExternalCosts = 0
@@ -42,7 +43,8 @@ export const AnnualReportProcessor = {
 
         const operatingResult = revenue + goodsCost + otherExternalCosts + personnelCosts + depreciation
         const resultAfterFinancial = operatingResult + financialItems
-        const tax = resultAfterFinancial > 0 ? Math.round(resultAfterFinancial * -FALLBACK_TAX_RATES.corporateTaxRate) : 0
+        const corporateTaxRate = taxRates?.corporateTaxRate ?? 0
+        const tax = (resultAfterFinancial > 0 && corporateTaxRate > 0) ? Math.round(resultAfterFinancial * -corporateTaxRate) : 0
         const netResult = resultAfterFinancial + tax
 
         return [

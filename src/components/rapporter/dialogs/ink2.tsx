@@ -53,7 +53,7 @@ export function Ink2PreviewDialog({ open, onOpenChange }: Ink2PreviewDialogProps
                 label: "Skattemässigt resultat",
                 value: 0,
                 subItems: [
-                    { label: `Beräknad skatt (${(taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',')}%)`, value: 0 }
+                    { label: `Beräknad skatt (${taxRates ? (taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',') : '—'}%)`, value: 0 }
                 ]
             }}
             status="Utkast"

@@ -121,6 +121,9 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         // Fetch tax rates and employee benefits for accurate employer contributions
         const currentYear = new Date().getFullYear()
         const rates = await taxService.getAllTaxRates(currentYear)
+        if (!rates) {
+            return { success: false, error: `Skattesatser för ${currentYear} saknas — kan inte beräkna löner.` }
+        }
 
         const payslips: Payslip[] = []
         for (const emp of employees) {
@@ -169,6 +172,9 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             const errors: string[] = []
             const currentYear = new Date().getFullYear()
             const rates = await taxService.getAllTaxRates(currentYear)
+            if (!rates) {
+                return { success: false, error: `Skattesatser för ${currentYear} saknas — kan inte spara löner.` }
+            }
 
             for (const payslip of payslips) {
                 try {

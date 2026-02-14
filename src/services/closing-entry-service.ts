@@ -12,7 +12,7 @@
 
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { verificationService } from './verification-service'
-import { taxService, FALLBACK_TAX_RATES } from './tax-service'
+import { taxService } from './tax-service'
 
 // =============================================================================
 // Types
@@ -101,7 +101,10 @@ export const closingEntryService = {
 
         // Corporate tax (only for AB, and only on profit)
         let corporateTax = 0
-        const taxRates = await taxService.getAllTaxRates(year).catch(() => FALLBACK_TAX_RATES)
+        const taxRates = await taxService.getAllTaxRates(year)
+        if (!taxRates) {
+            throw new Error(`Kan inte beräkna bokslut: skattesatser för ${year} saknas i databasen.`)
+        }
         if (companyType === 'AB' && resultBeforeTax > 0) {
             corporateTax = Math.round(resultBeforeTax * taxRates.corporateTaxRate)
         }

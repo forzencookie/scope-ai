@@ -88,7 +88,7 @@ export function useEmployerDeclaration() {
 
             report.totalSalary += gross
             report.tax += tax
-            report.contributions += Math.round(gross * taxRates.employerContributionRate)
+            report.contributions += Math.round(gross * (taxRates?.employerContributionRate ?? 0))
 
             // Track unique employees and their data per period
             const empId = p.employee_id || p.id
@@ -122,11 +122,11 @@ export function useEmployerDeclaration() {
                         name: emp.name,
                         grossSalary: emp.grossSalary,
                         taxDeduction: emp.taxDeduction,
-                        employerContribution: Math.round(emp.grossSalary * taxRates.employerContributionRate),
+                        employerContribution: Math.round(emp.grossSalary * (taxRates?.employerContributionRate ?? 0)),
                     })),
                 }
             })
-    }, [payslips, taxRates.employerContributionRate])
+    }, [payslips, taxRates?.employerContributionRate])
 
     // 2. Stats derived from calculated reports
     const stats = useMemo(() => {

@@ -14,7 +14,7 @@ import type {
     BenefitCategory,
 } from './ai/tool-types'
 import { formanerCatalog } from './ai/reference-data'
-import { taxService, FALLBACK_TAX_RATES } from '@/services/tax-service'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Database Row Types
@@ -228,13 +228,12 @@ export async function calculateBenefitTaxImpact(
     const taxFree = benefit?.taxFree ?? false
     const formansvarde = taxFree ? 0 : calculateFormansvarde(benefitType, amount)
 
-    // Fetch current rates (with fallback)
     const currentYear = new Date().getFullYear()
-    let employerFeesRate = FALLBACK_TAX_RATES.employerContributionRate
-    try {
-        const rates = await taxService.getAllTaxRates(currentYear)
-        employerFeesRate = rates.employerContributionRate
-    } catch { /* use fallback */ }
+    const rates = await taxService.getAllTaxRates(currentYear)
+    if (!rates) {
+        throw new Error(`Skattesatser för ${currentYear} saknas — kan inte beräkna förmånsskatt.`)
+    }
+    const employerFeesRate = rates.employerContributionRate
     const employeeTaxRate = 0.32 // Marginal rate (varies per individual, approximate)
 
     const employeeTax = formansvarde * employeeTaxRate
@@ -254,11 +253,11 @@ export async function calculateBenefitTaxImpact(
 
 /**
  * Calculate förmånsvärde for taxable benefits.
- * Uses cached rates when available, falls back to constants.
+ * Rates must be provided — no silent fallbacks.
  */
 function calculateFormansvarde(benefitType: string, amount: number, rates?: { formansvardeKost: number; formansvardeLunch: number }): number {
-    const kostRate = rates?.formansvardeKost ?? FALLBACK_TAX_RATES.formansvardeKost
-    const lunchRate = rates?.formansvardeLunch ?? FALLBACK_TAX_RATES.formansvardeLunch
+    const kostRate = rates?.formansvardeKost ?? 0
+    const lunchRate = rates?.formansvardeLunch ?? 0
 
     switch (benefitType) {
         case 'kost':

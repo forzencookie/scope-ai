@@ -6,7 +6,6 @@
 import type { JournalEntry, JournalEntryLine } from '../types'
 import { roundToOre } from '../validation'
 import { generateEntryId } from '../utils'
-import { FALLBACK_TAX_RATES } from '@/services/tax-service'
 
 /**
  * Swedish salary components
@@ -41,14 +40,13 @@ export interface SalaryEntryParams {
 
 /**
  * Calculate Swedish employer contributions (arbetsgivaravgifter)
- * Rate is loaded from system_parameters when available, with fallback.
- * 
+ *
  * @param grossSalary Gross salary amount
- * @param rate Optional custom rate as decimal (e.g. 0.3142). Default from FALLBACK_TAX_RATES.
+ * @param rate Employer contribution rate as decimal (e.g. 0.3142). Required — caller must fetch from taxService.
  */
 export function calculateEmployerContributions(
   grossSalary: number,
-  rate: number = FALLBACK_TAX_RATES.employerContributionRate
+  rate: number
 ): number {
   return roundToOre(grossSalary * rate)
 }

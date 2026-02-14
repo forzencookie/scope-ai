@@ -96,9 +96,9 @@ export function usePayslipsLogic() {
             employeeCount,
             totalGross,
             totalTax: periodSlips.reduce((sum, p) => sum + p.tax, 0),
-            totalEmployerContributions: Math.round(totalGross * taxRates.employerContributionRate)
+            totalEmployerContributions: Math.round(totalGross * (taxRates?.employerContributionRate ?? 0))
         }
-    }, [allPayslips, employeeCount, taxRates.employerContributionRate])
+    }, [allPayslips, employeeCount, taxRates?.employerContributionRate])
 
     const filteredPayslips = useMemo(() => {
         return allPayslips.filter(slip => {

@@ -394,6 +394,9 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         const financialItems = items.find(i => i.label === 'Finansiella poster')?.value ?? 0
 
         const rates = await taxService.getAllTaxRates(params.year)
+        if (!rates) {
+            return { success: false, error: `Skattesatser för ${params.year} saknas — kan inte beräkna bolagsskatt.` }
+        }
         const taxableIncome = Math.max(0, netIncome)
         const corporateTax = Math.round(taxableIncome * rates.corporateTaxRate)
 

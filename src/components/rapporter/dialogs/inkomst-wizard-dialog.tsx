@@ -81,7 +81,7 @@ export function InkomstWizardDialog({ open, onOpenChange, onConfirm, data }: Ink
 
     // Calculate adjusted taxable result
     const bokfortResultat = initialData.totals.netIncome
-    const taxRate = taxRates.corporateTaxRate
+    const taxRate = taxRates?.corporateTaxRate ?? 0
 
     // Max periodiseringsfond: 25% of profit (if positive)
     const maxPeriodiseringsfond = bokfortResultat > 0 ? Math.round(bokfortResultat * 0.25) : 0
@@ -294,7 +294,7 @@ export function InkomstWizardDialog({ open, onOpenChange, onConfirm, data }: Ink
                                     </span>
                                 </div>
                                 <div className="flex justify-between text-sm">
-                                    <span>Beräknad skatt ({(taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',')}%)</span>
+                                    <span>Beräknad skatt ({taxRates ? (taxRates.corporateTaxRate * 100).toFixed(1).replace('.', ',') : '—'}%)</span>
                                     <span className="font-medium">{formatNumber(estimatedTax)} kr</span>
                                 </div>
                             </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { taxService, FALLBACK_TAX_RATES, type TaxRates } from '@/services/tax-service'
+import { taxService, type TaxRates } from '@/services/tax-service'
 
 export interface TaxParameters {
     ibb: number
@@ -50,25 +50,34 @@ export function useTaxParameters(year: number) {
 
 /**
  * Hook to fetch all tax rates for a given year.
- * Used by client components that need employer contribution rates,
- * corporate tax, egenavgifter, mileage, etc.
+ * Returns null rates if the database is unavailable — callers must
+ * show an explicit error rather than silently using wrong values.
  */
 export function useAllTaxRates(year: number) {
-    const [rates, setRates] = useState<TaxRates>(FALLBACK_TAX_RATES)
+    const [rates, setRates] = useState<TaxRates | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [error, setError] = useState<string | null>(null)
 
     useEffect(() => {
         let mounted = true
 
         async function fetchRates() {
+            setError(null)
             try {
                 await Promise.resolve()
                 const fetched = await taxService.getAllTaxRates(year)
                 if (mounted) {
-                    setRates(fetched)
+                    if (fetched) {
+                        setRates(fetched)
+                    } else {
+                        setError(`Skattesatser för ${year} kunde inte laddas från databasen.`)
+                    }
                 }
-            } catch (error) {
-                console.error('Failed to load tax rates', error)
+            } catch (err) {
+                console.error('Failed to load tax rates', err)
+                if (mounted) {
+                    setError('Ett fel uppstod vid hämtning av skattesatser.')
+                }
             } finally {
                 if (mounted) setIsLoading(false)
             }
@@ -79,5 +88,5 @@ export function useAllTaxRates(year: number) {
         return () => { mounted = false }
     }, [year])
 
-    return { rates, isLoading }
+    return { rates, isLoading, error }
 }

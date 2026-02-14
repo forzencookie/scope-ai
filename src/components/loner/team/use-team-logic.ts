@@ -171,7 +171,7 @@ export function useTeamLogic() {
         } else if (reportType === 'mileage') {
             const dist = parseFloat(km)
             if (!dist) return
-            const krVal = dist * taxRates.mileageRate
+            const krVal = dist * (taxRates?.mileageRate ?? 0)
 
             await addVerification({
                 date: new Date().toISOString().split('T')[0],

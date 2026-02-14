@@ -48,7 +48,10 @@ const createPeriodiseringsfondTool = defineTool({
     requiresConfirmation: true,
     category: 'write',
     execute: async (params: { year: number; amount: number }) => {
-        const taxSavings = calculateTaxSavings(params.amount, 'AB')
+        const taxSavings = await calculateTaxSavings(params.amount, 'AB', params.year)
+        if (!taxSavings) {
+            return { success: false, error: `Skattesatser för ${params.year} saknas — kan inte beräkna besparing.` }
+        }
         return {
             success: true,
             confirmationRequired: {
