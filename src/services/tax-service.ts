@@ -92,51 +92,99 @@ export const taxService = {
     },
 
     /**
-     * Get all tax rates for a specific year in one query.
-     * Returns a map of key -> numeric value with sensible defaults.
+     * Look up SKV tax deduction for a given monthly income (SFL 11 kap).
+     * Returns the exact krona amount to withhold, or null if no matching bracket found.
      */
-    async getAllTaxRates(year: number): Promise<TaxRates> {
+    async lookupTaxDeduction(
+        year: number,
+        tableNumber: number,
+        columnNumber: number,
+        monthlyIncome: number
+    ): Promise<number | null> {
         const supabase = getSupabaseClient()
-        const { data, error } = await supabase
-            .from('system_parameters')
-            .select('key, value')
-            .eq('year', year)
 
-        const rateMap: Record<string, number> = {}
-        if (!error && data) {
+        const { data, error } = await supabase
+            .from('skv_tax_tables')
+            .select('tax_deduction')
+            .eq('year', year)
+            .eq('table_number', tableNumber)
+            .eq('column_number', columnNumber)
+            .lte('income_from', Math.round(monthlyIncome))
+            .gte('income_to', Math.round(monthlyIncome))
+            .limit(1)
+            .single()
+
+        if (error || !data) {
+            console.warn(`[tax-service] No SKV bracket found: table ${tableNumber}, col ${columnNumber}, income ${monthlyIncome}, year ${year}`)
+            return null
+        }
+
+        return data.tax_deduction
+    },
+
+    /**
+     * Get all tax rates for a specific year in one query.
+     * Returns null if rates cannot be loaded — callers must handle this
+     * explicitly rather than silently using potentially wrong values.
+     */
+    async getAllTaxRates(year: number): Promise<TaxRates | null> {
+        try {
+            const supabase = getSupabaseClient()
+            const { data, error } = await supabase
+                .from('system_parameters')
+                .select('key, value')
+                .eq('year', year)
+
+            if (error || !data || data.length === 0) {
+                console.error(`[tax-service] No tax rates found for year ${year}`, error)
+                return null
+            }
+
+            const rateMap: Record<string, number> = {}
             for (const row of data) {
                 rateMap[row.key] = Number(row.value)
             }
-        }
 
-        return {
-            employerContributionRate: rateMap['employer_contribution_rate'] ?? FALLBACK_TAX_RATES.employerContributionRate,
-            employerContributionRateSenior: rateMap['employer_contribution_rate_senior'] ?? FALLBACK_TAX_RATES.employerContributionRateSenior,
-            corporateTaxRate: rateMap['corporate_tax_rate'] ?? FALLBACK_TAX_RATES.corporateTaxRate,
-            egenavgifterFull: rateMap['egenavgifter_full'] ?? FALLBACK_TAX_RATES.egenavgifterFull,
-            egenavgifterReduced: rateMap['egenavgifter_reduced'] ?? FALLBACK_TAX_RATES.egenavgifterReduced,
-            egenavgifterKarensReduction: rateMap['egenavgifter_karens_reduction'] ?? FALLBACK_TAX_RATES.egenavgifterKarensReduction,
-            egenavgiftComponents: {
-                sjukforsakring: rateMap['egenavgift_sjukforsakring'] ?? 0.0388,
-                foraldraforsakring: rateMap['egenavgift_foraldraforsakring'] ?? 0.0260,
-                alderspension: rateMap['egenavgift_alderspension'] ?? 0.1021,
-                efterlevandepension: rateMap['egenavgift_efterlevandepension'] ?? 0.0070,
-                arbetsmarknadsavgift: rateMap['egenavgift_arbetsmarknadsavgift'] ?? 0.0264,
-                arbetsskadeavgift: rateMap['egenavgift_arbetsskadeavgift'] ?? 0.0020,
-                allmanLoneavgift: rateMap['egenavgift_allman_loneavgift'] ?? 0.1150,
-            },
-            dividendTaxKapital: rateMap['dividend_tax_kapital'] ?? FALLBACK_TAX_RATES.dividendTaxKapital,
-            mileageRate: rateMap['mileage_rate'] ?? FALLBACK_TAX_RATES.mileageRate,
-            vacationPayRate: rateMap['vacation_pay_rate'] ?? FALLBACK_TAX_RATES.vacationPayRate,
-            formansvardeKost: rateMap['formansvarde_kost'] ?? 260,
-            formansvardeLunch: rateMap['formansvarde_lunch'] ?? 130,
-            ibb: rateMap['ibb'] ?? 57300,
+            // Verify that critical rates exist — refuse to return partial data
+            const required = ['employer_contribution_rate', 'corporate_tax_rate', 'egenavgifter_full', 'ibb']
+            const missing = required.filter(k => !(k in rateMap))
+            if (missing.length > 0) {
+                console.error(`[tax-service] Missing critical tax rates for ${year}: ${missing.join(', ')}`)
+                return null
+            }
+
+            return {
+                employerContributionRate: rateMap['employer_contribution_rate'],
+                employerContributionRateSenior: rateMap['employer_contribution_rate_senior'] ?? rateMap['employer_contribution_rate'],
+                corporateTaxRate: rateMap['corporate_tax_rate'],
+                egenavgifterFull: rateMap['egenavgifter_full'],
+                egenavgifterReduced: rateMap['egenavgifter_reduced'] ?? rateMap['egenavgifter_full'],
+                egenavgifterKarensReduction: rateMap['egenavgifter_karens_reduction'] ?? 0,
+                egenavgiftComponents: {
+                    sjukforsakring: rateMap['egenavgift_sjukforsakring'] ?? 0,
+                    foraldraforsakring: rateMap['egenavgift_foraldraforsakring'] ?? 0,
+                    alderspension: rateMap['egenavgift_alderspension'] ?? 0,
+                    efterlevandepension: rateMap['egenavgift_efterlevandepension'] ?? 0,
+                    arbetsmarknadsavgift: rateMap['egenavgift_arbetsmarknadsavgift'] ?? 0,
+                    arbetsskadeavgift: rateMap['egenavgift_arbetsskadeavgift'] ?? 0,
+                    allmanLoneavgift: rateMap['egenavgift_allman_loneavgift'] ?? 0,
+                },
+                dividendTaxKapital: rateMap['dividend_tax_kapital'] ?? 0.20,
+                mileageRate: rateMap['mileage_rate'] ?? 0,
+                vacationPayRate: rateMap['vacation_pay_rate'] ?? 0,
+                formansvardeKost: rateMap['formansvarde_kost'] ?? 0,
+                formansvardeLunch: rateMap['formansvarde_lunch'] ?? 0,
+                ibb: rateMap['ibb'],
+            }
+        } catch (error) {
+            console.error(`[tax-service] Failed to fetch tax rates for year ${year}:`, error)
+            return null
         }
     },
 }
 
 // =============================================================================
-// Tax Rate Types & Fallbacks
+// Tax Rate Types
 // =============================================================================
 
 export interface TaxRates {
@@ -161,32 +209,4 @@ export interface TaxRates {
     formansvardeKost: number
     formansvardeLunch: number
     ibb: number
-}
-
-/**
- * Hardcoded fallback rates used when DB is unavailable.
- * These are the only place hardcoded rates should live.
- */
-export const FALLBACK_TAX_RATES: TaxRates = {
-    employerContributionRate: 0.3142,
-    employerContributionRateSenior: 0.1021,
-    corporateTaxRate: 0.206,
-    egenavgifterFull: 0.2897,
-    egenavgifterReduced: 0.1021,
-    egenavgifterKarensReduction: 0.0076,
-    egenavgiftComponents: {
-        sjukforsakring: 0.0388,
-        foraldraforsakring: 0.0260,
-        alderspension: 0.1021,
-        efterlevandepension: 0.0070,
-        arbetsmarknadsavgift: 0.0264,
-        arbetsskadeavgift: 0.0020,
-        allmanLoneavgift: 0.1150,
-    },
-    dividendTaxKapital: 0.20,
-    mileageRate: 2.50,
-    vacationPayRate: 0.12,
-    formansvardeKost: 260,
-    formansvardeLunch: 130,
-    ibb: 57300,
 }

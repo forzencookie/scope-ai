@@ -1,5 +1,6 @@
 import { getSupabaseClient } from '@/lib/database/supabase'
 import type { Json } from '@/types/database'
+import { logAuditEntry } from '@/lib/audit'
 
 /**
  * Verification Row - represents a single accounting verification (verifikat)
@@ -179,23 +180,28 @@ export const verificationService = {
     },
 
     /**
-     * Get the next verification number for a given series and year
+     * Get the next verification number for a given series and year.
+     * Uses the database RPC for atomic numbering (BFL 5:7 compliance).
      */
     async getNextVerificationNumber(series: string = 'A', year?: number): Promise<number> {
         const supabase = getSupabaseClient()
         const targetYear = year || new Date().getFullYear()
 
-        const { data } = await supabase
-            .from('verifications')
-            .select('number')
-            .eq('series', series)
-            .gte('date', `${targetYear}-01-01`)
-            .lte('date', `${targetYear}-12-31`)
-            .order('number', { ascending: false })
-            .limit(1)
-            .single()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Ingen inloggad användare')
 
-        return (data?.number || 0) + 1
+        const { data, error } = await supabase.rpc('get_next_verification_number', {
+            p_series: series,
+            p_fiscal_year: targetYear,
+            p_user_id: user.id,
+        })
+
+        if (error) {
+            console.error('[VerificationService] RPC get_next_verification_number failed:', error)
+            throw new Error('Kunde inte hämta nästa verifikationsnummer')
+        }
+
+        return (data as number) || 1
     },
 
     /**
@@ -287,30 +293,43 @@ export const verificationService = {
 
         const supabase = getSupabaseClient()
 
-        // Get next number
+        // Get next number via atomic RPC (BFL 5:7)
         const year = new Date(date).getFullYear()
-        const number = await this.getNextVerificationNumber(series, year)
+        let number = await this.getNextVerificationNumber(series, year)
 
         const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
 
-        // 1. Insert the verification header
-        const { data, error } = await supabase
+        // 1. Insert the verification header (with retry on unique constraint violation)
+        const insertPayload = {
+            series,
+            number,
+            date,
+            description,
+            rows: entries as unknown as Json,
+            source_type: sourceType || null,
+            source_id: sourceId || null,
+            total_amount: totalDebit,
+            fiscal_year: year,
+        }
+
+        let result = await supabase
             .from('verifications')
-            .insert({
-                series,
-                number,
-                date,
-                description,
-                rows: entries as unknown as Json,
-                source_type: sourceType || null,
-                source_id: sourceId || null,
-                total_amount: totalDebit,
-                fiscal_year: year,
-            })
+            .insert(insertPayload)
             .select()
             .single()
 
-        if (error) throw error
+        // Retry once if unique constraint violation (race condition between concurrent requests)
+        if (result.error?.code === '23505') {
+            number = await this.getNextVerificationNumber(series, year)
+            result = await supabase
+                .from('verifications')
+                .insert({ ...insertPayload, number })
+                .select()
+                .single()
+        }
+
+        if (result.error) throw result.error
+        const data = result.data
 
         // 2. Insert verification_lines for relational querying (reports)
         const { data: { user } } = await supabase.auth.getUser()
@@ -336,6 +355,15 @@ export const verificationService = {
 
         const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
 
+        // Audit trail: log verification creation
+        logAuditEntry({
+            action: 'created',
+            entityType: 'verifications',
+            entityId: data.id,
+            entityName: `${series}${data.number || number}`,
+            metadata: { series, number: data.number || number, amount: totalDebit, source: sourceType || 'manual' },
+        })
+
         return {
             id: data.id,
             number: data.number || number,
@@ -348,5 +376,88 @@ export const verificationService = {
             isBalanced: Math.abs(totalDebit - totalCredit) < 0.01,
             createdAt: data.created_at || new Date().toISOString()
         }
-    }
+    },
+
+    /**
+     * Update a verification. Checks period lock before allowing mutation (BFL 5:4).
+     */
+    async updateVerification(
+        id: string,
+        updates: { description?: string; date?: string; entries?: VerificationEntry[] }
+    ): Promise<Verification> {
+        const existing = await this.getVerificationById(id)
+        if (!existing) throw new Error('Verifikation hittades inte')
+
+        // Check lock on existing date
+        const locked = await this.isPeriodLocked(existing.date)
+        if (locked) {
+            throw new Error('Kan inte ändra verifikation i en låst period (BFL 5:4)')
+        }
+
+        // If moving to a new date, check lock on the new date too
+        if (updates.date && updates.date !== existing.date) {
+            const newLocked = await this.isPeriodLocked(updates.date)
+            if (newLocked) {
+                throw new Error('Kan inte flytta verifikation till en låst period (BFL 5:4)')
+            }
+        }
+
+        const supabase = getSupabaseClient()
+        const updatePayload: Record<string, unknown> = {}
+        if (updates.description !== undefined) updatePayload.description = updates.description
+        if (updates.date !== undefined) updatePayload.date = updates.date
+        if (updates.entries !== undefined) {
+            updatePayload.rows = updates.entries as unknown as Json
+            updatePayload.total_amount = updates.entries.reduce((sum, e) => sum + (e.debit || 0), 0)
+        }
+
+        const { error } = await supabase
+            .from('verifications')
+            .update(updatePayload)
+            .eq('id', id)
+
+        if (error) throw error
+
+        // Audit trail: log verification update
+        logAuditEntry({
+            action: 'updated',
+            entityType: 'verifications',
+            entityId: id,
+            entityName: `${existing.series}${existing.number}`,
+            metadata: { updatedFields: Object.keys(updates) },
+        })
+
+        return (await this.getVerificationById(id))!
+    },
+
+    /**
+     * Delete a verification. Checks period lock before allowing deletion (BFL 5:4 & 7 kap).
+     * Note: The database trigger also prevents deletion of locked verifications as a safety net.
+     */
+    async deleteVerification(id: string): Promise<void> {
+        const existing = await this.getVerificationById(id)
+        if (!existing) throw new Error('Verifikation hittades inte')
+
+        const locked = await this.isPeriodLocked(existing.date)
+        if (locked) {
+            throw new Error('Kan inte radera verifikation i en låst period (BFL 5:4, 7 kap)')
+        }
+
+        const supabase = getSupabaseClient()
+        const { error } = await supabase
+            .from('verifications')
+            .delete()
+            .eq('id', id)
+
+        if (error) throw error
+
+        // Audit trail: log verification deletion
+        logAuditEntry({
+            action: 'deleted',
+            entityType: 'verifications',
+            entityId: id,
+            entityName: `${existing.series}${existing.number}`,
+            metadata: { date: existing.date, description: existing.description },
+        })
+    },
 }

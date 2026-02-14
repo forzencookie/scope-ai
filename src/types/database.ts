@@ -2838,6 +2838,36 @@ export type Database = {
         }
         Relationships: []
       }
+      skv_tax_tables: {
+        Row: {
+          id: string
+          year: number
+          table_number: number
+          column_number: number
+          income_from: number
+          income_to: number
+          tax_deduction: number
+        }
+        Insert: {
+          id?: string
+          year: number
+          table_number: number
+          column_number?: number
+          income_from: number
+          income_to: number
+          tax_deduction: number
+        }
+        Update: {
+          id?: string
+          year?: number
+          table_number?: number
+          column_number?: number
+          income_from?: number
+          income_to?: number
+          tax_deduction?: number
+        }
+        Relationships: []
+      }
       system_parameters: {
         Row: {
           created_at: string | null

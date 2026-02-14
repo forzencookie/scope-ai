@@ -45,10 +45,14 @@ export function createVerificationsRepository(supabase: DbClient) {
         /**
          * Create a new verification
          */
+        /**
+         * @deprecated Use verificationService.createVerification() instead,
+         * which uses the atomic get_next_verification_number RPC (BFL 5:7).
+         */
         async create(verification: VerificationInput) {
             let id = verification.id
             if (!id) {
-                // Simple sequence generation via count
+                console.warn('[VerificationsRepository] Legacy count-based ID generation is deprecated. Use verificationService.createVerification() for BFL 5:7 compliant numbering.')
                 const { count } = await supabase
                     .from('verifications')
                     .select('*', { count: 'exact', head: true })

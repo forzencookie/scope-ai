@@ -172,22 +172,31 @@ export function useAktiebokLogic() {
   }, [transactions, searchQuery])
 
   const handleSaveTransaction = async () => {
-    // Validate required fields based on transaction type
-    if (!txTo || !txShares) {
-      toast.error("Uppgifter saknas", "Fyll i mottagare och antal aktier.")
-      return
-    }
+    // Split only requires a factor (stored in txShares), not a recipient
+    if (txType === 'Split') {
+      const factor = parseInt(txShares)
+      if (!factor || factor < 2) {
+        toast.error("Ogiltig splitfaktor", "Ange en splitfaktor på minst 2 (t.ex. 2 för 2:1 split).")
+        return
+      }
+    } else {
+      // Validate required fields based on transaction type
+      if (!txTo || !txShares) {
+        toast.error("Uppgifter saknas", "Fyll i mottagare och antal aktier.")
+        return
+      }
 
-    // For transfers (Köp, Gåva, Arv), we need a "from" shareholder
-    if (['Köp', 'Gåva', 'Arv'].includes(txType) && !txFrom) {
-      toast.error("Uppgifter saknas", "Ange vem som överlåter aktierna.")
-      return
-    }
+      // For transfers (Köp, Gåva, Arv), we need a "from" shareholder
+      if (['Köp', 'Gåva', 'Arv'].includes(txType) && !txFrom) {
+        toast.error("Uppgifter saknas", "Ange vem som överlåter aktierna.")
+        return
+      }
 
-    // Nyemission requires price
-    if (txType === 'Nyemission' && !txPrice) {
-      toast.error("Uppgifter saknas", "Ange pris per aktie för nyemission.")
-      return
+      // Nyemission requires price
+      if (txType === 'Nyemission' && !txPrice) {
+        toast.error("Uppgifter saknas", "Ange pris per aktie för nyemission.")
+        return
+      }
     }
 
     setIsSubmitting(true)
@@ -292,14 +301,44 @@ export function useAktiebokLogic() {
         }
 
         case 'Split': {
-          // Stock split: multiply all shares by a factor
-          // For now, we just record it
+          // Stock split: multiply all shares by the factor (ABL 5:2)
+          const factor = parseInt(txShares)
+          if (!realShareholders || realShareholders.length === 0) {
+            toast.error("Fel", "Inga aktieägare att splitta.")
+            setIsSubmitting(false)
+            return
+          }
+
+          const totalSharesBefore = realShareholders.reduce((sum, s) => sum + s.shares_count, 0)
+          const totalSharesAfter = totalSharesBefore * factor
+
+          // Update each shareholder: multiply shares, recalculate ranges
+          let runningShareNumber = 1
+          for (const shareholder of realShareholders) {
+            const newCount = shareholder.shares_count * factor
+            const newFrom = runningShareNumber
+            const newTo = runningShareNumber + newCount - 1
+            runningShareNumber = newTo + 1
+
+            await updateShareholder({
+              id: shareholder.id,
+              shares_count: newCount,
+              share_number_from: newFrom,
+              share_number_to: newTo,
+            })
+          }
+
+          // Record the split (no accounting impact, just share count change)
           await addVerification({
             date: txDate,
-            description: `Aktiesplit ${shares}:1`,
+            description: `Aktiesplit ${factor}:1 — ${totalSharesBefore} aktier blev ${totalSharesAfter} aktier`,
             sourceType: 'equity_issue',
-            rows: [] // No accounting impact, just share count change
+            rows: [] // No accounting impact
           })
+
+          // Validate: ownership percentages unchanged
+          // (each shareholder's proportion = oldCount/totalBefore = newCount/totalAfter)
+
           break
         }
 

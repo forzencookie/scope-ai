@@ -41,6 +41,7 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
         finalSalary,
         tax,
         taxRate,
+        taxMethodLabel,
         netSalary,
         fackavgift,
         akassa,
@@ -146,6 +147,7 @@ export function PayslipCreateDialog(props: PayslipCreateDialogProps) {
                             finalSalary={finalSalary}
                             tax={tax}
                             taxRate={taxRate}
+                            taxMethodLabel={taxMethodLabel}
                             netSalary={netSalary}
                             fackavgift={fackavgift}
                             akassa={akassa}

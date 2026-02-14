@@ -333,6 +333,8 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                         <DialogDescription className="pt-2">
                             Detta kommer permanent radera alla kvitton, transaktioner, leverantörsfakturor och chatthistorik.
                             <br /><br />
+                            Verifikationer i stängda (låsta) perioder bevaras enligt BFL 7 kap.
+                            <br /><br />
                             Detta går <strong>INTE</strong> att ångra. Du måste logga in igen efter radering.
                         </DialogDescription>
                     </DialogHeader>

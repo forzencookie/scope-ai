@@ -16,17 +16,20 @@ import { AppStatusBadge } from "@/components/ui/status-badge"
 import { ArsredovisningWizardDialog, type ArsredovisningWizardData } from "./dialogs/arsredovisning-wizard-dialog"
 import { CollapsibleTableHeader } from "@/components/ui/collapsible-table"
 import { useVerifications } from "@/hooks/use-verifications"
+import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import { AnnualReportProcessor } from "@/services/processors/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
 import { useCompany } from "@/providers/company-provider"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
+import { generateXBRL, type XBRLParams } from "@/lib/exports/xbrl-generator"
 
 export function ArsredovisningContent() {
     const toast = useToast()
     const [showAIDialog, setShowAIDialog] = useState(false)
     const { verifications } = useVerifications()
     const { company, companyTypeFullName } = useCompany()
+    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear() - 1)
 
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewTitle, setPreviewTitle] = useState("")
@@ -37,17 +40,22 @@ export function ArsredovisningContent() {
     const fiscalYear = currentYear - 1 // Annual report is for previous year
 
     // Calculate financials from verifications
-    const financials = useMemo(() => {
-        const incomeLines = AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear)
-        const balanceLines = AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${fiscalYear}-12-31`))
+    const incomeLines = useMemo(() =>
+        AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear, taxRates),
+        [verifications, fiscalYear, taxRates]
+    )
+    const balanceLines = useMemo(() =>
+        AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${fiscalYear}-12-31`)),
+        [verifications, fiscalYear]
+    )
 
-        // Find key figures
+    const financials = useMemo(() => {
         const revenue = incomeLines.find(l => l.label === "Nettoomsättning")?.value || 0
         const netIncome = incomeLines.find(l => l.label === "Årets resultat")?.value || 0
         const totalAssets = balanceLines.find(l => l.label === "Summa tillgångar")?.value || 0
 
         return { revenue, netIncome, totalAssets }
-    }, [verifications, fiscalYear])
+    }, [incomeLines, balanceLines])
 
     // Prepare data for wizard dialog
     const wizardData = useMemo<ArsredovisningWizardData>(() => ({
@@ -93,12 +101,63 @@ export function ArsredovisningContent() {
         ]
     }, [verifications, fiscalYear])
 
+    const handleExportXBRL = () => {
+        const getLine = (lines: typeof incomeLines, label: string) =>
+            lines.find(l => l.label === label)?.value || 0
+
+        const xbrlParams: XBRLParams = {
+            company: {
+                name: company?.name || 'Mitt Foretag AB',
+                orgNumber: company?.orgNumber || '556000-0000',
+            },
+            period: {
+                currentStart: `${fiscalYear}-01-01`,
+                currentEnd: `${fiscalYear}-12-31`,
+                previousStart: `${fiscalYear - 1}-01-01`,
+                previousEnd: `${fiscalYear - 1}-12-31`,
+            },
+            values: {
+                netTurnover: getLine(incomeLines, 'Nettoomsättning'),
+                goodsCost: getLine(incomeLines, 'Råvaror och förnödenheter'),
+                externalCosts: getLine(incomeLines, 'Övriga externa kostnader'),
+                personnelCosts: getLine(incomeLines, 'Personalkostnader'),
+                depreciation: getLine(incomeLines, 'Av- och nedskrivningar'),
+                operatingResult: getLine(incomeLines, 'Rörelseresultat'),
+                financialItems: getLine(incomeLines, 'Finansiella poster'),
+                profitAfterFin: getLine(incomeLines, 'Resultat efter finansiella poster'),
+                taxOnResult: getLine(incomeLines, 'Skatt på årets resultat'),
+                netResult: getLine(incomeLines, 'Årets resultat'),
+                fixedAssets: getLine(balanceLines, 'Anläggningstillgångar'),
+                currentAssets: getLine(balanceLines, 'Omsättningstillgångar'),
+                cashAndBank: getLine(balanceLines, 'Kassa och bank'),
+                totalAssets: getLine(balanceLines, 'Summa tillgångar'),
+                equity: getLine(balanceLines, 'Eget kapital (inkl. årets resultat)'),
+                longTermLiabilities: getLine(balanceLines, 'Långfristiga skulder'),
+                shortTermLiabilities: getLine(balanceLines, 'Kortfristiga skulder'),
+                totalEquityAndLiabilities: getLine(balanceLines, 'Summa eget kapital och skulder'),
+            },
+        }
+
+        const xml = generateXBRL(xbrlParams)
+        const blob = new Blob([xml], { type: 'application/xml;charset=utf-8' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.href = url
+        link.download = `arsredovisning_${fiscalYear}_${(company?.orgNumber || 'foretag').replace(/\D/g, '')}.xbrl`
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        URL.revokeObjectURL(url)
+
+        toast.success('iXBRL exporterad', `Årsredovisning ${fiscalYear} har laddats ner som iXBRL.`)
+    }
+
     const handleViewReport = (sectionName: string) => {
         let sections: ReportSection[] = []
         let title = sectionName
 
         if (sectionName === "Resultaträkning") {
-            const lines = AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear)
+            const lines = AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear, taxRates)
             sections = [{
                 id: "rr",
                 title: `Resultaträkning ${fiscalYear}`,
@@ -226,7 +285,7 @@ export function ArsredovisningContent() {
             <div className="space-y-4">
                 <CollapsibleTableHeader title="Delar av årsredovisningen">
                     <div className="flex items-center gap-2">
-                        <IconButton icon={Download} label="Exportera XBRL" showLabel />
+                        <IconButton icon={Download} label="Ladda ner iXBRL" showLabel onClick={handleExportXBRL} />
                     </div>
                 </CollapsibleTableHeader>
 

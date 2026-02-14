@@ -1,9 +1,10 @@
 "use client"
 
-import { useState, useEffect, useMemo } from "react"
+import { useState, useEffect, useMemo, useCallback } from "react"
 import { useToast } from "@/components/ui/toast"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
+import { taxService } from "@/services/tax-service"
 
 export interface AiDeduction {
     label: string
@@ -42,6 +43,7 @@ export interface PayslipEmployee {
     personalNumber?: string
     employmentType?: string
     taxTable?: number
+    taxColumn?: number
     pensionRate?: number // Tjänstepension as decimal (e.g. 0.045 = 4.5%)
 }
 
@@ -102,6 +104,7 @@ export function useCreatePayslipLogic({
                         personalNumber: e.personal_number || undefined,
                         employmentType: e.employment_type || undefined,
                         taxTable: e.tax_table ? Number(e.tax_table) : undefined,
+                        taxColumn: e.tax_column ? Number(e.tax_column) : undefined,
                         pensionRate: e.pension_rate ? Number(e.pension_rate) : 0.045, // Default ITP1 4.5%
                     })))
                 }
@@ -144,7 +147,44 @@ export function useCreatePayslipLogic({
     const recommendedSalary = selectedEmp ? selectedEmp.lastSalary - totalDeductions : 0
     const finalSalary = useAIRecommendation ? recommendedSalary : (parseInt(customSalary) || recommendedSalary)
     const taxRate = selectedEmp?.taxRate || 0.30
-    const tax = Math.round(finalSalary * taxRate)
+
+    // SKV tax table lookup (SFL 11 kap)
+    const [skvTaxDeduction, setSkvTaxDeduction] = useState<number | null>(null)
+    const [taxMethod, setTaxMethod] = useState<'table' | 'flat'>('flat')
+
+    const lookupSkvTax = useCallback(async (emp: PayslipEmployee, salary: number) => {
+        if (!emp.taxTable || salary <= 0) {
+            setSkvTaxDeduction(null)
+            setTaxMethod('flat')
+            return
+        }
+        const year = new Date().getFullYear()
+        const result = await taxService.lookupTaxDeduction(
+            year,
+            emp.taxTable,
+            emp.taxColumn || 1,
+            salary
+        )
+        if (result !== null) {
+            setSkvTaxDeduction(result)
+            setTaxMethod('table')
+        } else {
+            setSkvTaxDeduction(null)
+            setTaxMethod('flat')
+        }
+    }, [])
+
+    // Re-lookup when employee or salary changes
+    useEffect(() => {
+        if (selectedEmp && finalSalary > 0) {
+            lookupSkvTax(selectedEmp, finalSalary)
+        }
+    }, [selectedEmp, finalSalary, lookupSkvTax])
+
+    // Use SKV table deduction if available, otherwise fall back to flat rate
+    const tax = taxMethod === 'table' && skvTaxDeduction !== null
+        ? skvTaxDeduction
+        : Math.round(finalSalary * taxRate)
 
     // Employee deductions (reduce net pay)
     const fackavgift = useManualEntry ? (parseFloat(manualPerson.fackavgift) || 0) : 0
@@ -164,8 +204,10 @@ export function useCreatePayslipLogic({
     // Legal breakdown for lönespecifikation
     const employeeAge = getAgeFromPersonnummer(selectedEmp?.personalNumber)
     const isSenior = employeeAge !== null && employeeAge >= 66
-    const employerContributionRate = isSenior ? taxRates.employerContributionRateSenior : taxRates.employerContributionRate
-    const sempioneersattning = Math.round(finalSalary * taxRates.vacationPayRate)
+    const employerContributionRate = taxRates
+        ? (isSenior ? taxRates.employerContributionRateSenior : taxRates.employerContributionRate)
+        : 0
+    const sempioneersattning = Math.round(finalSalary * (taxRates?.vacationPayRate ?? 0))
     const employerContribution = Math.round(finalSalary * employerContributionRate)
     const pensionRate = selectedEmp?.pensionRate || 0.045 // Default ITP1 4.5%
     const pension = Math.round(finalSalary * pensionRate) // Employer cost
@@ -338,6 +380,11 @@ export function useCreatePayslipLogic({
         }
     }
 
+    // Tax method description for UI
+    const taxMethodLabel = taxMethod === 'table' && selectedEmp?.taxTable
+        ? `Skattetabell ${selectedEmp.taxTable}, kolumn ${selectedEmp.taxColumn || 1}`
+        : `Schablonberäkning ${Math.round(taxRate * 100)}%`
+
     return {
         employees, filteredEmployees, isLoadingEmployees,
         step, setStep,
@@ -363,6 +410,8 @@ export function useCreatePayslipLogic({
         finalSalary,
         tax,
         taxRate,
+        taxMethod,
+        taxMethodLabel,
         netSalary,
         fackavgift,
         akassa,

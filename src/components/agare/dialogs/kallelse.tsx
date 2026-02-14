@@ -27,11 +27,19 @@ import { formatDateLong } from "@/lib/utils"
 
 export type NoticeVariant = "association" | "corporate"
 
+export interface NoticeRecipient {
+    name: string
+    shares: number
+    shareClass: string
+    ownershipPercentage: number
+}
+
 interface SendNoticeDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     variant: NoticeVariant
     recipientCount: number
+    recipients?: NoticeRecipient[]
     meeting?: MeetingData
     onSubmit?: () => void
 }
@@ -41,6 +49,7 @@ export function SendNoticeDialog({
     onOpenChange,
     variant,
     recipientCount,
+    recipients = [],
     meeting,
     onSubmit
 }: SendNoticeDialogProps) {
@@ -63,7 +72,7 @@ export function SendNoticeDialog({
                 body: JSON.stringify({
                     meetingId: meeting?.id || 'new',
                     meetingType: isAssociation ? 'annual' : 'general',
-                    recipients: [], // Would be populated with real recipient emails
+                    recipients: recipients.map(r => ({ name: r.name, shares: r.shares })),
                     method: sendMethod,
                 })
             })
@@ -96,14 +105,28 @@ export function SendNoticeDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <div className="space-y-4 py-4">
-                    <div className="flex items-center justify-between p-4 bg-muted rounded-lg">
-                        <div>
-                            <p className="font-medium">Mottagare</p>
-                            <p className="text-sm text-muted-foreground">
-                                {recipientCount} {recipientType} kommer få kallelse
-                            </p>
+                    <div className="p-4 bg-muted rounded-lg space-y-2">
+                        <div className="flex items-center justify-between">
+                            <div>
+                                <p className="font-medium">Mottagare</p>
+                                <p className="text-sm text-muted-foreground">
+                                    {recipientCount} {recipientType} kommer få kallelse
+                                </p>
+                            </div>
+                            <Users className="h-8 w-8 text-muted-foreground" />
                         </div>
-                        <Users className="h-8 w-8 text-muted-foreground" />
+                        {recipients.length > 0 && (
+                            <div className="border-t pt-2 space-y-1">
+                                {recipients.map((r, i) => (
+                                    <div key={i} className="flex justify-between text-sm">
+                                        <span>{r.name}</span>
+                                        <span className="text-muted-foreground">
+                                            {r.shares.toLocaleString('sv-SE')} {r.shareClass}-aktier ({r.ownershipPercentage}%)
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
                     </div>
 
                     <div className="space-y-2">

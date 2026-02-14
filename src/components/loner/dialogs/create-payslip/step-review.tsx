@@ -18,6 +18,7 @@ interface StepReviewProps {
     finalSalary: number
     tax: number
     taxRate: number
+    taxMethodLabel?: string
     netSalary: number
     fackavgift: number
     akassa: number
@@ -44,6 +45,7 @@ export function StepReview({
     finalSalary,
     tax,
     taxRate,
+    taxMethodLabel,
     netSalary,
     fackavgift,
     akassa,
@@ -136,7 +138,7 @@ export function StepReview({
                     <span className="font-medium">{finalSalary.toLocaleString("sv-SE")} kr</span>
                 </div>
                 <div className="flex justify-between py-1 text-red-600">
-                    <span>Preliminärskatt ({Math.round(taxRate * 100)}%)</span>
+                    <span>Preliminärskatt ({taxMethodLabel || `${Math.round(taxRate * 100)}%`})</span>
                     <span className="font-medium">-{tax.toLocaleString("sv-SE")} kr</span>
                 </div>
                 {fackavgift > 0 && (

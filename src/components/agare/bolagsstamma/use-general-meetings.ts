@@ -1,11 +1,18 @@
-import { useMemo, useState } from "react"
+import { useMemo, useState, useCallback } from "react"
 import { useCompliance } from "@/hooks/use-compliance"
 import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/ownership"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
 
+export interface KallelseRecipient {
+  name: string
+  shares: number
+  shareClass: string
+  ownershipPercentage: number
+}
+
 export function useGeneralMeetings() {
-  const { documents: realDocuments, addDocument, updateDocument, refetchDocs } = useCompliance()
+  const { documents: realDocuments, addDocument, updateDocument, shareholders: realShareholders, refetchDocs } = useCompliance()
   const { addVerification } = useVerifications()
   const toast = useToast()
 
@@ -264,7 +271,7 @@ export function useGeneralMeetings() {
     }
   }
 
-  // Save kallelse text to a meeting
+  // Save kallelse text to a meeting, including recipients list (ABL 7:18-24)
   const saveKallelse = async (meetingId: string, kallelseText: string) => {
     // Find the meeting document
     const meeting = realDocuments?.find(d => d.id === meetingId)
@@ -274,27 +281,37 @@ export function useGeneralMeetings() {
     }
 
     try {
-      // Parse existing content and add kallelse
-      let content = {}
+      // Parse existing content and add kallelse + recipients
+      let content: Record<string, unknown> = {}
       try {
-        content = JSON.parse(meeting.content)
+        content = JSON.parse(meeting.content) as Record<string, unknown>
       } catch {
         content = {}
       }
 
+      const recipients = getKallelseRecipients()
+
       const updatedContent = {
         ...content,
         kallelseText,
-        kallelseSavedAt: new Date().toISOString()
+        kallelseSavedAt: new Date().toISOString(),
+        kallelseSentTo: recipients,
       }
 
-      // TODO: Add updateDocument to useCompliance hook
-      // For now, we'll just show a success message
+      await updateDocument({
+        id: meetingId,
+        content: JSON.stringify(updatedContent),
+        status: 'pending' as const,
+      })
+
+      const recipientNames = recipients.map(r => r.name).join(', ')
       toast.success(
         "Kallelse sparad",
-        "Kallelsen har sparats som utkast."
+        recipients.length > 0
+          ? `Kallelse förberedd för ${recipients.length} aktieägare: ${recipientNames}`
+          : "Kallelsen har sparats som utkast."
       )
-      
+
       await refetchDocs()
     } catch (error) {
       console.error('[saveKallelse] Failed to save kallelse:', error)
@@ -422,6 +439,22 @@ export function useGeneralMeetings() {
     }
   }
 
+  /**
+   * Get kallelse recipients from shareholders (ABL 7:23 — all shareholders entitled to notice).
+   */
+  const getKallelseRecipients = useCallback((): KallelseRecipient[] => {
+    if (!realShareholders || realShareholders.length === 0) return []
+
+    const totalShares = realShareholders.reduce((sum, s) => sum + s.shares_count, 0) || 1
+
+    return realShareholders.map(s => ({
+      name: s.name,
+      shares: s.shares_count,
+      shareClass: s.share_class || 'B',
+      ownershipPercentage: Math.round((s.shares_count / totalShares) * 100),
+    }))
+  }, [realShareholders])
+
   return {
     meetings,
     stats,
@@ -431,6 +464,7 @@ export function useGeneralMeetings() {
     createBoardMeeting,
     saveKallelse,
     updateMeeting,
-    refetchDocs
+    refetchDocs,
+    getKallelseRecipients,
   }
 }

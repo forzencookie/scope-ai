@@ -10,6 +10,7 @@
  */
 
 import { verificationService, type VerificationEntry, type Verification } from './verification-service'
+import { logAuditEntry } from '@/lib/audit'
 
 // =============================================================================
 // Types
@@ -114,6 +115,19 @@ export const correctionService = {
 
             result.correctionVerificationId = correction.id
         }
+
+        // Audit trail: log correction with reference to original verification
+        logAuditEntry({
+            action: 'updated',
+            entityType: 'verifications',
+            entityId: verificationId,
+            entityName: `Rättelse av ${original.series}${original.number}`,
+            metadata: {
+                originalVerificationId: verificationId,
+                reversalVerificationId: result.reversalVerificationId,
+                correctionVerificationId: result.correctionVerificationId,
+            },
+        })
 
         return result
     },
