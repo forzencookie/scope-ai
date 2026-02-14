@@ -6,13 +6,13 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
-import { Clock, Car, FileText, Banknote, Gift, Wallet } from "lucide-react"
+import { Clock, Car, FileText, Banknote, Gift, Wallet, MapPin } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 
 interface AddEmployeeDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    newEmployee: { name: string, role: string, email: string, salary: string }
+    newEmployee: { name: string, role: string, email: string, salary: string, kommun?: string }
     onChange: (field: string, value: string) => void
     onSave: () => void
     isSaving: boolean
@@ -63,14 +63,25 @@ export function AddEmployeeDialog({
                             type="email"
                         />
                     </div>
-                    <div className="space-y-2">
-                        <Label>Månadslön (brutto)</Label>
-                        <Input
-                            value={newEmployee.salary}
-                            onChange={e => onChange('salary', e.target.value)}
-                            placeholder="t.ex. 35000"
-                            type="number"
-                        />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                            <Label>Månadslön (brutto)</Label>
+                            <Input
+                                value={newEmployee.salary}
+                                onChange={e => onChange('salary', e.target.value)}
+                                placeholder="t.ex. 35000"
+                                type="number"
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label>Kommun</Label>
+                            <Input
+                                value={newEmployee.kommun || ''}
+                                onChange={e => onChange('kommun', e.target.value)}
+                                placeholder="t.ex. Stockholm"
+                            />
+                            <p className="text-xs text-muted-foreground">Folkbokföringskommun</p>
+                        </div>
                     </div>
                 </div>
                 <DialogFooter>
@@ -222,7 +233,7 @@ export interface ExpenseRecord {
 interface EmployeeDossierDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    employee: { id: string; name: string; role: string } | null
+    employee: { id: string; name: string; role: string; kommun?: string; tax_rate?: number } | null
     salaryHistory: SalaryRecord[]
     expenses: ExpenseRecord[]
     benefits: string[]
@@ -250,7 +261,16 @@ export function EmployeeDossierDialog({
             <DialogContent className="sm:max-w-[600px] max-h-[85vh]">
                 <DialogHeader>
                     <DialogTitle>{employee.name}</DialogTitle>
-                    <DialogDescription>{employee.role}</DialogDescription>
+                    <DialogDescription>
+                        {employee.role}
+                        {employee.kommun && (
+                            <span className="ml-2 inline-flex items-center gap-1">
+                                <MapPin className="h-3 w-3" />
+                                {employee.kommun}
+                                {employee.tax_rate != null && ` · ${Math.round(employee.tax_rate * 100)}% skatt`}
+                            </span>
+                        )}
+                    </DialogDescription>
                 </DialogHeader>
 
                 {/* Summary Cards */}

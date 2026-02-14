@@ -30,7 +30,7 @@ export function useTeamLogic() {
 
     // New Employee State
     const [newEmployeeDialogOpen, setNewEmployeeDialogOpen] = useState(false)
-    const [newEmployee, setNewEmployee] = useState({ name: '', role: '', email: '', salary: '' })
+    const [newEmployee, setNewEmployee] = useState({ name: '', role: '', email: '', salary: '', kommun: '' })
     const [isSaving, setIsSaving] = useState(false)
 
     // Calculate balances from ledger
@@ -138,11 +138,12 @@ export function useTeamLogic() {
                 name: newEmployee.name,
                 role: newEmployee.role,
                 email: newEmployee.email || undefined,
-                salary: parseFloat(newEmployee.salary) || 0
+                salary: parseFloat(newEmployee.salary) || 0,
+                kommun: newEmployee.kommun || undefined
             })
             toast.success("Anställd tillagd", `${newEmployee.name} har lagts till i teamet.`)
             setNewEmployeeDialogOpen(false)
-            setNewEmployee({ name: '', role: '', email: '', salary: '' })
+            setNewEmployee({ name: '', role: '', email: '', salary: '', kommun: '' })
         } catch {
             toast.error("Ett fel uppstod", "Kunde inte spara anställd.")
         } finally {

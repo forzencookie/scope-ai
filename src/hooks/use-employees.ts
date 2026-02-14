@@ -11,6 +11,9 @@ export interface Employee {
     status: string
     balance: number // 2820 Debt
     mileage: number // 7330 Mileage Cost
+    kommun?: string
+    tax_rate?: number
+    personal_number?: string
 }
 
 export interface NewEmployee {
@@ -18,6 +21,7 @@ export interface NewEmployee {
     role: string
     email?: string
     salary: number
+    kommun?: string
 }
 
 export function useEmployees() {
@@ -53,6 +57,7 @@ export function useEmployees() {
                     role: employee.role,
                     email: employee.email,
                     monthly_salary: employee.salary,
+                    kommun: employee.kommun || null,
                     status: 'active'
                 })
                 .select()

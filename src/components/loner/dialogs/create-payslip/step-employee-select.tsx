@@ -217,17 +217,6 @@ export function StepEmployeeSelect({
                                 </div>
                             </div>
                             <div className="space-y-2">
-                                <Label htmlFor="kommun">Kommun</Label>
-                                <Input
-                                    id="kommun"
-                                    type="text"
-                                    placeholder="t.ex. Stockholm"
-                                    value={manualPerson.kommun}
-                                    onChange={(e) => setManualPerson({ ...manualPerson, kommun: e.target.value })}
-                                />
-                                <p className="text-xs text-muted-foreground">Folkbokföringskommun. Avgör kommunalskatt.</p>
-                            </div>
-                            <div className="space-y-2">
                                 <Label htmlFor="taxRate">Skattesats (%)</Label>
                                 <div className="relative">
                                     <Input
