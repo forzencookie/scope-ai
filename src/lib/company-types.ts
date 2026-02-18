@@ -138,7 +138,7 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       // Payroll
       'lonebesked', 'agi', 'k10',
       // Ownership & Governance
-      'aktiebok', 'agarinfo', 'bolagsstamma', 'utdelning', 'firmatecknare',
+      'aktiebok', 'bolagsstamma', 'styrelseprotokoll', 'utdelning', 'firmatecknare',
     ],
     inkomstdeklarationVariant: 'INK2',
     arsbokslutVariant: 'K2',
@@ -155,7 +155,8 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       'momsdeklaration', 'inkomstdeklaration', 'arsbokslut', 'resultatrakning', 'balansrakning',
       // Payroll (if employees + egenavgifter)
       'lonebesked', 'agi', 'egenavgifter',
-      // No ownership features - EF owner is the user themselves
+      // Ownership - simple owner info only
+      'agarinfo',
     ],
     inkomstdeklarationVariant: 'NE',
     arsbokslutVariant: 'forenklat',
@@ -170,8 +171,8 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
       'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'fakturor', 'kvitton', 'verifikationer', 'inventarier', 'huvudbok',
       // Reports (all)
       'momsdeklaration', 'inkomstdeklaration', 'arsbokslut', 'resultatrakning', 'balansrakning',
-      // Payroll
-      'lonebesked', 'agi', 'delagaruttag',
+      // Payroll — partners pay egenavgifter on their profit share
+      'lonebesked', 'agi', 'delagaruttag', 'egenavgifter',
       // Ownership
       'delagare', 'firmatecknare',
     ],
@@ -184,12 +185,12 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
     fullName: 'Kommanditbolag',
     description: 'Handelsbolag där minst en delägare har begränsat ansvar (kommanditdelägare).',
     features: [
-      // Bookkeeping (all)
-      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'kvitton', 'verifikationer', 'huvudbok',
+      // Bookkeeping — same needs as HB
+      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'fakturor', 'kvitton', 'verifikationer', 'inventarier', 'huvudbok',
       // Reports (all)
       'momsdeklaration', 'inkomstdeklaration', 'arsbokslut', 'resultatrakning', 'balansrakning',
-      // Payroll
-      'lonebesked', 'agi', 'delagaruttag',
+      // Payroll — komplementärer pay egenavgifter on profit share
+      'lonebesked', 'agi', 'delagaruttag', 'egenavgifter',
       // Ownership
       'delagare', 'firmatecknare',
     ],
@@ -202,14 +203,14 @@ export const companyTypes: Record<CompanyType, CompanyTypeInfo> = {
     fullName: 'Ideell Förening',
     description: 'Förening som inte bedriver näringsverksamhet i vinstsyfte.',
     features: [
-      // Bookkeeping (all)
-      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'kvitton', 'verifikationer', 'huvudbok',
+      // Bookkeeping — föreningar can invoice and own assets
+      'transaktioner', 'kundfakturor', 'leverantorsfakturor', 'fakturor', 'kvitton', 'verifikationer', 'inventarier', 'huvudbok',
       // Reports - Förening uses Årsredovisning (förenklad)
       'momsdeklaration', 'inkomstdeklaration', 'arsredovisning', 'resultatrakning', 'balansrakning',
       // Payroll (if employees)
       'lonebesked', 'agi',
       // Ownership & Governance
-      'medlemsregister', 'bolagsstamma', 'arsmote', 'firmatecknare',
+      'medlemsregister', 'bolagsstamma', 'styrelseprotokoll', 'arsmote', 'firmatecknare',
     ],
     inkomstdeklarationVariant: 'forenklad',
     arsbokslutVariant: 'forenklat',

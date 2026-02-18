@@ -91,7 +91,7 @@ const tabHeaders: Record<string, { title: string; description: string }> = {
 function ParterPageContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const { companyType, hasFeature } = useCompany();
+    const { hasFeature } = useCompany();
     const lastUpdated = useLastUpdated();
 
     // Filter tabs based on available features for the current company type
@@ -105,9 +105,6 @@ function ParterPageContent() {
             .map(({ icon: _icon, ...rest }) => rest); // Remove icon property
     }, [hasFeature]);
 
-    // Check if this is EF (no tabs, just owner info)
-    const isEF = companyType === 'ef';
-
     // Default to first available tab if current tab is not available
     const currentTab = useMemo(() => {
         const requestedTab = searchParams.get('tab') || tabs[0]?.id || 'aktiebok';
@@ -120,8 +117,6 @@ function ParterPageContent() {
     const setCurrentTab = useCallback((tab: string) => {
         router.push(`/dashboard/agare?tab=${tab}`, { scroll: false });
     }, [router]);
-
-    // If EF, show simple owner info ...
 
     const currentHeader = tabHeaders[currentTab] || { title: "Parter", description: "" };
 
@@ -154,21 +149,7 @@ function ParterPageContent() {
                         {currentTab === 'aktiebok' && <LazyAktiebok />}
                         {currentTab === 'delagare' && <LazyDelagare />}
                         {currentTab === 'utdelning' && <LazyUtdelning />}
-                        {currentTab === 'agarinfo' && (
-                            isEF ? <EnskildFirmaOwnerInfo /> : (
-                            <div className="space-y-6">
-                                <Card>
-                                    <CardHeader>
-                                        <CardTitle>Ägaröversikt</CardTitle>
-                                        <CardDescription>Detaljerad information om alla registrerade ägare.</CardDescription>
-                                    </CardHeader>
-                                    <CardContent>
-                                        <div className="text-sm text-muted-foreground">Ägarinformation hämtas från aktieboken och Bolagsverket.</div>
-                                    </CardContent>
-                                </Card>
-                            </div>
-                            )
-                        )}
+                        {currentTab === 'agarinfo' && <EnskildFirmaOwnerInfo />}
                         {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
                         {currentTab === 'bolagsstamma' && <LazyBolagsstamma />}
                         {currentTab === 'arsmote' && <LazyArsmote />}
