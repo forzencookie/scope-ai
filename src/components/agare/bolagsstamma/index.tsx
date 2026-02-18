@@ -24,7 +24,7 @@ import { type GeneralMeeting } from "@/types/ownership"
 type CategoryFilter = 'alla' | 'bolagsstamma' | 'styrelsemote'
 
 export function Bolagsstamma() {
-  const { meetings, stats, bookDividend, createMeeting, createBoardMeeting, saveKallelse, updateMeeting } = useGeneralMeetings()
+  const { meetings, stats, bookDividend, createMeeting, createBoardMeeting, saveKallelse, updateMeeting, getKallelseRecipients } = useGeneralMeetings()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>('alla')
@@ -155,6 +155,7 @@ export function Bolagsstamma() {
         onUpdate={handleUpdateMeeting}
         onSaveKallelse={handleSaveKallelse}
         onBookDecision={bookDividend}
+        kallelseRecipients={getKallelseRecipients()}
       />
 
       {/* Create bolagsstämma dialog */}

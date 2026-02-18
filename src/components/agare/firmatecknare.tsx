@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import {
     PenTool,
     Plus,
@@ -9,6 +9,9 @@ import {
     X,
     MoreHorizontal,
     User,
+    History,
+    UserMinus,
+    Pencil,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,7 +23,15 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import {
+    Dialog,
+    DialogContent,
+    DialogHeader,
+    DialogTitle,
+    DialogFooter,
+} from '@/components/ui/dialog';
 import { useCompany } from '@/providers/company-provider';
+import { useToast } from '@/components/ui/toast';
 import { deriveSignatories, type Signatory } from './firmatecknare-logic';
 import { type Partner, type BoardMeeting, type OwnerInfo } from '@/types/ownership';
 import { useCompliance } from "@/hooks/use-compliance"
@@ -29,7 +40,10 @@ import { useMembers } from "@/hooks/use-members"
 
 export function Firmatecknare() {
     const { companyType, company } = useCompany();
-    
+    const toast = useToast();
+    const [selectedSignatory, setSelectedSignatory] = useState<Signatory | null>(null);
+    const [showHistoryDialog, setShowHistoryDialog] = useState(false);
+
     // Fetch real data
     const { shareholders, documents } = useCompliance();
     const { partners } = usePartners();
@@ -116,6 +130,32 @@ export function Firmatecknare() {
     const ensamSignatories = activeSignatories.filter(s => s.signatureType === 'ensam');
     const gemensamSignatories = activeSignatories.filter(s => s.signatureType === 'gemensam');
 
+    const handleAdd = () => {
+        toast.info(
+            "Lägg till firmatecknare",
+            "Firmatecknare härleds automatiskt från ägarstruktur och styrelse. Lägg till aktieägare i Aktiebok eller styrelseledamöter via Möten & Protokoll. Ändringar måste registreras hos Bolagsverket."
+        )
+    }
+
+    const handleEdit = (signatory: Signatory) => {
+        toast.info(
+            "Redigera firmatecknare",
+            `Firmateckningsrätten för ${signatory.name} baseras på rollen "${signatory.role}". Ändra ägarandel eller styrelseroll för att påverka firmateckningsrätten. Registrera ändringar hos Bolagsverket.`
+        )
+    }
+
+    const handleHistory = (signatory: Signatory) => {
+        setSelectedSignatory(signatory)
+        setShowHistoryDialog(true)
+    }
+
+    const handleDeregister = (signatory: Signatory) => {
+        toast.info(
+            "Avregistrera firmatecknare",
+            `För att avregistrera ${signatory.name} som firmatecknare behöver du ändra ägarandel eller styrelseroll, och sedan anmäla ändringen till Bolagsverket via "Ny åtgärd" under Händelser.`
+        )
+    }
+
     return (
         <div className="space-y-6">
             {/* Header */}
@@ -123,7 +163,7 @@ export function Firmatecknare() {
                 title="Firmatecknare"
                 subtitle={`Firmatecknare baserat på ${company?.name || 'företagets'} ägarstruktur och styrelse.`}
                 actions={
-                    <Button size="sm" className="gap-1.5">
+                    <Button size="sm" className="gap-1.5" onClick={handleAdd}>
                         <Plus className="h-4 w-4" />
                         Lägg till
                     </Button>

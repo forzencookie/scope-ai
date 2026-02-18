@@ -21,6 +21,8 @@ export interface SettingsFormData {
     address: string
     phone: string
     contactPerson: string
+    bankgiro: string
+    plusgiro: string
 }
 
 interface AccountTabProps {

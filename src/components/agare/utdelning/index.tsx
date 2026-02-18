@@ -4,12 +4,13 @@ import { useState } from "react"
 import { Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/shared"
-import { useDividendLogic } from "./use-dividend-logic"
+import { useDividendLogic, type DividendDecision } from "./use-dividend-logic"
 import { UtdelningStats } from "./utdelning-stats"
 import { RulesCard } from "./rules-card"
 import { DividendCalculator } from "./dividend-calculator"
 import { UtdelningsTable } from "./dividend-table"
 import { RegisterDividendDialog } from "./register-dividend-dialog"
+import { UtdelningsaviPreviewDialog } from "../dialogs/utdelningsavi-preview"
 
 export function UtdelningContent() {
     const {
@@ -21,6 +22,7 @@ export function UtdelningContent() {
         payDividend,
     } = useDividendLogic()
     const [showRegisterDialog, setShowRegisterDialog] = useState(false)
+    const [previewDividend, setPreviewDividend] = useState<DividendDecision | null>(null)
 
     return (
         <div className="space-y-6">
@@ -47,6 +49,7 @@ export function UtdelningContent() {
                         data={realDividendHistory}
                         onBook={bookDividend}
                         onPay={payDividend}
+                        onDownloadReceipt={setPreviewDividend}
                     />
                 </div>
                 <div className="shrink-0 lg:w-72">
@@ -58,6 +61,12 @@ export function UtdelningContent() {
                 open={showRegisterDialog}
                 onOpenChange={setShowRegisterDialog}
                 onRegister={planDividend}
+            />
+
+            <UtdelningsaviPreviewDialog
+                open={!!previewDividend}
+                onOpenChange={(open) => { if (!open) setPreviewDividend(null) }}
+                dividend={previewDividend}
             />
         </div>
     )

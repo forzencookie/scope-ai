@@ -443,16 +443,16 @@ When complete:
 **Fix:** Add `onDayClick` handler → dialog showing day's events + comment textarea persisted to DB.
 **Files:** `src/components/handelser/handelser-kalender.tsx`, new `day-detail-dialog.tsx`
 
-### 6.5 Ägare & Styrning Gaps
+### 6.5 Ägare & Styrning Gaps ✅ DONE
 
-#### 6.5a Document Downloads (Aktiebok, Meetings, Utdelning)
+#### 6.5a Document Downloads (Aktiebok, Meetings, Utdelning) ✅ DONE
 **Founder says:** Aktiebok must allow "recording and downloading of all legally required information." Meetings are a "legal paper trail" with downloadable minutes. Utdelning should "generate dividend receipts/vouchers."
-**Current:** Menu items exist ("Exportera aktiebok", "Ladda ner kallelse/protokoll") but handlers are not wired — they just log to console. No dividend receipt generation.
-**Fix:** Implement PDF generation using a library (e.g., @react-pdf/renderer or jsPDF) for:
-- Aktiebok export (shareholder register)
-- Meeting minutes (kallelse + protokoll)
-- Dividend receipts (utdelningsavi)
-**Files:** `src/components/agare/aktiebok/`, `src/components/agare/dialogs/meeting-view.tsx`, `src/components/agare/utdelning/`
+**Status:** Implemented. PDF generation via jsPDF for all four document types:
+- Aktiebok export (shareholder register) — preview dialog + PDF with ABL 5:2 compliant layout
+- Kallelse (meeting notice) — PDF with company info, agenda, custom text support
+- Protokoll (meeting minutes) — PDF with decisions, attendance, signature lines
+- Utdelningsavi (dividend receipt) — preview dialog + PDF with tax breakdown
+**Files:** `src/lib/generators/pdf-generator.ts`, `src/components/agare/dialogs/aktiebok-preview.tsx`, `src/components/agare/dialogs/utdelningsavi-preview.tsx`, `src/components/agare/dialogs/meeting-view.tsx`, `src/components/agare/aktiebok/index.tsx`, `src/components/agare/utdelning/`
 
 ### 6.6 Inställningar Gaps
 
@@ -528,12 +528,13 @@ Phase 1 (Accounting Spine) ✅ DONE
             ├── 6.6a Company logo upload ✅ DONE (settings + storage + API)
             ├── 6.7b Payment receipt downloads ✅ DONE (Stripe billing-history wired)
             ├── Aktienummer ABL 5:2 compliance ✅ DONE (share number ranges)
-            ├── 6.1a Upload simplification — pending
-            ├── 6.2 Löner UI gaps — pending
-            ├── 6.3 Årsbokslut manual + AI mode — pending
-            ├── 6.4 Kalender day-click dialog — pending (exists, needs comments)
-            ├── 6.5 PDF downloads (aktiebok, minutes, receipts) — pending
-            ├── 6.6b User profile picture — done (previous session)
+            ├── 6.1a Upload simplification ✅ DONE (auto-detect OCR handler)
+            ├── 6.2a Löner dynamic employee count ✅ DONE (already fetches from /api/employees)
+            ├── 6.2b Löner unknown person prompt ✅ DONE (search → add person suggestion)
+            ├── 6.3 Årsbokslut manual + AI mode ✅ DONE (editable fields + aiContext wired)
+            ├── 6.4 Kalender day-click dialog ✅ DONE (notes persist to Supabase)
+            ├── 6.5 PDF downloads (aktiebok, minutes, receipts) ✅ DONE
+            ├── 6.6b User profile picture ✅ DONE (previous session)
             ├── 6.7a Custom Stripe checkout ✅ DONE (embedded checkout)
             └── 6.8 Onboarding AI interview — deferred
 ```
@@ -559,10 +560,10 @@ Phases 1-4 are complete. Phase 5 eliminates hardcoded data. Phase 6 closes all r
 10. ✅ No component shows fake placeholder financial numbers (constants.ts cleaned)
 
 **Phase 6 (Partial):** Founder vision progress:
-11. Upload and import transactions via Manual or OCR — pending
+11. ✅ Upload and import transactions via Manual or OCR (auto-detect OCR handler)
 12. ✅ Invoice preview accessible in non-expanded dialog (clickable card opens preview)
-13. Click any calendar day → events + comments — day detail exists, comments pending
-14. Download aktiebok PDF, meeting minutes, dividend receipts — pending
+13. ✅ Click any calendar day → events + comments (notes persist to Supabase)
+14. ✅ Download aktiebok PDF, meeting minutes, dividend receipts
 15. ✅ Company logo upload in settings
 16. ✅ Custom branded Stripe checkout (embedded)
 17. AI interviews user during onboarding — deferred

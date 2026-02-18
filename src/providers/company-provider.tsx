@@ -29,6 +29,9 @@ interface CompanyInfo {
   phone?: string
   vatNumber?: string
   contactPerson?: string
+  // Payment details
+  bankgiro?: string
+  plusgiro?: string
   // Settings
   hasMomsRegistration: boolean
   hasEmployees: boolean

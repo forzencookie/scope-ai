@@ -78,6 +78,8 @@ export async function POST(req: NextRequest) {
             items: body.items || null,
             status: body.status || 'Utkast',
             currency: body.currency || 'SEK',
+            bankgiro: body.bankgiro || null,
+            plusgiro: body.plusgiro || null,
             user_id: userDb.userId,
             company_id: userDb.companyId || '',
         };

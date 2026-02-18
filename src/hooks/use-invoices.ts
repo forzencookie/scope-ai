@@ -43,6 +43,12 @@ export function useInvoices() {
         fetchInvoices()
     }, [fetchInvoices])
 
+    // Listen for manual page refresh
+    useEffect(() => {
+        window.addEventListener("page-refresh", fetchInvoices)
+        return () => window.removeEventListener("page-refresh", fetchInvoices)
+    }, [fetchInvoices])
+
     return { invoices, isLoading, error, refresh: fetchInvoices }
 }
 

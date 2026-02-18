@@ -25,7 +25,6 @@ interface ZRapportData {
     vatAmount: number
 }
 
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function parseZRapport(base64Data: string): Promise<ZRapportData | null> {
     try {
         const openai = getOpenAIClient()
@@ -70,6 +69,88 @@ interface CSVRow {
     description: string
     amount: number
     account?: string
+}
+
+interface GenericDocumentTransaction {
+    date: string
+    description: string
+    amount: number
+    vat?: number
+}
+
+async function parseGenericDocument(base64Data: string, mimeType: string): Promise<GenericDocumentTransaction[]> {
+    try {
+        const openai = getOpenAIClient()
+        const response = await openai.chat.completions.create({
+            model: 'gpt-4o-mini',
+            messages: [
+                {
+                    role: 'system',
+                    content: 'Du är en OCR-motor som läser kvitton, fakturor och andra ekonomiska dokument. Extrahera alla transaktioner du hittar. Returnera endast JSON.'
+                },
+                {
+                    role: 'user',
+                    content: [
+                        {
+                            type: 'text',
+                            text: `Läs detta dokument och extrahera alla transaktioner. Returnera JSON i detta format:
+{
+  "transactions": [
+    {
+      "date": "YYYY-MM-DD",
+      "description": "beskrivning av transaktionen",
+      "amount": nummer (positivt för inkomst, negativt för utgift),
+      "vat": nummer (momsbelopp, 0 om okänt)
+    }
+  ]
+}
+
+Om du inte kan läsa dokumentet eller hittar inga transaktioner, returnera: {"transactions": []}
+Om datum saknas, använd dagens datum.`
+                        },
+                        {
+                            type: 'image_url',
+                            image_url: {
+                                url: `data:${mimeType};base64,${base64Data}`
+                            }
+                        }
+                    ]
+                }
+            ],
+            temperature: 0.1,
+            response_format: { type: 'json_object' }
+        })
+
+        const content = response.choices[0]?.message?.content
+        if (!content) return []
+
+        const parsed = JSON.parse(content)
+        return (parsed.transactions || []) as GenericDocumentTransaction[]
+    } catch (error) {
+        console.error('[Generic Document Parser Error]', error)
+        return []
+    }
+}
+
+function getFileMimeType(fileName: string): string {
+    const ext = fileName.toLowerCase().split('.').pop() || ''
+    const mimeMap: Record<string, string> = {
+        'jpg': 'image/jpeg',
+        'jpeg': 'image/jpeg',
+        'png': 'image/png',
+        'gif': 'image/gif',
+        'webp': 'image/webp',
+        'pdf': 'application/pdf',
+        'tiff': 'image/tiff',
+        'tif': 'image/tiff',
+        'bmp': 'image/bmp',
+    }
+    return mimeMap[ext] || 'application/octet-stream'
+}
+
+function isSpreadsheetFile(fileName: string): boolean {
+    const ext = fileName.toLowerCase().split('.').pop() || ''
+    return ['csv', 'xlsx', 'xls'].includes(ext)
 }
 
 function parseCSV(text: string): CSVRow[] {
@@ -178,6 +259,54 @@ export async function POST(request: NextRequest) {
                     source: 'csv-import',
                 })
                 if (tx) createdTransactions.push(tx)
+            }
+        } else if (type === 'ocr') {
+            // Auto-detect: spreadsheet files → CSV parser, images/PDFs → GPT OCR
+            const fileName = file.name || ''
+
+            if (isSpreadsheetFile(fileName)) {
+                // Route spreadsheet files to CSV parser
+                const text = await file.text()
+                const rows = parseCSV(text)
+
+                for (const row of rows) {
+                    const tx = await userDb.transactions.create({
+                        id: randomUUID(),
+                        name: row.description,
+                        description: row.description,
+                        amount: String(row.amount),
+                        amount_value: Number(row.amount),
+                        date: row.date,
+                        status: 'pending',
+                        source: 'ocr-import',
+                    })
+                    if (tx) createdTransactions.push(tx)
+                }
+            } else {
+                // Image or PDF → GPT-4o-mini OCR
+                const buffer = await file.arrayBuffer()
+                const base64 = Buffer.from(buffer).toString('base64')
+                const mimeType = file.type || getFileMimeType(fileName)
+
+                const transactions = await parseGenericDocument(base64, mimeType)
+
+                if (transactions.length === 0) {
+                    return NextResponse.json({ error: 'Kunde inte läsa några transaktioner från dokumentet' }, { status: 400 })
+                }
+
+                for (const t of transactions) {
+                    const tx = await userDb.transactions.create({
+                        id: randomUUID(),
+                        name: t.description,
+                        description: t.description,
+                        amount: String(t.amount),
+                        amount_value: Number(t.amount),
+                        date: t.date,
+                        status: 'pending',
+                        source: 'ocr-import',
+                    })
+                    if (tx) createdTransactions.push(tx)
+                }
             }
         } else {
             return NextResponse.json({ error: 'Unknown import type' }, { status: 400 })

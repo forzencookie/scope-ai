@@ -107,6 +107,8 @@ export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialo
     email: "",
     phone: "",
     contactPerson: "",
+    bankgiro: "",
+    plusgiro: "",
   })
 
   // Fetch profile (avatar) on mount
@@ -130,6 +132,8 @@ export function SettingsDialog({ open, onOpenChange, defaultTab }: SettingsDialo
         email: company.email || "",
         phone: company.phone || "",
         contactPerson: company.contactPerson || "",
+        bankgiro: company.bankgiro || "",
+        plusgiro: company.plusgiro || "",
       })
     }
   }, [company])

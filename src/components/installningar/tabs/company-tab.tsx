@@ -256,6 +256,23 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                 />
+
+                <div className="grid grid-cols-2 gap-4">
+                    <SettingsFormField
+                        id="bankgiro"
+                        label="Bankgiro"
+                        placeholder="123-4567"
+                        value={formData.bankgiro}
+                        onChange={(e) => setFormData({ ...formData, bankgiro: e.target.value })}
+                    />
+                    <SettingsFormField
+                        id="plusgiro"
+                        label="Plusgiro"
+                        placeholder="12 34 56-7"
+                        value={formData.plusgiro}
+                        onChange={(e) => setFormData({ ...formData, plusgiro: e.target.value })}
+                    />
+                </div>
             </div>
 
             <Separator />

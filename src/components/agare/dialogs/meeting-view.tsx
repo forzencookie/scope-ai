@@ -43,6 +43,13 @@ import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/owners
 import { type MeetingStatus } from "@/lib/status-types"
 import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
 import { FULL_ABL_AGENDA } from "./mote"
+import { useCompany } from "@/providers/company-provider"
+import {
+    generateAnnualMeetingNoticePDF,
+    generateMeetingMinutesPDF,
+    type PDFCompanyInfo,
+} from "@/lib/generators/pdf-generator"
+import type { KallelseRecipient } from "@/components/agare/bolagsstamma/use-general-meetings"
 
 // ============================================================================
 // Types & Constants
@@ -96,6 +103,7 @@ interface MeetingViewDialogProps {
     onUpdate?: (meeting: GeneralMeeting, updates: Partial<GeneralMeeting>) => Promise<void>
     onSaveKallelse?: (meetingId: string, kallelseText: string) => Promise<void>
     onBookDecision?: (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => void
+    kallelseRecipients?: KallelseRecipient[]
 }
 
 // Callback to advance the step after a status-changing action
@@ -234,12 +242,14 @@ function StepPlanerad({
     onUpdate,
     onGoToKallelse,
     isBoard = false,
+    companyInfo,
 }: {
     meeting: GeneralMeeting
     canEdit: boolean
     onUpdate?: (meeting: GeneralMeeting, updates: Partial<GeneralMeeting>) => Promise<void>
     onGoToKallelse: () => void
     isBoard?: boolean
+    companyInfo?: PDFCompanyInfo
 }) {
     const [notes, setNotes] = useState("")
     const [isEditingNotes, setIsEditingNotes] = useState(false)
@@ -275,11 +285,42 @@ function StepPlanerad({
     }, [kallelseDeadline])
 
     const handleDownloadKallelse = () => {
-        console.log("Downloading kallelse for meeting:", meeting.id)
+        generateAnnualMeetingNoticePDF({
+            id: meeting.id,
+            year: meeting.year,
+            date: meeting.date,
+            location: meeting.location,
+            type: meeting.type,
+            agenda: meeting.agenda,
+            time: meeting.time,
+            kallelseText: meeting.kallelseText,
+            chairperson: meeting.chairperson,
+            secretary: meeting.secretary,
+        }, companyInfo)
     }
 
     const handleDownloadProtokoll = () => {
-        console.log("Downloading protokoll for meeting:", meeting.id)
+        const protokollText = (meeting as GeneralMeeting & { protokollText?: string }).protokollText || ""
+        generateMeetingMinutesPDF({
+            year: meeting.year,
+            date: meeting.date,
+            time: meeting.time,
+            location: meeting.location,
+            type: meeting.type,
+            meetingCategory: meeting.meetingCategory,
+            meetingNumber: meeting.meetingNumber,
+            chairperson: meeting.chairperson,
+            secretary: meeting.secretary,
+            attendees: meeting.attendees,
+            decisions: (meeting.decisions || []).map(d => ({
+                title: d.title,
+                decision: d.decision,
+                amount: d.amount,
+                votingResult: d.votingResult,
+            })),
+            protokollText,
+            agenda: meeting.agenda,
+        }, companyInfo)
     }
 
     return (
@@ -520,12 +561,16 @@ function StepKallelse({
     onUpdate,
     onBack,
     onAdvance,
+    companyInfo,
+    kallelseRecipients,
 }: {
     meeting: GeneralMeeting
     onSaveKallelse?: (meetingId: string, kallelseText: string) => Promise<void>
     onUpdate?: (meeting: GeneralMeeting, updates: Partial<GeneralMeeting>) => Promise<void>
     onBack: () => void
     onAdvance: OnStepAdvance
+    companyInfo?: PDFCompanyInfo
+    kallelseRecipients?: KallelseRecipient[]
 }) {
     const [kallelseText, setKallelseText] = useState(meeting.kallelseText || "")
     const [isSaving, setIsSaving] = useState(false)
@@ -598,22 +643,27 @@ Formatera dokumentet professionellt och formellt.`,
     }
 
     const handleDownloadPDF = () => {
-        const content = kallelseText || generateBasicKallelse()
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `kallelse-bolagsstamma-${meeting.year}.txt`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
+        generateAnnualMeetingNoticePDF({
+            id: meeting.id,
+            year: meeting.year,
+            date: meeting.date,
+            location: meeting.location,
+            type: meeting.type,
+            agenda: meeting.agenda,
+            time: meeting.time,
+            kallelseText: kallelseText || generateBasicKallelse(),
+            chairperson: meeting.chairperson,
+            secretary: meeting.secretary,
+        }, companyInfo)
     }
 
     const generateBasicKallelse = () => {
+        const name = companyInfo?.name || '[BOLAGSNAMN] AB'
+        const orgNr = companyInfo?.orgNumber || '[ORG.NR]'
+        const city = companyInfo?.city || '[ORT]'
         return `KALLELSE TILL ${meeting.type === 'ordinarie' ? 'ORDINARIE' : 'EXTRA'} BOLAGSSTÄMMA
 
-Aktieägarna i [BOLAGSNAMN] AB, org.nr [ORG.NR], kallas härmed till ${meeting.type === 'ordinarie' ? 'ordinarie' : 'extra'} bolagsstämma.
+Aktieägarna i ${name}, org.nr ${orgNr}, kallas härmed till ${meeting.type === 'ordinarie' ? 'ordinarie' : 'extra'} bolagsstämma.
 
 Datum: ${displayDate}
 Tid: ${meeting.time || '14:00'}
@@ -627,10 +677,10 @@ Aktieägare som önskar delta i stämman ska anmäla sig senast [DATUM] till [E-
 
 Aktieägare som företräds av ombud ska utfärda skriftlig, undertecknad och daterad fullmakt.
 
-[ORT], den [DATUM]
+${city}, den [DATUM]
 
 Styrelsen
-[BOLAGSNAMN] AB`
+${name}`
     }
 
     return (
@@ -668,6 +718,30 @@ Styrelsen
                     </div>
                 </CardContent>
             </Card>
+
+            {/* Recipients */}
+            {kallelseRecipients && kallelseRecipients.length > 0 && (
+                <div className="rounded-lg border p-3 space-y-2">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
+                        Mottagare ({kallelseRecipients.length} aktieägare)
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                        {kallelseRecipients.map((r, i) => (
+                            <span key={i} className="inline-flex items-center gap-1 text-xs bg-muted px-2 py-1 rounded-md">
+                                {r.name}
+                                <span className="text-muted-foreground">({r.ownershipPercentage}%)</span>
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            )}
+            {kallelseRecipients && kallelseRecipients.length === 0 && (
+                <div className="rounded-lg border border-amber-200 bg-amber-50 dark:bg-amber-950/20 dark:border-amber-900 p-3">
+                    <p className="text-xs text-amber-700 dark:text-amber-400">
+                        Inga aktieägare registrerade. Lägg till aktieägare i Aktiebok för att skicka kallelsen.
+                    </p>
+                </div>
+            )}
 
             {/* Kallelse textarea */}
             <div className="space-y-2">
@@ -742,12 +816,14 @@ function StepGenomford({
     onBookDecision,
     onAdvance,
     isBoard = false,
+    companyInfo,
 }: {
     meeting: GeneralMeeting
     onUpdate?: (meeting: GeneralMeeting, updates: Partial<GeneralMeeting>) => Promise<void>
     onBookDecision?: (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => void
     onAdvance: OnStepAdvance
     isBoard?: boolean
+    companyInfo?: PDFCompanyInfo
 }) {
     const [protokollText, setProtokollText] = useState(
         (meeting as GeneralMeeting & { protokollText?: string }).protokollText || ""
@@ -845,16 +921,26 @@ Formatera dokumentet professionellt och formellt.`
     }
 
     const handleDownloadProtokoll = () => {
-        const content = protokollText || `Protokoll — ${meeting.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${meeting.year}`
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `protokoll-bolagsstamma-${meeting.year}.txt`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
+        generateMeetingMinutesPDF({
+            year: meeting.year,
+            date: meeting.date,
+            time: meeting.time,
+            location: meeting.location,
+            type: meeting.type,
+            meetingCategory: meeting.meetingCategory,
+            meetingNumber: meeting.meetingNumber,
+            chairperson: meeting.chairperson,
+            secretary: meeting.secretary,
+            attendees: meeting.attendees,
+            decisions: (meeting.decisions || []).map(d => ({
+                title: d.title,
+                decision: d.decision,
+                amount: d.amount,
+                votingResult: d.votingResult,
+            })),
+            protokollText: protokollText || undefined,
+            agenda: meeting.agenda,
+        }, companyInfo)
     }
 
     return (
@@ -1019,25 +1105,37 @@ Formatera dokumentet professionellt och formellt.`
 function StepSignerat({
     meeting,
     onBookDecision,
+    companyInfo,
 }: {
     meeting: GeneralMeeting
     onBookDecision?: (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => void
+    companyInfo?: PDFCompanyInfo
 }) {
     const existingDecisions = meeting.decisions || []
     const protokollText = (meeting as GeneralMeeting & { protokollText?: string }).protokollText || ""
     const displayDate = formatDateLong(meeting.date)
 
     const handleDownloadProtokoll = () => {
-        const content = protokollText || `Protokoll — ${meeting.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${meeting.year}`
-        const blob = new Blob([content], { type: 'text/plain;charset=utf-8' })
-        const url = URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `protokoll-bolagsstamma-${meeting.year}.txt`
-        document.body.appendChild(a)
-        a.click()
-        document.body.removeChild(a)
-        URL.revokeObjectURL(url)
+        generateMeetingMinutesPDF({
+            year: meeting.year,
+            date: meeting.date,
+            time: meeting.time,
+            location: meeting.location,
+            type: meeting.type,
+            meetingCategory: meeting.meetingCategory,
+            meetingNumber: meeting.meetingNumber,
+            chairperson: meeting.chairperson,
+            secretary: meeting.secretary,
+            attendees: meeting.attendees,
+            decisions: (meeting.decisions || []).map(d => ({
+                title: d.title,
+                decision: d.decision,
+                amount: d.amount,
+                votingResult: d.votingResult,
+            })),
+            protokollText: protokollText || undefined,
+            agenda: meeting.agenda,
+        }, companyInfo)
     }
 
     return (
@@ -1174,9 +1272,18 @@ export function MeetingViewDialog({
     meeting,
     onUpdate,
     onSaveKallelse,
-    onBookDecision
+    onBookDecision,
+    kallelseRecipients,
 }: MeetingViewDialogProps) {
     const [activeStep, setActiveStep] = useState<MeetingStep | null>(null)
+    const { company } = useCompany()
+    const companyInfo: PDFCompanyInfo = {
+        name: company?.name || 'Mitt Företag AB',
+        orgNumber: company?.orgNumber || '',
+        address: company?.address,
+        city: company?.city,
+        zipCode: company?.zipCode,
+    }
     const isBoard = meeting?.meetingCategory === 'styrelsemote'
     const steps = getSteps(meeting)
 
@@ -1233,6 +1340,7 @@ export function MeetingViewDialog({
                             onUpdate={onUpdate}
                             onGoToKallelse={isBoard ? () => setActiveStep('genomford') : () => setActiveStep('kallelse')}
                             isBoard={isBoard}
+                            companyInfo={companyInfo}
                         />
                     )}
 
@@ -1243,6 +1351,8 @@ export function MeetingViewDialog({
                             onUpdate={onUpdate}
                             onBack={() => setActiveStep('planerad')}
                             onAdvance={setActiveStep}
+                            companyInfo={companyInfo}
+                            kallelseRecipients={kallelseRecipients}
                         />
                     )}
 
@@ -1253,6 +1363,7 @@ export function MeetingViewDialog({
                             onBookDecision={onBookDecision}
                             onAdvance={setActiveStep}
                             isBoard={isBoard}
+                            companyInfo={companyInfo}
                         />
                     )}
 
@@ -1260,6 +1371,7 @@ export function MeetingViewDialog({
                         <StepSignerat
                             meeting={meeting}
                             onBookDecision={isBoard ? undefined : onBookDecision}
+                            companyInfo={companyInfo}
                         />
                     )}
                 </div>

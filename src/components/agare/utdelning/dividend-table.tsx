@@ -1,4 +1,4 @@
-import { Calendar, Wallet, Calculator, DollarSign, MoreHorizontal } from "lucide-react"
+import { Calendar, Wallet, Calculator, DollarSign, MoreHorizontal, Download } from "lucide-react"
 import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
 import { AppStatusBadge, type AppStatus } from "@/components/ui/status-badge"
 import { Button } from "@/components/ui/button"
@@ -14,6 +14,7 @@ interface UtdelningsTabellProps {
     data: DividendDecision[]
     onBook?: (dividend: DividendDecision) => void
     onPay?: (dividend: DividendDecision) => void
+    onDownloadReceipt?: (dividend: DividendDecision) => void
 }
 
 const columns = [
@@ -34,7 +35,7 @@ function getStatusLabel(status: DividendDecision['status']): AppStatus {
     }
 }
 
-export function UtdelningsTable({ data, onBook, onPay }: UtdelningsTabellProps) {
+export function UtdelningsTable({ data, onBook, onPay, onDownloadReceipt }: UtdelningsTabellProps) {
     return (
         <>
             <GridTableHeader columns={columns} />
@@ -78,6 +79,12 @@ export function UtdelningsTable({ data, onBook, onPay }: UtdelningsTabellProps) 
                                         {row.status === 'planned' && (
                                             <DropdownMenuItem disabled>
                                                 Väntar på stämmobeslut
+                                            </DropdownMenuItem>
+                                        )}
+                                        {(row.status === 'decided' || row.status === 'booked') && onDownloadReceipt && (
+                                            <DropdownMenuItem onClick={() => onDownloadReceipt(row)}>
+                                                <Download className="h-4 w-4 mr-2" />
+                                                Ladda ner utdelningsavi
                                             </DropdownMenuItem>
                                         )}
                                         <DropdownMenuItem>Visa protokoll</DropdownMenuItem>

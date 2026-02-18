@@ -151,6 +151,7 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
     const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()
     const { user } = useAuth()
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+    const [isRefreshing, setIsRefreshing] = useState(false)
     const pathname = usePathname()
     const prevPathnameRef = React.useRef(pathname)
     
@@ -210,10 +211,14 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
                         variant="ghost"
                         size="icon"
                         className="h-8 w-8"
-                        onClick={() => window.dispatchEvent(new CustomEvent("page-refresh"))}
+                        onClick={() => {
+                            setIsRefreshing(true)
+                            window.dispatchEvent(new CustomEvent("page-refresh"))
+                            setTimeout(() => setIsRefreshing(false), 1200)
+                        }}
                         title="Uppdatera"
                     >
-                        <RefreshCw className="h-4 w-4" />
+                        <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
                     </Button>
                     <Button
                         variant="ghost"

@@ -73,7 +73,6 @@ export function useCreatePayslipLogic({
 
     const [employees, setEmployees] = useState<PayslipEmployee[]>([])
     const [isLoadingEmployees, setIsLoadingEmployees] = useState(true)
-    const [step, setStep] = useState(1)
     const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
     const [chatInput, setChatInput] = useState("")
     const [chatMessages, setChatMessages] = useState<ChatMessage[]>([])
@@ -226,7 +225,6 @@ export function useCreatePayslipLogic({
         : selectedEmployee !== null
 
     const resetDialog = () => {
-        setStep(1)
         setSelectedEmployee(null)
         setChatInput("")
         setChatMessages([])
@@ -396,10 +394,10 @@ export function useCreatePayslipLogic({
 
     return {
         employees, filteredEmployees, isLoadingEmployees,
-        step, setStep,
         selectedEmployee, setSelectedEmployee,
         selectedEmp,
         canProceedFromStep1,
+        currentPeriod,
 
         // Manual entry
         useManualEntry, setUseManualEntry,

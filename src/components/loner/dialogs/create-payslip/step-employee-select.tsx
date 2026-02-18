@@ -1,11 +1,12 @@
 "use client"
 
-import { Button } from "@/components/ui/button"
+import { useMemo } from "react"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Button } from "@/components/ui/button"
 import { User, Search, UserPlus, Users } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { type PayslipEmployee, type ManualPersonData } from "./use-create-payslip-logic"
@@ -23,9 +24,6 @@ interface StepEmployeeSelectProps {
     setSaveAsEmployee: (value: boolean) => void
     searchQuery: string
     setSearchQuery: (query: string) => void
-    canProceed: boolean
-    onNext: () => void
-    onCancel: () => void
     isLoading: boolean
     defaultTaxPercent?: string
 }
@@ -43,9 +41,6 @@ export function StepEmployeeSelect({
     setSaveAsEmployee,
     searchQuery,
     setSearchQuery,
-    canProceed,
-    onNext,
-    onCancel,
     isLoading,
     defaultTaxPercent = "32"
 }: StepEmployeeSelectProps) {
@@ -55,8 +50,11 @@ export function StepEmployeeSelect({
 
     const hasEmployees = employees.length > 0
 
-    // Auto-select "Ny person" tab if no employees exist
-    const defaultTab = hasEmployees ? "existing" : "new"
+    // Derive active tab from useManualEntry state
+    const activeTab = useMemo(() => {
+        if (!hasEmployees) return "new"
+        return useManualEntry ? "new" : "existing"
+    }, [hasEmployees, useManualEntry])
 
     const handleTabChange = (value: string) => {
         if (value === "new") {
@@ -68,9 +66,15 @@ export function StepEmployeeSelect({
         }
     }
 
+    const handleAddPersonFromSearch = () => {
+        setUseManualEntry(true)
+        setSelectedEmployee("")
+        setManualPerson({ ...manualPerson, name: searchQuery })
+    }
+
     return (
         <div className="space-y-4">
-            <Tabs defaultValue={defaultTab} onValueChange={handleTabChange} className="w-full">
+            <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                     <TabsTrigger value="existing" className="gap-2">
                         <Users className="h-4 w-4" />
@@ -128,8 +132,17 @@ export function StepEmployeeSelect({
                                             </button>
                                         ))
                                     ) : (
-                                        <div className="text-center py-8 text-muted-foreground">
-                                            <p>Inga resultat för "{searchQuery}"</p>
+                                        <div className="text-center py-8 text-muted-foreground space-y-3">
+                                            <p>Inga resultat för &quot;{searchQuery}&quot;</p>
+                                            <Button
+                                                variant="ghost"
+                                                size="sm"
+                                                className="gap-2 text-primary hover:text-primary"
+                                                onClick={handleAddPersonFromSearch}
+                                            >
+                                                <UserPlus className="h-4 w-4" />
+                                                Vill du lägga till denna person?
+                                            </Button>
                                         </div>
                                     )}
                                 </div>
@@ -299,20 +312,6 @@ export function StepEmployeeSelect({
                     </ScrollArea>
                 </TabsContent>
             </Tabs>
-
-            {/* Footer Buttons */}
-            <div className="flex gap-3 pt-4 border-t">
-                <Button variant="outline" className="flex-1" onClick={onCancel}>
-                    Avbryt
-                </Button>
-                <Button
-                    className="flex-1"
-                    disabled={!canProceed}
-                    onClick={onNext}
-                >
-                    Nästa
-                </Button>
-            </div>
         </div>
     )
 }

@@ -1,5 +1,6 @@
 "use client"
 
+import { useState } from "react"
 import {
     Plus,
     Download,
@@ -25,9 +26,11 @@ import { TransactionsGrid } from "./components/TransactionsGrid"
 import { TransactionDialog } from "./components/TransactionDialog"
 import { useAktiebokLogic } from "./use-aktiebok-logic"
 import { StockTransactionType } from "./types"
+import { AktiebokPreviewDialog } from "../dialogs/aktiebok-preview"
 
 export function Aktiebok() {
     const { text } = useTextMode()
+    const [showExportDialog, setShowExportDialog] = useState(false)
     const {
         stats,
         filteredShareholders,
@@ -74,7 +77,7 @@ export function Aktiebok() {
                                     Registrera överlåtelse
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => setShowExportDialog(true)}>
                                     <Download className="h-4 w-4 mr-2" />
                                     Exportera aktiebok
                                 </DropdownMenuItem>
@@ -184,6 +187,13 @@ export function Aktiebok() {
                 shareholders={shareholders}
                 onSave={handleSaveTransaction}
                 isSubmitting={isSubmitting}
+            />
+
+            <AktiebokPreviewDialog
+                open={showExportDialog}
+                onOpenChange={setShowExportDialog}
+                shareholders={shareholders}
+                stats={stats}
             />
         </div>
     )

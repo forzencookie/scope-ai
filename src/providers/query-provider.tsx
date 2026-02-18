@@ -17,16 +17,16 @@ function makeQueryClient() {
     return new QueryClient({
         defaultOptions: {
             queries: {
-                // Data stays fresh for 30 seconds
-                staleTime: 30 * 1000,
-                // Cache unused data for 5 minutes before garbage collection
-                gcTime: 5 * 60 * 1000,
-                // Refetch on window focus (good for dashboards)
-                refetchOnWindowFocus: true,
-                // Don't refetch on mount if data is fresh
+                // Data stays fresh for 5 minutes — manual refresh button handles on-demand updates
+                staleTime: 5 * 60 * 1000,
+                // Cache unused data for 10 minutes before garbage collection
+                gcTime: 10 * 60 * 1000,
+                // Never refetch just because the user switched browser tabs
+                refetchOnWindowFocus: false,
+                // Refetch on mount only if data is actually stale
                 refetchOnMount: true,
-                // Retry failed requests 3 times with exponential backoff
-                retry: 3,
+                // Retry failed requests 2 times with exponential backoff
+                retry: 2,
                 retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
             },
             mutations: {

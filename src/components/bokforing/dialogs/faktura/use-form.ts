@@ -62,7 +62,6 @@ export function useInvoiceForm() {
     const [formState, setFormState] = useState<InvoiceFormState>(getInitialFormState)
     const [formErrors, setFormErrors] = useState<InvoiceFormErrors>({})
     const [isCreating, setIsCreating] = useState(false)
-    const [expanded, setExpanded] = useState(false)
 
     // Field setters
     const setCustomer = useCallback((value: string) => {
@@ -164,7 +163,6 @@ export function useInvoiceForm() {
     const resetForm = useCallback(() => {
         setFormState(getInitialFormState())
         setFormErrors({})
-        setExpanded(false)
         setIsCreating(false)
     }, [])
 
@@ -196,8 +194,6 @@ export function useInvoiceForm() {
         formErrors,
         isCreating,
         setIsCreating,
-        expanded,
-        setExpanded,
         // Field setters
         setCustomer,
         setEmail,

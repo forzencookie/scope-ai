@@ -1,4 +1,4 @@
-import { useMemo, useState, useCallback } from "react"
+import { useMemo, useCallback } from "react"
 import { useCompliance } from "@/hooks/use-compliance"
 import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/ownership"
 import { useVerifications } from "@/hooks/use-verifications"
@@ -18,9 +18,6 @@ export function useGeneralMeetings() {
 
   // Debug: Log what documents we're receiving
   console.log('[useGeneralMeetings] realDocuments:', realDocuments)
-
-  // Local state to track booked decisions (since we can't easily update the document content implementation-wise here)
-  const [bookedDecisions, setBookedDecisions] = useState<string[]>([])
 
   // Map real documents to GeneralMeeting format (both general_meeting_minutes and board_meeting_minutes)
   const meetings = useMemo(() => {
@@ -51,7 +48,6 @@ export function useGeneralMeetings() {
 
         const decisionsWithStatus = content.decisions.map((d: GeneralMeetingDecision) => ({
           ...d,
-          booked: d.booked || bookedDecisions.includes(d.id || `${doc.id}-${d.title}`)
         }))
 
         return {
@@ -135,7 +131,7 @@ export function useGeneralMeetings() {
     return [...generalMeetings, ...boardMeetings].sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
-  }, [realDocuments, bookedDecisions])
+  }, [realDocuments])
 
   // Debug: Log transformed meetings
   console.log('[useGeneralMeetings] meetings:', meetings)
@@ -172,10 +168,10 @@ export function useGeneralMeetings() {
     }
   }, [meetings])
 
-  const bookDividend = (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => {
+  const bookDividend = async (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => {
     if (!decision.amount) return
 
-    addVerification({
+    await addVerification({
       description: `Utdelning enligt stämmobeslut ${meeting.year}`,
       date: meeting.date,
       rows: [
@@ -194,7 +190,28 @@ export function useGeneralMeetings() {
       ]
     })
 
-    setBookedDecisions(prev => [...prev, decision.id || `${meeting.id}-${decision.title}`])
+    // Persist the booked flag to the document content so it survives page refreshes
+    const doc = realDocuments?.find(d => d.id === meeting.id)
+    if (doc) {
+      try {
+        const content = JSON.parse(doc.content)
+        const decisions = content.decisions || []
+        const decisionId = decision.id || `${meeting.id}-${decision.title}`
+        const updated = decisions.map((d: GeneralMeetingDecision) => {
+          if ((d.id || `${meeting.id}-${d.title}`) === decisionId) {
+            return { ...d, booked: true }
+          }
+          return d
+        })
+        await updateDocument({
+          id: meeting.id,
+          content: JSON.stringify({ ...content, decisions: updated }),
+        })
+        await refetchDocs()
+      } catch (err) {
+        console.error('[bookDividend] Failed to persist booked flag:', err)
+      }
+    }
 
     toast.success(
       "Utdelning bokförd",

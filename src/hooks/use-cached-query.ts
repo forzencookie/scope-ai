@@ -179,6 +179,16 @@ export function useCachedQuery<T>({
         }
     }, [fetchData, skip])
 
+    // Listen for manual page refresh — invalidate cache and force-fetch
+    useEffect(() => {
+        const handleRefresh = () => {
+            cache.delete(cacheKey)
+            fetchData(true)
+        }
+        window.addEventListener("page-refresh", handleRefresh)
+        return () => window.removeEventListener("page-refresh", handleRefresh)
+    }, [cacheKey, fetchData])
+
     const refetch = useCallback(async () => {
         await fetchData(false)
     }, [fetchData])
