@@ -19,7 +19,8 @@ import {
     mockTransactions,
     mockReceipts,
     mockInvoices,
-    mockShareholders
+    mockShareholders,
+    mockEmployees,
 } from './mock-data'
 
 const supabase = createClient<Database>(
@@ -182,6 +183,32 @@ async function seed() {
         })
         if (error) console.error(`Shareholder Error (${sh.id}):`, error.message)
     }
+
+    // 7. Employees
+    console.log(`Seeding employees...`)
+    let empCount = 0
+    for (const emp of mockEmployees) {
+        const { error } = await supabase.from('employees').upsert({
+            name: emp.name,
+            role: emp.role,
+            email: emp.email,
+            phone: emp.phone,
+            personal_number: emp.personal_number,
+            monthly_salary: emp.monthly_salary,
+            employment_type: emp.employment_type,
+            tax_rate: emp.tax_rate,
+            tax_table: emp.tax_table,
+            tax_column: emp.tax_column,
+            kommun: emp.kommun,
+            status: emp.status,
+            start_date: emp.start_date,
+            user_id: userId,
+            company_id: companyId,
+        }, { onConflict: 'personal_number,company_id' })
+        if (error) console.error(`Employee Error (${emp.name}):`, error.message)
+        else empCount++
+    }
+    console.log(`Seeded ${empCount}/${mockEmployees.length} employees`)
 
     console.log('Seed completed.')
 }

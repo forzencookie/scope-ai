@@ -4,9 +4,6 @@
 
 import type { User, Team, NavItem, NavigationData, ApiResponse } from "@/types"
 import { navPlatform, navSettings } from "@/data/navigation"
-import { delay } from "@/lib/utils"
-
-const MOCK_DELAY = 500
 
 // Helper to get base URL
 function getApiBaseUrl() {
@@ -164,14 +161,7 @@ export async function switchTeam(teamId: string): Promise<ApiResponse<Team>> {
 // Navigation Service
 // ============================================
 
-export async function getNavigation(): Promise<ApiResponse<NavigationData>> {
-    await delay(MOCK_DELAY)
-
-    // TODO: Replace with actual API call
-    // Navigation items could be dynamic based on user permissions
-    // const response = await fetch('/api/navigation')
-    // return response.json()
-
+export function getNavigation(): ApiResponse<NavigationData> {
     return {
         data: {
             navPlatform,
@@ -182,9 +172,7 @@ export async function getNavigation(): Promise<ApiResponse<NavigationData>> {
     }
 }
 
-export async function getNavigationBySection(section: "platform" | "settings"): Promise<ApiResponse<NavItem[]>> {
-    await delay(MOCK_DELAY)
-
+export function getNavigationBySection(section: "platform" | "settings"): ApiResponse<NavItem[]> {
     const sectionMap = {
         platform: navPlatform,
         settings: navSettings,
