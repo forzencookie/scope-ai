@@ -45,12 +45,16 @@ describe('useAuth', () => {
     })
 
     describe('initialization', () => {
-        it('should start with loading state', () => {
+        it('should start with loading state', async () => {
             const { result } = renderHook(() => useAuth())
 
+            // Synchronous check — must be true before any async resolves
             expect(result.current.loading).toBe(true)
             expect(result.current.user).toBeNull()
             expect(result.current.isAuthenticated).toBe(false)
+
+            // Drain pending async operations so setLoading(false) fires inside act()
+            await waitFor(() => expect(result.current.loading).toBe(false))
         })
 
         it('should fetch current user on mount', async () => {
