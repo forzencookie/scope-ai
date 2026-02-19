@@ -105,16 +105,6 @@ export function TransactionsTableGrid({
                         <div className="text-center py-12 text-muted-foreground">
                             <ArrowRightLeft className="h-12 w-12 mx-auto mb-4 opacity-50" />
                             <p>{hasActiveFilters ? "Inga transaktioner matchar filtret" : "Inga transaktioner ännu"}</p>
-                            {!hasActiveFilters && (
-                                <Button
-                                    variant="outline"
-                                    className="mt-4"
-                                    onClick={onAddTransaction}
-                                >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    {text.transactions?.newTransaction || "Ny betalning eller inkomst"}
-                                </Button>
-                            )}
                         </div>
                     )}
                 </GridTableRows>

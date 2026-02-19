@@ -74,7 +74,7 @@ export function PageTabsLayout({
     return (
         <TooltipProvider delayDuration={400}>
             <div className="w-full">
-                <div className="flex items-center gap-1 pb-2 mb-4 border-b-2 border-border/60 overflow-x-auto scrollbar-hide">
+                <div className="flex items-center gap-1 pt-1 pb-2 mb-4 border-b-2 border-border/60 overflow-x-auto scrollbar-hide">
 
                     {/* Render primary tabs */}
                     {tabs.slice(0, maxVisibleTabs).map(renderTabButton)}

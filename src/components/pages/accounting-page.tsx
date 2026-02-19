@@ -11,9 +11,6 @@ import {
 import { Loader2 } from "lucide-react"
 
 import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
-import { PageSidebarSlot } from "@/components/shared/page-sidebar"
-import { TransactionsSidebar } from "@/components/bokforing/transactions-sidebar"
-
 import { DataErrorState } from "@/components/ui/data-error-state"
 import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 
@@ -81,7 +78,7 @@ function AccountingPageContent() {
     // Use paginated hook
     const {
         transactions,
-        isLoading: _isLoading,
+        isLoading: transactionsLoading,
         error: fetchError,
         page,
         setPage,
@@ -182,53 +179,43 @@ function AccountingPageContent() {
                 </div>
 
                 <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
-                    <div className="flex gap-6">
-                        <div className="flex-1 min-w-0 max-w-6xl space-y-6">
-                            {/* Content */}
-                            {currentTab === "transaktioner" && (
-                                fetchError ? (
-                                    <DataErrorState
-                                        message={fetchError instanceof Error ? fetchError.message : String(fetchError)}
-                                        onRetry={handleRefresh}
+                    <div className="space-y-6">
+                        {currentTab === "transaktioner" && (
+                            fetchError ? (
+                                <DataErrorState
+                                    message={fetchError instanceof Error ? fetchError.message : String(fetchError)}
+                                    onRetry={handleRefresh}
+                                />
+                            ) : (
+                                <SectionErrorBoundary sectionName="Transaktioner">
+                                    <LazyTransactionsTable
+                                        title="Transaktioner"
+                                        transactions={transactions}
+                                        stats={transactionStats ?? undefined}
+                                        onTransactionBooked={handleTransactionBooked}
+                                        page={page}
+                                        pageSize={pageSize}
+                                        total={total}
+                                        onPageChange={setPage}
+                                        isLoading={transactionsLoading}
                                     />
-                                ) : (
-                                    <SectionErrorBoundary sectionName="Transaktioner">
-                                        <LazyTransactionsTable
-                                            title="Transaktioner"
-                                            transactions={transactions}
-                                            stats={transactionStats ?? undefined}
-                                            onTransactionBooked={handleTransactionBooked}
-                                            page={page}
-                                            pageSize={pageSize}
-                                            total={total}
-                                            onPageChange={setPage}
-                                        />
-                                        {/* Sidebar widgets - portals to PageSidebarSlot on xl+ */}
-                                        <TransactionsSidebar 
-                                            transactions={transactions}
-                                            stats={transactionStats ?? undefined}
-                                        />
-                                    </SectionErrorBoundary>
-                                )
-                            )}
-                            {currentTab === "fakturor" && (
-                                <LazyUnifiedInvoicesView />
-                            )}
-                            {currentTab === "kvitton" && (
-                                <LazyReceiptsTable />
-                            )}
+                                </SectionErrorBoundary>
+                            )
+                        )}
+                        {currentTab === "fakturor" && (
+                            <LazyUnifiedInvoicesView />
+                        )}
+                        {currentTab === "kvitton" && (
+                            <LazyReceiptsTable />
+                        )}
 
-                            {currentTab === "inventarier" && (
-                                <LazyInventarierTable />
-                            )}
+                        {currentTab === "inventarier" && (
+                            <LazyInventarierTable />
+                        )}
 
-                            {currentTab === "verifikationer" && (
-                                <VerifikationerTable />
-                            )}
-                        </div>
-                        
-                        {/* Right sidebar slot for contextual widgets */}
-                        <PageSidebarSlot className="hidden xl:block w-80 shrink-0 space-y-4" />
+                        {currentTab === "verifikationer" && (
+                            <VerifikationerTable />
+                        )}
                     </div>
                 </main>
             </div>

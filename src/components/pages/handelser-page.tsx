@@ -75,7 +75,7 @@ function HandelserPageContent() {
     return (
         <div className="flex flex-col min-h-svh">
             {/* Tabs Navigation */}
-            <div className="px-6 pt-6">
+            <div className="px-4 md:px-6 pt-6">
                 <div className="flex items-center gap-1 pb-2 border-b-2 border-border/60">
                     {viewTabs.map((tab) => {
                         const isActive = activeView === tab.id
@@ -100,7 +100,7 @@ function HandelserPageContent() {
             </div>
 
             {/* Page Header - specific to current tab */}
-            <div className="px-6 pt-6">
+            <div className="px-4 md:px-6 pt-6">
                 <PageHeader
                     title={currentHeader.title}
                     subtitle={currentHeader.subtitle}
@@ -151,7 +151,7 @@ function HandelserPageContent() {
             />
 
             {/* View Content */}
-            <div className="px-6 py-6">
+            <div className="p-4 md:p-6">
                 <div className="max-w-4xl w-full space-y-4">
                     {/* Calendar View */}
                     {activeView === "calendar" && (

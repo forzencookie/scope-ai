@@ -67,7 +67,7 @@ function ReportsPageContent() {
         <TooltipProvider delayDuration={400}>
             <div className="flex flex-col min-h-svh">
                 {/* Tabs */}
-                <div className="px-6 pt-6">
+                <div className="px-4 md:px-6 pt-6">
                     <PageTabsLayout
                         tabs={availableTabs}
                         currentTab={currentTab}
@@ -77,7 +77,7 @@ function ReportsPageContent() {
                 </div>
 
                 {/* Tab Content */}
-                <div className="bg-background px-6">
+                <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
                     {currentTab === "resultatrakning" && <LazyResultatrakning />}
                     {currentTab === "balansrakning" && <LazyBalansrakning />}
                     {currentTab === "momsdeklaration" && <LazyMomsdeklaration />}
@@ -86,7 +86,7 @@ function ReportsPageContent() {
                     {currentTab === "agi" && <LazyAGI />}
                     {currentTab === "arsredovisning" && <LazyArsredovisning />}
                     {currentTab === "arsbokslut" && <LazyArsbokslut />}
-                </div>
+                </main>
             </div>
         </TooltipProvider>
     )

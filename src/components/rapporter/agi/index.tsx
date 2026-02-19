@@ -28,6 +28,7 @@ export function AGIContent() {
         selectedIds,
         filteredReports,
         stats,
+        isLoading,
         toggleSelection,
         toggleAll,
         bulkActions,
@@ -35,7 +36,7 @@ export function AGIContent() {
     } = useEmployerDeclaration()
 
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
+        <div className="w-full">
             <div className="w-full space-y-4 md:space-y-6">
                 {/* Page Heading */}
                 <PageHeader
@@ -43,18 +44,17 @@ export function AGIContent() {
                     subtitle="Hantera AGI-rapporter och skicka till Skatteverket."
                     actions={
                         <Button
-                            size="sm"
-                            className="w-full sm:w-auto"
+                            className="gap-2 overflow-hidden w-[120px] sm:w-auto"
                             onClick={() => navigateToAI(getDefaultAIContext('agi'))}
                         >
-                            <Plus className="h-4 w-4 mr-2" />
-                            Ny period
+                            <Plus className="h-4 w-4 shrink-0" />
+                            <span className="truncate">Ny period</span>
                         </Button>
                     }
                 />
 
                 {/* Stats */}
-                <AgiStats stats={stats} />
+                <AgiStats stats={stats} isLoading={isLoading} />
 
                 {/* Section Separator */}
                 <div className="border-b-2 border-border/60" />
@@ -120,6 +120,6 @@ export function AGIContent() {
                     />
                 </div>
             </div>
-        </main>
+        </div>
     )
 }

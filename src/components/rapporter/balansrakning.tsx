@@ -60,9 +60,9 @@ export function BalansrakningContent() {
             hasData={!!balanceSheetSections && balanceSheetSections.length > 0}
             contentId="balansrakning-content"
             actions={
-                <Button variant="outline" size="sm" onClick={handleExportPDF}>
-                    <Download className="h-4 w-4 mr-2" />
-                    PDF
+                <Button variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={handleExportPDF}>
+                    <Download className="h-4 w-4 shrink-0" />
+                    <span className="truncate">PDF</span>
                 </Button>
             }
         >

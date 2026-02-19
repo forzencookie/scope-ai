@@ -38,6 +38,7 @@ export function MomsdeklarationContent() {
     const {
         // State
         stats,
+        isLoading,
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
         selectedReport, setSelectedReport,
@@ -56,7 +57,7 @@ export function MomsdeklarationContent() {
     } = useVatReport()
 
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
+        <div className="w-full">
             <div className="w-full space-y-4 md:space-y-6">
                 {/* Page Heading */}
                 <div className="flex flex-col gap-4">
@@ -75,7 +76,7 @@ export function MomsdeklarationContent() {
                 </div>
 
                 {/* Stats */}
-                <MomsStats stats={stats} text={text} />
+                <MomsStats stats={stats} text={text} isLoading={isLoading} />
 
                 {/* Section Separator */}
                 <div className="border-b-2 border-border/60" />
@@ -160,6 +161,6 @@ export function MomsdeklarationContent() {
                     onSave={handleUpdateReport}
                 />
             </div>
-        </main>
+        </div>
     )
 }

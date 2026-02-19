@@ -75,7 +75,7 @@ export function ReportLayout({
     }
 
     return (
-        <main id={contentId} className="flex-1 flex flex-col p-4 md:p-6 bg-background">
+        <div id={contentId} className="w-full">
             <CollapsibleTableContainer>
                 {/* Page Heading */}
                 <div className="flex flex-col gap-4 md:gap-6">
@@ -110,6 +110,6 @@ export function ReportLayout({
                 {/* Footer */}
                 {footer}
             </CollapsibleTableContainer>
-        </main>
+        </div>
     )
 }

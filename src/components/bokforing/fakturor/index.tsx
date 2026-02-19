@@ -33,10 +33,12 @@ import { InvoiceCard } from "./components/InvoiceCard"
 
 // Constants & Types
 import { UNIFIED_COLUMNS, CUSTOMER_COLUMNS, SUPPLIER_COLUMNS } from "./constants"
-import { ViewFilter } from "./types"
+import { ViewFilter, UnifiedInvoice } from "./types"
 
 // Logic
 import { useInvoicesLogic } from "./use-invoices-logic"
+import { useCompany } from "@/providers/company-provider"
+import { generateInvoicePDF, type InvoicePDFCompanyInfo } from "@/lib/generators/pdf-generator"
 
 export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     const {
@@ -46,16 +48,16 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         customerDialogOpen, setCustomerDialogOpen,
         supplierDialogOpen, setSupplierDialogOpen,
         isLoading,
-        
+
         // Pagination
         page, setPage, pageSize,
         totalCustomerCount, totalSupplierCount,
-        
+
         // Data
         customerInvoices,
         unifiedInvoices,
         stats,
-        
+
         // Handlers
         handleSendInvoice,
         handleMarkCustomerPaid,
@@ -63,6 +65,42 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         handleMarkSupplierPaid,
         handleInvoiceCreated
     } = useInvoicesLogic()
+
+    const { company } = useCompany()
+
+    const handleDownloadPDF = React.useCallback((unified: UnifiedInvoice) => {
+        const inv = unified.originalCustomerInvoice
+        if (!inv) return
+
+        const companyInfo: InvoicePDFCompanyInfo = {
+            name: company?.name || '',
+            orgNumber: company?.orgNumber || '',
+            address: company?.address,
+            zipCode: company?.zipCode,
+            city: company?.city,
+            vatNumber: company?.vatNumber,
+        }
+
+        generateInvoicePDF({
+            invoiceNumber: inv.id,
+            invoiceDate: inv.issueDate,
+            dueDate: inv.dueDate,
+            customerName: inv.customer,
+            customerAddress: inv.address,
+            customerOrgNumber: inv.orgNumber,
+            reference: inv.reference,
+            lineItems: (inv.items || []).map(i => ({
+                description: i.description,
+                quantity: i.quantity,
+                unitPrice: i.unitPrice,
+                vatRate: i.vatRate,
+            })),
+            currency: inv.currency,
+            bankgiro: inv.bankgiro,
+            plusgiro: inv.plusgiro,
+            notes: inv.notes,
+        }, companyInfo)
+    }, [company])
 
     // Render Helpers
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -74,6 +112,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
             onMarkCustomerPaid={handleMarkCustomerPaid}
             onApproveSupplier={handleApproveSupplier}
             onMarkSupplierPaid={handleMarkSupplierPaid}
+            onDownloadPDF={handleDownloadPDF}
         />
     )
 
@@ -139,14 +178,14 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     return (
         <div className="w-full space-y-4 md:space-y-6">
             {/* Header */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-xl md:text-2xl font-bold tracking-tight">Fakturor</h2>
-                    <p className="text-muted-foreground text-sm">Hantera alla fakturor</p>
+            <div className="flex items-center justify-between gap-4">
+                <div className="min-w-0">
+                    <h2 className="text-lg sm:text-xl md:text-2xl font-bold tracking-tight truncate">Fakturor</h2>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 line-clamp-1">Hantera alla fakturor</p>
                 </div>
                 <DropdownMenu>
                     <DropdownMenuTrigger asChild>
-                        <Button className="gap-2 w-full sm:w-auto">
+                        <Button className="gap-2 shrink-0">
                             <Plus className="h-4 w-4" />
                             <span className="sm:inline">Ny faktura</span>
                             <ChevronDown className="h-3.5 w-3.5" />
@@ -165,15 +204,16 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                 </DropdownMenu>
             </div>
 
-            {/* Summary Bar + Filters in one row */}
-            <div className="flex items-center justify-between gap-4 flex-wrap">
-                <InvoicesStats
-                    incoming={stats.incoming}
-                    outgoing={stats.outgoing}
-                    overdueCount={stats.overdueCount}
-                />
+            {/* Stats - full width */}
+            <InvoicesStats
+                incoming={stats.incoming}
+                outgoing={stats.outgoing}
+                overdueCount={stats.overdueCount}
+                isLoading={isLoading}
+            />
 
-                <div className="flex items-center gap-3">
+            {/* Filters */}
+            <div className="flex items-center justify-between">
                     <FilterTabs
                         value={viewFilter}
                         onChange={(v) => setViewFilter(v as ViewFilter)}
@@ -200,7 +240,6 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                             <DropdownMenuItem onClick={() => setPeriodFilter("all")}>Alla</DropdownMenuItem>
                         </DropdownMenuContent>
                     </DropdownMenu>
-                </div>
             </div>
 
             {/* Kanban */}

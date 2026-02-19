@@ -27,7 +27,7 @@ export function K10Content() {
     const [refreshKey, setRefreshKey] = useState(0)
 
     // Logic Hook
-    const { k10Data, taxYear } = useK10Calculation()
+    const { k10Data, taxYear, isLoading } = useK10Calculation()
 
     const handleExportSRU = async () => {
         toast.info("Exporterar", "Förbereder K10 SRU-filer...")
@@ -68,7 +68,7 @@ export function K10Content() {
 
     return (
         <TooltipProvider>
-            <main className="flex-1 flex flex-col p-4 md:p-6">
+            <div className="w-full space-y-4 md:space-y-6">
                 <div className="w-full space-y-4 md:space-y-6">
                     {/* Page Heading */}
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -93,7 +93,7 @@ export function K10Content() {
                     </div>
 
                     {/* Stats Grid */}
-                    <K10Stats data={k10Data} deadline={taxYear.deadlineLabel} />
+                    <K10Stats data={k10Data} deadline={taxYear.deadlineLabel} isLoading={isLoading} />
 
                     <SectionCard
                         title="Optimera K10 med AI"
@@ -112,7 +112,7 @@ export function K10Content() {
                     {/* History Table */}
                     <K10History key={refreshKey} />
                 </div>
-            </main>
+            </div>
 
             <K10WizardDialog
                 open={isWizardOpen}

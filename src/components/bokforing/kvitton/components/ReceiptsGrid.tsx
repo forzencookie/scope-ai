@@ -91,11 +91,6 @@ export function ReceiptsGrid({
                         </div>
                     )}
                 </GridTableRows>
-
-                <Button variant="ghost" className="w-full border-2 border-dashed border-border/50 text-muted-foreground h-12" onClick={onUpload}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    {text.receipts.upload}
-                </Button>
             </div>
         </div>
     )

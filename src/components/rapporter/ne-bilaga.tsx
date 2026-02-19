@@ -235,7 +235,7 @@ export function NEBilagaContent() {
 
     return (
         <TooltipProvider>
-            <main className="flex-1 flex flex-col p-4 md:p-6">
+            <div className="w-full">
                 <div id="ne-bilaga-content" className="w-full space-y-4 md:space-y-6 bg-background">
                     {/* Page Heading */}
                     <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
@@ -436,7 +436,7 @@ export function NEBilagaContent() {
                         </p>
                     </div>
                 </div>
-            </main>
+            </div>
 
             <NEBilagaWizardDialog
                 open={wizardOpen}

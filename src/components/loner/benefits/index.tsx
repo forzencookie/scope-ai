@@ -32,7 +32,7 @@ export function BenefitsTab() {
     // Show error state if fetch failed
     if (error && !isLoading) {
         return (
-            <div className="space-y-6 px-6 pb-6 max-w-6xl">
+            <div className="space-y-6 pb-6 w-full">
                 <PageHeader
                     title="Förmåner"
                     subtitle="Hantera personalförmåner och skattefria avdrag."
@@ -47,7 +47,7 @@ export function BenefitsTab() {
 
     return (
         <SectionErrorBoundary sectionName="Förmåner">
-            <div className="space-y-6 px-6 pb-6 max-w-6xl">
+            <div className="space-y-6 pb-6 w-full">
                 {/* Header */}
                 <PageHeader
                     title="Förmåner"

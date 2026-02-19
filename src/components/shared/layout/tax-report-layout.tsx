@@ -1,8 +1,9 @@
 "use client"
 
 import { ReactNode } from "react"
-import { type LucideIcon, Bot, Loader2 } from "lucide-react"
+import { type LucideIcon, Bot } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
+import { Skeleton } from "@/components/ui/skeleton"
 import { SectionCard } from "@/components/ui/section-card"
 import { Button } from "@/components/ui/button"
 import { CollapsibleTableContainer } from "@/components/ui/collapsible-table"
@@ -74,19 +75,10 @@ export function TaxReportLayout({
 }: TaxReportLayoutProps) {
     const navigateToAI = useNavigateToAIChat()
 
-    if (isLoading) {
-        return (
-            <div className="flex h-64 items-center justify-center text-muted-foreground">
-                <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-                {loadingMessage}
-            </div>
-        )
-    }
-
     return (
-        <main className="flex-1 flex flex-col p-4 md:p-6">
+        <div className="w-full">
             <CollapsibleTableContainer>
-                <div className="max-w-6xl w-full space-y-4 md:space-y-6">
+                <div className="w-full space-y-4 md:space-y-6">
                     {/* Page Heading */}
                     <div className="flex flex-col gap-4 md:gap-6">
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -103,17 +95,32 @@ export function TaxReportLayout({
                     </div>
 
                     {/* Stats Cards */}
-                    <StatCardGrid columns={stats.length as 2 | 3 | 4}>
-                        {stats.map((stat, index) => (
-                            <StatCard
-                                key={index}
-                                label={stat.label}
-                                value={stat.value}
-                                subtitle={stat.subtitle}
-                                headerIcon={stat.icon}
-                            />
-                        ))}
-                    </StatCardGrid>
+                    {isLoading ? (
+                        <StatCardGrid columns={stats.length as 2 | 3 | 4}>
+                            {stats.map((_, index) => (
+                                <div key={index} className="bg-card rounded-lg p-4 border-2 border-border/60 space-y-3">
+                                    <div className="flex items-center gap-1.5">
+                                        <Skeleton className="h-3 w-24" />
+                                        <Skeleton className="h-6 w-6 rounded-md" />
+                                    </div>
+                                    <Skeleton className="h-7 w-28" />
+                                    <Skeleton className="h-3 w-20" />
+                                </div>
+                            ))}
+                        </StatCardGrid>
+                    ) : (
+                        <StatCardGrid columns={stats.length as 2 | 3 | 4}>
+                            {stats.map((stat, index) => (
+                                <StatCard
+                                    key={index}
+                                    label={stat.label}
+                                    value={stat.value}
+                                    subtitle={stat.subtitle}
+                                    headerIcon={stat.icon}
+                                />
+                            ))}
+                        </StatCardGrid>
+                    )}
 
                     {/* Section Separator */}
                     <div className="border-b-2 border-border/60" />
@@ -137,6 +144,6 @@ export function TaxReportLayout({
 
             {/* Dialogs */}
             {dialogs}
-        </main>
+        </div>
     )
 }

@@ -210,9 +210,9 @@ export function ArsbokslutContent() {
             aiDescription={text.reports.aiYearEndDesc}
             isLoading={isLoading}
             actions={
-                <Button onClick={() => window.print()} variant="outline" size="sm" className="w-full sm:w-auto">
-                    <Download className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Exportera</span>
+                <Button onClick={() => window.print()} variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto">
+                    <Download className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Exportera</span>
                 </Button>
             }
         >

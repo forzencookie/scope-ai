@@ -43,7 +43,7 @@ import { useCompany } from "@/providers/company-provider"
 export function InkomstdeklarationContent() {
     // const router = useRouter()
     const { addToast: toast } = useToast()
-    const { verifications } = useVerifications()
+    const { verifications, isLoading } = useVerifications()
     const { company } = useCompany()
     const [showSRUPreview, setShowSRUPreview] = useState(false)
     const [showAIDialog, setShowAIDialog] = useState(false)
@@ -208,14 +208,14 @@ export function InkomstdeklarationContent() {
             title="Inkomstdeklaration"
             subtitle="Sammanställ INK2-deklaration baserat på bokföringen."
             stats={taxReportStats}
+            isLoading={isLoading}
             aiContext="inkomstdeklaration"
             aiTitle="AI-inkomstdeklaration"
             aiDescription="INK2-fälten genereras automatiskt från bokföringen."
             actions={
-                <Button size="sm" onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Skapa deklaration</span>
-                    <span className="sm:hidden">Skapa</span>
+                <Button onClick={() => setShowAIDialog(true)} className="gap-2 overflow-hidden w-[120px] sm:w-auto">
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Skapa deklaration</span>
                 </Button>
             }
             dialogs={

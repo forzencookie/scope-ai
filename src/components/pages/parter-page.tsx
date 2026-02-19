@@ -124,7 +124,7 @@ function ParterPageContent() {
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
                 {/* Tabs */}
-                <div className="px-6 pt-6">
+                <div className="px-4 md:px-6 pt-6">
                     <PageTabsLayout
                         tabs={tabs}
                         currentTab={currentTab}
@@ -134,30 +134,23 @@ function ParterPageContent() {
                     />
                 </div>
 
-                {/* Tab Content - Two Column Layout */}
-                <main className="flex gap-6 p-6">
-                    {/* Main Content */}
-                    <div className="flex-1 min-w-0 max-w-6xl">
-                        {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
-                        {!['aktiebok', 'bolagsstamma', 'medlemsregister', 'utdelning', 'firmatecknare'].includes(currentTab) && (
-                            <div className="pb-6">
-                                <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
-                                <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
-                            </div>
-                        )}
+                <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+                    {/* Dynamic Tab Header - Only show for tabs that don't have their own header with actions */}
+                    {!['aktiebok', 'bolagsstamma', 'medlemsregister', 'utdelning', 'firmatecknare'].includes(currentTab) && (
+                        <div className="pb-6">
+                            <h2 className="text-xl font-semibold">{currentHeader.title}</h2>
+                            <p className="text-sm text-muted-foreground">{currentHeader.description}</p>
+                        </div>
+                    )}
 
-                        {currentTab === 'aktiebok' && <LazyAktiebok />}
-                        {currentTab === 'delagare' && <LazyDelagare />}
-                        {currentTab === 'utdelning' && <LazyUtdelning />}
-                        {currentTab === 'agarinfo' && <EnskildFirmaOwnerInfo />}
-                        {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
-                        {currentTab === 'bolagsstamma' && <LazyBolagsstamma />}
-                        {currentTab === 'arsmote' && <LazyArsmote />}
-                        {currentTab === 'firmatecknare' && <LazyFirmatecknare />}
-                    </div>
-
-                    {/* Right Sidebar - Activity Panel */}
-                    <div id="page-right-sidebar" className="hidden xl:block w-80 shrink-0" />
+                    {currentTab === 'aktiebok' && <LazyAktiebok />}
+                    {currentTab === 'delagare' && <LazyDelagare />}
+                    {currentTab === 'utdelning' && <LazyUtdelning />}
+                    {currentTab === 'agarinfo' && <EnskildFirmaOwnerInfo />}
+                    {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
+                    {currentTab === 'bolagsstamma' && <LazyBolagsstamma />}
+                    {currentTab === 'arsmote' && <LazyArsmote />}
+                    {currentTab === 'firmatecknare' && <LazyFirmatecknare />}
                 </main>
             </div>
         </TooltipProvider>

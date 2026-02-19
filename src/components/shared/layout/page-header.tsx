@@ -30,7 +30,7 @@ export function PageHeader({
 }: PageHeaderProps) {
     return (
         <div className={cn(
-            "flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4",
+            "flex items-center justify-between gap-4",
             className
         )}>
             <div className={cn("min-w-0", hideTitleOnMobile && "hidden sm:block")}>

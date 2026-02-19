@@ -40,6 +40,7 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
         verifikationer,
         stats,
         selection,
+        isLoading,
     } = useVerificationsLogic()
 
     return (
@@ -51,22 +52,12 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                     ? `Systematisk översikt för konto ${accountParam} (${filteredVerifikationer[0]?.kontoName || 'Laddar...'})`
                     : "Se alla bokförda transaktioner och verifikationer."}
                 actions={
-                    <div className="hidden md:flex items-center gap-2">
-                        <Button size="sm" className="h-8 px-3 gap-1" onClick={() => setCreateDialogOpen(true)}>
-                            <Plus className="h-3.5 w-3.5" />
-                            Ny verifikation
-                        </Button>
-                    </div>
+                    <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
+                        <Plus className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Ny verifikation</span>
+                    </Button>
                 }
             />
-
-            {/* Mobile-only action button */}
-            <div className="md:hidden w-full">
-                <Button className="w-full" size="lg" onClick={() => setCreateDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ny verifikation
-                </Button>
-            </div>
 
             {/* Active Account Filter Badge */}
             {accountParam && (
@@ -85,7 +76,7 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
             )}
 
             {/* Stats Cards */}
-            <VerifikationerStats stats={stats} />
+            <VerifikationerStats stats={stats} isLoading={isLoading} />
 
             {/* Create Dialog */}
             <VerifikationDialog

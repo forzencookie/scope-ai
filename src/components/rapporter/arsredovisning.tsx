@@ -248,12 +248,10 @@ export function ArsredovisningContent() {
             actions={
                 <Button
                     onClick={() => setShowAIDialog(true)}
-                    size="sm"
-                    className="w-full sm:w-auto"
+                    className="gap-2 overflow-hidden w-[120px] sm:w-auto"
                 >
-                    <Plus className="h-4 w-4 sm:mr-2" />
-                    <span className="hidden sm:inline">Skapa årsredovisning</span>
-                    <span className="sm:hidden">Skapa</span>
+                    <Plus className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Skapa årsredovisning</span>
                 </Button>
             }
             dialogs={
