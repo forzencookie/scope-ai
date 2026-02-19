@@ -2,6 +2,8 @@
 
 import { Package } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
+import { formatCurrencyCompact } from "@/lib/formatters"
+import { Skeleton } from "@/components/ui/skeleton"
 // Import type from hook (or just use loose typing for props as extracted)
 import { type useInventarier } from "@/hooks/use-inventarier"
 
@@ -9,23 +11,41 @@ type StatsType = ReturnType<typeof useInventarier>['stats']
 
 interface InventarierStatsProps {
     stats: StatsType
+    isLoading?: boolean
 }
 
-export function InventarierStats({ stats }: InventarierStatsProps) {
+export function InventarierStats({ stats, isLoading }: InventarierStatsProps) {
+    if (isLoading) {
+        return (
+            <div className="rounded-xl border p-5 overflow-hidden">
+                <div className="flex flex-row items-center gap-4">
+                    <Skeleton className="h-14 w-14 shrink-0 rounded-xl" />
+                    <div className="space-y-2">
+                        <Skeleton className="h-3 w-32" />
+                        <Skeleton className="h-8 w-40" />
+                        <Skeleton className="h-3 w-48" />
+                    </div>
+                </div>
+            </div>
+        )
+    }
     const totalValue = stats.totalInkopsvarde
 
     return (
-        <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/40 dark:to-zinc-950/40 p-5">
+        <div className="rounded-xl border bg-gradient-to-br from-slate-50 to-zinc-50 dark:from-slate-950/40 dark:to-zinc-950/40 p-5 overflow-hidden">
             <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
                 {/* Total Value Section */}
-                <div className="flex flex-col sm:flex-row items-center gap-4">
-                    <div className="h-14 w-14 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
+                <div className="flex flex-row items-center gap-4 min-w-0">
+                    <div className="h-14 w-14 shrink-0 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center">
                         <Package className="h-7 w-7 text-slate-600 dark:text-slate-400" />
                     </div>
-                    <div className="text-center sm:text-left">
-                        <p className="text-sm text-muted-foreground">Totalt tillgångsvärde</p>
-                        <p className="text-2xl sm:text-3xl font-bold tabular-nums">{formatCurrency(totalValue)}</p>
-                        <p className="text-sm text-muted-foreground">
+                    <div className="text-left min-w-0">
+                        <p className="text-sm text-muted-foreground truncate">Totalt tillgångsvärde</p>
+                        <p className="text-2xl sm:text-3xl font-bold tabular-nums truncate" title={formatCurrency(totalValue)}>
+                            <span className="hidden sm:inline">{formatCurrency(totalValue)}</span>
+                            <span className="sm:hidden">{formatCurrencyCompact(totalValue)}</span>
+                        </p>
+                        <p className="text-sm text-muted-foreground truncate">
                             {stats.totalCount} tillgångar i {stats.kategorier} kategorier
                         </p>
                     </div>

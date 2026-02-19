@@ -4,6 +4,7 @@ import { ResponsiveCurrency } from "@/components/ui/responsive-currency"
 import { formatCurrency } from "@/lib/utils"
 import { formatCurrencyCompact } from "@/lib/formatters"
 import { termExplanations } from "@/components/rapporter/constants"
+import { Skeleton } from "@/components/ui/skeleton"
 
 interface MomsStatsProps {
     stats: {
@@ -15,9 +16,27 @@ interface MomsStatsProps {
     }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     text: any
+    isLoading?: boolean
 }
 
-export function MomsStats({ stats, text }: MomsStatsProps) {
+export function MomsStats({ stats, text, isLoading }: MomsStatsProps) {
+    if (isLoading) {
+        return (
+            <StatCardGrid columns={3}>
+                {Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="bg-card rounded-lg p-4 border-2 border-border/60 space-y-3">
+                        <div className="flex items-center gap-1.5">
+                            <Skeleton className="h-3 w-24" />
+                            <Skeleton className="h-6 w-6 rounded-md" />
+                        </div>
+                        <Skeleton className="h-7 w-28" />
+                        <Skeleton className="h-3 w-20" />
+                    </div>
+                ))}
+            </StatCardGrid>
+        )
+    }
+
     return (
         <StatCardGrid columns={3}>
             <StatCard
