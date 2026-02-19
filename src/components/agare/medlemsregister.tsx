@@ -36,7 +36,6 @@ import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useMembers, type Member } from "@/hooks/use-members"
 
 // Components
-import { RightSidebarContent } from "./medlemsregister/right-sidebar-content"
 import { useMemberStats } from "./medlemsregister/use-member-stats"
 import { MembersStats } from "./medlemsregister/members-stats"
 import { AddMemberDialog } from "./medlemsregister/add-member-dialog"
@@ -105,13 +104,6 @@ export function Medlemsregister() {
 
   return (
     <div className="space-y-6">
-      {/* Right Sidebar Portal */}
-      <RightSidebarContent 
-        changes={changes}
-        getMembershipChangeTypeLabel={getMembershipChangeTypeLabel}
-        formatDate={formatDate}
-      />
-
       <PageHeader
         title="Medlemsregister"
         subtitle="Hantera medlemmar, medlemsavgifter och roller."

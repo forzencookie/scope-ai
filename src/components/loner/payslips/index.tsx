@@ -13,7 +13,7 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/toast"
-import { BulkActionToolbar, type BulkAction, PageHeader } from "@/components/shared"
+import { BulkActionToolbar, type BulkAction } from "@/components/shared"
 
 import { usePayslipsLogic } from "./use-payslips-logic"
 import { PayslipsStats } from "./payslips-stats"
@@ -88,29 +88,19 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
     return (
         <div className="w-full space-y-4 md:space-y-6">
             {/* Page Heading */}
-            <PageHeader
-                title="Lönekörning"
-                subtitle="Hantera löner och lönespecifikationer för dina anställda."
-                actions={
-                    <div className="hidden md:block">
-                        <Button onClick={() => setShowAIDialog(true)}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Ny lönekörning
-                        </Button>
-                    </div>
-                }
-            />
-
-            {/* Mobile-only action button */}
-            <div className="md:hidden w-full">
-                <Button className="w-full" size="lg" onClick={() => setShowAIDialog(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight">Lönekörning</h2>
+                    <p className="text-muted-foreground mt-1">Hantera löner och lönespecifikationer för dina anställda.</p>
+                </div>
+                <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
+                    <Plus className="h-4 w-4 mr-2" />
                     Ny lönekörning
                 </Button>
             </div>
 
             {/* Stats Overview */}
-            {!isLoading && <PayslipsStats stats={stats} />}
+            <PayslipsStats stats={stats} isLoading={isLoading} />
 
             {/* Dialogs */}
             <PayslipCreateDialog

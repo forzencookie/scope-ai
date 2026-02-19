@@ -53,6 +53,260 @@ function checkPageBreak(doc: jsPDF, y: number, needed: number = 20): number {
 }
 
 // ============================================================================
+// Invoice (Faktura) PDF
+// ============================================================================
+
+export interface InvoicePDFLineItem {
+    description: string
+    quantity: number
+    unitPrice: number
+    vatRate: number
+}
+
+export interface InvoicePDFData {
+    invoiceNumber: string
+    invoiceDate: string
+    dueDate: string
+    customerName: string
+    customerAddress?: string
+    customerOrgNumber?: string
+    reference?: string        // Er referens (customer reference)
+    lineItems: InvoicePDFLineItem[]
+    currency?: string
+    bankgiro?: string
+    plusgiro?: string
+    notes?: string
+}
+
+export interface InvoicePDFCompanyInfo extends PDFCompanyInfo {
+    vatNumber?: string        // Momsregistreringsnummer (SE + org.nr + 01)
+    phone?: string
+    email?: string
+}
+
+export const generateInvoicePDF = (data: InvoicePDFData, company?: InvoicePDFCompanyInfo) => {
+    const doc = new jsPDF()
+    const currency = data.currency || 'SEK'
+
+    function fmt(amount: number) {
+        return `${amount.toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${currency}`
+    }
+
+    // ── Calculate totals ────────────────────────────────────
+    const subtotal = data.lineItems.reduce((s, i) => s + i.quantity * i.unitPrice, 0)
+    const vatByRate = new Map<number, number>()
+    for (const item of data.lineItems) {
+        const lineTotal = item.quantity * item.unitPrice
+        const vat = lineTotal * item.vatRate / 100
+        vatByRate.set(item.vatRate, (vatByRate.get(item.vatRate) || 0) + vat)
+    }
+    const totalVat = Array.from(vatByRate.values()).reduce((s, v) => s + v, 0)
+    const total = subtotal + totalVat
+
+    // ── Company header (right side) ─────────────────────────
+    const companyName = company?.name || ''
+    const orgNumber = company?.orgNumber || ''
+    const companyAddress = company?.address
+        ? `${company.address}${company.zipCode ? `, ${company.zipCode}` : ''}${company.city ? ` ${company.city}` : ''}`
+        : ''
+    // Swedish VAT number format: SE + org.nr digits + 01
+    const vatNr = company?.vatNumber || (orgNumber ? `SE${orgNumber.replace(/\D/g, '')}01` : '')
+
+    doc.setTextColor(...PDF_STYLES.grayText)
+    doc.setFontSize(9)
+    let headerY = 18
+    doc.text(companyName, PDF_STYLES.margins.right, headerY, { align: 'right' })
+    headerY += 5
+    if (orgNumber) { doc.text(`Org.nr: ${orgNumber}`, PDF_STYLES.margins.right, headerY, { align: 'right' }); headerY += 5 }
+    if (vatNr) { doc.text(`Momsreg.nr: ${vatNr}`, PDF_STYLES.margins.right, headerY, { align: 'right' }); headerY += 5 }
+    if (companyAddress) { doc.text(companyAddress, PDF_STYLES.margins.right, headerY, { align: 'right' }); headerY += 5 }
+    if (company?.phone) { doc.text(company.phone, PDF_STYLES.margins.right, headerY, { align: 'right' }); headerY += 5 }
+    if (company?.email) { doc.text(company.email, PDF_STYLES.margins.right, headerY, { align: 'right' }) }
+
+    // ── FAKTURA title + number (left side) ──────────────────
+    doc.setTextColor(PDF_STYLES.primaryColor)
+    doc.setFontSize(26)
+    doc.text('FAKTURA', 20, 28)
+    doc.setFontSize(10)
+    doc.setTextColor(...PDF_STYLES.grayText)
+    doc.text(`Nr: ${data.invoiceNumber}`, 20, 35)
+
+    // Divider
+    doc.setDrawColor(...PDF_STYLES.dividerColor)
+    doc.line(20, 43, 190, 43)
+
+    // ── Dates + Bill-to boxes ────────────────────────────────
+    let y = 52
+
+    // Left box: dates
+    doc.setFillColor(...PDF_STYLES.bgFill)
+    doc.rect(20, y, 80, 24, 'F')
+    doc.setTextColor(...PDF_STYLES.grayText)
+    doc.setFontSize(8)
+    doc.text('FAKTURADATUM', 25, y + 7)
+    doc.text('FÖRFALLODATUM', 60, y + 7)
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(10)
+    doc.text(data.invoiceDate, 25, y + 16)
+    doc.text(data.dueDate, 60, y + 16)
+
+    // Right box: bill-to
+    doc.setFillColor(...PDF_STYLES.bgFill)
+    doc.rect(110, y, 80, 24, 'F')
+    doc.setTextColor(...PDF_STYLES.grayText)
+    doc.setFontSize(8)
+    doc.text('FAKTURERAS TILL', 115, y + 7)
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(10)
+    doc.text(data.customerName.substring(0, 32), 115, y + 16)
+    y += 30
+
+    // Customer extra details
+    doc.setFontSize(9)
+    doc.setTextColor(...PDF_STYLES.grayText)
+    if (data.customerAddress) {
+        doc.text(data.customerAddress, 115, y)
+        y = Math.max(y, y)
+    }
+    if (data.customerOrgNumber) {
+        doc.text(`Org.nr: ${data.customerOrgNumber}`, 115, y + (data.customerAddress ? 5 : 0))
+    }
+    if (data.reference) {
+        doc.text(`Er referens: ${data.reference}`, 20, y)
+    }
+    y += 10
+
+    // ── Line items table ────────────────────────────────────
+    y = Math.max(y, 100)
+
+    // Header row
+    doc.setFillColor(...PDF_STYLES.primaryRGB)
+    doc.rect(20, y - 5, 170, 8, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(8)
+    doc.text('BESKRIVNING', 22, y)
+    doc.text('ANT.', 118, y, { align: 'right' })
+    doc.text('À PRIS', 140, y, { align: 'right' })
+    doc.text('MOMS', 158, y, { align: 'right' })
+    doc.text('BELOPP', 188, y, { align: 'right' })
+    y += 8
+
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(9)
+
+    for (const item of data.lineItems) {
+        const lineTotal = item.quantity * item.unitPrice
+        const descLines = doc.splitTextToSize(item.description, 90)
+        const rowHeight = Math.max(descLines.length * 5, 7)
+
+        y = checkPageBreak(doc, y, rowHeight + 4)
+
+        doc.text(descLines, 22, y)
+        doc.text(String(item.quantity), 118, y, { align: 'right' })
+        doc.text(fmt(item.unitPrice), 140, y, { align: 'right' })
+        doc.text(`${item.vatRate}%`, 158, y, { align: 'right' })
+        doc.text(fmt(lineTotal), 188, y, { align: 'right' })
+
+        y += rowHeight
+        doc.setDrawColor(...PDF_STYLES.dividerColor)
+        doc.line(20, y, 190, y)
+        y += 5
+    }
+
+    // ── Totals ──────────────────────────────────────────────
+    y += 5
+    y = checkPageBreak(doc, y, 45)
+    const totalsX = 128
+
+    doc.setFontSize(9)
+    doc.setTextColor(...PDF_STYLES.grayText)
+    doc.text('Nettosumma (exkl. moms)', totalsX, y)
+    doc.setTextColor(0, 0, 0)
+    doc.text(fmt(subtotal), 188, y, { align: 'right' })
+    y += 6
+
+    for (const [rate, vatAmt] of vatByRate.entries()) {
+        if (rate > 0) {
+            doc.setTextColor(...PDF_STYLES.grayText)
+            doc.text(`Moms ${rate}%`, totalsX, y)
+            doc.setTextColor(0, 0, 0)
+            doc.text(fmt(vatAmt), 188, y, { align: 'right' })
+            y += 6
+        }
+    }
+
+    // Total highlighted box
+    y += 2
+    doc.setFillColor(...PDF_STYLES.primaryRGB)
+    doc.rect(totalsX - 3, y - 4, 66, 13, 'F')
+    doc.setTextColor(255, 255, 255)
+    doc.setFontSize(10)
+    doc.text('ATT BETALA', totalsX, y + 5)
+    doc.text(fmt(total), 188, y + 5, { align: 'right' })
+    y += 18
+
+    // ── Payment info ────────────────────────────────────────
+    if (data.bankgiro || data.plusgiro) {
+        y = checkPageBreak(doc, y, 30)
+        y += 5
+
+        doc.setFillColor(...PDF_STYLES.bgFill)
+        doc.rect(20, y, 100, 22, 'F')
+        doc.setTextColor(...PDF_STYLES.grayText)
+        doc.setFontSize(8)
+        doc.text('BETALNINGSINFORMATION', 25, y + 7)
+        doc.setTextColor(0, 0, 0)
+        doc.setFontSize(10)
+        let payY = y + 15
+        if (data.bankgiro) {
+            doc.text(`Bankgiro: ${data.bankgiro}`, 25, payY)
+            payY += 6
+        }
+        if (data.plusgiro) {
+            doc.text(`Plusgiro: ${data.plusgiro}`, 25, payY)
+        }
+
+        // OCR / payment reference = invoice number
+        doc.setTextColor(...PDF_STYLES.grayText)
+        doc.setFontSize(8)
+        doc.text('BETALNINGSREFERENS (OCR)', 125, y + 7)
+        doc.setTextColor(0, 0, 0)
+        doc.setFontSize(13)
+        doc.text(data.invoiceNumber, 125, y + 17)
+
+        y += 28
+    }
+
+    // ── Notes ───────────────────────────────────────────────
+    if (data.notes) {
+        y = checkPageBreak(doc, y, 20)
+        y += 5
+        doc.setTextColor(...PDF_STYLES.grayText)
+        doc.setFontSize(8)
+        doc.text('MEDDELANDE', 20, y)
+        y += 5
+        doc.setTextColor(0, 0, 0)
+        doc.setFontSize(9)
+        const noteLines = doc.splitTextToSize(data.notes, 170)
+        for (const line of noteLines) {
+            y = checkPageBreak(doc, y, 6)
+            doc.text(line, 20, y)
+            y += 5
+        }
+    }
+
+    // F-skatt (standard on Swedish invoices)
+    y = checkPageBreak(doc, y, 12)
+    y += 8
+    doc.setTextColor(...PDF_STYLES.lightGrayText)
+    doc.setFontSize(8)
+    doc.text('Innehar F-skattsedel', 20, y)
+
+    addFooter(doc)
+    doc.save(`Faktura-${data.invoiceNumber}.pdf`)
+}
+
+// ============================================================================
 // Payslip PDF
 // ============================================================================
 

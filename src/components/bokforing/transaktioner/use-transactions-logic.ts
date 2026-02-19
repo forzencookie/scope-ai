@@ -12,7 +12,8 @@ import type { TransactionsTableProps } from "./types"
 export function useTransactionsLogic({
     transactions = [],
     stats: externalStats,
-    onTransactionBooked
+    onTransactionBooked,
+    isLoading,
 }: TransactionsTableProps) {
     const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
     const [selectedTransactions, setSelectedTransactions] = useState<TransactionWithAI[]>([])
@@ -112,6 +113,7 @@ export function useTransactionsLogic({
         filteredTransactions,
         stats,
         bulkActions,
+        isLoading,
         
         // Handlers
         handleTransactionClick,

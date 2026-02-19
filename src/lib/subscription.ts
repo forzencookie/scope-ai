@@ -21,7 +21,7 @@ export type GatedFeature =
   | "ai_extraction"        // AI document data extraction
   | "ai_suggestions"       // AI-powered suggestions
   | "bank_connection"      // Real bank account connections
-  | "gov_submission"       // Real submission to Skatteverket/Bolagsverket
+  | "gov_submission"       // Submission to Skatteverket/Bolagsverket (coming soon)
   | "team_members"         // Multiple team members
   | "priority_support"     // Priority customer support
   | "custom_integrations"  // Custom API integrations
@@ -58,16 +58,11 @@ export const TIER_TOKEN_LIMITS: Record<SubscriptionTier, number> = {
 export const MODEL_COST_MULTIPLIERS: Record<string, number> = {
   // Snabb tier (1x) - cheapest, for daily use
   'gpt-4o-mini': 1,
-  'gemini-2.0-flash': 1,
-  
+
   // Smart tier (3x) - balanced cost/performance
   'gpt-4o': 3,
-  'gemini-2.0-pro-low': 3,
-  'claude-sonnet-4-20250514': 3,
-  
-  // Expert tier (15x) - premium, for complex tasks
-  'claude-opus-4-20250514': 15,
-  'gemini-2.0-pro-high': 10,
+
+  // Expert tier (10x) - premium, for complex tasks
   'gpt-4-turbo': 10,
 }
 
@@ -107,7 +102,7 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
     ai_extraction: "disabled",
     ai_suggestions: "simulated",
     bank_connection: "disabled",
-    gov_submission: "simulated",
+    gov_submission: "disabled",
     team_members: "full",        // No cost - just sharing demo data
     priority_support: "disabled",
     custom_integrations: "disabled",
@@ -119,7 +114,7 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
     ai_extraction: "disabled",
     ai_suggestions: "simulated",
     bank_connection: "disabled",
-    gov_submission: "simulated",
+    gov_submission: "disabled",
     team_members: "full",        // No cost - just sharing demo data
     priority_support: "disabled",
     custom_integrations: "disabled",
@@ -130,7 +125,7 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
     ai_extraction: "full",
     ai_suggestions: "full",
     bank_connection: "full",
-    gov_submission: "full",
+    gov_submission: "disabled",
     team_members: "full",
     priority_support: "disabled",
     custom_integrations: "disabled",
@@ -141,7 +136,7 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
     ai_extraction: "full",
     ai_suggestions: "full",
     bank_connection: "full",
-    gov_submission: "full",
+    gov_submission: "disabled",
     team_members: "full",
     priority_support: "full",
     custom_integrations: "full",

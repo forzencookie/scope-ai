@@ -13,6 +13,7 @@ export interface TransactionsTableProps {
     pageSize?: number
     total?: number
     onPageChange?: (page: number) => void
+    isLoading?: boolean
 }
 
 export interface TransactionsEmptyStateProps {

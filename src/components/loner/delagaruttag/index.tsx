@@ -26,6 +26,7 @@ export function DelagaruttagManager() {
     const {
         withdrawals,
         overallStats,
+        isLoading,
         registerTransaction,
     } = useOwnerWithdrawals()
     
@@ -80,6 +81,7 @@ export function DelagaruttagManager() {
             <div id="delagaruttag-content" className="space-y-6">
             <WithdrawalStats
                 stats={overallStats}
+                isLoading={isLoading}
             />
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">

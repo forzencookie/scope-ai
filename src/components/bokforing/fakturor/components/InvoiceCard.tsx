@@ -6,7 +6,8 @@ import {
     Eye,
     CheckCircle2,
     Mail,
-    Banknote
+    Banknote,
+    Download,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
@@ -24,6 +25,7 @@ interface InvoiceCardProps {
     onMarkCustomerPaid: (id: string) => void
     onApproveSupplier: (id: string) => void
     onMarkSupplierPaid: (id: string) => void
+    onDownloadPDF?: (invoice: UnifiedInvoice) => void
 }
 
 export const InvoiceCard = React.memo(function InvoiceCard({
@@ -31,7 +33,8 @@ export const InvoiceCard = React.memo(function InvoiceCard({
     onSend,
     onMarkCustomerPaid,
     onApproveSupplier,
-    onMarkSupplierPaid
+    onMarkSupplierPaid,
+    onDownloadPDF,
 }: InvoiceCardProps) {
     const isCustomer = invoice.direction === "in"
     const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
@@ -57,6 +60,12 @@ export const InvoiceCard = React.memo(function InvoiceCard({
                 <Eye className="h-3.5 w-3.5 mr-2" />
                 Visa detaljer
             </DropdownMenuItem>
+            {isCustomer && onDownloadPDF && (
+                <DropdownMenuItem onClick={() => onDownloadPDF(invoice)}>
+                    <Download className="h-3.5 w-3.5 mr-2" />
+                    Ladda ner PDF
+                </DropdownMenuItem>
+            )}
 
             {/* Customer invoice actions */}
             {isCustomer && invoice.originalCustomerInvoice && (

@@ -45,7 +45,8 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
         filteredTransactions,
         stats,
         bulkActions,
-        
+        isLoading,
+
         // Handlers
         handleTransactionClick,
         handleBook
@@ -58,22 +59,12 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 title={text.transactions?.title || "Transaktioner"}
                 subtitle={text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}
                 actions={
-                    <div className="hidden md:block">
-                        <Button className="gap-2" onClick={() => setNewTransactionDialogOpen(true)}>
-                            <Plus className="h-4 w-4" />
-                            <span>{text.transactions?.newTransaction || "Ny händelse"}</span>
-                        </Button>
-                    </div>
+                    <Button className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={() => setNewTransactionDialogOpen(true)}>
+                        <Plus className="h-4 w-4 shrink-0" />
+                        <span className="truncate">{text.transactions?.newTransaction || "Ny transaktion"}</span>
+                    </Button>
                 }
             />
-
-            {/* Mobile-only action button */}
-            <div className="md:hidden w-full">
-                <Button className="w-full" size="lg" onClick={() => setNewTransactionDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ny transaktion
-                </Button>
-            </div>
 
             {/* Status Hero */}
             <TransactionsStatusCard
@@ -86,6 +77,7 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 totalCount={stats.totalCount}
                 income={stats.income}
                 expenses={stats.expenses}
+                isLoading={isLoading}
             />
 
             <NewTransactionDialog

@@ -303,13 +303,23 @@ export interface Invoice {
   invoiceNumber?: string
   customer: string
   email?: string
+  address?: string
+  orgNumber?: string
   issueDate: string
   dueDate: string
   amount: number       // Net amount (ex. VAT)
   vatAmount?: number   // VAT amount
+  subtotal?: number
   totalAmount?: number // Total amount (including VAT)
   vatRate?: number     // VAT rate (25, 12, 6, 0)
   status: InvoiceStatus
+  currency?: string
+  reference?: string   // Er referens (customer reference)
+  bankgiro?: string
+  plusgiro?: string
+  notes?: string
+  items?: Array<{ description: string; quantity: number; unitPrice: number; vatRate: number }>
+  dbId?: string        // Actual DB UUID (id is invoice number like F-0001)
 }
 
 // ============================================

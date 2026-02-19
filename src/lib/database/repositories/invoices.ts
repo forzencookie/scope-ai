@@ -64,29 +64,22 @@ export function createInvoicesRepository(supabase: DbClient) {
 
         /**
          * Create a new customer invoice
+         * Accepts a snake_case object matching the DB table columns directly.
          */
-        async create(invoice: InvoiceInput) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        async create(invoice: Record<string, any>) {
             const { data, error } = await supabase
                 .from('customerinvoices')
-                .insert({
-                    id: invoice.id,
-                    invoice_number: invoice.invoiceNumber,
-                    customer_name: invoice.customerName,
-                    subtotal: invoice.amount || 0,
-                    vat_amount: invoice.vatAmount || 0,
-                    total_amount: invoice.totalAmount || 0,
-                    invoice_date: invoice.issueDate || invoice.date,
-                    due_date: invoice.dueDate,
-                    status: invoice.status || 'draft',
-                    user_id: invoice.createdBy || invoice.created_by,
-                    company_id: invoice.companyId || '00000000-0000-0000-0000-000000000000',
-                } as any)
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                .insert(invoice as any)
                 .select()
                 .single()
 
-            if (error) console.error('Supabase Error (addInvoice):', error)
-            return data || invoice
+            if (error) {
+                console.error('Supabase Error (createInvoice):', error)
+                return null
+            }
+            return data
         },
 
         /**

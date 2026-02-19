@@ -32,7 +32,7 @@ interface K10Report {
 
 export function useK10Calculation() {
     const { company } = useCompany()
-    const { verifications } = useVerifications()
+    const { verifications, isLoading } = useVerifications()
     const { shareholders } = useCompliance()
     const [k10History, setK10History] = useState<K10Report[]>([])
 
@@ -166,6 +166,7 @@ export function useK10Calculation() {
 
     return {
         k10Data,
-        taxYear
+        taxYear,
+        isLoading
     }
 }

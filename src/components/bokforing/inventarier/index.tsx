@@ -46,16 +46,11 @@ export function InventarierTable() {
                 title="Tillgångar"
                 subtitle="Datorer, möbler och andra saker du äger."
                 actions={
-                    <div className="hidden md:flex gap-2">
-                        <Button variant="outline" className="gap-2" onClick={handleDepreciate}>
-                            <Calculator className="h-4 w-4" />
-                            Bokför avskrivning
-                        </Button>
-                        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+                    <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                             <DialogTrigger asChild>
-                                <Button className="gap-2">
-                                    <Plus className="h-4 w-4" />
-                                    Ny tillgång
+                                <Button className="gap-2 overflow-hidden w-[120px] sm:w-auto">
+                                    <Plus className="h-4 w-4 shrink-0" />
+                                    <span className="truncate">Ny tillgång</span>
                                 </Button>
                             </DialogTrigger>
                             <DialogContent>
@@ -106,29 +101,25 @@ export function InventarierTable() {
                             </DialogFooter>
                         </DialogContent>
                         </Dialog>
-                    </div>
                 }
             />
 
-            {/* Mobile-only action button */}
-            <div className="md:hidden w-full">
-                <Button className="w-full" size="lg" onClick={() => setIsDialogOpen(true)}>
-                    <Plus className="mr-2 h-4 w-4" />
-                    Ny tillgång
-                </Button>
-            </div>
 
             {/* Stats Cards */}
-            <InventarierStats stats={stats} />
+            <InventarierStats stats={stats} isLoading={isLoading} />
 
             {/* Section Separator */}
             <div className="border-b-2 border-border/60" />
 
             {/* Table Title */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-1">
+            <div className="flex items-center justify-between gap-3 py-1">
                 <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
                     Alla tillgångar
                 </h3>
+                <Button variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={handleDepreciate}>
+                    <Calculator className="h-4 w-4 shrink-0" />
+                    <span className="truncate">Bokför avskrivning</span>
+                </Button>
             </div>
 
             {/* Assets Grid */}

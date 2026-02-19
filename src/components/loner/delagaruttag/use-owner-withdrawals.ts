@@ -33,7 +33,7 @@ function buildAccountToPartnerMap(partnerIds: string[]): {
 }
 
 export function useOwnerWithdrawals() {
-  const { verifications, addVerification } = useVerifications()
+  const { verifications, addVerification, isLoading } = useVerifications()
   const { partners } = usePartners()
 
   const partnerIds = useMemo(() => partners.map(p => p.id), [partners])
@@ -178,6 +178,7 @@ export function useOwnerWithdrawals() {
     partnerStats,
     overallStats,
     partners,
+    isLoading,
     registerTransaction
   }
 }

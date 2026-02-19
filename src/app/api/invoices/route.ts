@@ -75,11 +75,17 @@ export async function POST(req: NextRequest) {
             subtotal: finalSubtotal,
             vat_amount: finalVatAmount,
             total_amount: finalTotal,
-            items: body.items || null,
+            // Store line items + payment info + notes in the items JSON field
+            items: {
+                lines: body.items || [],
+                bankgiro: body.bankgiro || null,
+                plusgiro: body.plusgiro || null,
+                notes: body.notes || null,
+            },
             status: body.status || 'Utkast',
             currency: body.currency || 'SEK',
-            bankgiro: body.bankgiro || null,
-            plusgiro: body.plusgiro || null,
+            // payment_reference stores the customer reference (Er referens)
+            payment_reference: body.reference || null,
             user_id: userDb.userId,
             company_id: userDb.companyId || '',
         };
@@ -91,16 +97,25 @@ export async function POST(req: NextRequest) {
         }
 
         // Return in format expected by frontend
+        const storedItems = created.items as { lines?: unknown[]; bankgiro?: string; plusgiro?: string; notes?: string } | null
         const responseInvoice = {
             id: created.invoice_number,
             customer: created.customer_name,
             email: created.customer_email,
+            address: created.customer_address,
+            orgNumber: created.customer_org_number,
             amount: created.total_amount,
             vatAmount: created.vat_amount,
+            subtotal: created.subtotal,
             issueDate: created.invoice_date,
             dueDate: created.due_date,
             status: created.status,
-            items: created.items,
+            currency: created.currency,
+            reference: created.payment_reference,
+            bankgiro: storedItems?.bankgiro || null,
+            plusgiro: storedItems?.plusgiro || null,
+            notes: storedItems?.notes || null,
+            items: storedItems?.lines || [],
             dbId: created.id,
         };
 
