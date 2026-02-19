@@ -80,4 +80,4 @@ export interface LLMStreamChunk {
 // Provider Types
 // =============================================================================
 
-export type Provider = 'openai' | 'anthropic' | 'google'
+export type Provider = 'openai'

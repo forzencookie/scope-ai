@@ -1,58 +1,28 @@
 /**
  * LLM Client for Agents
- * 
- * Multi-provider LLM client supporting:
- * - OpenAI (GPT-4o, GPT-4o-mini)
- * - Anthropic (Claude Sonnet, Opus)
- * - Google (Gemini 2.0)
- * 
- * Features:
- * - Tool calling with automatic execution loop
- * - Streaming support
- * - Timeout handling
- * - Provider-agnostic interface
+ *
+ * OpenAI-only client with tool calling and streaming support.
  */
 
 import type { AgentToolResult } from '../types'
 import { callOpenAI, streamOpenAI } from './openai-adapter'
-import { callAnthropic, streamAnthropic } from './anthropic-adapter'
-import { callGoogle, streamGoogle } from './google-adapter'
-import type { 
-    LLMCallOptions, 
-    LLMResponse, 
-    LLMToolCall, 
+import type {
+    LLMCallOptions,
+    LLMResponse,
+    LLMToolCall,
     LLMStreamChunk,
-    Provider 
 } from './types'
 
 // Re-export types
-export type { 
-    LLMMessage, 
-    LLMToolDefinition, 
-    LLMToolCall, 
-    LLMResponse, 
-    LLMCallOptions, 
+export type {
+    LLMMessage,
+    LLMToolDefinition,
+    LLMToolCall,
+    LLMResponse,
+    LLMCallOptions,
     LLMStreamChunk,
-    Provider 
+    Provider
 } from './types'
-
-// =============================================================================
-// Provider Detection
-// =============================================================================
-
-function getProviderFromModel(model: string): Provider {
-    if (model.startsWith('gpt-') || model.startsWith('o1') || model.startsWith('o3')) {
-        return 'openai'
-    }
-    if (model.startsWith('claude-')) {
-        return 'anthropic'
-    }
-    if (model.startsWith('gemini-')) {
-        return 'google'
-    }
-    // Default to OpenAI
-    return 'openai'
-}
 
 // =============================================================================
 // Public API
@@ -60,28 +30,15 @@ function getProviderFromModel(model: string): Provider {
 
 /**
  * Call an LLM with the given options.
- * Automatically selects the correct provider based on model name.
  */
 export async function callLLM(options: LLMCallOptions): Promise<LLMResponse> {
-    const provider = getProviderFromModel(options.model)
     const timeout = options.timeout ?? 30000
 
     const controller = new AbortController()
     const timeoutId = setTimeout(() => controller.abort(), timeout)
 
     try {
-        const callOptions = { ...options, signal: controller.signal }
-
-        switch (provider) {
-            case 'openai':
-                return await callOpenAI(callOptions)
-            case 'anthropic':
-                return await callAnthropic(callOptions)
-            case 'google':
-                return await callGoogle(callOptions)
-            default:
-                throw new Error(`Unknown provider: ${provider}`)
-        }
+        return await callOpenAI({ ...options, signal: controller.signal })
     } finally {
         clearTimeout(timeoutId)
     }
@@ -89,24 +46,9 @@ export async function callLLM(options: LLMCallOptions): Promise<LLMResponse> {
 
 /**
  * Stream an LLM response.
- * Automatically selects the correct provider based on model name.
  */
 export async function* streamLLM(options: LLMCallOptions): AsyncGenerator<LLMStreamChunk> {
-    const provider = getProviderFromModel(options.model)
-
-    switch (provider) {
-        case 'openai':
-            yield* streamOpenAI(options)
-            break
-        case 'anthropic':
-            yield* streamAnthropic(options)
-            break
-        case 'google':
-            yield* streamGoogle(options)
-            break
-        default:
-            throw new Error(`Unknown provider: ${provider}`)
-    }
+    yield* streamOpenAI(options)
 }
 
 /**

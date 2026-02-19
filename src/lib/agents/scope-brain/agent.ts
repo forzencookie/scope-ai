@@ -2,27 +2,19 @@
  * Scope Brain - Unified AI Agent
  *
  * Single agent with access to all tools and domain expertise.
- * Replaces the multi-agent orchestration with a simpler, more
- * effective architecture.
- *
- * Features:
- * - Intelligent model selection (Haiku/Sonnet/Sonnet+Thinking)
- * - All tools available
- * - Unified Swedish accounting expertise
- * - Streaming support
+ * Uses OpenAI GPT-4o with tool calling and streaming.
  */
 
 import type {
     AgentContext,
     AgentResponse,
     AgentToolResult,
-    AgentDisplayInstruction,
-    AgentConfirmation,
 } from '../types'
 import { aiToolRegistry } from '../../ai-tools/registry'
 import { selectModel, getModelId, type ModelConfig } from './model-selector'
 import { buildSystemPrompt } from './system-prompt'
-import type { LLMMessage, LLMToolDefinition, LLMToolCall } from '../llm-client/types'
+import type { LLMMessage, LLMToolDefinition } from '../llm-client/types'
+import type OpenAI from 'openai'
 
 // =============================================================================
 // Types
@@ -64,35 +56,22 @@ export class ScopeBrain {
     // Main Handle Method
     // =========================================================================
 
-    /**
-     * Handle a user message and return a response.
-     * This is the primary entry point for non-streaming usage.
-     */
     async handle(message: string, context: AgentContext): Promise<AgentResponse> {
         try {
-            // Select model based on query complexity
             const modelConfig = this.options.forceModel ?? selectModel(message)
             const modelId = getModelId(modelConfig)
 
-            console.log(`[ScopeBrain] Using model: ${modelId}, thinking: ${modelConfig.thinking}`)
+            console.log(`[ScopeBrain] Using model: ${modelId}`)
 
-            // Build messages
             const messages = this.buildMessages(message, context)
             const tools = this.getAllToolDefinitions()
 
-            // Call LLM with tool loop
-            const { text, toolResults } = await this.callLLMWithTools(
-                modelId,
-                messages,
-                tools,
-                context,
-                modelConfig
-            )
+            const { text, toolResults } = await this.callLLMWithTools(modelId, messages, tools, context)
 
             return {
                 success: true,
                 message: text,
-                agentId: 'orchestrator', // For compatibility
+                agentId: 'orchestrator',
                 toolResults: toolResults.length > 0 ? toolResults : undefined,
             }
         } catch (error) {
@@ -111,10 +90,6 @@ export class ScopeBrain {
     // Streaming Support
     // =========================================================================
 
-    /**
-     * Handle a user message with streaming response.
-     * Yields chunks as they arrive from the LLM.
-     */
     async *handleStream(
         message: string,
         context: AgentContext
@@ -128,13 +103,7 @@ export class ScopeBrain {
             const messages = this.buildMessages(message, context)
             const tools = this.getAllToolDefinitions()
 
-            yield* this.streamLLMWithTools(
-                modelId,
-                messages,
-                tools,
-                context,
-                modelConfig
-            )
+            yield* this.streamLLMWithTools(modelId, messages, tools, context)
 
             yield { type: 'done' }
         } catch (error) {
@@ -149,88 +118,60 @@ export class ScopeBrain {
     // LLM Integration
     // =========================================================================
 
-    /**
-     * Call LLM with automatic tool execution loop.
-     */
     private async callLLMWithTools(
         modelId: string,
         messages: LLMMessage[],
         tools: LLMToolDefinition[],
         context: AgentContext,
-        modelConfig: ModelConfig
     ): Promise<{ text: string; toolResults: AgentToolResult[] }> {
-        const Anthropic = (await import('@anthropic-ai/sdk')).default
-        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+        const { default: OpenAIClient } = await import('openai')
+        const openai = new OpenAIClient({ apiKey: process.env.OPENAI_API_KEY })
 
         const allToolResults: AgentToolResult[] = []
         let iterations = 0
         let currentMessages = [...messages]
 
         while (iterations < (this.options.maxToolIterations ?? 10)) {
-            // Prepare Anthropic-specific format
-            const systemMessage = currentMessages.find(m => m.role === 'system')?.content || ''
-            const otherMessages = currentMessages.filter(m => m.role !== 'system')
+            const openaiMessages = this.convertToOpenAIMessages(currentMessages)
+            const openaiTools = this.convertToOpenAITools(tools)
 
-            const anthropicMessages = this.convertToAnthropicMessages(otherMessages)
-            const anthropicTools = this.convertToAnthropicTools(tools)
-
-            // Build request options
-            const requestOptions: Parameters<typeof anthropic.messages.create>[0] = {
+            const response = await openai.chat.completions.create({
                 model: modelId,
-                max_tokens: modelConfig.thinking ? 16000 : 4096,
-                system: systemMessage,
-                messages: anthropicMessages,
-                tools: anthropicTools,
+                messages: openaiMessages,
+                tools: openaiTools.length > 0 ? openaiTools : undefined,
+                tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
+                max_tokens: 4096,
+                temperature: this.options.temperature ?? 0.7,
+            })
+
+            const choice = response.choices[0]
+            const textContent = choice.message.content || ''
+            // Cast to the standard tool call type (OpenAI SDK union can include custom types)
+            type StandardToolCall = { id: string; function: { name: string; arguments: string } }
+            const toolCalls = (choice.message.tool_calls || []) as StandardToolCall[]
+
+            if (choice.finish_reason !== 'tool_calls' || toolCalls.length === 0) {
+                return { text: textContent, toolResults: allToolResults }
             }
 
-            // Add thinking if enabled (extended thinking API)
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const finalOptions: any = { ...requestOptions }
-            if (modelConfig.thinking && modelConfig.thinkingBudget) {
-                finalOptions.thinking = {
-                    type: 'enabled',
-                    budget_tokens: modelConfig.thinkingBudget,
-                }
-            }
-
-            const response = await anthropic.messages.create(finalOptions)
-
-            // Extract content - handle Message type
-            type ContentBlock = { type: 'text'; text: string } | { type: 'tool_use'; id: string; name: string; input: unknown }
-            const content = response.content as ContentBlock[]
-            const textContent = content.find((c): c is { type: 'text'; text: string } => c.type === 'text')
-            const toolUseBlocks = content.filter((c): c is { type: 'tool_use'; id: string; name: string; input: unknown } => c.type === 'tool_use')
-
-            // If no tool calls, we're done
-            if (response.stop_reason !== 'tool_use' || toolUseBlocks.length === 0) {
-                return {
-                    text: textContent?.text ?? '',
-                    toolResults: allToolResults,
-                }
-            }
-
-            // Execute tool calls
             const toolResults = await Promise.all(
-                toolUseBlocks.map(async (tc) => {
-                    return this.executeTool(tc.name, tc.input as Record<string, unknown>, context)
+                toolCalls.map(async (tc) => {
+                    let params: Record<string, unknown> = {}
+                    try { params = JSON.parse(tc.function.arguments || '{}') } catch { /* use empty */ }
+                    return this.executeTool(tc.function.name, params, context)
                 })
             )
             allToolResults.push(...toolResults)
 
-            // Add assistant message with tool use
-            currentMessages.push({
-                role: 'assistant',
-                content: textContent?.text ?? '',
-            })
+            currentMessages.push({ role: 'assistant', content: textContent })
 
-            // Add tool results
-            for (let i = 0; i < toolUseBlocks.length; i++) {
-                const tc = toolUseBlocks[i]
+            for (let i = 0; i < toolCalls.length; i++) {
+                const tc = toolCalls[i]
                 currentMessages.push({
                     role: 'tool',
                     content: JSON.stringify(toolResults[i].result ?? toolResults[i].error),
                     toolCallId: tc.id,
-                    name: tc.name,
+                    name: tc.function.name,
                 })
             }
 
@@ -240,92 +181,78 @@ export class ScopeBrain {
         throw new Error(`Tool execution loop exceeded ${this.options.maxToolIterations} iterations`)
     }
 
-    /**
-     * Stream LLM response with tool execution.
-     */
     private async *streamLLMWithTools(
         modelId: string,
         messages: LLMMessage[],
         tools: LLMToolDefinition[],
         context: AgentContext,
-        modelConfig: ModelConfig
     ): AsyncGenerator<StreamChunk> {
-        const Anthropic = (await import('@anthropic-ai/sdk')).default
-        const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+        const { default: OpenAIClient } = await import('openai')
+        const openai = new OpenAIClient({ apiKey: process.env.OPENAI_API_KEY })
 
         let currentMessages = [...messages]
         let iterations = 0
 
         while (iterations < (this.options.maxToolIterations ?? 10)) {
-            const systemMessage = currentMessages.find(m => m.role === 'system')?.content || ''
-            const otherMessages = currentMessages.filter(m => m.role !== 'system')
+            const openaiMessages = this.convertToOpenAIMessages(currentMessages)
+            const openaiTools = this.convertToOpenAITools(tools)
 
-            const anthropicMessages = this.convertToAnthropicMessages(otherMessages)
-            const anthropicTools = this.convertToAnthropicTools(tools)
-
-            const stream = anthropic.messages.stream({
+            const stream = await openai.chat.completions.create({
                 model: modelId,
-                max_tokens: modelConfig.thinking ? 16000 : 4096,
-                system: systemMessage,
-                messages: anthropicMessages,
-                tools: anthropicTools,
+                messages: openaiMessages,
+                tools: openaiTools.length > 0 ? openaiTools : undefined,
+                tool_choice: openaiTools.length > 0 ? 'auto' : undefined,
+                max_tokens: 4096,
+                temperature: this.options.temperature ?? 0.7,
+                stream: true,
             })
 
             let fullText = ''
-            const toolCalls: Array<{ id: string; name: string; input: Record<string, unknown> }> = []
-            let currentToolId = ''
-            let currentToolName = ''
-            let toolInputBuffer = ''
+            // Map from tool call index → accumulated buffer
+            const toolCallBuffers = new Map<number, { id: string; name: string; args: string }>()
 
-            for await (const event of stream) {
-                if (event.type === 'content_block_start') {
-                    if (event.content_block.type === 'tool_use') {
-                        currentToolId = event.content_block.id
-                        currentToolName = event.content_block.name
-                        toolInputBuffer = ''
-                        yield { type: 'tool_start', toolName: currentToolName }
-                    }
-                } else if (event.type === 'content_block_delta') {
-                    if (event.delta.type === 'text_delta') {
-                        fullText += event.delta.text
-                        yield { type: 'text', content: event.delta.text }
-                    } else if (event.delta.type === 'thinking_delta') {
-                        yield { type: 'thinking', content: (event.delta as { thinking?: string }).thinking }
-                    } else if (event.delta.type === 'input_json_delta') {
-                        toolInputBuffer += event.delta.partial_json
-                    }
-                } else if (event.type === 'content_block_stop') {
-                    if (currentToolId && currentToolName) {
-                        try {
-                            const input = JSON.parse(toolInputBuffer || '{}')
-                            toolCalls.push({ id: currentToolId, name: currentToolName, input })
-                        } catch {
-                            toolCalls.push({ id: currentToolId, name: currentToolName, input: {} })
+            for await (const chunk of stream) {
+                const delta = chunk.choices[0]?.delta
+
+                if (delta?.content) {
+                    fullText += delta.content
+                    yield { type: 'text', content: delta.content }
+                }
+
+                if (delta?.tool_calls) {
+                    for (const tc of delta.tool_calls) {
+                        const idx = tc.index
+                        if (!toolCallBuffers.has(idx)) {
+                            toolCallBuffers.set(idx, { id: tc.id || '', name: tc.function?.name || '', args: '' })
+                            if (tc.function?.name) {
+                                yield { type: 'tool_start', toolName: tc.function.name }
+                            }
                         }
-                        currentToolId = ''
-                        currentToolName = ''
+                        const buf = toolCallBuffers.get(idx)!
+                        if (tc.id) buf.id = tc.id
+                        if (tc.function?.name) buf.name = tc.function.name
+                        if (tc.function?.arguments) buf.args += tc.function.arguments
                     }
                 }
             }
 
-            // If no tool calls, we're done
-            if (toolCalls.length === 0) {
+            if (toolCallBuffers.size === 0) {
                 return
             }
 
-            // Execute tools and yield results
+            // Execute tools and add to message history
+            const toolCalls = Array.from(toolCallBuffers.values())
             const toolResults: AgentToolResult[] = []
+
             for (const tc of toolCalls) {
-                const result = await this.executeTool(tc.name, tc.input, context)
+                let params: Record<string, unknown> = {}
+                try { params = JSON.parse(tc.args || '{}') } catch { /* use empty */ }
+                const result = await this.executeTool(tc.name, params, context)
                 toolResults.push(result)
                 yield { type: 'tool_result', toolName: tc.name, toolResult: result }
             }
 
-            // Add messages for next iteration
-            currentMessages.push({
-                role: 'assistant',
-                content: fullText,
-            })
+            currentMessages.push({ role: 'assistant', content: fullText })
 
             for (let i = 0; i < toolCalls.length; i++) {
                 currentMessages.push({
@@ -344,9 +271,6 @@ export class ScopeBrain {
     // Tool Execution
     // =========================================================================
 
-    /**
-     * Execute a tool by name.
-     */
     private async executeTool(
         toolName: string,
         params: Record<string, unknown>,
@@ -379,9 +303,6 @@ export class ScopeBrain {
     // Message Building
     // =========================================================================
 
-    /**
-     * Build the messages array for LLM call.
-     */
     private buildMessages(userMessage: string, context: AgentContext): LLMMessage[] {
         const systemPrompt = buildSystemPrompt(context)
 
@@ -389,29 +310,21 @@ export class ScopeBrain {
             { role: 'system', content: systemPrompt },
         ]
 
-        // Add conversation history
         for (const msg of context.conversationHistory) {
             if (msg.from === 'user') {
                 messages.push({ role: 'user', content: msg.content })
             } else {
-                // Any agent response becomes assistant message
                 messages.push({ role: 'assistant', content: msg.content })
             }
         }
 
-        // Add current message
         messages.push({ role: 'user', content: userMessage })
 
         return messages
     }
 
-    /**
-     * Get all tool definitions for the LLM.
-     */
     private getAllToolDefinitions(): LLMToolDefinition[] {
-        const allTools = aiToolRegistry.getAll()
-
-        return allTools.map(tool => ({
+        return aiToolRegistry.getAll().map(tool => ({
             type: 'function' as const,
             function: {
                 name: tool.name,
@@ -422,48 +335,35 @@ export class ScopeBrain {
     }
 
     // =========================================================================
-    // Anthropic Format Conversion
+    // OpenAI Format Conversion
     // =========================================================================
 
-    /**
-     * Convert messages to Anthropic format.
-     */
-    private convertToAnthropicMessages(messages: LLMMessage[]): Array<{
-        role: 'user' | 'assistant'
-        content: string | Array<{ type: 'tool_result'; tool_use_id: string; content: string }>
-    }> {
+    private convertToOpenAIMessages(messages: LLMMessage[]): OpenAI.ChatCompletionMessageParam[] {
         return messages.map(m => {
             if (m.role === 'tool') {
                 return {
-                    role: 'user' as const,
-                    content: [{
-                        type: 'tool_result' as const,
-                        tool_use_id: m.toolCallId!,
-                        content: m.content,
-                    }],
+                    role: 'tool' as const,
+                    tool_call_id: m.toolCallId!,
+                    content: m.content,
                 }
             }
-            return {
-                role: m.role as 'user' | 'assistant',
-                content: m.content,
+            if (m.role === 'system') {
+                return { role: 'system' as const, content: m.content }
             }
+            if (m.role === 'assistant') {
+                return { role: 'assistant' as const, content: m.content }
+            }
+            return { role: 'user' as const, content: m.content }
         })
     }
 
-    /**
-     * Convert tools to Anthropic format.
-     */
-    private convertToAnthropicTools(tools: LLMToolDefinition[]): Array<{
-        name: string
-        description: string
-        input_schema: { type: 'object' } & Record<string, unknown>
-    }> {
+    private convertToOpenAITools(tools: LLMToolDefinition[]): OpenAI.ChatCompletionTool[] {
         return tools.map(t => ({
-            name: t.function.name,
-            description: t.function.description,
-            input_schema: {
-                type: 'object' as const,
-                ...t.function.parameters,
+            type: 'function' as const,
+            function: {
+                name: t.function.name,
+                description: t.function.description,
+                parameters: t.function.parameters,
             },
         }))
     }
@@ -473,16 +373,10 @@ export class ScopeBrain {
 // Factory Functions
 // =============================================================================
 
-/**
- * Create a new ScopeBrain instance with default options.
- */
 export function createScopeBrain(options?: ScopeBrainOptions): ScopeBrain {
     return new ScopeBrain(options)
 }
 
-/**
- * Quick helper to handle a message with default settings.
- */
 export async function handleWithScopeBrain(
     message: string,
     context: AgentContext,

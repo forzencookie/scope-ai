@@ -61,7 +61,7 @@ export * from './planning/roadmap'
 // ============================================================================
 
 import { aiToolRegistry } from './registry'
-import { toolsToGoogleFunctions, toolsToOpenAIFunctions, type AITool } from './types'
+import { toolsToOpenAIFunctions, type AITool } from './types'
 import { bokforingTools } from './bokforing'
 import { lonerTools } from './loner'
 import { skattTools } from './skatt'
@@ -103,9 +103,3 @@ export function getOpenAITools() {
     return toolsToOpenAIFunctions(aiToolRegistry.getAll())
 }
 
-/**
- * Get all tools in Google Gemini format
- */
-export function getGoogleTools() {
-    return toolsToGoogleFunctions(aiToolRegistry.getAll())
-}

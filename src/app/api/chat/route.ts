@@ -92,7 +92,7 @@ async function streamScopeBrainResponse(
 
         // Log model selection for monitoring
         const modelConfig = selectModel(message)
-        console.log(`[Chat] Model: ${modelConfig.model}, thinking: ${modelConfig.thinking}, cost: ${getRelativeCost(modelConfig)}x`)
+        console.log(`[Chat] Model: ${modelConfig.model}, cost: ${getRelativeCost(modelConfig)}x`)
 
         // Stream response
         for await (const chunk of brain.handleStream(message, context)) {
@@ -387,17 +387,14 @@ export async function GET(request: NextRequest) {
 
         return Response.json({
             agent: 'scope-brain',
-            description: 'Unified single-agent architecture with intelligent model selection',
+            description: 'Unified single-agent architecture powered by GPT-4o',
             features: [
-                'Smart model routing (Haiku/Sonnet/Sonnet+thinking)',
+                'GPT-4o with tool calling',
                 'All 60+ tools available',
-                'Extended thinking for complex queries',
                 'Streaming responses',
             ],
             models: {
-                simple: 'claude-haiku-3-5-20241022',
-                standard: 'claude-sonnet-4-20250514',
-                complex: 'claude-sonnet-4-20250514 + extended thinking',
+                default: 'gpt-4o',
             },
         })
     } catch (error) {
