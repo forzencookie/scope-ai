@@ -15,20 +15,20 @@ export function OnboardingModeStep({ onSelectMode }: OnboardingModeStepProps) {
   return (
     <div className="grid grid-cols-2 gap-4 max-w-lg mx-auto">
       <button
-        className="p-6 rounded-lg border-2 border-primary bg-primary/5 text-left hover:bg-primary/10 transition-colors"
+        className="p-6 rounded-xl bg-white/[0.06] border-2 border-white/20 text-left hover:bg-white/[0.1] hover:border-white/30 transition-all"
         onClick={() => onSelectMode("fresh")}
       >
-        <ScopeAILogo className="h-8 w-8 text-stone-900 mb-3" />
-        <h3 className="font-semibold mb-1">Nystartat företag</h3>
-        <p className="text-sm text-muted-foreground">Börja från noll med en ren bokföring</p>
+        <ScopeAILogo className="h-8 w-8 text-white/60 mb-3" />
+        <h3 className="font-medium text-white mb-1">Nystartat företag</h3>
+        <p className="text-sm text-white/40">Börja från noll med en ren bokföring</p>
       </button>
       <button
-        className="p-6 rounded-lg border-2 border-border text-left hover:border-primary hover:bg-primary/5 transition-colors"
+        className="p-6 rounded-xl bg-white/[0.04] border-2 border-white/10 text-left hover:bg-white/[0.08] hover:border-white/20 transition-all"
         onClick={() => onSelectMode("existing")}
       >
-        <UploadCloud className="h-8 w-8 text-muted-foreground mb-3" />
-        <h3 className="font-semibold mb-1">Befintligt företag</h3>
-        <p className="text-sm text-muted-foreground">Importera från annat bokföringssystem</p>
+        <UploadCloud className="h-8 w-8 text-white/40 mb-3" />
+        <h3 className="font-medium text-white mb-1">Befintligt företag</h3>
+        <p className="text-sm text-white/40">Importera från annat bokföringssystem</p>
       </button>
     </div>
   )

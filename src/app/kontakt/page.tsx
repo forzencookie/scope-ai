@@ -38,19 +38,7 @@ export default function ContactPage() {
                 </p>
             </section>
 
-            {/* Partnership */}
-            <section>
-                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Samarbete &amp; partnerskap</h2>
-                <p>
-                    Är du intresserad av att samarbeta med oss, integrera ert system med vår plattform eller utforska partnerskapsmöjligheter? Vi hör gärna från dig.
-                </p>
-                <div className="mt-4 rounded-xl bg-white/[0.03] border border-white/[0.06] p-6">
-                    <p className="text-sm text-white/50 mb-1">Partnerskap</p>
-                    <a href="mailto:partner@scopeai.se" className="text-blue-400 hover:text-blue-300 transition-colors text-lg font-medium">
-                        partner@scopeai.se
-                    </a>
-                </div>
-            </section>
+
 
             {/* GDPR / Data */}
             <section>
@@ -60,8 +48,8 @@ export default function ContactPage() {
                 </p>
                 <div className="mt-4 rounded-xl bg-white/[0.03] border border-white/[0.06] p-6">
                     <p className="text-sm text-white/50 mb-1">Dataskyddsombud</p>
-                    <a href="mailto:dpo@scopeai.se" className="text-blue-400 hover:text-blue-300 transition-colors text-lg font-medium">
-                        dpo@scopeai.se
+                    <a href="mailto:dataskydd@scopeai.se" className="text-blue-400 hover:text-blue-300 transition-colors text-lg font-medium">
+                        dataskydd@scopeai.se
                     </a>
                 </div>
             </section>

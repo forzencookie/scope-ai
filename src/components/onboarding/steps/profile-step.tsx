@@ -3,7 +3,6 @@
 import { useState, useRef } from "react"
 import { useTheme } from "next-themes"
 import { Camera, Loader2, Sun, Moon, Monitor } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { cn } from "@/lib/utils"
 
@@ -67,11 +66,11 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
         <div className="max-w-sm mx-auto space-y-8">
             {/* Avatar section */}
             <div>
-                <p className="text-sm font-medium mb-4 text-left">Profilbild</p>
+                <p className="text-sm font-medium mb-4 text-left text-white/70">Profilbild</p>
                 <div className="flex items-center gap-4 mb-4">
-                    <Avatar className="h-20 w-20">
+                    <Avatar className="h-20 w-20 border-2 border-white/10">
                         <AvatarImage src={avatarUrl} />
-                        <AvatarFallback className="text-2xl">
+                        <AvatarFallback className="text-2xl bg-white/5 text-white/60">
                             {selectedEmoji || "👤"}
                         </AvatarFallback>
                     </Avatar>
@@ -83,25 +82,24 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
                             className="hidden"
                             onChange={handleFileUpload}
                         />
-                        <Button
-                            variant="outline"
-                            size="sm"
+                        <button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isUploading}
+                            className="flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm text-white/70 bg-white/5 hover:bg-white/10 border border-white/10 transition-colors disabled:opacity-50"
                         >
                             {isUploading ? (
                                 <>
-                                    <Loader2 className="h-4 w-4 mr-1 animate-spin" />
+                                    <Loader2 className="h-4 w-4 animate-spin" />
                                     Laddar upp...
                                 </>
                             ) : (
                                 <>
-                                    <Camera className="h-4 w-4 mr-1" />
+                                    <Camera className="h-4 w-4" />
                                     Ladda upp foto
                                 </>
                             )}
-                        </Button>
-                        <p className="text-xs text-muted-foreground">eller välj en emoji nedan</p>
+                        </button>
+                        <p className="text-xs text-white/30">eller välj en emoji nedan</p>
                     </div>
                 </div>
 
@@ -113,10 +111,10 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
                             onClick={() => handleEmojiSelect(emoji)}
                             className={cn(
                                 "h-10 w-10 rounded-lg text-xl flex items-center justify-center transition-all",
-                                "hover:bg-primary/10 hover:scale-110",
+                                "hover:bg-white/10 hover:scale-110",
                                 selectedEmoji === emoji
-                                    ? "bg-primary/20 ring-2 ring-primary"
-                                    : "bg-muted/50"
+                                    ? "bg-white/15 ring-2 ring-white/30"
+                                    : "bg-white/[0.04]"
                             )}
                         >
                             {emoji}
@@ -127,21 +125,21 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
 
             {/* Theme section */}
             <div>
-                <p className="text-sm font-medium mb-4 text-left">Utseende</p>
+                <p className="text-sm font-medium mb-4 text-left text-white/70">Utseende</p>
                 <div className="grid grid-cols-3 gap-3">
                     {themeOptions.map(({ value, label, icon: Icon }) => (
                         <button
                             key={value}
                             onClick={() => setTheme(value)}
                             className={cn(
-                                "flex flex-col items-center gap-2 p-4 rounded-lg border-2 transition-all",
+                                "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                                 theme === value
-                                    ? "border-primary bg-primary/5"
-                                    : "border-border hover:border-primary/50 hover:bg-muted/50"
+                                    ? "border-white/30 bg-white/[0.08]"
+                                    : "border-white/10 hover:border-white/20 hover:bg-white/[0.04]"
                             )}
                         >
-                            <Icon className="h-6 w-6" />
-                            <span className="text-sm font-medium">{label}</span>
+                            <Icon className="h-6 w-6 text-white/60" />
+                            <span className="text-sm font-medium text-white/70">{label}</span>
                         </button>
                     ))}
                 </div>

@@ -25,8 +25,8 @@ function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) 
                 if (i <= fullText.length) {
                     setDisplayedText(fullText.substring(0, i))
                     i++
-                    // Natural typing speed: 30-80ms per character
-                    const delay = Math.random() * 50 + 30
+                    // Natural, deliberate typing speed: 50-120ms per character
+                    const delay = Math.random() * 70 + 50
                     timeoutId = setTimeout(typeChar, delay)
                 }
             }

@@ -2,8 +2,7 @@
 
 import { useState, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronRight, CheckCircle2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { ChevronRight, ChevronLeft, CheckCircle2, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 import { useCompany } from "@/providers/company-provider"
@@ -78,7 +77,7 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
                             name: s.name,
                             ssn_org_nr: s.ssn,
                             shares_count: s.shares,
-                            shares_percentage: 0, // will be computed by DB
+                            shares_percentage: 0,
                             share_class: s.shareClass,
                         }))
                         : undefined,
@@ -102,7 +101,6 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
         setCompletedSteps(prev => new Set([...prev, step.id]))
 
         if (isLastStep) {
-            // Seed collected data before completing
             seedData().then(() => {
                 updateCompany({ onboardingComplete: true })
                 onComplete()
@@ -126,8 +124,6 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
         setCompletedSteps(prev => new Set([...prev, step.id]))
         setCurrentStep(prev => prev + 1)
     }, [step.id, updateCompany])
-
-    const Icon = step.icon
 
     // Render the appropriate step content
     const renderStepContent = () => {
@@ -172,38 +168,40 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-background">
+        <div
+            className="min-h-screen flex flex-col text-white font-sans selection:bg-white/30"
+            style={{ backgroundColor: '#050505' }}
+        >
             {/* Header */}
-            <header className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <header className="flex items-center justify-between px-6 md:px-10 py-5">
                 <div className="flex items-center gap-3">
-                    <ScopeAILogo className="h-7 w-7" />
-                    <span className="font-semibold text-lg">Scope AI</span>
+                    <ScopeAILogo className="h-6 w-6 text-white" />
+                    <span className="font-semibold text-[15px] tracking-tight text-white">scope ai</span>
                 </div>
-                <Button
-                    variant="ghost"
+                <button
                     onClick={onSkip}
-                    className="text-muted-foreground hover:text-foreground"
+                    className="text-white/40 hover:text-white/70 transition-colors text-sm flex items-center gap-1"
                 >
                     Hoppa över för nu
-                    <ChevronRight className="h-4 w-4 ml-1" />
-                </Button>
+                    <ChevronRight className="h-4 w-4" />
+                </button>
             </header>
 
             {/* Main content */}
-            <main className="flex-1 flex flex-col items-center justify-center overflow-auto py-8 px-4">
-                <div className="w-full max-w-2xl">
+            <main className="flex-1 flex flex-col items-center justify-center overflow-auto py-8 px-5">
+                <div className="w-full max-w-[440px] md:max-w-[540px]">
                     {/* Step indicators */}
-                    <div className="flex items-center justify-center gap-2 mb-8">
+                    <div className="flex items-center justify-center gap-1.5 mb-10">
                         {onboardingSteps.map((s, index) => (
                             <div
                                 key={s.id}
                                 className={cn(
-                                    "h-1.5 rounded-full transition-all duration-200",
+                                    "h-1 rounded-full transition-all duration-300",
                                     index === currentStep
-                                        ? "w-8 bg-primary"
+                                        ? "w-8 bg-white"
                                         : completedSteps.has(s.id)
-                                            ? "w-4 bg-primary"
-                                            : "w-4 bg-muted"
+                                            ? "w-4 bg-white/40"
+                                            : "w-4 bg-white/10"
                                 )}
                             />
                         ))}
@@ -221,62 +219,82 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
                         >
                             {/* Step header */}
                             <div className="text-center mb-8">
-                                <div className="flex justify-center">
-                                    <div className={cn(step.bgColor && "inline-flex p-4 rounded-lg mb-4", step.bgColor)}>
-                                        <Icon className={cn(step.bgColor ? "h-8 w-8" : "h-16 w-16 mb-4", step.color)} />
-                                    </div>
-                                </div>
-                                <h1 className="text-2xl md:text-3xl font-semibold mb-2">{step.title}</h1>
-                                <p className="text-muted-foreground max-w-md mx-auto">{step.description}</p>
+                                <h1 className="text-2xl md:text-3xl font-bold tracking-tight text-white mb-3 leading-[1.15]">{step.title}</h1>
+                                <p className="text-white/40 max-w-md mx-auto text-[15px] leading-relaxed">{step.description}</p>
                             </div>
+
+                            {/* Separator — hidden on welcome */}
+                            {step.id !== "welcome" && <div className="h-px bg-white/10 mb-8" />}
 
                             {/* Step-specific content */}
                             {renderStepContent()}
                         </motion.div>
                     </AnimatePresence>
 
-                    {/* Footer navigation */}
-                    <div className="flex items-center justify-between mt-8 pt-6 border-t border-border">
-                        <div>
-                            {!isFirstStep && (
-                                <Button variant="ghost" onClick={handleBack}>
-                                    Tillbaka
-                                </Button>
-                            )}
+                    {/* Footer navigation — welcome uses inline button instead */}
+                    {step.id === "welcome" ? (
+                        <div className="flex justify-center mt-10">
+                            <button
+                                onClick={handleNext}
+                                className="flex items-center gap-2 px-8 py-3 rounded-xl text-sm font-medium bg-white text-[#050505] hover:bg-white/90 transition-all"
+                            >
+                                Fortsätt
+                                <ArrowRight className="h-4 w-4" />
+                            </button>
                         </div>
-                        <div className="flex items-center gap-3">
-                            {step.optional && (
-                                <Button variant="outline" onClick={handleSkip}>
-                                    Hoppa över
-                                </Button>
-                            )}
-                            {/* Hide "Fortsätt" for onboarding-mode since buttons are in the step */}
-                            {step.id !== "onboarding-mode" && (
-                                <Button onClick={handleNext} size="lg">
-                                    {isLastStep ? (
-                                        <>
-                                            <CheckCircle2 className="h-4 w-4 mr-2" />
-                                            Kom igång med Scope AI
-                                        </>
-                                    ) : (
-                                        <>
-                                            Fortsätt
-                                            <ChevronRight className="h-4 w-4 ml-1" />
-                                        </>
-                                    )}
-                                </Button>
-                            )}
+                    ) : (
+                        <div className="flex items-center justify-between mt-10 pt-6 border-t border-white/10">
+                            <div>
+                                {!isFirstStep && (
+                                    <button
+                                        onClick={handleBack}
+                                        className="flex items-center gap-1.5 text-white/40 hover:text-white/70 transition-colors text-sm"
+                                    >
+                                        <ChevronLeft className="h-4 w-4" />
+                                        Tillbaka
+                                    </button>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3">
+                                {step.optional && (
+                                    <button
+                                        onClick={handleSkip}
+                                        className="px-5 py-2.5 rounded-xl text-sm text-white/40 hover:text-white/70 transition-colors"
+                                    >
+                                        Hoppa över
+                                    </button>
+                                )}
+                                {/* Hide "Fortsätt" for onboarding-mode since buttons are in the step */}
+                                {step.id !== "onboarding-mode" && (
+                                    <button
+                                        onClick={handleNext}
+                                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl text-sm font-medium bg-white text-[#050505] hover:bg-white/90 transition-all"
+                                    >
+                                        {isLastStep ? (
+                                            <>
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                Kom igång
+                                            </>
+                                        ) : (
+                                            <>
+                                                Fortsätt
+                                                <ArrowRight className="h-4 w-4" />
+                                            </>
+                                        )}
+                                    </button>
+                                )}
+                            </div>
                         </div>
-                    </div>
+                    )}
                 </div>
             </main>
 
             {/* Footer */}
-            <footer className="px-6 py-4 border-t border-border">
-                <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+            <footer className="px-6 py-4">
+                <div className="flex items-center justify-center gap-2 text-xs text-white/30">
                     <span>Steg {currentStep + 1} av {onboardingSteps.length}</span>
                     <span>•</span>
-                    <span>{step.title}</span>
+                    <span>Designad & utvecklad i Sverige 🇸🇪</span>
                 </div>
             </footer>
         </div>

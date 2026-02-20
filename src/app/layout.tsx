@@ -3,6 +3,7 @@ import { Geist, Geist_Mono, Playfair_Display } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/providers/theme-provider";
 import { CorporateProvider } from "@/hooks/use-corporate";
+import { CookieBanner } from "@/components/ui/cookie-banner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,7 +20,6 @@ const playfairDisplay = Playfair_Display({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
 });
-
 
 export const metadata: Metadata = {
   title: "Scope AI | Automatiserad bokföring för svenska företag",
@@ -58,6 +58,7 @@ export default function RootLayout({
         >
           <CorporateProvider>
             {children}
+            <CookieBanner />
           </CorporateProvider>
         </ThemeProvider>
       </body>

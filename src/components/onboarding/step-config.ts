@@ -18,7 +18,7 @@ import type { OnboardingStep } from "./types"
 export const onboardingSteps: OnboardingStep[] = [
   {
     id: "welcome",
-    title: "Välkommen till Scope AI! 🇸🇪",
+    title: "Välkommen till scope ai",
     description: "Vi hjälper dig komma igång smidigt med din bokföring. Det tar bara några minuter — sen är du fri att fokusera på det du brinner för.",
     icon: ScopeAILogo,
     color: "text-stone-900",

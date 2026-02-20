@@ -96,22 +96,22 @@ export function CompanyTypeSelector({
             key={type}
             onClick={() => handleSelect(type)}
             className={cn(
-              "w-full flex items-center gap-4 p-3 rounded-lg border-2 transition-all text-left",
+              "w-full flex items-center gap-4 p-3 rounded-xl border-2 transition-all text-left",
               isSelected
-                ? companyTypeColors[type] + " border-current"
-                : "border-muted hover:border-muted-foreground/20 hover:bg-muted/50"
+                ? "border-white/30 bg-white/[0.08]"
+                : "border-white/10 hover:border-white/20 hover:bg-white/[0.04]"
             )}
           >
             <div className="flex-1 min-w-0">
               <div className="flex items-center">
-                <span className="font-semibold">{info.fullName}</span>
-                <Icon className={cn("ml-2 h-4 w-4", isSelected ? "text-current" : "text-muted-foreground")} />
+                <span className="font-semibold text-white">{info.fullName}</span>
+                <Icon className={cn("ml-2 h-4 w-4", isSelected ? "text-white" : "text-white/40")} />
                 {isSelected && (
-                  <Check className="h-4 w-4 ml-auto text-current" />
+                  <Check className="h-4 w-4 ml-auto text-white" />
                 )}
               </div>
               {showDescription && (
-                <p className="text-sm text-muted-foreground mt-1 line-clamp-2">
+                <p className="text-sm text-white/40 mt-1 line-clamp-2">
                   {info.description}
                 </p>
               )}
