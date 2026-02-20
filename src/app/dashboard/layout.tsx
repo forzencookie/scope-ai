@@ -30,10 +30,10 @@ import { cn } from "@/lib/utils"
 
 // Default team based on company provider
 const defaultTeam = {
-  id: 'default',
-  name: 'Mitt Företag',
-  logo: Building2,
-  plan: 'Free',
+    id: 'default',
+    name: 'Mitt Företag',
+    logo: Building2,
+    plan: 'Free',
 }
 
 // Module-level navigation history store (persists across component remounts)
@@ -132,12 +132,12 @@ function useNavigationHistory() {
 function MobileNavLink({ href, icon: Icon, children, pathname }: { href: string, icon: React.ComponentType<{ className?: string }>, children: React.ReactNode, pathname: string }) {
     const isActive = pathname === href || pathname.startsWith(href + '/')
     return (
-        <Link 
-            href={href} 
+        <Link
+            href={href}
             className={cn(
                 "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive 
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground" 
+                isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
                     : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
             )}
         >
@@ -154,7 +154,7 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
     const [isRefreshing, setIsRefreshing] = useState(false)
     const pathname = usePathname()
     const prevPathnameRef = React.useRef(pathname)
-    
+
     // Auto-close menu on navigation (using ref to avoid setState in effect)
     useEffect(() => {
         if (prevPathnameRef.current !== pathname) {
@@ -175,9 +175,9 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
     return (
         <div className="flex flex-col">
             {/* Desktop Toolbar Row */}
-            <div className="hidden md:flex h-12 items-center px-2">
+            <div className="hidden md:flex h-12 items-center px-4 md:px-8 w-full">
                 {/* Sidebar toggle */}
-                <SidebarTrigger />
+                <SidebarTrigger className="-ml-2" />
                 {/* Navigation buttons */}
                 <div className="flex items-center gap-0.5 ml-1">
                     <Button
@@ -206,7 +206,7 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
                     <GlobalSearch />
                 </div>
                 {/* Right side actions */}
-                <div className="flex items-center gap-1 mr-2">
+                <div className="flex items-center gap-1 -mr-2">
                     <Button
                         variant="ghost"
                         size="icon"
@@ -250,8 +250,8 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
             {/* Mobile Toolbar Row */}
             <div className="flex md:hidden h-12 items-center px-2">
                 {/* Mobile: Menu toggle */}
-                <Button 
-                    variant="ghost" 
+                <Button
+                    variant="ghost"
                     size="icon"
                     onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
                 >
@@ -307,7 +307,7 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
 
             {/* Mobile Push-Down Navigation Menu */}
             <div className={cn(
-                "grid transition-all duration-300 ease-in-out md:hidden", 
+                "grid transition-all duration-300 ease-in-out md:hidden",
                 isMobileMenuOpen ? "grid-rows-[1fr] opacity-100 mb-2" : "grid-rows-[0fr] opacity-0"
             )}>
                 <div className="overflow-hidden">
@@ -362,20 +362,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 className="flex-col"
                 style={
                     {
-                        "--sidebar-width": sidebarMode === "ai-chat" ? "400px" : "calc(var(--spacing) * 72)",
+                        "--sidebar-width": sidebarMode === "ai-chat" ? "380px" : "340px",
                         "--header-height": "calc(var(--spacing) * 12)",
                     } as React.CSSProperties
                 }
             >
 
                 {/* Main layout */}
-                <div className="flex flex-1 w-full bg-sidebar mt-2">
-                    <AppSidebar variant="inset" mode={sidebarMode} onModeChange={setSidebarMode} className="hidden md:flex" />
+                <div className="flex flex-1 w-full bg-background relative">
+                    <AppSidebar variant="floating" mode={sidebarMode} onModeChange={setSidebarMode} className="hidden md:flex" />
                     <SidebarInset>
                         {/* Toolbar inside content area */}
                         <DashboardToolbar sidebarMode={sidebarMode} setSidebarMode={setSidebarMode} />
-                        
-                        <div className="relative w-full h-full px-0 md:px-[5%]">
+
+                        <div className="relative w-full h-full bg-background overflow-x-hidden">
                             {children}
                             {/* AI Overlay - shows when AI is processing */}
                             <AIOverlay />

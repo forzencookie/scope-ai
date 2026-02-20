@@ -96,27 +96,32 @@ export function useAIUsage(): UseAIUsageReturn {
           const tokens = row.tokens_used || 0
           const modelId = row.model_id || 'gpt-4o-mini'
           const multiplier = getModelMultiplier(modelId)
-          
+
           rawTokensUsed += tokens
           effectiveTokensUsed += tokens * multiplier
           requestsCount += row.requests_count || 0
         }
       }
 
-      // Fetch purchased credits from usercredits table
-      const { data: creditsData, error: creditsError } = await supabase
-        .rpc("get_user_credits", { p_user_id: user.id })
+      // Fetch purchased credits from usercredits table safely
+      let extraCredits = 0
+      try {
+        const { data: creditsData, error: creditsError } = await supabase
+          .rpc("get_user_credits", { p_user_id: user.id })
 
-      if (creditsError) {
-        console.error("Failed to fetch credits:", creditsError)
+        if (creditsError) {
+          console.error("Failed to fetch credits from Supabase:", creditsError)
+        } else if (creditsData !== null) {
+          extraCredits = Number(creditsData)
+        }
+      } catch (err) {
+        console.warn("Exception while fetching user credits, falling back to 0:", err)
       }
-
-      const extraCredits = creditsData ?? 0
 
       const tokenLimit = TIER_TOKEN_LIMITS[tier] || 0
       const totalAvailable = tokenLimit + extraCredits
       const tokensRemaining = Math.max(0, totalAvailable - effectiveTokensUsed)
-      const usagePercent = totalAvailable > 0 
+      const usagePercent = totalAvailable > 0
         ? Math.min(100, Math.round((effectiveTokensUsed / totalAvailable) * 100))
         : 0
 

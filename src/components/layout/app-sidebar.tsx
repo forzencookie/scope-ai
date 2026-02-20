@@ -86,7 +86,7 @@ export function AppSidebar({
 
   // Teams state - fetched from API
   const [teams, setTeams] = React.useState([defaultTeam])
-  
+
   React.useEffect(() => {
     getTeams().then(response => {
       if (response.success && response.data && response.data.length > 0) {
@@ -142,23 +142,23 @@ export function AppSidebar({
   React.useEffect(() => {
     const handleOpenAIChat = (e: Event) => {
       const context = (e as CustomEvent).detail as PageContext
-      
+
       // Store context to re-dispatch after sidebar mounts
       if (context) {
         pendingAIContextRef.current = context
       }
-      
+
       setInternalMode("ai-chat")
       if (onModeChange) onModeChange("ai-chat")
-      
+
       // If already in ai-chat mode, the sidebar is mounted and will handle it
       // If switching modes, we need to wait for mount then re-dispatch
       if (sidebarMode !== "ai-chat" && context) {
         // Re-dispatch after a short delay to allow sidebar to mount
         setTimeout(() => {
           if (pendingAIContextRef.current) {
-            window.dispatchEvent(new CustomEvent(AI_CHAT_EVENT, { 
-              detail: pendingAIContextRef.current 
+            window.dispatchEvent(new CustomEvent(AI_CHAT_EVENT, {
+              detail: pendingAIContextRef.current
             }))
             pendingAIContextRef.current = null
           }
@@ -234,9 +234,8 @@ export function AppSidebar({
       </Sidebar>
     )
   }
-
   // Determine sidebar variant to pass to underlying Sidebar
-  const sidebarVariant = variant === "inset" ? "inset" : undefined
+  const sidebarVariant = variant === "minimal" ? undefined : variant
 
   return (
     <>
@@ -248,9 +247,10 @@ export function AppSidebar({
       <Sidebar
         collapsible="offcanvas"
         variant={sidebarVariant}
+        className="[&_*]:!border-0 [&_[data-slot=sidebar-inner]]:shadow-none"
         style={
           {
-            "--sidebar-width": sidebarMode === "ai-chat" ? "400px" : "300px",
+            "--sidebar-width": sidebarMode === "ai-chat" ? "380px" : "340px",
           } as React.CSSProperties
         }
         {...props}
