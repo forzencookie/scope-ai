@@ -1,56 +1,63 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { useState } from "react"
 import Link from "next/link"
+import { Menu, X } from "lucide-react"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { AnimatePresence, motion } from "framer-motion"
 
 export function Navbar() {
-  const navItems = [
-    { name: "Funktioner", href: "/#features" },
-    { name: "Pris", href: "/#pricing" },
-    { name: "Om oss", href: "/om-oss" },
-    { name: "Vanliga frågor", href: "/#faq" },
-  ]
+    const [isOpen, setIsOpen] = useState(false)
 
-  return (
-    <motion.nav
-      initial={{ y: -20, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      transition={{ duration: 0.5 }}
-      className="sticky top-4 z-50 px-3 md:px-4 max-w-[2400px] mx-auto will-change-transform-opacity"
-    >
-      <div className="bg-white/80 backdrop-blur-md rounded-2xl h-14 px-4 flex items-center justify-between">
-        {/* Logo - Left */}
-        <Link href="/" className="flex items-center gap-2">
-          <ScopeAILogo className="w-6 h-6" />
-          <span className="font-mono text-stone-900 font-bold tracking-widest uppercase text-sm">
-            ScopeAI
-          </span>
-        </Link>
+    return (
+        <>
+            <header className="fixed top-6 left-0 right-0 z-[60] w-full max-w-[440px] md:max-w-[640px] mx-auto transition-all duration-300">
+                <div className="flex items-center justify-between px-5 py-3 bg-black/40 backdrop-blur-xl rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+                    <Link href="/" className="flex items-center gap-3 font-medium cursor-pointer" onClick={() => setIsOpen(false)}>
+                        <ScopeAILogo className="w-5 h-5 text-white" />
+                        <span className="text-[15px] font-semibold tracking-tight text-white mt-[1px]">scope ai</span>
+                    </Link>
+                    <button
+                        onClick={() => setIsOpen(!isOpen)}
+                        className="p-1 text-white hover:text-white/70 transition-colors"
+                    >
+                        {isOpen ? (
+                            <X className="w-5 h-5" strokeWidth={1.5} />
+                        ) : (
+                            <Menu className="w-5 h-5" strokeWidth={1.5} />
+                        )}
+                    </button>
+                </div>
+            </header>
 
-        {/* Nav Links - Center */}
-        <div className="hidden md:flex items-center gap-8 absolute left-1/2 -translate-x-1/2">
-          {navItems.map((item) => (
-            <Link key={item.name} href={item.href} className="text-sm text-stone-600 hover:text-stone-900 transition-colors">
-              {item.name}
-            </Link>
-          ))}
-        </div>
-
-        {/* Auth - Right */}
-        <div className="flex items-center gap-3">
-          <Link href="/login" className="text-sm text-stone-600 hover:text-stone-900 transition-colors hidden md:block">
-            Logga in
-          </Link>
-
-          <Link
-            href="/register"
-            className="text-sm font-medium bg-stone-900 text-white px-4 py-2 rounded-lg hover:bg-stone-800 transition-colors"
-          >
-            Kom igång
-          </Link>
-        </div>
-      </div>
-    </motion.nav>
-  )
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="fixed inset-0 z-50 bg-[#050505] flex flex-col items-center justify-center"
+                    >
+                        <nav className="flex flex-col items-center gap-8 text-[32px] font-medium tracking-tight">
+                            <Link
+                                href="/logga-in"
+                                className="text-white hover:text-white/70 transition-colors"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Sign up
+                            </Link>
+                            <Link
+                                href="/logga-in"
+                                className="text-white hover:text-white/70 transition-colors"
+                                onClick={() => setIsOpen(false)}
+                            >
+                                Log in
+                            </Link>
+                        </nav>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </>
+    )
 }

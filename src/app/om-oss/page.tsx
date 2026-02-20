@@ -1,157 +1,131 @@
-"use client"
+import { LegalPageLayout } from "@/components/landing/layout/legal-page-layout"
 
-import { motion } from "framer-motion"
-import { Navbar, Footer, AnimatedDitherArt } from "@/components/landing"
-import { SectionHeader } from "@/components/landing/shared/section-header"
-import { StaticWorldMap } from "@/components/landing/sections/global-reach/static-world-map"
-import { ThemeProvider } from "@/providers/theme-provider"
-
-export default function AboutPage() {
+export default function InformationPage() {
     return (
-        <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
-            <main className="light min-h-screen bg-white font-sans text-stone-900 selection:bg-stone-200 selection:text-stone-900 scroll-smooth relative overflow-x-hidden">
-                <AnimatedDitherArt />
+        <LegalPageLayout title="Om scope ai" brandLabel="scope ai">
+            <p>
+                <strong className="text-white">scope ai</strong> är en AI-driven bokföringsplattform byggd för framtidens företagare. Vi automatiserar det administrativa arbetet så att du kan fokusera på det du gör bäst — att driva och utveckla ditt företag.
+            </p>
 
-                <div className="relative z-10">
-                    <Navbar />
+            {/* Mission */}
+            <section>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Vårt uppdrag</h2>
+                <p>
+                    Vi har som mål att förenkla företagande genom en autonom AI-plattform som underlättar och planerar din bokföring. Bokföring har länge varit synonymt med manuellt arbete, pappershögar och repetitiva uppgifter. Vi vill ändra på det.
+                </p>
+                <p className="mt-4">
+                    Vår vision är att skapa en global standard för automatiserad bokföring där varje idé får chansen att växa utan administrativa hinder.
+                </p>
+            </section>
 
-                    {/* Hero / Header */}
-                    <section className="pt-32 pb-16 px-6 md:px-12 lg:px-24 max-w-[1400px] mx-auto text-center">
-                        <motion.h1
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            className="text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight mb-6"
-                        >
-                            Om oss
-                        </motion.h1>
-                        <motion.p
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ delay: 0.1 }}
-                            className="text-lg text-stone-600 max-w-2xl mx-auto leading-relaxed"
-                        >
-                            Vi bygger framtidens bokföringstjänst där AI gör grovjobbet och människor står för kvalitetskontrollen.
-                        </motion.p>
-                    </section>
+            {/* What we do */}
+            <section>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Vad vi gör</h2>
+                <p className="mb-4">
+                    Scope AI kombinerar avancerad artificiell intelligens med modern redovisningspraxis för att erbjuda en helhetslösning:
+                </p>
 
-                    {/* Problem & Team - Side by Side */}
-                    <section className="px-6 md:px-12 lg:px-24 py-16 max-w-[1400px] mx-auto">
-                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-start">
-                            {/* Left: The Problem */}
-                            <div className="max-w-2xl">
-                                <SectionHeader
-                                    badge="Problemet"
-                                    title="Varför vi finns"
-                                    description=""
-                                    align="left"
-                                    className="mb-8"
-                                />
-                                <div className="space-y-6 text-lg text-stone-600 leading-relaxed">
-                                    <p>
-                                        Bokföring har länge varit synonymt med manuellt arbete, pappershögar och repetitiva uppgifter.
-                                        För många företagare är det ett nödvändigt ont som tar tid från det som faktiskt betyder något – att driva och utveckla sin verksamhet.
-                                    </p>
-                                    <p>
-                                        Traditionella byråer kämpar ofta med ineffektiva processer där konsulter lägger timmar på att stansa in siffror istället för att ge rådgivning.
-                                        Vi såg ett behov av en förändring. En lösning där tekniken inte bara är ett stöd, utan motorn som driver hela processen framåt.
-                                    </p>
-                                    <p>
-                                        Vår ambition var att eliminera den administrativa bördan helt. Genom att låta avancerad AI hantera tolkning, kontering och avstämning kan vi erbjuda en tjänst som är snabbare, säkrare och mer kostnadseffektiv än någonsin tidigare.
-                                    </p>
-                                </div>
-                            </div>
+                <div className="space-y-4">
+                    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-5">
+                        <h4 className="font-semibold text-white mb-1">🧠 AI-assistans</h4>
+                        <p className="text-sm text-white/60">En intelligent assistent som hjälper dig med bokföring, kontering och rapportering — dygnet runt. Ställ frågor, få svar, och låt AI:n göra det tunga jobbet.</p>
+                    </div>
 
-                            {/* Right: The Team */}
-                            <div className="w-full">
-                                <SectionHeader
-                                    badge="Teamet"
-                                    title="Vilka vi är"
-                                    description=""
-                                    align="left"
-                                    className="mb-12"
-                                />
+                    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-5">
+                        <h4 className="font-semibold text-white mb-1">📄 Automatisk kvittohantering</h4>
+                        <p className="text-sm text-white/60">Ladda upp kvitton så tolkar, kategoriserar och bokför vår AI dem automatiskt. Ingen mer manuell inmatning.</p>
+                    </div>
 
-                                <motion.div
-                                    initial={{ opacity: 0, scale: 0.95 }}
-                                    whileInView={{ opacity: 1, scale: 1 }}
-                                    viewport={{ once: true }}
-                                    className="group relative max-w-sm mx-auto lg:mx-0"
-                                >
-                                    <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-stone-100 mb-6 relative">
-                                        {/* Placeholder for user photo */}
-                                        <div className="absolute inset-0 flex items-center justify-center text-stone-400 bg-stone-100">
-                                            <div className="text-center p-6">
-                                                <span className="block text-4xl mb-2">👋</span>
-                                                <span className="text-sm">Här kommer en bild på grundaren</span>
-                                            </div>
-                                        </div>
-                                        {/* Overlay gradient */}
-                                        <div className="absolute inset-0 bg-gradient-to-t from-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-                                    </div>
-                                    <div className="text-left">
-                                        <h3 className="text-xl font-bold mb-1">Grundaren</h3>
-                                        <p className="text-stone-500 font-medium mb-3">Grundare</p>
-                                        <p className="text-stone-600 text-sm leading-relaxed max-w-xs">
-                                            Drivs av att förenkla företagande genom teknik. Med bakgrund inom både ekonomi och systemutveckling.
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            </div>
-                        </div>
-                    </section>
+                    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-5">
+                        <h4 className="font-semibold text-white mb-1">📊 Rapportering</h4>
+                        <p className="text-sm text-white/60">Resultaträkning, balansräkning, momsrapporter och mer — genereras automatiskt utifrån din bokföringsdata.</p>
+                    </div>
 
-                    {/* Vision Section - Empowering & Scaled */}
-                    <section className="px-6 md:px-12 lg:px-24 py-24 max-w-[1400px] mx-auto border-t border-stone-200">
-                        <div className="grid lg:grid-cols-2 gap-12 lg:gap-20 items-center mb-20">
-                            {/* Left: Header & Long Term Goal */}
-                            <div>
-                                <SectionHeader
-                                    badge="Vår Vision"
-                                    title="Alla förtjänar en chans"
-                                    description="Vi tror att företagande ska vara stärkande, inte skrämmande."
-                                    align="left"
-                                    className="mb-10"
-                                />
+                    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-5">
+                        <h4 className="font-semibold text-white mb-1">🏢 Bolagsstiftelse</h4>
+                        <p className="text-sm text-white/60">Starta ditt bolag direkt via plattformen. Vi guidar dig genom processen och hjälper dig med allt från aktiebok till registrering.</p>
+                    </div>
 
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    whileInView={{ opacity: 1, y: 0 }}
-                                    viewport={{ once: true }}
-                                    transition={{ delay: 0.2 }}
-                                    className="text-left space-y-8"
-                                >
-                                    <div>
-                                        <h3 className="text-xl font-bold mb-3">Långsiktigt mål</h3>
-                                        <p className="text-stone-600 leading-relaxed text-lg">
-                                            Att skapa en global standard för automatiserad bokföring där varje idé får chansen att växa utan administrativa hinder.
-                                        </p>
-                                    </div>
-
-                                    <div>
-                                        <h3 className="text-xl font-bold mb-3">Kortsiktigt mål</h3>
-                                        <p className="text-stone-600 leading-relaxed text-lg">
-                                            Just nu fokuserar vi på att hjälpa Sveriges företagare att skala genom smart automatisering. Vi vill sänka tröskeln för att starta eget genom att göra administrationen transparent och begriplig – en gradvis &quot;microdosing&quot; av företagande som stärker snarare än skrämmer.
-                                        </p>
-                                    </div>
-                                </motion.div>
-                            </div>
-
-                            {/* Right: Map */}
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95 }}
-                                whileInView={{ opacity: 1, scale: 1 }}
-                                viewport={{ once: true }}
-                                transition={{ duration: 0.8 }}
-                                className="w-full"
-                            >
-                                <StaticWorldMap className="w-full h-auto text-stone-200" dotColor="#8b5cf6" />
-                            </motion.div>
-                        </div>
-                    </section>
-
-                    <Footer />
+                    <div className="rounded-xl bg-white/[0.03] border border-white/[0.06] p-5">
+                        <h4 className="font-semibold text-white mb-1">💰 Lönehantering</h4>
+                        <p className="text-sm text-white/60">Hantera löner, arbetsgivaravgifter och skatteavdrag för dig och dina anställda — allt integrerat i bokföringen.</p>
+                    </div>
                 </div>
-            </main>
-        </ThemeProvider>
+            </section>
+
+            {/* For who */}
+            <section>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Vem är det för?</h2>
+                <p className="mb-4">
+                    Scope AI är designat för:
+                </p>
+                <ul className="space-y-2">
+                    <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2.5 shrink-0" />
+                        <span><strong className="text-white/90">Soloföretagare</strong> som vill undvika dyra byråer och göra bokföringen själva — snabbt och korrekt.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2.5 shrink-0" />
+                        <span><strong className="text-white/90">Startups</strong> som behöver en skalbar bokföringslösning som växer med dem.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2.5 shrink-0" />
+                        <span><strong className="text-white/90">Småföretag</strong> som vill minska administrativ tid och fokusera på verksamheten.</span>
+                    </li>
+                    <li className="flex items-start gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-blue-400 mt-2.5 shrink-0" />
+                        <span><strong className="text-white/90">Nystartade företag</strong> som behöver guidas genom bolagsbildning och första bokföringen.</span>
+                    </li>
+                </ul>
+            </section>
+
+            {/* Tech */}
+            <section>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Teknologin bakom</h2>
+                <p>
+                    Vi använder de senaste framstegen inom maskininlärning och NLP (Natural Language Processing) för att ge dig en plattform som inte bara följer reglerna — utan förstår dem.
+                </p>
+                <ul className="mt-4 space-y-2">
+                    <li className="flex items-center gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        Avancerad OCR för kvittoigenkänning.
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        LLM-baserad kontering och kategorisering.
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        Regelmotor för svensk skattelagstiftning (BAS-konto, moms, SRU-koder).
+                    </li>
+                    <li className="flex items-center gap-3">
+                        <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 shrink-0" />
+                        End-to-end kryptering och GDPR-kompatibel datahantering.
+                    </li>
+                </ul>
+            </section>
+
+            {/* Status */}
+            <section>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Beta-status</h2>
+                <p>
+                    Scope AI befinner sig för närvarande i beta. Det innebär att vi aktivt utvecklar och förbättrar plattformen. Vi välkomnar all feedback — den hjälper oss att bygga den bästa möjliga produkten.
+                </p>
+                <p className="mt-4">
+                    Under beta-perioden är den grundläggande tjänsten kostnadsfri att använda.
+                </p>
+            </section>
+
+            {/* Contact */}
+            <section>
+                <h2 className="text-xl md:text-2xl font-bold text-white mb-4 tracking-tight">Kontakt</h2>
+                <p>
+                    Vill du veta mer, samarbeta med oss eller bara säga hej? Hör av dig via{" "}
+                    <a href="mailto:info@scopeai.se" className="text-blue-400 hover:text-blue-300 transition-colors border-b border-blue-400/30 hover:border-blue-300/50 pb-px">
+                        info@scopeai.se
+                    </a>
+                </p>
+            </section>
+        </LegalPageLayout>
     )
 }
