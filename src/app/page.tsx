@@ -17,7 +17,7 @@ import { ThemeProvider } from "@/providers/theme-provider"
 export default function ScopeLandingPage() {
   return (
     <ThemeProvider attribute="class" forcedTheme="light" enableSystem={false}>
-      <main className="light min-h-screen bg-white font-sans text-stone-900 selection:bg-stone-200 selection:text-stone-900 scroll-smooth relative overflow-x-hidden">
+      <main className="light min-h-screen bg-white font-sans text-stone-900 selection:bg-stone-200 selection:text-stone-900 scroll-smooth relative ">
         {/* Animated Dither Art Decorations */}
         <AnimatedDitherArt />
 

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback, useEffect, useMemo } from "react"
 import { useInventarier } from "@/hooks/use-inventarier"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useToast } from "@/components/ui/toast"
@@ -13,9 +13,19 @@ export function useInventarierLogic() {
     const toast = useToast()
     
     const [isDialogOpen, setIsDialogOpen] = useState(false)
+    const [searchQuery, setSearchQuery] = useState("")
     const [newAsset, setNewAsset] = useState<Partial<Inventarie>>({
         livslangdAr: 5
     })
+
+    const filteredInventarier = useMemo(() => {
+        if (!searchQuery) return inventarier
+        const q = searchQuery.toLowerCase()
+        return inventarier.filter(i =>
+            i.namn.toLowerCase().includes(q) ||
+            i.kategori?.toLowerCase().includes(q)
+        )
+    }, [inventarier, searchQuery])
 
     // Initial fetch
     useEffect(() => {
@@ -73,12 +83,14 @@ export function useInventarierLogic() {
     return {
         // State
         isDialogOpen, setIsDialogOpen,
+        searchQuery, setSearchQuery,
         newAsset, setNewAsset,
         isLoading,
         text,
 
         // Data
         inventarier,
+        filteredInventarier,
         stats,
         selection,
         

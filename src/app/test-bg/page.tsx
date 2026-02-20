@@ -1,181 +1,91 @@
 "use client"
 
+import { ArrowRight } from "lucide-react"
+import Link from "next/link"
+import { TestNavbar } from "@/components/landing/layout/test-navbar"
+
 export default function TestBgPage() {
     return (
-        <div className="relative min-h-screen bg-black overflow-hidden flex items-center justify-center">
-            {/* Layer 1: Base image with slow Ken Burns drift */}
-            <div
-                className="absolute inset-0 animate-drift opacity-70"
-                style={{
-                    backgroundImage: "url('/premium.png')",
-                    backgroundSize: "cover",
-                    backgroundPosition: "center",
-                }}
-            />
+        <div
+            className="relative min-h-screen text-white font-sans selection:bg-white/30"
+            style={{
+                backgroundColor: '#050505',
+                backgroundImage: "url('/premiumbg-clean.png')",
+                backgroundSize: 'cover',
+                backgroundPosition: '85% center',
+                backgroundAttachment: 'fixed',
+                backgroundRepeat: 'no-repeat',
+            }}
+        >
+            {/* Main scrollable container */}
+            <div className="relative z-10 flex flex-col items-center w-full">
 
-            {/* Layer 2: Duplicate with different blend + offset timing */}
-            <div
-                className="absolute inset-0 animate-drift-reverse opacity-40 mix-blend-screen"
-                style={{
-                    backgroundImage: "url('/premium.png')",
-                    backgroundSize: "110% 110%",
-                    backgroundPosition: "center",
-                }}
-            />
+                {/* Fixed minimal Header */}
+                <TestNavbar />
 
-            {/* Layer 3: Breathing glow pulse */}
-            <div className="absolute inset-0 animate-glow-pulse bg-gradient-radial from-blue-500/15 via-transparent to-transparent" />
+                {/* Section 1: Hero */}
+                <section className="flex flex-col items-center justify-center min-h-[90vh] text-center px-4 w-full pt-24 md:pt-0">
+                    <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto flex flex-col items-center">
+                        <div className="px-3 py-1 rounded text-[10px] font-bold text-white/70 bg-white/10 mb-8 tracking-widest uppercase border border-white/10">
+                            Beta
+                        </div>
 
-            {/* Layer 4: Slow-moving radial gradient overlay for depth */}
-            <div
-                className="absolute inset-0 animate-gradient-shift opacity-60"
-                style={{
-                    background: "radial-gradient(ellipse at 60% 50%, rgba(59, 130, 246, 0.12) 0%, transparent 60%)",
-                }}
-            />
+                        <h1 className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-10 leading-[1.1] text-white">
+                            bokföring för framtiden.<br />
+                            starta ditt bolag.
+                        </h1>
 
-            {/* Vignette edges */}
-            <div
-                className="absolute inset-0 pointer-events-none"
-                style={{
-                    background: "radial-gradient(ellipse at center, transparent 40%, rgba(0,0,0,0.7) 100%)",
-                }}
-            />
+                        <Link href="/test-login" className="flex items-center justify-center gap-2 px-10 py-3.5 bg-[#f5f5f5] text-black rounded-2xl hover:bg-white transition-all font-medium text-lg w-fit hover:scale-[1.02] active:scale-[0.98]">
+                            kom igång <ArrowRight className="w-5 h-5" />
+                        </Link>
+                    </div>
+                </section>
 
-            {/* Content */}
-            <div className="relative z-10 text-center px-6 max-w-4xl">
-                <p className="text-blue-400/80 text-sm font-medium tracking-[0.3em] uppercase mb-6 animate-fade-in-up">
-                    Bokföring för framtiden
-                </p>
-                <h1 className="text-5xl md:text-7xl font-bold text-white mb-6 tracking-tight animate-fade-in-up animation-delay-100">
-                    Scope
-                </h1>
-                <p className="text-lg md:text-xl text-white/60 max-w-2xl mx-auto mb-10 animate-fade-in-up animation-delay-200">
-                    AI-driven bokföring som gör det enkelt att driva företag i Sverige.
-                </p>
-                <div className="flex items-center justify-center gap-4 animate-fade-in-up animation-delay-300">
-                    <button className="px-8 py-3 bg-white text-black font-semibold rounded-lg hover:bg-white/90 transition-all hover:scale-105">
-                        Kom igång gratis
-                    </button>
-                    <button className="px-8 py-3 border border-white/20 text-white font-medium rounded-lg hover:bg-white/10 transition-all">
-                        Se demo
-                    </button>
-                </div>
+                {/* Section 2: Statement Card */}
+                <section className="flex items-center justify-center min-h-screen px-4 w-full">
+                    <div className="max-w-[440px] md:max-w-[640px] w-full p-10 md:p-12 rounded-[2rem] bg-black/30 backdrop-blur-2xl">
+                        <p className="text-xl md:text-2xl font-medium leading-normal mb-20 text-white/95 tracking-tight">
+                            scope ai har som uppdrag att förenkla företagande genom en autonom AI-plattform som underlättar och planerar din bokföring, så att du kan ägna mer tid till att fokusera på det du gör bäst.
+                        </p>
+                        <p className="text-white/60 text-lg">
+                            <Link href="/test-login" className="text-white border-b border-white/30 hover:border-white transition-colors pb-1 border-dotted">gå med nu</Link> för att skapa ditt fria konto
+                        </p>
+                    </div>
+                </section>
+
+                {/* Section 3: Footer */}
+                <section className="min-h-screen flex flex-col justify-end w-full px-8 pb-0 pt-32 overflow-hidden">
+                    <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto z-10 flex flex-col px-5">
+
+                        {/* Links Row */}
+                        <div className="flex flex-row justify-between w-full mb-8 md:mb-12">
+                            <div>
+                                <h3 className="text-white/40 text-xl font-medium mb-6">Företag</h3>
+                                <ul className="space-y-3 text-2xl font-medium text-white/90">
+                                    <li><a href="#" className="hover:text-white transition-colors">Information</a></li>
+                                    <li><a href="#" className="hover:text-white transition-colors">Kontakt</a></li>
+                                </ul>
+                            </div>
+                            <div>
+                                <h3 className="text-white/40 text-xl font-medium mb-6">Följ oss</h3>
+                                <ul className="space-y-3 text-2xl font-medium text-white/90">
+                                    <li><a href="#" className="hover:text-white transition-colors">Facebook</a></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        {/* Huge logo perfectly constrained to the same vertical bounds left/right */}
+                        <div className="w-full pb-6 md:pb-10">
+                            <svg viewBox="0 0 380 90" className="w-full h-auto opacity-90 fill-white overflow-visible">
+                                <text x="50%" y="85%" textAnchor="middle" className="font-bold tracking-tighter" style={{ fontSize: '110px' }}>
+                                    scope ai
+                                </text>
+                            </svg>
+                        </div>
+
+                    </div>
+                </section>
             </div>
-
-            {/* Custom keyframes */}
-            <style jsx>{`
-                @keyframes drift {
-                    0% {
-                        transform: scale(1) translate(0, 0);
-                    }
-                    25% {
-                        transform: scale(1.05) translate(-1%, 0.5%);
-                    }
-                    50% {
-                        transform: scale(1.08) translate(0.5%, -0.5%);
-                    }
-                    75% {
-                        transform: scale(1.03) translate(1%, 0.5%);
-                    }
-                    100% {
-                        transform: scale(1) translate(0, 0);
-                    }
-                }
-
-                @keyframes drift-reverse {
-                    0% {
-                        transform: scale(1.1) translate(0, 0) rotate(0deg);
-                    }
-                    33% {
-                        transform: scale(1.15) translate(1%, -0.5%) rotate(0.5deg);
-                    }
-                    66% {
-                        transform: scale(1.05) translate(-1%, 0.5%) rotate(-0.3deg);
-                    }
-                    100% {
-                        transform: scale(1.1) translate(0, 0) rotate(0deg);
-                    }
-                }
-
-                @keyframes glow-pulse {
-                    0%, 100% {
-                        opacity: 0.3;
-                        transform: scale(1);
-                    }
-                    50% {
-                        opacity: 0.6;
-                        transform: scale(1.05);
-                    }
-                }
-
-                @keyframes gradient-shift {
-                    0% {
-                        background-position: 60% 50%;
-                        transform: scale(1);
-                    }
-                    33% {
-                        background-position: 40% 45%;
-                        transform: scale(1.1);
-                    }
-                    66% {
-                        background-position: 55% 55%;
-                        transform: scale(1.05);
-                    }
-                    100% {
-                        background-position: 60% 50%;
-                        transform: scale(1);
-                    }
-                }
-
-                @keyframes fade-in-up {
-                    0% {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    100% {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
-                }
-
-                .animate-drift {
-                    animation: drift 25s ease-in-out infinite;
-                }
-
-                .animate-drift-reverse {
-                    animation: drift-reverse 30s ease-in-out infinite;
-                }
-
-                .animate-glow-pulse {
-                    animation: glow-pulse 8s ease-in-out infinite;
-                }
-
-                .animate-gradient-shift {
-                    animation: gradient-shift 20s ease-in-out infinite;
-                }
-
-                .animate-fade-in-up {
-                    animation: fade-in-up 0.8s ease-out forwards;
-                    opacity: 0;
-                }
-
-                .animation-delay-100 {
-                    animation-delay: 0.1s;
-                }
-
-                .animation-delay-200 {
-                    animation-delay: 0.2s;
-                }
-
-                .animation-delay-300 {
-                    animation-delay: 0.3s;
-                }
-
-                .bg-gradient-radial {
-                    background: radial-gradient(ellipse at center, var(--tw-gradient-from) 0%, var(--tw-gradient-via) 50%, var(--tw-gradient-to) 100%);
-                }
-            `}</style>
         </div>
     )
 }

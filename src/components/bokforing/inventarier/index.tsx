@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { PageHeader } from "@/components/shared"
+import { SearchBar } from "@/components/ui/search-bar"
 import {
     Dialog,
     DialogContent,
@@ -26,11 +27,12 @@ export function InventarierTable() {
     const {
         // State
         isDialogOpen, setIsDialogOpen,
+        searchQuery, setSearchQuery,
         newAsset, setNewAsset,
         isLoading,
 
         // Data
-        inventarier,
+        filteredInventarier,
         stats,
         selection,
         
@@ -116,15 +118,22 @@ export function InventarierTable() {
                 <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
                     Alla tillgångar
                 </h3>
-                <Button variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={handleDepreciate}>
-                    <Calculator className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Bokför avskrivning</span>
-                </Button>
+                <div className="flex items-center gap-2">
+                    <SearchBar
+                        placeholder="Sök tillgång..."
+                        value={searchQuery}
+                        onChange={setSearchQuery}
+                    />
+                    <Button variant="outline" className="gap-2 shrink-0" onClick={handleDepreciate}>
+                        <Calculator className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Bokför avskrivning</span>
+                    </Button>
+                </div>
             </div>
 
             {/* Assets Grid */}
             <InventarierGrid
-                inventarier={inventarier}
+                inventarier={filteredInventarier}
                 isLoading={isLoading}
                 selection={selection}
             />

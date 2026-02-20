@@ -9,6 +9,16 @@ import {
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, PageHeader } from "@/components/shared"
 import { Button } from "@/components/ui/button"
+import { SearchBar } from "@/components/ui/search-bar"
+import { FilterButton } from "@/components/ui/filter-button"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuTrigger,
+    DropdownMenuCheckboxItem,
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
+import { accountClassLabels, type AccountClass } from "@/data/accounts"
 import { VerifikationDialog } from "../verifikation-dialog"
 
 // Sub-components
@@ -24,7 +34,8 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
 
     const {
         // State
-        setSearchQuery,
+        searchQuery, setSearchQuery,
+        classFilter, setClassFilter,
         createDialogOpen, setCreateDialogOpen,
         detailsDialogOpen, setDetailsDialogOpen,
         selectedVerifikation,
@@ -99,6 +110,50 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                     toast.success("Verifikation godkänd", `Verifikation #${selectedVerifikation?.id} har godkänts.`)
                 }}
             />
+
+            {/* Table Section */}
+            <div>
+                <div className="border-b-2 border-border/60" />
+
+                <div className="flex items-center justify-between gap-3 py-3">
+                    <h3 className="text-base font-semibold text-muted-foreground uppercase tracking-wider">
+                        Verifikationer
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <SearchBar
+                            placeholder="Sök verifikation..."
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                        />
+                        <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                                <FilterButton
+                                    label="Kontoklass"
+                                    isActive={classFilter !== "all"}
+                                />
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-[220px]">
+                                <DropdownMenuCheckboxItem
+                                    checked={classFilter === "all"}
+                                    onCheckedChange={() => setClassFilter("all")}
+                                >
+                                    Visa alla
+                                </DropdownMenuCheckboxItem>
+                                <DropdownMenuSeparator />
+                                {(Object.entries(accountClassLabels) as [string, string][]).map(([key, label]) => (
+                                    <DropdownMenuCheckboxItem
+                                        key={key}
+                                        checked={classFilter === Number(key)}
+                                        onCheckedChange={() => setClassFilter(Number(key) as AccountClass)}
+                                    >
+                                        {key} – {label}
+                                    </DropdownMenuCheckboxItem>
+                                ))}
+                            </DropdownMenuContent>
+                        </DropdownMenu>
+                    </div>
+                </div>
+            </div>
 
             {/* Verifications Table */}
             <VerifikationerGrid

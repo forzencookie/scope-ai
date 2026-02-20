@@ -22,23 +22,22 @@ export function OrbitalCut({ className }: { className?: string }) {
 export function GeometricIris({ className }: { className?: string }) {
     return (
         <svg viewBox="0 0 100 100" className={cn("shrink-0", className)}>
-            {/* Background - using currentColor to inherit text color (e.g. violet) */}
+            {/* Background - using currentColor to inherit text color */}
             <circle cx="50" cy="50" r="48" fill="currentColor" />
 
             {/* Solid 12-point star formed by 3 filled squares - with rounded corners */}
-            <g>
-                <rect x="25" y="25" width="50" height="50" rx="6" fill="white" />
-                <rect x="25" y="25" width="50" height="50" rx="6" fill="white"
-                    transform="rotate(30 50 50)" />
-                <rect x="25" y="25" width="50" height="50" rx="6" fill="white"
-                    transform="rotate(60 50 50)" />
+            {/* By default we want the cutouts to look like white/background space */}
+            <g fill="var(--background, #fff)" className="opacity-100 dark:fill-[#050505]">
+                <rect x="25" y="25" width="50" height="50" rx="6" />
+                <rect x="25" y="25" width="50" height="50" rx="6" transform="rotate(30 50 50)" />
+                <rect x="25" y="25" width="50" height="50" rx="6" transform="rotate(60 50 50)" />
             </g>
 
             {/* Negative Space Iris (Cutting through the solid star mass) */}
             <circle cx="50" cy="50" r="18" fill="currentColor" />
 
-            {/* Center Pupil (Solid white inside the cutout) */}
-            <circle cx="50" cy="50" r="6" fill="white" />
+            {/* Center Pupil */}
+            <circle cx="50" cy="50" r="6" fill="var(--background, #fff)" className="dark:fill-[#050505]" />
         </svg>
     )
 }
