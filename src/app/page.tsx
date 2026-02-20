@@ -5,6 +5,55 @@ import Link from "next/link"
 import { Navbar } from "@/components/landing/layout/navbar"
 import { AppDemoShowcase } from "@/components/landing/sections/app-demo-showcase"
 import { TextModeProvider } from "@/providers/text-mode-provider"
+import { motion, useInView } from "framer-motion"
+import { useState, useEffect, useRef } from "react"
+
+function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) {
+    const [displayedText, setDisplayedText] = useState("")
+    const ref = useRef(null)
+    const isInView = useInView(ref, { margin: "-10%" })
+
+    useEffect(() => {
+        let timeoutId: NodeJS.Timeout
+
+        if (isInView) {
+            setDisplayedText("")
+            let i = 0
+            const fullText = line1 + "\n" + line2
+
+            const typeChar = () => {
+                if (i <= fullText.length) {
+                    setDisplayedText(fullText.substring(0, i))
+                    i++
+                    // Natural typing speed: 30-80ms per character
+                    const delay = Math.random() * 50 + 30
+                    timeoutId = setTimeout(typeChar, delay)
+                }
+            }
+
+            // Initial pause before typing starts
+            timeoutId = setTimeout(typeChar, 400)
+        } else {
+            setDisplayedText("")
+        }
+
+        return () => clearTimeout(timeoutId)
+    }, [isInView, line1, line2])
+
+    const parts = displayedText.split("\n")
+
+    return (
+        <h1 ref={ref} className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-10 leading-[1.1] text-white min-h-[2.2em] md:min-h-[2.2em]">
+            {parts[0]}
+            {parts.length > 1 && <><br />{parts[1]}</>}
+            <motion.span
+                animate={{ opacity: [1, 0] }}
+                transition={{ repeat: Infinity, duration: 0.9, ease: "stepEnd" }}
+                className="inline-block w-[4px] h-[0.85em] bg-white ml-2 align-middle -translate-y-[4px]"
+            />
+        </h1>
+    )
+}
 
 export default function LandingPage() {
     return (
@@ -33,10 +82,7 @@ export default function LandingPage() {
                                 Beta
                             </div>
 
-                            <h1 className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-10 leading-[1.1] text-white">
-                                bokföring för framtiden.<br />
-                                starta ditt bolag.
-                            </h1>
+                            <TypewriterHeroText line1="bokföring för framtiden." line2="starta ditt bolag." />
 
                             <Link href="/logga-in" className="flex items-center justify-center gap-2 px-10 py-3.5 bg-[#f5f5f5] text-black rounded-2xl hover:bg-white transition-all font-medium text-lg w-fit hover:scale-[1.02] active:scale-[0.98]">
                                 kom igång <ArrowRight className="w-5 h-5" />
@@ -58,8 +104,8 @@ export default function LandingPage() {
 
                     {/* Section 3: Vision */}
                     <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
-                        <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
-                            vision.
+                        <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white gap-2 text-center mb-16 leading-tight">
+                            Vision
                         </h2>
                         <div className="max-w-[440px] md:max-w-[640px] w-full p-10 md:p-12 rounded-[2rem] bg-black/30 backdrop-blur-2xl">
                             <p className="text-xl md:text-2xl font-medium leading-normal mb-20 text-white/95 tracking-tight">
@@ -74,7 +120,7 @@ export default function LandingPage() {
                     {/* Section 4: Priser */}
                     <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
                         <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
-                            priser.
+                            Priser
                         </h2>
                         <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">
 
