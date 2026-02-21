@@ -1,6 +1,6 @@
 "use client"
 
-import { ArrowRight, Check, Sparkles } from "lucide-react"
+import { ArrowRight, Check } from "lucide-react"
 import Link from "next/link"
 import { Navbar } from "@/components/landing/layout/navbar"
 import { AppDemoShowcase } from "@/components/landing/sections/app-demo-showcase"
@@ -97,7 +97,7 @@ export default function LandingPage() {
                                 Din AI-assistent som jobbar dygnet runt.
                             </h2>
                         </div>
-                        <div className="-mt-[110px] w-full">
+                        <div className="-mt-[40px] w-full">
                             <AppDemoShowcase />
                         </div>
                     </div>
@@ -130,8 +130,8 @@ export default function LandingPage() {
                                     <div className="md:flex-1">
                                         <div className="flex items-center gap-3 mb-4">
                                             <p className="text-xs font-bold text-white/50 tracking-widest uppercase">Pro</p>
-                                            <span className="px-3 py-0.5 rounded-full bg-white/10 backdrop-blur-md text-[10px] font-bold text-white/80 tracking-widest uppercase flex items-center gap-1.5">
-                                                <Sparkles className="w-3 h-3" /> Populärast
+                                            <span className="px-3 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/20 backdrop-blur-md text-[10px] font-bold text-blue-300 tracking-widest uppercase flex items-center gap-1.5">
+                                                Populärast
                                             </span>
                                         </div>
                                         <div className="flex items-end gap-1 mb-6 md:mb-0">

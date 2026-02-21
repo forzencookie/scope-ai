@@ -77,6 +77,7 @@ export const RECEIPT_STATUS_VARIANT: Record<ReceiptStatus, StatusVariant> = {
     "Matchad": "success",
     "Avvisad": "error",
     "Bokförd": "violet",
+    "Uppladdad": "info",
 }
 
 // =============================================================================

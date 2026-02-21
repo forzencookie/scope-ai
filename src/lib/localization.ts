@@ -69,7 +69,8 @@ export const RECEIPT_STATUS_LABELS = {
     PROCESSED: "Behandlad",
     REJECTED: "Avvisad",
     MATCHED: "Matchad",
-    RECORDED: "Bokförd",  // Only achieved via verifikation matching
+    RECORDED: "Bokförd",
+    UPLOADED: "Uppladdad",
 } as const
 
 // =============================================================================

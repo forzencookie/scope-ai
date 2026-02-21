@@ -68,8 +68,8 @@ describe('Localization Constants', () => {
             expect(RECEIPT_STATUS_LABELS.REJECTED).toBe('Avvisad')
         })
 
-        it('should have exactly 8 statuses', () => {
-            expect(Object.keys(RECEIPT_STATUS_LABELS)).toHaveLength(8)
+        it('should have exactly 9 statuses', () => {
+            expect(Object.keys(RECEIPT_STATUS_LABELS)).toHaveLength(9)
         })
     })
 
