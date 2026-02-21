@@ -175,7 +175,7 @@ export function AppDemoShowcase() {
     const isProcessingReceipt = phase === 4
 
     // Content view: kvitton (0-6), verifikationer (7-10), momsdeklaration (11+)
-    const showMomsPage = phase >= 11 && phase < 20
+    const showMomsPage = phase >= 11
     const showVerifikationer = phase >= 7 && phase <= 10
     const activeTab = showMomsPage ? "moms" : showVerifikationer ? "verifikationer" : "kvitton"
 
@@ -188,16 +188,16 @@ export function AppDemoShowcase() {
     const walkthroughGodkannPressed = phase === 15
 
     const messages: Array<{ id: string, role: "user" | "ai", content?: string, isFile?: boolean, attachedFileName?: string }> = []
-    if (phase >= 4 && phase < 21) messages.push({ id: "1", role: "user", content: "Bokför mitt kvitto.", attachedFileName: "Scandic Hotel..." })
-    if (phase >= 5 && phase < 21) messages.push({ id: "2", role: "ai", content: `Kvittot från **${NEW_RECEIPT.supplier}** är bokfört som verifikation **V-${NEW_RECEIPT.verNr}**.` })
-    if (phase >= 7 && phase < 21) messages.push({ id: "2b", role: "user", content: "Visa verifikationen." })
-    if (phase >= 8 && phase < 21) messages.push({ id: "2c", role: "ai", content: "Självklart, jag öppnar listan med verifikationer åt dig." })
-    if (phase >= 10 && phase < 21) messages.push({ id: "3", role: "user", content: "Kan du ta fram momsdeklarationen?" })
-    if (phase >= 11 && phase < 21) messages.push({ id: "4", role: "ai", content: "Du har en kommande momsdeklaration för **Q1 2026**. Perioden täcker jan\u2013mars. Vill du att jag genererar den?" })
-    if (phase >= 13 && phase < 21) messages.push({ id: "5", role: "user", content: "Ja, kör!" })
-    if (phase >= 16 && phase < 21) messages.push({ id: "6", role: "ai", isFile: true, content: "Momsdeklarationen är genererad och redo. Filen innehåller all data för Skatteverkets e-tjänst." })
-    if (phase >= 18 && phase < 21) messages.push({ id: "7", role: "user", content: "Vad gör jag med filen nu?" })
-    if (phase >= 19 && phase < 21) messages.push({ id: "8", role: "ai", content: "Ladda ner SRU-filen ovan och logga in på **Skatteverket.se**.\nGå till *Momsdeklaration > Lämna fil* och ladda upp den där. Bekräfta och signera med BankID." })
+    if (phase >= 4) messages.push({ id: "1", role: "user", content: "Bokför mitt kvitto.", attachedFileName: "Scandic Hotel..." })
+    if (phase >= 5) messages.push({ id: "2", role: "ai", content: `Kvittot från **${NEW_RECEIPT.supplier}** är bokfört som verifikation **V-${NEW_RECEIPT.verNr}**.` })
+    if (phase >= 7) messages.push({ id: "2b", role: "user", content: "Visa verifikationen." })
+    if (phase >= 8) messages.push({ id: "2c", role: "ai", content: "Självklart, jag öppnar listan med verifikationer åt dig." })
+    if (phase >= 10) messages.push({ id: "3", role: "user", content: "Kan du ta fram momsdeklarationen?" })
+    if (phase >= 11) messages.push({ id: "4", role: "ai", content: "Du har en kommande momsdeklaration för **Q1 2026**. Perioden täcker jan\u2013mars. Vill du att jag genererar den?" })
+    if (phase >= 13) messages.push({ id: "5", role: "user", content: "Ja, kör!" })
+    if (phase >= 16) messages.push({ id: "6", role: "ai", isFile: true, content: "Momsdeklarationen är genererad och redo. Filen innehåller all data för Skatteverkets e-tjänst." })
+    if (phase >= 18) messages.push({ id: "7", role: "user", content: "Vad gör jag med filen nu?" })
+    if (phase >= 19) messages.push({ id: "8", role: "ai", content: "Ladda ner SRU-filen ovan och logga in på **Skatteverket.se**.\nGå till *Momsdeklaration > Lämna fil* och ladda upp den där. Bekräfta och signera med BankID." })
 
     const isAiThinking = phase === 4 || phase === 7 || phase === 10 || phase === 13 || phase === 18
 
@@ -272,7 +272,7 @@ export function AppDemoShowcase() {
                         >
                             {/* Scope AI Full Screen Overlay (Brand ending reset) */}
                             <div
-                                className={`absolute inset-0 z-[100] flex items-center justify-center bg-black transition-opacity duration-1000 rounded-2xl pointer-events-none ${phase === 21 ? 'opacity-100' : 'opacity-0'}`}
+                                className={`absolute inset-0 z-[100] flex items-center justify-center bg-black transition-opacity duration-1000 rounded-2xl pointer-events-none ${phase >= 21 ? 'opacity-100' : 'opacity-0'}`}
                             >
                                 {(phase === 21 || phase === 22) && (
                                     <div className="flex items-center gap-5 animate-in fade-in zoom-in-95 duration-1000 delay-300 fill-mode-both">
@@ -295,7 +295,7 @@ export function AppDemoShowcase() {
                                         <div className="flex items-center gap-2 px-3 py-3">
                                             <ScopeAILogo className="w-5 h-5 text-white" />
                                             <div className="flex flex-col">
-                                                <span className="text-[13px] font-semibold text-white leading-tight">Scope AI</span>
+                                                <span className="text-[13px] font-semibold text-white leading-tight">Scooby</span>
                                                 <span className="text-[10px] text-white/40 leading-tight">AI Assistent</span>
                                             </div>
                                             <ChevronDown className="w-3 h-3 text-white/30 ml-auto" />
@@ -392,7 +392,7 @@ export function AppDemoShowcase() {
                                                     {isAiThinking && (
                                                         <div className="flex justify-start items-center gap-1.5 py-1 text-white/50">
                                                             <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                                                            <span className="text-[12px]">Scope AI funderar...</span>
+                                                            <span className="text-[12px]">Scooby funderar...</span>
                                                         </div>
                                                     )}
                                                 </div>
@@ -459,7 +459,7 @@ export function AppDemoShowcase() {
                                                     </div>
                                                 </div>
                                                 <p className="text-[10px] text-white/30 text-center mt-2.5">
-                                                    Scope AI kan göra misstag. Kontrollera viktig info.
+                                                    Scooby kan göra misstag. Kontrollera viktig info.
                                                 </p>
                                             </div>
                                         </div>
