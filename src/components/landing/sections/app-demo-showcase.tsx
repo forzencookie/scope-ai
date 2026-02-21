@@ -203,7 +203,7 @@ export function AppDemoShowcase() {
 
     return (
         <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full py-16">
-            <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto text-center mb-6">
+            <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto text-center mb-6 mt-8">
                 {/* Interactive Timeline Playback Controls */}
                 <div className={`inline-flex items-center p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md transition-opacity duration-300 ${ready ? 'opacity-100' : 'opacity-0'}`}>
                     {/* Play/Pause Button */}
