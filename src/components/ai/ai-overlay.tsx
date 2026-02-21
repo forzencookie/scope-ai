@@ -2,28 +2,21 @@
 
 /**
  * AI Overlay - Full-screen overlay for AI processing
- * Shows animated mascots while thinking, output preview when complete
+ * Shows loading state while thinking, output preview when complete
  */
 
 import { motion, AnimatePresence } from "framer-motion"
 import { useAIDialogOptional } from "@/providers/ai-overlay-provider"
-import {
-    MascotCookingScene,
-    MascotCelebrationSceneStatic,
-    MascotPlayingScene,
-    MascotReadingScene,
-    MascotSearchingScene,
-    MascotErrorScene,
-    type SceneType,
-} from "./pixel-mascots"
+import type { SceneType } from "./pixel-mascots"
 import { CardRenderer } from "./card-renderer"
 import { ConfirmationCard } from "./confirmation-card"
 import { WalkthroughOverlay } from "./walkthrough-overlay"
 import { WalkthroughRenderer } from "./blocks"
 import { Button } from "@/components/ui/button"
-import { Check, Pencil, X, Sparkles, ArrowRight } from "lucide-react"
+import { Check, Pencil, X, ArrowRight, AlertTriangle, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { BlockProps } from "./blocks/types"
+import { useCallback } from "react"
 
 function extractBlockLabel(block: BlockProps): string {
     const props = block.props as Record<string, unknown>
@@ -112,49 +105,19 @@ export function AIOverlay({ className }: AIOverlayProps) {
 }
 
 // ============================================================================
-// Scene Component Map
+// Scene Labels — maps content type to card title + subtitle
 // ============================================================================
 
-const SCENE_COMPONENTS: Record<SceneType, React.ComponentType<{ className?: string }>> = {
-    cooking: MascotCookingScene,
-    playing: MascotPlayingScene,
-    reading: MascotReadingScene,
-    searching: MascotSearchingScene,
-    error: MascotErrorScene,
-}
-
-const SCENE_MESSAGES: Record<SceneType, string[]> = {
-    cooking: [
-        "Kokar ihop något gott...",
-        "Mixar ingredienserna...",
-        "Brygger ett svar...",
-        "Nästan klart...",
-    ],
-    playing: [
-        "Leker med idéer...",
-        "Jonglerar tankar...",
-        "Studsar runt...",
-        "Nästan klart...",
-    ],
-    reading: [
-        "Läser dokumenten...",
-        "Granskar detaljerna...",
-        "Analyserar innehållet...",
-        "Nästan klart...",
-    ],
-    searching: [
-        "Söker igenom...",
-        "Letar efter svar...",
-        "Utforskar möjligheter...",
-        "Nästan klart...",
-    ],
-    error: [
-        "Något gick fel...",
-    ],
+const SCENE_LABELS: Record<SceneType, { title: string; subtitle: string }> = {
+    cooking: { title: "Förbereder", subtitle: "Sammanställer och bearbetar data..." },
+    playing: { title: "Bearbetar", subtitle: "Analyserar och sammanställer..." },
+    reading: { title: "Läser dokument", subtitle: "Granskar och analyserar innehållet..." },
+    searching: { title: "Söker", subtitle: "Letar igenom och matchar data..." },
+    error: { title: "Bearbetar", subtitle: "Försöker lösa problemet..." },
 }
 
 // ============================================================================
-// Thinking State - Dynamic scene based on content type
+// Thinking State - Card-style spinner (matches demo overlay pattern)
 // ============================================================================
 
 interface ThinkingStateProps {
@@ -162,84 +125,22 @@ interface ThinkingStateProps {
 }
 
 function ThinkingState({ sceneType }: ThinkingStateProps) {
-    const SceneComponent = SCENE_COMPONENTS[sceneType] || MascotPlayingScene
-    const messages = SCENE_MESSAGES[sceneType] || SCENE_MESSAGES.playing
+    const labels = SCENE_LABELS[sceneType] || SCENE_LABELS.playing
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            className="flex flex-col items-center gap-8"
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="rounded-2xl border bg-card shadow-2xl p-5 flex items-center gap-4"
         >
-            {/* Dynamic mascot scene - no CSS scale to preserve pixel clarity */}
-            <SceneComponent />
-
-            {/* Animated message */}
-            <div className="flex flex-col items-center gap-2 mt-8">
-                <motion.div
-                    className="flex items-center gap-2 text-lg font-medium text-foreground"
-                    animate={{ opacity: [0.7, 1, 0.7] }}
-                    transition={{ duration: 2, repeat: Infinity }}
-                >
-                    <Sparkles className="h-5 w-5 text-amber-500" />
-                    <ThinkingMessage messages={messages} />
-                    <Sparkles className="h-5 w-5 text-amber-500" />
-                </motion.div>
-                <p className="text-sm text-muted-foreground">
-                    AI:n arbetar på din förfrågan
-                </p>
-            </div>
-
-            {/* Progress indicator */}
-            <div className="flex gap-1.5">
-                {[0, 1, 2].map((i) => (
-                    <motion.div
-                        key={i}
-                        className="w-2 h-2 rounded-full bg-primary"
-                        animate={{
-                            scale: [1, 1.3, 1],
-                            opacity: [0.5, 1, 0.5],
-                        }}
-                        transition={{
-                            duration: 0.8,
-                            repeat: Infinity,
-                            delay: i * 0.2,
-                        }}
-                    />
-                ))}
+            <Loader2 className="w-6 h-6 text-primary animate-spin shrink-0" />
+            <div className="flex flex-col">
+                <span className="text-sm font-semibold text-foreground">{labels.title}</span>
+                <span className="text-xs text-muted-foreground mt-0.5">{labels.subtitle}</span>
             </div>
         </motion.div>
     )
 }
-
-interface ThinkingMessageProps {
-    messages: string[]
-}
-
-function ThinkingMessage({ messages }: ThinkingMessageProps) {
-    const [index, setIndex] = useState(0)
-
-    useEffect(() => {
-        const interval = setInterval(() => {
-            setIndex((prev) => (prev + 1) % messages.length)
-        }, 3000)
-        return () => clearInterval(interval)
-    }, [messages.length])
-
-    return (
-        <motion.span
-            key={index}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-        >
-            {messages[index]}
-        </motion.span>
-    )
-}
-
-// Need to import useState, useEffect, useCallback
-import { useState, useEffect, useCallback } from "react"
 
 // ============================================================================
 // Complete State - Output preview with actions
@@ -277,20 +178,15 @@ interface CompleteStateProps {
 
 function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProps) {
     const hasConfirmation = !!output.confirmationRequired
-    const hasRichPreview = output.display?.component?.includes('Preview')
 
-    // If there's a confirmation AND NO rich preview, show the simple card directly
-    if (hasConfirmation && !hasRichPreview) {
+    // Confirmation card for write operations (approval flow)
+    if (hasConfirmation) {
         return (
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="flex flex-col items-center gap-4 max-w-md w-full px-4"
             >
-                {/* Static mascots */}
-                <MascotCelebrationSceneStatic className="scale-75" />
-
-                {/* Just the confirmation card */}
                 <ConfirmationCard
                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
                     confirmation={output.confirmationRequired as any}
@@ -302,103 +198,86 @@ function CompleteState({ output, onAccept, onEdit, onCancel }: CompleteStateProp
         )
     }
 
-    // For other structured output (non-confirmation OR rich preview confirmation)
+    // Document-style output — clean report layout
     return (
         <motion.div
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            className="flex flex-col items-center gap-6 max-w-2xl w-full px-4"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="absolute inset-0 overflow-y-auto"
         >
-            {/* Mini celebration - using static mascots (no animation) */}
-            <motion.div
-                initial={{ opacity: 0, y: -10 }}
+            <motion.article
+                initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="flex flex-col items-center gap-2 mb-2"
+                transition={{ delay: 0.05 }}
+                className="mx-auto max-w-3xl px-6 py-12 font-sans"
             >
-                <MascotCelebrationSceneStatic className="scale-100" />
-            </motion.div>
+                {/* Title */}
+                <header className="mb-6">
+                    <h1 className="text-2xl font-semibold tracking-tight">{output.title}</h1>
+                    <p className="mt-1 text-xs text-muted-foreground uppercase tracking-wide">{output.contentType}</p>
+                </header>
 
-            {/* Output card */}
-            <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.1 }}
-                className="w-full rounded-xl border bg-card shadow-lg overflow-hidden"
-            >
-                {/* Header */}
-                <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/50">
-                    <div className="flex items-center gap-2">
-                        <Sparkles className="h-4 w-4 text-amber-500" />
-                        <span className="font-medium">{output.title}</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground uppercase tracking-wide">
-                        {output.contentType}
-                    </span>
-                </div>
+                <hr className="border-border mb-6" />
 
-                {/* Content preview */}
-                <div className="p-4 max-h-[400px] overflow-y-auto">
+                {/* Content */}
+                <div className="max-h-[400px] overflow-y-auto mb-6">
                     {output.display ? (
                         <CardRenderer display={output.display!} />
                     ) : (
-                        output.content
+                        <div className="text-sm text-muted-foreground leading-relaxed">
+                            {output.content}
+                        </div>
                     )}
                 </div>
 
                 {/* Navigation hint */}
                 {output.navigation && (
-                    <div className="px-4 py-3 border-t bg-muted/30 flex items-center gap-2 text-sm text-muted-foreground">
-                        <ArrowRight className="h-4 w-4" />
-                        <span>Kommer visas i: <strong className="text-foreground">{output.navigation!.label || output.navigation!.route}</strong></span>
-                    </div>
+                    <>
+                        <hr className="border-border mb-6" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground mb-6">
+                            <ArrowRight className="h-4 w-4" />
+                            <span>Kommer visas i: <strong className="text-foreground">{output.navigation.label || output.navigation.route}</strong></span>
+                        </div>
+                    </>
                 )}
-            </motion.div>
 
-            {/* Action buttons */}
-            <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-                className="flex items-center gap-3"
-            >
-                <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onCancel}
-                    className="gap-2"
-                >
-                    <X className="h-4 w-4" />
-                    Avbryt
-                </Button>
-                <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onEdit}
-                    className="gap-2"
-                >
-                    <Pencil className="h-4 w-4" />
-                    Redigera
-                </Button>
-                <Button
-                    size="lg"
-                    onClick={onAccept}
-                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
-                >
-                    <Check className="h-4 w-4" />
-                    {hasConfirmation ? "Godkänn" : "Acceptera"}
-                </Button>
-            </motion.div>
+                <hr className="border-border mb-6" />
 
-            {/* Hint text */}
-            <p className="text-xs text-muted-foreground text-center">
-                Klicka på &quot;Redigera&quot; för att be AI:n göra ändringar
-            </p>
+                {/* Action buttons */}
+                <footer className="flex items-center gap-3">
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onEdit}
+                        className="gap-2"
+                    >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Redigera
+                    </Button>
+                    <Button
+                        size="sm"
+                        onClick={onAccept}
+                        className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white"
+                    >
+                        <Check className="h-3.5 w-3.5" />
+                        Acceptera
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={onCancel}
+                        className="ml-auto"
+                    >
+                        Stäng
+                    </Button>
+                </footer>
+            </motion.article>
         </motion.div>
     )
 }
 
 // ============================================================================
-// Error State - Confused mascots with retry/exit options
+// Error State
 // ============================================================================
 
 interface ErrorStateProps {
@@ -414,13 +293,13 @@ function ErrorState({ errorMessage, onRetry, onExit }: ErrorStateProps) {
             animate={{ opacity: 1, scale: 1 }}
             className="flex flex-col items-center gap-6 max-w-md w-full px-4"
         >
-            {/* Confused mascots */}
+            {/* Error icon */}
             <motion.div
                 initial={{ opacity: 0, y: -10 }}
                 animate={{ opacity: 1, y: 0 }}
-                className="mb-4"
+                className="flex items-center justify-center h-14 w-14 rounded-full bg-destructive/10"
             >
-                <MascotErrorScene />
+                <AlertTriangle className="h-7 w-7 text-destructive" />
             </motion.div>
 
             {/* Error message */}
@@ -438,7 +317,7 @@ function ErrorState({ errorMessage, onRetry, onExit }: ErrorStateProps) {
                 </p>
             </motion.div>
 
-            {/* Action buttons - simple retry/exit */}
+            {/* Action buttons */}
             <motion.div
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}

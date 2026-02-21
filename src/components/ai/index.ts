@@ -14,12 +14,6 @@ export {
     PixelDog,
     PixelBear,
     PixelGiraffe,
-    MascotCookingScene,
-    MascotCelebrationScene,
-    MascotPlayingScene,
-    MascotReadingScene,
-    MascotSearchingScene,
-    MascotErrorScene,
     type SceneType,
 } from './pixel-mascots'
 export { CardRenderer, type CardRendererProps } from './card-renderer'

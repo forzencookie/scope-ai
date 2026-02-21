@@ -122,7 +122,7 @@ export function AppStatusBadge({
     status,
     className,
     size = "sm",
-    showIcon = false,
+    showIcon = true,
 }: {
     status: AppStatus
     className?: string
@@ -139,10 +139,10 @@ export function AppStatusBadge({
     // Automatically use BookOpen icon for 'Bokförd' status
     const statusIcon = isBooked ? BookOpen : undefined
     // For booked items, we might want to ensure the icon is shown if it adds context
-    // but we respect the prop if it's explicitly false (though default is false).
-    // Let's passed it as the icon prop, the consumer can choose to show it via showIcon.
+    // but we respect the prop if it's explicitly false.
+    // Let's pass it as the icon prop, the consumer can choose to show it via showIcon.
 
-    return <StatusBadge status={displayText} variant={variant} size={size} showIcon={showIcon || isBooked} icon={statusIcon} className={className} />
+    return <StatusBadge status={displayText} variant={variant} size={size} showIcon={showIcon} icon={statusIcon} className={className} />
 }
 
 /**
