@@ -1,35 +1,12 @@
 // ============================================================================
-// Consolidated Provider - All exports from single file
+// Providers Layer - Central Export
 // ============================================================================
 
-export {
-    // Main provider
-    AppProviders,
-    DataProvider, // Legacy alias
+// Query provider (React Query wrapper)
+export { QueryProvider, getQueryClient } from "./query-provider"
+export type { QueryProviderProps } from "./query-provider"
 
-    // Hooks
-    useData,
-    useTransactions,
-    useTransactionsContext, // Legacy alias
-    useInvoices,
-    useInvoicesContext, // Legacy alias
-    useReceipts,
-    useReceiptsContext, // Legacy alias
-
-    // Query client
-    getQueryClient,
-    QueryProvider,
-
-    // Convenience providers
-    TransactionsOnlyProvider,
-    TransactionsProvider, // Legacy alias
-    InvoicesOnlyProvider,
-    InvoicesProvider, // Legacy alias
-    ReceiptsOnlyProvider,
-    ReceiptsProvider, // Legacy alias
-} from "./app-provider"
-
-// Company provider
+// Company provider (company type, feature gating, company data)
 export {
     CompanyProvider,
     useCompany,
@@ -44,38 +21,22 @@ export {
     T,
 } from "./text-mode-provider"
 
-export type {
-    TextMode,
-} from "./text-mode-provider"
-
-export type {
-    AppProvidersProps,
-    DataProviderProps,
-    TransactionsProviderProps,
-    InvoicesProviderProps,
-    ReceiptsProviderProps,
-    QueryProviderProps,
-    Invoice,
-    Receipt,
-} from "./app-provider"
-
-// AI Overlay provider
+// AI overlay provider (Scooby dialog state)
 export {
-    AIDialogProvider as AIOverlayProvider,
-    AIDialogProvider, // Keep legacy export
-    useAIDialog as useAIOverlay,
-    useAIDialog, // Keep legacy export
-    useAIDialogOptional as useAIOverlayOptional,
-    useAIDialogOptional, // Keep legacy export
+    AIDialogProvider,
+    useAIDialog,
+    useAIDialogOptional,
 } from "./ai-overlay-provider"
 
+// Model provider (AI model selection)
+export { ModelProvider, useModel } from "./model-provider"
+
+// Types
+export type { TextMode } from "./text-mode-provider"
+
 export type {
-    AIDialogStatus as AIOverlayStatus,
-    AIDialogStatus, // Keep legacy export
-    AIDialogOutput as AIOverlayOutput,
-    AIDialogOutput, // Keep legacy export
-    AIDialogNavigation as AIOverlayNavigation,
-    AIDialogNavigation, // Keep legacy export
-    AIDialogDisplay as AIOverlayDisplay,
-    AIDialogDisplay, // Keep legacy export
+    AIDialogStatus,
+    AIDialogOutput,
+    AIDialogNavigation,
+    AIDialogDisplay,
 } from "./ai-overlay-provider"

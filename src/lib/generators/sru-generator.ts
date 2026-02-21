@@ -359,3 +359,100 @@ export function createK10Declaration(data: K10SRUData): SRUDeclaration {
         fields,
     }
 }
+
+// ============================================================================
+// Legacy SRU generators (simpler interface for VAT/INK2 cards)
+// ============================================================================
+
+interface LegacySRUContact {
+    name: string
+    phone: string
+    email: string
+    address?: string
+    postalCode?: string
+    city?: string
+}
+
+class LegacySRUGenerator {
+    private lines: string[] = []
+
+    constructor(private prod = {
+        timestamp: new Date().toISOString().replace(/[-:T.Z]/g, '').slice(0, 14),
+        programName: "ScopeAI",
+        programVersion: "1.0"
+    }) { }
+
+    private addLine(line: string) { this.lines.push(line) }
+
+    public generateHeader() {
+        this.addLine(`#DATABESKRIVNING_START`)
+        this.addLine(`#PRODUKT ${this.prod.programName}`)
+        this.addLine(`#PROGRAM ${this.prod.programName} ${this.prod.programVersion}`)
+        this.addLine(`#SKAPAD ${this.prod.timestamp}`)
+        this.addLine(`#DATABESKRIVNING_SLUT`)
+    }
+
+    public addMediaProvider(info: LegacySRUContact) {
+        this.addLine(`#MEDIELEVERANTÖR_START`)
+        this.addLine(`#ORGNR ${info.phone}`)
+        this.addLine(`#NAMN ${info.name}`)
+        this.addLine(`#ADRESS ${info.address || ''}`)
+        this.addLine(`#POSTNR ${info.postalCode || ''}`)
+        this.addLine(`#POSTORT ${info.city || ''}`)
+        this.addLine(`#MEDIELEVERANTÖR_SLUT`)
+    }
+
+    public addForm(code: string, orgNumber: string, period: string, fields: Record<string, string | number>) {
+        this.addLine(`#BLANKETT ${code}`)
+        this.addLine(`#IDENTITET ${orgNumber.replace(/\D/g, '')} ${period}`)
+        this.addLine(`#NAMN ${fields['contactName'] || ''}`)
+        for (const [key, value] of Object.entries(fields)) {
+            if (key === 'contactName') continue
+            this.addLine(`#UPPGIFT ${key} ${value}`)
+        }
+        this.addLine(`#BLANKETT_SLUT`)
+    }
+
+    public addFileFooter() { this.addLine(`#FIL_SLUT`) }
+    public toString() { return this.lines.join('\r\n') }
+}
+
+export function generateVATSru(
+    data: {
+        orgNumber: string,
+        period: string,
+        vatData: Record<string, number>,
+        contact: LegacySRUContact
+    }
+): string {
+    const generator = new LegacySRUGenerator()
+    generator.generateHeader()
+    generator.addMediaProvider(data.contact)
+    const year = new Date().getFullYear()
+    generator.addForm(`SKV4700-${year}`, data.orgNumber, data.period, {
+        ...data.vatData,
+        contactName: data.contact.name
+    })
+    generator.addFileFooter()
+    return generator.toString()
+}
+
+export function generateINK2Sru(
+    data: {
+        orgNumber: string,
+        period: string,
+        taxData: Record<string, number>,
+        contact: LegacySRUContact
+    }
+): string {
+    const generator = new LegacySRUGenerator()
+    generator.generateHeader()
+    generator.addMediaProvider(data.contact)
+    const year = new Date().getFullYear()
+    generator.addForm(`INK2-${year}`, data.orgNumber, data.period, {
+        ...data.taxData,
+        contactName: data.contact.name
+    })
+    generator.addFileFooter()
+    return generator.toString()
+}

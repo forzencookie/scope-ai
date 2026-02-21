@@ -228,7 +228,7 @@ function ParterPageLoading() {
     );
 }
 
-export default function ParterPage() {
+export default function OwnershipPage() {
     return (
         <Suspense fallback={<ParterPageLoading />}>
             <ParterPageContent />

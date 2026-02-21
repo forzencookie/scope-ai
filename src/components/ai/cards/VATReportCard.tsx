@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { generateVATSru } from "@/lib/exports/sru-generator"
+import { generateVATSru } from "@/lib/generators/sru-generator"
 import { downloadTextFile } from "./utils"
 import { useCompany } from "@/providers/company-provider"
 

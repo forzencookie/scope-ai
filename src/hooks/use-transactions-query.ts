@@ -296,7 +296,7 @@ export function useTransactionStats() {
                 if (!response.success) throw new Error(response.error || "Failed to fetch stats")
                 return response.data
             }
-            return { total: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0 }
+            return { total: 0, totalCount: 0, income: 0, expenses: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0 }
         },
         staleTime: CACHE_CONFIG.staleTime,
         gcTime: CACHE_CONFIG.gcTime,
@@ -319,7 +319,7 @@ export function useTransactionAI(onUpdate?: (transaction: TransactionWithAI) => 
     const approveMutation = useMutation({
         mutationFn: async (transactionId: string) => {
             if (!isAuthenticated || !userId) throw new Error("Unauthorized")
-            const response = await transactionService.approveAISuggestion(transactionId)
+            const response = await transactionService.approveAISuggestion(transactionId, userId)
             if (!response.success || !response.data) throw new Error(response.error || "Failed to approve")
             return response.data
         },
@@ -332,7 +332,7 @@ export function useTransactionAI(onUpdate?: (transaction: TransactionWithAI) => 
     const rejectMutation = useMutation({
         mutationFn: async (transactionId: string) => {
             if (!isAuthenticated || !userId) throw new Error("Unauthorized")
-            const response = await transactionService.rejectAISuggestion(transactionId)
+            const response = await transactionService.rejectAISuggestion(transactionId, userId)
             if (!response.success || !response.data) throw new Error(response.error || "Failed to reject")
             return response.data
         },
@@ -345,7 +345,7 @@ export function useTransactionAI(onUpdate?: (transaction: TransactionWithAI) => 
     const bulkApproveMutation = useMutation({
         mutationFn: async (transactionIds: string[]) => {
             if (!isAuthenticated || !userId) throw new Error("Unauthorized")
-            const response = await transactionService.bulkApproveAISuggestions(transactionIds)
+            const response = await transactionService.bulkApproveAISuggestions(userId, transactionIds)
             if (!response.success || !response.data) throw new Error(response.error || "Failed to bulk approve")
             return response.data
         },

@@ -7,7 +7,7 @@ import { formatNumber } from "@/lib/utils"
 import { CheckCircle2 } from "lucide-react"
 import { ReportWizardShell } from "@/components/shared"
 import { useToast } from "@/components/ui/toast"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
 interface ArsbokslutData {
     sales: number

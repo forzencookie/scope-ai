@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { generateAGIXML } from "@/lib/exports/agi-generator"
+import { generateAGIXML } from "@/lib/generators/agi-generator"
 import { downloadTextFile } from "./utils"
 import { useCompany } from "@/providers/company-provider"
 

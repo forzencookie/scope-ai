@@ -46,8 +46,8 @@ const defaultTeam = {
 export type SidebarMode = "navigation" | "ai-chat"
 
 interface AppSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, "variant"> {
-  /** 'default' shows full navigation, 'minimal' shows empty sidebar with custom header */
-  variant?: "default" | "minimal" | "inset"
+  /** 'sidebar' shows full navigation, 'minimal' shows empty sidebar with custom header */
+  variant?: "sidebar" | "floating" | "minimal" | "inset"
   /** Custom header config for minimal variant */
   minimalHeader?: {
     icon?: LucideIcon
@@ -64,7 +64,7 @@ interface AppSidebarProps extends Omit<React.ComponentProps<typeof Sidebar>, "va
 
 
 export function AppSidebar({
-  variant = "default",
+  variant = "sidebar",
   minimalHeader,
   mode,
   onModeChange,
@@ -235,7 +235,8 @@ export function AppSidebar({
     )
   }
   // Determine sidebar variant to pass to underlying Sidebar
-  const sidebarVariant = variant === "minimal" ? undefined : variant
+  // Note: 'minimal' is handled above with early return, so variant is always a valid Sidebar variant here
+  const sidebarVariant = variant as "sidebar" | "floating" | "inset"
 
   return (
     <>
@@ -248,8 +249,8 @@ export function AppSidebar({
         collapsible="offcanvas"
         variant={sidebarVariant}
         className={`[&_*]:!border-0 [&_[data-slot=sidebar-inner]]:shadow-none ${sidebarMode === "ai-chat"
-            ? "[--sidebar-width:380px] xl:[--sidebar-width:440px] 2xl:[--sidebar-width:500px]"
-            : "[--sidebar-width:340px] xl:[--sidebar-width:380px] 2xl:[--sidebar-width:420px]"
+          ? "[--sidebar-width:380px] xl:[--sidebar-width:440px] 2xl:[--sidebar-width:500px]"
+          : "[--sidebar-width:340px] xl:[--sidebar-width:380px] 2xl:[--sidebar-width:420px]"
           }`}
         {...props}
       >

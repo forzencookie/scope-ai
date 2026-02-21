@@ -99,3 +99,91 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;')
 }
 
+// ============================================================================
+// Legacy AGI XML Generator (eAGI schema variant)
+// ============================================================================
+
+export interface EmployeeAGIData {
+    id: string
+    socialSecurityNumber: string
+    grossPay: number
+    benefits: number
+    expenseAllowances: number
+    taxDeducted: number
+}
+
+export interface AGIXMLParams {
+    period: string
+    submissionId: string
+    employer: {
+        orgNumber: string
+        name: string
+        contactName: string
+        phone: string
+        email: string
+    }
+    employees: EmployeeAGIData[]
+    deductions: {
+        rdDeduction?: number
+        regionalDeduction?: number
+    }
+}
+
+export function generateAGIXML(data: AGIXMLParams): string {
+    const [year, month] = data.period.split('-')
+    const periodCode = `${year}${month}`
+    const fmt = (num: number) => Math.round(num).toString()
+    const esc = (str: string) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+    const xml = `<?xml version="1.0" encoding="UTF-8"?>
+<eAGI xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/info/1.0"
+ xmlns:ai="http://xmls.skatteverket.se/se/skatteverket/ai/komponent/info/1.0">
+  <Avsandare>
+    <Organisationsnummer>${data.employer.orgNumber.replace(/\D/g, '')}</Organisationsnummer>
+    <TekniskKontaktperson>
+      <Namn>${esc(data.employer.contactName)}</Namn>
+      <Telefon>${data.employer.phone}</Telefon>
+      <Epostadress>${data.employer.email}</Epostadress>
+    </TekniskKontaktperson>
+    <Producentbeteckning>ScopeAI</Producentbeteckning>
+  </Avsandare>
+  <Blankettgemensamt>
+    <Redovisningsperiod>${periodCode}</Redovisningsperiod>
+  </Blankettgemensamt>
+
+  <Arbetsgivardeklaration>
+    <Arbetsgivare>
+      <Arbetsgivaravgift>
+        ${data.deductions.rdDeduction ? `<AvgiftsavdragFoU>${fmt(data.deductions.rdDeduction)}</AvgiftsavdragFoU>` : ''}
+        ${data.deductions.regionalDeduction ? `<AvgiftsavdragRegionalt>${fmt(data.deductions.regionalDeduction)}</AvgiftsavdragRegionalt>` : ''}
+      </Arbetsgivaravgift>
+    </Arbetsgivare>
+
+    <!-- Individual Employees -->
+    ${data.employees.map(emp => `
+    <Individuppgift>
+      <ArendetekniskaUppgifter>
+        <Arendetecken>${data.submissionId}</Arendetecken>
+      </ArendetekniskaUppgifter>
+      <Betalningsmottagare>
+        <Personnummer>${emp.socialSecurityNumber.replace(/\D/g, '')}</Personnummer>
+      </Betalningsmottagare>
+      <KontantErsattning>
+        ${emp.grossPay > 0 ? `<KontantBruttolon>${fmt(emp.grossPay)}</KontantBruttolon>` : ''}
+        ${emp.expenseAllowances > 0 ? `<Kostnadsersattning>${fmt(emp.expenseAllowances)}</Kostnadsersattning>` : ''}
+      </KontantErsattning>
+      <Forman>
+        ${emp.benefits > 0 ? `<SkattepliktigaFormaner>${fmt(emp.benefits)}</SkattepliktigaFormaner>` : ''}
+      </Forman>
+      <AvdragenSkatt>
+        <Skatteavdrag>${fmt(emp.taxDeducted)}</Skatteavdrag>
+      </AvdragenSkatt>
+    </Individuppgift>
+    `).join('')}
+
+  </Arbetsgivardeklaration>
+</eAGI>`
+
+    return xml
+}
+

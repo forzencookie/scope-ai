@@ -9,6 +9,8 @@ import * as React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
+import { getMyCompany, updateCompany as updateCompanyInDb } from "@/services/company-service"
+import { getSupabaseClient } from "@/lib/database/supabase"
 
 // ============================================
 // Types
@@ -138,45 +140,42 @@ export function CompanyProvider({
   useEffect(() => {
     async function loadCompany() {
       try {
-        // Try to fetch from database
-        const response = await fetch('/api/company')
-        if (response.ok) {
-          const data = await response.json()
-          if (data.company) {
-            // Map database format to local format
-            const dbCompany: CompanyInfo = {
-              id: data.company.id,
-              name: data.company.name,
-              orgNumber: data.company.orgNumber || '',
-              companyType: data.company.companyType || 'ab',
-              vatNumber: data.company.vatNumber || '',
-              address: data.company.address || '',
-              city: data.company.city || '',
-              zipCode: data.company.zipCode || '',
-              email: data.company.email || '',
-              phone: data.company.phone || '',
-              contactPerson: data.company.contactPerson || '',
-              registrationDate: data.company.registrationDate,
-              hasMomsRegistration: data.company.hasMomsRegistration ?? true,
-              hasEmployees: data.company.hasEmployees ?? false,
-              fiscalYearEnd: data.company.fiscalYearEnd || '12-31',
-              accountingMethod: data.company.accountingMethod || 'invoice',
-              vatFrequency: data.company.vatFrequency || 'quarterly',
-              isCloselyHeld: data.company.isCloselyHeld ?? true,
-              shareCapital: data.company.shareCapital ?? 25000,
-              totalShares: data.company.totalShares ?? 500,
-              shareClasses: { A: 0, B: data.company.totalShares ?? 500 },
-              memberFee: 0,
-              capitalContribution: 0,
-              onboardingMode: 'existing',
-              onboardingComplete: true,
-            }
-            setCompanyState(dbCompany)
-            // Also update localStorage for offline access
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(dbCompany))
-            setIsLoading(false)
-            return
+        // Try to fetch from database via company-service (direct Supabase)
+        const dbCompanyInfo = await getMyCompany()
+        if (dbCompanyInfo) {
+          // Map company-service CompanyInfo to provider's CompanyInfo shape
+          const company: CompanyInfo = {
+            id: dbCompanyInfo.id,
+            name: dbCompanyInfo.name,
+            orgNumber: dbCompanyInfo.orgNumber || '',
+            companyType: dbCompanyInfo.companyType || 'ab',
+            vatNumber: dbCompanyInfo.vatNumber || '',
+            address: dbCompanyInfo.address || '',
+            city: dbCompanyInfo.city || '',
+            zipCode: dbCompanyInfo.zipCode || '',
+            email: dbCompanyInfo.email || '',
+            phone: dbCompanyInfo.phone || '',
+            contactPerson: dbCompanyInfo.contactPerson || '',
+            registrationDate: dbCompanyInfo.registrationDate || undefined,
+            hasMomsRegistration: dbCompanyInfo.hasMomsRegistration ?? true,
+            hasEmployees: dbCompanyInfo.hasEmployees ?? false,
+            fiscalYearEnd: dbCompanyInfo.fiscalYearEnd || '12-31',
+            accountingMethod: dbCompanyInfo.accountingMethod || 'invoice',
+            vatFrequency: dbCompanyInfo.vatFrequency || 'quarterly',
+            isCloselyHeld: dbCompanyInfo.isCloselyHeld ?? true,
+            shareCapital: dbCompanyInfo.shareCapital ?? 25000,
+            totalShares: dbCompanyInfo.totalShares ?? 500,
+            shareClasses: { A: 0, B: dbCompanyInfo.totalShares ?? 500 },
+            memberFee: 0,
+            capitalContribution: 0,
+            onboardingMode: 'existing',
+            onboardingComplete: true,
           }
+          setCompanyState(company)
+          // Also cache in localStorage for offline access
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(company))
+          setIsLoading(false)
+          return
         }
       } catch (error) {
         console.warn('[CompanyProvider] Failed to fetch from database, using localStorage:', error)
@@ -214,29 +213,30 @@ export function CompanyProvider({
     if (company && !isLoading) {
       // Always save to localStorage immediately
       localStorage.setItem(STORAGE_KEY, JSON.stringify(company))
-      
-      // Debounce database save to avoid too many API calls
+
+      // Debounce database save to avoid too many writes
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)
       }
-      
+
       saveTimeoutRef.current = setTimeout(async () => {
+        if (!company.id) return // Skip if no company ID yet
         setIsSaving(true)
         try {
-          await fetch('/api/company', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          const supabase = getSupabaseClient()
+          const { data: { user } } = await supabase.auth.getUser()
+          if (user) {
+            await updateCompanyInDb(company.id, user.id, {
               name: company.name,
               orgNumber: company.orgNumber,
               companyType: company.companyType,
-              vatNumber: company.vatNumber,
-              address: company.address,
-              city: company.city,
-              zipCode: company.zipCode,
-              email: company.email,
-              phone: company.phone,
-              contactPerson: company.contactPerson,
+              vatNumber: company.vatNumber || undefined,
+              address: company.address || undefined,
+              city: company.city || undefined,
+              zipCode: company.zipCode || undefined,
+              email: company.email || undefined,
+              phone: company.phone || undefined,
+              contactPerson: company.contactPerson || undefined,
               registrationDate: company.registrationDate,
               fiscalYearEnd: company.fiscalYearEnd,
               accountingMethod: company.accountingMethod,
@@ -246,8 +246,8 @@ export function CompanyProvider({
               hasMomsRegistration: company.hasMomsRegistration,
               shareCapital: company.shareCapital,
               totalShares: company.totalShares,
-            }),
-          })
+            })
+          }
         } catch (error) {
           console.error('[CompanyProvider] Failed to save to database:', error)
         } finally {
@@ -255,7 +255,7 @@ export function CompanyProvider({
         }
       }, 1000) // 1 second debounce
     }
-    
+
     return () => {
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)

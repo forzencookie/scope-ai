@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
 const PayslipPreview = dynamic(() => import("../previews/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })), { ssr: false })
 

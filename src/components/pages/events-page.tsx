@@ -211,7 +211,7 @@ function HandelserPageLoading() {
     )
 }
 
-export default function HandelserPage() {
+export default function EventsPage() {
     return (
         <Suspense fallback={<HandelserPageLoading />}>
             <HandelserPageContent />

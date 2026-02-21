@@ -23,7 +23,7 @@ import { useTextMode } from "@/providers/text-mode-provider"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
 import { useToast } from "@/components/ui/toast"
 import { formatCurrency } from "@/lib/utils"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { ArsbokslutWizardDialog } from "./dialogs/arsbokslut-wizard-dialog"
 

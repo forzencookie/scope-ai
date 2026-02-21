@@ -1,6 +1,6 @@
 import { ReactElement, ReactNode } from "react"
 import { render, RenderOptions } from "@testing-library/react"
-import { DataProvider, DataProviderProps } from "@/providers"
+import { QueryProvider } from "@/providers/query-provider"
 import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ToastProvider } from "@/components/ui/toast"
 import type { Transaction, Invoice, Receipt, QuickStat, PendingTask } from "@/types"
@@ -154,30 +154,22 @@ export function createMockApiResponse<T>(data: T, success = true) {
 // Custom Render with Providers
 // ============================================================================
 
-interface CustomRenderOptions extends Omit<RenderOptions, "wrapper"> {
-    providerProps?: Partial<DataProviderProps>
-}
-
 /**
  * Custom render function that wraps components with necessary providers
  * Use this for testing components that depend on context
  */
 export function renderWithProviders(
     ui: ReactElement,
-    { providerProps, ...renderOptions }: CustomRenderOptions = {}
+    renderOptions: Omit<RenderOptions, "wrapper"> = {}
 ) {
     const Wrapper = ({ children }: { children: ReactNode }) => (
-        <TextModeProvider>
-            <ToastProvider>
-                <DataProvider
-                    initialTransactions={providerProps?.initialTransactions ?? []}
-                    initialInvoices={providerProps?.initialInvoices ?? []}
-                    initialReceipts={providerProps?.initialReceipts ?? []}
-                >
+        <QueryProvider>
+            <TextModeProvider>
+                <ToastProvider>
                     {children}
-                </DataProvider>
-            </ToastProvider>
-        </TextModeProvider>
+                </ToastProvider>
+            </TextModeProvider>
+        </QueryProvider>
     )
 
     return {

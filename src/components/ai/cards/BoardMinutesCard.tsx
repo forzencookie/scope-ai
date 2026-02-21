@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
 const BoardMinutesPreview = dynamic(() => import("../previews/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
 

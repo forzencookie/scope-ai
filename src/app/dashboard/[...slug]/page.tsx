@@ -13,10 +13,10 @@ const AccountingPage = dynamic(() => import("@/components/pages/accounting-page"
 const ReportsPage = dynamic(() => import("@/components/pages/reports-page"), {
     loading: () => <div className="p-6">Laddar rapporter...</div>
 })
-const HandelserPage = dynamic(() => import("@/components/pages/handelser-page"), {
+const EventsPage = dynamic(() => import("@/components/pages/events-page"), {
     loading: () => <div className="p-6">Laddar händelser...</div>
 })
-const ParterPage = dynamic(() => import("@/components/pages/parter-page"), {
+const OwnershipPage = dynamic(() => import("@/components/pages/ownership-page"), {
     loading: () => <div className="p-6">Laddar ägare...</div>
 })
 
@@ -24,8 +24,8 @@ const ParterPage = dynamic(() => import("@/components/pages/parter-page"), {
 const pageMap: Record<string, { component: React.ComponentType; label: string }> = {
     bokforing: { component: AccountingPage, label: "Bokföring" },
     rapporter: { component: ReportsPage, label: "Rapporter" },
-    handelser: { component: HandelserPage, label: "Händelser" },
-    agare: { component: ParterPage, label: "Ägare & Styrning" },
+    handelser: { component: EventsPage, label: "Händelser" },
+    agare: { component: OwnershipPage, label: "Ägare & Styrning" },
     loner: { component: PayrollPage, label: "Löner" },
 }
 

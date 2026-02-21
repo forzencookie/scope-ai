@@ -1,8 +1,8 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
-import { generateXBRL } from "@/lib/exports/xbrl-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
+import { generateXBRL } from "@/lib/generators/xbrl-generator"
 import { downloadTextFile } from "./utils"
 
 const AnnualReportPreview = dynamic(() => import("../previews/documents/annual-report-preview").then(m => ({ default: m.AnnualReportPreview })), { ssr: false })

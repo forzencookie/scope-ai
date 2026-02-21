@@ -10,7 +10,7 @@ import { useFinancialReports } from "@/hooks/use-financial-reports"
 import { SectionCard } from "@/components/ui/section-card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
 // ============================================
 // Balansräkning Component

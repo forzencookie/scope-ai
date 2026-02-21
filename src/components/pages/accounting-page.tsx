@@ -3,7 +3,6 @@
 import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
-import { transactionService, type TransactionStats } from '@/services/transaction-service'
 import { useCachedQuery } from '@/hooks/use-cached-query'
 import {
     TooltipProvider,
@@ -24,7 +23,7 @@ import {
 import { VerifikationerTable } from "@/components/bokforing/verifikationer"
 import { useTextMode } from "@/providers/text-mode-provider"
 
-import { useTransactionsPaginated } from "@/hooks"
+import { useTransactionsPaginated, useTransactionStats } from "@/hooks"
 
 // Tab configuration with feature requirements and translations
 const allTabs = [
@@ -87,11 +86,7 @@ function AccountingPageContent() {
         refetch: handleRefresh
     } = useTransactionsPaginated(50) // Default 50 items per page
 
-    const { data: transactionStats } = useCachedQuery<TransactionStats>({
-        cacheKey: 'transaction-stats',
-        queryFn: () => transactionService.getStats(),
-        ttlMs: 2 * 60 * 1000, // 2 min cache
-    })
+    const { stats: transactionStats } = useTransactionStats()
 
     const [lastRefresh, setLastRefresh] = useState<Date>(new Date())
 

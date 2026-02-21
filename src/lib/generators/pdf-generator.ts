@@ -954,3 +954,71 @@ export const generateDividendReceiptPDF = (data: DividendReceiptPDFData, company
 
     doc.save(`Utdelningsavi_${companyName.replace(/\s+/g, '_')}_${data.year}.pdf`);
 }
+
+// ============================================================================
+// DOM-to-PDF (captures rendered element as PDF)
+// ============================================================================
+
+export interface DOMPDFOptions {
+    fileName: string
+    elementId?: string
+    format?: 'a4' | 'letter'
+    orientation?: 'portrait' | 'landscape'
+}
+
+/**
+ * Capture a specific DOM element and download as PDF.
+ * Uses html2canvas for exact visual replication of styled previews.
+ */
+export async function downloadElementAsPDF(options: DOMPDFOptions) {
+    const html2canvas = (await import('html2canvas')).default
+
+    const element = options.elementId
+        ? document.getElementById(options.elementId)
+        : document.getElementById('document-preview-container')
+
+    if (!element) {
+        console.error(`Element not found: ${options.elementId || 'document-preview-container'}`)
+        throw new Error("Could not find document element to print")
+    }
+
+    try {
+        const canvas = await html2canvas(element, {
+            scale: 2,
+            useCORS: true,
+            logging: false,
+            backgroundColor: '#ffffff'
+        })
+
+        const imgData = canvas.toDataURL('image/png')
+
+        const pdf = new jsPDF({
+            orientation: options.orientation || 'portrait',
+            unit: 'mm',
+            format: options.format || 'a4'
+        })
+
+        const imgWidth = 210
+        const pageHeight = 297
+        const imgHeight = (canvas.height * imgWidth) / canvas.width
+
+        let heightLeft = imgHeight
+        let position = 0
+
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+        heightLeft -= pageHeight
+
+        while (heightLeft >= 0) {
+            position = heightLeft - imgHeight
+            pdf.addPage()
+            pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight)
+            heightLeft -= pageHeight
+        }
+
+        pdf.save(`${options.fileName}.pdf`)
+        return true
+    } catch (error) {
+        console.error("PDF Generation failed:", error)
+        return false
+    }
+}

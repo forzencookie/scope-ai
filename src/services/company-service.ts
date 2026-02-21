@@ -6,12 +6,14 @@
  */
 
 import { getSupabaseClient, getSupabaseAdmin } from '@/lib/database/supabase'
+import type { CompanyType } from '@/lib/company-types'
+
+// Re-export for convenience
+export type { CompanyType }
 
 // =============================================================================
 // Types
 // =============================================================================
-
-export type CompanyType = 'ab' | 'enskild_firma' | 'hb' | 'kb' | 'ekonomisk_forening'
 
 export interface CompanyInfo {
     id: string

@@ -7,6 +7,26 @@
  */
 
 // =============================================================================
+// LLM Types (used by ScopeBrain agent)
+// =============================================================================
+
+export interface LLMMessage {
+    role: 'system' | 'user' | 'assistant' | 'tool'
+    content: string
+    toolCallId?: string
+    name?: string
+}
+
+export interface LLMToolDefinition {
+    type: 'function'
+    function: {
+        name: string
+        description: string
+        parameters: Record<string, unknown>
+    }
+}
+
+// =============================================================================
 // Agent Domains
 // =============================================================================
 

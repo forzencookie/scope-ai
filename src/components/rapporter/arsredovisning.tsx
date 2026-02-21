@@ -22,7 +22,7 @@ import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
 import { useCompany } from "@/providers/company-provider"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
-import { generateXBRL, type XBRLParams } from "@/lib/exports/xbrl-generator"
+import { generateXBRL, type XBRLParams } from "@/lib/generators/xbrl-generator"
 
 export function ArsredovisningContent() {
     const toast = useToast()

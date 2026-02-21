@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
 const ShareRegisterPreview = dynamic(() => import("../previews/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
 

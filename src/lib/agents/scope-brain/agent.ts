@@ -9,11 +9,12 @@ import type {
     AgentContext,
     AgentResponse,
     AgentToolResult,
+    LLMMessage,
+    LLMToolDefinition,
 } from '../types'
 import { aiToolRegistry } from '../../ai-tools/registry'
 import { selectModel, getModelId, type ModelConfig } from './model-selector'
 import { buildSystemPrompt } from './system-prompt'
-import type { LLMMessage, LLMToolDefinition } from '../llm-client/types'
 import type OpenAI from 'openai'
 
 // =============================================================================

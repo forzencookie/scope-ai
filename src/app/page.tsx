@@ -48,7 +48,7 @@ function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) 
             {parts.length > 1 && <><br />{parts[1]}</>}
             <motion.span
                 animate={{ opacity: [1, 0] }}
-                transition={{ repeat: Infinity, duration: 0.9, ease: "stepEnd" }}
+                transition={{ repeat: Infinity, duration: 0.9, ease: [1, 0, 1, 0] }}
                 className="inline-block w-[4px] h-[0.85em] bg-white ml-2 align-middle -translate-y-[4px]"
             />
         </h1>

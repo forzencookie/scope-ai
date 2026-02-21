@@ -33,7 +33,7 @@ import { SectionCard } from "@/components/ui/section-card"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { getSupabaseClient } from "@/lib/database/supabase"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
 import { taxService } from "@/services/tax-service"
 

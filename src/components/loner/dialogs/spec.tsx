@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { useToast } from "@/components/ui/toast"
-import { downloadElementAsPDF } from "@/lib/exports/pdf-generator"
+import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 
 interface Payslip {
