@@ -247,12 +247,10 @@ export function AppSidebar({
       <Sidebar
         collapsible="offcanvas"
         variant={sidebarVariant}
-        className="[&_*]:!border-0 [&_[data-slot=sidebar-inner]]:shadow-none"
-        style={
-          {
-            "--sidebar-width": sidebarMode === "ai-chat" ? "380px" : "340px",
-          } as React.CSSProperties
-        }
+        className={`[&_*]:!border-0 [&_[data-slot=sidebar-inner]]:shadow-none ${sidebarMode === "ai-chat"
+            ? "[--sidebar-width:380px] xl:[--sidebar-width:440px] 2xl:[--sidebar-width:500px]"
+            : "[--sidebar-width:340px] xl:[--sidebar-width:380px] 2xl:[--sidebar-width:420px]"
+          }`}
         {...props}
       >
         <SidebarHeader className="p-0 px-2 pt-1">

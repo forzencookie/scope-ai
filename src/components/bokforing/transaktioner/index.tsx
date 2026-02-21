@@ -10,7 +10,6 @@ import { NewTransactionDialog } from "../dialogs/ny-transaktion"
 import { BookingDialog } from "../dialogs/bokforing"
 
 // Components
-import { TransactionsStatusCard } from "./components/transactions-status-card"
 import { TransactionsStats } from "./components/transactions-stats"
 import { TransactionFilters } from "./components/transaction-filters"
 import { TransactionsTableGrid } from "./components/transactions-table-grid"
@@ -21,26 +20,26 @@ import { TransactionsTableProps } from "./types"
 import { TRANSACTION_STATUSES } from "@/types"
 
 export const TransactionsTable = memo(function TransactionsTable(props: TransactionsTableProps) {
-    const { 
-        title, 
-        page = 1, 
-        pageSize = 20, 
-        total = 0, 
-        onPageChange 
+    const {
+        title,
+        page = 1,
+        pageSize = 20,
+        total = 0,
+        onPageChange
     } = props
 
     const { text } = useTextMode()
-    
+
     const {
         // State
         newTransactionDialogOpen, setNewTransactionDialogOpen,
         bookingDialogOpen, setBookingDialogOpen,
         selectedTransactions,
-        
+
         // Hooks
         filter,
         selection,
-        
+
         // Data
         filteredTransactions,
         stats,
@@ -66,11 +65,7 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 }
             />
 
-            {/* Status Hero */}
-            <TransactionsStatusCard
-                pendingCount={stats.pending}
-                onViewPending={() => filter.setStatusFilter([TRANSACTION_STATUSES.TO_RECORD, TRANSACTION_STATUSES.MISSING_DOCUMENTATION])}
-            />
+
 
             {/* Stats Overview */}
             <TransactionsStats
@@ -88,8 +83,8 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
             {/* Table Area */}
             <div>
                 <div className="border-b-2 border-border/60" />
-                
-                <TransactionFilters 
+
+                <TransactionFilters
                     title={title || (text.transactions?.allTransactions || "Alla transaktioner")}
                     searchQuery={filter.searchQuery}
                     onSearchChange={filter.setSearchQuery}
@@ -98,7 +93,7 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                     onStatusFilterClear={() => filter.setStatusFilter([])}
                 />
 
-                <TransactionsTableGrid 
+                <TransactionsTableGrid
                     transactions={filteredTransactions}
                     selection={selection}
                     onTransactionClick={handleTransactionClick}

@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { useCompany } from "@/providers/company-provider"
 import { useVerifications } from "@/hooks/use-verifications"
-import { VatProcessor, type VatReport } from "@/services/processors/vat-processor"
+import { VatProcessor, type VatReport } from "@/services/processors/vat"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useToast } from "@/components/ui/toast"
 import { BulkAction } from "@/components/shared/bulk-action-toolbar"
@@ -184,14 +184,14 @@ export function useVatReport() {
         selectedReport, setSelectedReport,
         showAIDialog, setShowAIDialog,
         isLoading,
-        
+
         // Data
         filteredPeriods,
-        
+
         // Selection
         selection,
         bulkActions,
-        
+
         // Actions
         refreshData,
         handleUpdateReport,

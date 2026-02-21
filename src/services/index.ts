@@ -8,7 +8,7 @@ export * from "./transactions"
 
 // Processor services - transform raw data into display-ready format
 export * from "./processors/invoice-processor"
-export * from "./processors/reports-processor"
+export * from "./processors/reports"
 
 // Domain services (consolidated from lib/services)
 export * from "./asset-service"

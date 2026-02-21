@@ -9,7 +9,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import {
     type ProcessedFinancialItem,
     type AccountBalance,
-} from '@/services/processors/reports-processor'
+} from '@/services/processors/reports'
 import { FinancialReportCalculator } from '@/services/processors/reports/calculator'
 import { companyService } from '@/services/company-service'
 import { getSupabaseAdmin } from '../../database/supabase'

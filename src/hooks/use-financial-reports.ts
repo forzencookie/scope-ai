@@ -1,7 +1,7 @@
 
 import { useMemo } from "react"
 import { getSupabaseClient } from '@/lib/database/supabase'
-import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports-processor"
+import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports"
 import { useCachedQuery } from "./use-cached-query"
 
 interface BalanceData {
