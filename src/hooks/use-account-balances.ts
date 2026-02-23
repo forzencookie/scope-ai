@@ -6,6 +6,7 @@
 import { useMemo } from "react"
 import { useVerifications } from "./use-verifications"
 import { basAccounts, type Account } from "@/data/accounts"
+import { normalizeBalances } from "./use-normalized-balances"
 
 // Account activity with balance information
 export interface AccountActivity {
@@ -145,51 +146,9 @@ export function useAccountBalances(options: UseAccountBalancesOptions = {}) {
     return accountBalances.filter((a) => a.transactionCount > 0)
   }, [accountBalances])
 
-  // Calculate totals
-  const totals = useMemo(() => {
-    const assets = accountBalances
-      .filter((a) => a.account?.type === "asset")
-      .reduce((sum, a) => sum + a.balance, 0)
-
-    const liabilities = accountBalances
-      .filter((a) => a.account?.type === "liability")
-      .reduce((sum, a) => sum + a.balance, 0)
-
-    const revenue = accountBalances
-      .filter((a) => a.account?.type === "revenue")
-      .reduce((sum, a) => sum + a.balance, 0)
-
-    const expenses = accountBalances
-      .filter((a) => a.account?.type === "expense")
-      .reduce((sum, a) => sum + a.balance, 0)
-
-    // Notes on accounting signs:
-    // Assets: Debit (+), Credit (-) -> Positive balance
-    // Liabilities: Credit (-), Debit (+) -> Negative balance
-    // Revenue: Credit (-), Debit (+) -> Negative balance
-    // Expenses: Debit (+), Credit (-) -> Positive balance
-
-    // Net Income = Revenue + Expenses (since Revenue is negative, Expenses positive).
-    // E.g. Revenue -100, Expense +80 => -20 (Profit of 20? No if Rev is -100 (Credit), Profit is usually inverted or Rev-Exp).
-    // Standard: Net Income = Revenue (absolute) - Expenses (absolute).
-    // Let's rely on the signed Math:
-    // Rev (-100) + Exp (80) = -20.  If negative result => Profit. If positive => Loss.
-    // However the UI expects 'netIncome'.
-    // Look at StatCard usage: "changeType={totals.netIncome >= 0 ? "positive" : "negative"}"
-    // Assuming UI expects Positive for Profit?
-    // Let's invert the sign for Net Income display if needed, or check logic.
-    // Let's strictly follow: Net = (Revenue + Expenses) * -1.
-    // Ex: Rev -100, Exp +80 = -20.  *-1 = +20 Profit. Correct.
-
-    return {
-      assets,
-      liabilities,
-      equity: assets + liabilities, // Assets + Liabilities should equal Equity? (A = L + E -> A - L = E? Assets (+) + Liabilities (-))
-      revenue,
-      expenses,
-      netIncome: (revenue + expenses) * -1,
-    }
-  }, [accountBalances])
+  // Calculate totals using normalized sign convention
+  // Raw balances stay as debit-credit for drill-down; totals are display-friendly
+  const totals = useMemo(() => normalizeBalances(accountBalances), [accountBalances])
 
   return {
     accountBalances,

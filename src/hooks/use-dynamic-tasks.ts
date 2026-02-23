@@ -3,6 +3,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useTransactions } from '@/hooks/use-transactions-query'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
 import { getSupabaseClient } from '@/lib/database/supabase'
+import { useCompany } from '@/providers/company-provider'
 
 export interface DynamicTask {
     id: string
@@ -81,6 +82,7 @@ function useStatCounts(): StatCounts & { isLoading: boolean } {
 export function useDynamicTasks() {
     const { transactions, isLoading: isLoadingTransactions } = useTransactions()
     const { draftInvoices, overdueInvoices, pendingPayslips, isLoading: isLoadingCounts } = useStatCounts()
+    const { company, companyType } = useCompany()
 
     // Derived state for goals and tasks
     const goals = useMemo<DynamicGoal[]>(() => {
@@ -137,27 +139,55 @@ export function useDynamicTasks() {
             tasks: bokforingTasks
         })
 
-        // 2. Rapporter Goal
+        // 2. Rapporter Goal — VAT deadline based on company's vatFrequency
         const now = new Date()
         const currentYear = now.getFullYear()
-        let vatDeadline = new Date(currentYear, 1, 12) // Feb 12
-        let vatPeriod = "Q4"
+        const vatFrequency = company?.vatFrequency || 'quarterly'
 
-        if (now > new Date(currentYear, 1, 12)) {
-            vatDeadline = new Date(currentYear, 4, 12) // May 12
-            vatPeriod = "Q1"
-        }
-        if (now > new Date(currentYear, 4, 12)) {
-            vatDeadline = new Date(currentYear, 7, 17) // Aug 17
-            vatPeriod = "Q2"
-        }
-        if (now > new Date(currentYear, 7, 17)) {
-            vatDeadline = new Date(currentYear, 10, 12) // Nov 12
-            vatPeriod = "Q3"
-        }
-        if (now > new Date(currentYear, 10, 12)) {
-            vatDeadline = new Date(currentYear + 1, 1, 12) // Feb 12 next year
+        let vatDeadline: Date
+        let vatPeriod: string
+
+        if (vatFrequency === 'monthly') {
+            // Monthly: deadline is 26th of next month (12th for jan/aug declarations)
+            const currentMonth = now.getMonth() // 0-based
+            const declarationMonth = currentMonth // previous month's VAT
+            const deadlineDay = (declarationMonth === 0 || declarationMonth === 7) ? 12 : 26
+            vatDeadline = new Date(currentYear, currentMonth + 1, deadlineDay)
+            if (vatDeadline <= now) {
+                const nextMonth = currentMonth + 1
+                const nextDeadlineDay = (nextMonth === 0 || nextMonth === 7) ? 12 : 26
+                vatDeadline = new Date(currentYear, nextMonth + 1, nextDeadlineDay)
+            }
+            const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+            vatPeriod = monthNames[vatDeadline.getMonth() - 1] || monthNames[11]
+        } else if (vatFrequency === 'annually') {
+            // Annually: deadline Feb 26 for previous year
+            vatDeadline = new Date(currentYear, 1, 26) // Feb 26
+            if (now > vatDeadline) {
+                vatDeadline = new Date(currentYear + 1, 1, 26)
+            }
+            vatPeriod = `${vatDeadline.getFullYear() - 1}`
+        } else {
+            // Quarterly (default)
+            vatDeadline = new Date(currentYear, 1, 12) // Feb 12
             vatPeriod = "Q4"
+
+            if (now > new Date(currentYear, 1, 12)) {
+                vatDeadline = new Date(currentYear, 4, 12) // May 12
+                vatPeriod = "Q1"
+            }
+            if (now > new Date(currentYear, 4, 12)) {
+                vatDeadline = new Date(currentYear, 7, 17) // Aug 17
+                vatPeriod = "Q2"
+            }
+            if (now > new Date(currentYear, 7, 17)) {
+                vatDeadline = new Date(currentYear, 10, 12) // Nov 12
+                vatPeriod = "Q3"
+            }
+            if (now > new Date(currentYear, 10, 12)) {
+                vatDeadline = new Date(currentYear + 1, 1, 12) // Feb 12 next year
+                vatPeriod = "Q4"
+            }
         }
 
         const daysToDeadline = Math.ceil((vatDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
@@ -186,38 +216,87 @@ export function useDynamicTasks() {
             ]
         })
 
-        // 3. Löner Goal
-        const lonerTasks: DynamicTask[] = []
+        // 3. Löner Goal — only show payroll for companies with employees
+        if (company?.hasEmployees) {
+            const lonerTasks: DynamicTask[] = []
 
-        if (pendingPayslips > 0) {
-            lonerTasks.push({
-                id: 'lon-1',
-                title: `Godkänn ${pendingPayslips} lönebesked`,
-                completed: false,
-                href: '/dashboard/loner?tab=lonebesked',
-                category: 'loner'
-            })
-        } else {
-            lonerTasks.push({
-                id: 'lon-1-done',
-                title: `Alla löner är hanterade`,
-                completed: true,
-                href: '/dashboard/loner?tab=lonebesked',
-                category: 'loner'
+            if (pendingPayslips > 0) {
+                lonerTasks.push({
+                    id: 'lon-1',
+                    title: `Godkänn ${pendingPayslips} lönebesked`,
+                    completed: false,
+                    href: '/dashboard/loner?tab=lonebesked',
+                    category: 'loner'
+                })
+            } else {
+                lonerTasks.push({
+                    id: 'lon-1-done',
+                    title: `Alla löner är hanterade`,
+                    completed: true,
+                    href: '/dashboard/loner?tab=lonebesked',
+                    category: 'loner'
+                })
+            }
+
+            newGoals.push({
+                id: 'goal-loner',
+                name: 'Löneadministration',
+                target: 'Utbetalning den 25:e varje månad',
+                category: 'loner',
+                tasks: lonerTasks
             })
         }
 
-        newGoals.push({
-            id: 'goal-loner',
-            name: 'Löneadministration',
-            target: 'Utbetalning den 25:e varje månad',
-            category: 'loner',
-            tasks: lonerTasks
-        })
+        // 4. EF/HB/KB: Egenavgifter goal instead of payroll
+        if (companyType === 'ef' || companyType === 'hb' || companyType === 'kb') {
+            newGoals.push({
+                id: 'goal-egenavgifter',
+                name: 'Egenavgifter',
+                target: 'Beräkna och bokför månadsvis',
+                category: 'loner',
+                tasks: [
+                    {
+                        id: 'ega-1',
+                        title: 'Beräkna preliminär F-skatt',
+                        completed: false,
+                        href: '/dashboard/loner?tab=egenavgifter',
+                        category: 'loner'
+                    }
+                ]
+            })
+        }
+
+        // 5. AB: Bolagsstämma reminder near fiscal year end
+        if (companyType === 'ab' && company?.fiscalYearEnd) {
+            const [fyMonth, fyDay] = company.fiscalYearEnd.split('-').map(Number)
+            // Stämma must be held within 6 months of fiscal year end
+            const fyEndDate = new Date(currentYear, (fyMonth || 12) - 1, fyDay || 31)
+            const stammoDeadline = new Date(fyEndDate)
+            stammoDeadline.setMonth(stammoDeadline.getMonth() + 6)
+            const daysToStamma = Math.ceil((stammoDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+
+            if (daysToStamma > 0 && daysToStamma <= 90) {
+                newGoals.push({
+                    id: 'goal-bolagsstamma',
+                    name: 'Bolagsstämma',
+                    target: `Ska hållas senast ${stammoDeadline.toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })} (${daysToStamma} dagar kvar)`,
+                    category: 'agare',
+                    tasks: [
+                        {
+                            id: 'stamma-1',
+                            title: 'Förbered årsredovisning',
+                            completed: false,
+                            href: '/dashboard/rapporter',
+                            category: 'agare'
+                        }
+                    ]
+                })
+            }
+        }
 
         return newGoals
 
-    }, [transactions, draftInvoices, overdueInvoices, pendingPayslips])
+    }, [transactions, draftInvoices, overdueInvoices, pendingPayslips, company, companyType])
 
     return {
         goals,

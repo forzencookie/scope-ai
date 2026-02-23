@@ -72,6 +72,7 @@ export const navBokforing: NavItem[] = [
         url: "/dashboard/bokforing?tab=verifikationer",
         icon: CheckSquare,
         featureKey: "verifikationer",
+        badgeKey: "pending-bookings",
     },
 ]
 
@@ -150,7 +151,7 @@ export const navLoner: NavItem[] = [
         featureKey: "lonebesked",
     },
     {
-        title: "Team & Rapportering",
+        title: "Team",
         titleEnkel: "Team",
         url: "/dashboard/loner?tab=team",
         icon: Users,

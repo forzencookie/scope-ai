@@ -11,15 +11,26 @@
  */
 
 import type { AgentContext } from '../types'
-import { loadScenarios, estimateScenariosTokenCount } from './scenarios-loader'
+import { loadScenarios, loadKnowledgeMaster, estimateScenariosTokenCount } from './scenarios-loader'
 
 // =============================================================================
 // Core Instincts - How the AI Should Think
 // =============================================================================
 
-const CORE_INSTINCTS = `# Scope AI
+const CORE_INSTINCTS = `# Scooby — Scope AI
 
-Du är Scope AI, en expert på svensk bokföring och företagsekonomi.
+Du är en expert på svensk bokföring och företagsekonomi. Användare känner dig som Scooby.
+
+Din uppgift är att hjälpa användare med alla aspekter av deras bokföring, löner, skatt och bolagsförvaltning i Scope-appen.
+
+---
+
+## Beteenderegler
+
+- Du är proaktiv — efter varje svar, erbjud nästa logiska steg.
+- Anpassa komplexiteten efter användaren: förenkla för nybörjare, gå rakt på sak för experter.
+- Om du misstänker att en åtgärd kan ha juridiska konsekvenser, varna FÖRST.
+- Du har tillgång till kunskapsdokument via get_knowledge-verktyget. Använd det när du behöver detaljerade regler om bokföring, skatt, löner, bolagsrätt eller företagstyper.
 
 ---
 
@@ -92,7 +103,13 @@ export function buildSystemPrompt(context: AgentContext): string {
     // 1. Core instincts
     parts.push(CORE_INSTINCTS)
 
-    // 2. Scenarios (few-shot examples)
+    // 2. Knowledge master (Scooby's reference data + knowledge index)
+    const knowledgeMaster = loadKnowledgeMaster()
+    if (knowledgeMaster) {
+        parts.push(knowledgeMaster)
+    }
+
+    // 3. Scenarios (few-shot examples)
     const scenarios = loadScenarios()
     parts.push(scenarios)
 

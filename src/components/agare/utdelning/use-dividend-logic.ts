@@ -1,4 +1,4 @@
-import { useMemo } from "react"
+import { useMemo, useCallback } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useCompliance } from "@/hooks/use-compliance"
 import { useToast } from "@/components/ui/toast"
@@ -18,7 +18,7 @@ export interface DividendDecision {
 }
 
 export function useDividendLogic() {
-    const { verifications, addVerification } = useVerifications()
+    const { verifications } = useVerifications()
     const { documents: realDocuments, addDocument, updateDocument } = useCompliance()
     const toast = useToast()
     const { k10Data } = useK10Calculation()
@@ -154,11 +154,36 @@ export function useDividendLogic() {
         )
     }
 
-    // Step 2: Book a decided dividend (creates accounting entries)
+    // Helper: create a pending booking via API
+    const createPendingBooking = useCallback(async (params: {
+        sourceType: string
+        sourceId: string
+        description: string
+        entries: Array<{ account: string; debit: number; credit: number; description: string }>
+        series?: string
+        date: string
+        metadata?: Record<string, unknown>
+    }): Promise<string | null> => {
+        try {
+            const res = await fetch('/api/pending-bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ action: 'create', ...params }),
+            })
+            if (!res.ok) throw new Error('Failed to create pending booking')
+            const data = await res.json()
+            return data.pendingBooking?.id || null
+        } catch (err) {
+            console.error('[useDividendLogic] createPendingBooking error:', err)
+            return null
+        }
+    }, [])
+
+    // Step 2: Book a decided dividend (creates pending booking for wizard)
     const bookDividend = async (dividend: DividendDecision) => {
         if (dividend.status !== 'decided') {
             toast.error("Kan inte bokföra", "Utdelningen måste vara beslutad på stämma först.")
-            return
+            return null
         }
 
         // ABL 17:3 solvency check at booking time (equity may have changed since planning)
@@ -169,83 +194,68 @@ export function useDividendLogic() {
                 `Beslutad utdelning: ${dividend.amount.toLocaleString('sv-SE')} kr. ` +
                 `Utdelningen överskrider fritt eget kapital (ABL 17:3).`
             )
-            return
+            return null
         }
 
-        // Create accounting entries:
-        // Step 1: Record liability - Debit 2098 (Vinst föregående år) → Credit 2898 (Utdelningsskuld)
-        await addVerification({
+        // Create pending booking — record liability: Debit 2098 → Credit 2898
+        const pendingId = await createPendingBooking({
+            sourceType: 'dividend_decision',
+            sourceId: dividend.id,
             description: `Beslutad utdelning ${dividend.year}`,
-            date: dividend.meetingDate,
-            rows: [
-                {
-                    account: "2098",
-                    debit: dividend.amount,
-                    credit: 0,
-                    description: "Minskning av fritt eget kapital",
-                },
-                {
-                    account: "2898",
-                    debit: 0,
-                    credit: dividend.amount,
-                    description: "Skuld till aktieägare",
-                },
+            entries: [
+                { account: "2098", debit: dividend.amount, credit: 0, description: "Minskning av fritt eget kapital" },
+                { account: "2898", debit: 0, credit: dividend.amount, description: "Skuld till aktieägare" },
             ],
+            series: 'A',
+            date: dividend.meetingDate,
+            metadata: {
+                dividendYear: dividend.year,
+                amount: dividend.amount,
+                meetingId: dividend.meetingId,
+                freeEquity: distributableEquity,
+            },
         })
 
-        // Update the meeting document to mark decision as booked
-        const doc = realDocuments?.find(d => d.id === dividend.meetingId)
-        if (doc) {
-            const content = JSON.parse(doc.content)
-            const decision = content.decisions?.find((d: any) => d.id === dividend.decisionId)
-            if (decision) {
-                decision.booked = true
-                await updateDocument({
-                    id: doc.id,
-                    content: JSON.stringify(content),
-                })
-            }
-        }
-
         toast.success(
-            "Utdelning bokförd",
-            `${dividend.amount.toLocaleString('sv-SE')} kr bokförd som skuld till aktieägare.`
+            "Utdelning förberedd",
+            `${dividend.amount.toLocaleString('sv-SE')} kr skapad som utkast. Gå till Verifikationer för att bokföra.`
         )
+
+        return pendingId
     }
 
-    // Step 3: Pay out dividend (settles the liability)
+    // Step 3: Pay out dividend (creates pending booking for wizard)
     const payDividend = async (dividend: DividendDecision, paymentDate?: string) => {
         if (dividend.status !== 'booked') {
             toast.error("Kan inte betala", "Utdelningen måste vara bokförd först.")
-            return
+            return null
         }
 
         const date = paymentDate || new Date().toISOString().split('T')[0]
 
-        // Settle liability - Debit 2898 (Utdelningsskuld) → Credit 1930 (Bank)
-        await addVerification({
+        // Create pending booking — settle liability: Debit 2898 → Credit 1930
+        const pendingId = await createPendingBooking({
+            sourceType: 'dividend_payment',
+            sourceId: dividend.id,
             description: `Utbetalning utdelning ${dividend.year}`,
-            date,
-            rows: [
-                {
-                    account: "2898",
-                    debit: dividend.amount,
-                    credit: 0,
-                    description: "Reglering utdelningsskuld",
-                },
-                {
-                    account: "1930",
-                    debit: 0,
-                    credit: dividend.amount,
-                    description: "Utbetalning till aktieägare",
-                },
+            entries: [
+                { account: "2898", debit: dividend.amount, credit: 0, description: "Reglering utdelningsskuld" },
+                { account: "1930", debit: 0, credit: dividend.amount, description: "Utbetalning till aktieägare" },
             ],
+            series: 'A',
+            date,
+            metadata: {
+                dividendYear: dividend.year,
+                amount: dividend.amount,
+            },
         })
 
         toast.success(
-            "Utdelning utbetald",
-            `${dividend.amount.toLocaleString('sv-SE')} kr utbetald till aktieägarna.`
+            "Utbetalning förberedd",
+            `${dividend.amount.toLocaleString('sv-SE')} kr skapad som utkast. Gå till Verifikationer för att bokföra.`
         )
+
+        return pendingId
     }
 
     // Legacy function - now just plans the dividend

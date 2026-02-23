@@ -15,6 +15,7 @@ import type { TransactionFilters, SortConfig, Transaction, TransactionWithAI } f
 import type { TransactionStatus } from "@/lib/status-types"
 import * as transactionService from "@/services/transactions"
 import { useAuth } from "./use-auth"
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 // ============================================================================
 // Query Keys - Centralized key management for cache invalidation
@@ -76,10 +77,29 @@ export function useTransactions() {
         enabled: isAuthenticated,
     })
 
-    // Update status mutation with optimistic updates
+    // Update status mutation with optimistic updates + period lock guard
     const updateStatusMutation = useMutation({
         mutationFn: async ({ id, status }: { id: string; status: TransactionStatus }) => {
             if (isAuthenticated && userId) {
+                // Check period lock before booking a transaction
+                const transaction = transactions.find(t => t.id === id)
+                if (transaction?.date) {
+                    const txDate = new Date(transaction.date)
+                    const year = txDate.getFullYear()
+                    const month = txDate.getMonth() + 1
+                    const periodId = `${year}-M${String(month).padStart(2, '0')}`
+                    const supabase = getSupabaseClient()
+                    const { data: period } = await supabase
+                        .from('financialperiods')
+                        .select('status')
+                        .eq('id', periodId)
+                        .single()
+
+                    if (period?.status === 'closed') {
+                        throw new Error('Perioden är låst. Lås upp månaden först.')
+                    }
+                }
+
                 const response = await transactionService.updateTransactionStatus(id, userId, status)
                 if (!response.success) throw new Error(response.error || "Failed to update status")
             }

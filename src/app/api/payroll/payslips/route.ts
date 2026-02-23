@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
-import { verificationService } from '@/services/verification-service';
+import { pendingBookingService } from '@/services/pending-booking-service';
 import { taxService } from '@/services/tax-service';
 
 export async function GET() {
@@ -48,14 +48,14 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Failed to create" }, { status: 500 });
         }
 
-        // Auto-create salary verification if we have the necessary salary data
-        // Skip if client indicates it will create the verification itself (skip_verification=true)
+        // Create pending booking instead of auto-verification
+        // User confirms via BookingWizard before entries become a verification
         const grossSalary = Number(body.gross_salary) || 0
         const taxDeduction = Number(body.tax_deduction) || 0
         const netSalary = Number(body.net_salary) || (grossSalary - taxDeduction)
+        let pendingBookingId: string | undefined
 
         if (grossSalary > 0 && !body.skip_verification) {
-            // Fetch tax rates from system_parameters
             const currentYear = new Date().getFullYear()
             const rates = await taxService.getAllTaxRates(currentYear)
 
@@ -66,7 +66,6 @@ export async function POST(req: NextRequest) {
                 );
             }
 
-            // Use client-provided employer contribution if available, otherwise calculate
             const employerContributionRate = body.employer_contribution_rate != null
                 ? Number(body.employer_contribution_rate)
                 : rates!.employerContributionRate
@@ -77,10 +76,12 @@ export async function POST(req: NextRequest) {
             const period = body.period || new Date().toISOString().slice(0, 7)
 
             try {
-                await verificationService.createVerification({
+                const pending = await pendingBookingService.createPendingBooking({
+                    sourceType: 'payslip',
+                    sourceId: saved.id,
+                    description: `Lön ${employeeName} ${period}`,
                     series: 'L',
                     date: body.payment_date || new Date().toISOString().split('T')[0],
-                    description: `Lön ${employeeName} ${period}`,
                     entries: [
                         { account: '7010', debit: grossSalary, credit: 0, description: `Lön ${employeeName}` },
                         { account: '7510', debit: employerContribution, credit: 0, description: `Arbetsgivaravgift ${employeeName}` },
@@ -88,16 +89,15 @@ export async function POST(req: NextRequest) {
                         { account: '2730', debit: 0, credit: employerContribution, description: `Arbetsgivaravgift skuld ${employeeName}` },
                         { account: '1930', debit: 0, credit: netSalary, description: `Utbetalning lön ${employeeName}` },
                     ],
-                    sourceType: 'payroll',
-                    sourceId: saved.id,
+                    metadata: { employeeName, period, grossSalary, netSalary },
                 })
-            } catch (verError) {
-                // Log but don't fail the payslip creation
-                console.error('Failed to create salary verification:', verError)
+                pendingBookingId = pending.id
+            } catch (pbError) {
+                console.error('Failed to create pending booking for payslip:', pbError)
             }
         }
 
-        return NextResponse.json({ success: true, payslip: saved });
+        return NextResponse.json({ success: true, payslip: saved, pendingBookingId });
     } catch (error) {
         console.error("Failed to create payslip:", error);
         return NextResponse.json({ error: "Failed to create" }, { status: 500 });

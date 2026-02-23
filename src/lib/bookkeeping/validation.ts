@@ -3,6 +3,7 @@
  */
 
 import type { JournalEntry, JournalEntryLine, ValidationResult } from './types'
+import { isValidAccount } from './utils'
 
 /**
  * Round to nearest öre (Swedish cent, 0.01 SEK)
@@ -35,6 +36,8 @@ export function validateLine(line: JournalEntryLine, index: number): string[] {
 
   if (!/^\d{4}$/.test(line.account)) {
     errors.push(`Rad ${index + 1}: Ogiltigt kontonummer "${line.account}"`)
+  } else if (!isValidAccount(line.account)) {
+    errors.push(`Rad ${index + 1}: Konto ${line.account} finns inte i BAS kontoplanen`)
   }
 
   // Amount validation

@@ -1,6 +1,7 @@
 
-import { useCallback } from "react"
+import { useCallback, useState } from "react"
 import { useCachedQuery } from "./use-cached-query"
+import { getSupabaseClient } from '@/lib/database/supabase'
 
 export interface VerificationRow {
     account: string
@@ -38,8 +39,31 @@ export function useVerifications() {
         ttlMs: 5 * 60 * 1000, // 5 minutes cache
     })
 
+    const [lockError, setLockError] = useState<string | null>(null)
+
     const addVerification = useCallback(async (verification: Omit<Verification, "id">) => {
+        setLockError(null)
         try {
+            // Check if the verification's date falls in a locked period
+            const verDate = new Date(verification.date)
+            const year = verDate.getFullYear()
+            const month = verDate.getMonth() + 1
+            const periodId = `${year}-M${String(month).padStart(2, '0')}`
+
+            const supabase = getSupabaseClient()
+            const { data: period } = await supabase
+                .from('financialperiods')
+                .select('status')
+                .eq('id', periodId)
+                .single()
+
+            if (period?.status === 'closed') {
+                const msg = 'Perioden är låst. Lås upp månaden först.'
+                setLockError(msg)
+                console.warn(msg)
+                return false
+            }
+
             const response = await fetch('/api/verifications', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -58,6 +82,7 @@ export function useVerifications() {
         verifications: verifications || [],
         isLoading,
         error,
+        lockError,
         refresh: refetch,
         addVerification,
     }

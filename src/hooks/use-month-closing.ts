@@ -15,6 +15,18 @@ import {
 
 export type PeriodStatus = 'open' | 'review' | 'locked'
 
+/**
+ * Check if a date falls within a locked financial period.
+ * Used by useVerifications and useTransactions to prevent writes to closed months.
+ */
+export function isPeriodLocked(date: string, periods: MonthStatus[]): boolean {
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1 // 1-based
+  const period = periods.find(p => p.year === year && p.month === month)
+  return period?.status === 'locked'
+}
+
 export interface MonthStatus {
     id?: string
     year: number

@@ -17,6 +17,7 @@ export type { AIConfirmationRequest } from './types'
 
 class AIToolRegistry {
     private tools: Map<string, AITool> = new Map()
+    /** In-memory cache — DB is source of truth */
     private pendingConfirmations: Map<string, PendingConfirmation> = new Map()
     private auditLog: ActionAuditLog[] = []
 
@@ -106,7 +107,12 @@ class AIToolRegistry {
                     createdAt: Date.now(),
                     expiresAt: Date.now() + 5 * 60 * 1000, // 5 minutes
                 }
+                // Store in memory cache
                 this.pendingConfirmations.set(confirmationId, pending)
+                // Persist to DB for restart resilience
+                this.persistConfirmation(pending, name, params, options?.userId).catch(err =>
+                    console.error('[AI Tool Registry] Failed to persist confirmation:', err)
+                )
 
                 return {
                     success: true,
@@ -123,7 +129,11 @@ class AIToolRegistry {
 
         // If confirming a previous request, validate the confirmation
         if (options?.confirmationId) {
-            const pending = this.pendingConfirmations.get(options.confirmationId)
+            let pending: PendingConfirmation | undefined = this.pendingConfirmations.get(options.confirmationId)
+            // Fallback to DB if not in memory (e.g. after server restart)
+            if (!pending) {
+                pending = await this.loadConfirmationFromDB(options.confirmationId) ?? undefined
+            }
             if (!pending) {
                 return {
                     success: false,
@@ -132,13 +142,15 @@ class AIToolRegistry {
             }
             if (Date.now() > pending.expiresAt) {
                 this.pendingConfirmations.delete(options.confirmationId)
+                this.deleteConfirmationFromDB(options.confirmationId).catch(() => {})
                 return {
                     success: false,
                     error: 'Confirmation expired. Please try again.',
                 }
             }
-            // Clear the pending confirmation
+            // Clear the pending confirmation from both cache and DB
             this.pendingConfirmations.delete(options.confirmationId)
+            this.deleteConfirmationFromDB(options.confirmationId).catch(() => {})
             // Mark context as confirmed so the tool knows to persist
             context.isConfirmed = true
         }
@@ -219,6 +231,81 @@ class AIToolRegistry {
     }
 
     /**
+     * Persist a confirmation to DB for restart resilience
+     */
+    private async persistConfirmation(
+        pending: PendingConfirmation,
+        toolName: string,
+        params: unknown,
+        userId?: string,
+    ): Promise<void> {
+        try {
+            await db.logAIToolExecution({
+                toolName: `__confirmation__:${pending.id}`,
+                parameters: {
+                    originalTool: toolName,
+                    originalParams: params as Record<string, unknown>,
+                    request: pending.request as unknown as Record<string, unknown>,
+                    createdAt: pending.createdAt,
+                    expiresAt: pending.expiresAt,
+                },
+                result: { status: 'pending' },
+                status: 'pending',
+                userId: userId || 'system',
+            })
+        } catch (error) {
+            console.error('[AI Tool Registry] Confirmation persist failed:', error)
+        }
+    }
+
+    /**
+     * Load a confirmation from DB (fallback when not in memory cache)
+     */
+    private async loadConfirmationFromDB(confirmationId: string): Promise<PendingConfirmation | null> {
+        try {
+            const { getSupabaseAdmin } = await import('../database/supabase')
+            const supabase = getSupabaseAdmin()
+            const { data } = await supabase
+                .from('ai_audit_log')
+                .select('parameters')
+                .eq('tool_name', `__confirmation__:${confirmationId}`)
+                .single()
+
+            if (!data?.parameters) return null
+
+            const params = data.parameters as Record<string, unknown>
+            const pending: PendingConfirmation = {
+                id: confirmationId,
+                request: params.request as PendingConfirmation['request'],
+                createdAt: params.createdAt as number,
+                expiresAt: params.expiresAt as number,
+            }
+
+            // Re-cache for subsequent lookups
+            this.pendingConfirmations.set(confirmationId, pending)
+            return pending
+        } catch {
+            return null
+        }
+    }
+
+    /**
+     * Delete a confirmation from DB after it's been used or expired
+     */
+    private async deleteConfirmationFromDB(confirmationId: string): Promise<void> {
+        try {
+            const { getSupabaseAdmin } = await import('../database/supabase')
+            const supabase = getSupabaseAdmin()
+            await supabase
+                .from('ai_audit_log')
+                .delete()
+                .eq('tool_name', `__confirmation__:${confirmationId}`)
+        } catch {
+            // Non-critical — cleanup will catch it
+        }
+    }
+
+    /**
      * Clear all pending confirmations (for cleanup)
      */
     clearExpiredConfirmations(): void {
@@ -226,6 +313,7 @@ class AIToolRegistry {
         for (const [id, pending] of this.pendingConfirmations) {
             if (now > pending.expiresAt) {
                 this.pendingConfirmations.delete(id)
+                this.deleteConfirmationFromDB(id).catch(() => {})
             }
         }
     }

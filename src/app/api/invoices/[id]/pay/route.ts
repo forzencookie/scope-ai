@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
-import { verificationService } from '@/services/verification-service';
+import { pendingBookingService } from '@/services/pending-booking-service';
 import { createPaymentReceivedEntry } from '@/lib/bookkeeping';
 
 export async function POST(
@@ -35,9 +35,6 @@ export async function POST(
             return NextResponse.json({ error: "Invoice already paid" }, { status: 400 });
         }
 
-        // Update Invoice Status
-        await userDb.customerInvoices.update(id, { status: 'betald' });
-
         const total = Number(invoice.total_amount) || 0;
 
         // Use the bookkeeping engine for payment received entry
@@ -49,10 +46,10 @@ export async function POST(
             series: 'A',
         });
 
-        // Create verification with source tracking and relational lines
-        const verification = await verificationService.createVerification({
-            series: 'A',
-            date: journalEntry.date,
+        // Create pending booking instead of auto-verification
+        const pending = await pendingBookingService.createPendingBooking({
+            sourceType: 'invoice_payment',
+            sourceId: id,
             description: journalEntry.description,
             entries: journalEntry.rows.map(row => ({
                 account: row.account,
@@ -60,22 +57,16 @@ export async function POST(
                 credit: row.credit,
                 description: row.description,
             })),
-            sourceType: 'invoice',
-            sourceId: id,
+            series: 'A',
+            date: journalEntry.date,
+            metadata: {
+                invoiceNumber: invoice.invoice_number,
+                customerName: invoice.customer_name,
+                total,
+            },
         });
 
-        // Create Bank Transaction record
-        const transaction = await userDb.transactions.create({
-            id: `TX-PAY-${Date.now()}`,
-            date: new Date().toISOString(),
-            description: `Inbetalning ${invoice.invoice_number || id}`,
-            name: `Inbetalning ${invoice.invoice_number || id}`,
-            amount: String(total),
-            amount_value: total,
-            status: 'Bokförd'
-        });
-
-        return NextResponse.json({ success: true, verification, transaction });
+        return NextResponse.json({ success: true, pendingBookingId: pending.id });
 
     } catch (error: unknown) {
         console.error("Payment error:", error);

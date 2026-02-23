@@ -222,11 +222,15 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 }
             }
 
+            // Calculate vacation accrual suggestion (Semesterlagen 12%)
+            const vacationAccrual = Math.round(totalGross * 0.12)
+            const vacationNote = `\n\nSemesterlöneskuld på ${vacationAccrual.toLocaleString('sv-SE')} kr (12% av bruttolön) bör bokföras. Vill du att jag gör det?`
+
             return {
                 success: errors.length === 0,
                 data: savedPayslips,
                 message: errors.length === 0
-                    ? `Lönekörning klar! ${savedPayslips.length} lönebesked sparade. Total brutto: ${totalGross.toLocaleString('sv-SE')} kr.`
+                    ? `Lönekörning klar! ${savedPayslips.length} lönebesked sparade. Total brutto: ${totalGross.toLocaleString('sv-SE')} kr.${vacationNote}`
                     : `${savedPayslips.length} av ${payslips.length} lönebesked sparade. Fel: ${errors.join('; ')}`,
                 ...(errors.length > 0 ? { error: errors.join('; ') } : {}),
             }

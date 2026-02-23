@@ -4,6 +4,7 @@
  */
 
 import type { JournalEntry, JournalEntryLine, SwedishVatRate } from '../types'
+import { DEFAULT_ACCOUNTS, PAYMENT_ACCOUNTS } from '../types'
 import { roundToOre } from '../validation'
 import { calculateVat, getVatAccount } from '../vat'
 import { generateEntryId } from '../utils'
@@ -65,11 +66,11 @@ export function createSalesEntry(params: SalesEntryParams): JournalEntry {
     date,
     description,
     grossAmount,
-    revenueAccount = '3010', // Försäljning tjänster
+    revenueAccount = DEFAULT_ACCOUNTS.SALES_REVENUE,
     vatRate = 25,
-    receivableAccount = '1510', // Kundfordringar
+    receivableAccount = DEFAULT_ACCOUNTS.CUSTOMER_RECEIVABLES,
     paidImmediately = false,
-    bankAccount = '1930',
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
     invoiceNumber,
     series = 'A', // A-series for customer invoices
   } = params
@@ -154,8 +155,8 @@ export function createPaymentReceivedEntry(params: {
     date,
     description,
     amount,
-    receivableAccount = '1510',
-    bankAccount = '1930',
+    receivableAccount = DEFAULT_ACCOUNTS.CUSTOMER_RECEIVABLES,
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
     invoiceReference,
     series = 'A',
   } = params
@@ -203,9 +204,9 @@ export function createCreditNoteEntry(params: {
     date,
     description,
     grossAmount,
-    revenueAccount = '3010',
+    revenueAccount = DEFAULT_ACCOUNTS.SALES_REVENUE,
     vatRate = 25,
-    receivableAccount = '1510',
+    receivableAccount = DEFAULT_ACCOUNTS.CUSTOMER_RECEIVABLES,
     creditNoteNumber,
     series = 'A',
   } = params

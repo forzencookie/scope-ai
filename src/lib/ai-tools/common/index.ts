@@ -11,6 +11,7 @@ export * from './settings'
 export * from './events'
 export * from './statistics'
 export * from './memory'
+export * from './knowledge'
 
 import { navigationTools } from './navigation'
 import { companyTools } from './company'
@@ -19,6 +20,7 @@ import { settingsTools } from './settings'
 import { eventTools } from './events'
 import { companyStatisticsTools } from './statistics'
 import { memoryTools } from './memory'
+import { knowledgeTools } from './knowledge'
 
 export const commonTools = [
     ...navigationTools,
@@ -28,4 +30,5 @@ export const commonTools = [
     ...eventTools,
     ...companyStatisticsTools,
     ...memoryTools,
+    ...knowledgeTools,
 ]

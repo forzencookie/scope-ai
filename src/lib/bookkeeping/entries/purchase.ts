@@ -4,6 +4,7 @@
  */
 
 import type { JournalEntry, JournalEntryLine, SwedishVatRate } from '../types'
+import { DEFAULT_ACCOUNTS, PAYMENT_ACCOUNTS } from '../types'
 import { roundToOre } from '../validation'
 import { calculateVat, getVatAccount } from '../vat'
 import { generateEntryId } from '../utils'
@@ -68,9 +69,9 @@ export function createPurchaseEntry(params: PurchaseEntryParams): JournalEntry {
     grossAmount,
     expenseAccount,
     vatRate = 25,
-    liabilityAccount = '2440', // Leverantörsskulder
+    liabilityAccount = DEFAULT_ACCOUNTS.SUPPLIER_LIABILITY,
     paidImmediately = false,
-    bankAccount = '1930',
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
     invoiceReference,
     series = 'B', // B-series for supplier invoices
   } = params
@@ -154,8 +155,8 @@ export function createSupplierPayment(params: {
     date,
     description,
     amount,
-    liabilityAccount = '2440',
-    bankAccount = '1930',
+    liabilityAccount = DEFAULT_ACCOUNTS.SUPPLIER_LIABILITY,
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
     series = 'B',
   } = params
 

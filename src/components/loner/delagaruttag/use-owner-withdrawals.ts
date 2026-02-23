@@ -33,7 +33,7 @@ function buildAccountToPartnerMap(partnerIds: string[]): {
 }
 
 export function useOwnerWithdrawals() {
-  const { verifications, addVerification, isLoading } = useVerifications()
+  const { verifications, isLoading } = useVerifications()
   const { partners } = usePartners()
 
   const partnerIds = useMemo(() => partners.map(p => p.id), [partners])
@@ -136,40 +136,42 @@ export function useOwnerWithdrawals() {
     amount: number,
     date: string,
     description: string
-  ) => {
+  ): Promise<string | null> => {
     const idx = partnerIndex(partnerId)
     const accounts = getPartnerAccounts(idx)
+    const partnerName = partners.find(p => p.id === partnerId)?.name || 'Delägare'
 
-    if (type === 'uttag' || type === 'lön') {
-      await addVerification({
-        date: date,
-        description: description,
-        sourceType: 'withdrawal',
-        rows: [
-          {
-             account: accounts.withdrawal,
-             description: `${type === 'lön' ? 'Lön' : 'Uttag'} ${partners.find(p => p.id === partnerId)?.name}`,
-             debit: amount,
-             credit: 0
-          },
-          {
-             account: "1930",
-             description: "Utbetalning",
-             debit: 0,
-             credit: amount
-          }
+    const entries = (type === 'uttag' || type === 'lön')
+      ? [
+          { account: accounts.withdrawal, description: `${type === 'lön' ? 'Lön' : 'Uttag'} ${partnerName}`, debit: amount, credit: 0 },
+          { account: "1930", description: "Utbetalning", debit: 0, credit: amount },
         ]
-      })
-    } else {
-      await addVerification({
-        date: date,
-        description: description,
-        sourceType: 'deposit',
-        rows: [
+      : [
           { account: "1930", description: "Insättning", debit: amount, credit: 0 },
-          { account: accounts.deposit, description: `Egen insättning ${partners.find(p => p.id === partnerId)?.name}`, debit: 0, credit: amount }
+          { account: accounts.deposit, description: `Egen insättning ${partnerName}`, debit: 0, credit: amount },
         ]
+
+    try {
+      const res = await fetch('/api/pending-bookings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'create',
+          sourceType: 'owner_withdrawal',
+          sourceId: `withdrawal-${Date.now()}`,
+          description,
+          entries,
+          series: 'A',
+          date,
+          metadata: { type, partnerId, partnerName, amount },
+        }),
       })
+      if (!res.ok) throw new Error('Failed to create pending booking')
+      const data = await res.json()
+      return data.pendingBooking?.id || null
+    } catch (err) {
+      console.error('[useOwnerWithdrawals] registerTransaction error:', err)
+      return null
     }
   }
 

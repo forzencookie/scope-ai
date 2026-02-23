@@ -1,6 +1,8 @@
 
 import { useMemo } from "react"
 import { useVerifications, type Verification, type VerificationRow } from "./use-verifications"
+import { getAccountClass } from "@/lib/bookkeeping/utils"
+import { useCompany } from "@/providers/company-provider"
 
 export interface MonthlyMetric {
     month: string
@@ -26,14 +28,15 @@ export interface ExpenseCategory {
 
 export function useFinancialMetrics() {
     const { verifications, isLoading } = useVerifications()
+    const { company } = useCompany()
+    const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
 
-    // Helper to determine if an account is revenue/expense
-    const getAccountType = (account: string) => {
-        const acc = parseInt(account)
-        if (isNaN(acc)) return 'other'
-        if (acc >= 3000 && acc <= 3999) return 'revenue'
-        if (acc >= 4000 && acc <= 7999) return 'expense' // 8000+ is financial, tax etc, usually expense too
-        if (acc >= 8000 && acc <= 8999) return 'financial'
+    // Helper to determine if an account is revenue/expense using BAS account class
+    const getAccountType = (account: string): 'revenue' | 'expense' | 'other' => {
+        const classNum = parseInt(account.charAt(0))
+        if (isNaN(classNum)) return 'other'
+        if (classNum === 3) return 'revenue'
+        if (classNum >= 4 && classNum <= 8) return 'expense'
         return 'other'
     }
 
@@ -65,25 +68,24 @@ export function useFinancialMetrics() {
 
             v.rows.forEach((row: VerificationRow) => {
                 const type = getAccountType(row.account)
-                // Revenue (Class 3) is Credit (-). We want positive number for chart.
-                // Expenses (Class 4-8) is Debit (+). We want positive number for chart.
+                // Normalize using getAccountClass: credit-normal accounts are flipped
+                const rawBalance = row.debit - row.credit
+                const { normalBalance } = getAccountClass(row.account)
+                const displayAmount = normalBalance === 'credit' ? rawBalance * -1 : rawBalance
 
                 if (type === 'revenue') {
-                    // Revenue increases with Credit. Net is negative. 
-                    // Add absolute value of Credit-heavy net to Revenue.
-                    // Actually, strictly: Revenue += (Credit - Debit).
-                    current.revenue += (row.credit - row.debit)
-                } else if (type === 'expense' || type === 'financial') {
-                    // Expense increases with Debit. Net is positive.
-                    current.expenses += (row.debit - row.credit)
+                    current.revenue += displayAmount
+                } else if (type === 'expense') {
+                    current.expenses += displayAmount
                 }
             })
         })
 
-        // Convert to array and sort (simple sort by month index)
-        // For now, let's map hardcoded months to ensure order if we want "Jan-Dec" of current year.
-        // The previous mocked data was for "Current Year".
-        const monthNames = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"]
+        // Reorder months based on fiscal year start
+        const allMonths = ["jan", "feb", "mar", "apr", "maj", "jun", "jul", "aug", "sep", "okt", "nov", "dec"]
+        const fyEndMonth = parseInt(fiscalYearEnd.split('-')[0])
+        const fyStartIdx = fyEndMonth % 12 // e.g. fyEnd=06 → start=index 6 (jul), fyEnd=12 → start=0 (jan)
+        const monthNames = [...allMonths.slice(fyStartIdx), ...allMonths.slice(0, fyStartIdx)]
 
         let accumulated = 0
         return monthNames.map(m => {
@@ -98,7 +100,7 @@ export function useFinancialMetrics() {
                 accumulatedProfit: accumulated
             }
         })
-    }, [verifications])
+    }, [verifications, fiscalYearEnd])
 
     const expenseDistribution = useMemo(() => {
         if (!verifications) return []
@@ -154,14 +156,17 @@ export function useFinancialMetrics() {
             if (year !== prevYear) return
 
             v.rows.forEach((row: VerificationRow) => {
+                const rawBalance = row.debit - row.credit
+                const { normalBalance } = getAccountClass(row.account)
+                const displayAmount = normalBalance === 'credit' ? rawBalance * -1 : rawBalance
                 const type = getAccountType(row.account)
-                if (type === 'revenue') revenue += (row.credit - row.debit)
-                else if (type === 'expense' || type === 'financial') expenses += (row.debit - row.credit)
 
-                const acc = parseInt(row.account)
-                const val = row.debit - row.credit
-                if (acc >= 1000 && acc <= 1999) assets += val
-                if (acc >= 2000 && acc <= 2099) equity -= val
+                if (type === 'revenue') revenue += displayAmount
+                else if (type === 'expense') expenses += displayAmount
+
+                const classNum = parseInt(row.account.charAt(0))
+                if (classNum === 1) assets += displayAmount
+                if (parseInt(row.account.substring(0, 2)) === 20) equity += displayAmount
             })
         })
 
@@ -179,10 +184,13 @@ export function useFinancialMetrics() {
         if (verifications) {
             verifications.forEach(v => {
                 v.rows.forEach(r => {
-                    const acc = parseInt(r.account)
-                    const val = r.debit - r.credit
-                    if (acc >= 1000 && acc <= 1999) assets += val
-                    if (acc >= 2000 && acc <= 2099) equity -= val
+                    const rawBalance = r.debit - r.credit
+                    const { normalBalance } = getAccountClass(r.account)
+                    const displayAmount = normalBalance === 'credit' ? rawBalance * -1 : rawBalance
+
+                    const classNum = parseInt(r.account.charAt(0))
+                    if (classNum === 1) assets += displayAmount
+                    if (parseInt(r.account.substring(0, 2)) === 20) equity += displayAmount
                 })
             })
         }

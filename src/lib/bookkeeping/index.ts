@@ -48,7 +48,7 @@ export type {
   SwedishVatRate,
 } from './types'
 
-export { VAT_ACCOUNTS, PAYMENT_ACCOUNTS } from './types'
+export { VAT_ACCOUNTS, PAYMENT_ACCOUNTS, DEFAULT_ACCOUNTS } from './types'
 
 // ============================================================================
 // Validation
@@ -102,6 +102,7 @@ export {
   createSalaryEntry,
   createPayrollTaxPayment,
   createSalaryAccrual,
+  createVacationAccrual,
   calculateEmployerContributions,
   type SalaryEntryParams,
   type SalaryComponents,
@@ -127,6 +128,7 @@ export {
   generateEntryId,
   getNextVerificationNumber,
   finalizeEntry,
+  isValidAccount,
   getAccountName,
   getAccountBalance,
   formatSwedishDate,

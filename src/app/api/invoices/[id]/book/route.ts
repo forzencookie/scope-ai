@@ -12,7 +12,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
-import { verificationService } from '@/services/verification-service';
+import { pendingBookingService } from '@/services/pending-booking-service';
 import { getVatAccount } from '@/lib/bookkeeping/vat';
 import type { SwedishVatRate } from '@/lib/bookkeeping/types';
 
@@ -134,17 +134,18 @@ export async function POST(
             }
         }
 
-        // Create verification with source tracking and relational lines
-        const verification = await verificationService.createVerification({
-            series: 'A',
-            date,
+        // Create pending booking instead of auto-verification
+        const pending = await pendingBookingService.createPendingBooking({
+            sourceType: 'customer_invoice',
+            sourceId: id,
             description,
             entries,
-            sourceType: 'invoice',
-            sourceId: id,
+            series: 'A',
+            date,
+            metadata: { customerName, invoiceNumber, total },
         });
 
-        return NextResponse.json({ success: true, verification });
+        return NextResponse.json({ success: true, pendingBookingId: pending.id });
 
     } catch (error) {
         console.error("Booking error:", error);

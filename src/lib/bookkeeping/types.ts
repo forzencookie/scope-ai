@@ -110,3 +110,27 @@ export const PAYMENT_ACCOUNTS = {
   /** Stripe/Payment processor */
   STRIPE: '1580',
 } as const
+
+/**
+ * Default BAS accounts for common transaction types.
+ * Centralizes magic strings so BAS changes only need one update.
+ */
+export const DEFAULT_ACCOUNTS = {
+  // Löner (Personnel)
+  SALARY_EXPENSE: '7010',
+  EMPLOYER_CONTRIBUTIONS_EXPENSE: '7510',
+  TAX_WITHHOLDING: '2710',
+  EMPLOYER_CONTRIBUTIONS_LIABILITY: '2730',
+  PENSION_LIABILITY: '2740',
+  OTHER_DEDUCTIONS: '2790',
+  ACCRUED_SALARIES: '2920',
+  TAX_ACCOUNT: '1630',
+  // Inköp (Purchases)
+  SUPPLIER_LIABILITY: '2440',
+  // Försäljning (Sales)
+  SALES_REVENUE: '3010',
+  CUSTOMER_RECEIVABLES: '1510',
+  // Semester (Vacation)
+  VACATION_PAY_EXPENSE: '7090',
+  VACATION_PAY_LIABILITY: '2920',
+} as const

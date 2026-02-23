@@ -42,6 +42,13 @@ export function finalizeEntry(entry: JournalEntry): JournalEntry {
 }
 
 /**
+ * Check if an account number exists in the BAS kontoplan
+ */
+export function isValidAccount(accountNumber: string): boolean {
+  return basAccounts.some(a => a.number === accountNumber)
+}
+
+/**
  * Get account name from BAS account number
  */
 export function getAccountName(accountNumber: string): string {

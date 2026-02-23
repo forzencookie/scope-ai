@@ -8,8 +8,9 @@
 import fs from 'fs'
 import path from 'path'
 
-// Cache the scenarios to avoid repeated file reads
+// Cache the scenarios and knowledge master to avoid repeated file reads
 let cachedScenarios: string | null = null
+let cachedKnowledgeMaster: string | null = null
 
 /**
  * Load scenarios from the markdown file.
@@ -103,6 +104,36 @@ You: Show transaction details directly. No walkthrough needed.
 User: "ska jag dra moms på det här?"
 You: Explain the rule, apply to their case, offer to book if clear.
 `
+}
+
+/**
+ * Load the knowledge master document for system prompt injection.
+ * Contains Scooby's identity, knowledge index, and quick-reference data.
+ */
+export function loadKnowledgeMaster(): string {
+    if (cachedKnowledgeMaster) {
+        return cachedKnowledgeMaster
+    }
+
+    try {
+        const possiblePaths = [
+            path.join(process.cwd(), 'src', 'data', 'ai-knowledge', 'master.md'),
+            path.join(process.cwd(), '..', 'src', 'data', 'ai-knowledge', 'master.md'),
+        ]
+
+        for (const p of possiblePaths) {
+            if (fs.existsSync(p)) {
+                cachedKnowledgeMaster = fs.readFileSync(p, 'utf-8')
+                return cachedKnowledgeMaster
+            }
+        }
+
+        console.warn('[Knowledge] Could not find master.md')
+        return ''
+    } catch (error) {
+        console.error('[Knowledge] Error loading master.md:', error)
+        return ''
+    }
 }
 
 /**

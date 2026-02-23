@@ -19,10 +19,11 @@ export {
 } from './sales'
 export type { SalesEntryParams } from './sales'
 
-export { 
-  createSalaryEntry, 
-  createPayrollTaxPayment, 
+export {
+  createSalaryEntry,
+  createPayrollTaxPayment,
   createSalaryAccrual,
-  calculateEmployerContributions 
+  createVacationAccrual,
+  calculateEmployerContributions
 } from './salary'
 export type { SalaryEntryParams, SalaryComponents } from './salary'

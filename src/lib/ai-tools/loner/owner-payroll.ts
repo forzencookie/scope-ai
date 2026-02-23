@@ -137,36 +137,38 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
             'uttag': { debit: '2013 (Privata uttag)', credit: '1930 (Bank)' },
         }
 
-        // If confirmed, persist verification to database
+        // If confirmed, create pending booking (user books via wizard)
         if (context?.isConfirmed) {
             try {
-                const { verificationService } = await import('@/services/verification-service')
+                const { pendingBookingService } = await import('@/services/pending-booking-service')
                 const accounts = accountMap[type]
 
-                const verification = await verificationService.createVerification({
-                    series: 'A',
-                    date,
+                const pending = await pendingBookingService.createPendingBooking({
+                    sourceType: 'owner_withdrawal',
+                    sourceId: `withdrawal-${Date.now()}`,
                     description: `${typeLabels[type]} — ${ownerName}`,
                     entries: [
                         { account: accounts.debit, debit: params.amount, credit: 0, description: typeLabels[type] },
                         { account: accounts.credit, debit: 0, credit: params.amount, description: `Utbetalning ${ownerName}` },
                     ],
-                    sourceType: 'ai',
+                    series: 'A',
+                    date,
+                    metadata: { ownerName, type, amount: params.amount },
                 })
 
                 return {
                     success: true,
                     data: {
-                        id: verification?.id || `withdrawal-${Date.now()}`,
+                        id: pending.id,
                         amount: params.amount,
                         type,
                         date,
-                        verificationId: verification?.id || '',
+                        verificationId: '',
                     },
-                    message: `${typeLabels[type]} på ${params.amount.toLocaleString('sv-SE')} kr bokförd för ${ownerName}. Verifikation skapad.`,
+                    message: `${typeLabels[type]} på ${params.amount.toLocaleString('sv-SE')} kr förberedd för ${ownerName}. Gå till Verifikationer för att bokföra.`,
                 }
             } catch (error) {
-                return { success: false, error: 'Kunde inte bokföra uttaget.' }
+                return { success: false, error: 'Kunde inte skapa bokning.' }
             }
         }
 

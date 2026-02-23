@@ -1,8 +1,11 @@
 import { useMemo, useState, useEffect } from "react"
 import { getSupabaseClient } from '@/lib/database/supabase'
+import { normalizeBalances } from './use-normalized-balances'
+import { useCompany } from '@/providers/company-provider'
 import { Shield, Droplets, Scale, Percent, Users, Building2, Package, CreditCard, Plane, MoreHorizontal } from "lucide-react"
 
 export function useCompanyStatistics() {
+    const { companyType } = useCompany()
     const [isLoading, setIsLoading] = useState(true)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [monthlyFlow, setMonthlyFlow] = useState<any[]>([])
@@ -18,6 +21,8 @@ export function useCompanyStatistics() {
     // For now, let's fetch account balances via RPC to keep it efficient (already implemented in Phase 2.1)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const [accountBalances, setAccountBalances] = useState<any[]>([])
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const [prevYearBalances, setPrevYearBalances] = useState<any[]>([])
 
     useEffect(() => {
         let isMounted = true
@@ -28,19 +33,27 @@ export function useCompanyStatistics() {
             try {
                 const year = new Date().getFullYear()
 
+                const prevYearStart = `${year - 1}-01-01`
+                const prevYearEnd = `${year - 1}-12-31`
+
                 // Parallel fetch
-                const [flowRes, countsRes, balancesRes] = await Promise.all([
+                const [flowRes, countsRes, balancesRes, prevBalancesRes] = await Promise.all([
                     supabase.rpc('get_monthly_cashflow', { p_year: year }),
                     supabase.rpc('get_dashboard_counts'),
                     supabase.rpc('get_account_balances', {
                         p_start_date: '2000-01-01',
                         p_end_date: new Date().toISOString().split('T')[0]
+                    }),
+                    supabase.rpc('get_account_balances', {
+                        p_start_date: prevYearStart,
+                        p_end_date: prevYearEnd
                     })
                 ])
 
                 if (flowRes.error) console.error('Flow Error:', flowRes.error)
                 if (countsRes.error) console.error('Counts Error:', countsRes.error)
                 if (balancesRes.error) console.error('Balances Error:', balancesRes.error)
+                if (prevBalancesRes.error) console.error('Prev Balances Error:', prevBalancesRes.error)
 
                 if (isMounted) {
                     setMonthlyFlow(flowRes.data || [])
@@ -49,6 +62,10 @@ export function useCompanyStatistics() {
                         invoices: { sent: 0, overdue: 0, totalValue: 0 }
                     })
                     setAccountBalances((balancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
+                        account: String(row.account_number),
+                        balance: row.balance
+                    })))
+                    setPrevYearBalances((prevBalancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
                         account: String(row.account_number),
                         balance: row.balance
                     })))
@@ -66,42 +83,31 @@ export function useCompanyStatistics() {
         return () => { isMounted = false }
     }, [])
 
-    // Calculate totals from account balances for KPIs
+    // Calculate totals from account balances using normalized sign convention
     const totals = useMemo(() => {
-        let assets = 0, liabilities = 0, equity = 0, revenue = 0, expenses = 0
-
-        accountBalances.forEach(b => {
-            const acc = parseInt(b.account)
-            const val = b.balance
-            // Logic from reports-processor/use-account-balances
-            if (acc >= 1000 && acc <= 1999) assets += (val * -1) // Flip for Asset
-            else if (acc >= 2000 && acc <= 2099) equity += val
-            else if (acc >= 2100 && acc <= 2999) liabilities += val
-            else if (acc >= 3000 && acc <= 3999) revenue += val // Credit (neg)
-            else if (acc >= 4000 && acc <= 8999) expenses += val // Debit (pos)
-        })
-
-        // Net Income = (Revenue (neg) + Expenses (pos)) * -1
-        // Example: Rev -100, Exp 80 -> Net -20. Inverted -> 20 Profit.
+        const normalized = normalizeBalances(
+            accountBalances.map(b => ({ account: b.account, balance: b.balance }))
+        )
         return {
-            assets,
-            liabilities,
-            equity: assets - liabilities, // Simplified Equity check? Or just use booked equity.
-            // Let's use booked equity + current result for "Total Equity" in KPIs usually.
-            // But strict booked equity is safer.
-            bookedEquity: equity,
-            revenue: Math.abs(revenue),
-            netIncome: (revenue + expenses) * -1
+            ...normalized,
+            bookedEquity: normalized.equity,
         }
     }, [accountBalances])
 
+    // Previous year totals for YoY comparison
+    const prevTotals = useMemo(() => {
+        return normalizeBalances(
+            prevYearBalances.map(b => ({ account: b.account, balance: b.balance }))
+        )
+    }, [prevYearBalances])
+
     // 1. Financial KPIs
     const financialHealth = useMemo(() => {
-        // Get raw values
+        // Values are already display-friendly (positive) from normalizeBalances
         const assets = totals.assets || 0
-        const liabilities = Math.abs(totals.liabilities) || 0
+        const liabilities = totals.liabilities || 0
         const equity = totals.equity || 0
-        const revenue = Math.abs(totals.revenue) || 0
+        const revenue = totals.revenue || 0
         const netIncome = totals.netIncome || 0
 
         // Check which account classes have data
@@ -127,11 +133,19 @@ export function useCompanyStatistics() {
         const solidity = canCalcSolidity && assets > 0 ? (equity / assets) * 100 : null
 
         // Kassalikviditet (Current Assets / Current Liabilities)
+        // Current liabilities = 24xx-29xx (excludes long-term debt 21xx-23xx)
         const cashAccounts = accountBalances.filter(a => String(a.account).startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
         const receivableAccounts = accountBalances.filter(a => String(a.account).startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
         const currentAssets = cashAccounts + receivableAccounts
-        const canCalcLiquidity = (hasCash || hasReceivables) && hasLiabilities
-        const liquidity = canCalcLiquidity && liabilities > 0 ? (currentAssets / liabilities) * 100 : null
+        const currentLiabilities = accountBalances
+            .filter(a => {
+                const num = parseInt(String(a.account).substring(0, 2))
+                return num >= 24 && num <= 29
+            })
+            .reduce((sum, a) => sum + Math.abs(a.balance), 0)
+        const hasCurrentLiabilities = currentLiabilities > 0
+        const canCalcLiquidity = (hasCash || hasReceivables) && hasCurrentLiabilities
+        const liquidity = canCalcLiquidity && currentLiabilities > 0 ? (currentAssets / currentLiabilities) * 100 : null
 
         // Skuldsättningsgrad (Liabilities / Equity)
         const canCalcDebtEquity = hasLiabilities && hasEquity
@@ -141,41 +155,80 @@ export function useCompanyStatistics() {
         const canCalcMargin = hasRevenue && hasExpenses
         const profitMargin = canCalcMargin && revenue > 0 ? (netIncome / revenue) * 100 : null
 
+        // YoY comparison using previous year data
+        const prevAssets = prevTotals.assets || 0
+        const prevEquity = prevTotals.equity || 0
+        const prevLiabilities = prevTotals.liabilities || 0
+        const prevRevenue = prevTotals.revenue || 0
+        const prevNetIncome = prevTotals.netIncome || 0
+
+        const prevSolidity = prevAssets > 0 ? (prevEquity / prevAssets) * 100 : null
+        const prevLiquidity = (() => {
+            const prevCurrentLiab = prevYearBalances
+                .filter(a => { const n = parseInt(String(a.account).substring(0, 2)); return n >= 24 && n <= 29 })
+                .reduce((sum, a) => sum + Math.abs(a.balance), 0)
+            if (prevCurrentLiab === 0) return null
+            const prevCash = prevYearBalances.filter(a => String(a.account).startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
+            const prevRecv = prevYearBalances.filter(a => String(a.account).startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
+            return ((prevCash + prevRecv) / prevCurrentLiab) * 100
+        })()
+        const prevDebtEquity = prevEquity !== 0 ? prevLiabilities / prevEquity : null
+        const prevProfitMargin = prevRevenue > 0 ? (prevNetIncome / prevRevenue) * 100 : null
+
+        const formatYoY = (current: number | null, previous: number | null): { change: string | null; positive: boolean | null } => {
+            if (current === null) return { change: null, positive: null }
+            if (previous === null || previous === 0) return { change: 'N/A', positive: null }
+            const delta = current - previous
+            const sign = delta >= 0 ? '+' : ''
+            return { change: `${sign}${delta.toFixed(1)}%`, positive: delta >= 0 }
+        }
+
+        const solidityYoY = formatYoY(solidity, prevSolidity)
+        const liquidityYoY = formatYoY(liquidity, prevLiquidity)
+        const debtEquityYoY = (() => {
+            if (debtEquityRatio === null) return { change: null, positive: null }
+            if (prevDebtEquity === null || prevDebtEquity === 0) return { change: 'N/A' as string | null, positive: null as boolean | null }
+            const delta = debtEquityRatio - prevDebtEquity
+            const sign = delta >= 0 ? '+' : ''
+            return { change: `${sign}${delta.toFixed(1)}`, positive: delta <= 0 } // lower is better
+        })()
+        const marginYoY = formatYoY(profitMargin, prevProfitMargin)
+
         return [
             {
                 label: "Soliditet",
                 value: solidity !== null ? `${Math.round(solidity)}%` : "-",
-                change: solidity !== null ? "+0%" : null,
-                positive: solidity !== null ? true : null,
+                change: solidityYoY.change,
+                positive: solidityYoY.positive,
                 icon: Shield,
                 subtitle: solidity !== null ? "vs förra året" : "Saknar data"
             },
             {
                 label: "Kassalikviditet",
                 value: liquidity !== null ? `${Math.round(liquidity)}%` : "-",
-                change: liquidity !== null ? "+0%" : null,
-                positive: liquidity !== null ? liquidity > 100 : null,
+                change: liquidityYoY.change,
+                positive: liquidityYoY.positive !== null ? liquidityYoY.positive : (liquidity !== null ? liquidity > 100 : null),
                 icon: Droplets,
                 subtitle: liquidity !== null ? "vs förra året" : "Saknar data"
             },
             {
                 label: "Skuldsättningsgrad",
                 value: debtEquityRatio !== null ? debtEquityRatio.toFixed(1) : "-",
-                change: debtEquityRatio !== null ? "0.0" : null,
-                positive: debtEquityRatio !== null ? true : null,
+                change: debtEquityYoY.change,
+                positive: debtEquityYoY.positive,
                 icon: Scale,
                 subtitle: debtEquityRatio !== null ? "vs förra året" : "Saknar data"
             },
             {
                 label: "Vinstmarginal",
                 value: profitMargin !== null ? `${profitMargin.toFixed(1)}%` : "-",
-                change: profitMargin !== null ? "+0%" : null,
-                positive: profitMargin !== null ? profitMargin > 0 : null,
+                change: marginYoY.change,
+                positive: marginYoY.positive !== null ? marginYoY.positive : (profitMargin !== null ? profitMargin > 0 : null),
                 icon: Percent,
                 subtitle: profitMargin !== null ? "vs förra året" : "Saknar data"
             },
         ]
-    }, [totals, accountBalances]) // Re-calc when RPC data returns
+    }, [totals, accountBalances, prevTotals, prevYearBalances]) // Re-calc when RPC data returns
 
     // 2. Transaction Stats (from RPC)
     const transactionStats = useMemo(() => {
@@ -210,15 +263,23 @@ export function useCompanyStatistics() {
     }, [monthlyFlow])
 
     const expenseCategories = useMemo(() => {
-        // Group expenses by category
-        // We can map Account Group to categories
+        // Group expenses by BAS account class (4-8)
+        const categoryNames: Record<number, string> = {
+            4: 'Varuinköp',
+            5: 'Övriga externa kostnader',
+            6: 'Övriga externa kostnader',
+            7: 'Personalkostnader',
+            8: 'Finansiellt & Avskrivningar',
+        }
         const categories = new Map<string, number>()
 
         accountBalances.forEach(acc => {
-            if (acc.account?.type === 'expense') {
-                const group = acc.account.group || 'Övrigt'
+            const accNum = String(acc.account || '')
+            const classNum = parseInt(accNum.charAt(0))
+            if (classNum >= 4 && classNum <= 8) {
+                const group = categoryNames[classNum] || 'Övrigt'
                 const current = categories.get(group) || 0
-                categories.set(group, current + acc.balance)
+                categories.set(group, current + Math.abs(acc.balance))
             }
         })
 
@@ -239,6 +300,7 @@ export function useCompanyStatistics() {
 
     return {
         isLoading,
+        companyType,
         financialHealth,
         transactionStats,
         invoiceStats,

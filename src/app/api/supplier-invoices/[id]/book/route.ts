@@ -9,7 +9,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createUserScopedDb } from '@/lib/database/user-scoped-db'
-import { verificationService } from '@/services/verification-service'
+import { pendingBookingService } from '@/services/pending-booking-service'
 import { createPurchaseEntry } from '@/lib/bookkeeping'
 import type { BookingData } from '@/components/bokforing/dialogs/bokforing'
 import type { SwedishVatRate } from '@/lib/bookkeeping'
@@ -44,10 +44,10 @@ export async function POST(
             series: 'B',
         });
 
-        // Create verification with source tracking and relational lines
-        const verification = await verificationService.createVerification({
-            series: 'B',
-            date: journalEntry.date,
+        // Create pending booking instead of auto-verification
+        const pending = await pendingBookingService.createPendingBooking({
+            sourceType: 'supplier_invoice',
+            sourceId: id,
             description: journalEntry.description,
             entries: journalEntry.rows.map(row => ({
                 account: row.account,
@@ -55,16 +55,16 @@ export async function POST(
                 credit: row.credit,
                 description: row.description,
             })),
-            sourceType: 'supplier_invoice',
-            sourceId: id,
+            series: 'B',
+            date: journalEntry.date,
+            metadata: {
+                invoiceNumber: invoice?.invoice_number,
+                amount,
+                supplierName: invoice?.supplier_name,
+            },
         });
 
-        // Update invoice status to booked
-        if (invoice) {
-            await userDb.supplierInvoices.update(id, { status: 'bokförd' });
-        }
-
-        return NextResponse.json({ success: true, verification })
+        return NextResponse.json({ success: true, pendingBookingId: pending.id })
 
     } catch (error) {
         console.error('Booking error:', error);

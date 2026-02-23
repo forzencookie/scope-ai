@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createUserScopedDb } from '@/lib/database/user-scoped-db'
-import { verificationService, VerificationEntry } from '@/services/verification-service'
+import { pendingBookingService } from '@/services/pending-booking-service'
+import type { VerificationEntry } from '@/services/verification-service'
 import { createSimpleEntry } from '@/lib/bookkeeping'
 import type { SwedishVatRate } from '@/lib/bookkeeping'
 
@@ -55,28 +56,30 @@ export async function POST(
             description: row.description,
         }))
 
-        // 4. Create Verification with source tracking
-        const verification = await verificationService.createVerification({
-            series: 'A',
-            date: journalEntry.date,
-            description: journalEntry.description,
-            entries,
+        // 4. Create pending booking instead of auto-verification
+        const pending = await pendingBookingService.createPendingBooking({
             sourceType: 'transaction',
             sourceId: id,
+            description: journalEntry.description,
+            entries,
+            series: 'A',
+            date: journalEntry.date,
+            metadata: {
+                category,
+                amount,
+                isIncome,
+                transactionDescription: transaction.description,
+            },
         })
 
-        // 5. Update Transaction Status
-        const updated = await userDb.transactions.update(id, {
-            status: 'Bokförd',
+        // 5. Update Transaction category (but NOT status — that happens on booking confirmation)
+        await userDb.transactions.update(id, {
             category: category,
         })
 
         return NextResponse.json({
             success: true,
-            data: {
-                transaction: updated,
-                verification: verification
-            }
+            pendingBookingId: pending.id,
         })
 
     } catch (error) {

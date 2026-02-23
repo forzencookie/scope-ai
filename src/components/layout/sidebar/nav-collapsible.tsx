@@ -9,11 +9,13 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
+import { useCachedQuery } from "@/hooks/use-cached-query"
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarMenuBadge,
 } from "@/components/ui/sidebar"
 
 // ============================================================================
@@ -27,6 +29,7 @@ interface NavCollapsibleItem {
   icon?: LucideIcon
   isActive?: boolean
   featureKey?: FeatureKey
+  badgeKey?: string
 }
 
 interface NavCollapsibleSectionProps {
@@ -102,6 +105,24 @@ export function NavCollapsibleSection({
     return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
   }
 
+  // Fetch badge counts for items with badgeKey
+  const hasBadgeItems = filteredItems.some(item => item.badgeKey)
+  const { data: badgeCounts } = useCachedQuery<Record<string, number>>({
+    cacheKey: 'sidebar-badge-counts',
+    queryFn: async (): Promise<Record<string, number>> => {
+      try {
+        const res = await fetch('/api/pending-bookings?status=pending')
+        if (!res.ok) return {} as Record<string, number>
+        const data = await res.json()
+        return { 'pending-bookings': data.pendingCount || 0 } as Record<string, number>
+      } catch {
+        return {} as Record<string, number>
+      }
+    },
+    ttlMs: 60 * 1000, // 1 minute
+    skip: !hasBadgeItems,
+  })
+
   if (filteredItems.length === 0) return null
 
   return (
@@ -118,15 +139,21 @@ export function NavCollapsibleSection({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenu>
-            {filteredItems.map((item) => (
-              <SidebarMenuItem key={item.title}>
-                <SidebarMenuButton asChild tooltip={getTitle(item)} className="pl-6 h-8">
-                  <Link href={item.url}>
-                    <span className="text-sm">{getTitle(item)}</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
-            ))}
+            {filteredItems.map((item) => {
+              const badgeCount = item.badgeKey ? badgeCounts?.[item.badgeKey] || 0 : 0
+              return (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild tooltip={getTitle(item)} className="pl-6 h-8">
+                    <Link href={item.url}>
+                      <span className="text-sm">{getTitle(item)}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                  {badgeCount > 0 && (
+                    <SidebarMenuBadge>{badgeCount}</SidebarMenuBadge>
+                  )}
+                </SidebarMenuItem>
+              )
+            })}
           </SidebarMenu>
         </CollapsibleContent>
       </Collapsible>

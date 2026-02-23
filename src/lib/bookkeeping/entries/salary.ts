@@ -4,6 +4,7 @@
  */
 
 import type { JournalEntry, JournalEntryLine } from '../types'
+import { DEFAULT_ACCOUNTS, PAYMENT_ACCOUNTS } from '../types'
 import { roundToOre } from '../validation'
 import { generateEntryId } from '../utils'
 
@@ -79,7 +80,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
     description,
     salary,
     paidImmediately = false,
-    bankAccount = '1930',
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
     series = 'L', // L-series for salary/payroll
   } = params
 
@@ -98,7 +99,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
 
   // 1. Debit salary expense (gross)
   rows.push({
-    account: '7010',
+    account: DEFAULT_ACCOUNTS.SALARY_EXPENSE,
     debit: roundToOre(grossSalary),
     credit: 0,
     description: 'Bruttolön',
@@ -106,7 +107,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
 
   // 2. Debit employer contributions expense
   rows.push({
-    account: '7510',
+    account: DEFAULT_ACCOUNTS.EMPLOYER_CONTRIBUTIONS_EXPENSE,
     debit: roundToOre(employerContributions),
     credit: 0,
     description: 'Arbetsgivaravgifter',
@@ -114,7 +115,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
 
   // 3. Credit tax liability (källskatt)
   rows.push({
-    account: '2710',
+    account: DEFAULT_ACCOUNTS.TAX_WITHHOLDING,
     debit: 0,
     credit: roundToOre(preliminaryTax),
     description: 'Personalens källskatt',
@@ -122,7 +123,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
 
   // 4. Credit employer contribution liability
   rows.push({
-    account: '2730',
+    account: DEFAULT_ACCOUNTS.EMPLOYER_CONTRIBUTIONS_LIABILITY,
     debit: 0,
     credit: roundToOre(employerContributions),
     description: 'Skuld arbetsgivaravgifter',
@@ -131,7 +132,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
   // 5. Pension contribution if applicable
   if (pensionContribution > 0) {
     rows.push({
-      account: '2740',
+      account: DEFAULT_ACCOUNTS.PENSION_LIABILITY,
       debit: 0,
       credit: roundToOre(pensionContribution),
       description: 'Skuld pensionspremier',
@@ -141,7 +142,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
   // 6. Other deductions if applicable
   if (otherDeductions > 0) {
     rows.push({
-      account: '2790',
+      account: DEFAULT_ACCOUNTS.OTHER_DEDUCTIONS,
       debit: 0,
       credit: roundToOre(otherDeductions),
       description: 'Övriga löneavdrag',
@@ -158,7 +159,7 @@ export function createSalaryEntry(params: SalaryEntryParams): JournalEntry {
     })
   } else {
     rows.push({
-      account: '2920',
+      account: DEFAULT_ACCOUNTS.ACCRUED_SALARIES,
       debit: 0,
       credit: netSalary,
       description: 'Upplupna löner',
@@ -194,8 +195,8 @@ export function createPayrollTaxPayment(params: {
     description,
     preliminaryTax,
     employerContributions,
-    bankAccount = '1930',
-    taxAccount = '1630', // Skattekonto
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
+    taxAccount = DEFAULT_ACCOUNTS.TAX_ACCOUNT,
     series = 'L',
   } = params
 
@@ -209,13 +210,13 @@ export function createPayrollTaxPayment(params: {
     rows: [
       // Clear tax liabilities
       {
-        account: '2710',
+        account: DEFAULT_ACCOUNTS.TAX_WITHHOLDING,
         debit: roundToOre(preliminaryTax),
         credit: 0,
         description: 'Betalning källskatt',
       },
       {
-        account: '2730',
+        account: DEFAULT_ACCOUNTS.EMPLOYER_CONTRIBUTIONS_LIABILITY,
         debit: roundToOre(employerContributions),
         credit: 0,
         description: 'Betalning arbetsgivaravgifter',
@@ -226,6 +227,57 @@ export function createPayrollTaxPayment(params: {
         debit: 0,
         credit: totalAmount,
         description: 'Skattebetalning',
+      },
+    ],
+    finalized: false,
+    createdAt: new Date().toISOString(),
+  }
+}
+
+/**
+ * Create a vacation pay accrual entry (Semesterlagen 12%)
+ *
+ * Swedish law requires employers to accrue vacation pay at 12% of gross salary.
+ * This function calculates and creates the accrual entry automatically.
+ *
+ * @param grossSalary - The gross salary to calculate accrual from
+ * @param vacationPayRate - Rate as decimal (default 0.12 per Semesterlagen)
+ * @param date - Accrual date (YYYY-MM-DD)
+ */
+export function createVacationAccrual(params: {
+  grossSalary: number
+  vacationPayRate?: number
+  date: string
+  description?: string
+  series?: string
+}): JournalEntry {
+  const {
+    grossSalary,
+    vacationPayRate = 0.12,
+    date,
+    description = 'Semesterlöneskuld',
+    series = 'L',
+  } = params
+
+  const accrualAmount = roundToOre(grossSalary * vacationPayRate)
+
+  return {
+    id: generateEntryId(),
+    date,
+    description,
+    series,
+    rows: [
+      {
+        account: DEFAULT_ACCOUNTS.VACATION_PAY_EXPENSE,
+        debit: accrualAmount,
+        credit: 0,
+        description: `Reservering semesterlön (${(vacationPayRate * 100).toFixed(0)}%)`,
+      },
+      {
+        account: DEFAULT_ACCOUNTS.VACATION_PAY_LIABILITY,
+        debit: 0,
+        credit: accrualAmount,
+        description: 'Upplupen semesterlöneskuld',
       },
     ],
     finalized: false,
@@ -248,9 +300,9 @@ export function createSalaryAccrual(params: {
 
   // Map type to accounts
   const accountMap = {
-    vacation: { expense: '7090', liability: '2920' },
-    bonus: { expense: '7010', liability: '2920' },
-    other: { expense: '7090', liability: '2990' },
+    vacation: { expense: DEFAULT_ACCOUNTS.VACATION_PAY_EXPENSE, liability: DEFAULT_ACCOUNTS.VACATION_PAY_LIABILITY },
+    bonus: { expense: DEFAULT_ACCOUNTS.SALARY_EXPENSE, liability: DEFAULT_ACCOUNTS.ACCRUED_SALARIES },
+    other: { expense: DEFAULT_ACCOUNTS.VACATION_PAY_EXPENSE, liability: '2990' },
   }
 
   const accounts = accountMap[type]

@@ -1,6 +1,6 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
-import { verificationService } from '@/services/verification-service'
+import { pendingBookingService } from '@/services/pending-booking-service'
 
 interface VerificationRow {
     account: string
@@ -51,12 +51,12 @@ export const createVerificationTool: AITool = {
             }
         }
 
-        // If confirmed, persist to database
+        // If confirmed, create pending booking (user books via wizard)
         if (context?.isConfirmed) {
             try {
-                const verification = await verificationService.createVerification({
-                    series: 'A',
-                    date: date || new Date().toISOString().split('T')[0],
+                const pending = await pendingBookingService.createPendingBooking({
+                    sourceType: 'ai_entry',
+                    sourceId: `ai-${Date.now()}`,
                     description,
                     entries: rows.map(r => ({
                         account: r.account,
@@ -64,18 +64,20 @@ export const createVerificationTool: AITool = {
                         credit: r.credit || 0,
                         description: r.description || description,
                     })),
-                    sourceType: 'ai',
+                    series: 'A',
+                    date: date || new Date().toISOString().split('T')[0],
+                    metadata: { source: 'ai_chat' },
                 })
 
                 return {
                     success: true,
-                    data: verification,
-                    message: `Verifikation "${description}" har bokförts. ${rows.length} rader, totalt ${totalDebit.toLocaleString('sv-SE')} kr.`,
+                    data: { pendingBookingId: pending.id },
+                    message: `Verifikation "${description}" har skapats som utkast. Gå till Verifikationer för att bokföra.`,
                 }
             } catch (error) {
                 return {
                     success: false,
-                    error: 'Kunde inte spara verifikation till databasen.',
+                    error: 'Kunde inte skapa bokning.',
                 }
             }
         }
