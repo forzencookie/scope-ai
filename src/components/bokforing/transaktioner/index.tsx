@@ -35,6 +35,8 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
         newTransactionDialogOpen, setNewTransactionDialogOpen,
         bookingDialogOpen, setBookingDialogOpen,
         selectedTransactions,
+        aiSuggestion,
+        aiSuggestionLoading,
 
         // Hooks
         filter,
@@ -153,6 +155,8 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                     account: selectedTransactions[0].account,
                     category: selectedTransactions[0].category
                 } : null}
+                aiSuggestion={aiSuggestion}
+                aiSuggestionLoading={aiSuggestionLoading}
                 onBook={handleBook}
             />
         </div>

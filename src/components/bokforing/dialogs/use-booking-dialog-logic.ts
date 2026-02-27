@@ -3,6 +3,7 @@
 import { useState, useCallback, useEffect } from "react"
 import type { BookableEntity, BookingData, BookingStep } from "./booking-types"
 import type { AISuggestion } from "@/types"
+import { useCompany } from "@/providers/company-provider"
 
 export interface UseBookingDialogLogicProps {
     entity: BookableEntity | null
@@ -52,6 +53,7 @@ export function useBookingDialogLogic({
     onOpenChange,
     open,
 }: UseBookingDialogLogicProps): UseBookingDialogLogicReturn {
+    const { company } = useCompany()
     const [step, setStep] = useState<BookingStep>('details')
     const [isLoading, setIsLoading] = useState(false)
     const [uploadedFile, setUploadedFile] = useState<File | null>(null)
@@ -112,16 +114,18 @@ export function useBookingDialogLogic({
 
         setIsLoading(true)
         try {
+            const isCashMethod = company?.accountingMethod === 'cash'
             const bookingData: BookingData = {
                 entityId: entity.id,
                 entityType: entity.type,
                 useAiSuggestion: !!aiSuggestion,
                 category: category,
                 debitAccount: debitAccount,
-                creditAccount: creditAccount,
+                creditAccount: isCashMethod ? '1930' : creditAccount,
                 description: description || `Bokföring: ${entity.name}`,
                 amount: entity.amount ? parseFloat(entity.amount.replace(/[^0-9.-]/g, '')) : 0,
                 attachmentName: uploadedFile?.name,
+                accountingMethod: company?.accountingMethod,
             }
 
             await onBook(bookingData)

@@ -5,7 +5,6 @@ import {
     Users,
     FileText,
     Megaphone,
-    Send,
     Sparkles,
     Download
 } from "lucide-react"
@@ -21,7 +20,6 @@ import {
     DialogTitle,
 } from "@/components/ui/dialog"
 import { generateAnnualMeetingNoticePDF, type MeetingData } from "@/lib/generators/pdf-generator"
-import { useToast } from "@/components/ui/toast"
 import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
 import { formatDateLong } from "@/lib/utils"
 
@@ -56,40 +54,6 @@ export function SendNoticeDialog({
     const isAssociation = variant === "association"
     const title = isAssociation ? "Skicka kallelse till årsmöte" : "Skicka kallelse till bolagsstämma"
     const recipientType = isAssociation ? "aktiva medlemmar" : "aktieägare"
-    const toast = useToast()
-
-    const [isSending, setIsSending] = React.useState(false)
-    const [sendMethod, setSendMethod] = React.useState<'email' | 'post' | 'both'>('email')
-
-    const handleSend = async () => {
-        if (isSending) return
-        setIsSending(true)
-        
-        try {
-            const response = await fetch('/api/notices', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    meetingId: meeting?.id || 'new',
-                    meetingType: isAssociation ? 'annual' : 'general',
-                    recipients: recipients.map(r => ({ name: r.name, shares: r.shares })),
-                    method: sendMethod,
-                })
-            })
-
-            if (!response.ok) throw new Error('Failed to send')
-
-            toast.success("Kallelse skickad", `Kallelse har skickats till ${recipientCount} ${recipientType}.`)
-            onSubmit?.()
-            onOpenChange(false)
-        } catch (error) {
-            console.error('Send notice error:', error)
-            toast.error("Fel", "Kunde inte skicka kallelsen")
-        } finally {
-            setIsSending(false)
-        }
-    }
-
     const handleDownloadPDF = () => {
         if (!meeting) return
         generateAnnualMeetingNoticePDF(meeting)
@@ -127,27 +91,6 @@ export function SendNoticeDialog({
                                 ))}
                             </div>
                         )}
-                    </div>
-
-                    <div className="space-y-2">
-                        <Label>Skicka via</Label>
-                        <div className="grid grid-cols-2 gap-2">
-                            <Button variant="outline" className="justify-start">
-                                <FileText className="h-4 w-4 mr-2" />
-                                E-post
-                            </Button>
-                            {isAssociation ? (
-                                <Button variant="outline" className="justify-start">
-                                    <Megaphone className="h-4 w-4 mr-2" />
-                                    Nyhetsbrev
-                                </Button>
-                            ) : (
-                                <Button variant="outline" className="justify-start">
-                                    <Send className="h-4 w-4 mr-2" />
-                                    Rekommenderat brev
-                                </Button>
-                            )}
-                        </div>
                     </div>
 
                     {isAssociation && (
@@ -238,15 +181,9 @@ Formatera kallelsen så den är redo att skickas ut.`
                             Ladda ner PDF
                         </Button>
                     )}
-                    <div className="flex gap-2">
-                        <Button variant="outline" onClick={() => onOpenChange(false)}>
-                            Avbryt
-                        </Button>
-                        <Button onClick={handleSend} disabled={isSending}>
-                            <Send className="h-4 w-4 mr-2" />
-                            {isSending ? "Skickar..." : "Skicka"}
-                        </Button>
-                    </div>
+                    <Button variant="outline" onClick={() => onOpenChange(false)}>
+                        Avbryt
+                    </Button>
                 </DialogFooter>
             </DialogContent>
         </Dialog>

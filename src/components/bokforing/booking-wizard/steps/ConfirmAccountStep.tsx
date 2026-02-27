@@ -1,23 +1,43 @@
 "use client"
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Search } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
+import { Search, Sparkles, Loader2 } from 'lucide-react'
 import type { VerificationEntry } from '@/services/verification-service'
 import { basAccounts } from '@/data/accounts'
 
 interface ConfirmAccountStepProps {
   entries: VerificationEntry[]
   onUpdateEntry: (index: number, account: string) => void
+  aiSuggestedAccount?: string
+  aiSuggestionLoading?: boolean
 }
 
 /**
  * Wizard step: Confirm or change BAS accounts for proposed entries.
  * Shows each entry line with editable account selection.
  */
-export function ConfirmAccountStep({ entries, onUpdateEntry }: ConfirmAccountStepProps) {
+export function ConfirmAccountStep({
+  entries,
+  onUpdateEntry,
+  aiSuggestedAccount,
+  aiSuggestionLoading = false,
+}: ConfirmAccountStepProps) {
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Auto-apply AI suggestion to the first editable entry
+  useEffect(() => {
+    if (!aiSuggestedAccount) return
+    const editableIdx = entries.findIndex((e) => {
+      const num = parseInt(e.account, 10)
+      return !(num === 1930 || num === 2610 || num === 2620 || num === 2630 || num === 2640)
+    })
+    if (editableIdx >= 0 && entries[editableIdx].account !== aiSuggestedAccount) {
+      onUpdateEntry(editableIdx, aiSuggestedAccount)
+    }
+  }, [aiSuggestedAccount]) // Only run when suggestion arrives
 
   // Find the first entry that likely needs account confirmation
   // (the one that's not a standard bank/tax/liability account)
@@ -40,7 +60,22 @@ export function ConfirmAccountStep({ entries, onUpdateEntry }: ConfirmAccountSte
   return (
     <div className="space-y-4">
       <div className="text-sm text-muted-foreground">
-        Bekräfta eller ändra konto för konteringen. AI har föreslagit konton baserat på transaktionens beskrivning.
+        {aiSuggestionLoading ? (
+          <span className="flex items-center gap-2">
+            <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+            Analyserar med AI...
+          </span>
+        ) : aiSuggestedAccount ? (
+          <span className="flex items-center gap-2">
+            Bekräfta eller ändra konto för konteringen.
+            <Badge variant="secondary" className="text-xs gap-1">
+              <Sparkles className="h-3 w-3 text-violet-600" />
+              AI-förslag
+            </Badge>
+          </span>
+        ) : (
+          'Bekräfta eller ändra konto för konteringen.'
+        )}
       </div>
 
       {/* Current entries preview */}

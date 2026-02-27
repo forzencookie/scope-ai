@@ -173,17 +173,26 @@ export const calculateDepreciationTool = defineTool<CalculateDepreciationParams,
         const period = params.period || new Date().toLocaleString('sv-SE', { month: 'long', year: 'numeric' })
 
         // Calculate monthly depreciation for each asset
+        const now = new Date()
         const depreciationDetails = assets.map(asset => {
-            const monthlyDep = Math.round(asset.inkopspris / (asset.livslangdAr * 12))
-            // Simplified: assume asset is midway through its life for remaining value
-            const monthsOwned = 12 // Simplified
-            const totalDepreciated = monthlyDep * monthsOwned
+            const totalMonths = asset.livslangdAr * 12
+            const monthlyDep = Math.round(asset.inkopspris / totalMonths)
+
+            // Calculate actual months owned from purchase date
+            const purchaseDate = new Date(asset.inkopsdatum)
+            const monthsOwned = Math.max(0,
+                (now.getFullYear() - purchaseDate.getFullYear()) * 12
+                + (now.getMonth() - purchaseDate.getMonth())
+            )
+            // Cap depreciation at total useful life
+            const depreciatedMonths = Math.min(monthsOwned, totalMonths)
+            const totalDepreciated = monthlyDep * depreciatedMonths
             const remainingValue = Math.max(0, asset.inkopspris - totalDepreciated)
 
             return {
                 id: asset.id,
                 namn: asset.namn,
-                avskrivning: monthlyDep,
+                avskrivning: depreciatedMonths < totalMonths ? monthlyDep : 0,
                 kvarvarandeVarde: remainingValue,
             }
         })
@@ -306,13 +315,28 @@ export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResul
         required: ['assetId'],
     },
     execute: async (params) => {
-        // In production, fetch the actual asset
         const salePrice = params.salePrice ?? 0
         const reason = params.reason ?? 'såld'
         const disposeDate = params.disposeDate || new Date().toISOString().split('T')[0]
 
-        // Mock book value calculation (in production, calculate from depreciation)
-        const bookValue = 5000 // Would be calculated
+        // Calculate actual book value from depreciation
+        const { inventarier } = await inventarieService.getInventarier({ limit: 100 })
+        const asset = inventarier.find(i => i.id === params.assetId)
+
+        let bookValue = 0
+        if (asset) {
+            const totalMonths = asset.livslangdAr * 12
+            const monthlyDep = Math.round(asset.inkopspris / totalMonths)
+            const disposeD = new Date(disposeDate)
+            const purchaseD = new Date(asset.inkopsdatum)
+            const monthsOwned = Math.max(0,
+                (disposeD.getFullYear() - purchaseD.getFullYear()) * 12
+                + (disposeD.getMonth() - purchaseD.getMonth())
+            )
+            const depreciatedMonths = Math.min(monthsOwned, totalMonths)
+            bookValue = Math.max(0, asset.inkopspris - (monthlyDep * depreciatedMonths))
+        }
+
         const gainLoss = salePrice - bookValue
 
         const gainLossText = gainLoss > 0

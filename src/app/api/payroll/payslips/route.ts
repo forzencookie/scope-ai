@@ -11,6 +11,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
 import { pendingBookingService } from '@/services/pending-booking-service';
 import { taxService } from '@/services/tax-service';
+import { createSalaryEntry } from '@/lib/bookkeeping';
 
 export async function GET() {
     try {
@@ -76,19 +77,32 @@ export async function POST(req: NextRequest) {
             const period = body.period || new Date().toISOString().slice(0, 7)
 
             try {
+                const paymentDate = body.payment_date || new Date().toISOString().split('T')[0]
+                const journalEntry = createSalaryEntry({
+                    date: paymentDate,
+                    description: `Lön ${employeeName} ${period}`,
+                    salary: {
+                        grossSalary,
+                        preliminaryTax: taxDeduction,
+                        employerContributions: employerContribution,
+                    },
+                    paidImmediately: true,
+                    bankAccount: '1930',
+                    series: 'L',
+                })
+
                 const pending = await pendingBookingService.createPendingBooking({
                     sourceType: 'payslip',
                     sourceId: saved.id,
-                    description: `Lön ${employeeName} ${period}`,
+                    description: journalEntry.description,
                     series: 'L',
-                    date: body.payment_date || new Date().toISOString().split('T')[0],
-                    entries: [
-                        { account: '7010', debit: grossSalary, credit: 0, description: `Lön ${employeeName}` },
-                        { account: '7510', debit: employerContribution, credit: 0, description: `Arbetsgivaravgift ${employeeName}` },
-                        { account: '2710', debit: 0, credit: taxDeduction, description: `Personalskatt ${employeeName}` },
-                        { account: '2730', debit: 0, credit: employerContribution, description: `Arbetsgivaravgift skuld ${employeeName}` },
-                        { account: '1930', debit: 0, credit: netSalary, description: `Utbetalning lön ${employeeName}` },
-                    ],
+                    date: paymentDate,
+                    entries: journalEntry.rows.map(row => ({
+                        account: row.account,
+                        debit: row.debit,
+                        credit: row.credit,
+                        description: row.description,
+                    })),
                     metadata: { employeeName, period, grossSalary, netSalary },
                 })
                 pendingBookingId = pending.id
@@ -100,6 +114,12 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ success: true, payslip: saved, pendingBookingId });
     } catch (error) {
         console.error("Failed to create payslip:", error);
-        return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'Failed to create payslip';
+
+        if (message.includes('balanserar inte')) {
+            return NextResponse.json({ error: message }, { status: 422 });
+        }
+
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

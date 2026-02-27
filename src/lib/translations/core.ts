@@ -20,7 +20,7 @@ export const nav = {
     payroll: { enkel: "Löner", avancerad: "Löner" },
     owners: { enkel: "Ägarinfo", avancerad: "Ägare & Styrning" },
     settings: { enkel: "Inställningar", avancerad: "Inställningar" },
-    statistics: { enkel: "Statistik", avancerad: "Företagsstatistik" },
+
     more: { enkel: "Övrigt", avancerad: "Mer" },
 }
 

@@ -1,5 +1,6 @@
 
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useTransactions } from '@/hooks/use-transactions-query'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
 import { getSupabaseClient } from '@/lib/database/supabase'
@@ -28,55 +29,49 @@ interface StatCounts {
     pendingPayslips: number
 }
 
-function useStatCounts(): StatCounts & { isLoading: boolean } {
-    const [counts, setCounts] = useState<StatCounts>({
-        draftInvoices: 0,
-        overdueInvoices: 0,
-        pendingPayslips: 0,
-    })
-    const [isLoading, setIsLoading] = useState(true)
+export const dynamicTaskQueryKeys = {
+    all: ["dynamic-tasks"] as const,
+    statCounts: () => [...dynamicTaskQueryKeys.all, "stat-counts"] as const,
+}
 
-    useEffect(() => {
-        async function fetchCounts() {
+function useStatCounts(): StatCounts & { isLoading: boolean } {
+    const { data, isLoading } = useQuery<StatCounts>({
+        queryKey: dynamicTaskQueryKeys.statCounts(),
+        queryFn: async () => {
             const supabase = getSupabaseClient()
             const today = new Date().toISOString().split('T')[0]
 
-            try {
-                const [draftRes, overdueRes, payslipRes] = await Promise.all([
-                    // Draft customer invoices
-                    supabase
-                        .from('customerinvoices')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('status', 'DRAFT'),
-                    // Overdue unpaid invoices
-                    supabase
-                        .from('customerinvoices')
-                        .select('id', { count: 'exact', head: true })
-                        .lt('due_date', today)
-                        .not('status', 'in', '("PAID","CANCELLED")'),
-                    // Pending payslips
-                    supabase
-                        .from('payslips')
-                        .select('id', { count: 'exact', head: true })
-                        .eq('status', 'draft'),
-                ])
+            const [draftRes, overdueRes, payslipRes] = await Promise.all([
+                supabase
+                    .from('customerinvoices')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('status', 'DRAFT'),
+                supabase
+                    .from('customerinvoices')
+                    .select('id', { count: 'exact', head: true })
+                    .lt('due_date', today)
+                    .not('status', 'in', '("PAID","CANCELLED")'),
+                supabase
+                    .from('payslips')
+                    .select('id', { count: 'exact', head: true })
+                    .eq('status', 'draft'),
+            ])
 
-                setCounts({
-                    draftInvoices: draftRes.count || 0,
-                    overdueInvoices: overdueRes.count || 0,
-                    pendingPayslips: payslipRes.count || 0,
-                })
-            } catch (err) {
-                console.error('Failed to fetch stat counts:', err)
-            } finally {
-                setIsLoading(false)
+            return {
+                draftInvoices: draftRes.count || 0,
+                overdueInvoices: overdueRes.count || 0,
+                pendingPayslips: payslipRes.count || 0,
             }
-        }
+        },
+        staleTime: 5 * 60 * 1000,
+    })
 
-        fetchCounts()
-    }, [])
-
-    return { ...counts, isLoading }
+    return {
+        draftInvoices: data?.draftInvoices || 0,
+        overdueInvoices: data?.overdueInvoices || 0,
+        pendingPayslips: data?.pendingPayslips || 0,
+        isLoading,
+    }
 }
 
 export function useDynamicTasks() {
@@ -148,9 +143,8 @@ export function useDynamicTasks() {
         let vatPeriod: string
 
         if (vatFrequency === 'monthly') {
-            // Monthly: deadline is 26th of next month (12th for jan/aug declarations)
-            const currentMonth = now.getMonth() // 0-based
-            const declarationMonth = currentMonth // previous month's VAT
+            const currentMonth = now.getMonth()
+            const declarationMonth = currentMonth
             const deadlineDay = (declarationMonth === 0 || declarationMonth === 7) ? 12 : 26
             vatDeadline = new Date(currentYear, currentMonth + 1, deadlineDay)
             if (vatDeadline <= now) {
@@ -161,31 +155,29 @@ export function useDynamicTasks() {
             const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
             vatPeriod = monthNames[vatDeadline.getMonth() - 1] || monthNames[11]
         } else if (vatFrequency === 'annually') {
-            // Annually: deadline Feb 26 for previous year
-            vatDeadline = new Date(currentYear, 1, 26) // Feb 26
+            vatDeadline = new Date(currentYear, 1, 26)
             if (now > vatDeadline) {
                 vatDeadline = new Date(currentYear + 1, 1, 26)
             }
             vatPeriod = `${vatDeadline.getFullYear() - 1}`
         } else {
-            // Quarterly (default)
-            vatDeadline = new Date(currentYear, 1, 12) // Feb 12
+            vatDeadline = new Date(currentYear, 1, 12)
             vatPeriod = "Q4"
 
             if (now > new Date(currentYear, 1, 12)) {
-                vatDeadline = new Date(currentYear, 4, 12) // May 12
+                vatDeadline = new Date(currentYear, 4, 12)
                 vatPeriod = "Q1"
             }
             if (now > new Date(currentYear, 4, 12)) {
-                vatDeadline = new Date(currentYear, 7, 17) // Aug 17
+                vatDeadline = new Date(currentYear, 7, 17)
                 vatPeriod = "Q2"
             }
             if (now > new Date(currentYear, 7, 17)) {
-                vatDeadline = new Date(currentYear, 10, 12) // Nov 12
+                vatDeadline = new Date(currentYear, 10, 12)
                 vatPeriod = "Q3"
             }
             if (now > new Date(currentYear, 10, 12)) {
-                vatDeadline = new Date(currentYear + 1, 1, 12) // Feb 12 next year
+                vatDeadline = new Date(currentYear + 1, 1, 12)
                 vatPeriod = "Q4"
             }
         }
@@ -269,7 +261,6 @@ export function useDynamicTasks() {
         // 5. AB: Bolagsstämma reminder near fiscal year end
         if (companyType === 'ab' && company?.fiscalYearEnd) {
             const [fyMonth, fyDay] = company.fiscalYearEnd.split('-').map(Number)
-            // Stämma must be held within 6 months of fiscal year end
             const fyEndDate = new Date(currentYear, (fyMonth || 12) - 1, fyDay || 31)
             const stammoDeadline = new Date(fyEndDate)
             stammoDeadline.setMonth(stammoDeadline.getMonth() + 6)

@@ -65,10 +65,6 @@ export {
     LazyFirmatecknare,
     LazyEgenavgifter,
     LazyDelagaruttag,
-    // Statistik
-    LazyEkonomiskOversikt,
-    LazyTransaktionsrapport,
-    LazyKostnadsanalys,
     // Onboarding
     LazyOnboardingWizard,
 } from "./lazy-loader"

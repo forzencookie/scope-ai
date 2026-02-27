@@ -77,4 +77,5 @@ export interface BookingData {
     amount?: number
     attachmentUrl?: string
     attachmentName?: string
+    accountingMethod?: 'cash' | 'invoice'
 }

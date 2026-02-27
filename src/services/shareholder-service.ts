@@ -48,6 +48,29 @@ export interface Shareholder {
     acquisitionPrice: number | null
 }
 
+/** Map a database row to the Shareholder UI model. */
+function mapRowToShareholder(row: Record<string, any>, totalShares: number): Shareholder {
+    const sharesCount = row.shares_count || row.shares || 0
+    const ownershipPct = row.ownership_percentage || row.share_percentage ||
+        (totalShares > 0 ? (sharesCount / totalShares) * 100 : 0)
+
+    return {
+        id: row.id,
+        name: row.name,
+        personalOrOrgNumber: row.ssn_org_nr || row.personal_number || '',
+        sharesCount,
+        shareClass: row.share_class || 'A',
+        ownershipPercentage: Math.round(ownershipPct * 100) / 100,
+        votingPercentage: row.voting_percentage || row.voting_power || ownershipPct,
+        isBoardMember: row.is_board_member || false,
+        boardRole: row.board_role,
+        email: row.email,
+        phone: row.phone,
+        acquisitionDate: row.acquisition_date,
+        acquisitionPrice: row.acquisition_price,
+    }
+}
+
 /**
  * Shareholder query options
  */
@@ -132,27 +155,7 @@ export const shareholderService = {
         // Calculate totals for percentage calculations
         const totalShares = data.reduce((sum, row) => sum + (row.shares_count || row.shares || 0), 0)
 
-        const shareholders: Shareholder[] = data.map((row) => {
-            const sharesCount = row.shares_count || row.shares || 0
-            const ownershipPct = row.ownership_percentage || row.share_percentage ||
-                (totalShares > 0 ? (sharesCount / totalShares) * 100 : 0)
-
-            return {
-                id: row.id,
-                name: row.name,
-                personalOrOrgNumber: row.ssn_org_nr || row.personal_number || '',
-                sharesCount,
-                shareClass: row.share_class || 'A',
-                ownershipPercentage: Math.round(ownershipPct * 100) / 100,
-                votingPercentage: row.voting_percentage || row.voting_power || ownershipPct,
-                isBoardMember: row.is_board_member || false,
-                boardRole: row.board_role,
-                email: row.email,
-                phone: row.phone,
-                acquisitionDate: row.acquisition_date,
-                acquisitionPrice: row.acquisition_price
-            }
-        })
+        const shareholders: Shareholder[] = data.map((row) => mapRowToShareholder(row, totalShares))
 
         return {
             shareholders,
@@ -273,8 +276,9 @@ export const shareholderService = {
         const supabase = getSupabaseClient()
 
         const { data, error, count } = await supabase
-            .from('sharetransactions')
-            .select('*', { count: 'exact' })
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            .from('sharetransactions' as any)
+            .select('*, from_shareholder:shareholders!from_shareholder_id(name), to_shareholder:shareholders!to_shareholder_id(name)', { count: 'exact' })
             .order('registration_date', { ascending: false })
             .range(offset, offset + limit - 1)
 
@@ -291,9 +295,9 @@ export const shareholderService = {
         const transactions: ShareTransaction[] = (data as any[]).map((row) => ({
             id: row.id,
             fromShareholderId: row.from_shareholder_id || null,
-            fromShareholderName: null, // Would need join or separate query
+            fromShareholderName: row.from_shareholder?.name || null,
             toShareholderId: row.to_shareholder_id || null,
-            toShareholderName: '', // Would need join
+            toShareholderName: row.to_shareholder?.name || '',
             shareCount: row.share_count || row.shares || 0,
             pricePerShare: row.price_per_share || null,
             totalPrice: row.price_per_share ? row.price_per_share * (row.share_count || row.shares || 0) : null,

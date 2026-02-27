@@ -32,6 +32,7 @@ export interface CompanyInfo {
     accountingMethod: 'cash' | 'invoice'
     vatFrequency: 'monthly' | 'quarterly' | 'annually'
     isCloselyHeld: boolean
+    hasFskatt: boolean
     hasEmployees: boolean
     hasMomsRegistration: boolean
     shareCapital: number
@@ -56,6 +57,7 @@ export interface CompanyUpdate {
     accountingMethod?: 'cash' | 'invoice'
     vatFrequency?: 'monthly' | 'quarterly' | 'annually'
     isCloselyHeld?: boolean
+    hasFskatt?: boolean
     hasEmployees?: boolean
     hasMomsRegistration?: boolean
     shareCapital?: number
@@ -83,6 +85,7 @@ interface CompanyRow {
     accounting_method: string | null
     vat_frequency: string | null
     is_closely_held: boolean | null
+    has_f_skatt: boolean | null
     has_employees: boolean | null
     has_moms_registration: boolean | null
     share_capital: number | null
@@ -111,10 +114,11 @@ function mapRowToCompany(row: CompanyRow): CompanyInfo {
         accountingMethod: (row.accounting_method as 'cash' | 'invoice') || 'invoice',
         vatFrequency: (row.vat_frequency as 'monthly' | 'quarterly' | 'annually') || 'quarterly',
         isCloselyHeld: row.is_closely_held ?? true,
+        hasFskatt: row.has_f_skatt ?? true,
         hasEmployees: row.has_employees ?? false,
         hasMomsRegistration: row.has_moms_registration ?? true,
-        shareCapital: row.share_capital ?? 25000,
-        totalShares: row.total_shares ?? 500,
+        shareCapital: row.share_capital ?? 0,
+        totalShares: row.total_shares ?? 0,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     }
@@ -198,10 +202,11 @@ export async function createCompany(
         accounting_method: data.accountingMethod || 'invoice',
         vat_frequency: data.vatFrequency || 'quarterly',
         is_closely_held: data.isCloselyHeld ?? true,
+        has_f_skatt: data.hasFskatt ?? true,
         has_employees: data.hasEmployees ?? false,
         has_moms_registration: data.hasMomsRegistration ?? true,
-        share_capital: data.shareCapital ?? 25000,
-        total_shares: data.totalShares ?? 500,
+        share_capital: data.shareCapital ?? null,
+        total_shares: data.totalShares ?? null,
     }
 
     const { data: result, error } = await supabase
@@ -249,6 +254,7 @@ export async function updateCompany(
     if (updates.accountingMethod !== undefined) updateData.accounting_method = updates.accountingMethod
     if (updates.vatFrequency !== undefined) updateData.vat_frequency = updates.vatFrequency
     if (updates.isCloselyHeld !== undefined) updateData.is_closely_held = updates.isCloselyHeld
+    if (updates.hasFskatt !== undefined) updateData.has_f_skatt = updates.hasFskatt
     if (updates.hasEmployees !== undefined) updateData.has_employees = updates.hasEmployees
     if (updates.hasMomsRegistration !== undefined) updateData.has_moms_registration = updates.hasMomsRegistration
     if (updates.shareCapital !== undefined) updateData.share_capital = updates.shareCapital

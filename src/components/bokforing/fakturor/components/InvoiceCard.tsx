@@ -5,9 +5,9 @@ import {
     Send,
     Eye,
     CheckCircle2,
-    Mail,
     Banknote,
     Download,
+    FileX2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
@@ -26,6 +26,7 @@ interface InvoiceCardProps {
     onApproveSupplier: (id: string) => void
     onMarkSupplierPaid: (id: string) => void
     onDownloadPDF?: (invoice: UnifiedInvoice) => void
+    onCreateCreditNote?: (id: string) => void
 }
 
 export const InvoiceCard = React.memo(function InvoiceCard({
@@ -35,6 +36,7 @@ export const InvoiceCard = React.memo(function InvoiceCard({
     onApproveSupplier,
     onMarkSupplierPaid,
     onDownloadPDF,
+    onCreateCreditNote,
 }: InvoiceCardProps) {
     const isCustomer = invoice.direction === "in"
     const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
@@ -82,11 +84,13 @@ export const InvoiceCard = React.memo(function InvoiceCard({
                                 <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
                                 Markera betald
                             </DropdownMenuItem>
-                            <DropdownMenuItem>
-                                <Mail className="h-3.5 w-3.5 mr-2" />
-                                Skicka påminnelse
-                            </DropdownMenuItem>
                         </>
+                    )}
+                    {invoice.status !== INVOICE_STATUS_LABELS.DRAFT && invoice.status !== 'Krediterad' && onCreateCreditNote && (
+                        <DropdownMenuItem onClick={() => onCreateCreditNote(invoice.originalCustomerInvoice!.id)}>
+                            <FileX2 className="h-3.5 w-3.5 mr-2" />
+                            Skapa kreditfaktura
+                        </DropdownMenuItem>
                     )}
                 </>
             )}

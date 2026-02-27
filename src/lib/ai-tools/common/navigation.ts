@@ -206,11 +206,6 @@ const ROUTES: Record<string, RouteInfo> = {
         label: 'Inställningar',
         aliases: ['inställningar', 'installningar', 'settings', 'konfiguration'],
     },
-    statistics: {
-        path: '/dashboard/foretagsstatistik',
-        label: 'Företagsstatistik',
-        aliases: ['företagsstatistik', 'foretagsstatistik', 'statistik', 'nyckeltal'],
-    },
 }
 
 type RouteName = keyof typeof ROUTES

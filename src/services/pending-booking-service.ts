@@ -182,8 +182,8 @@ export const pendingBookingService = {
    * Book a single pending item:
    * 1. Validate entries balance
    * 2. Create verification via verificationService
-   * 3. Update pending_booking status to 'booked'
-   * 4. Update source entity status to 'bokförd'
+   * 3. Atomically update pending_booking + source entity status via RPC
+   *    (if RPC fails, compensate by deleting the orphaned verification)
    */
   async bookPendingItem(
     id: string,
@@ -221,7 +221,7 @@ export const pendingBookingService = {
       )
     }
 
-    // 3. Create the verification
+    // 3. Create the verification (header + lines)
     const verification = await verificationService.createVerification({
       series: pending.proposedSeries,
       date: pending.proposedDate,
@@ -231,23 +231,40 @@ export const pendingBookingService = {
       sourceId: pending.sourceId,
     })
 
-    // 4. Update pending booking → booked
-    const { error: updateError } = await supabase
-      .from('pending_bookings')
-      .update({
-        status: 'booked',
-        booked_at: new Date().toISOString(),
-        verification_id: verification.id,
-        proposed_entries: entries as unknown as Record<string, unknown>,
-      })
-      .eq('id', id)
+    // 4. Atomically update pending_booking status + source entity status via RPC
+    //    Both updates happen in one DB transaction — either both succeed or both roll back.
+    //    The RPC also guards against double-booking (WHERE status = 'pending').
+    const { error: rpcError } = await supabase.rpc('book_pending_item_status', {
+      p_pending_id: id,
+      p_verification_id: verification.id,
+      p_entries: entries as unknown as Record<string, unknown>,
+      p_source_type: pending.sourceType,
+      p_source_id: pending.sourceId,
+    })
 
-    if (updateError) {
-      console.error('[PendingBookingService] Failed to update pending booking status:', updateError)
+    if (rpcError) {
+      // Compensate: delete the orphaned verification so the user can retry
+      console.error('[PendingBookingService] Atomic status update failed, compensating:', rpcError)
+      try {
+        const realSupabase = getSupabaseClient()
+        await realSupabase.from('verification_lines').delete().eq('verification_id', verification.id)
+        await realSupabase.from('verifications').delete().eq('id', verification.id)
+      } catch (cleanupErr) {
+        console.error('[PendingBookingService] Compensation cleanup also failed:', cleanupErr)
+      }
+      throw new Error(
+        `Bokföring misslyckades — verifikation och statusuppdatering har rullats tillbaka. ` +
+        `Försök igen. Fel: ${rpcError.message}`
+      )
     }
 
-    // 5. Update source entity status
-    await this.updateSourceEntityStatus(pending.sourceType, pending.sourceId)
+    logAuditEntry({
+      action: 'booked',
+      entityType: 'verifications',
+      entityId: verification.id,
+      entityName: `${verification.series}${verification.number}`,
+      metadata: { sourceType: pending.sourceType, sourceId: pending.sourceId, pendingBookingId: id },
+    })
 
     return {
       verificationId: verification.id,
@@ -332,7 +349,9 @@ export const pendingBookingService = {
   },
 
   /**
-   * Update the source entity's status to 'booked'/'bokförd' after verification creation.
+   * Update the source entity's status to 'booked'/'bokförd'.
+   * Note: For normal booking flow, this is handled atomically by the
+   * book_pending_item_status RPC. This method is kept for manual/admin use.
    */
   async updateSourceEntityStatus(sourceType: string, sourceId: string): Promise<void> {
     const mapping = SOURCE_TABLE_MAP[sourceType]
@@ -340,26 +359,23 @@ export const pendingBookingService = {
 
     const supabase = db()
 
-    try {
-      const { error } = await supabase
-        .from(mapping.table)
-        .update({ status: mapping.statusValue })
-        .eq('id', sourceId)
+    const { error } = await supabase
+      .from(mapping.table)
+      .update({ status: mapping.statusValue })
+      .eq('id', sourceId)
 
-      if (error) {
-        console.error(`[PendingBookingService] Failed to update ${mapping.table} status:`, error)
-      }
-
-      logAuditEntry({
-        action: 'booked',
-        entityType: 'verifications',
-        entityId: sourceId,
-        entityName: `${sourceType}:${sourceId}`,
-        metadata: { sourceType, status: mapping.statusValue },
-      })
-    } catch (err) {
-      // Don't fail the booking if source status update fails
-      console.error(`[PendingBookingService] updateSourceEntityStatus error:`, err)
+    if (error) {
+      throw new Error(
+        `Kunde inte uppdatera status på ${mapping.table} (${sourceId}): ${error.message}`
+      )
     }
+
+    logAuditEntry({
+      action: 'booked',
+      entityType: 'verifications',
+      entityId: sourceId,
+      entityName: `${sourceType}:${sourceId}`,
+      metadata: { sourceType, status: mapping.statusValue },
+    })
   },
 }

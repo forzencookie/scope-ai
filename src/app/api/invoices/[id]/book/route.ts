@@ -13,18 +13,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
 import { pendingBookingService } from '@/services/pending-booking-service';
-import { getVatAccount } from '@/lib/bookkeeping/vat';
-import type { SwedishVatRate } from '@/lib/bookkeeping/types';
+import { createSalesEntry, createMultiVatSalesEntry } from '@/lib/bookkeeping';
+import type { SwedishVatRate } from '@/lib/bookkeeping';
 
 interface InvoiceLineItem {
     description?: string;
     quantity?: number;
     unitPrice?: number;
     vatRate?: number;
-}
-
-function isValidVatRate(rate: number): rate is SwedishVatRate {
-    return rate === 0 || rate === 6 || rate === 12 || rate === 25;
 }
 
 export async function POST(
@@ -54,92 +50,70 @@ export async function POST(
         // Update Invoice Status
         await userDb.customerInvoices.update(id, { status: 'skickad' });
 
+        // Read optional accountingMethod from request body
+        let accountingMethod: 'cash' | 'invoice' | undefined;
+        try {
+            const body = await req.json();
+            if (body.accountingMethod === 'cash' || body.accountingMethod === 'invoice') {
+                accountingMethod = body.accountingMethod;
+            }
+        } catch {
+            // No body or invalid JSON — use default (invoice method)
+        }
+
         const total = Number(invoice.total_amount) || 0;
         const date = new Date().toISOString().split('T')[0];
         const customerName = invoice.customer_name || 'Kund';
         const invoiceNumber = invoice.invoice_number || undefined;
         const description = invoiceNumber ? `${customerName} (Faktura ${invoiceNumber})` : customerName;
 
-        const entries: { account: string; debit: number; credit: number; description: string }[] = [];
-
-        // Debit: Customer receivable for full gross amount
-        entries.push({
-            account: '1510',
-            debit: total,
-            credit: 0,
-            description: invoiceNumber ? `Kundfaktura ${invoiceNumber}` : 'Kundfordran',
-        });
-
-        // Parse line items to get per-line VAT rates
+        // Parse line items to determine entry creation method
         const items = invoice.items as InvoiceLineItem[] | null;
 
+        let journalEntry;
+
         if (items && Array.isArray(items) && items.length > 0) {
-            // Group line items by VAT rate
-            const vatGroups = new Map<SwedishVatRate, number>();
-            for (const item of items) {
-                const qty = Number(item.quantity) || 0;
-                const price = Number(item.unitPrice) || 0;
-                const lineNet = Math.round(qty * price * 100) / 100;
-                const rawRate = Number(item.vatRate) ?? 25;
-                const vatRate: SwedishVatRate = isValidVatRate(rawRate) ? rawRate : 25;
-
-                vatGroups.set(vatRate, (vatGroups.get(vatRate) || 0) + lineNet);
-            }
-
-            // Credit: Revenue and output VAT per VAT rate group
-            for (const [vatRate, netAmount] of vatGroups) {
-                const roundedNet = Math.round(netAmount * 100) / 100;
-
-                entries.push({
-                    account: '3001',
-                    debit: 0,
-                    credit: roundedNet,
-                    description: vatRate > 0 ? `Försäljning (exkl moms ${vatRate}%)` : 'Försäljning (momsfri)',
-                });
-
-                if (vatRate > 0) {
-                    const vatAmount = Math.round(roundedNet * (vatRate / 100) * 100) / 100;
-                    const vatAccount = getVatAccount(vatRate, 'output');
-
-                    entries.push({
-                        account: vatAccount,
-                        debit: 0,
-                        credit: vatAmount,
-                        description: `Utgående moms ${vatRate}%`,
-                    });
-                }
-            }
-        } else {
-            // Fallback: use invoice-level vat_rate or derive from total vs vat_amount
-            const invoiceVatRate = Number(invoice.vat_rate);
-            const vatRate: SwedishVatRate = isValidVatRate(invoiceVatRate) ? invoiceVatRate : 25;
-            const vatMultiplier = vatRate / 100;
-            const netAmount = Math.round((total / (1 + vatMultiplier)) * 100) / 100;
-            const vatAmount = Math.round((total - netAmount) * 100) / 100;
-
-            entries.push({
-                account: '3001',
-                debit: 0,
-                credit: netAmount,
-                description: `Försäljning (exkl moms ${vatRate}%)`,
+            // Multi-VAT-rate: use line-item-aware entry creator
+            journalEntry = createMultiVatSalesEntry({
+                date,
+                description: customerName,
+                grossAmount: total,
+                lineItems: items.map(item => ({
+                    quantity: Number(item.quantity) || 0,
+                    unitPrice: Number(item.unitPrice) || 0,
+                    vatRate: Number(item.vatRate) ?? 25,
+                    description: item.description,
+                })),
+                invoiceNumber,
+                accountingMethod,
             });
+        } else {
+            // Single VAT rate: use simple sales entry
+            const invoiceVatRate = Number(invoice.vat_rate);
+            const isValid = (r: number): r is SwedishVatRate => r === 0 || r === 6 || r === 12 || r === 25;
+            const vatRate: SwedishVatRate = isValid(invoiceVatRate) ? invoiceVatRate : 25;
 
-            if (vatRate > 0) {
-                entries.push({
-                    account: getVatAccount(vatRate, 'output'),
-                    debit: 0,
-                    credit: vatAmount,
-                    description: `Utgående moms ${vatRate}%`,
-                });
-            }
+            journalEntry = createSalesEntry({
+                date,
+                description: customerName,
+                grossAmount: total,
+                vatRate,
+                invoiceNumber,
+                accountingMethod,
+            });
         }
 
-        // Create pending booking instead of auto-verification
+        // Create pending booking
         const pending = await pendingBookingService.createPendingBooking({
             sourceType: 'customer_invoice',
             sourceId: id,
             description,
-            entries,
+            entries: journalEntry.rows.map(row => ({
+                account: row.account,
+                debit: row.debit,
+                credit: row.credit,
+                description: row.description,
+            })),
             series: 'A',
             date,
             metadata: { customerName, invoiceNumber, total },
@@ -149,6 +123,15 @@ export async function POST(
 
     } catch (error) {
         console.error("Booking error:", error);
-        return NextResponse.json({ error: "Failed to book invoice" }, { status: 500 });
+        const message = error instanceof Error ? error.message : 'Failed to book invoice';
+
+        if (message.includes('balanserar inte')) {
+            return NextResponse.json({ error: message }, { status: 422 });
+        }
+        if (message.includes('redan bokförd') || message.includes('already')) {
+            return NextResponse.json({ error: message }, { status: 409 });
+        }
+
+        return NextResponse.json({ error: message }, { status: 500 });
     }
 }

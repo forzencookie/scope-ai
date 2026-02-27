@@ -31,6 +31,7 @@ interface BookingDialogProps {
     onOpenChange: (open: boolean) => void
     entity: BookableEntity | null
     aiSuggestion?: AISuggestion | null
+    aiSuggestionLoading?: boolean
     onBook: (booking: BookingData) => Promise<void>
 }
 
@@ -72,6 +73,7 @@ export function BookingDialog({
     onOpenChange,
     entity,
     aiSuggestion,
+    aiSuggestionLoading = false,
     onBook,
 }: BookingDialogProps) {
     const logic = useBookingDialogLogic({
@@ -137,6 +139,9 @@ export function BookingDialog({
                     <BookingStepBooking
                         entity={entity}
                         hasAiSuggestion={hasAiSuggestion}
+                        aiSuggestionLoading={aiSuggestionLoading}
+                        aiReasoning={aiSuggestion?.reasoning}
+                        aiConfidence={aiSuggestion?.confidence}
                         category={category}
                         setCategory={setCategory}
                         debitAccount={debitAccount}

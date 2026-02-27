@@ -150,7 +150,6 @@ export function Medlemsregister() {
           {memberSelection.selectedCount > 0 && (
             <div className="flex items-center gap-2 bg-muted/50 px-3 py-1.5 rounded-md text-sm">
               <span className="font-medium">{memberSelection.selectedCount} valda</span>
-              <Button size="sm" variant="ghost" className="h-6 px-2">Skicka e-post</Button>
             </div>
           )}
         </div>

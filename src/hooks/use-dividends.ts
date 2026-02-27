@@ -2,18 +2,19 @@
  * Dividends Hook — Ägare → Utdelning data layer
  *
  * AB only: calculates distributable equity (fritt eget kapital) per ABL 17 kap.
- * Free equity = Total equity (class 20) - Restricted equity (aktiekapital 2081, reservfond 2086)
+ * Free equity = Total equity (class 20) - Restricted equity (aktiekapital 2011, reservfond 2013)
  */
 
 import { useMemo } from 'react'
 import { useAccountBalances } from './use-account-balances'
 import { normalizeBalances } from './use-normalized-balances'
 import { useCompany } from '@/providers/company-provider'
+import { EQUITY_ACCOUNTS } from '@/data/account-constants'
 
 export interface DividendData {
   /** Total booked equity (class 20xx) — positive when company has net worth */
   totalEquity: number
-  /** Restricted equity: aktiekapital (2081) + reservfond (2086) */
+  /** Restricted equity: aktiekapital (2011) + reservfond (2013) */
   restrictedEquity: number
   /** Free equity available for distribution */
   freeEquity: number
@@ -55,9 +56,9 @@ export function useDividends(): DividendData {
       // Raw balance is debit - credit. For credit-normal 2xxx, flip to positive.
       const displayAmount = entry.balance * -1
 
-      if (acc === '2081' || acc.startsWith('2081')) {
+      if (acc === EQUITY_ACCOUNTS.AKTIEKAPITAL) {
         aktiekapital += displayAmount
-      } else if (acc === '2086' || acc.startsWith('2086')) {
+      } else if (acc === EQUITY_ACCOUNTS.RESERVFOND) {
         reservfond += displayAmount
       }
     }

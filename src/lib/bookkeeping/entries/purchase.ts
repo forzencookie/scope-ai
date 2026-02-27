@@ -30,6 +30,8 @@ export interface PurchaseEntryParams {
   invoiceReference?: string
   /** Series identifier */
   series?: string
+  /** Accounting method: 'cash' skips payables (2440), booking directly to bank */
+  accountingMethod?: 'cash' | 'invoice'
 }
 
 /**
@@ -74,6 +76,7 @@ export function createPurchaseEntry(params: PurchaseEntryParams): JournalEntry {
     bankAccount = PAYMENT_ACCOUNTS.BANK,
     invoiceReference,
     series = 'B', // B-series for supplier invoices
+    accountingMethod = 'invoice',
   } = params
 
   const rows: JournalEntryLine[] = []
@@ -110,12 +113,13 @@ export function createPurchaseEntry(params: PurchaseEntryParams): JournalEntry {
     })
   }
 
-  // Credit the appropriate account
-  const creditAccount = paidImmediately ? bankAccount : liabilityAccount
-  const creditDescription = paidImmediately 
-    ? 'Betalning' 
-    : invoiceReference 
-      ? `Lev.skuld ref: ${invoiceReference}` 
+  // Cash method: always credit bank directly (no payable)
+  const useBankDirect = accountingMethod === 'cash' || paidImmediately
+  const creditAccount = useBankDirect ? bankAccount : liabilityAccount
+  const creditDescription = useBankDirect
+    ? 'Betalning'
+    : invoiceReference
+      ? `Lev.skuld ref: ${invoiceReference}`
       : 'Leverantörsskuld'
 
   rows.push({

@@ -65,6 +65,7 @@ export interface InvoicePDFLineItem {
 
 export interface InvoicePDFData {
     invoiceNumber: string
+    ocrReference?: string
     invoiceDate: string
     dueDate: string
     customerName: string
@@ -82,6 +83,7 @@ export interface InvoicePDFCompanyInfo extends PDFCompanyInfo {
     vatNumber?: string        // Momsregistreringsnummer (SE + org.nr + 01)
     phone?: string
     email?: string
+    hasFskatt?: boolean       // Show "Innehar F-skattsedel" on invoice
 }
 
 export const generateInvoicePDF = (data: InvoicePDFData, company?: InvoicePDFCompanyInfo) => {
@@ -266,13 +268,13 @@ export const generateInvoicePDF = (data: InvoicePDFData, company?: InvoicePDFCom
             doc.text(`Plusgiro: ${data.plusgiro}`, 25, payY)
         }
 
-        // OCR / payment reference = invoice number
+        // OCR / payment reference
         doc.setTextColor(...PDF_STYLES.grayText)
         doc.setFontSize(8)
         doc.text('BETALNINGSREFERENS (OCR)', 125, y + 7)
         doc.setTextColor(0, 0, 0)
         doc.setFontSize(13)
-        doc.text(data.invoiceNumber, 125, y + 17)
+        doc.text(data.ocrReference || data.invoiceNumber, 125, y + 17)
 
         y += 28
     }
@@ -295,12 +297,14 @@ export const generateInvoicePDF = (data: InvoicePDFData, company?: InvoicePDFCom
         }
     }
 
-    // F-skatt (standard on Swedish invoices)
-    y = checkPageBreak(doc, y, 12)
-    y += 8
-    doc.setTextColor(...PDF_STYLES.lightGrayText)
-    doc.setFontSize(8)
-    doc.text('Innehar F-skattsedel', 20, y)
+    // F-skatt (only if company has F-skattsedel)
+    if (company?.hasFskatt !== false) {
+        y = checkPageBreak(doc, y, 12)
+        y += 8
+        doc.setTextColor(...PDF_STYLES.lightGrayText)
+        doc.setFontSize(8)
+        doc.text('Innehar F-skattsedel', 20, y)
+    }
 
     addFooter(doc)
     doc.save(`Faktura-${data.invoiceNumber}.pdf`)

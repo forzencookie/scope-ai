@@ -1,13 +1,14 @@
 "use client"
 
-import { useState, useMemo, useCallback } from "react"
+import { useState, useMemo, useCallback, useEffect } from "react"
 import { useTableFilter, useTableSort, commonSortHandlers } from "@/hooks/use-table"
 import { useBulkSelection, type BulkAction } from "@/components/shared/bulk-action-toolbar"
 import { BookOpen } from "lucide-react"
 import { parseAmount } from "@/lib/utils"
-import { TRANSACTION_STATUSES, type TransactionWithAI } from "@/types"
+import { TRANSACTION_STATUSES, type TransactionWithAI, type AISuggestion } from "@/types"
 import { type BookingData } from "../dialogs/bokforing"
 import type { TransactionsTableProps } from "./types"
+import { fetchAiBookingSuggestion } from "@/lib/ai-suggestion"
 
 export function useTransactionsLogic({
     transactions = [],
@@ -18,6 +19,8 @@ export function useTransactionsLogic({
     const [newTransactionDialogOpen, setNewTransactionDialogOpen] = useState(false)
     const [selectedTransactions, setSelectedTransactions] = useState<TransactionWithAI[]>([])
     const [bookingDialogOpen, setBookingDialogOpen] = useState(false)
+    const [aiSuggestion, setAiSuggestion] = useState<AISuggestion | null>(null)
+    const [aiSuggestionLoading, setAiSuggestionLoading] = useState(false)
 
     // Table Logic
     const filter = useTableFilter<TransactionWithAI>({
@@ -71,6 +74,34 @@ export function useTransactionsLogic({
         return { income, expenses, pending, booked, totalCount: transactions.length }
     }, [transactions, externalStats])
 
+    // Fetch AI suggestion when booking dialog opens
+    useEffect(() => {
+        if (!bookingDialogOpen || selectedTransactions.length === 0) {
+            setAiSuggestion(null)
+            return
+        }
+
+        const tx = selectedTransactions[0]
+        let cancelled = false
+        setAiSuggestionLoading(true)
+        setAiSuggestion(null)
+
+        fetchAiBookingSuggestion({
+            id: tx.id,
+            name: tx.name,
+            amount: tx.amount,
+            date: tx.date,
+        }).then((suggestion) => {
+            if (!cancelled) setAiSuggestion(suggestion)
+        }).catch(() => {
+            // Silently fail — user can still book manually
+        }).finally(() => {
+            if (!cancelled) setAiSuggestionLoading(false)
+        })
+
+        return () => { cancelled = true }
+    }, [bookingDialogOpen, selectedTransactions])
+
     // Booking Handlers
     const handleBook = useCallback(async (bookingData: BookingData) => {
         if (onTransactionBooked) {
@@ -103,18 +134,20 @@ export function useTransactionsLogic({
         newTransactionDialogOpen, setNewTransactionDialogOpen,
         bookingDialogOpen, setBookingDialogOpen,
         selectedTransactions,
-        
+        aiSuggestion,
+        aiSuggestionLoading,
+
         // Hooks
         filter,
         sort,
         selection,
-        
+
         // Data
         filteredTransactions,
         stats,
         bulkActions,
         isLoading,
-        
+
         // Handlers
         handleTransactionClick,
         handleBook

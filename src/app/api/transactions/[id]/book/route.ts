@@ -84,8 +84,17 @@ export async function POST(
 
     } catch (error) {
         console.error(`Failed to book transaction ${id}:`, error)
+        const message = error instanceof Error ? error.message : 'Failed to book transaction';
+
+        if (message.includes('balanserar inte')) {
+            return NextResponse.json({ success: false, error: message }, { status: 422 });
+        }
+        if (message.includes('redan bokförd') || message.includes('already')) {
+            return NextResponse.json({ success: false, error: message }, { status: 409 });
+        }
+
         return NextResponse.json(
-            { success: false, error: 'Failed to book transaction' },
+            { success: false, error: message },
             { status: 500 }
         )
     }

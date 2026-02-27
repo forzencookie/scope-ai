@@ -1,6 +1,6 @@
 "use client"
 
-import { useCallback, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -30,6 +30,8 @@ import { ConfirmAccountStep } from './steps/ConfirmAccountStep'
 import { ReviewEntriesStep } from './steps/ReviewEntriesStep'
 import { ConfirmEquityStep } from './steps/ConfirmEquityStep'
 import { ReferenceMeetingStep } from './steps/ReferenceMeetingStep'
+import { fetchAiBookingSuggestion } from '@/lib/ai-suggestion'
+import { useCompany } from '@/providers/company-provider'
 
 // =============================================================================
 // Props
@@ -99,8 +101,44 @@ export function BookingWizardDialog({
   onDismiss,
 }: BookingWizardDialogProps) {
   const [isBooking, setIsBooking] = useState(false)
+  const [aiSuggestedAccount, setAiSuggestedAccount] = useState<string | null>(null)
+  const [aiSuggestionLoading, setAiSuggestionLoading] = useState(false)
+  const { company } = useCompany()
+  const accountingMethod = company?.accountingMethod || 'invoice'
 
   const wizard = useBookingWizard(sourceType, sourceData, proposedEntries)
+
+  // Fetch AI suggestion for transactions when dialog opens
+  useEffect(() => {
+    if (!open || sourceType !== 'transaction') {
+      setAiSuggestedAccount(null)
+      return
+    }
+
+    const name = sourceData.description as string || sourceData.name as string || ''
+    const txAmount = sourceData.amount as string | number || 0
+    const txDate = sourceData.date as string || ''
+    const txId = sourceId
+
+    if (!name && !txAmount) return
+
+    let cancelled = false
+    setAiSuggestionLoading(true)
+    setAiSuggestedAccount(null)
+
+    fetchAiBookingSuggestion({ id: txId, name, amount: txAmount, date: txDate })
+      .then((suggestion) => {
+        if (!cancelled && suggestion?.account) {
+          setAiSuggestedAccount(suggestion.account)
+        }
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!cancelled) setAiSuggestionLoading(false)
+      })
+
+    return () => { cancelled = true }
+  }, [open, sourceType, sourceId, sourceData])
 
   // Set initial mode when dialog opens
   const handleOpenChange = useCallback(
@@ -121,17 +159,13 @@ export function BookingWizardDialog({
     if (!pendingBookingId) return
     setIsBooking(true)
     try {
-      const res = await fetch('/api/pending-bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'book',
-          id: pendingBookingId,
-          finalEntries: wizard.entries,
-        }),
+      const { postPendingBookingAction } = await import('@/hooks/use-pending-bookings')
+      const data = await postPendingBookingAction({
+        action: 'book',
+        id: pendingBookingId,
+        finalEntries: wizard.entries,
+        accountingMethod,
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Booking failed')
 
       wizard.setComplete({
         id: data.verificationId,
@@ -268,6 +302,8 @@ export function BookingWizardDialog({
               <ConfirmAccountStep
                 entries={wizard.entries}
                 onUpdateEntry={wizard.updateEntryAccount}
+                aiSuggestedAccount={aiSuggestedAccount ?? undefined}
+                aiSuggestionLoading={aiSuggestionLoading}
               />
             )}
 

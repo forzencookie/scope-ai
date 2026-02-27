@@ -26,6 +26,13 @@ interface Section {
     statusBreakdown: StatusBreakdown[]
 }
 
+interface ActivitySection {
+    type: string
+    label: string
+    count: number
+    items: { title: string; date: string }[]
+}
+
 interface MonthlyReviewResponse {
     financial: {
         revenue: number
@@ -33,6 +40,7 @@ interface MonthlyReviewResponse {
         result: number
     }
     sections: Section[]
+    activity: ActivitySection[]
 }
 
 // Status → variant mapping (mirrors status-types.ts)
@@ -178,6 +186,23 @@ export async function GET(request: NextRequest) {
                 p_start_date: startDate,
                 p_end_date: endDate,
             }),
+
+            // 8: AI conversations in this month
+            userDb.client
+                .from('conversations')
+                .select('id, title, created_at')
+                .gte('created_at', `${startDate}T00:00:00`)
+                .lte('created_at', `${endDate}T23:59:59`)
+                .order('created_at', { ascending: false }),
+
+            // 9: Completed roadmap steps in this month
+            userDb.client
+                .from('roadmap_steps')
+                .select('id, title, updated_at')
+                .eq('status', 'completed')
+                .gte('updated_at', `${startDate}T00:00:00`)
+                .lte('updated_at', `${endDate}T23:59:59`)
+                .order('updated_at', { ascending: false }),
         ])
 
         // Extract results safely — cast to any to avoid union type issues from allSettled
@@ -197,6 +222,8 @@ export async function GET(request: NextRequest) {
         const vatResult = extract(5)
         const verifResult = extract(6)
         const balanceResult = extract(7)
+        const conversationResult = extract(8)
+        const roadmapResult = extract(9)
 
         // Build sections (only include non-empty)
         const sections: Section[] = []
@@ -287,6 +314,35 @@ export async function GET(request: NextRequest) {
             }
         }
 
+        // Activity sections (conversations + roadmap)
+        const activity: ActivitySection[] = []
+
+        const conversations = (conversationResult.data || []) as { id: string; title: string; created_at: string }[]
+        if (conversations.length > 0) {
+            activity.push({
+                type: 'conversations',
+                label: 'AI-konversationer',
+                count: conversations.length,
+                items: conversations.slice(0, 5).map(c => ({
+                    title: c.title || 'Konversation utan titel',
+                    date: c.created_at,
+                })),
+            })
+        }
+
+        const completedSteps = (roadmapResult.data || []) as { id: string; title: string; updated_at: string }[]
+        if (completedSteps.length > 0) {
+            activity.push({
+                type: 'roadmap',
+                label: 'Avklarade steg',
+                count: completedSteps.length,
+                items: completedSteps.slice(0, 5).map(s => ({
+                    title: s.title,
+                    date: s.updated_at,
+                })),
+            })
+        }
+
         const response: MonthlyReviewResponse = {
             financial: {
                 revenue,
@@ -294,6 +350,7 @@ export async function GET(request: NextRequest) {
                 result: revenue - expenses,
             },
             sections,
+            activity,
         }
 
         return NextResponse.json(response)

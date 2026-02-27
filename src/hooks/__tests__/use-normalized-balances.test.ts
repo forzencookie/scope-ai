@@ -31,7 +31,7 @@ describe('normalizeBalances', () => {
 
   it('handles equity (class 20) — credit-normal, flipped to positive', () => {
     const result = normalizeBalances([
-      { accountNumber: '2081', balance: -100000 }, // Aktiekapital (credit balance)
+      { accountNumber: '2011', balance: -100000 }, // Aktiekapital (credit balance)
     ])
     expect(result.equity).toBe(100000)
   })
@@ -73,7 +73,7 @@ describe('normalizeBalances', () => {
 
   it('keeps equity separate from liabilities (20xx vs 21xx+)', () => {
     const result = normalizeBalances([
-      { accountNumber: '2081', balance: -100000 },  // Equity
+      { accountNumber: '2011', balance: -100000 },  // Equity
       { accountNumber: '2440', balance: -50000 },   // Liability
     ])
     expect(result.equity).toBe(100000)
@@ -103,8 +103,8 @@ describe('normalizeBalances', () => {
       { accountNumber: '1920', balance: 500000 },  // Bank
       { accountNumber: '1510', balance: 100000 },  // Kundfordringar
       // Equity & Liabilities
-      { accountNumber: '2081', balance: -50000 },   // Aktiekapital
-      { accountNumber: '2091', balance: -150000 },  // Balanserad vinst — still 20xx = equity
+      { accountNumber: '2011', balance: -50000 },   // Aktiekapital
+      { accountNumber: '2080', balance: -150000 },  // Balanserat resultat — still 20xx = equity
       { accountNumber: '2440', balance: -200000 },  // Leverantörsskulder
       // Revenue
       { accountNumber: '3010', balance: -800000 },  // Försäljning

@@ -2,7 +2,7 @@
  * Tests for the bookkeeping module
  * Covers validation, entry creators, and VAT calculations
  */
-import { isValidAccount } from '../bookkeeping/utils'
+import { isValidAccount, getAccountClass, getFiscalYearRange } from '../bookkeeping/utils'
 import {
   validateJournalEntry,
   validateLine,
@@ -10,7 +10,9 @@ import {
   roundToOre,
 } from '../bookkeeping/validation'
 import { createSimpleEntry } from '../bookkeeping/entries/simple'
-import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '../bookkeeping/entries/salary'
+import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions, createPayrollTaxPayment, createSalaryAccrual } from '../bookkeeping/entries/salary'
+import { createSalesEntry, createMultiVatSalesEntry, createPaymentReceivedEntry, createCreditNoteEntry } from '../bookkeeping/entries/sales'
+import { createPurchaseEntry, createSupplierPayment } from '../bookkeeping/entries/purchase'
 import { calculateVat, extractVat, splitGrossAmount } from '../bookkeeping/vat'
 import { DEFAULT_ACCOUNTS, PAYMENT_ACCOUNTS } from '../bookkeeping/types'
 import type { JournalEntry, JournalEntryLine } from '../bookkeeping/types'
@@ -347,5 +349,406 @@ describe('calculateEmployerContributions', () => {
 
   it('should handle zero salary', () => {
     expect(calculateEmployerContributions(0, 0.3142)).toBe(0)
+  })
+})
+
+// =============================================================================
+// createSalesEntry
+// =============================================================================
+
+describe('createSalesEntry', () => {
+  it('should create a balanced sales entry with 25% VAT', () => {
+    const entry = createSalesEntry({
+      date: '2026-01-15',
+      description: 'Consulting services',
+      grossAmount: 12500,
+      vatRate: 25,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows).toHaveLength(3) // receivable, revenue, output VAT
+    expect(entry.rows[0].account).toBe('1510') // Kundfordringar
+    expect(entry.rows[0].debit).toBe(12500)
+    expect(entry.series).toBe('A')
+  })
+
+  it('should handle 0% VAT (single revenue line)', () => {
+    const entry = createSalesEntry({
+      date: '2026-01-15',
+      description: 'VAT-exempt sale',
+      grossAmount: 10000,
+      vatRate: 0,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows).toHaveLength(2) // receivable + revenue (no VAT line)
+    expect(entry.rows[1].credit).toBe(10000)
+  })
+
+  it('should use bank account for immediate payment', () => {
+    const entry = createSalesEntry({
+      date: '2026-01-15',
+      description: 'Cash sale',
+      grossAmount: 1250,
+      vatRate: 25,
+      paidImmediately: true,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows[0].account).toBe(PAYMENT_ACCOUNTS.BANK)
+  })
+
+  it('should include invoice number in description', () => {
+    const entry = createSalesEntry({
+      date: '2026-01-15',
+      description: 'Acme Corp',
+      grossAmount: 5000,
+      invoiceNumber: '2026-001',
+    })
+
+    expect(entry.description).toContain('Faktura 2026-001')
+  })
+
+  it('should skip customer receivable (1510) with cash method', () => {
+    const entry = createSalesEntry({
+      date: '2026-01-15',
+      description: 'Consulting (kassametoden)',
+      grossAmount: 12500,
+      vatRate: 25,
+      accountingMethod: 'cash',
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    // Should NOT have 1510
+    expect(entry.rows.every(r => r.account !== '1510')).toBe(true)
+    // Should debit bank directly
+    expect(entry.rows[0].account).toBe(PAYMENT_ACCOUNTS.BANK)
+    expect(entry.rows[0].debit).toBe(12500)
+  })
+
+  it('should use customer receivable (1510) with invoice method (default)', () => {
+    const entry = createSalesEntry({
+      date: '2026-01-15',
+      description: 'Consulting (fakturametoden)',
+      grossAmount: 12500,
+      vatRate: 25,
+      accountingMethod: 'invoice',
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows[0].account).toBe('1510')
+    expect(entry.rows[0].debit).toBe(12500)
+  })
+})
+
+// =============================================================================
+// createMultiVatSalesEntry
+// =============================================================================
+
+describe('createMultiVatSalesEntry', () => {
+  it('should group line items by VAT rate', () => {
+    const entry = createMultiVatSalesEntry({
+      date: '2026-01-15',
+      description: 'Mixed invoice',
+      grossAmount: 15000,
+      lineItems: [
+        { quantity: 1, unitPrice: 8000, vatRate: 25 },
+        { quantity: 2, unitPrice: 2000, vatRate: 12 },
+        { quantity: 1, unitPrice: 1000, vatRate: 25 },
+      ],
+    })
+
+    // Should have: 1 receivable + 2 revenue lines (25% and 12%) + 2 VAT lines
+    expect(entry.rows.length).toBeGreaterThanOrEqual(5)
+    expect(entry.rows[0].debit).toBe(15000) // receivable = gross
+  })
+
+  it('should handle all items at same VAT rate', () => {
+    const entry = createMultiVatSalesEntry({
+      date: '2026-01-15',
+      description: 'Same rate',
+      grossAmount: 5000,
+      lineItems: [
+        { quantity: 1, unitPrice: 3000, vatRate: 25 },
+        { quantity: 1, unitPrice: 2000, vatRate: 25 },
+      ],
+    })
+
+    // 1 receivable + 1 revenue + 1 VAT = 3 rows
+    expect(entry.rows).toHaveLength(3)
+  })
+})
+
+// =============================================================================
+// createPaymentReceivedEntry
+// =============================================================================
+
+describe('createPaymentReceivedEntry', () => {
+  it('should debit bank and credit receivable', () => {
+    const entry = createPaymentReceivedEntry({
+      date: '2026-02-01',
+      description: 'Payment from customer',
+      amount: 12500,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows).toHaveLength(2)
+    expect(entry.rows[0].account).toBe(PAYMENT_ACCOUNTS.BANK)
+    expect(entry.rows[0].debit).toBe(12500)
+    expect(entry.rows[1].account).toBe('1510')
+    expect(entry.rows[1].credit).toBe(12500)
+  })
+})
+
+// =============================================================================
+// createCreditNoteEntry
+// =============================================================================
+
+describe('createCreditNoteEntry', () => {
+  it('should reverse a sales entry (debit revenue, credit receivable)', () => {
+    const entry = createCreditNoteEntry({
+      date: '2026-02-01',
+      description: 'Credit note',
+      grossAmount: 5000,
+      vatRate: 25,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    // Revenue should be debited (reversed)
+    const revenueRow = entry.rows.find(r => r.account === '3010')
+    expect(revenueRow?.debit).toBeGreaterThan(0)
+    // Receivable should be credited (reduced)
+    const receivableRow = entry.rows.find(r => r.account === '1510')
+    expect(receivableRow?.credit).toBe(5000)
+  })
+})
+
+// =============================================================================
+// createPurchaseEntry
+// =============================================================================
+
+describe('createPurchaseEntry', () => {
+  it('should create a balanced purchase entry with VAT', () => {
+    const entry = createPurchaseEntry({
+      date: '2026-01-15',
+      description: 'Office rent',
+      grossAmount: 12500,
+      expenseAccount: '5010',
+      vatRate: 25,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows).toHaveLength(3) // expense, input VAT, liability
+    expect(entry.series).toBe('B')
+  })
+
+  it('should debit expense net amount and input VAT', () => {
+    const entry = createPurchaseEntry({
+      date: '2026-01-15',
+      description: 'Test',
+      grossAmount: 1250,
+      expenseAccount: '6110',
+      vatRate: 25,
+    })
+
+    const expenseRow = entry.rows.find(r => r.account === '6110')
+    expect(expenseRow?.debit).toBe(1000) // net = 1250 / 1.25
+
+    const vatRow = entry.rows.find(r => r.account === '2640')
+    expect(vatRow?.debit).toBe(250) // VAT = 1250 - 1000
+  })
+
+  it('should credit supplier liability by default', () => {
+    const entry = createPurchaseEntry({
+      date: '2026-01-15',
+      description: 'Test',
+      grossAmount: 5000,
+      expenseAccount: '5010',
+    })
+
+    const liabilityRow = entry.rows.find(r => r.account === '2440')
+    expect(liabilityRow?.credit).toBe(5000)
+  })
+
+  it('should use bank for immediate payment', () => {
+    const entry = createPurchaseEntry({
+      date: '2026-01-15',
+      description: 'Card purchase',
+      grossAmount: 999,
+      expenseAccount: '6540',
+      vatRate: 25,
+      paidImmediately: true,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    const bankRow = entry.rows.find(r => r.account === PAYMENT_ACCOUNTS.BANK)
+    expect(bankRow?.credit).toBe(999)
+  })
+
+  it('should skip supplier liability (2440) with cash method', () => {
+    const entry = createPurchaseEntry({
+      date: '2026-01-15',
+      description: 'Office rent (kassametoden)',
+      grossAmount: 12500,
+      expenseAccount: '5010',
+      vatRate: 25,
+      accountingMethod: 'cash',
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    // Should NOT have 2440
+    expect(entry.rows.every(r => r.account !== '2440')).toBe(true)
+    // Should credit bank directly
+    const bankRow = entry.rows.find(r => r.account === PAYMENT_ACCOUNTS.BANK)
+    expect(bankRow?.credit).toBe(12500)
+  })
+
+  it('should use supplier liability (2440) with invoice method (default)', () => {
+    const entry = createPurchaseEntry({
+      date: '2026-01-15',
+      description: 'Office rent (fakturametoden)',
+      grossAmount: 12500,
+      expenseAccount: '5010',
+      vatRate: 25,
+      accountingMethod: 'invoice',
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    const liabilityRow = entry.rows.find(r => r.account === '2440')
+    expect(liabilityRow?.credit).toBe(12500)
+  })
+})
+
+// =============================================================================
+// createSupplierPayment
+// =============================================================================
+
+describe('createSupplierPayment', () => {
+  it('should debit supplier liability and credit bank', () => {
+    const entry = createSupplierPayment({
+      date: '2026-02-15',
+      description: 'Pay supplier invoice',
+      amount: 25000,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows).toHaveLength(2)
+    expect(entry.rows[0].account).toBe('2440') // leverantörsskuld
+    expect(entry.rows[0].debit).toBe(25000)
+    expect(entry.rows[1].account).toBe(PAYMENT_ACCOUNTS.BANK)
+    expect(entry.rows[1].credit).toBe(25000)
+  })
+})
+
+// =============================================================================
+// createPayrollTaxPayment
+// =============================================================================
+
+describe('createPayrollTaxPayment', () => {
+  it('should clear tax liabilities and credit bank', () => {
+    const entry = createPayrollTaxPayment({
+      date: '2026-02-12',
+      description: 'Skatteinbetalning januari',
+      preliminaryTax: 13500,
+      employerContributions: 14139,
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows).toHaveLength(3) // tax, employer contrib, bank
+    expect(entry.series).toBe('L')
+
+    const totalPayment = 13500 + 14139
+    const bankRow = entry.rows.find(r => r.account === PAYMENT_ACCOUNTS.BANK)
+    expect(bankRow?.credit).toBe(totalPayment)
+  })
+})
+
+// =============================================================================
+// createSalaryAccrual
+// =============================================================================
+
+describe('createSalaryAccrual', () => {
+  it('should create a balanced vacation accrual entry', () => {
+    const entry = createSalaryAccrual({
+      date: '2026-01-31',
+      description: 'Semesterlön jan',
+      amount: 5400,
+      type: 'vacation',
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows[0].account).toBe(DEFAULT_ACCOUNTS.VACATION_PAY_EXPENSE)
+    expect(entry.rows[0].debit).toBe(5400)
+  })
+
+  it('should use salary expense account for bonus type', () => {
+    const entry = createSalaryAccrual({
+      date: '2026-12-31',
+      description: 'Bonus reservation',
+      amount: 10000,
+      type: 'bonus',
+    })
+
+    expect(isBalanced(entry)).toBe(true)
+    expect(entry.rows[0].account).toBe(DEFAULT_ACCOUNTS.SALARY_EXPENSE)
+  })
+})
+
+// =============================================================================
+// getAccountClass
+// =============================================================================
+
+describe('getAccountClass', () => {
+  it('should classify asset accounts as debit-normal', () => {
+    const result = getAccountClass('1930')
+    expect(result.normalBalance).toBe('debit')
+  })
+
+  it('should classify liability accounts as credit-normal', () => {
+    const result = getAccountClass('2440')
+    expect(result.normalBalance).toBe('credit')
+  })
+
+  it('should classify revenue accounts as credit-normal', () => {
+    const result = getAccountClass('3010')
+    expect(result.normalBalance).toBe('credit')
+  })
+
+  it('should classify expense accounts as debit-normal', () => {
+    const result = getAccountClass('7010')
+    expect(result.normalBalance).toBe('debit')
+  })
+})
+
+// =============================================================================
+// getFiscalYearRange
+// =============================================================================
+
+describe('getFiscalYearRange', () => {
+  it('should return calendar year for 12-31 fiscal year end', () => {
+    const range = getFiscalYearRange('12-31', new Date('2026-06-15'))
+    expect(range.startStr).toBe('2026-01-01')
+    expect(range.endStr).toBe('2026-12-31')
+  })
+
+  it('should handle broken fiscal year (e.g., 06-30)', () => {
+    // In August 2026, fiscal year is Jul 2026 - Jun 2027
+    const range = getFiscalYearRange('06-30', new Date('2026-08-15'))
+    expect(range.startStr).toBe('2026-07-01')
+    expect(range.endStr).toBe('2027-06-30')
+  })
+
+  it('should handle reference date within broken fiscal year', () => {
+    // In March 2026, fiscal year ending 06-30 = Jul 2025 - Jun 2026
+    const range = getFiscalYearRange('06-30', new Date('2026-03-15'))
+    expect(range.startStr).toBe('2025-07-01')
+    expect(range.endStr).toBe('2026-06-30')
+  })
+
+  it('should default to current date when no reference provided', () => {
+    const range = getFiscalYearRange('12-31')
+    const year = new Date().getFullYear()
+    expect(range.startStr).toBe(`${year}-01-01`)
+    expect(range.endStr).toBe(`${year}-12-31`)
   })
 })

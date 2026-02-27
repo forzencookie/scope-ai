@@ -6,6 +6,7 @@ import { useToast } from "@/components/ui/toast"
 import { useCompliance } from "@/hooks/use-compliance"
 import { useCompany } from "@/providers/company-provider"
 import { StockTransactionType, ShareholderDisplay, TransactionDisplay } from "./types"
+import { EQUITY_ACCOUNTS } from "@/data/account-constants"
 
 const SHARE_REGEX = /(\d+)\s*aktier/i
 const NAME_REGEX_TO = /till\s+(.+?)(?:\s*$|\s*från)/i
@@ -238,7 +239,7 @@ export function useAktiebokLogic() {
             sourceType: 'equity_issue',
             rows: [
               { account: "1930", description: "Insättning nyemission", debit: total, credit: 0 },
-              { account: "2081", description: "Aktiekapital", debit: 0, credit: shares * quotaValue },
+              { account: EQUITY_ACCOUNTS.AKTIEKAPITAL, description: "Aktiekapital", debit: 0, credit: shares * quotaValue },
               ...(total > shares * quotaValue ? [
                 { account: "2097", description: "Överkursfond", debit: 0, credit: total - (shares * quotaValue) }
               ] : [])

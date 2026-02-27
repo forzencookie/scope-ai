@@ -11,6 +11,30 @@ import { taxService } from '@/services/tax-service'
 import { getEmployeeBenefits } from '@/lib/formaner'
 
 // =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Get the monthly taxable benefit value (förmånsvärde) for an employee.
+ * Benefits with a `month` field are already monthly; those without are yearly
+ * and get divided by 12 to produce a monthly figure.
+ */
+async function getMonthlyBenefitValue(employeeName: string, year: number): Promise<number> {
+    try {
+        const empBenefits = await getEmployeeBenefits(employeeName, year)
+        let total = 0
+        for (const b of empBenefits) {
+            if (!b.formansvarde || b.formansvarde <= 0) continue
+            // If benefit has a month field, it's already a monthly value
+            total += b.month ? b.formansvarde : b.formansvarde / 12
+        }
+        return Math.round(total)
+    } catch {
+        return 0
+    }
+}
+
+// =============================================================================
 // Payslip Tools
 // =============================================================================
 
@@ -128,21 +152,18 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         const payslips: Payslip[] = []
         for (const emp of employees) {
             const gross = emp.monthlySalary || 0
-            const taxRate = (emp.taxTable || 30) / 100
-            const tax = Math.round(gross * taxRate)
 
-            // Fetch taxable benefits for this employee
-            let benefitTaxValue = 0
-            try {
-                const empBenefits = await getEmployeeBenefits(emp.name, currentYear)
-                benefitTaxValue = empBenefits
-                    .filter(b => b.formansvarde && b.formansvarde > 0)
-                    .reduce((sum, b) => sum + (b.formansvarde || 0), 0)
-                // Monthly average (benefits are stored yearly or monthly)
-                if (benefitTaxValue > 0) {
-                    benefitTaxValue = Math.round(benefitTaxValue / 12)
-                }
-            } catch { /* no benefits */ }
+            // Fetch monthly taxable benefit value for this employee
+            const benefitTaxValue = await getMonthlyBenefitValue(emp.name, currentYear)
+
+            // Taxable income = gross salary + taxable benefit value (SFL 11 kap)
+            const taxableIncome = gross + benefitTaxValue
+
+            // Look up tax deduction from SKV tables using employee's table number
+            // Column 1 = standard (no church tax); fallback to approximate rate if no bracket found
+            const tableNumber = emp.taxTable || 33
+            const skvTax = await taxService.lookupTaxDeduction(currentYear, tableNumber, 1, taxableIncome)
+            const tax = skvTax ?? Math.round(taxableIncome * rates.marginalTaxRateApprox)
 
             payslips.push({
                 id: `new-${emp.id}`,
@@ -178,18 +199,8 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
 
             for (const payslip of payslips) {
                 try {
-                    // Include taxable benefits in employer contribution basis
-                    let benefitTaxValue = 0
-                    try {
-                        const empBenefits = await getEmployeeBenefits(payslip.employeeName, currentYear)
-                        benefitTaxValue = empBenefits
-                            .filter(b => b.formansvarde && b.formansvarde > 0)
-                            .reduce((sum, b) => sum + (b.formansvarde || 0), 0)
-                        if (benefitTaxValue > 0) {
-                            benefitTaxValue = Math.round(benefitTaxValue / 12)
-                        }
-                    } catch { /* no benefits */ }
-
+                    // Include taxable benefits in employer contribution basis (SLF 2 kap 10§)
+                    const benefitTaxValue = await getMonthlyBenefitValue(payslip.employeeName, currentYear)
                     const employerContributionBasis = payslip.grossSalary + benefitTaxValue
                     const employerContribution = Math.round(employerContributionBasis * rates.employerContributionRate)
                     const res = await fetch(`${baseUrl}/api/payroll/payslips`, {
@@ -295,31 +306,25 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
 
         const r = reports[0];
 
-        // Transform the latest/first report to AGIData format for preview
-        // Fetch employees to sum taxable benefits
-        let totalBenefits = 0
+        // Sum monthly taxable benefits across all employees for AGI basis
+        let totalMonthlyBenefits = 0
         try {
             const employees = await payrollService.getEmployees()
             const currentYear = new Date().getFullYear()
             for (const emp of employees) {
-                const empBenefits = await getEmployeeBenefits(emp.name, currentYear)
-                totalBenefits += empBenefits
-                    .filter(b => b.formansvarde && b.formansvarde > 0)
-                    .reduce((sum, b) => sum + (b.formansvarde || 0), 0)
+                totalMonthlyBenefits += await getMonthlyBenefitValue(emp.name, currentYear)
             }
         } catch { /* no benefits data */ }
 
-        const totalGrossPay = (r as any).totalGrossPay || 0
+        const totalGrossPay = r.totalSalary || 0
         const agiData = {
             period: r.period,
             employeeCount: r.employeeCount || 0,
             totalGrossPay,
-            totalBenefits,
+            totalBenefits: totalMonthlyBenefits,
             totalTaxDeduction: r.totalTax || 0,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            employerFeeBasis: totalGrossPay + totalBenefits,
+            employerFeeBasis: totalGrossPay + totalMonthlyBenefits,
             totalEmployerFee: r.employerContributions || 0,
-            // totalToPay calculated in component
         }
 
         return {

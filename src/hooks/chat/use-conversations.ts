@@ -76,11 +76,31 @@ export function useConversations() {
         await queryClient.invalidateQueries({ queryKey: conversationsQueryKey })
     }, [queryClient])
 
+    // Extract memories from a completed conversation (fire-and-forget)
+    const extractMemories = useCallback((conversationId: string) => {
+        // Get companyId from localStorage (same source as CompanyProvider)
+        try {
+            const stored = localStorage.getItem('scope_company_data')
+            const companyId = stored ? JSON.parse(stored)?.id : null
+            if (!companyId) return
+
+            fetch('/api/chat/extract-memories', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ conversationId, companyId }),
+            }).catch(() => {}) // Silent — memory extraction is best-effort
+        } catch {}
+    }, [])
+
     // Start new conversation
     const startNewConversation = useCallback(() => {
+        // Extract memories from the conversation we're leaving
+        if (currentConversationId) {
+            extractMemories(currentConversationId)
+        }
         setCurrentConversationId(null)
         window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [])
+    }, [currentConversationId, extractMemories])
 
     // Load a conversation (fetches messages if not already loaded)
     const loadConversation = useCallback(async (conversationId: string) => {
@@ -110,11 +130,13 @@ export function useConversations() {
 
     // Delete a conversation
     const deleteConversation = useCallback((conversationId: string) => {
+        // Extract memories before deleting
+        extractMemories(conversationId)
         setConversations(prev => prev.filter(c => c.id !== conversationId))
         if (currentConversationId === conversationId) {
             setCurrentConversationId(null)
         }
-    }, [currentConversationId, setConversations])
+    }, [currentConversationId, setConversations, extractMemories])
 
     // Delete a message
     const deleteMessage = useCallback((messageId: string) => {

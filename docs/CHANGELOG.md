@@ -4,6 +4,154 @@ Historical record of completed plans, audits, and major changes.
 
 ---
 
+## 2026-02-27: Feature Batch — Onboarding, Memory, Invoices & Cleanup
+
+### Företagsstatistik Page Removed
+
+Deleted the dedicated `/dashboard/foretagsstatistik` page and all associated components. Statistics are now handled entirely through AI — users ask Scooby and get stat-cards, charts, and KPIs via the walkthrough system. The hooks and services powering the AI tools were kept intact.
+
+**Deleted:** page route, 5 component files, lazy-loader exports, nav entry, page context, AI navigation route, translation key.
+
+### Onboarding Polish
+
+| Change | Detail |
+|--------|--------|
+| Avatar emoji persistence | Migration adds `avatar_emoji` to profiles table. ProfileStep saves emoji choice via PATCH `/api/user/profile` |
+| Theme persistence | Theme selection now saved to `user_preferences` table via PUT `/api/user/preferences` (was localStorage-only) |
+| Profile API PATCH | New PATCH handler on `/api/user/profile` for updating `full_name` and `avatar_emoji` |
+
+### Månadsavslut Dialog Additions
+
+Added two new sections to the monthly review dialog and API:
+
+| Section | Source | Display |
+|---------|--------|---------|
+| AI-konversationer | `conversations` table filtered by month | Card with conversation titles + dates (max 5) |
+| Avklarade steg | `roadmap_steps` where status=completed, filtered by month | Card with step titles + dates (max 5) |
+
+### AI Memory — Post-Conversation Extraction
+
+| Part | Detail |
+|------|--------|
+| `src/app/api/chat/extract-memories/route.ts` | POST endpoint; uses GPT-4o-mini to analyze conversation transcript; extracts decisions, preferences, pending items; saves to `user_memory` table with `source_conversation_id` |
+| `use-conversations.ts` | Auto-triggers extraction (fire-and-forget) when starting a new conversation or deleting one |
+| Confidence threshold | Only saves extractions with confidence >= 0.5; pending items auto-expire after 30 days |
+
+### Invoice: OCR Reference Numbers (Luhn)
+
+| Part | Detail |
+|------|--------|
+| `src/lib/ocr.ts` | Luhn check digit generation + validation utilities |
+| Invoice creation API | Auto-generates OCR from invoice number, stores in `ocr_reference` column |
+| Invoice preview | Shows OCR in payment section of the create dialog |
+| PDF generator | Uses `ocrReference` field for BETALNINGSREFERENS |
+
+### Invoice: F-skatt as Company Setting
+
+| Part | Detail |
+|------|--------|
+| `has_f_skatt` column | Added to companies table (default: true) |
+| Company provider/service | `hasFskatt` field added to CompanyInfo type, mapped in service |
+| PDF generator | "Innehar F-skattsedel" only rendered when `company.hasFskatt !== false` |
+
+### Invoice: Credit Note Workflow
+
+| Part | Detail |
+|------|--------|
+| `src/app/api/invoices/[id]/credit-note/route.ts` | POST endpoint; generates KF-YYYY-NNNN numbering; calls `createCreditNoteEntry()` for bookkeeping; creates negative invoice record; marks original as "Krediterad" |
+| Invoice card UI | "Skapa kreditfaktura" dropdown action on non-draft customer invoices |
+| `use-invoices-logic.ts` | `handleCreateCreditNote` handler with toast feedback |
+
+### Migrations
+
+- `20260227000001_add_avatar_emoji_to_profiles.sql`
+- `20260227000002_add_ocr_reference_to_invoices.sql`
+- `20260227000003_add_has_f_skatt_to_companies.sql`
+
+### FUTURE_FEATURES.md Updated
+
+- Removed partial payment tracking (overkill for MVP — status is user/AI-managed)
+- Added AI Status Reconciliation feature (Scooby scans for stale data)
+- Moved email infrastructure and guided app tour to Postponed section
+- Logged all implemented items
+
+---
+
+## 2026-02-26: Auto-Verifikation & Critical Fixes
+
+### Auto-Verifikation Dialog — Full Implementation
+
+Replaced three overlapping flows (VerifikationDialog + BookingWizardDialog + amber pending section) with a single unified dialog triggered by one "Bokföra" button.
+
+| Part | What was built |
+|------|---------------|
+| `src/app/api/verifikationer/auto/route.ts` | POST endpoint; GPT-4o-mini JSON mode; separates pending_bookings (pass-through) from transactions/invoices (AI categorized); returns `VerifikationProposal[]` with confidence + needsReview |
+| `auto-dialog/index.tsx` | Dialog shell, two tabs, success message, auto-close |
+| `auto-dialog/AutoTab.tsx` | Skeleton loading, accept/reject all, scrollable card list, "Bokför X valda" footer |
+| `auto-dialog/ManualTab.tsx` | OCR drag-and-drop via extract-receipt API, manual entry form with AccountSearchInput, balance enforcement |
+| `auto-dialog/VerifikationCard.tsx` | Checkbox, inline account edit, collapsible AI reasoning, balance indicator |
+| `auto-dialog/use-auto-verifikation.ts` | Fetches pending bookings + unbooked transactions + open invoices; deduplicates; routes pending_bookings through batch-book, others through PUT+book |
+| `src/components/bokforing/verifikationer/index.tsx` | Replaced with single "Bokföra" button + badge showing pendingCount |
+| `src/components/bokforing/verifikation-dialog.tsx` | **Deleted** — fully replaced by ManualTab |
+
+### Fixes Applied from Backend Audit
+
+| Fix | File | Detail |
+|-----|------|--------|
+| Verification atomicity | `verification-service.ts` | Added compensation delete — if lines insert fails, header is deleted before throwing |
+| Solvency check | `use-owner-withdrawals.ts` | Partner withdrawals blocked if kapitalkonto < withdrawal amount |
+| Firmatecknare buttons | `firmatecknare.tsx` | Edit/history/deregister menu items now have proper onClick handlers and icons |
+| Board signatures | `arsredovisning-wizard-dialog.tsx` | Added ordförande + justeringsperson name/date fields in Step 4; data included in POST to annual-report API |
+| Benefit limits seeded | `supabase/migrations/20260226000001_seed_benefit_limits.sql` | Friskvård, julgåva, jubileumsgåva, cykelförmån, kostförmån seeded to system_parameters |
+
+### UI Cleanup: Fake Send Buttons Removed
+
+| Component | What was removed |
+|-----------|-----------------|
+| `InvoiceCard.tsx` | Dead "Skicka påminnelse" button (no onClick) |
+| `use-invoices-logic.ts` | Misleading toast changed from "bokförts och skickats" → "bokförts" |
+| `Medlemsregister.tsx` | Dead "Skicka e-post" bulk-action button (no onClick) |
+| `kallelse.tsx` | `handleSend()` function + fake `/api/notices` call + send method selector + "Skicka" footer button; existing PDF download button kept |
+
+### Verified as Already Implemented (removed from FUTURE_FEATURES)
+
+Items from previous audits that were listed as open but confirmed fixed in code:
+
+| Item | Evidence |
+|------|----------|
+| BAS account numbers | `account-constants.ts` has correct values: AKTIEKAPITAL=2011, RESERVFOND=2013, OWNER_SALARY=7012, BALANSERAT_RESULTAT=2080 |
+| Sequential verification numbering | `verification-service.ts` calls atomic RPC `get_next_verification_number()` (BFL 5:7) |
+| Silent fallbacks (5 services) | All return null/error instead of fake data |
+| Payroll benefit inclusion | Benefits separated from gross correctly in `payroll.ts` |
+| Broken fiscal year handling | `board-service.ts` takes `fiscalYearEnd` parameter, no calendar year assumption |
+| AI booking flow (double confirm) | `create-verification.ts` calls `verificationService.createVerification()` directly on confirm |
+| Asset depreciation months | `inventarier.ts` calculates from `asset.inkopsdatum` dynamically |
+| 3:12 optimization default | `owner-payroll.ts` requires explicit companyProfit input |
+| Verification balance validation | `verification-service.ts` checks debit === credit before insert |
+| Tax fallbacks (IBB/egenavgifter) | `use-tax-parameters.ts` throws error if DB values missing, no hardcoded fallbacks |
+| React Query standardization | All hooks (`use-company-statistics`, `use-dynamic-tasks`, `use-invoices`, `use-employees`) use `useQuery` |
+| Invoice/payroll booking routes | Both import and call bookkeeping library functions (`createSalesEntry`, `createSalaryEntry`) |
+| Pending booking consolidation | All callers use shared `postPendingBookingAction()` |
+| CompanyProvider dual state | Only writes to DB, no localStorage duplication |
+| Shareholder transaction names | Uses proper relations, not null |
+| AI write tools fake success | `create-verification.ts` calls real `verificationService.createVerification()` on confirm |
+
+### Files Consolidated (deleted)
+
+| File | Disposition |
+|------|------------|
+| `AUTO_VERIFIKATION_PLAN.md` | Implemented — added to changelog |
+| `BACKEND_AUDIT_2026_02_22.md` | Open items moved to `FUTURE_FEATURES.md` |
+| `PRODUCTION_ROADMAP.md` | Open items moved to `FUTURE_FEATURES.md` |
+| `PRODUCTION_WIRING_PLAN.md` | Open items moved to `FUTURE_FEATURES.md` |
+| `MANADSAVSLUT_DIALOG_ADDITIONS.md` | Moved to `FUTURE_FEATURES.md` |
+| `ONBOARDING_AND_PAYMENTS_PLAN.md` | Moved to `FUTURE_FEATURES.md` |
+| `QA_CHECKLIST.md` | Full QA pass noted in `FUTURE_FEATURES.md` |
+| `CODEBASE_AUDIT.md` | Superseded by BACKEND_AUDIT_2026_02_22 |
+| `googleleak.md` | Deleted (meta notes) |
+
+---
+
 ## 2026-02-13: Documentation Consolidation
 
 Reduced 32 docs to 20. Dissolved `ai-context/` folder. Renamed files for consistency.

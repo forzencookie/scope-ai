@@ -42,7 +42,7 @@ export function useK10Calculation() {
         type: 'k10'
     })
 
-    const { params } = useTaxParameters(taxYear.year)
+    const { params, error: taxError } = useTaxParameters(taxYear.year)
 
     // Fetch K10 history to calculate sparat utdelningsutrymme
     useEffect(() => {
@@ -62,13 +62,30 @@ export function useK10Calculation() {
 
     // Calculate K10 using dynamic year & real ledger data
     const k10Data = useMemo<K10Data>(() => {
-        // Constants fetched from System Parameters (with fallback)
+        // Constants fetched from System Parameters — null means DB unavailable
+        if (!params) {
+            return {
+                year: String(taxYear.year),
+                schablonbelopp: 0,
+                lonebaseratUtrymme: 0,
+                gransbelopp: 0,
+                totalDividends: 0,
+                remainingUtrymme: 0,
+                aktiekapital: 0,
+                omkostnadsbelopp: 0,
+                agarandel: 0,
+                egenLon: 0,
+                klararLonekrav: false,
+                hasData: false,
+                sparatUtdelningsutrymme: 0,
+            }
+        }
         const ibb = params.ibb
         const schablonRate = params.schablonRate
         
-        // Get aktiekapital from company data or use default minimum
-        const aktiekapital = company?.shareCapital || 25000
-        const omkostnadsbelopp = aktiekapital // Assumed equal to share capital for simplicity
+        // Get aktiekapital from company data — 0 means not yet configured
+        const aktiekapital = company?.shareCapital || 0
+        const omkostnadsbelopp = aktiekapital
         
         // Calculate ownership percentage from shareholders data
         // If no shareholders data, assume 100%
@@ -162,7 +179,7 @@ export function useK10Calculation() {
             hasData,
             sparatUtdelningsutrymme
         }
-    }, [taxYear.year, verifications, params.ibb, params.schablonRate, shareholders, company?.shareCapital, k10History])
+    }, [taxYear.year, verifications, params?.ibb, params?.schablonRate, shareholders, company?.shareCapital, k10History])
 
     return {
         k10Data,

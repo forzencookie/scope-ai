@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useRef } from "react"
+import { useState, useRef, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { Camera, Loader2, Sun, Moon, Monitor } from "lucide-react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
@@ -23,6 +23,17 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
     const [avatarUrl, setAvatarUrl] = useState("")
     const [selectedEmoji, setSelectedEmoji] = useState("")
 
+    // Load saved emoji from profile on mount
+    useEffect(() => {
+        fetch("/api/user/profile")
+            .then(res => res.ok ? res.json() : null)
+            .then(data => {
+                if (data?.avatar_emoji) setSelectedEmoji(data.avatar_emoji)
+                if (data?.avatar_url) setAvatarUrl(data.avatar_url)
+            })
+            .catch(() => {})
+    }, [])
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -42,6 +53,8 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
                 setAvatarUrl(avatar_url)
                 setSelectedEmoji("")
                 onAvatarChange?.(avatar_url)
+                // Clear emoji when photo uploaded
+                persistEmoji("")
             }
         } catch (error) {
             console.error("[Profile] Avatar upload error:", error)
@@ -51,9 +64,30 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
         }
     }
 
+    const persistEmoji = async (emoji: string) => {
+        try {
+            await fetch("/api/user/profile", {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ avatar_emoji: emoji }),
+            })
+        } catch {}
+    }
+
     const handleEmojiSelect = (emoji: string) => {
         setSelectedEmoji(emoji)
         setAvatarUrl("")
+        persistEmoji(emoji)
+    }
+
+    const handleThemeChange = (value: string) => {
+        setTheme(value)
+        // Persist to user_preferences
+        fetch("/api/user/preferences", {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ theme: value }),
+        }).catch(() => {})
     }
 
     const themeOptions = [
@@ -130,7 +164,7 @@ export function ProfileStep({ onAvatarChange }: ProfileStepProps) {
                     {themeOptions.map(({ value, label, icon: Icon }) => (
                         <button
                             key={value}
-                            onClick={() => setTheme(value)}
+                            onClick={() => handleThemeChange(value)}
                             className={cn(
                                 "flex flex-col items-center gap-2 p-4 rounded-xl border-2 transition-all",
                                 theme === value

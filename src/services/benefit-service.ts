@@ -44,7 +44,7 @@ export const benefitService = {
             return {
                 totalCost: 0,
                 employeesWithBenefits: 0,
-                totalEmployees: 10,
+                totalEmployees: 0,
                 unusedPotential: 0,
                 totalBenefits: 0,
                 activeBenefits: 0,
@@ -54,7 +54,7 @@ export const benefitService = {
         return {
             totalCost: Number(data.totalValue || data.totalCost || 0),
             employeesWithBenefits: Number(data.employeesWithBenefits || 0),
-            totalEmployees: Number(data.totalEmployees || 10),
+            totalEmployees: Number(data.totalEmployees || 0),
             unusedPotential: Number(data.unusedPotential || 0),
             totalBenefits: Number(data.totalBenefits || 0),
             activeBenefits: Number(data.activeBenefits || 0),

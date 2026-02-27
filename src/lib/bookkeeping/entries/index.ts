@@ -12,12 +12,13 @@ export {
 } from './purchase'
 export type { PurchaseEntryParams } from './purchase'
 
-export { 
-  createSalesEntry, 
-  createPaymentReceivedEntry, 
-  createCreditNoteEntry 
+export {
+  createSalesEntry,
+  createMultiVatSalesEntry,
+  createPaymentReceivedEntry,
+  createCreditNoteEntry
 } from './sales'
-export type { SalesEntryParams } from './sales'
+export type { SalesEntryParams, MultiVatSalesEntryParams, InvoiceLineItem } from './sales'
 
 export {
   createSalaryEntry,

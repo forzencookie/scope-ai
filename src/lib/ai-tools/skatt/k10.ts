@@ -33,9 +33,15 @@ export const calculateGransbeloppTool = defineTool({
         }
 
         const IBB = rates.ibb
-        const acquisitionValue = params.acquisitionValue || 25000
+        if (!params.acquisitionValue) {
+            return { success: false, error: 'Anskaffningsvärde (aktiekapital vid förvärv) måste anges för K10-beräkning.' }
+        }
+        if (!params.ownershipPercent) {
+            return { success: false, error: 'Ägarandel (%) måste anges för K10-beräkning. Kontrollera aktieboken.' }
+        }
+        const acquisitionValue = params.acquisitionValue
         const annualSalary = params.annualSalary || 0
-        const ownershipPercent = params.ownershipPercent || 100
+        const ownershipPercent = params.ownershipPercent
 
         // Förenklingsregeln: 2.75 * IBB
         const forenklingsbeloppMax = 2.75 * IBB

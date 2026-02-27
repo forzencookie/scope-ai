@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import { useMemo } from "react"
 import { Plus, X, AlertCircle } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
@@ -13,6 +14,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { type InvoiceFormState, type InvoiceFormErrors, type InvoiceLineItem } from "./use-form"
+import { generateOCR } from "@/lib/ocr"
 
 interface CustomerInfoSectionProps {
     formState: InvoiceFormState
@@ -390,6 +392,7 @@ export function InvoicePreview({
     total,
 }: InvoicePreviewProps) {
     const dueDate = new Date(new Date(issueDate || Date.now()).getTime() + parseInt(paymentTerms) * 24 * 60 * 60 * 1000)
+    const ocrReference = useMemo(() => generateOCR(invoiceNumber), [invoiceNumber])
 
     return (
         <div className="w-full border-l pl-6">
@@ -466,6 +469,7 @@ export function InvoicePreview({
                             <p className="text-xs font-medium text-muted-foreground mb-1">BETALNING</p>
                             {bankgiro && <p>Bankgiro: {bankgiro}</p>}
                             {plusgiro && <p>Plusgiro: {plusgiro}</p>}
+                            {ocrReference && <p>OCR: <span className="font-mono font-semibold">{ocrReference}</span></p>}
                         </div>
                     )}
                 </div>

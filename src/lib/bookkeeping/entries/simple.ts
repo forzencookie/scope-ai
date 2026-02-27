@@ -5,7 +5,7 @@
 
 import type { JournalEntry, JournalEntryLine, SwedishVatRate } from '../types'
 import { roundToOre } from '../validation'
-import { calculateVat, getVatAccount } from '../vat'
+import { extractVat, calculateNet, getVatAccount } from '../vat'
 import { generateEntryId } from '../utils'
 
 export interface SimpleEntryParams {
@@ -66,10 +66,10 @@ export function createSimpleEntry(params: SimpleEntryParams): JournalEntry {
   const rows: JournalEntryLine[] = []
 
   if (vatRate > 0) {
-    // Calculate VAT split
+    // Calculate VAT split using standard utility functions
     const grossAmount = roundToOre(amount)
-    const vatAmount = calculateVat(grossAmount / (1 + vatRate / 100), vatRate)
-    const netAmount = roundToOre(grossAmount - vatAmount)
+    const netAmount = calculateNet(grossAmount, vatRate)
+    const vatAmount = extractVat(grossAmount, vatRate)
     const vatAccount = getVatAccount(vatRate, isIncome ? 'output' : 'input')
 
     if (isIncome) {

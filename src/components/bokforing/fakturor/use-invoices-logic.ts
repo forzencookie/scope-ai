@@ -104,7 +104,7 @@ export function useInvoicesLogic() {
         try {
             await fetch(`/api/invoices/${id}/book`, { method: "POST" })
             fetchInvoices()
-            toast.success("Faktura skickad!", "Fakturan har bokförts och skickats")
+            toast.success("Faktura bokförd", "Fakturan har bokförts.")
         } catch {
             toast.error("Kunde inte skicka faktura", "Ett fel uppstod")
         }
@@ -148,6 +148,22 @@ export function useInvoicesLogic() {
         }
     }, [fetchInvoices, toast])
 
+    const handleCreateCreditNote = useCallback(async (id: string) => {
+        try {
+            const res = await fetch(`/api/invoices/${id}/credit-note`, { method: "POST" })
+            if (!res.ok) {
+                const data = await res.json()
+                toast.error("Kunde inte kreditera", data.error || "Ett fel uppstod")
+                return
+            }
+            const data = await res.json()
+            fetchInvoices()
+            toast.success("Kreditfaktura skapad", `${data.creditNote.creditNoteNumber} har skapats`)
+        } catch {
+            toast.error("Kunde inte kreditera", "Ett fel uppstod")
+        }
+    }, [fetchInvoices, toast])
+
     const handleInvoiceCreated = useCallback(() => {
         fetchInvoices()
     }, [fetchInvoices])
@@ -175,6 +191,7 @@ export function useInvoicesLogic() {
         handleMarkCustomerPaid,
         handleApproveSupplier,
         handleMarkSupplierPaid,
+        handleCreateCreditNote,
         handleInvoiceCreated
     }
 }

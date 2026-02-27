@@ -1,6 +1,7 @@
 import { getSupabaseClient } from '@/lib/database/supabase'
 import type { Json } from '@/types/database'
 import { logAuditEntry } from '@/lib/audit'
+import { isValidAccount } from '@/lib/bookkeeping/utils'
 
 /**
  * Verification Row - represents a single accounting verification (verifikat)
@@ -42,6 +43,26 @@ export interface Verification {
     totalCredit: number
     isBalanced: boolean
     createdAt: string
+}
+
+/** Map a database row to the Verification UI model. */
+function mapRowToVerification(row: Record<string, any>): Verification {
+    const entries = (row.rows as VerificationEntry[] | null) || []
+    const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
+    const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
+
+    return {
+        id: row.id,
+        number: row.number || 0,
+        series: row.series || 'A',
+        date: row.date || '',
+        description: row.description || '',
+        entries,
+        totalDebit,
+        totalCredit,
+        isBalanced: Math.abs(totalDebit - totalCredit) < 0.01,
+        createdAt: row.created_at || '',
+    }
 }
 
 /**
@@ -122,24 +143,7 @@ export const verificationService = {
             }
         }
 
-        const verifications: Verification[] = data.map((row) => {
-            const entries = (row.rows as VerificationEntry[] | null) || []
-            const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
-            const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
-
-            return {
-                id: row.id,
-                number: row.number || 0,
-                series: row.series || 'A',
-                date: row.date || '',
-                description: row.description || '',
-                entries,
-                totalDebit,
-                totalCredit,
-                isBalanced: Math.abs(totalDebit - totalCredit) < 0.01,
-                createdAt: row.created_at || ''
-            }
-        })
+        const verifications: Verification[] = data.map(mapRowToVerification)
 
         return {
             verifications,
@@ -161,22 +165,7 @@ export const verificationService = {
 
         if (error || !data) return null
 
-        const entries = (data.rows as VerificationEntry[] | null) || []
-        const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
-        const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
-
-        return {
-            id: data.id,
-            number: data.number || 0,
-            series: data.series || 'A',
-            date: data.date || '',
-            description: data.description || '',
-            entries,
-            totalDebit,
-            totalCredit,
-            isBalanced: Math.abs(totalDebit - totalCredit) < 0.01,
-            createdAt: data.created_at || ''
-        }
+        return mapRowToVerification(data)
     },
 
     /**
@@ -283,6 +272,51 @@ export const verificationService = {
         sourceType?: string
         sourceId?: string
     }): Promise<Verification> {
+        // Validate entries are not empty
+        if (!entries || entries.length === 0) {
+            throw new Error('Verifikationen måste ha minst en rad.')
+        }
+
+        // Validate date format (YYYY-MM-DD)
+        if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+            throw new Error(`Ogiltigt datumformat: "${date}". Förväntat format: YYYY-MM-DD.`)
+        }
+        const parsedDate = new Date(date)
+        if (isNaN(parsedDate.getTime())) {
+            throw new Error(`Ogiltigt datum: "${date}".`)
+        }
+
+        // Validate account numbers against BAS kontoplan
+        const invalidAccounts = entries
+            .map(e => e.account)
+            .filter(acc => !isValidAccount(acc))
+        if (invalidAccounts.length > 0) {
+            throw new Error(
+                `Ogiltiga kontonummer: ${invalidAccounts.join(', ')}. ` +
+                `Kontrollera att kontona finns i BAS-kontoplanen.`
+            )
+        }
+
+        // Validate monetary amounts (no NaN, no negative on both sides)
+        for (const entry of entries) {
+            if (isNaN(entry.debit) || isNaN(entry.credit)) {
+                throw new Error(`Ogiltigt belopp på konto ${entry.account}: debet/kredit får inte vara NaN.`)
+            }
+            if (entry.debit < 0 || entry.credit < 0) {
+                throw new Error(`Negativt belopp på konto ${entry.account}: använd debet/kredit istället för negativa värden.`)
+            }
+        }
+
+        // Validate balance: total debit must equal total credit (BFL 5 kap.)
+        const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
+        const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
+        if (Math.abs(totalDebit - totalCredit) > 0.01) {
+            throw new Error(
+                `Verifikationen är inte balanserad. Debet: ${totalDebit.toFixed(2)}, Kredit: ${totalCredit.toFixed(2)}. ` +
+                `Differens: ${Math.abs(totalDebit - totalCredit).toFixed(2)} kr.`
+            )
+        }
+
         // Period lock check — prevent booking in locked months
         const locked = await this.isPeriodLocked(date)
         if (locked) {
@@ -296,8 +330,6 @@ export const verificationService = {
         // Get next number via atomic RPC (BFL 5:7)
         const year = new Date(date).getFullYear()
         let number = await this.getNextVerificationNumber(series, year)
-
-        const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
 
         // 1. Insert the verification header (with retry on unique constraint violation)
         const insertPayload = {
@@ -349,11 +381,15 @@ export const verificationService = {
                 .insert(lines)
 
             if (linesError) {
-                console.error('[VerificationService] Failed to insert verification_lines:', linesError)
+                // Compensate: delete the orphaned header so we don't leave a ghost verification
+                await supabase.from('verifications').delete().eq('id', data.id)
+                console.error('[VerificationService] Failed to insert verification_lines, rolled back header:', linesError)
+                throw new Error(
+                    `Verifikation ${series}${number} kunde inte sparas (konteringsrader misslyckades). ` +
+                    `Försök igen. Fel: ${linesError.message}`
+                )
             }
         }
-
-        const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
 
         // Audit trail: log verification creation
         logAuditEntry({

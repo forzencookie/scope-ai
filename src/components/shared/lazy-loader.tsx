@@ -179,22 +179,6 @@ export const LazyDelagaruttag = createLazyComponent(
     "Laddar delägaruttag..."
 )
 
-// --- Företagsstatistik ---
-export const LazyEkonomiskOversikt = createLazyComponent(
-    () => import("@/components/foretagsstatistik/oversikt").then(m => ({ default: m.EkonomiskOversikt })),
-    "Laddar ekonomisk översikt..."
-)
-
-export const LazyTransaktionsrapport = createLazyComponent(
-    () => import("@/components/foretagsstatistik/transaktionsrapport").then(m => ({ default: m.Transaktionsrapport })),
-    "Laddar transaktionsrapport..."
-)
-
-export const LazyKostnadsanalys = createLazyComponent(
-    () => import("@/components/foretagsstatistik/kostnadsanalys").then(m => ({ default: m.Kostnadsanalys })),
-    "Laddar kostnadsanalys..."
-)
-
 // --- Onboarding ---
 export const LazyOnboardingWizard = createLazyComponent(
     () => import("@/components/onboarding/onboarding-wizard").then(m => ({ default: m.OnboardingWizard })),

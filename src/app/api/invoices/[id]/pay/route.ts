@@ -71,6 +71,14 @@ export async function POST(
     } catch (error: unknown) {
         console.error("Payment error:", error);
         const message = error instanceof Error ? error.message : 'Failed to pay invoice';
+
+        if (message.includes('balanserar inte')) {
+            return NextResponse.json({ error: message }, { status: 422 });
+        }
+        if (message.includes('redan') || message.includes('already')) {
+            return NextResponse.json({ error: message }, { status: 409 });
+        }
+
         return NextResponse.json({ error: message }, { status: 500 });
     }
 }

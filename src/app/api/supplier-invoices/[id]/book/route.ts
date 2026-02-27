@@ -25,7 +25,7 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const body = (await request.json()) as BookingData
+        const body = (await request.json()) as BookingData & { accountingMethod?: 'cash' | 'invoice' }
         const { id } = await params
 
         // Fetch the invoice to get details
@@ -42,6 +42,7 @@ export async function POST(
             liabilityAccount: body.creditAccount || '2440',
             invoiceReference: invoice?.invoice_number || undefined,
             series: 'B',
+            accountingMethod: body.accountingMethod,
         });
 
         // Create pending booking instead of auto-verification
@@ -68,8 +69,17 @@ export async function POST(
 
     } catch (error) {
         console.error('Booking error:', error);
+        const message = error instanceof Error ? error.message : 'Failed to book invoice';
+
+        if (message.includes('balanserar inte')) {
+            return NextResponse.json({ success: false, error: message }, { status: 422 });
+        }
+        if (message.includes('redan bokförd') || message.includes('already')) {
+            return NextResponse.json({ success: false, error: message }, { status: 409 });
+        }
+
         return NextResponse.json(
-            { success: false, error: 'Failed to book invoice' },
+            { success: false, error: message },
             { status: 500 }
         )
     }

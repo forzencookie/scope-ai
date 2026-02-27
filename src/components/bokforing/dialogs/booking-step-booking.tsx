@@ -1,8 +1,9 @@
 "use client"
 
-import { Sparkles } from "lucide-react"
+import { Sparkles, Loader2 } from "lucide-react"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
+import { Badge } from "@/components/ui/badge"
 import {
     Select,
     SelectContent,
@@ -10,13 +11,23 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
+import {
+    Tooltip,
+    TooltipContent,
+    TooltipTrigger,
+} from "@/components/ui/tooltip"
 import { useTextMode } from "@/providers/text-mode-provider"
+import { useCompany } from "@/providers/company-provider"
 import { BAS_ACCOUNTS, BOOKING_CATEGORIES, type BookableEntity } from "./booking-types"
 import { isInventarieThresholdExceeded, getPriceBaseAmount } from "@/lib/swedish-tax-rules"
+import { Lock } from "lucide-react"
 
 interface BookingStepBookingProps {
     entity: BookableEntity
     hasAiSuggestion: boolean
+    aiSuggestionLoading?: boolean
+    aiReasoning?: string
+    aiConfidence?: number
     category: string
     setCategory: (category: string) => void
     debitAccount: string
@@ -30,6 +41,9 @@ interface BookingStepBookingProps {
 export function BookingStepBooking({
     entity,
     hasAiSuggestion,
+    aiSuggestionLoading = false,
+    aiReasoning,
+    aiConfidence,
     category,
     setCategory,
     debitAccount,
@@ -40,14 +54,37 @@ export function BookingStepBooking({
     setDescription,
 }: BookingStepBookingProps) {
     const { text } = useTextMode()
+    const { company } = useCompany()
+    const isCashMethod = company?.accountingMethod === 'cash'
 
     return (
         <div className="space-y-6">
+            {/* AI loading state */}
+            {aiSuggestionLoading && (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin text-violet-600" />
+                    <span>Analyserar med AI...</span>
+                </div>
+            )}
+
             {/* AI Suggestion indicator */}
-            {hasAiSuggestion && (
+            {!aiSuggestionLoading && hasAiSuggestion && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <Sparkles className="h-4 w-4 text-violet-600" />
                     <span>Förslag baserat på AI-analys</span>
+                    {aiConfidence != null && (
+                        <Tooltip>
+                            <TooltipTrigger asChild>
+                                <Badge variant="secondary" className="text-xs gap-1">
+                                    <Sparkles className="h-3 w-3" />
+                                    AI-förslag {aiConfidence}%
+                                </Badge>
+                            </TooltipTrigger>
+                            <TooltipContent side="bottom" className="max-w-xs">
+                                {aiReasoning || 'AI-baserat konteringsförslag'}
+                            </TooltipContent>
+                        </Tooltip>
+                    )}
                 </div>
             )}
 
@@ -69,7 +106,19 @@ export function BookingStepBooking({
 
                 <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <Label>{text.bookkeeping.debit}</Label>
+                        <Label className="flex items-center gap-2">
+                            {text.bookkeeping.debit}
+                            {!aiSuggestionLoading && hasAiSuggestion && (
+                                <Badge variant="outline" className="text-[10px] font-normal text-violet-600 border-violet-300">
+                                    AI-förslag
+                                </Badge>
+                            )}
+                        </Label>
+                        {aiSuggestionLoading ? (
+                            <div className="h-10 rounded-md border bg-muted animate-pulse flex items-center px-3">
+                                <span className="text-sm text-muted-foreground">Analyserar...</span>
+                            </div>
+                        ) : (
                         <Select value={debitAccount} onValueChange={setDebitAccount}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Välj konto..." />
@@ -82,10 +131,19 @@ export function BookingStepBooking({
                                 ))}
                             </SelectContent>
                         </Select>
+                        )}
                     </div>
 
                     <div className="space-y-2">
-                        <Label>{text.bookkeeping.credit}</Label>
+                        <Label className="flex items-center gap-2">
+                            {isCashMethod ? 'Betalas från' : text.bookkeeping.credit}
+                            {isCashMethod && <Lock className="h-3 w-3 text-muted-foreground" />}
+                        </Label>
+                        {isCashMethod ? (
+                            <div className="h-10 rounded-md border bg-muted/50 flex items-center px-3 text-sm text-muted-foreground">
+                                Företagskonto (1930)
+                            </div>
+                        ) : (
                         <Select value={creditAccount} onValueChange={setCreditAccount}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Välj konto..." />
@@ -98,6 +156,7 @@ export function BookingStepBooking({
                                 ))}
                             </SelectContent>
                         </Select>
+                        )}
                     </div>
                 </div>
 

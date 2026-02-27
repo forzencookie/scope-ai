@@ -9,7 +9,8 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
-import { useCachedQuery } from "@/hooks/use-cached-query"
+import { useQuery } from "@tanstack/react-query"
+import { pendingBookingQueryKeys } from "@/hooks/use-pending-bookings"
 import {
   SidebarGroup,
   SidebarMenu,
@@ -105,23 +106,21 @@ export function NavCollapsibleSection({
     return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
   }
 
-  // Fetch badge counts for items with badgeKey
+  // Share the pending-bookings query with usePendingBookings() — React Query deduplicates
   const hasBadgeItems = filteredItems.some(item => item.badgeKey)
-  const { data: badgeCounts } = useCachedQuery<Record<string, number>>({
-    cacheKey: 'sidebar-badge-counts',
-    queryFn: async (): Promise<Record<string, number>> => {
-      try {
-        const res = await fetch('/api/pending-bookings?status=pending')
-        if (!res.ok) return {} as Record<string, number>
-        const data = await res.json()
-        return { 'pending-bookings': data.pendingCount || 0 } as Record<string, number>
-      } catch {
-        return {} as Record<string, number>
-      }
+  const { data: pendingData } = useQuery({
+    queryKey: pendingBookingQueryKeys.list(),
+    queryFn: async () => {
+      const res = await fetch('/api/pending-bookings')
+      if (!res.ok) return { bookings: [], pendingCount: 0 }
+      return res.json() as Promise<{ bookings: unknown[]; pendingCount: number }>
     },
-    ttlMs: 60 * 1000, // 1 minute
-    skip: !hasBadgeItems,
+    staleTime: 2 * 60 * 1000,
+    enabled: hasBadgeItems,
   })
+  const badgeCounts: Record<string, number> = React.useMemo(() => {
+    return { 'pending-bookings': pendingData?.pendingCount || 0 }
+  }, [pendingData])
 
   if (filteredItems.length === 0) return null
 

@@ -1,7 +1,7 @@
 "use client"
 
 import { useCallback, useState } from 'react'
-import { useCachedQuery, invalidateCacheByPrefix } from './use-cached-query'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import type { VerificationEntry } from '@/services/verification-service'
 
 // =============================================================================
@@ -43,6 +43,16 @@ interface WizardState {
 }
 
 // =============================================================================
+// Query Keys
+// =============================================================================
+
+export const pendingBookingQueryKeys = {
+  all: ['pending-bookings'] as const,
+  list: (sourceType?: PendingBookingSourceType) =>
+    [...pendingBookingQueryKeys.all, 'list', sourceType] as const,
+}
+
+// =============================================================================
 // API helpers
 // =============================================================================
 
@@ -58,7 +68,7 @@ async function fetchPendingBookings(sourceType?: PendingBookingSourceType): Prom
   return res.json()
 }
 
-async function postPendingBookingAction(body: Record<string, unknown>) {
+export async function postPendingBookingAction(body: Record<string, unknown>) {
   const res = await fetch('/api/pending-bookings', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
@@ -76,12 +86,12 @@ async function postPendingBookingAction(body: Record<string, unknown>) {
 // =============================================================================
 
 export function usePendingBookings(sourceType?: PendingBookingSourceType) {
-  const cacheKey = sourceType ? `pending-bookings-${sourceType}` : 'pending-bookings'
+  const queryClient = useQueryClient()
 
-  const { data, isLoading, error, invalidate } = useCachedQuery({
-    cacheKey,
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: pendingBookingQueryKeys.list(sourceType),
     queryFn: () => fetchPendingBookings(sourceType),
-    ttlMs: 2 * 60 * 1000, // 2 minutes — pending bookings change frequently
+    staleTime: 2 * 60 * 1000,
   })
 
   const [wizardState, setWizardState] = useState<WizardState>({
@@ -95,48 +105,60 @@ export function usePendingBookings(sourceType?: PendingBookingSourceType) {
   const pendingBookings = data?.bookings || []
   const pendingCount = data?.pendingCount || 0
 
+  const invalidateAll = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: pendingBookingQueryKeys.all })
+    queryClient.invalidateQueries({ queryKey: ['verifications'] })
+  }, [queryClient])
+
   // Book a single item (optionally with wizard-adjusted entries)
+  const bookItemMutation = useMutation({
+    mutationFn: async ({ id, finalEntries }: { id: string; finalEntries?: VerificationEntry[] }) => {
+      return postPendingBookingAction({ action: 'book', id, finalEntries }) as Promise<{
+        verificationId: string
+        verificationNumber: string
+      }>
+    },
+    onSuccess: () => invalidateAll(),
+  })
+
   const bookItem = useCallback(
     async (id: string, finalEntries?: VerificationEntry[]) => {
-      const result = await postPendingBookingAction({
-        action: 'book',
-        id,
-        finalEntries,
-      })
-      invalidateCacheByPrefix('pending-bookings')
-      invalidateCacheByPrefix('verifications')
-      await invalidate()
-      return result as { verificationId: string; verificationNumber: string }
+      return bookItemMutation.mutateAsync({ id, finalEntries })
     },
-    [invalidate]
+    [bookItemMutation]
   )
 
   // Batch book multiple items
+  const bookItemsMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      return postPendingBookingAction({ action: 'book-batch', ids }) as Promise<{
+        booked: number
+        errors: Array<{ id: string; error: string }>
+      }>
+    },
+    onSuccess: () => invalidateAll(),
+  })
+
   const bookItems = useCallback(
     async (ids: string[]) => {
-      const result = await postPendingBookingAction({
-        action: 'book-batch',
-        ids,
-      })
-      invalidateCacheByPrefix('pending-bookings')
-      invalidateCacheByPrefix('verifications')
-      await invalidate()
-      return result as { booked: number; errors: Array<{ id: string; error: string }> }
+      return bookItemsMutation.mutateAsync(ids)
     },
-    [invalidate]
+    [bookItemsMutation]
   )
 
   // Dismiss items
+  const dismissMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await postPendingBookingAction({ action: 'dismiss', ids })
+    },
+    onSuccess: () => invalidateAll(),
+  })
+
   const dismissItems = useCallback(
     async (ids: string[]) => {
-      await postPendingBookingAction({
-        action: 'dismiss',
-        ids,
-      })
-      invalidateCacheByPrefix('pending-bookings')
-      await invalidate()
+      await dismissMutation.mutateAsync(ids)
     },
-    [invalidate]
+    [dismissMutation]
   )
 
   // Open the booking wizard for a pending item
@@ -194,7 +216,7 @@ export function usePendingBookings(sourceType?: PendingBookingSourceType) {
     bookItem,
     bookItems,
     dismissItems,
-    invalidate,
+    invalidate: refetch,
 
     // Wizard state
     wizardState,

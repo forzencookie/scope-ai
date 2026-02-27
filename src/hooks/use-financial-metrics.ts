@@ -1,7 +1,7 @@
 
 import { useMemo } from "react"
 import { useVerifications, type Verification, type VerificationRow } from "./use-verifications"
-import { getAccountClass } from "@/lib/bookkeeping/utils"
+import { getAccountClass, getFiscalYearRange } from "@/lib/bookkeeping/utils"
 import { useCompany } from "@/providers/company-provider"
 
 export interface MonthlyMetric {
@@ -43,22 +43,17 @@ export function useFinancialMetrics() {
     const monthlyMetrics = useMemo(() => {
         if (!verifications) return []
 
+        // Get current fiscal year range for filtering
+        const currentFY = getFiscalYearRange(fiscalYearEnd)
+
         const months = new Map<string, { revenue: number; expenses: number }>()
 
-        // Initialize last 12 months
-        for (let i = 11; i >= 0; i--) {
-            // Initialize if not exists (though we iterate verifications, we want consistent x-axis)
-            // Actually, simpler to just map data we have, but chart needs fixed axis usually.
-            // Let's stick to dynamically filling based on available data for now, or fixed list.
-            // The chart in Foretagsstatistik uses "Jan", "Feb" etc.
-        }
-
-        // Group by month
+        // Group by month — only include verifications in the current fiscal year
         verifications.forEach((v: Verification) => {
+            if (v.date < currentFY.startStr || v.date > currentFY.endStr) return
+
             const date = new Date(v.date)
             const monthKey = date.toLocaleString('sv-SE', { month: 'short' })
-            // Filter for current year or rolling? Let's assume current year (2024 in context)
-            // Or 12 rolling months. Let's do 12 rolling months for charts.
 
             if (!months.has(monthKey)) {
                 months.set(monthKey, { revenue: 0, expenses: 0 })
@@ -141,10 +136,14 @@ export function useFinancialMetrics() {
 
     }, [verifications])
 
-    // Compute previous year totals for YoY comparison
+    // Compute previous fiscal year totals for YoY comparison
     const prevYearTotals = useMemo(() => {
         if (!verifications) return { revenue: 0, profit: 0, assets: 0, equity: 0 }
-        const prevYear = new Date().getFullYear() - 1
+
+        // Previous fiscal year = shift reference date back by 1 year
+        const oneYearAgo = new Date()
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1)
+        const prevFY = getFiscalYearRange(fiscalYearEnd, oneYearAgo)
 
         let revenue = 0
         let expenses = 0
@@ -152,8 +151,8 @@ export function useFinancialMetrics() {
         let equity = 0
 
         verifications.forEach((v: Verification) => {
-            const year = new Date(v.date).getFullYear()
-            if (year !== prevYear) return
+            // Filter to previous fiscal year date range
+            if (v.date < prevFY.startStr || v.date > prevFY.endStr) return
 
             v.rows.forEach((row: VerificationRow) => {
                 const rawBalance = row.debit - row.credit
@@ -171,7 +170,7 @@ export function useFinancialMetrics() {
         })
 
         return { revenue, profit: revenue - expenses, assets, equity }
-    }, [verifications])
+    }, [verifications, fiscalYearEnd])
 
     const kpis = useMemo(() => {
         const totalRevenue = monthlyMetrics.reduce((sum, m) => sum + m.revenue, 0)

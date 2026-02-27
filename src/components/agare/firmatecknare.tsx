@@ -185,7 +185,13 @@ export function Firmatecknare() {
                     {ensamSignatories.length > 0 ? (
                         <div className="divide-y">
                             {ensamSignatories.map((signatory) => (
-                                <SignatoryRow key={signatory.id} signatory={signatory} />
+                                <SignatoryRow
+                                    key={signatory.id}
+                                    signatory={signatory}
+                                    onEdit={handleEdit}
+                                    onHistory={handleHistory}
+                                    onDeregister={handleDeregister}
+                                />
                             ))}
                         </div>
                     ) : (
@@ -211,7 +217,13 @@ export function Firmatecknare() {
                     <CardContent>
                         <div className="divide-y">
                             {gemensamSignatories.map((signatory) => (
-                                <SignatoryRow key={signatory.id} signatory={signatory} />
+                                <SignatoryRow
+                                    key={signatory.id}
+                                    signatory={signatory}
+                                    onEdit={handleEdit}
+                                    onHistory={handleHistory}
+                                    onDeregister={handleDeregister}
+                                />
                             ))}
                         </div>
                     </CardContent>
@@ -231,7 +243,17 @@ export function Firmatecknare() {
     );
 }
 
-function SignatoryRow({ signatory }: { signatory: Signatory }) {
+function SignatoryRow({
+    signatory,
+    onEdit,
+    onHistory,
+    onDeregister,
+}: {
+    signatory: Signatory
+    onEdit: (s: Signatory) => void
+    onHistory: (s: Signatory) => void
+    onDeregister: (s: Signatory) => void
+}) {
     return (
         <div className="flex items-center justify-between py-3 first:pt-0 last:pb-0">
             <div className="flex items-center gap-3">
@@ -275,9 +297,18 @@ function SignatoryRow({ signatory }: { signatory: Signatory }) {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem>Redigera</DropdownMenuItem>
-                        <DropdownMenuItem>Visa historik</DropdownMenuItem>
-                        <DropdownMenuItem className="text-destructive">Avregistrera</DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onEdit(signatory)}>
+                            <Pencil className="h-4 w-4 mr-2" />
+                            Redigera
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => onHistory(signatory)}>
+                            <History className="h-4 w-4 mr-2" />
+                            Visa historik
+                        </DropdownMenuItem>
+                        <DropdownMenuItem className="text-destructive" onClick={() => onDeregister(signatory)}>
+                            <UserMinus className="h-4 w-4 mr-2" />
+                            Avregistrera
+                        </DropdownMenuItem>
                     </DropdownMenuContent>
                 </DropdownMenu>
             </div>

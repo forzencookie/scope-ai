@@ -76,6 +76,11 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
         redovisningsprinciper: "Årsredovisningen har upprättats enligt årsredovisningslagen och BFNAR 2016:10 Årsredovisning i mindre företag (K2).\n\nTillämpade principer är oförändrade jämfört med föregående år.",
         medelAnstallda: 0,
         overigaNoter: "",
+        // Underskrifter
+        ordforandeNamn: "",
+        ordforandeDatum: "",
+        justeringspersonNamn: "",
+        justeringspersonDatum: "",
     })
 
     const [step, setStep] = useState<1 | 2 | 3 | 4>(1)
@@ -105,6 +110,10 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
             redovisningsprinciper: "Årsredovisningen har upprättats enligt årsredovisningslagen och BFNAR 2016:10 Årsredovisning i mindre företag (K2).\n\nTillämpade principer är oförändrade jämfört med föregående år.",
             medelAnstallda: 0,
             overigaNoter: "",
+            ordforandeNamn: "",
+            ordforandeDatum: "",
+            justeringspersonNamn: "",
+            justeringspersonDatum: "",
         })
         setIsSubmitting(false)
         onOpenChange(false)
@@ -137,6 +146,12 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                             redovisningsprinciper: formData.redovisningsprinciper,
                             medelAnstallda: formData.medelAnstallda,
                             overigaNoter: formData.overigaNoter,
+                        },
+                        underskrifter: {
+                            ordforandeNamn: formData.ordforandeNamn,
+                            ordforandeDatum: formData.ordforandeDatum,
+                            justeringspersonNamn: formData.justeringspersonNamn,
+                            justeringspersonDatum: formData.justeringspersonDatum,
                         },
                     },
                     status: 'draft',
@@ -431,6 +446,55 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                         </DialogHeader>
 
                         <div className="space-y-4 py-4">
+                            {/* Underskrifter */}
+                            <div className="space-y-3">
+                                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                                    Underskrifter
+                                </h4>
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="ordforande-namn" className="text-xs">Ordförande</Label>
+                                        <Input
+                                            id="ordforande-namn"
+                                            value={formData.ordforandeNamn}
+                                            onChange={(e) => handleInputChange('ordforandeNamn', e.target.value)}
+                                            placeholder="För- och efternamn"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="ordforande-datum" className="text-xs">Datum</Label>
+                                        <Input
+                                            id="ordforande-datum"
+                                            value={formData.ordforandeDatum}
+                                            onChange={(e) => handleInputChange('ordforandeDatum', e.target.value)}
+                                            placeholder="ÅÅÅÅ-MM-DD"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="justering-namn" className="text-xs">Justeringsperson</Label>
+                                        <Input
+                                            id="justering-namn"
+                                            value={formData.justeringspersonNamn}
+                                            onChange={(e) => handleInputChange('justeringspersonNamn', e.target.value)}
+                                            placeholder="För- och efternamn"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                    <div className="space-y-1.5">
+                                        <Label htmlFor="justering-datum" className="text-xs">Datum</Label>
+                                        <Input
+                                            id="justering-datum"
+                                            value={formData.justeringspersonDatum}
+                                            onChange={(e) => handleInputChange('justeringspersonDatum', e.target.value)}
+                                            placeholder="ÅÅÅÅ-MM-DD"
+                                            className="h-9"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
                             <div className="rounded-lg border-2 border-primary bg-primary/5 p-4 space-y-4">
                                 <div className="flex items-center gap-3">
                                     <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
@@ -479,6 +543,10 @@ export function ArsredovisningWizardDialog({ open, onOpenChange, onConfirm, data
                                     <div className="flex items-center gap-2 text-sm">
                                         <CheckCircle2 className={`h-4 w-4 ${formData.redovisningsprinciper ? 'text-green-600' : 'text-muted-foreground'}`} />
                                         <span>Noter ({formData.redovisningsprinciper ? 'ifyllda' : 'ej ifyllda'})</span>
+                                    </div>
+                                    <div className="flex items-center gap-2 text-sm">
+                                        <CheckCircle2 className={`h-4 w-4 ${formData.ordforandeNamn && formData.justeringspersonNamn ? 'text-green-600' : 'text-muted-foreground'}`} />
+                                        <span>Underskrifter ({formData.ordforandeNamn && formData.justeringspersonNamn ? 'ifyllda' : 'ej ifyllda'})</span>
                                     </div>
                                 </div>
                             </div>

@@ -8,6 +8,7 @@
  */
 
 import { useState, useEffect, useCallback } from "react"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { getSupabaseClient } from "@/lib/database/supabase"
 
@@ -116,6 +117,37 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
 }
 
 // ============================================================================
+// Query Keys
+// ============================================================================
+
+export const activityLogQueryKeys = {
+  all: ["activity-log"] as const,
+  list: (entityType?: string, entityId?: string) =>
+    [...activityLogQueryKeys.all, "list", entityType, entityId] as const,
+}
+
+// ============================================================================
+// Row mapper
+// ============================================================================
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRow(row: any): ActivityLogEntry {
+  return {
+    id: row.id,
+    userId: row.user_id,
+    userName: row.user_name,
+    userEmail: row.user_email,
+    companyId: row.company_id,
+    action: row.action as ActivityAction,
+    entityType: row.entity_type as EntityType,
+    entityId: row.entity_id,
+    entityName: row.entity_name,
+    changes: row.changes as Record<string, { from: unknown; to: unknown }> | null,
+    createdAt: new Date(row.created_at),
+  }
+}
+
+// ============================================================================
 // Main Hook
 // ============================================================================
 
@@ -126,85 +158,79 @@ export function useActivityLog({
   realtime = true,
 }: UseActivityLogOptions = {}): UseActivityLogReturn {
   const { user } = useAuth()
-  const [activities, setActivities] = useState<ActivityLogEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<Error | null>(null)
+  const queryClient = useQueryClient()
+  const [extraActivities, setExtraActivities] = useState<ActivityLogEntry[]>([])
   const [hasMore, setHasMore] = useState(true)
-  const [offset, setOffset] = useState(0)
+  const [loadMoreOffset, setLoadMoreOffset] = useState(0)
 
   const supabase = getSupabaseClient()
 
-  // Fetch activities
-  const fetchActivities = useCallback(
-    async (reset = false) => {
-      if (!user) return
+  const {
+    data: initialActivities = [],
+    isLoading: loading,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: activityLogQueryKeys.list(entityType, entityId),
+    queryFn: async () => {
+      let query = supabase
+        .from("activity_log")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .range(0, limit - 1)
 
-      try {
-        setLoading(true)
-        const currentOffset = reset ? 0 : offset
-
-        let query = supabase
-          .from("activity_log")
-          .select("*")
-          .order("created_at", { ascending: false })
-          .range(currentOffset, currentOffset + limit - 1)
-
-        if (entityType) {
-          query = query.eq("entity_type", entityType)
-        }
-
-        if (entityId) {
-          query = query.eq("entity_id", entityId)
-        }
-
-        const { data, error: fetchError } = await query
-
-        if (fetchError) throw fetchError
-
-        const mapped: ActivityLogEntry[] = (data || []).map((row) => ({
-          id: row.id,
-          userId: row.user_id,
-          userName: row.user_name,
-          userEmail: row.user_email,
-          companyId: row.company_id,
-          action: row.action as ActivityAction,
-          entityType: row.entity_type as EntityType,
-          entityId: row.entity_id,
-          entityName: row.entity_name,
-          changes: row.changes as Record<string, { from: unknown; to: unknown }> | null,
-          createdAt: new Date(row.created_at),
-        }))
-
-        if (reset) {
-          setActivities(mapped)
-          setOffset(limit)
-        } else {
-          setActivities((prev) => [...prev, ...mapped])
-          setOffset((prev) => prev + limit)
-        }
-
-        setHasMore(mapped.length === limit)
-        setError(null)
-      } catch (err) {
-        setError(err instanceof Error ? err : new Error("Failed to fetch activities"))
-      } finally {
-        setLoading(false)
+      if (entityType) {
+        query = query.eq("entity_type", entityType)
       }
-    },
-    [user, supabase, entityType, entityId, limit, offset]
-  )
 
-  // Initial fetch
-  useEffect(() => {
-    let isMounted = true
-    
-    if (isMounted) {
-      fetchActivities(true)
+      if (entityId) {
+        query = query.eq("entity_id", entityId)
+      }
+
+      const { data, error: fetchError } = await query
+      if (fetchError) throw fetchError
+
+      const mapped = (data || []).map(mapRow)
+      setHasMore(mapped.length === limit)
+      setLoadMoreOffset(limit)
+      setExtraActivities([])
+      return mapped
+    },
+    enabled: !!user,
+    staleTime: 2 * 60 * 1000,
+  })
+
+  // Combine initial data with any "load more" pages
+  const activities = extraActivities.length > 0
+    ? [...initialActivities, ...extraActivities]
+    : initialActivities
+
+  // Load more (pagination beyond the initial query)
+  const loadMore = useCallback(async () => {
+    if (!user) return
+
+    let query = supabase
+      .from("activity_log")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .range(loadMoreOffset, loadMoreOffset + limit - 1)
+
+    if (entityType) {
+      query = query.eq("entity_type", entityType)
     }
-    
-    return () => { isMounted = false }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user, entityType, entityId])
+
+    if (entityId) {
+      query = query.eq("entity_id", entityId)
+    }
+
+    const { data, error: fetchError } = await query
+    if (fetchError) return
+
+    const mapped = (data || []).map(mapRow)
+    setExtraActivities(prev => [...prev, ...mapped])
+    setLoadMoreOffset(prev => prev + limit)
+    setHasMore(mapped.length === limit)
+  }, [user, supabase, entityType, entityId, limit, loadMoreOffset])
 
   // Real-time subscription
   useEffect(() => {
@@ -220,25 +246,17 @@ export function useActivityLog({
           table: "activity_log",
         },
         (payload) => {
-          const newActivity: ActivityLogEntry = {
-            id: payload.new.id,
-            userId: payload.new.user_id,
-            userName: payload.new.user_name,
-            userEmail: payload.new.user_email,
-            companyId: payload.new.company_id,
-            action: payload.new.action as ActivityAction,
-            entityType: payload.new.entity_type as EntityType,
-            entityId: payload.new.entity_id,
-            entityName: payload.new.entity_name,
-            changes: payload.new.changes,
-            createdAt: new Date(payload.new.created_at),
-          }
+          const newActivity = mapRow(payload.new)
 
           // Only add if it matches our filters
           if (entityType && newActivity.entityType !== entityType) return
           if (entityId && newActivity.entityId !== entityId) return
 
-          setActivities((prev) => [newActivity, ...prev])
+          // Prepend to the query cache
+          queryClient.setQueryData<ActivityLogEntry[]>(
+            activityLogQueryKeys.list(entityType, entityId),
+            (old) => old ? [newActivity, ...old] : [newActivity]
+          )
         }
       )
       .subscribe()
@@ -246,15 +264,19 @@ export function useActivityLog({
     return () => {
       channel.unsubscribe()
     }
-  }, [realtime, user, entityType, entityId, supabase])
+  }, [realtime, user, entityType, entityId, supabase, queryClient])
+
+  const refresh = useCallback(async () => {
+    await refetch()
+  }, [refetch])
 
   return {
     activities,
     loading,
-    error,
+    error: error instanceof Error ? error : null,
     hasMore,
-    loadMore: () => fetchActivities(false),
-    refresh: () => fetchActivities(true),
+    loadMore,
+    refresh,
   }
 }
 

@@ -16,17 +16,17 @@ export { VAT_ACCOUNTS, PAYMENT_ACCOUNTS, DEFAULT_ACCOUNTS } from '@/lib/bookkeep
 // =============================================================================
 
 export const EQUITY_ACCOUNTS = {
-  /** Aktiekapital */
-  AKTIEKAPITAL: '2081',
-  /** Reservfond */
-  RESERVFOND: '2086',
-  /** Balanserat resultat */
-  BALANSERAT_RESULTAT: '2091',
-  /** Årets resultat */
+  /** Aktiekapital (BAS 2011) */
+  AKTIEKAPITAL: '2011',
+  /** Reservfond (BAS 2013) */
+  RESERVFOND: '2013',
+  /** Balanserat resultat (BAS 2080) — retained earnings from prior years */
+  BALANSERAT_RESULTAT: '2080',
+  /** Årets resultat (BAS 2099) */
   ARETS_RESULTAT: '2099',
-  /** Vinst föregående år */
+  /** Vinst föregående år (BAS 2098) */
   VINST_FOREGAENDE_AR: '2098',
-  /** Utdelningsskuld */
+  /** Utdelningsskuld (BAS 2898) */
   UTDELNINGSSKULD: '2898',
 } as const
 
@@ -54,10 +54,17 @@ export const SALARY_ACCOUNTS = {
 // =============================================================================
 
 export const OWNER_ACCOUNTS = {
-  /** Löner till ägare */
-  OWNER_SALARY: '7210',
-  /** Privata uttag */
-  PRIVATE_WITHDRAWAL: '2013',
+  /** Löner till företagsledare (BAS 7012) — NOT 7210 which is Styrelsearvoden */
+  OWNER_SALARY: '7012',
+  /**
+   * Privata uttag — company-type-dependent:
+   * - EF: 2013 (Eget kapital, privata uttag)
+   * - HB/KB: 2070 range per partner
+   * - AB: N/A (use salary or dividend, not withdrawals)
+   * Default here is EF. Use getWithdrawalAccount(companyType) for correct mapping.
+   */
+  PRIVATE_WITHDRAWAL_EF: '2013',
+  PRIVATE_WITHDRAWAL_HB: '2070',
   /** Vinst föregående år (utdelning) */
   RETAINED_EARNINGS: '2098',
 } as const

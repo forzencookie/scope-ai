@@ -6,6 +6,7 @@
 
 import { NextRequest, NextResponse } from "next/server";
 import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { generateOCR } from '@/lib/ocr';
 
 export async function GET() {
     try {
@@ -63,9 +64,13 @@ export async function POST(req: NextRequest) {
         const finalVatAmount = body.vatAmount ?? vatAmount;
         const finalTotal = body.amount ?? (finalSubtotal + finalVatAmount);
 
+        // Generate OCR reference from invoice number (Luhn check digit)
+        const ocrReference = generateOCR(invoiceNumber);
+
         // Prepare invoice data for database
         const invoiceData = {
             invoice_number: invoiceNumber,
+            ocr_reference: ocrReference,
             customer_name: body.customer,
             customer_email: body.email || null,
             customer_address: body.address || null,
@@ -100,6 +105,7 @@ export async function POST(req: NextRequest) {
         const storedItems = created.items as { lines?: unknown[]; bankgiro?: string; plusgiro?: string; notes?: string } | null
         const responseInvoice = {
             id: created.invoice_number,
+            ocrReference: ocrReference,
             customer: created.customer_name,
             email: created.customer_email,
             address: created.customer_address,

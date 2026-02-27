@@ -1,14 +1,10 @@
 "use client"
 
-import { memo, useState, useCallback } from "react"
+import { memo, useState } from "react"
 import {
-    Plus,
+    BookOpen,
     X,
     CreditCard,
-    Clock,
-    ChevronDown,
-    ChevronUp,
-    CheckSquare,
 } from "lucide-react"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, PageHeader } from "@/components/shared"
@@ -24,8 +20,7 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { accountClassLabels, type AccountClass } from "@/data/accounts"
-import { VerifikationDialog } from "../verifikation-dialog"
-import { BookingWizardDialog } from "../booking-wizard/BookingWizardDialog"
+import { AutoVerifikationDialog } from "./auto-dialog"
 
 // Sub-components
 import { VerifikationerStats } from "./components/VerifikationerStats"
@@ -34,20 +29,7 @@ import { VerifikationerGrid } from "./components/VerifikationerGrid"
 
 // Logic & hooks
 import { useVerificationsLogic } from "./use-verifications-logic"
-import { usePendingBookings, type PendingBooking } from "@/hooks/use-pending-bookings"
-
-// Source type labels for display
-const SOURCE_TYPE_LABELS: Record<string, string> = {
-    payslip: 'Lön',
-    customer_invoice: 'Kundfaktura',
-    supplier_invoice: 'Lev.faktura',
-    invoice_payment: 'Betalning',
-    transaction: 'Transaktion',
-    dividend_decision: 'Utdelning',
-    dividend_payment: 'Utdelningsbetalning',
-    owner_withdrawal: 'Ägaruttag',
-    ai_entry: 'AI-genererad',
-}
+import { usePendingBookings } from "@/hooks/use-pending-bookings"
 
 export const VerifikationerTable = memo(function VerifikationerTable() {
     const toast = useToast()
@@ -56,7 +38,6 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
         // State
         searchQuery, setSearchQuery,
         classFilter, setClassFilter,
-        createDialogOpen, setCreateDialogOpen,
         detailsDialogOpen, setDetailsDialogOpen,
         selectedVerifikation,
         accountParam,
@@ -68,65 +49,16 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
 
         // Data
         filteredVerifikationer,
-        verifikationer,
         stats,
         selection,
         isLoading,
     } = useVerificationsLogic()
 
-    // Pending bookings
-    const {
-        pendingBookings,
-        pendingCount,
-        bookItem,
-        bookItems,
-        dismissItems,
-        wizardState,
-        openWizard,
-        closeWizard,
-        invalidate: invalidatePending,
-    } = usePendingBookings()
+    // Pending bookings (for the badge count)
+    const { pendingCount } = usePendingBookings()
 
-    const [pendingExpanded, setPendingExpanded] = useState(true)
-    const [selectedPendingIds, setSelectedPendingIds] = useState<Set<string>>(new Set())
-
-    const togglePendingSelection = useCallback((id: string) => {
-        setSelectedPendingIds((prev) => {
-            const next = new Set(prev)
-            if (next.has(id)) next.delete(id)
-            else next.add(id)
-            return next
-        })
-    }, [])
-
-    const handleBatchBook = useCallback(async () => {
-        if (selectedPendingIds.size === 0) return
-        try {
-            const result = await bookItems(Array.from(selectedPendingIds))
-            setSelectedPendingIds(new Set())
-            toast.success(
-                "Bokförda",
-                `${result.booked} verifikationer skapade.${result.errors.length > 0 ? ` ${result.errors.length} fel.` : ''}`
-            )
-        } catch {
-            toast.error("Fel", "Kunde inte bokföra valda poster.")
-        }
-    }, [selectedPendingIds, bookItems, toast])
-
-    const handleDismissPending = useCallback(async (ids: string[]) => {
-        try {
-            await dismissItems(ids)
-            setSelectedPendingIds(new Set())
-            toast.info("Avfärdade", `${ids.length} poster avfärdade.`)
-        } catch {
-            toast.error("Fel", "Kunde inte avfärda poster.")
-        }
-    }, [dismissItems, toast])
-
-    // Wizard state for selected pending booking
-    const selectedPendingBooking = wizardState.pendingBookingId
-        ? pendingBookings.find((b) => b.id === wizardState.pendingBookingId) || null
-        : null
+    // Auto-verifikation dialog state
+    const [autoDialogOpen, setAutoDialogOpen] = useState(false)
 
     return (
         <div className="w-full space-y-6">
@@ -137,9 +69,14 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                     ? `Systematisk översikt för konto ${accountParam} (${filteredVerifikationer[0]?.kontoName || 'Laddar...'})`
                     : "Se alla bokförda transaktioner och verifikationer."}
                 actions={
-                    <Button className="gap-2" onClick={() => setCreateDialogOpen(true)}>
-                        <Plus className="h-4 w-4 shrink-0" />
-                        <span className="truncate">Ny verifikation</span>
+                    <Button className="gap-2" onClick={() => setAutoDialogOpen(true)}>
+                        <BookOpen className="h-4 w-4 shrink-0" />
+                        <span className="truncate">Bokföra</span>
+                        {pendingCount > 0 && (
+                            <Badge variant="secondary" className="text-xs ml-1">
+                                {pendingCount}
+                            </Badge>
+                        )}
                     </Button>
                 }
             />
@@ -163,117 +100,10 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
             {/* Stats Cards */}
             <VerifikationerStats stats={stats} isLoading={isLoading} />
 
-            {/* Pending Bookings Section */}
-            {pendingCount > 0 && (
-                <div className="rounded-lg border bg-amber-50/50 dark:bg-amber-950/20 border-amber-200 dark:border-amber-800">
-                    <button
-                        onClick={() => setPendingExpanded(!pendingExpanded)}
-                        className="w-full flex items-center justify-between px-4 py-3 text-left"
-                    >
-                        <div className="flex items-center gap-2">
-                            <Clock className="h-4 w-4 text-amber-600 dark:text-amber-400" />
-                            <span className="font-medium text-sm">Att bokföra</span>
-                            <Badge variant="secondary" className="text-xs">
-                                {pendingCount}
-                            </Badge>
-                        </div>
-                        <div className="flex items-center gap-2">
-                            {selectedPendingIds.size > 0 && (
-                                <Button
-                                    size="sm"
-                                    variant="default"
-                                    className="h-7 text-xs"
-                                    onClick={(e) => {
-                                        e.stopPropagation()
-                                        handleBatchBook()
-                                    }}
-                                >
-                                    <CheckSquare className="h-3 w-3 mr-1" />
-                                    Bokför valda ({selectedPendingIds.size})
-                                </Button>
-                            )}
-                            {pendingExpanded ? (
-                                <ChevronUp className="h-4 w-4 text-muted-foreground" />
-                            ) : (
-                                <ChevronDown className="h-4 w-4 text-muted-foreground" />
-                            )}
-                        </div>
-                    </button>
-
-                    {pendingExpanded && (
-                        <div className="border-t border-amber-200 dark:border-amber-800">
-                            {pendingBookings.map((item) => (
-                                <div
-                                    key={item.id}
-                                    className="flex items-center gap-3 px-4 py-2.5 border-b last:border-0 border-amber-100 dark:border-amber-900 hover:bg-amber-100/50 dark:hover:bg-amber-900/30 cursor-pointer transition-colors"
-                                    onClick={() => openWizard(item.id)}
-                                >
-                                    <input
-                                        type="checkbox"
-                                        className="h-4 w-4 rounded border-amber-300"
-                                        checked={selectedPendingIds.has(item.id)}
-                                        onChange={(e) => {
-                                            e.stopPropagation()
-                                            togglePendingSelection(item.id)
-                                        }}
-                                        onClick={(e) => e.stopPropagation()}
-                                    />
-                                    <Badge variant="outline" className="text-xs shrink-0">
-                                        {SOURCE_TYPE_LABELS[item.sourceType] || item.sourceType}
-                                    </Badge>
-                                    <span className="text-sm truncate flex-1">{item.description}</span>
-                                    <span className="text-xs text-muted-foreground tabular-nums">
-                                        {item.proposedDate}
-                                    </span>
-                                    <span className="text-sm font-medium tabular-nums">
-                                        {item.proposedEntries
-                                            .reduce((sum, e) => sum + (e.debit || 0), 0)
-                                            .toLocaleString('sv-SE')}{' '}
-                                        kr
-                                    </span>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-                </div>
-            )}
-
-            {/* Booking Wizard Dialog */}
-            <BookingWizardDialog
-                open={wizardState.open}
-                onOpenChange={(open) => !open && closeWizard()}
-                sourceType={wizardState.sourceType}
-                sourceId={wizardState.sourceId || ''}
-                sourceData={wizardState.sourceData}
-                pendingBookingId={wizardState.pendingBookingId || undefined}
-                proposedEntries={selectedPendingBooking?.proposedEntries}
-                proposedDate={selectedPendingBooking?.proposedDate}
-                proposedSeries={selectedPendingBooking?.proposedSeries}
-                proposedDescription={selectedPendingBooking?.description}
-                initialMode="info"
-                onBooked={(verificationId, verificationNumber) => {
-                    closeWizard()
-                    invalidatePending()
-                    toast.success(
-                        "Verifikation skapad",
-                        `${verificationNumber} har bokförts.`
-                    )
-                }}
-                onDismiss={() => {
-                    if (wizardState.pendingBookingId) {
-                        handleDismissPending([wizardState.pendingBookingId])
-                    }
-                    closeWizard()
-                }}
-            />
-
-            {/* Create Dialog */}
-            <VerifikationDialog
-                open={createDialogOpen}
-                onOpenChange={setCreateDialogOpen}
-                onVerifikationCreated={() => {
-                    toast.success("Verifikation skapad", "Kopplingen har sparats och status har uppdaterats till Bokförd.")
-                }}
+            {/* Auto-Verifikation Dialog (replaces old VerifikationDialog + BookingWizard + pending section) */}
+            <AutoVerifikationDialog
+                open={autoDialogOpen}
+                onOpenChange={setAutoDialogOpen}
             />
 
             {/* Details Dialog */}

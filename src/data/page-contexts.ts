@@ -20,7 +20,7 @@ import {
     Landmark,
     Settings,
     Calendar,
-    Captions,
+
     Gift,
     type LucideIcon,
 } from "lucide-react"
@@ -598,23 +598,6 @@ export const PAGE_CONTEXTS: PageContext[] = [
         relatedTools: ['get_subscription_status', 'get_notification_preferences', 'list_active_integrations', 'connect_bank_account'],
         keywords: ['inställning', 'integration', 'notifikation', 'prenumeration', 'bank'],
     },
-    {
-        id: 'foretagsstatistik',
-        title: 'Företagsstatistik',
-        shortTitle: 'Statistik',
-        category: 'ovrigt',
-        url: '/dashboard/foretagsstatistik',
-        icon: Captions,
-        description: 'Översikt och nyckeltal för företaget. Grafer och trender.',
-        aiCapabilities: [
-            'Visa nyckeltal',
-            'Analysera trender',
-            'Jämföra perioder',
-        ],
-        dataEntities: ['Nyckeltal', 'Statistik', 'Trender'],
-        relatedTools: ['get_company_stats'],
-        keywords: ['statistik', 'nyckeltal', 'graf', 'trend', 'översikt'],
-    },
 ]
 
 // =============================================================================
@@ -715,10 +698,6 @@ Bolagsskatt är 20.6%. Deklaration lämnas 1 juli året efter räkenskapsårets 
 Använd 'generate_annual_report' för att skapa årsredovisning.
 Kan hjälpa med förvaltningsberättelse, noter och nyckeltal.
 K2 för mindre företag, K3 för större. Inlämning till Bolagsverket inom 6 månader.`,
-
-    foretagsstatistik: `Användaren tittar på Företagsstatistik-sidan med nyckeltal och grafer.
-Använd 'get_company_statistics' för att hämta KPI:er (omsättning, resultat, kassaflöde, marginaler).
-Kan analysera trender, jämföra perioder och förklara nyckeltal.`,
 
     loner: `Användaren tittar på Löner-sidan för lönehantering.
 Använd 'get_employees' för att lista anställda.

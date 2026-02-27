@@ -50,6 +50,60 @@ export type AGIReport = {
     submittedAt?: string
 }
 
+/** Map a database row to the Employee UI model. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRowToEmployee(e: any): Employee {
+    return {
+        id: e.id,
+        name: e.name,
+        personalNumber: e.personal_number,
+        role: e.role,
+        monthlySalary: Number(e.monthly_salary) || 0,
+        taxTable: e.tax_table || 33,
+        startDate: e.start_date,
+        email: e.email,
+        status: e.status || 'active',
+    }
+}
+
+/** Map a database row to the Payslip UI model. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRowToPayslip(p: any): Payslip {
+    return {
+        id: p.id,
+        employeeId: p.employee_id,
+        employeeName: p.employees?.name || 'Okänd',
+        period: p.period,
+        year: p.year,
+        month: p.month,
+        grossSalary: Number(p.gross_salary) || 0,
+        taxDeduction: Number(p.tax_deduction) || 0,
+        netSalary: Number(p.net_salary) || 0,
+        bonuses: Number(p.bonuses) || 0,
+        otherDeductions: Number(p.other_deductions) || 0,
+        status: p.status || 'draft',
+        sentAt: p.sent_at,
+    }
+}
+
+/** Map a database row to the AGIReport UI model. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRowToAGIReport(r: any): AGIReport {
+    return {
+        id: r.id,
+        period: r.period,
+        year: r.year,
+        month: r.month,
+        dueDate: r.due_date,
+        employeeCount: r.employee_count || 0,
+        totalSalary: Number(r.total_salary) || 0,
+        totalTax: Number(r.total_tax) || 0,
+        employerContributions: Number(r.employer_contributions) || 0,
+        status: r.status || 'draft',
+        submittedAt: r.submitted_at,
+    }
+}
+
 export const payrollService = {
     /**
      * Get aggregate statistics for payroll from the database.
@@ -100,18 +154,7 @@ export const payrollService = {
             return []
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (data || []).map((e: any) => ({
-            id: e.id,
-            name: e.name,
-            personalNumber: e.personal_number,
-            role: e.role,
-            monthlySalary: Number(e.monthly_salary) || 0,
-            taxTable: e.tax_table || 33,
-            startDate: e.start_date,
-            email: e.email,
-            status: e.status || 'active',
-        }))
+        return (data || []).map(mapRowToEmployee)
     },
 
     /**
@@ -135,22 +178,7 @@ export const payrollService = {
             return []
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (data || []).map((p: any) => ({
-            id: p.id,
-            employeeId: p.employee_id,
-            employeeName: p.employees?.name || 'Okänd',
-            period: p.period,
-            year: p.year,
-            month: p.month,
-            grossSalary: Number(p.gross_salary) || 0,
-            taxDeduction: Number(p.tax_deduction) || 0,
-            netSalary: Number(p.net_salary) || 0,
-            bonuses: Number(p.bonuses) || 0,
-            otherDeductions: Number(p.other_deductions) || 0,
-            status: p.status || 'draft',
-            sentAt: p.sent_at,
-        }))
+        return (data || []).map(mapRowToPayslip)
     },
 
     /**
@@ -174,19 +202,6 @@ export const payrollService = {
             return []
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (data || []).map((r: any) => ({
-            id: r.id,
-            period: r.period,
-            year: r.year,
-            month: r.month,
-            dueDate: r.due_date,
-            employeeCount: r.employee_count || 0,
-            totalSalary: Number(r.total_salary) || 0,
-            totalTax: Number(r.total_tax) || 0,
-            employerContributions: Number(r.employer_contributions) || 0,
-            status: r.status || 'draft',
-            submittedAt: r.submitted_at,
-        }))
+        return (data || []).map(mapRowToAGIReport)
     },
 }

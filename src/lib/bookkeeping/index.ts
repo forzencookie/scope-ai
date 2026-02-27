@@ -94,9 +94,12 @@ export {
   
   // Sales entries
   createSalesEntry,
+  createMultiVatSalesEntry,
   createPaymentReceivedEntry,
   createCreditNoteEntry,
   type SalesEntryParams,
+  type MultiVatSalesEntryParams,
+  type InvoiceLineItem,
   
   // Salary entries
   createSalaryEntry,

@@ -137,6 +137,17 @@ export function useOwnerWithdrawals() {
     date: string,
     description: string
   ): Promise<string | null> => {
+    // Solvency check for withdrawals: kapitalkonto must cover the amount
+    if (type === 'uttag' || type === 'lön') {
+      const stats = partnerStats.find(p => p.id === partnerId)
+      if (stats && stats.kapitalkonto < amount) {
+        throw new Error(
+          `Otillräckligt kapital. ${stats.name} har ${stats.kapitalkonto.toLocaleString('sv-SE')} kr på kapitalkontot, ` +
+          `men försöker ta ut ${amount.toLocaleString('sv-SE')} kr.`
+        )
+      }
+    }
+
     const idx = partnerIndex(partnerId)
     const accounts = getPartnerAccounts(idx)
     const partnerName = partners.find(p => p.id === partnerId)?.name || 'Delägare'
@@ -152,22 +163,17 @@ export function useOwnerWithdrawals() {
         ]
 
     try {
-      const res = await fetch('/api/pending-bookings', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'create',
-          sourceType: 'owner_withdrawal',
-          sourceId: `withdrawal-${Date.now()}`,
-          description,
-          entries,
-          series: 'A',
-          date,
-          metadata: { type, partnerId, partnerName, amount },
-        }),
+      const { postPendingBookingAction } = await import('@/hooks/use-pending-bookings')
+      const data = await postPendingBookingAction({
+        action: 'create',
+        sourceType: 'owner_withdrawal',
+        sourceId: `withdrawal-${Date.now()}`,
+        description,
+        entries,
+        series: 'A',
+        date,
+        metadata: { type, partnerId, partnerName, amount },
       })
-      if (!res.ok) throw new Error('Failed to create pending booking')
-      const data = await res.json()
       return data.pendingBooking?.id || null
     } catch (err) {
       console.error('[useOwnerWithdrawals] registerTransaction error:', err)

@@ -1,87 +1,87 @@
-import { useMemo, useState, useEffect } from "react"
+import { useMemo } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { normalizeBalances } from './use-normalized-balances'
 import { useCompany } from '@/providers/company-provider'
 import { Shield, Droplets, Scale, Percent, Users, Building2, Package, CreditCard, Plane, MoreHorizontal } from "lucide-react"
 
+export const companyStatisticsQueryKeys = {
+    all: ["company-statistics"] as const,
+    dashboard: () => [...companyStatisticsQueryKeys.all, "dashboard"] as const,
+}
+
+interface DashboardRpcData {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    monthlyFlow: any[]
+    dashboardCounts: {
+        transactions: { total: number; unbooked: number }
+        invoices: { sent: number; overdue: number; totalValue: number }
+    }
+    accountBalances: Array<{ account: string; balance: number }>
+    prevYearBalances: Array<{ account: string; balance: number }>
+}
+
 export function useCompanyStatistics() {
     const { companyType } = useCompany()
-    const [isLoading, setIsLoading] = useState(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [monthlyFlow, setMonthlyFlow] = useState<any[]>([])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [dashboardCounts, setDashboardCounts] = useState<any>({
-        transactions: { total: 0, unbooked: 0 },
-        invoices: { sent: 0, overdue: 0, totalValue: 0 }
+
+    const {
+        data: rpcData,
+        isLoading,
+    } = useQuery({
+        queryKey: companyStatisticsQueryKeys.dashboard(),
+        queryFn: async (): Promise<DashboardRpcData> => {
+            const supabase = getSupabaseClient()
+            const year = new Date().getFullYear()
+            const prevYearStart = `${year - 1}-01-01`
+            const prevYearEnd = `${year - 1}-12-31`
+
+            const [flowRes, countsRes, balancesRes, prevBalancesRes] = await Promise.all([
+                supabase.rpc('get_monthly_cashflow', { p_year: year }),
+                supabase.rpc('get_dashboard_counts'),
+                supabase.rpc('get_account_balances', {
+                    p_start_date: '2000-01-01',
+                    p_end_date: new Date().toISOString().split('T')[0]
+                }),
+                supabase.rpc('get_account_balances', {
+                    p_start_date: prevYearStart,
+                    p_end_date: prevYearEnd
+                })
+            ])
+
+            if (flowRes.error) console.error('Flow Error:', flowRes.error)
+            if (countsRes.error) console.error('Counts Error:', countsRes.error)
+            if (balancesRes.error) console.error('Balances Error:', balancesRes.error)
+            if (prevBalancesRes.error) console.error('Prev Balances Error:', prevBalancesRes.error)
+
+            // Cast RPC responses to expected shapes (Supabase types return generic Json)
+            const counts = (countsRes.data || {
+                transactions: { total: 0, unbooked: 0 },
+                invoices: { sent: 0, overdue: 0, totalValue: 0 }
+            }) as DashboardRpcData['dashboardCounts']
+
+            return {
+                monthlyFlow: flowRes.data || [],
+                dashboardCounts: counts,
+                accountBalances: (balancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
+                    account: String(row.account_number),
+                    balance: row.balance
+                })),
+                prevYearBalances: (prevBalancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
+                    account: String(row.account_number),
+                    balance: row.balance
+                })),
+            }
+        },
+        staleTime: 5 * 60 * 1000,
     })
 
-    // We still need account balances for Financial Health (Solidity etc)
-    // But we can fetch them via RPC internally instead of full hook if we want to isolate
-    // Or just fetch the minimal 'totals' needed. 
-    // For now, let's fetch account balances via RPC to keep it efficient (already implemented in Phase 2.1)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [accountBalances, setAccountBalances] = useState<any[]>([])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [prevYearBalances, setPrevYearBalances] = useState<any[]>([])
-
-    useEffect(() => {
-        let isMounted = true
-
-        async function fetchStats() {
-            setIsLoading(true)
-            const supabase = getSupabaseClient()
-            try {
-                const year = new Date().getFullYear()
-
-                const prevYearStart = `${year - 1}-01-01`
-                const prevYearEnd = `${year - 1}-12-31`
-
-                // Parallel fetch
-                const [flowRes, countsRes, balancesRes, prevBalancesRes] = await Promise.all([
-                    supabase.rpc('get_monthly_cashflow', { p_year: year }),
-                    supabase.rpc('get_dashboard_counts'),
-                    supabase.rpc('get_account_balances', {
-                        p_start_date: '2000-01-01',
-                        p_end_date: new Date().toISOString().split('T')[0]
-                    }),
-                    supabase.rpc('get_account_balances', {
-                        p_start_date: prevYearStart,
-                        p_end_date: prevYearEnd
-                    })
-                ])
-
-                if (flowRes.error) console.error('Flow Error:', flowRes.error)
-                if (countsRes.error) console.error('Counts Error:', countsRes.error)
-                if (balancesRes.error) console.error('Balances Error:', balancesRes.error)
-                if (prevBalancesRes.error) console.error('Prev Balances Error:', prevBalancesRes.error)
-
-                if (isMounted) {
-                    setMonthlyFlow(flowRes.data || [])
-                    setDashboardCounts(countsRes.data || {
-                        transactions: { total: 0, unbooked: 0 },
-                        invoices: { sent: 0, overdue: 0, totalValue: 0 }
-                    })
-                    setAccountBalances((balancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
-                        account: String(row.account_number),
-                        balance: row.balance
-                    })))
-                    setPrevYearBalances((prevBalancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
-                        account: String(row.account_number),
-                        balance: row.balance
-                    })))
-                }
-
-            } catch (err) {
-                console.error('Failed to fetch dashboard stats', err)
-            } finally {
-                if (isMounted) setIsLoading(false)
-            }
-        }
-
-        fetchStats()
-
-        return () => { isMounted = false }
-    }, [])
+    const monthlyFlow = rpcData?.monthlyFlow || []
+    const dashboardCounts = rpcData?.dashboardCounts || {
+        transactions: { total: 0, unbooked: 0 },
+        invoices: { sent: 0, overdue: 0, totalValue: 0 }
+    }
+    const accountBalances = rpcData?.accountBalances || []
+    const prevYearBalances = rpcData?.prevYearBalances || []
 
     // Calculate totals from account balances using normalized sign convention
     const totals = useMemo(() => {
@@ -111,7 +111,6 @@ export function useCompanyStatistics() {
         const netIncome = totals.netIncome || 0
 
         // Check which account classes have data
-        // Note: RPC returns 'account' as the field name, not 'accountNumber'
         const hasAssets = accountBalances.some(a => String(a.account).startsWith('1') && a.balance !== 0)
         const hasEquity = accountBalances.some(a => String(a.account).startsWith('20') && a.balance !== 0)
         const hasLiabilities = accountBalances.some(a =>
@@ -128,12 +127,9 @@ export function useCompanyStatistics() {
         )
 
         // Calculate values only if we have required data
-        // Soliditet (Equity / Assets) - needs both equity and assets
         const canCalcSolidity = hasAssets && hasEquity
         const solidity = canCalcSolidity && assets > 0 ? (equity / assets) * 100 : null
 
-        // Kassalikviditet (Current Assets / Current Liabilities)
-        // Current liabilities = 24xx-29xx (excludes long-term debt 21xx-23xx)
         const cashAccounts = accountBalances.filter(a => String(a.account).startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
         const receivableAccounts = accountBalances.filter(a => String(a.account).startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
         const currentAssets = cashAccounts + receivableAccounts
@@ -147,11 +143,9 @@ export function useCompanyStatistics() {
         const canCalcLiquidity = (hasCash || hasReceivables) && hasCurrentLiabilities
         const liquidity = canCalcLiquidity && currentLiabilities > 0 ? (currentAssets / currentLiabilities) * 100 : null
 
-        // Skuldsättningsgrad (Liabilities / Equity)
         const canCalcDebtEquity = hasLiabilities && hasEquity
         const debtEquityRatio = canCalcDebtEquity && equity !== 0 ? liabilities / equity : null
 
-        // Vinstmarginal (Net Income / Revenue)
         const canCalcMargin = hasRevenue && hasExpenses
         const profitMargin = canCalcMargin && revenue > 0 ? (netIncome / revenue) * 100 : null
 
@@ -228,13 +222,13 @@ export function useCompanyStatistics() {
                 subtitle: profitMargin !== null ? "vs förra året" : "Saknar data"
             },
         ]
-    }, [totals, accountBalances, prevTotals, prevYearBalances]) // Re-calc when RPC data returns
+    }, [totals, accountBalances, prevTotals, prevYearBalances])
 
     // 2. Transaction Stats (from RPC)
     const transactionStats = useMemo(() => {
         return {
             total: dashboardCounts.transactions.total,
-            recorded: 0, // Not currently returned by RPC, adding simplified
+            recorded: 0,
             pending: dashboardCounts.transactions.unbooked,
             missingDocs: 0,
         }
@@ -244,7 +238,7 @@ export function useCompanyStatistics() {
     const invoiceStats = useMemo(() => {
         return {
             sent: dashboardCounts.invoices.sent,
-            paid: 0, // Not needed for Dash summary cards usually, or add to RPC
+            paid: 0,
             overdue: dashboardCounts.invoices.overdue,
             draft: 0,
             totalValue: dashboardCounts.invoices.totalValue,
@@ -263,7 +257,6 @@ export function useCompanyStatistics() {
     }, [monthlyFlow])
 
     const expenseCategories = useMemo(() => {
-        // Group expenses by BAS account class (4-8)
         const categoryNames: Record<number, string> = {
             4: 'Varuinköp',
             5: 'Övriga externa kostnader',

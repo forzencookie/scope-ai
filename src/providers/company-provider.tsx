@@ -42,6 +42,7 @@ interface CompanyInfo {
   // Tax Settings (Onboarding-driven)
   vatFrequency: 'monthly' | 'quarterly' | 'annually'
   isCloselyHeld: boolean // Fåmansföretag - determines K10 applicability
+  hasFskatt: boolean // Innehar F-skattsedel
   // Share Structure (AB only)
   shareCapital: number       // e.g., 25000 or 50000
   totalShares: number        // e.g., 500 or 1000
@@ -97,6 +98,7 @@ const defaultCompany: CompanyInfo = {
   accountingMethod: "invoice",
   vatFrequency: "quarterly",
   isCloselyHeld: true,
+  hasFskatt: true,
   // Share Structure (AB defaults)
   shareCapital: 25000,
   totalShares: 500,
@@ -114,9 +116,6 @@ const defaultCompany: CompanyInfo = {
 // ============================================
 
 const CompanyContext = createContext<CompanyContextValue | undefined>(undefined)
-
-// Storage key for persisting company data
-const STORAGE_KEY = "scope-ai-company"
 
 // ============================================
 // Provider Component
@@ -163,6 +162,7 @@ export function CompanyProvider({
             accountingMethod: dbCompanyInfo.accountingMethod || 'invoice',
             vatFrequency: dbCompanyInfo.vatFrequency || 'quarterly',
             isCloselyHeld: dbCompanyInfo.isCloselyHeld ?? true,
+            hasFskatt: dbCompanyInfo.hasFskatt ?? true,
             shareCapital: dbCompanyInfo.shareCapital ?? 25000,
             totalShares: dbCompanyInfo.totalShares ?? 500,
             shareClasses: { A: 0, B: dbCompanyInfo.totalShares ?? 500 },
@@ -172,48 +172,27 @@ export function CompanyProvider({
             onboardingComplete: true,
           }
           setCompanyState(company)
-          // Also cache in localStorage for offline access
-          localStorage.setItem(STORAGE_KEY, JSON.stringify(company))
           setIsLoading(false)
           return
         }
       } catch (error) {
-        console.warn('[CompanyProvider] Failed to fetch from database, using localStorage:', error)
+        console.warn('[CompanyProvider] Failed to fetch from database:', error)
       }
 
-      // Fallback to localStorage
-      try {
-        const stored = localStorage.getItem(STORAGE_KEY)
-        if (stored) {
-          const parsed = JSON.parse(stored) as CompanyInfo
-          setCompanyState(parsed)
-        } else {
-          // Use default with initial company type
-          setCompanyState({
-            ...defaultCompany,
-            companyType: initialCompanyType,
-          })
-        }
-      } catch (error) {
-        console.error("Failed to load company data:", error)
-        setCompanyState({
-          ...defaultCompany,
-          companyType: initialCompanyType,
-        })
-      } finally {
-        setIsLoading(false)
-      }
+      // Fallback to defaults when DB is unavailable
+      setCompanyState({
+        ...defaultCompany,
+        companyType: initialCompanyType,
+      })
+      setIsLoading(false)
     }
 
     loadCompany()
   }, [initialCompanyType])
 
-  // Save company to localStorage immediately and database with debounce
+  // Save company to database with debounce
   useEffect(() => {
     if (company && !isLoading) {
-      // Always save to localStorage immediately
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(company))
-
       // Debounce database save to avoid too many writes
       if (saveTimeoutRef.current) {
         clearTimeout(saveTimeoutRef.current)

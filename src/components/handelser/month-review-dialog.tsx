@@ -16,7 +16,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Badge } from "@/components/ui/badge"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import type { AppStatus } from "@/lib/status-types"
-import { Loader2, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, FileCheck, Check, X } from "lucide-react"
+import { Loader2, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, FileCheck, Check, X, MessageSquare, ListChecks } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { formatSEK, formatSEKCompact } from "@/lib/formatters"
 import { useMonthClosing } from "@/hooks/use-month-closing"
@@ -40,6 +40,13 @@ interface Section {
     statusBreakdown: StatusBreakdown[]
 }
 
+interface ActivitySection {
+    type: string
+    label: string
+    count: number
+    items: { title: string; date: string }[]
+}
+
 interface MonthlyReviewData {
     financial: {
         revenue: number
@@ -47,6 +54,7 @@ interface MonthlyReviewData {
         result: number
     }
     sections: Section[]
+    activity?: ActivitySection[]
 }
 
 interface MonthReviewDialogProps {
@@ -253,10 +261,43 @@ export function MonthReviewDialog({
                             </div>
                         )}
 
-                        {data.sections.length === 0 && (
+                        {data.sections.length === 0 && (!data.activity || data.activity.length === 0) && (
                             <p className="text-sm text-muted-foreground text-center py-4">
                                 Ingen aktivitet registrerad för denna månad.
                             </p>
+                        )}
+
+                        {/* Activity sections (conversations + roadmap) */}
+                        {data.activity && data.activity.length > 0 && (
+                            <div className="space-y-3">
+                                {data.activity.map((section) => {
+                                    const Icon = section.type === 'conversations' ? MessageSquare : ListChecks
+                                    return (
+                                        <div key={section.type} className="rounded-lg border p-3 space-y-2">
+                                            <div className="flex items-center gap-2">
+                                                <Icon className="h-4 w-4 text-muted-foreground" />
+                                                <span className="text-sm font-medium">{section.label}</span>
+                                                <Badge variant="secondary" className="text-xs">{section.count}</Badge>
+                                            </div>
+                                            <div className="space-y-1">
+                                                {section.items.map((item, i) => (
+                                                    <div key={i} className="flex items-center justify-between text-xs">
+                                                        <span className="text-muted-foreground truncate max-w-[70%]">{item.title}</span>
+                                                        <span className="text-muted-foreground/60 shrink-0">
+                                                            {new Date(item.date).toLocaleDateString('sv-SE', { day: 'numeric', month: 'short' })}
+                                                        </span>
+                                                    </div>
+                                                ))}
+                                                {section.count > 5 && (
+                                                    <p className="text-xs text-muted-foreground/50">
+                                                        +{section.count - 5} till
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )
+                                })}
+                            </div>
                         )}
 
                         {/* Notes */}

@@ -1,8 +1,5 @@
 # Bokföring — Scope AI
 
-**The bookkeeping module built for Swedish accountants who value precision, speed, and full control.**
-
-Bokföring is the core of Scope AI. It handles the full lifecycle of financial data — from raw bank transactions to verified ledger entries — in a workflow designed around how professional accountants actually work. Every screen, every dialog, every stat card exists because Swedish accounting law (BFL, ÅRL) demands it.
 
 ---
 
@@ -10,22 +7,22 @@ Bokföring is the core of Scope AI. It handles the full lifecycle of financial d
 
 ### 1. Transaktioner — The Transaction Inbox
 
-The starting point for all bookkeeping. Transaktioner functions as a professional-grade inbox where every payment flowing through the company lands for review.
+Transaktioner functions as a bank account inbox where every payment flowing through the company lands for review and booking.
 
 **Stat cards at a glance:**
 - **Antal betalningar** — Total transaction count for the period
 - **Pengar in** — Sum of all incoming payments (green)
 - **Pengar ut** — Sum of all outgoing payments (red)
-- **Allt i ordning** — Booked vs. total ratio, showing immediately whether the books are clean
+
 
 **How it works:**
-- Transactions arrive via bank import or manual entry
-- Each transaction carries a status badge: *Att bokföra*, *Bokförd*, *Saknar underlag*, or *Ignorerad*
-- The accountant filters by status to focus on what needs attention — no scrolling through hundreds of already-handled items
-- A prominent status banner shows how many transactions need review, with a direct link to filter them
+- Transactions arrive via upload or manual entry
+- Each transaction carries a status badge: *Att bokföra*, *Bokförd*. the status badges *Saknar underlag*, or *Ignorerad* can be removed.
+- The accountant can filters by status to focus on what needs attention — no scrolling through hundreds of already-handled items
+
 
 **Adding transactions:**
-- **Manuell** — Full legal-grade entry form capturing: beskrivning, motpart, org-nr/personnr, belopp (inkl. moms), momssats (25/12/6/0%), auto-calculated momsbelopp, datum, konto, and verifikationsunderlag (document reference). Every field a Swedish auditor would expect to see on a verification is present at the point of entry.
+- **Manuell** — needs to have eveything a bank transfer might provide which is name date and time and so on. 
 - **Filuppladdning** — Upload any file (PDF, image, CSV, Excel) and the AI analyzes the content regardless of format. One upload zone handles Z-rapporter, bank exports, scanned documents — the AI determines what it is and extracts the data
 
 **Why it matters:**
@@ -51,7 +48,7 @@ A complete invoice lifecycle manager with Kanban visualization, covering both cu
 The creation dialog produces invoices that satisfy Mervärdesskattelagen 11 kap. 8§. It captures: customer name, org-nummer, address, reference person, line items with per-item VAT rates (25/12/6/0%), editable issue date, payment terms, due date, currency, bankgiro, plusgiro, and notes. The company's own information (name, org-nr, moms-nr, address) is pulled automatically from company settings — not hardcoded. Each invoice gets a sequential number (F-0001, F-0002...) at creation. A live invoice preview renders alongside the form in both standard and expanded view, showing exactly what the customer will receive — including the payment section with bank details.
 
 **Supplier invoice creation (audit-ready):**
-Captures: supplier name, supplier org-nummer, supplier address, invoice number, OCR number, invoice date, due date, total amount, VAT amount, currency (SEK/EUR/USD/GBP/NOK/DKK), and category. Every field needed to match the supplier's invoice against Bolagsverket records and to claim VAT deductions is present.
+Captures: supplier name, supplier org-nummer, supplier address, invoice number, OCR number, invoice date, due date, total amount, VAT amount, any currency  and category. Every field needed to match the supplier's invoice against Bolagsverket records and to claim VAT deductions is present.
 
 **Supplier invoice AI extraction:**
 Upload a supplier invoice (PDF, photo) and the AI extracts supplier name, invoice/OCR number, total amount, VAT, due date, and category. The extracted data is presented for review before saving — the accountant always approves before anything is committed.
@@ -76,12 +73,12 @@ Swedish law (BFL 7 kap.) requires supporting documentation for every verificatio
 
 ### 4. Inventarier — Asset Register
 
-A straightforward register for company-owned assets (computers, furniture, vehicles) with built-in depreciation support.
+A straightforward register for company-owned assets (computers, furniture, vehicles)
 
 **Features:**
 - Asset registration with name, purchase price (excl. moms), purchase date, and useful life in years
 - Stat cards showing total asset value and category breakdown
-- **Bokför avskrivning** button directly in the header — one click to record depreciation entries for all eligible assets
+- **Bokför avskrivning** button in the table headerone click to record depreciation entries for all eligible assets
 - Consistent UI with table title separator and "Alla tillgångar" section heading, matching the visual pattern across all Bokföring pages
 
 **Why it matters:**

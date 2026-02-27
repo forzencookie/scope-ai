@@ -165,13 +165,8 @@ export function useDividendLogic() {
         metadata?: Record<string, unknown>
     }): Promise<string | null> => {
         try {
-            const res = await fetch('/api/pending-bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'create', ...params }),
-            })
-            if (!res.ok) throw new Error('Failed to create pending booking')
-            const data = await res.json()
+            const { postPendingBookingAction } = await import('@/hooks/use-pending-bookings')
+            const data = await postPendingBookingAction({ action: 'create', ...params })
             return data.pendingBooking?.id || null
         } catch (err) {
             console.error('[useDividendLogic] createPendingBooking error:', err)

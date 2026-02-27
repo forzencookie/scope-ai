@@ -30,6 +30,8 @@ export interface SalesEntryParams {
   invoiceNumber?: string
   /** Series identifier */
   series?: string
+  /** Accounting method: 'cash' skips receivables (1510), booking directly to bank */
+  accountingMethod?: 'cash' | 'invoice'
 }
 
 /**
@@ -73,17 +75,19 @@ export function createSalesEntry(params: SalesEntryParams): JournalEntry {
     bankAccount = PAYMENT_ACCOUNTS.BANK,
     invoiceNumber,
     series = 'A', // A-series for customer invoices
+    accountingMethod = 'invoice',
   } = params
 
   const rows: JournalEntryLine[] = []
   const gross = roundToOre(grossAmount)
 
-  // Debit the appropriate account (receivable or bank)
-  const debitAccount = paidImmediately ? bankAccount : receivableAccount
-  const debitDescription = paidImmediately 
-    ? 'Inbetalning' 
-    : invoiceNumber 
-      ? `Kundfaktura ${invoiceNumber}` 
+  // Cash method: always debit bank directly (no receivable)
+  const useBankDirect = accountingMethod === 'cash' || paidImmediately
+  const debitAccount = useBankDirect ? bankAccount : receivableAccount
+  const debitDescription = useBankDirect
+    ? 'Inbetalning'
+    : invoiceNumber
+      ? `Kundfaktura ${invoiceNumber}`
       : 'Kundfordran'
 
   rows.push({
@@ -133,6 +137,123 @@ export function createSalesEntry(params: SalesEntryParams): JournalEntry {
     finalized: false,
     createdAt: new Date().toISOString(),
   }
+}
+
+/**
+ * Invoice line item with per-line VAT rate
+ */
+export interface InvoiceLineItem {
+  description?: string
+  quantity: number
+  unitPrice: number
+  vatRate?: number
+}
+
+export interface MultiVatSalesEntryParams {
+  /** Invoice date (YYYY-MM-DD) */
+  date: string
+  /** Description (e.g., customer name + invoice number) */
+  description: string
+  /** Total gross amount (including all VAT) */
+  grossAmount: number
+  /** Line items with per-line VAT rates */
+  lineItems: InvoiceLineItem[]
+  /** Revenue account (default: 3001) */
+  revenueAccount?: string
+  /** Receivable account (default: 1510) */
+  receivableAccount?: string
+  /** Bank account for cash method */
+  bankAccount?: string
+  /** Invoice number for description */
+  invoiceNumber?: string
+  /** Series identifier */
+  series?: string
+  /** Accounting method: 'cash' skips receivables (1510), booking directly to bank */
+  accountingMethod?: 'cash' | 'invoice'
+}
+
+/**
+ * Create a sales journal entry for invoices with multiple VAT rates.
+ * Groups line items by VAT rate and creates revenue + output VAT entries per group.
+ */
+export function createMultiVatSalesEntry(params: MultiVatSalesEntryParams): JournalEntry {
+  const {
+    date,
+    description,
+    grossAmount,
+    lineItems,
+    revenueAccount = DEFAULT_ACCOUNTS.SALES_REVENUE,
+    receivableAccount = DEFAULT_ACCOUNTS.CUSTOMER_RECEIVABLES,
+    bankAccount = PAYMENT_ACCOUNTS.BANK,
+    invoiceNumber,
+    series = 'A',
+    accountingMethod = 'invoice',
+  } = params
+
+  const rows: JournalEntryLine[] = []
+  const gross = roundToOre(grossAmount)
+
+  // Cash method: debit bank directly (no receivable)
+  const debitAccount = accountingMethod === 'cash' ? bankAccount : receivableAccount
+  const debitDescription = accountingMethod === 'cash'
+    ? 'Inbetalning'
+    : invoiceNumber ? `Kundfaktura ${invoiceNumber}` : 'Kundfordran'
+
+  rows.push({
+    account: debitAccount,
+    debit: gross,
+    credit: 0,
+    description: debitDescription,
+  })
+
+  // Group line items by VAT rate
+  const vatGroups = new Map<SwedishVatRate, number>()
+  for (const item of lineItems) {
+    const qty = Number(item.quantity) || 0
+    const price = Number(item.unitPrice) || 0
+    const lineNet = roundToOre(qty * price)
+    const rawRate = Number(item.vatRate) ?? 25
+    const vatRate: SwedishVatRate = isValidVatRate(rawRate) ? rawRate : 25
+    vatGroups.set(vatRate, (vatGroups.get(vatRate) || 0) + lineNet)
+  }
+
+  // Credit revenue and output VAT per group
+  for (const [vatRate, netAmount] of vatGroups) {
+    const roundedNet = roundToOre(netAmount)
+
+    rows.push({
+      account: revenueAccount,
+      debit: 0,
+      credit: roundedNet,
+      description: vatRate > 0 ? `Försäljning (exkl moms ${vatRate}%)` : 'Försäljning (momsfri)',
+    })
+
+    if (vatRate > 0) {
+      const vatAmount = roundToOre(roundedNet * (vatRate / 100))
+      const vatAccount = getVatAccount(vatRate, 'output')
+
+      rows.push({
+        account: vatAccount,
+        debit: 0,
+        credit: vatAmount,
+        description: `Utgående moms ${vatRate}%`,
+      })
+    }
+  }
+
+  return {
+    id: generateEntryId(),
+    date,
+    description: invoiceNumber ? `${description} (Faktura ${invoiceNumber})` : description,
+    series,
+    rows,
+    finalized: false,
+    createdAt: new Date().toISOString(),
+  }
+}
+
+function isValidVatRate(rate: number): rate is SwedishVatRate {
+  return rate === 0 || rate === 6 || rate === 12 || rate === 25
 }
 
 /**

@@ -9,6 +9,34 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { taxService } from '@/services/tax-service'
+import { companyService } from '@/services/company-service'
+import { OWNER_ACCOUNTS, EQUITY_ACCOUNTS } from '@/data/account-constants'
+
+/**
+ * Get the correct private withdrawal account for the company type.
+ * EF uses 2013, HB/KB uses 2070, AB doesn't normally have private withdrawals.
+ */
+async function getWithdrawalAccount(userId?: string): Promise<{ account: string; label: string }> {
+    if (userId) {
+        try {
+            const company = await companyService.getByUserId(userId)
+            if (company) {
+                switch (company.companyType) {
+                    case 'hb':
+                    case 'kb':
+                        return { account: OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_HB, label: `${OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_HB} (Privata uttag HB/KB)` }
+                    case 'ab':
+                        // AB: private withdrawals are unusual — typically salary or dividend
+                        return { account: OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF, label: `${OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF} (Privata uttag — obs: ovanligt för AB)` }
+                    default:
+                        // EF, enskild firma
+                        return { account: OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF, label: `${OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF} (Privata uttag)` }
+                }
+            }
+        } catch { /* fall through to default */ }
+    }
+    return { account: OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF, label: `${OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF} (Privata uttag)` }
+}
 
 // =============================================================================
 // Calculate Self-Employment Fees Tool
@@ -125,16 +153,19 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
             'uttag': 'Privat uttag',
         }
 
+        // Get company-type-aware withdrawal account
+        const withdrawal = await getWithdrawalAccount(context?.userId as string | undefined)
+
         const accountMap = {
-            'lön': { debit: '7210', credit: '1930' },
-            'utdelning': { debit: '2098', credit: '1930' },
-            'uttag': { debit: '2013', credit: '1930' },
+            'lön': { debit: OWNER_ACCOUNTS.OWNER_SALARY, credit: '1930' },
+            'utdelning': { debit: EQUITY_ACCOUNTS.VINST_FOREGAENDE_AR, credit: '1930' },
+            'uttag': { debit: withdrawal.account, credit: '1930' },
         }
 
         const accountLabels = {
-            'lön': { debit: '7210 (Löner)', credit: '1930 (Bank)' },
-            'utdelning': { debit: '2098 (Vinst föregående år)', credit: '1930 (Bank)' },
-            'uttag': { debit: '2013 (Privata uttag)', credit: '1930 (Bank)' },
+            'lön': { debit: `${OWNER_ACCOUNTS.OWNER_SALARY} (Löner till företagsledare)`, credit: '1930 (Bank)' },
+            'utdelning': { debit: `${EQUITY_ACCOUNTS.VINST_FOREGAENDE_AR} (Vinst föregående år)`, credit: '1930 (Bank)' },
+            'uttag': { debit: withdrawal.label, credit: '1930 (Bank)' },
         }
 
         // If confirmed, create pending booking (user books via wizard)
@@ -245,8 +276,14 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
     },
     execute: async (params) => {
         const year = params.currentYear || new Date().getFullYear()
-        const ownershipPercent = params.ownershipPercent || 100
-        const companyProfit = params.companyProfit || 500000
+        if (!params.ownershipPercent) {
+            return { success: false, error: 'Ägarandel (%) måste anges för 3:12-optimering. Kontrollera aktieboken.' }
+        }
+        if (!params.companyProfit) {
+            return { success: false, error: 'Bolagets resultat före skatt måste anges för 3:12-optimering.' }
+        }
+        const ownershipPercent = params.ownershipPercent
+        const companyProfit = params.companyProfit
         const currentSalary = params.annualSalary || 0
 
         const taxRates = await taxService.getAllTaxRates(year)

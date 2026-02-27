@@ -91,16 +91,70 @@ export function formatSwedishDate(date: Date): string {
 }
 
 /**
- * Get current fiscal year (default calendar year for Swedish companies)
+ * Get fiscal year date range for a given reference date and fiscal year end (MM-DD).
+ * Supports broken fiscal years (e.g., "06-30" = July 1 to June 30).
+ *
+ * @param fiscalYearEnd - MM-DD format, e.g. "12-31" or "06-30"
+ * @param referenceDate - Date to determine which fiscal year we're in (defaults to now)
+ * @returns { start, end } as Date objects
+ *
+ * @example
+ * // Calendar year (fiscal year ends Dec 31)
+ * getFiscalYearRange('12-31', new Date('2025-03-15'))
+ * // → { start: 2025-01-01, end: 2025-12-31 }
+ *
+ * // Broken fiscal year (ends June 30)
+ * getFiscalYearRange('06-30', new Date('2025-03-15'))
+ * // → { start: 2024-07-01, end: 2025-06-30 }
+ *
+ * // After fiscal year end month
+ * getFiscalYearRange('06-30', new Date('2025-09-15'))
+ * // → { start: 2025-07-01, end: 2026-06-30 }
+ */
+export function getFiscalYearRange(
+  fiscalYearEnd: string = '12-31',
+  referenceDate: Date = new Date()
+): { start: Date; end: Date; startStr: string; endStr: string } {
+  const [endMonthStr, endDayStr] = fiscalYearEnd.split('-')
+  const endMonth = parseInt(endMonthStr) // 1-12
+  const endDay = parseInt(endDayStr)
+
+  const refYear = referenceDate.getFullYear()
+  const refMonth = referenceDate.getMonth() + 1 // 1-12
+
+  // Determine which fiscal year the reference date falls into
+  // If fiscal year ends in December (calendar year), it's straightforward
+  if (endMonth === 12) {
+    return {
+      start: new Date(refYear, 0, 1),
+      end: new Date(refYear, 11, endDay),
+      startStr: `${refYear}-01-01`,
+      endStr: `${refYear}-${endMonthStr}-${endDayStr}`,
+    }
+  }
+
+  // Broken fiscal year: FY ends in month X, starts in month X+1 of the previous calendar year
+  // If ref date is after FY end month → we're in the NEW fiscal year (starts this year)
+  // If ref date is on or before FY end month → we're in the OLD fiscal year (started last year)
+  const fyEndYear = refMonth > endMonth ? refYear + 1 : refYear
+  const fyStartYear = fyEndYear - 1
+  const startMonth = endMonth + 1 // Month after FY end
+
+  return {
+    start: new Date(fyStartYear, startMonth - 1, 1),
+    end: new Date(fyEndYear, endMonth - 1, endDay),
+    startStr: `${fyStartYear}-${String(startMonth).padStart(2, '0')}-01`,
+    endStr: `${fyEndYear}-${endMonthStr}-${endDayStr}`,
+  }
+}
+
+/**
+ * Get current fiscal year (default calendar year for Swedish companies).
+ * @deprecated Use getFiscalYearRange(fiscalYearEnd) instead for broken fiscal year support.
  */
 export function getCurrentFiscalYear(): { start: Date; end: Date } {
-  const now = new Date()
-  const year = now.getFullYear()
-  
-  return {
-    start: new Date(year, 0, 1),
-    end: new Date(year, 11, 31),
-  }
+  const { start, end } = getFiscalYearRange('12-31')
+  return { start, end }
 }
 
 /**

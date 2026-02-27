@@ -14,7 +14,7 @@ import {
     Vote,
     FileText,
     PiggyBank,
-    Captions,
+
     Scale,
     Gift,
     Send,
@@ -247,11 +247,6 @@ export const navSettings: NavItem[] = [
         url: "/dashboard/installningar",
         icon: Settings,
     },
-    {
-        title: "Företagsstatistik",
-        titleEnkel: "Statistik",
-        url: "/dashboard/foretagsstatistik",
-        icon: Captions,
-    },
+
 ]
 

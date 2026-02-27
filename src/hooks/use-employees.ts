@@ -1,5 +1,6 @@
 
-import { useState, useEffect, useCallback } from "react"
+import { useCallback } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { getSupabaseClient } from '@/lib/database/supabase'
 
 export interface Employee {
@@ -24,32 +25,33 @@ export interface NewEmployee {
     kommun?: string
 }
 
+export const employeeQueryKeys = {
+    all: ["employees"] as const,
+    list: () => [...employeeQueryKeys.all, "list"] as const,
+}
+
 export function useEmployees() {
-    const [employees, setEmployees] = useState<Employee[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [error, setError] = useState<any>(null)
+    const queryClient = useQueryClient()
 
-    const fetchEmployees = useCallback(async () => {
-        setIsLoading(true)
-        const supabase = getSupabaseClient()
-        try {
+    const {
+        data: employees = [],
+        isLoading,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: employeeQueryKeys.list(),
+        queryFn: async () => {
+            const supabase = getSupabaseClient()
             const { data, error } = await supabase.rpc('get_employee_balances')
-
             if (error) throw error
+            return (data || []) as Employee[]
+        },
+        staleTime: 5 * 60 * 1000,
+    })
 
-            setEmployees(data || [])
-        } catch (err) {
-            console.error("Failed to fetch employees:", err)
-            setError(err)
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
-
-    const addEmployee = useCallback(async (employee: NewEmployee): Promise<Employee | null> => {
-        const supabase = getSupabaseClient()
-        try {
+    const addMutation = useMutation({
+        mutationFn: async (employee: NewEmployee): Promise<Employee> => {
+            const supabase = getSupabaseClient()
             const { data, error } = await supabase
                 .from('employees')
                 .insert({
@@ -65,25 +67,26 @@ export function useEmployees() {
 
             if (error) throw error
 
-            // Refresh list after adding
-            await fetchEmployees()
-
             return {
                 ...data,
                 salary: data.monthly_salary,
                 balance: 0,
                 mileage: 0
             } as Employee
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: employeeQueryKeys.all })
+        },
+    })
+
+    const addEmployee = useCallback(async (employee: NewEmployee): Promise<Employee | null> => {
+        try {
+            return await addMutation.mutateAsync(employee)
         } catch (err) {
             console.error("Failed to add employee:", err)
-            setError(err)
             return null
         }
-    }, [fetchEmployees])
+    }, [addMutation])
 
-    useEffect(() => {
-        fetchEmployees()
-    }, [fetchEmployees])
-
-    return { employees, isLoading, error, refresh: fetchEmployees, addEmployee }
+    return { employees, isLoading, error, refresh: refetch, addEmployee }
 }

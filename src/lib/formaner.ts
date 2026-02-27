@@ -175,6 +175,31 @@ export async function getEmployeeBenefits(
 }
 
 /**
+ * Get the yearly limit for a benefit from system_parameters (e.g., benefit_limit_friskvard).
+ * Falls back to the static catalog maxAmount if no DB row exists.
+ */
+async function getBenefitLimit(benefitType: string, year: number): Promise<number | null> {
+    // Try system_parameters first (e.g., key = "benefit_limit_friskvard", year = 2026)
+    if (isSupabaseConfigured()) {
+        const supabase = getSupabaseClient()
+        const { data } = await supabase
+            .from('system_parameters')
+            .select('value')
+            .eq('key', `benefit_limit_${benefitType}`)
+            .eq('year', year)
+            .single()
+
+        if (data?.value != null) {
+            return Number(data.value)
+        }
+    }
+
+    // Fallback to static catalog
+    const benefit = await getBenefitDetails(benefitType)
+    return benefit?.maxAmount ?? null
+}
+
+/**
  * Get remaining allowance for a benefit (e.g., friskvård)
  */
 export async function getRemainingAllowance(
@@ -182,15 +207,15 @@ export async function getRemainingAllowance(
     benefitType: string,
     year: number
 ): Promise<number> {
-    const benefit = await getBenefitDetails(benefitType)
-    if (!benefit?.maxAmount) return Infinity // No limit
+    const limit = await getBenefitLimit(benefitType, year)
+    if (limit == null) return Infinity // No limit defined
 
     const used = await getEmployeeBenefits(employeeName, year)
     const usedAmount = used
         .filter(b => b.benefitType === benefitType)
         .reduce((sum, b) => sum + b.amount, 0)
 
-    return Math.max(0, benefit.maxAmount - usedAmount)
+    return Math.max(0, limit - usedAmount)
 }
 
 /**

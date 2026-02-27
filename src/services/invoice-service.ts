@@ -35,6 +35,42 @@ export type InvoiceStats = {
     paidAmount: number         // Sum of paid invoices
 }
 
+/** Map a database row to the CustomerInvoice UI model. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRowToCustomerInvoice(row: any): CustomerInvoice {
+    return {
+        id: row.id,
+        invoiceNumber: row.invoice_number || row.id,
+        customer: row.customer_name,
+        email: row.customer_email,
+        amount: Number(row.amount),
+        vatAmount: row.vat_amount ? Number(row.vat_amount) : undefined,
+        totalAmount: Number(row.total_amount),
+        issueDate: row.invoice_date,
+        dueDate: row.due_date,
+        status: row.status,
+    }
+}
+
+/** Map a database row to the SupplierInvoice UI model. */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function mapRowToSupplierInvoice(row: any): SupplierInvoice {
+    const amount = Number(row.amount) || 0
+    const vatAmount = row.vat_amount != null ? Number(row.vat_amount) : undefined
+    return {
+        id: row.id,
+        invoiceNumber: row.ocr || row.id,
+        supplierName: row.supplier_name,
+        amount,
+        vatAmount,
+        totalAmount: Number(row.total_amount) || amount,
+        invoiceDate: row.issue_date || row.created_at || new Date().toISOString(),
+        dueDate: row.due_date,
+        status: row.status as SupplierInvoice['status'],
+        currency: 'SEK',
+    }
+}
+
 export const invoiceService = {
     /**
      * Get customer invoices (kundfakturor) with optional filters
@@ -76,20 +112,7 @@ export const invoiceService = {
             return { invoices: [], totalCount: 0 }
         }
 
-        // Map snake_case DB columns to camelCase for UI
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const invoices: CustomerInvoice[] = (data || []).map((row: any) => ({
-            id: row.id,
-            invoiceNumber: row.invoice_number || row.id,
-            customer: row.customer_name,
-            email: row.customer_email,
-            amount: Number(row.amount),
-            vatAmount: row.vat_amount ? Number(row.vat_amount) : undefined,
-            totalAmount: Number(row.total_amount),
-            issueDate: row.invoice_date,
-            dueDate: row.due_date,
-            status: row.status
-        }))
+        const invoices: CustomerInvoice[] = (data || []).map(mapRowToCustomerInvoice)
 
         return { invoices, totalCount: count || 0 }
     },
@@ -134,21 +157,7 @@ export const invoiceService = {
             return { invoices: [], totalCount: 0 }
         }
 
-        // Map snake_case DB columns to camelCase for UI
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const invoices: SupplierInvoice[] = (data || []).map((row: any) => ({
-            id: row.id,
-            invoiceNumber: row.ocr || row.id, // using ocr as invoice number
-            supplierName: row.supplier_name,
-            amount: Number(row.amount),
-            vatAmount: 0, // Not currently in DB schema
-            totalAmount: Number(row.amount), // Assuming amount is total for now
-            invoiceDate: row.created_at || new Date().toISOString(),
-            dueDate: row.due_date,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            status: (row.status as any),
-            currency: 'SEK'
-        }))
+        const invoices: SupplierInvoice[] = (data || []).map(mapRowToSupplierInvoice)
 
         return { invoices, totalCount: count || 0 }
     },

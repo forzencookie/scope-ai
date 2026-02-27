@@ -352,45 +352,20 @@ export async function initiateBankConnection(
 }
 
 /**
- * Sync transactions from connected banks
+ * Sync transactions from connected banks.
+ * Currently a stub — bank integration is manual/CSV only at launch.
+ * When Tink/Open Banking is integrated, this will call the provider API.
  */
 export async function syncBankTransactions(
-    connectionId?: string,
-    days: number = 30
+    _connectionId?: string,
+    _days: number = 30
 ): Promise<{ synced: number; newTransactions: number; errors: string[] }> {
-    const connections = await getBankConnections()
-    const errors: string[] = []
-    let synced = 0
-    let newTransactions = 0
-
-    const toSync = connectionId
-        ? connections.filter(c => c.id === connectionId)
-        : connections.filter(c => c.status === 'connected')
-
-    for (const connection of toSync) {
-        // In production, would call bank API to fetch transactions
-        // For now, we just update the last_sync_at timestamp
-        const supabase = getSupabaseClient()
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { error } = await supabase
-            .from('bankconnections' as any)
-            .update({
-                last_sync_at: new Date().toISOString(),
-                status: 'connected',
-            } as never)
-            .eq('id', connection.id)
-
-        if (error) {
-            errors.push(`Kunde inte synka ${connection.bankName}: ${error.message}`)
-        } else {
-            synced++
-            // Would return actual new transaction count from bank API
-            newTransactions += Math.floor(Math.random() * 20) + 5
-        }
+    // No live bank API integration yet — return zero with clear indication
+    return {
+        synced: 0,
+        newTransactions: 0,
+        errors: ['Banksynk är inte aktiverad. Importera transaktioner via CSV eller lägg in manuellt.'],
     }
-
-    return { synced, newTransactions, errors }
 }
 
 // =============================================================================

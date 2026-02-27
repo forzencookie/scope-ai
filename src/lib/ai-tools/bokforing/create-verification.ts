@@ -1,6 +1,7 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
-import { pendingBookingService } from '@/services/pending-booking-service'
+import { verificationService } from '@/services/verification-service'
+import { isValidAccount } from '@/lib/bookkeeping/utils'
 
 interface VerificationRow {
     account: string
@@ -40,6 +41,17 @@ export const createVerificationTool: AITool = {
     execute: async (params: unknown, context: InteractionContext) => {
         const { description, date, rows } = params as { description: string, date?: string, rows: VerificationRow[] }
 
+        // Validate account numbers against BAS kontoplan
+        const invalidAccounts = rows
+            .map(r => r.account)
+            .filter(acc => !isValidAccount(acc))
+        if (invalidAccounts.length > 0) {
+            return {
+                success: false,
+                error: `Ogiltiga kontonummer: ${invalidAccounts.join(', ')}. Kontrollera att kontona finns i BAS-kontoplanen.`,
+            }
+        }
+
         // Validate balance
         const totalDebit = rows.reduce((sum, r) => sum + (r.debit || 0), 0)
         const totalCredit = rows.reduce((sum, r) => sum + (r.credit || 0), 0)
@@ -51,12 +63,12 @@ export const createVerificationTool: AITool = {
             }
         }
 
-        // If confirmed, create pending booking (user books via wizard)
+        // If confirmed in chat, create the verification directly (no double-confirm via pending)
         if (context?.isConfirmed) {
             try {
-                const pending = await pendingBookingService.createPendingBooking({
-                    sourceType: 'ai_entry',
-                    sourceId: `ai-${Date.now()}`,
+                const verification = await verificationService.createVerification({
+                    series: 'A',
+                    date: date || new Date().toISOString().split('T')[0],
                     description,
                     entries: rows.map(r => ({
                         account: r.account,
@@ -64,20 +76,21 @@ export const createVerificationTool: AITool = {
                         credit: r.credit || 0,
                         description: r.description || description,
                     })),
-                    series: 'A',
-                    date: date || new Date().toISOString().split('T')[0],
-                    metadata: { source: 'ai_chat' },
+                    sourceType: 'ai_entry',
                 })
 
                 return {
                     success: true,
-                    data: { pendingBookingId: pending.id },
-                    message: `Verifikation "${description}" har skapats som utkast. Gå till Verifikationer för att bokföra.`,
+                    data: {
+                        verificationId: verification.id,
+                        verificationNumber: `${verification.series}${verification.number}`,
+                    },
+                    message: `Verifikation ${verification.series}${verification.number} "${description}" har bokförts.`,
                 }
             } catch (error) {
                 return {
                     success: false,
-                    error: 'Kunde inte skapa bokning.',
+                    error: error instanceof Error ? error.message : 'Kunde inte skapa verifikation.',
                 }
             }
         }

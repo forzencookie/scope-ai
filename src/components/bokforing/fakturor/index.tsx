@@ -63,6 +63,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         handleMarkCustomerPaid,
         handleApproveSupplier,
         handleMarkSupplierPaid,
+        handleCreateCreditNote,
         handleInvoiceCreated
     } = useInvoicesLogic()
 
@@ -79,6 +80,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
             zipCode: company?.zipCode,
             city: company?.city,
             vatNumber: company?.vatNumber,
+            hasFskatt: company?.hasFskatt,
         }
 
         generateInvoicePDF({
@@ -113,6 +115,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
             onApproveSupplier={handleApproveSupplier}
             onMarkSupplierPaid={handleMarkSupplierPaid}
             onDownloadPDF={handleDownloadPDF}
+            onCreateCreditNote={handleCreateCreditNote}
         />
     )
 

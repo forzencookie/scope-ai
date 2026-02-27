@@ -11,6 +11,45 @@ import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import { getSupabaseAdmin } from '@/lib/database/supabase'
 import { isDemoTier, isPaidTier, type SubscriptionTier } from '@/lib/subscription'
 
+const ALLOWED_UPDATES = ['full_name', 'avatar_emoji'] as const
+
+export async function PATCH(request: NextRequest) {
+  try {
+    const auth = await verifyAuth(request)
+    if (!auth) {
+      return ApiResponse.unauthorized('Authentication required')
+    }
+
+    const body = await request.json()
+    const updates: Record<string, unknown> = {}
+
+    for (const key of ALLOWED_UPDATES) {
+      if (key in body) updates[key] = body[key]
+    }
+
+    if (Object.keys(updates).length === 0) {
+      return ApiResponse.badRequest('No valid fields to update')
+    }
+
+    const supabase = getSupabaseAdmin()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await (supabase as any)
+      .from('profiles')
+      .update(updates)
+      .eq('id', auth.userId)
+
+    if (error) {
+      console.error('[Profile API] Failed to update profile:', error)
+      return ApiResponse.serverError('Failed to update profile')
+    }
+
+    return Response.json({ success: true })
+  } catch (error) {
+    console.error('[Profile API] Unexpected error:', error)
+    return ApiResponse.serverError('Internal server error')
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
     // Authenticate user
@@ -21,9 +60,10 @@ export async function GET(request: NextRequest) {
 
     // Query profile from Supabase using admin client
     const supabase = getSupabaseAdmin()
-    const { data: profile, error } = await supabase
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data: profile, error } = await (supabase as any)
       .from('profiles')
-      .select('id, full_name, email, avatar_url, role, subscription_tier, created_at, updated_at')
+      .select('id, full_name, email, avatar_url, avatar_emoji, role, subscription_tier, created_at, updated_at')
       .eq('id', auth.userId)
       .single()
 

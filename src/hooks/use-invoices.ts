@@ -1,23 +1,31 @@
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect } from "react"
+import { useQuery } from "@tanstack/react-query"
 import { type Invoice } from "@/types"
 import { invoiceService } from '@/services/invoice-service'
-import { useAsync } from "./use-async"
+
+export const invoiceQueryKeys = {
+    all: ["invoices"] as const,
+    list: () => [...invoiceQueryKeys.all, "list"] as const,
+    paginated: (viewFilter: string, page: number, pageSize: number, startDate?: string) =>
+        [...invoiceQueryKeys.all, "paginated", viewFilter, page, pageSize, startDate] as const,
+}
 
 export function useInvoices() {
-    const [invoices, setInvoices] = useState<Invoice[]>([])
-    const [isLoading, setIsLoading] = useState(true)
-    const [error, setError] = useState<string | null>(null)
-
-    const fetchInvoices = useCallback(async () => {
-        try {
+    const {
+        data: invoices = [],
+        isLoading,
+        error,
+        refetch,
+    } = useQuery<Invoice[]>({
+        queryKey: invoiceQueryKeys.list(),
+        queryFn: async () => {
             const response = await fetch('/api/invoices')
             const data = await response.json()
 
             if (data.invoices && Array.isArray(data.invoices)) {
-                // Ensure proper typing
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const mapped: Invoice[] = data.invoices.map((inv: any) => ({
+                return data.invoices.map((inv: any) => ({
                     id: inv.id || inv.invoiceNumber,
                     customer: inv.customer,
                     email: inv.email,
@@ -26,30 +34,14 @@ export function useInvoices() {
                     amount: typeof inv.amount === 'string' ? parseFloat(inv.amount) : inv.amount,
                     vatAmount: typeof inv.vatAmount === 'string' ? parseFloat(inv.vatAmount) : inv.vatAmount,
                     status: inv.status,
-                }))
-                setInvoices(mapped)
-            } else {
-                setInvoices([])
+                })) as Invoice[]
             }
-        } catch (err) {
-            console.error(err)
-            setError('Failed to load invoices')
-        } finally {
-            setIsLoading(false)
-        }
-    }, [])
+            return []
+        },
+        staleTime: 5 * 60 * 1000,
+    })
 
-    useEffect(() => {
-        fetchInvoices()
-    }, [fetchInvoices])
-
-    // Listen for manual page refresh
-    useEffect(() => {
-        window.addEventListener("page-refresh", fetchInvoices)
-        return () => window.removeEventListener("page-refresh", fetchInvoices)
-    }, [fetchInvoices])
-
-    return { invoices, isLoading, error, refresh: fetchInvoices }
+    return { invoices, isLoading, error: error ? String(error) : null, refresh: refetch }
 }
 
 export function useInvoicesPaginated(
@@ -66,44 +58,49 @@ export function useInvoicesPaginated(
         setViewFilter(initialViewFilter)
     }, [initialViewFilter])
 
-    const {
-        data,
-        isLoading,
-        error,
-        refetch
-    } = useAsync(async () => {
-        const offset = (page - 1) * pageSize
-
-        const [customerResult, supplierResult] = await Promise.all([
-            (viewFilter === 'all' || viewFilter === 'kundfakturor')
-                ? invoiceService.getCustomerInvoices({ limit: pageSize, offset, startDate })
-                : Promise.resolve({ invoices: [], totalCount: 0 }),
-            (viewFilter === 'all' || viewFilter === 'leverantorsfakturor')
-                ? invoiceService.getSupplierInvoices({ limit: pageSize, offset, startDate })
-                : Promise.resolve({ invoices: [], totalCount: 0 })
-        ])
-
-        setTotalCount({
-            customer: customerResult.totalCount,
-            supplier: supplierResult.totalCount
-        })
-
-        return {
-            customerInvoices: customerResult.invoices,
-            supplierInvoices: supplierResult.invoices
-        }
-    }, { customerInvoices: [], supplierInvoices: [] }, [page, pageSize, viewFilter, startDate])
-
     // Reset page when filter changes
     useEffect(() => {
         setPage(1)
     }, [viewFilter, startDate])
 
-    return {
-        customerInvoices: data.customerInvoices,
-        supplierInvoices: data.supplierInvoices,
+    const {
+        data,
         isLoading,
         error,
+        refetch,
+    } = useQuery({
+        queryKey: invoiceQueryKeys.paginated(viewFilter, page, pageSize, startDate),
+        queryFn: async () => {
+            const offset = (page - 1) * pageSize
+
+            const [customerResult, supplierResult] = await Promise.all([
+                (viewFilter === 'all' || viewFilter === 'kundfakturor')
+                    ? invoiceService.getCustomerInvoices({ limit: pageSize, offset, startDate })
+                    : Promise.resolve({ invoices: [], totalCount: 0 }),
+                (viewFilter === 'all' || viewFilter === 'leverantorsfakturor')
+                    ? invoiceService.getSupplierInvoices({ limit: pageSize, offset, startDate })
+                    : Promise.resolve({ invoices: [], totalCount: 0 })
+            ])
+
+            setTotalCount({
+                customer: customerResult.totalCount,
+                supplier: supplierResult.totalCount
+            })
+
+            return {
+                customerInvoices: customerResult.invoices,
+                supplierInvoices: supplierResult.invoices
+            }
+        },
+        staleTime: 5 * 60 * 1000,
+        placeholderData: (previousData) => previousData,
+    })
+
+    return {
+        customerInvoices: data?.customerInvoices || [],
+        supplierInvoices: data?.supplierInvoices || [],
+        isLoading,
+        error: error ? String(error) : null,
         page,
         setPage,
         pageSize,
