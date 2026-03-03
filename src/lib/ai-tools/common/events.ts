@@ -42,6 +42,8 @@ export const getEventsTool = defineTool<GetEventsParams, Event[]>({
     description: 'Hämta händelser och aktivitetslogg. Kan filtreras på källa, kategori och datum.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['händelse', 'aktivitet', 'logg', 'historik'],
     parameters: {
         type: 'object',
         properties: {
@@ -115,6 +117,8 @@ export const createEventTool = defineTool<CreateEventParams, Event>({
     description: 'Skapa en ny händelse eller påminnelse i kalendern.',
     category: 'write',
     requiresConfirmation: false, // Low-risk action
+    domain: 'common',
+    keywords: ['skapa', 'händelse', 'påminnelse', 'kalender'],
     parameters: {
         type: 'object',
         properties: {
@@ -196,6 +200,8 @@ export const getUpcomingDeadlinesTool = defineTool<{ days?: number }, UpcomingDe
     description: 'Visa kommande deadlines för skatt, bokföring och bolagsärenden.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['deadline', 'förfallodag', 'datum', 'kommande'],
     parameters: {
         type: 'object',
         properties: {
@@ -292,6 +298,8 @@ export const getActivitySummaryTool = defineTool<{ period?: 'week' | 'month' | '
     description: 'Visa en sammanfattning av aktivitet för en period.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['sammanfattning', 'aktivitet', 'period', 'översikt'],
     parameters: {
         type: 'object',
         properties: {
@@ -356,6 +364,8 @@ export const exportToCalendarTool = defineTool<ExportToCalendarParams, { exporte
     description: 'Exportera deadlines och händelser till extern kalender.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'common',
+    keywords: ['exportera', 'kalender', 'google', 'outlook'],
     parameters: {
         type: 'object',
         properties: {
@@ -413,6 +423,8 @@ export const getWalkthroughHistoryTool = defineTool<GetWalkthroughHistoryParams,
     description: 'Hämta sparade walkthroughs (genomgångar). Kan sökas på titel.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['genomgång', 'walkthrough', 'historik', 'sparad'],
     parameters: {
         type: 'object',
         properties: {
@@ -457,6 +469,8 @@ export const showWalkthroughTool = defineTool<ShowWalkthroughParams, Record<stri
     description: 'Visa en sparad walkthrough (genomgång) genom att hämta den från händelsehistoriken.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['visa', 'genomgång', 'walkthrough'],
     parameters: {
         type: 'object',
         properties: {

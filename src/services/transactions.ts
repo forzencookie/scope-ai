@@ -24,7 +24,7 @@ type DbTransaction = Tables<"transactions">
 
 function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
   const isNegative = db.amount_value < 0
-  const formattedAmount = `${isNegative ? '-' : '+'}$${Math.abs(db.amount_value).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  const formattedAmount = `${isNegative ? '-' : '+'}${Math.abs(db.amount_value).toLocaleString('sv-SE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} kr`
 
   return {
     id: db.id,

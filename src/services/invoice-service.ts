@@ -89,8 +89,7 @@ export const invoiceService = {
         const supabase = getSupabaseClient()
 
         let query = supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('customerinvoices' as any)
+            .from('customerinvoices')
             .select('*', { count: 'exact' })
             .order('due_date', { ascending: true })
             .range(offset, offset + limit - 1)
@@ -134,8 +133,7 @@ export const invoiceService = {
         const supabase = getSupabaseClient()
 
         let query = supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('supplierinvoices' as any)
+            .from('supplierinvoices')
             .select('*', { count: 'exact' })
             .order('due_date', { ascending: true })
             .range(offset, offset + limit - 1)

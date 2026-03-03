@@ -25,6 +25,8 @@ export const getVerificationsTool = defineTool<GetVerificationsParams, Verificat
     description: 'Hämta verifikationer (bokföringsposter) från huvudboken. Kan filtreras på serie, datum och sökterm. Använd för att hitta specifika bokföringsposter eller förstå vad en viss post gäller.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['verifikation', 'verifikat', 'bokföring', 'lista'],
     parameters: {
         type: 'object',
         properties: {
@@ -85,6 +87,8 @@ export const getVerificationStatsTool = defineTool<Record<string, never>, {
     description: 'Hämta statistik om verifikationer - antal, senaste nummer, etc.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['verifikation', 'statistik', 'antal'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
@@ -135,6 +139,8 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
     description: 'Periodisera en kostnad över flera månader. Skapar automatiska bokföringsposter.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['periodisera', 'kostnad', 'fördela'],
     parameters: {
         type: 'object',
         properties: {
@@ -147,7 +153,7 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
         },
         required: ['description', 'totalAmount', 'startDate', 'months'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const monthlyAmount = Math.round(params.totalAmount / params.months)
         const sourceAccount = params.sourceAccount || '1790'
         const targetAccount = params.targetAccount || '6310'
@@ -167,6 +173,37 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
             })
         }
 
+        // If confirmed, create real verifications for each month
+        if (context?.isConfirmed) {
+            try {
+                const createdVerifications: string[] = []
+
+                for (const entry of entries) {
+                    const verification = await verificationService.createVerification({
+                        series: 'A',
+                        date: entry.date,
+                        description: `Periodisering: ${params.description} (${entry.period})`,
+                        entries: [
+                            { account: targetAccount, debit: entry.amount, credit: 0, description: params.description },
+                            { account: sourceAccount, debit: 0, credit: entry.amount, description: 'Förutbetald kostnad' },
+                        ],
+                        sourceType: 'periodization',
+                    })
+                    createdVerifications.push(`${verification.series}${verification.number}`)
+                }
+
+                return {
+                    success: true,
+                    data: { entries, totalAmount: params.totalAmount, monthlyAmount },
+                    message: `Periodisering klar: ${createdVerifications.length} verifikationer skapade (${createdVerifications.join(', ')}).`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte skapa periodiseringar.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Periodisera kostnad',
             description: params.description,
@@ -184,11 +221,7 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
 
         return {
             success: true,
-            data: {
-                entries,
-                totalAmount: params.totalAmount,
-                monthlyAmount,
-            },
+            data: { entries, totalAmount: params.totalAmount, monthlyAmount },
             message: `Periodisering förberedd: ${monthlyAmount.toLocaleString('sv-SE')} kr/månad i ${params.months} månader.`,
             confirmationRequired: confirmationRequest,
         }
@@ -216,6 +249,8 @@ export const reverseVerificationTool = defineTool<ReverseVerificationParams, Rev
     description: 'Återför/ångra en verifikation genom att skapa en motbokning.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['reversera', 'ångra', 'verifikation', 'korrigera'],
     parameters: {
         type: 'object',
         properties: {
@@ -225,19 +260,59 @@ export const reverseVerificationTool = defineTool<ReverseVerificationParams, Rev
         },
         required: ['verificationId'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const reversalDate = params.reversalDate || new Date().toISOString().split('T')[0]
-        const reversalId = `ver-${Date.now()}-rev`
 
-        // In production, fetch the original verification and swap debit/credit
-        const mockAmount = 5000 // Would be fetched
+        // Fetch the original verification
+        const original = await verificationService.getVerificationById(params.verificationId)
+        if (!original) {
+            return { success: false, error: `Verifikation ${params.verificationId} hittades inte.` }
+        }
 
+        const amount = original.totalDebit
+
+        // If confirmed, create real reversal verification
+        if (context?.isConfirmed) {
+            try {
+                // Swap debit/credit on all entries
+                const reversedEntries = original.entries.map(entry => ({
+                    account: entry.account,
+                    debit: entry.credit,
+                    credit: entry.debit,
+                    description: entry.description,
+                }))
+
+                const reversal = await verificationService.createVerification({
+                    series: original.series,
+                    date: reversalDate,
+                    description: `Återföring: ${original.description} (${params.reason || 'Rättelse'})`,
+                    entries: reversedEntries,
+                    sourceType: 'reversal',
+                    sourceId: params.verificationId,
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        originalId: params.verificationId,
+                        reversalId: reversal.id,
+                        amount,
+                    },
+                    message: `Återföring skapad: ${reversal.series}${reversal.number} (${amount.toLocaleString('sv-SE')} kr).`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte skapa återföring.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Återför verifikation',
-            description: `Skapa motbokning för verifikation ${params.verificationId}`,
+            description: `Skapa motbokning för ${original.series}${original.number}: ${original.description}`,
             summary: [
-                { label: 'Original', value: params.verificationId },
-                { label: 'Återföringsverifikation', value: reversalId },
+                { label: 'Original', value: `${original.series}${original.number}` },
+                { label: 'Belopp', value: `${amount.toLocaleString('sv-SE')} kr` },
                 { label: 'Datum', value: reversalDate },
                 { label: 'Anledning', value: params.reason || 'Rättelse' },
             ],
@@ -249,10 +324,10 @@ export const reverseVerificationTool = defineTool<ReverseVerificationParams, Rev
             success: true,
             data: {
                 originalId: params.verificationId,
-                reversalId,
-                amount: mockAmount,
+                reversalId: 'pending',
+                amount,
             },
-            message: `Återföring av verifikation ${params.verificationId} förberedd.`,
+            message: `Återföring av ${original.series}${original.number} förberedd (${amount.toLocaleString('sv-SE')} kr).`,
             confirmationRequired: confirmationRequest,
         }
     },
@@ -282,6 +357,8 @@ export const createAccrualTool = defineTool<CreateAccrualParams, AccrualResult>(
     description: 'Skapa periodavgränsningspost (upplupen kostnad/intäkt, förutbetald kostnad/intäkt).',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['upplupen', 'periodisering', 'accrual'],
     parameters: {
         type: 'object',
         properties: {
@@ -297,32 +374,104 @@ export const createAccrualTool = defineTool<CreateAccrualParams, AccrualResult>(
         },
         required: ['type', 'description', 'amount'],
     },
-    execute: async (params) => {
-        const accrualAccounts = {
+    execute: async (params, context) => {
+        const accrualAccounts: Record<string, string> = {
             'upplupen_kostnad': '2990',
             'upplupen_intakt': '1790',
             'forutbetald_kostnad': '1790',
             'forutbetald_intakt': '2990',
         }
 
-        const typeLabels = {
+        // Cost/revenue contra accounts
+        const contraAccounts: Record<string, string> = {
+            'upplupen_kostnad': '6999',   // Diverse kostnader
+            'upplupen_intakt': '3999',    // Övriga intäkter
+            'forutbetald_kostnad': '6310', // Diverse kostnader
+            'forutbetald_intakt': '3999',  // Övriga intäkter
+        }
+
+        const typeLabels: Record<string, string> = {
             'upplupen_kostnad': 'Upplupen kostnad',
             'upplupen_intakt': 'Upplupen intäkt',
             'forutbetald_kostnad': 'Förutbetald kostnad',
             'forutbetald_intakt': 'Förutbetald intäkt',
         }
 
-        const account = params.account || accrualAccounts[params.type]
+        const balanceAccount = accrualAccounts[params.type] || '2990'
+        const costRevenueAccount = params.account || contraAccounts[params.type] || '6999'
         const date = params.date || new Date().toISOString().split('T')[0]
+        const label = typeLabels[params.type] || params.type
 
+        // If confirmed, create accrual verification + next-month reversal
+        if (context?.isConfirmed) {
+            try {
+                // Determine debit/credit based on type
+                const isKostnad = params.type === 'upplupen_kostnad' || params.type === 'forutbetald_kostnad'
+                const accrualEntries = isKostnad
+                    ? [
+                        { account: costRevenueAccount, debit: params.amount, credit: 0, description: label },
+                        { account: balanceAccount, debit: 0, credit: params.amount, description: label },
+                    ]
+                    : [
+                        { account: balanceAccount, debit: params.amount, credit: 0, description: label },
+                        { account: costRevenueAccount, debit: 0, credit: params.amount, description: label },
+                    ]
+
+                const verification = await verificationService.createVerification({
+                    series: 'A',
+                    date,
+                    description: `${label}: ${params.description}`,
+                    entries: accrualEntries,
+                    sourceType: 'accrual',
+                })
+
+                // Create reversal on the first day of the next month
+                const nextMonth = new Date(date)
+                nextMonth.setMonth(nextMonth.getMonth() + 1, 1)
+                const reversalDate = nextMonth.toISOString().split('T')[0]
+
+                const reversalEntries = accrualEntries.map(e => ({
+                    account: e.account,
+                    debit: e.credit,
+                    credit: e.debit,
+                    description: `Återföring: ${e.description}`,
+                }))
+
+                const reversal = await verificationService.createVerification({
+                    series: 'A',
+                    date: reversalDate,
+                    description: `Återföring ${label}: ${params.description}`,
+                    entries: reversalEntries,
+                    sourceType: 'accrual_reversal',
+                    sourceId: verification.id,
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        id: verification.id,
+                        type: params.type,
+                        amount: params.amount,
+                        verificationId: verification.id,
+                    },
+                    message: `${label} bokförd (${verification.series}${verification.number}) med automatisk återföring (${reversal.series}${reversal.number}).`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte skapa periodavgränsning.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
-            title: typeLabels[params.type],
+            title: label,
             description: params.description,
             summary: [
-                { label: 'Typ', value: typeLabels[params.type] },
+                { label: 'Typ', value: label },
                 { label: 'Beskrivning', value: params.description },
                 { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
-                { label: 'Konto', value: account },
+                { label: 'Balanskonto', value: balanceAccount },
+                { label: 'Resultat-/intäktskonto', value: costRevenueAccount },
                 { label: 'Datum', value: date },
             ],
             action: { toolName: 'create_accrual', params },
@@ -332,12 +481,12 @@ export const createAccrualTool = defineTool<CreateAccrualParams, AccrualResult>(
         return {
             success: true,
             data: {
-                id: `acc-${Date.now()}`,
+                id: 'pending',
                 type: params.type,
                 amount: params.amount,
-                verificationId: `ver-${Date.now()}`,
+                verificationId: 'pending',
             },
-            message: `${typeLabels[params.type]} på ${params.amount.toLocaleString('sv-SE')} kr förberedd.`,
+            message: `${label} på ${params.amount.toLocaleString('sv-SE')} kr förberedd.`,
             confirmationRequired: confirmationRequest,
         }
     },

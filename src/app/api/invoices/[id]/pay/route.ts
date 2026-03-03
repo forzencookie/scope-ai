@@ -66,6 +66,9 @@ export async function POST(
             },
         });
 
+        // Update invoice status to Betald
+        await userDb.customerInvoices.update(id, { status: 'Betald' });
+
         return NextResponse.json({ success: true, pendingBookingId: pending.id });
 
     } catch (error: unknown) {

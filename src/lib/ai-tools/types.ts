@@ -42,6 +42,9 @@ export interface InteractionContext {
  * Defines a single tool that the AI can invoke.
  * Maps to OpenAI function calling format.
  */
+/** Tool domain — maps to folder structure */
+export type AIToolDomain = 'bokforing' | 'loner' | 'skatt' | 'parter' | 'common' | 'planning'
+
 export interface AITool<TParams = unknown, TResult = unknown> {
     /** Unique identifier for the tool */
     name: string
@@ -52,18 +55,27 @@ export interface AITool<TParams = unknown, TResult = unknown> {
     /** JSON Schema for parameters */
     parameters: FunctionParameters
 
-    /** 
+    /**
      * Whether this tool requires user confirmation before execution.
      * Used for destructive/legally-binding actions.
      */
     requiresConfirmation: boolean
 
-    /** 
-     * Category for organizing tools 
+    /**
+     * Category for organizing tools
      */
     category: 'read' | 'write' | 'navigation'
 
-    /** 
+    /** Domain this tool belongs to (for search/discovery) */
+    domain?: AIToolDomain
+
+    /** Swedish/English keywords for search matching */
+    keywords?: string[]
+
+    /** If true, this tool is always loaded (not discovered via search) */
+    coreTool?: boolean
+
+    /**
      * Execute the tool with the given parameters.
      * Returns a structured result.
      */

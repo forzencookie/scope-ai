@@ -201,6 +201,16 @@ export function getAccountClass(accountNumber: string): {
 }
 
 /**
+ * Check if an account is a cash/bank account (1900-1959).
+ * BAS: 1900-1909 = kassa, 1910-1959 = bank.
+ * 1960-1999 are other current assets (not cash).
+ */
+export function isCashAccount(accountNumber: string): boolean {
+  const num = parseInt(accountNumber.substring(0, 4))
+  return num >= 1900 && num <= 1959
+}
+
+/**
  * Check if an account is a balance sheet account (1xxx, 2xxx)
  */
 export function isBalanceSheetAccount(accountNumber: string): boolean {

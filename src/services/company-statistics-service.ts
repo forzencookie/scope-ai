@@ -121,8 +121,7 @@ export const companyStatisticsService = {
         // Calculate transaction metrics
         let pendingCount = 0
         let uncategorizedCount = 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const transactions = (transactionStats.data || []) as any[]
+        const transactions = transactionStats.data || []
         for (const t of transactions) {
             if (t.status === 'pending') pendingCount++
             if (t.status === 'pending' || t.status === 'needs_review') uncategorizedCount++
@@ -133,8 +132,7 @@ export const companyStatisticsService = {
         let invoicesOutstanding = 0
         let overdueCount = 0
         const today = new Date().toISOString().split('T')[0]
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const invoices = (invoiceStats.data || []) as any[]
+        const invoices = invoiceStats.data || []
         for (const inv of invoices) {
             invoicesTotal += inv.total_amount || 0
             if (inv.status !== 'paid') {
@@ -147,8 +145,7 @@ export const companyStatisticsService = {
 
         // Calculate receipt metrics
         let unmatchedReceipts = 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const receipts = (receiptStats.data || []) as any[]
+        const receipts = receiptStats.data || []
         for (const r of receipts) {
             if (r.status === 'pending' || r.status === 'processing') {
                 unmatchedReceipts++
@@ -157,16 +154,14 @@ export const companyStatisticsService = {
 
         // Calculate payroll cost
         let totalPayroll = 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const employees = (employeeStats.data || []) as any[]
+        const employees = employeeStats.data || []
         for (const emp of employees) {
             totalPayroll += (emp.monthly_salary || 0) * 12 // Annual cost
         }
 
         // Calculate asset value (Swedish column names: inkopspris, bokfort_varde)
         let assetValue = 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const assets = (assetStats.data || []) as any[]
+        const assets = assetStats.data || []
         for (const a of assets) {
             assetValue += a.bokfort_varde || a.inkopspris || 0
         }
@@ -175,8 +170,7 @@ export const companyStatisticsService = {
         let revenue = 0
         let expenses = 0
         let cashBalance = 0
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const balances = (accountBalances.data || []) as any[]
+        const balances = accountBalances.data || []
         for (const b of balances) {
             const accNum = b.account_number
             const balance = b.balance || 0

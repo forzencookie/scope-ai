@@ -36,8 +36,8 @@ export const benefitService = {
      */
     async getStats(year: number): Promise<BenefitStats> {
         const supabase = getSupabaseClient()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase.rpc('get_benefit_stats', { target_year: year }) as { data: any, error: any }
+        const { data: rawData, error } = await supabase.rpc('get_benefit_stats', { target_year: year })
+        const data = rawData as Record<string, unknown> | null
 
         if (error) {
             console.error('Failed to fetch benefit stats:', error)
@@ -51,13 +51,14 @@ export const benefitService = {
             }
         }
 
+        const d = data ?? {}
         return {
-            totalCost: Number(data.totalValue || data.totalCost || 0),
-            employeesWithBenefits: Number(data.employeesWithBenefits || 0),
-            totalEmployees: Number(data.totalEmployees || 0),
-            unusedPotential: Number(data.unusedPotential || 0),
-            totalBenefits: Number(data.totalBenefits || 0),
-            activeBenefits: Number(data.activeBenefits || 0),
+            totalCost: Number(d.totalValue || d.totalCost || 0),
+            employeesWithBenefits: Number(d.employeesWithBenefits || 0),
+            totalEmployees: Number(d.totalEmployees || 0),
+            unusedPotential: Number(d.unusedPotential || 0),
+            totalBenefits: Number(d.totalBenefits || 0),
+            activeBenefits: Number(d.activeBenefits || 0),
         }
     },
 
@@ -67,8 +68,7 @@ export const benefitService = {
     async getBenefits(): Promise<Benefit[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('benefits' as any)
+            .from('benefits')
             .select('*')
             .order('category')
 
@@ -77,16 +77,15 @@ export const benefitService = {
             return []
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (data || []).map((b: any) => ({
+        return (data || []).map((b): Benefit => ({
             id: b.id,
             name: b.name,
-            description: b.description,
-            category: b.category || 'other',
-            valuePerMonth: Number(b.value_per_month) || 0,
-            isTaxable: b.is_taxable || false,
-            taxValue: Number(b.tax_value) || 0,
-            provider: b.provider,
+            description: b.description ?? undefined,
+            category: (b.type || 'other') as Benefit['category'],
+            valuePerMonth: Number(b.cost_to_company) || 0,
+            isTaxable: (b.taxable_amount || 0) > 0,
+            taxValue: Number(b.taxable_value) || 0,
+            provider: undefined,
             isActive: b.is_active !== false,
         }))
     },

@@ -275,6 +275,9 @@ export const navigateToTool = defineTool<NavigateToParams, { route: string }>({
     description: `Navigera användaren till en sida i dashboarden. Stödjer naturligt språk som "visa mina kvitton", "gå till löner", "öppna momsdeklarationen". Tillgängliga sidor: ${routeDescriptions}`,
     category: 'navigation',
     requiresConfirmation: false,
+    coreTool: true,
+    domain: 'common',
+    keywords: ['navigera', 'gå till', 'öppna', 'visa', 'sida'],
     parameters: {
         type: 'object',
         properties: {
@@ -349,6 +352,8 @@ export const showPreviewTool = defineTool<ShowPreviewParams, { previewType: stri
     description: 'Visa en förhandsgranskning av data direkt i chatten utan att navigera bort. Använd när användaren vill se en snabböversikt.',
     category: 'navigation',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['förhandsgranska', 'översikt', 'preview', 'visa'],
     parameters: {
         type: 'object',
         properties: {
@@ -409,6 +414,8 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
     description: 'Hämta kommande deadlines för moms, AGI och andra deklarationer. Använd när användaren frågar om kommande förfallodagar eller vad som behöver göras härnäst.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['deadline', 'förfallodag', 'kommande', 'datum', 'kalender'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         // TODO: Fetch real deadlines from taxcalendar table

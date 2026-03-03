@@ -109,11 +109,10 @@ export const inventarieService = {
     async addInventarie(inventarie: Omit<Inventarie, 'id'>) {
         const supabase = getSupabaseClient()
 
-        const id = `inv-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+        const id = crypto.randomUUID()
 
         const { data, error } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('inventarier' as any)
+            .from('inventarier')
             .insert({
                 id,
                 namn: inventarie.namn,
@@ -121,8 +120,25 @@ export const inventarieService = {
                 inkopsdatum: inventarie.inkopsdatum,
                 inkopspris: inventarie.inkopspris,
                 livslangd_ar: inventarie.livslangdAr,
-                anteckningar: inventarie.anteckningar
-            })
+                anteckningar: inventarie.anteckningar,
+            } as never)
+            .select()
+            .single()
+
+        if (error) throw error
+        return data
+    },
+
+    /**
+     * Update the status of an inventarie (e.g. aktiv → såld)
+     */
+    async updateStatus(id: string, status: 'aktiv' | 'såld' | 'avskriven') {
+        const supabase = getSupabaseClient()
+
+        const { data, error } = await supabase
+            .from('inventarier')
+            .update({ status } as never)
+            .eq('id', id)
             .select()
             .single()
 
@@ -137,8 +153,7 @@ export const inventarieService = {
         const supabase = getSupabaseClient()
 
         const { error } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('inventarier' as any)
+            .from('inventarier')
             .delete()
             .eq('id', id)
 

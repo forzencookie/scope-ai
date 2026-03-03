@@ -4,7 +4,7 @@
  * Security: Uses user-scoped DB access with RLS enforcement
  */
 
-import { NextResponse } from "next/server"
+import { NextRequest, NextResponse } from "next/server"
 import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 
 // Helper to format transaction for frontend
@@ -29,19 +29,25 @@ function formatTransaction(tx: Record<string, unknown>) {
     }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
     try {
         const userDb = await createUserScopedDb();
-        
+
         if (!userDb) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const transactions = await userDb.transactions.list({ limit: 200 });
+        const { searchParams } = new URL(request.url);
+        const limit = parseInt(searchParams.get('limit') || '200', 10);
+        const startDate = searchParams.get('startDate') || undefined;
+        const endDate = searchParams.get('endDate') || undefined;
+        const status = searchParams.get('status') || undefined;
+
+        const transactions = await userDb.transactions.list({ limit, startDate, endDate, status });
 
         return NextResponse.json({
             success: true,
-            data: transactions.map(formatTransaction),
+            transactions: transactions.map(formatTransaction),
             userId: userDb.userId,
             companyId: userDb.companyId,
             timestamp: new Date()
@@ -49,5 +55,30 @@ export async function GET() {
     } catch (error) {
         console.error('Transactions API error:', error)
         return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 })
+    }
+}
+
+export async function POST(request: NextRequest) {
+    try {
+        const userDb = await createUserScopedDb();
+
+        if (!userDb) {
+            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+        }
+
+        const body = await request.json();
+        const transaction = await userDb.transactions.create(body);
+
+        if (!transaction) {
+            return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
+        }
+
+        return NextResponse.json({
+            success: true,
+            transaction: formatTransaction(transaction as Record<string, unknown>),
+        });
+    } catch (error) {
+        console.error('Transactions POST error:', error);
+        return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
     }
 }

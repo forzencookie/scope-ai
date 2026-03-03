@@ -2,7 +2,7 @@ import { getSupabaseClient } from '@/lib/database/supabase'
 import { verificationService, type VerificationEntry } from './verification-service'
 import { logAuditEntry } from '@/lib/audit'
 
-// pending_bookings table is not yet in generated Supabase types (migration pending)
+// pending_bookings generated types don't match PendingBookingRow — needs migration to align columns
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function db() { return getSupabaseClient() as any }
 
@@ -16,6 +16,7 @@ export type PendingBookingSourceType =
   | 'supplier_invoice'
   | 'invoice_payment'
   | 'transaction'
+  | 'receipt'
   | 'dividend_decision'
   | 'dividend_payment'
   | 'owner_withdrawal'

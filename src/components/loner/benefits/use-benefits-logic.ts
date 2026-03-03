@@ -1,10 +1,14 @@
 "use client"
 
 import { useState, useEffect, useMemo, useCallback } from "react"
-import { listAvailableBenefits, assignBenefit, suggestUnusedBenefits } from "@/lib/formaner"
+import { listAvailableBenefits, assignBenefit, suggestUnusedBenefits, getAllAssignedBenefits, deleteAssignedBenefit } from "@/lib/formaner"
 import type { FormanCatalogItem, EmployeeBenefit } from "@/lib/ai/tool-types"
+import { useCompany } from "@/providers/company-provider"
+import { useToast } from "@/components/ui/toast"
 
 export function useBenefitsLogic() {
+    const { company } = useCompany()
+    const toast = useToast()
     const [benefits, setBenefits] = useState<FormanCatalogItem[]>([])
     const [assignedBenefits, setAssignedBenefits] = useState<EmployeeBenefit[]>([])
     const [suggestions, setSuggestions] = useState<FormanCatalogItem[]>([])
@@ -30,10 +34,12 @@ export function useBenefitsLogic() {
             setError(null)
 
             try {
-                const [allBenefits, unusedSuggestions, empRes] = await Promise.all([
-                    listAvailableBenefits('AB'),
-                    suggestUnusedBenefits('Demo Anställd', currentYear, 'AB'),
-                    fetch('/api/employees')
+                const companyType = (company?.companyType || 'ab').toUpperCase() as 'AB' | 'EF' | 'EnskildFirma'
+                const [allBenefits, unusedSuggestions, empRes, assigned] = await Promise.all([
+                    listAvailableBenefits(companyType),
+                    suggestUnusedBenefits('Demo Anställd', currentYear, companyType),
+                    fetch('/api/employees'),
+                    getAllAssignedBenefits(currentYear),
                 ])
 
                 const empData = await empRes.json()
@@ -43,6 +49,7 @@ export function useBenefitsLogic() {
                     setBenefits(allBenefits)
                     setSuggestions(unusedSuggestions)
                     setEmployeeCount(realCount)
+                    setAssignedBenefits(assigned)
                 }
             } catch (err) {
                 if (isMounted) {
@@ -132,6 +139,16 @@ export function useBenefitsLogic() {
         }
     }
 
+    const handleDeleteBenefit = useCallback(async (id: string) => {
+        const deleted = await deleteAssignedBenefit(id)
+        if (deleted) {
+            setAssignedBenefits(prev => prev.filter(b => b.id !== id))
+            toast.success("Förmån borttagen")
+        } else {
+            toast.error("Kunde inte ta bort förmånen")
+        }
+    }, [toast])
+
     return {
         // State
         isLoading,
@@ -150,6 +167,7 @@ export function useBenefitsLogic() {
         setIsDetailsOpen,
         handleRowClick,
         handleAssign,
+        handleDeleteBenefit,
         handleRetry
     }
 }

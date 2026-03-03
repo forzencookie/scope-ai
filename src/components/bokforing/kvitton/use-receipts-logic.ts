@@ -54,10 +54,20 @@ export function useReceiptsLogic() {
         deleteConfirmation.requestDelete(id)
     }, [deleteConfirmation])
 
-    const handleConfirmDelete = useCallback(() => {
+    const handleConfirmDelete = useCallback(async () => {
         const id = deleteConfirmation.confirmDelete()
         if (id) {
             const receipt = receipts.find(r => r.id === id)
+            try {
+                const res = await fetch(`/api/receipts/${id}`, { method: 'DELETE' })
+                if (!res.ok) {
+                    toast.error("Kunde inte radera", "Försök igen senare")
+                    return
+                }
+            } catch {
+                toast.error("Kunde inte radera", "Nätverksfel")
+                return
+            }
             fetchReceipts()
             toast.success("Underlag raderat", `${receipt?.supplier || 'Underlaget'} har raderats`)
         }

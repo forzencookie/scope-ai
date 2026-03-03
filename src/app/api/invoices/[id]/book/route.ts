@@ -68,11 +68,17 @@ export async function POST(
         const description = invoiceNumber ? `${customerName} (Faktura ${invoiceNumber})` : customerName;
 
         // Parse line items to determine entry creation method
-        const items = invoice.items as InvoiceLineItem[] | null;
+        // Items may be stored as { lines: [...], bankgiro, ... } or as a plain array
+        const rawItems = invoice.items as InvoiceLineItem[] | { lines?: InvoiceLineItem[] } | null;
+        const items: InvoiceLineItem[] | null = rawItems
+            ? Array.isArray(rawItems) ? rawItems
+            : Array.isArray((rawItems as { lines?: InvoiceLineItem[] }).lines) ? (rawItems as { lines: InvoiceLineItem[] }).lines
+            : null
+            : null;
 
         let journalEntry;
 
-        if (items && Array.isArray(items) && items.length > 0) {
+        if (items && items.length > 0) {
             // Multi-VAT-rate: use line-item-aware entry creator
             journalEntry = createMultiVatSalesEntry({
                 date,

@@ -3,6 +3,7 @@ import { useQuery } from "@tanstack/react-query"
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { normalizeBalances } from './use-normalized-balances'
 import { useCompany } from '@/providers/company-provider'
+import { getAccountClass, isCashAccount } from '@/lib/bookkeeping/utils'
 import { Shield, Droplets, Scale, Percent, Users, Building2, Package, CreditCard, Plane, MoreHorizontal } from "lucide-react"
 
 export const companyStatisticsQueryKeys = {
@@ -27,6 +28,7 @@ export function useCompanyStatistics() {
     const {
         data: rpcData,
         isLoading,
+        error,
     } = useQuery({
         queryKey: companyStatisticsQueryKeys.dashboard(),
         queryFn: async (): Promise<DashboardRpcData> => {
@@ -110,27 +112,26 @@ export function useCompanyStatistics() {
         const revenue = totals.revenue || 0
         const netIncome = totals.netIncome || 0
 
-        // Check which account classes have data
-        const hasAssets = accountBalances.some(a => String(a.account).startsWith('1') && a.balance !== 0)
+        // Check which account classes have data (using getAccountClass for consistency)
+        const hasAssets = accountBalances.some(a => getAccountClass(String(a.account)).class === 1 && a.balance !== 0)
         const hasEquity = accountBalances.some(a => String(a.account).startsWith('20') && a.balance !== 0)
-        const hasLiabilities = accountBalances.some(a =>
-            String(a.account).startsWith('2') &&
-            !String(a.account).startsWith('20') &&
-            a.balance !== 0
-        )
-        const hasCash = accountBalances.some(a => String(a.account).startsWith('19') && a.balance !== 0)
+        const hasLiabilities = accountBalances.some(a => {
+            const cls = getAccountClass(String(a.account))
+            return cls.class === 2 && !String(a.account).startsWith('20') && a.balance !== 0
+        })
+        const hasCash = accountBalances.some(a => isCashAccount(String(a.account)) && a.balance !== 0)
         const hasReceivables = accountBalances.some(a => String(a.account).startsWith('15') && a.balance !== 0)
-        const hasRevenue = accountBalances.some(a => String(a.account).startsWith('3') && a.balance !== 0)
-        const hasExpenses = accountBalances.some(a =>
-            ['4', '5', '6', '7', '8'].some(prefix => String(a.account).startsWith(prefix)) &&
-            a.balance !== 0
-        )
+        const hasRevenue = accountBalances.some(a => getAccountClass(String(a.account)).class === 3 && a.balance !== 0)
+        const hasExpenses = accountBalances.some(a => {
+            const cls = getAccountClass(String(a.account)).class
+            return cls >= 4 && cls <= 8 && a.balance !== 0
+        })
 
         // Calculate values only if we have required data
         const canCalcSolidity = hasAssets && hasEquity
         const solidity = canCalcSolidity && assets > 0 ? (equity / assets) * 100 : null
 
-        const cashAccounts = accountBalances.filter(a => String(a.account).startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
+        const cashAccounts = accountBalances.filter(a => isCashAccount(String(a.account))).reduce((sum, a) => sum + a.balance, 0)
         const receivableAccounts = accountBalances.filter(a => String(a.account).startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
         const currentAssets = cashAccounts + receivableAccounts
         const currentLiabilities = accountBalances
@@ -162,7 +163,7 @@ export function useCompanyStatistics() {
                 .filter(a => { const n = parseInt(String(a.account).substring(0, 2)); return n >= 24 && n <= 29 })
                 .reduce((sum, a) => sum + Math.abs(a.balance), 0)
             if (prevCurrentLiab === 0) return null
-            const prevCash = prevYearBalances.filter(a => String(a.account).startsWith('19')).reduce((sum, a) => sum + a.balance, 0)
+            const prevCash = prevYearBalances.filter(a => isCashAccount(String(a.account))).reduce((sum, a) => sum + a.balance, 0)
             const prevRecv = prevYearBalances.filter(a => String(a.account).startsWith('15')).reduce((sum, a) => sum + a.balance, 0)
             return ((prevCash + prevRecv) / prevCurrentLiab) * 100
         })()
@@ -268,7 +269,7 @@ export function useCompanyStatistics() {
 
         accountBalances.forEach(acc => {
             const accNum = String(acc.account || '')
-            const classNum = parseInt(accNum.charAt(0))
+            const { class: classNum } = getAccountClass(accNum)
             if (classNum >= 4 && classNum <= 8) {
                 const group = categoryNames[classNum] || 'Övrigt'
                 const current = categories.get(group) || 0
@@ -293,6 +294,7 @@ export function useCompanyStatistics() {
 
     return {
         isLoading,
+        error,
         companyType,
         financialHealth,
         transactionStats,

@@ -22,7 +22,7 @@ export interface UserScopedDb {
 
     // Data accessors - all automatically filtered by RLS
     transactions: {
-        list: (options?: { limit?: number }) => Promise<Tables['transactions']['Row'][]>
+        list: (options?: { limit?: number; startDate?: string; endDate?: string; status?: string }) => Promise<Tables['transactions']['Row'][]>
         getById: (id: string) => Promise<Tables['transactions']['Row'] | null>
         create: (data: Tables['transactions']['Insert']) => Promise<Tables['transactions']['Row'] | null>
         update: (id: string, data: Tables['transactions']['Update']) => Promise<Tables['transactions']['Row'] | null>
@@ -59,6 +59,7 @@ export interface UserScopedDb {
 
     verificationLines: {
         listByVerification: (verificationId: string) => Promise<Tables['verification_lines']['Row'][]>
+        listByVerificationIds: (ids: string[]) => Promise<Tables['verification_lines']['Row'][]>
         create: (data: Tables['verification_lines']['Insert']) => Promise<Tables['verification_lines']['Row'] | null>
         createMany: (lines: Tables['verification_lines']['Insert'][]) => Promise<Tables['verification_lines']['Row'][]>
         listByAccount: (accountNumber: number, options?: { startDate?: string; endDate?: string }) => Promise<Tables['verification_lines']['Row'][]>
@@ -82,6 +83,8 @@ export interface UserScopedDb {
         list: (options?: { limit?: number }) => Promise<Tables['payslips']['Row'][]>
         getById: (id: string) => Promise<Tables['payslips']['Row'] | null>
         create: (data: Tables['payslips']['Insert']) => Promise<Tables['payslips']['Row'] | null>
+        update: (id: string, data: Tables['payslips']['Update']) => Promise<Tables['payslips']['Row'] | null>
+        delete: (id: string) => Promise<boolean>
     }
 
     conversations: {
@@ -138,12 +141,15 @@ export interface UserScopedDb {
 
 function createTransactionsAccessor(supabase: SupabaseClient<Database>, userId: string, companyId: string | null) {
     return {
-        list: async (options?: { limit?: number }) => {
-            const query = supabase
+        list: async (options?: { limit?: number; startDate?: string; endDate?: string; status?: string }) => {
+            let query = supabase
                 .from('transactions')
                 .select('*')
                 .order('date', { ascending: false })
-            if (options?.limit) query.limit(options.limit)
+            if (options?.limit) query = query.limit(options.limit)
+            if (options?.startDate) query = query.gte('date', options.startDate)
+            if (options?.endDate) query = query.lte('date', options.endDate)
+            if (options?.status) query = query.eq('status', options.status)
             const { data, error } = await query
             if (error) console.error('[UserScopedDb] transactions.list error:', error)
             return data || []
@@ -303,6 +309,16 @@ function createVerificationLinesAccessor(supabase: SupabaseClient<Database>, use
             if (error) console.error('[UserScopedDb] verificationLines.listByVerification error:', error)
             return data || []
         },
+        listByVerificationIds: async (ids: string[]) => {
+            if (ids.length === 0) return []
+            const { data, error } = await supabase
+                .from('verification_lines')
+                .select('*')
+                .in('verification_id', ids)
+                .order('created_at', { ascending: true })
+            if (error) console.error('[UserScopedDb] verificationLines.listByVerificationIds error:', error)
+            return data || []
+        },
         create: async (data: Tables['verification_lines']['Insert']) => {
             const insertData = { ...data, user_id: data.user_id ?? userId, company_id: data.company_id ?? companyId }
             const { data: created, error } = await supabase.from('verification_lines').insert(insertData).select().single()
@@ -338,12 +354,12 @@ function createVerificationLinesAccessor(supabase: SupabaseClient<Database>, use
         },
         getAccountBalances: async (options?: { startDate?: string; endDate?: string }) => {
             const { data, error } = await supabase.rpc('get_account_balances', {
-                p_start_date: options?.startDate || null,
-                p_end_date: options?.endDate || null,
+                p_start_date: options?.startDate,
+                p_end_date: options?.endDate,
                 p_user_id: userId,
-            })
+            } as never)
             if (error) console.error('[UserScopedDb] verificationLines.getAccountBalances error:', error)
-            return data || []
+            return (data || []) as Array<{ account_number: number; account_name: string | null; total_debit: number; total_credit: number; balance: number }>
         },
     }
 }
@@ -393,6 +409,16 @@ function createPayslipsAccessor(supabase: SupabaseClient<Database>, userId: stri
             const { data: created, error } = await supabase.from('payslips').insert(insertData).select().single()
             if (error) console.error('[UserScopedDb] payslips.create error:', error)
             return created
+        },
+        update: async (id: string, data: Tables['payslips']['Update']) => {
+            const { data: updated, error } = await supabase.from('payslips').update(data).eq('id', id).select().single()
+            if (error) console.error('[UserScopedDb] payslips.update error:', error)
+            return updated
+        },
+        delete: async (id: string) => {
+            const { error } = await supabase.from('payslips').delete().eq('id', id)
+            if (error) console.error('[UserScopedDb] payslips.delete error:', error)
+            return !error
         },
     }
 }

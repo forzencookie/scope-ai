@@ -175,6 +175,50 @@ export async function getEmployeeBenefits(
 }
 
 /**
+ * Get all assigned benefits for the current company (all employees, current year)
+ */
+export async function getAllAssignedBenefits(
+    year: number
+): Promise<EmployeeBenefit[]> {
+    if (!isSupabaseConfigured()) return []
+
+    const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { data, error } = await supabase
+        .from('employee_benefits' as any)
+        .select('*')
+        .eq('year', year)
+        .order('created_at', { ascending: false })
+
+    if (error) {
+        console.error('Error fetching all assigned benefits:', error)
+        return []
+    }
+
+    return ((data || []) as unknown as EmployeeBenefitRow[]).map(mapBenefitFromDb)
+}
+
+/**
+ * Delete an assigned benefit by ID
+ */
+export async function deleteAssignedBenefit(id: string): Promise<boolean> {
+    if (!isSupabaseConfigured()) return false
+
+    const supabase = getSupabaseClient()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const { error } = await supabase
+        .from('employee_benefits' as any)
+        .delete()
+        .eq('id', id)
+
+    if (error) {
+        console.error('Error deleting assigned benefit:', error)
+        return false
+    }
+    return true
+}
+
+/**
  * Get the yearly limit for a benefit from system_parameters (e.g., benefit_limit_friskvard).
  * Falls back to the static catalog maxAmount if no DB row exists.
  */

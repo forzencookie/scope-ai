@@ -167,9 +167,8 @@ const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
 export async function getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
     const supabase = getSupabaseClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('settings' as any)
+        .from('settings')
         .select('key, value')
         .eq('user_id', userId)
         .in('key', ['notification_email', 'notification_push'])
@@ -217,9 +216,8 @@ export async function updateNotificationPreference(
     // Upsert the setting
     const value = channel === 'email' ? updated.email : updated.push
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
-        .from('settings' as any)
+        .from('settings')
         .upsert({
             user_id: userId,
             key,
@@ -253,9 +251,8 @@ const INTEGRATION_TYPE_MAP: Record<string, Integration['type']> = {
 export async function getIntegrations(): Promise<Integration[]> {
     const supabase = getSupabaseClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('integrations' as any)
+        .from('integrations')
         .select('id, integration_id, name, type, status, connected, connected_at, last_sync_at, provider, service, metadata')
 
     if (error) {
@@ -263,15 +260,14 @@ export async function getIntegrations(): Promise<Integration[]> {
         return []
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ((data as any[]) || []).map((row) => ({
+    return (data || []).map((row): Integration => ({
         id: row.id,
         name: row.name || row.integration_id,
-        type: row.type || INTEGRATION_TYPE_MAP[row.integration_id] || 'other',
-        status: row.connected ? 'connected' : (row.status || 'disconnected'),
+        type: (row.type || INTEGRATION_TYPE_MAP[row.integration_id || ''] || 'other') as Integration['type'],
+        status: row.connected ? 'connected' : (row.status || 'disconnected') as Integration['status'],
         connectedAt: row.connected_at,
         lastSync: row.last_sync_at,
-        provider: row.provider,
+        provider: row.provider ?? undefined,
     }))
 }
 
@@ -285,9 +281,8 @@ export async function getIntegrations(): Promise<Integration[]> {
 export async function getBankConnections(): Promise<BankConnection[]> {
     const supabase = getSupabaseClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('bankconnections' as any)
+        .from('bankconnections')
         .select('id, bank_name, account_id, account_type, status, last_sync_at, provider, error_message')
 
     if (error) {
@@ -295,8 +290,7 @@ export async function getBankConnections(): Promise<BankConnection[]> {
         return []
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    return ((data as any[]) || []).map((row) => ({
+    return (data || []).map((row) => ({
         id: row.id,
         bankName: row.bank_name,
         accountId: row.account_id,
@@ -320,9 +314,8 @@ export async function initiateBankConnection(
     const supabase = getSupabaseClient()
 
     // Create pending connection record
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('bankconnections' as any)
+        .from('bankconnections')
         .insert({
             user_id: userId,
             company_id: companyId,
@@ -340,8 +333,7 @@ export async function initiateBankConnection(
     }
 
     // In production, would generate OAuth URL to bank provider
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const connectionId = (data as any).id as string
+    const connectionId = data.id
     const redirectUrl = `/api/integrations/bank/connect?connection=${connectionId}&bank=${encodeURIComponent(bankName)}`
 
     return {

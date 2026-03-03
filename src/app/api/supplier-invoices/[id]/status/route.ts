@@ -36,3 +36,5 @@ export async function POST(
         return NextResponse.json({ error: "Failed to update status" }, { status: 500 });
     }
 }
+
+export { POST as PUT };

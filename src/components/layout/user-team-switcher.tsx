@@ -35,7 +35,8 @@ interface UserTeamSwitcherProps {
     teams: {
         name: string
         logo: LucideIcon
-        plan: string
+        plan?: string
+        orgNumber?: string
     }[]
     compact?: boolean
 }
@@ -121,7 +122,7 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
                                 </div>
                                 <div className="grid flex-1 text-left text-sm leading-tight">
                                     <span className="truncate font-semibold">{activeTeam.name}</span>
-                                    <span className="truncate text-xs text-muted-foreground">556999-1234</span>
+                                    <span className="truncate text-xs text-muted-foreground">{activeTeam.orgNumber || ''}</span>
                                 </div>
                             </div>
                         </DropdownMenuLabel>

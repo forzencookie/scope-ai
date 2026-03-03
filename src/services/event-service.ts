@@ -47,8 +47,7 @@ export async function getEvents(filters?: EventFilters & { limit?: number; offse
     const supabase = getSupabaseClient()
 
     let query = supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('events' as any)
+        .from('events')
         .select('*', { count: 'exact' })
         .order('timestamp', { ascending: false })
 
@@ -113,8 +112,7 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
 
     await Promise.all(sources.map(async (source) => {
         const { count } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('events' as any)
+            .from('events')
             .select('*', { count: 'exact', head: true })
             .eq('source', source)
 
@@ -159,9 +157,8 @@ export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent
     }
 
     const { data, error } = await supabase
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        .from('events' as any)
-        .insert(dbPayload)
+        .from('events')
+        .insert(dbPayload as never)
         .select()
         .single()
 

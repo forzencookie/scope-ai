@@ -59,6 +59,8 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
     description: 'Skapa en ny kundfaktura. Beräknar moms automatiskt (25% standard). Använd när användaren vill fakturera en kund för utfört arbete eller sålda varor. Vanliga frågor: "skapa faktura", "fakturera Acme", "jag behöver skicka en faktura". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['faktura', 'skapa', 'kund', 'försäljning'],
     parameters: {
         type: 'object',
         properties: {
@@ -186,6 +188,8 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
     description: 'Hämta skickade kundfakturor. Kan filtrera på status (utkast/skickad/betald/förfallen) eller kundnamn. Använd för att se fakturastatus, hitta specifika fakturor, eller följa upp betalningar. Vanliga frågor: "visa mina fakturor", "fakturor till Acme".',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['kundfaktura', 'fakturor', 'kund', 'utställda'],
     parameters: {
         type: 'object',
         properties: {
@@ -251,6 +255,8 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Inv
     description: 'Hämta mottagna leverantörsfakturor (inkommande fakturor att betala). Kan filtrera på status eller leverantör. Använd för att se obetalda räkningar, förbereda betalningar, eller attestera fakturor.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['leverantörsfaktura', 'inköp', 'leverantör'],
     parameters: {
         type: 'object',
         properties: {
@@ -328,6 +334,8 @@ export const sendInvoiceReminderTool = defineTool<SendInvoiceReminderParams, Inv
     description: 'Skicka betalningspåminnelse på förfallen kundfaktura. Stödjer tre nivåer: första påminnelse, andra påminnelse, och inkassokrav. Kan lägga till dröjsmålsavgift (60 kr). Använd när kunden inte betalat i tid.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['påminnelse', 'faktura', 'skicka', 'betalning'],
     parameters: {
         type: 'object',
         properties: {
@@ -394,6 +402,8 @@ export const voidInvoiceTool = defineTool<VoidInvoiceParams, VoidInvoiceResult>(
     description: 'Makulera en felaktig faktura genom att skapa kreditfaktura. Använd när faktura har fel belopp, fel kund, eller inte ska skickas. Kan inte ångras. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['makulera', 'faktura', 'ångra', 'ta bort'],
     parameters: {
         type: 'object',
         properties: {
@@ -448,6 +458,8 @@ export const bookInvoicePaymentTool = defineTool<BookInvoicePaymentParams, BookI
     description: 'Registrera att en kundfaktura är betald. Skapar verifikation, uppdaterar kundreskontran, och markerar fakturan som betald. Använd när betalning kommit in på bankkontot. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['bokföra', 'betalning', 'faktura', 'inbetalning'],
     parameters: {
         type: 'object',
         properties: {
@@ -531,6 +543,8 @@ export const getOverdueInvoicesTool = defineTool<GetOverdueInvoicesParams, Invoi
     description: 'Lista kundfakturor som passerat förfallodatum och inte betalats. Använd för uppföljning och beslut om påminnelser. Vanliga frågor: "har nån kund inte betalat", "vilka fakturor är förfallna", "obetalda fakturor".',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['förfallen', 'faktura', 'obetald', 'sen'],
     parameters: {
         type: 'object',
         properties: {

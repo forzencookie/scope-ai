@@ -105,15 +105,17 @@ export const VatCalculator = {
       })
     })
 
-    // Note: We NO LONGER reverse-calculate 05, 06, 07 from the VAT. 
-    // We rely on the actual booking accounts.
-    // However, for 12% and 6% sales (Box 06, 07), we might need specific account ranges
-    // or we can fallback to the reverse calc ONLY if the account scan didn't find anything 
-    // to avoid breaking legacy data that might not use standard accounts.
-
-    // Fallback: If Box 06 is empty but we have Box 11 (12% VAT), guess based on VAT
+    // Boxes 06/07: Sales bases for 12% and 6% VAT
+    // Since BAS accounts don't distinguish VAT rate in the 3xxx range,
+    // we reverse-calculate from the VAT amounts when no direct account match exists.
     if (report.ruta06 === 0 && report.ruta11 > 0) report.ruta06 = Math.round(report.ruta11 / 0.12)
     if (report.ruta07 === 0 && report.ruta12 > 0) report.ruta07 = Math.round(report.ruta12 / 0.06)
+
+    // Box 05 may include sales that belong to 06/07 (12%/6% sales also use 3xxx accounts).
+    // Subtract to avoid double-counting.
+    if (report.ruta05 > 0 && (report.ruta06 > 0 || report.ruta07 > 0)) {
+      report.ruta05 = Math.max(0, report.ruta05 - report.ruta06 - report.ruta07)
+    }
 
     return recalculateVatReport(report)
   },

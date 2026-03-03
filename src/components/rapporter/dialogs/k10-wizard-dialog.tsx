@@ -36,6 +36,7 @@ function getDefaultData(): K10WizardData {
             year: (currentYear - 1).toString(),
             schablonbelopp: 0,
             lonebaseratUtrymme: 0,
+            rantebaseratUtrymme: 0,
             gransbelopp: 0,
             totalDividends: 0,
             remainingUtrymme: 0,

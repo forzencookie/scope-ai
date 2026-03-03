@@ -26,6 +26,8 @@ import { formatCurrency } from "@/lib/utils"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { ArsbokslutWizardDialog } from "./dialogs/arsbokslut-wizard-dialog"
+import { ConfirmDialog } from "@/components/ui/alert-dialog"
+import { getFiscalYearRange } from "@/lib/bookkeeping/utils"
 
 
 // =============================================================================
@@ -33,20 +35,34 @@ import { ArsbokslutWizardDialog } from "./dialogs/arsbokslut-wizard-dialog"
 // =============================================================================
 export function ArsbokslutContent() {
     const toast = useToast()
-    const { companyTypeName } = useCompany()
+    const { company, companyType, companyTypeName } = useCompany()
     const [wizardOpen, setWizardOpen] = useState(false)
     const [isClosing, setIsClosing] = useState(false)
-    const fiscalYear = new Date().getFullYear() - 1
+    const [closingConfirmOpen, setClosingConfirmOpen] = useState(false)
+    const [closingPreview, setClosingPreview] = useState<{
+        totalRevenue: number; totalExpenses: number; corporateTax: number;
+        netResult: number; entryCount: number; closingCompanyType: string;
+    } | null>(null)
     const { text } = useTextMode()
+
+    // Use fiscal year range — reference date is "now" so we get the current FY,
+    // but Årsbokslut is for the *previous* completed FY
+    const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
+    const currentFY = getFiscalYearRange(fiscalYearEnd, new Date())
+    const prevRefDate = new Date(currentFY.start)
+    prevRefDate.setFullYear(prevRefDate.getFullYear() - 1)
+    const previousFY = getFiscalYearRange(fiscalYearEnd, prevRefDate)
+    const fiscalYear = previousFY.end.getFullYear()
+    const fiscalStartStr = previousFY.startStr
+    const fiscalEndStr = previousFY.endStr
     const { accountBalances, totals, isLoading } = useAccountBalances()
 
-    // Closing entry handler
+    // Closing entry handler — step 1: fetch preview and show confirmation dialog
     const handleCreateClosingEntries = useCallback(async () => {
         setIsClosing(true)
         try {
-            // Preview first
-            const companyType = companyTypeName?.toLowerCase().includes('enskild') ? 'EF' : 'AB'
-            const previewRes = await fetch(`/api/closing-entries?year=${fiscalYear}&companyType=${companyType}`)
+            const closingCompanyType = companyType === 'ef' ? 'EF' : 'AB'
+            const previewRes = await fetch(`/api/closing-entries?year=${fiscalYear}&companyType=${closingCompanyType}`)
             const preview = await previewRes.json()
 
             if (!previewRes.ok) {
@@ -59,23 +75,33 @@ export function ArsbokslutContent() {
                 return
             }
 
-            // Show confirmation
-            const confirmed = window.confirm(
-                `Skapa bokslutsposter för ${fiscalYear}?\n\n` +
-                `Intäkter: ${formatCurrency(preview.totalRevenue)}\n` +
-                `Kostnader: ${formatCurrency(preview.totalExpenses)}\n` +
-                (preview.corporateTax > 0 ? `Bolagsskatt: ${formatCurrency(preview.corporateTax)}\n` : '') +
-                `Årets resultat: ${formatCurrency(preview.netResult)}\n\n` +
-                `${preview.revenueEntries.length + preview.expenseEntries.length + preview.resultTransfer.length + (preview.taxEntry?.length || 0)} rader skapas i serie Y.`
-            )
+            const entryCount = preview.revenueEntries.length + preview.expenseEntries.length + preview.resultTransfer.length + (preview.taxEntry?.length || 0)
+            setClosingPreview({
+                totalRevenue: preview.totalRevenue,
+                totalExpenses: preview.totalExpenses,
+                corporateTax: preview.corporateTax,
+                netResult: preview.netResult,
+                entryCount,
+                closingCompanyType,
+            })
+            setClosingConfirmOpen(true)
+        } catch (err) {
+            toast.error('Fel', 'Ett oväntat fel uppstod')
+            console.error('Closing entries error:', err)
+        } finally {
+            setIsClosing(false)
+        }
+    }, [fiscalYear, companyType, toast])
 
-            if (!confirmed) return
-
-            // Execute
+    // Closing entry handler — step 2: execute after confirmation
+    const handleConfirmClosing = useCallback(async () => {
+        if (!closingPreview) return
+        setIsClosing(true)
+        try {
             const execRes = await fetch('/api/closing-entries', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ year: fiscalYear, companyType }),
+                body: JSON.stringify({ year: fiscalYear, companyType: closingPreview.closingCompanyType }),
             })
             const execResult = await execRes.json()
 
@@ -92,8 +118,9 @@ export function ArsbokslutContent() {
             console.error('Closing entries error:', err)
         } finally {
             setIsClosing(false)
+            setClosingPreview(null)
         }
-    }, [fiscalYear, companyTypeName, toast])
+    }, [fiscalYear, closingPreview, toast])
 
     // P&L Calculations
     const sales = accountBalances
@@ -113,7 +140,7 @@ export function ArsbokslutContent() {
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
 
     const depreciations = accountBalances
-        .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 7800 && parseInt(a.accountNumber) <= 7999)
+        .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 7700 && parseInt(a.accountNumber) <= 7999)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
 
     const financialItems = accountBalances
@@ -137,6 +164,10 @@ export function ArsbokslutContent() {
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 1000 && parseInt(a.accountNumber) <= 1399)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
 
+    const inventory = accountBalances
+        .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 1400 && parseInt(a.accountNumber) <= 1499)
+        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
+
     const receivables = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 1500 && parseInt(a.accountNumber) <= 1799)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0)
@@ -151,6 +182,18 @@ export function ArsbokslutContent() {
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2000 && parseInt(a.accountNumber) <= 2099)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
 
+    const untaxedReserves = accountBalances
+        .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2100 && parseInt(a.accountNumber) <= 2199)
+        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
+
+    const provisions = accountBalances
+        .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2200 && parseInt(a.accountNumber) <= 2299)
+        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
+
+    const longTermLiabilities = accountBalances
+        .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2300 && parseInt(a.accountNumber) <= 2399)
+        .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
+
     const payables = accountBalances
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2400 && parseInt(a.accountNumber) <= 2499)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
@@ -163,33 +206,37 @@ export function ArsbokslutContent() {
         .filter((a: AccountActivity) => parseInt(a.accountNumber) >= 2700 && parseInt(a.accountNumber) <= 2999)
         .reduce((sum: number, a: AccountActivity) => sum + a.balance, 0) * -1
 
-    const totalEqLiab = Math.round(equity + result + payables + taxes + otherLiabilities)
+    const totalEqLiab = Math.round(equity + result + untaxedReserves + provisions + longTermLiabilities + payables + taxes + otherLiabilities)
 
     // Balance Sheet Items
     const assetItems: CollapsibleTableItem[] = useMemo(() => ([
         { label: "Anläggningstillgångar", value: Math.round(fixedAssets) },
+        { label: "Lager", value: Math.round(inventory) },
         { label: "Kundfordringar mm", value: Math.round(receivables) },
         { label: "Kassa och bank", value: Math.round(cash) },
-    ]), [fixedAssets, receivables, cash]);
+    ]), [fixedAssets, inventory, receivables, cash]);
 
     const liabilityItems: CollapsibleTableItem[] = useMemo(() => ([
         { label: "Eget kapital (inkl. årets resultat)", value: Math.round(equity + result) },
+        { label: "Obeskattade reserver", value: Math.round(untaxedReserves) },
+        { label: "Avsättningar", value: Math.round(provisions) },
+        { label: "Långfristiga skulder", value: Math.round(longTermLiabilities) },
         { label: "Leverantörsskulder", value: Math.round(payables) },
         { label: "Skatteskulder", value: Math.round(taxes) },
         { label: "Övriga skulder", value: Math.round(otherLiabilities) },
-    ]), [equity, result, payables, taxes, otherLiabilities]);
+    ]), [equity, result, untaxedReserves, provisions, longTermLiabilities, payables, taxes, otherLiabilities]);
 
     const stats: TaxReportStat[] = [
         {
             label: text.reports.fiscalYear,
             value: String(fiscalYear),
-            subtitle: `${fiscalYear}-01-01 – ${fiscalYear}-12-31`,
+            subtitle: `${fiscalStartStr} – ${fiscalEndStr}`,
             icon: Calendar,
         },
         {
             label: text.reports.companyType,
             value: companyTypeName,
-            subtitle: text.reports.simplified,
+            subtitle: companyTypeName,
             icon: Building2,
         },
         {
@@ -203,16 +250,24 @@ export function ArsbokslutContent() {
     return (
         <TaxReportLayout
             title="Årsbokslut"
-            subtitle="Sammanställning av räkenskaper för enskild firma."
+            subtitle={`Sammanställning av räkenskaper för ${companyTypeName.toLowerCase()}.`}
             stats={stats}
             aiContext="arsbokslut"
             aiTitle={text.reports.aiYearEnd}
             aiDescription={text.reports.aiYearEndDesc}
             isLoading={isLoading}
             actions={
-                <Button onClick={() => window.print()} variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto">
+                <Button variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={async () => {
+                    toast.info("Förbereder PDF", "Vänta...")
+                    try {
+                        await downloadElementAsPDF({ fileName: `arsbokslut-${fiscalYear}`, elementId: 'arsbokslut-content' })
+                        toast.success("Klart", "Årsbokslut har laddats ner som PDF.")
+                    } catch {
+                        toast.error("Fel", "Kunde inte skapa PDF.")
+                    }
+                }}>
                     <Download className="h-4 w-4 shrink-0" />
-                    <span className="truncate">Exportera</span>
+                    <span className="truncate">PDF</span>
                 </Button>
             }
         >
@@ -220,7 +275,7 @@ export function ArsbokslutContent() {
                 {/* Header with Actions */}
                 <CollapsibleTableHeader
                     title={`Årsbokslut ${fiscalYear}`}
-                    subtitle={`Räkenskapsår ${fiscalYear}-01-01 – ${fiscalYear}-12-31`}
+                    subtitle={`Räkenskapsår ${fiscalStartStr} – ${fiscalEndStr}`}
                 >
                     <Button variant="outline" size="sm" className="h-9">
                         <Eye className="mr-2 h-4 w-4" />
@@ -300,6 +355,19 @@ export function ArsbokslutContent() {
                 </div>
             </div>
 
+            <ConfirmDialog
+                open={closingConfirmOpen}
+                onOpenChange={setClosingConfirmOpen}
+                title={`Skapa bokslutsposter för ${fiscalYear}?`}
+                description={
+                    closingPreview
+                        ? `Intäkter: ${formatCurrency(closingPreview.totalRevenue)}\nKostnader: ${formatCurrency(closingPreview.totalExpenses)}${closingPreview.corporateTax > 0 ? `\nBolagsskatt: ${formatCurrency(closingPreview.corporateTax)}` : ''}\nÅrets resultat: ${formatCurrency(closingPreview.netResult)}\n\n${closingPreview.entryCount} rader skapas i serie Y.`
+                        : ''
+                }
+                confirmLabel="Skapa bokslutsposter"
+                onConfirm={handleConfirmClosing}
+            />
+
             <ArsbokslutWizardDialog
                 open={wizardOpen}
                 onOpenChange={setWizardOpen}
@@ -312,10 +380,14 @@ export function ArsbokslutContent() {
                     financialItems: Math.round(financialItems),
                     result,
                     fixedAssets: Math.round(fixedAssets),
+                    inventory: Math.round(inventory),
                     receivables: Math.round(receivables),
                     cash: Math.round(cash),
                     totalAssets,
                     equity: Math.round(equity),
+                    untaxedReserves: Math.round(untaxedReserves),
+                    provisions: Math.round(provisions),
+                    longTermLiabilities: Math.round(longTermLiabilities),
                     payables: Math.round(payables),
                     taxes: Math.round(taxes),
                     otherLiabilities: Math.round(otherLiabilities),

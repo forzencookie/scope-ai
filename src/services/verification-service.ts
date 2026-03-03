@@ -230,27 +230,23 @@ export const verificationService = {
     },
 
     /**
-     * Check if a period (month) is locked.
-     * A period is locked if any verification in that month has is_locked = true
-     * (set by månadsavslut / period close).
+     * Check if a period (month) is locked via the financialperiods table
+     * (single source of truth, set by månadsavslut / period close).
      */
     async isPeriodLocked(date: string): Promise<boolean> {
         const supabase = getSupabaseClient()
         const d = new Date(date)
         const year = d.getFullYear()
         const month = d.getMonth() + 1
-        const startOfMonth = `${year}-${String(month).padStart(2, '0')}-01`
-        const endOfMonth = `${year}-${String(month).padStart(2, '0')}-${new Date(year, month, 0).getDate()}`
+        const periodId = `${year}-M${String(month).padStart(2, '0')}`
 
         const { data } = await supabase
-            .from('verifications')
-            .select('id')
-            .gte('date', startOfMonth)
-            .lte('date', endOfMonth)
-            .eq('is_locked', true)
-            .limit(1)
+            .from('financialperiods')
+            .select('status')
+            .eq('id', periodId)
+            .single()
 
-        return (data?.length || 0) > 0
+        return data?.status === 'closed'
     },
 
     /**

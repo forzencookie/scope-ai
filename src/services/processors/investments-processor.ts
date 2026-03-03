@@ -49,7 +49,6 @@ async function listFromTable<TRow, TResult>(
     orderBy: string = 'created_at'
 ): Promise<TResult[]> {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase()
             .from(table as any)
             .select('*')
@@ -72,7 +71,6 @@ async function createInTable<TRow, TResult>(
     mapper: (row: TRow) => TResult
 ): Promise<TResult | null> {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase()
             .from(table as any)
             .insert(input)
@@ -97,7 +95,6 @@ async function updateInTable<TRow, TResult>(
     mapper: (row: TRow) => TResult
 ): Promise<TResult | null> {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase()
             .from(table as any)
             .update({ ...updates, updated_at: new Date().toISOString() })
@@ -118,7 +115,6 @@ async function updateInTable<TRow, TResult>(
 // Generic delete function
 async function deleteFromTable(table: string, id: string): Promise<boolean> {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { error } = await supabase()
             .from(table as any)
             .delete()

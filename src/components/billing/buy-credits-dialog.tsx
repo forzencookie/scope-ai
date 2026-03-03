@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { useRouter } from "next/navigation"
 import { Zap, Sparkles, Check, Loader2 } from "lucide-react"
 import {
   Dialog,
@@ -29,42 +30,16 @@ export function BuyCreditsDialog({
   outOfTokens = false,
   onPurchase,
 }: BuyCreditsDialogProps) {
+  const router = useRouter()
   const [selectedPackage, setSelectedPackage] = useState<number | null>(null)
   const [purchasing, setPurchasing] = useState(false)
-  const [error, setError] = useState<string | null>(null)
 
-  const handlePurchase = async () => {
+  const handlePurchase = () => {
     if (!selectedPackage) return
 
     setPurchasing(true)
-    setError(null)
-    
-    try {
-      const response = await fetch('/api/stripe/credits', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tokens: selectedPackage }),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || 'Kunde inte starta köp')
-      }
-
-      if (data.url) {
-        // Redirect to Stripe checkout
-        onPurchase?.(selectedPackage)
-        window.location.href = data.url
-      } else {
-        throw new Error('Ingen checkout-URL mottagen')
-      }
-    } catch (err) {
-      console.error('Credits purchase error:', err)
-      setError(err instanceof Error ? err.message : 'Något gick fel')
-    } finally {
-      setPurchasing(false)
-    }
+    onPurchase?.(selectedPackage)
+    router.push(`/dashboard/checkout?type=credits&tokens=${selectedPackage}`)
   }
 
   return (
@@ -138,13 +113,8 @@ export function BuyCreditsDialog({
         </div>
 
         <div className="flex flex-col gap-3">
-          {error && (
-            <p className="text-sm text-center text-red-600 dark:text-red-400">
-              {error}
-            </p>
-          )}
-          <Button 
-            onClick={handlePurchase} 
+          <Button
+            onClick={handlePurchase}
             disabled={!selectedPackage || purchasing}
             className="w-full"
             size="lg"
@@ -152,7 +122,7 @@ export function BuyCreditsDialog({
             {purchasing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Omdirigerar till kassan...
+                Öppnar kassan...
               </>
             ) : selectedPackage ? (
               `Köp ${formatTokens(selectedPackage)} tokens`

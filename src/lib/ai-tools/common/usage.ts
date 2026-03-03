@@ -45,7 +45,7 @@ const USAGE_THRESHOLDS = {
 
 export const checkUsageTool = defineTool<Record<string, never>, UsageStatus>({
   name: 'check_ai_usage',
-  description: `Kontrollera användarens AI-tokenanvändning och returnera status. 
+  description: `Kontrollera användarens AI-tokenanvändning och returnera status.
 Använd detta diskret för att:
 - Påminna användaren när de når 50%, 75%, 90% av sin månadsgräns
 - Informera om att de kan köpa fler credits vid behov
@@ -55,6 +55,8 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
   parameters: { type: 'object' as const, properties: {} },
   requiresConfirmation: false,
   category: 'read',
+  domain: 'common',
+  keywords: ['användning', 'tokens', 'budget', 'kvot'],
   execute: async (_params, context) => {
     // Get usage from database
     const { getSupabaseClient } = await import('@/lib/database/supabase')
@@ -174,6 +176,8 @@ export const getUsageStatsTool = defineTool<Record<string, never>, UsageStatus>(
   parameters: { type: 'object' as const, properties: {} },
   requiresConfirmation: false,
   category: 'read',
+  domain: 'common',
+  keywords: ['statistik', 'användning', 'tokens', 'AI'],
   execute: async (_params, context) => {
     // Same logic as checkUsageTool but always returns full data
     const result = await checkUsageTool.execute({}, context)
@@ -232,7 +236,7 @@ export interface BuyCreditsResult {
 
 export const buyCreditsToolDef = defineTool<BuyCreditsParams, BuyCreditsResult>({
   name: 'buy_ai_credits',
-  description: `Hjälp användaren köpa fler AI-credits. 
+  description: `Hjälp användaren köpa fler AI-credits.
 Använd detta verktyg när:
 - Användaren vill köpa fler tokens/credits
 - Användaren har slut på sin AI-budget
@@ -240,6 +244,8 @@ Använd detta verktyg när:
 
 Om användaren inte angett hur många tokens, visa tillgängliga paket.
 Om användaren valt ett paket, returnera checkout-länken.`,
+  domain: 'common',
+  keywords: ['köpa', 'credits', 'tokens', 'prenumeration'],
   parameters: {
     type: 'object' as const,
     properties: {

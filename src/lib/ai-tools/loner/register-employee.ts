@@ -6,6 +6,8 @@ export const registerEmployeeTool: AITool = {
     name: "register_employee",
     description: "Proposes registering a new employee. Returns a preview card for user confirmation.",
     requiresConfirmation: true,
+    domain: 'loner',
+    keywords: ['registrera', 'anställ', 'ny medarbetare', 'personal'],
     category: 'write',
     parameters: {
         type: 'object',

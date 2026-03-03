@@ -54,6 +54,9 @@ export const getKnowledgeTool = defineTool<GetKnowledgeParams, string>({
     description: 'Ladda detaljerad kunskap om ett amne. Anvand nar du behover specifika regler om bokforing, skatt, loner, bolagsratt, eller foretagstyper. Tillgangliga amnen: bokforing, rapporter, loner, agare, handelser, skatt, foretagstyper.',
     category: 'read',
     requiresConfirmation: false,
+    coreTool: true,
+    domain: 'common',
+    keywords: ['kunskap', 'regler', 'lagar', 'information', 'hjälp'],
     parameters: {
         type: 'object',
         properties: {

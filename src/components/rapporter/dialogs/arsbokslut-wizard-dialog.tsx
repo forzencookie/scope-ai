@@ -18,10 +18,14 @@ interface ArsbokslutData {
     financialItems: number
     result: number
     fixedAssets: number
+    inventory: number
     receivables: number
     cash: number
     totalAssets: number
     equity: number
+    untaxedReserves: number
+    provisions: number
+    longTermLiabilities: number
     payables: number
     taxes: number
     otherLiabilities: number

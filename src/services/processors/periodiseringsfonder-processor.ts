@@ -40,9 +40,8 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
     }
 
     const supabase = getSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .select('*')
         .order('year', { ascending: false })
 
@@ -69,9 +68,8 @@ export async function createPeriodiseringsfond(
     const expiresAt = new Date(input.year + 6, 11, 31) // Dec 31, 6 years later
 
     const supabase = getSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .insert({
             year: input.year,
             amount: input.amount,
@@ -105,9 +103,8 @@ export async function dissolvePeriodiseringsfond(
     const supabase = getSupabaseClient()
 
     // First get the current fond
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: existingData } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .select('*')
         .eq('id', id)
         .single()
@@ -122,9 +119,8 @@ export async function dissolvePeriodiseringsfond(
     const newDissolvedAmount = existingDissolved + dissolveAmount
     const newStatus = newDissolvedAmount >= existingAmount ? 'dissolved' : 'partially_dissolved'
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .update({
             dissolved_amount: newDissolvedAmount,
             status: newStatus,
@@ -154,9 +150,8 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
     futureDate.setMonth(futureDate.getMonth() + withinMonths)
 
     const supabase = getSupabaseClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('periodiseringsfonder' as any)
+        .from('periodiseringsfonder')
         .select('*')
         .eq('status', 'active')
         .lte('expires_at', futureDate.toISOString().split('T')[0])

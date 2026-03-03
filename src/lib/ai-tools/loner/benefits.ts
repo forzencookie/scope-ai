@@ -8,7 +8,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import {
     listAvailableBenefits,
     getBenefitDetails,
-    // assignBenefit,
+    assignBenefit,
     suggestUnusedBenefits,
 } from '../../formaner'
 
@@ -26,6 +26,8 @@ export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
     description: 'Hämta tillgängliga personalförmåner (t.ex. friskvård, bilförmån).',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['förmåner', 'friskvård', 'tillgängliga'],
     parameters: {
         type: 'object',
         properties: {
@@ -57,6 +59,8 @@ export const listBenefitsTool = defineTool({
         },
     },
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['förmåner', 'lista', 'aktiva'],
     category: 'read',
     execute: async (params: { companyType?: 'AB' | 'EF' | 'EnskildFirma' }) => {
         const benefits = await listAvailableBenefits(params.companyType)
@@ -79,6 +83,8 @@ export const getBenefitDetailsTool = defineTool({
         required: ['benefitId'],
     },
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['förmån', 'detaljer', 'information'],
     category: 'read',
     execute: async (params: { benefitId: string }) => {
         const benefit = await getBenefitDetails(params.benefitId)
@@ -101,6 +107,8 @@ export const suggestUnusedBenefitsTool = defineTool({
         required: ['employeeName', 'year'],
     },
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['förmån', 'förslag', 'outnyttjad'],
     category: 'read',
     execute: async (params: { employeeName: string; year: number }) => {
         const suggestions = await suggestUnusedBenefits(params.employeeName, params.year)
@@ -130,6 +138,8 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
     description: 'Tilldela en förmån till en anställd. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'loner',
+    keywords: ['tilldela', 'förmån', 'anställd'],
     parameters: {
         type: 'object',
         properties: {
@@ -140,8 +150,27 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
         },
         required: ['employeeName', 'benefitId', 'amount'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const year = params.year || new Date().getFullYear()
+
+        // If confirmed, persist to DB
+        if (context?.isConfirmed) {
+            const result = await assignBenefit({
+                employeeName: params.employeeName,
+                benefitType: params.benefitId,
+                amount: params.amount,
+                year,
+            })
+
+            if (result) {
+                return {
+                    success: true,
+                    data: { success: true },
+                    message: `Förmån ${params.benefitId} tilldelad ${params.employeeName}. Belopp: ${params.amount.toLocaleString('sv-SE')} kr.`,
+                }
+            }
+            return { success: false, error: 'Kunde inte tilldela förmånen.' }
+        }
 
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Tilldela förmån',

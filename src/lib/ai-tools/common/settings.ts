@@ -38,6 +38,8 @@ export const getSubscriptionStatusTool = defineTool<Record<string, never>, Subsc
     description: 'Visa aktuell prenumerationsstatus, användning och faktureringsinformation.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['prenumeration', 'plan', 'fakturering', 'subscription'],
     parameters: { type: 'object', properties: {} },
     execute: async (_params, context) => {
         // Get real subscription status from database
@@ -102,6 +104,8 @@ export const getNotificationPreferencesTool = defineTool<Record<string, never>, 
     description: 'Visa aktuella notifikationsinställningar för e-post och push.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['notifikation', 'påminnelse', 'e-post', 'push'],
     parameters: { type: 'object', properties: {} },
     execute: async (_params, context) => {
         // Get real notification preferences from database
@@ -133,6 +137,8 @@ export const updateNotificationPreferencesTool = defineTool<UpdateNotificationPa
     description: 'Ändra en notifikationsinställning (e-post eller push).',
     category: 'write',
     requiresConfirmation: false, // Low-risk change
+    domain: 'common',
+    keywords: ['ändra', 'notifikation', 'inställning'],
     parameters: {
         type: 'object',
         properties: {
@@ -199,6 +205,8 @@ export const listActiveIntegrationsTool = defineTool<Record<string, never>, Inte
     description: 'Visa alla aktiva integrationer och deras status.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['integration', 'koppling', 'anslutning', 'bank'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         // Get real integrations from database
@@ -230,6 +238,8 @@ export const connectBankAccountTool = defineTool<ConnectBankParams, { initiated:
     description: 'Initiera koppling till bankkonto via Open Banking (PSD2). Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'common',
+    keywords: ['bank', 'koppla', 'PSD2', 'konto'],
     parameters: {
         type: 'object',
         properties: {
@@ -305,6 +315,8 @@ export const syncBankTransactionsTool = defineTool<SyncBankParams, { synced: num
     description: 'Synka banktransaktioner manuellt från anslutna bankkonton.',
     category: 'write',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['synka', 'bank', 'transaktioner', 'importera'],
     parameters: {
         type: 'object',
         properties: {

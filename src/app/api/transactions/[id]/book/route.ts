@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server"
 import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 import { pendingBookingService } from '@/services/pending-booking-service'
-import type { VerificationEntry } from '@/services/verification-service'
+import { verificationService, type VerificationEntry } from '@/services/verification-service'
 import { createSimpleEntry } from '@/lib/bookkeeping'
 import type { SwedishVatRate } from '@/lib/bookkeeping'
 
@@ -31,6 +31,16 @@ export async function POST(
         const transaction = await userDb.transactions.getById(id)
         if (!transaction) {
             return NextResponse.json({ success: false, error: 'Transaction not found' }, { status: 404 })
+        }
+
+        // 1b. Check period lock
+        const txDate = transaction.date || new Date().toISOString().split('T')[0]
+        const locked = await verificationService.isPeriodLocked(txDate)
+        if (locked) {
+            return NextResponse.json(
+                { success: false, error: 'Perioden är låst. Kan inte bokföra i en stängd period.' },
+                { status: 403 }
+            )
         }
 
         const amount = Math.abs(Number(transaction.amount))

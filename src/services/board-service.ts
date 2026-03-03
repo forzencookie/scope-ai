@@ -76,8 +76,7 @@ export const boardService = {
 
         return data.map((row) => {
             const role = row.board_role || 'Ledamot'
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const metadata = row.metadata as any
+            const metadata = row.metadata as Record<string, unknown> | null
             
             return {
                 id: row.id,
@@ -87,7 +86,7 @@ export const boardService = {
                 email: row.email,
                 phone: row.phone,
                 appointedDate: row.acquisition_date,
-                isSignatory: metadata?.isSignatory || role === 'Ordförande' || role === 'VD'
+                isSignatory: !!(metadata?.isSignatory) || role === 'Ordförande' || role === 'VD'
             }
         })
     },
@@ -116,21 +115,19 @@ export const boardService = {
         return data
             .filter((row) => {
                 const role = row.board_role || ''
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const metadata = row.metadata as any
+                const metadata = row.metadata as Record<string, unknown> | null
                 return role === 'Ordförande' || role === 'VD' || metadata?.isSignatory
             })
             .map((row) => {
                 const role = row.board_role || 'Ledamot'
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const metadata = row.metadata as any
+                const metadata = row.metadata as Record<string, unknown> | null
                 
                 let signingAuthority = 'Två i förening'
                 if (role === 'VD' || role === 'Ordförande') {
                     signingAuthority = 'Ensam'
                 }
                 if (metadata?.signingAuthority) {
-                    signingAuthority = metadata.signingAuthority
+                    signingAuthority = String(metadata.signingAuthority)
                 }
 
                 return {

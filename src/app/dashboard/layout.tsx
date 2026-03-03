@@ -33,7 +33,6 @@ const defaultTeam = {
     id: 'default',
     name: 'Mitt Företag',
     logo: Building2,
-    plan: 'Free',
 }
 
 // Module-level navigation history store (persists across component remounts)

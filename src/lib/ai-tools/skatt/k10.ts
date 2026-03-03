@@ -14,6 +14,8 @@ import { taxService } from '@/services/tax-service'
 export const calculateGransbeloppTool = defineTool({
     name: 'calculate_gransbelopp',
     description: 'Beräkna gränsbeloppet för K10-deklaration (fåmansföretag). Visar hur mycket utdelning som kan beskattas som kapitalinkomst (20%) istället för tjänsteinkomst. Använder förenklingsregeln eller löneunderlag. Vanliga frågor: "hur mycket utdelning kan jag ta", "vad blir gränsbeloppet".',
+    domain: 'skatt',
+    keywords: ['gränsbelopp', 'K10', '3:12', 'utdelning'],
     parameters: {
         type: 'object' as const,
         properties: {

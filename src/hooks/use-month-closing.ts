@@ -16,7 +16,7 @@ import {
 export type PeriodStatus = 'open' | 'review' | 'locked'
 
 /**
- * Check if a date falls within a locked financial period.
+ * Check if a date falls within a locked financial period (synchronous, from preloaded state).
  * Used by useVerifications and useTransactions to prevent writes to closed months.
  */
 export function isPeriodLocked(date: string, periods: MonthStatus[]): boolean {
@@ -25,6 +25,26 @@ export function isPeriodLocked(date: string, periods: MonthStatus[]): boolean {
   const month = d.getMonth() + 1 // 1-based
   const period = periods.find(p => p.year === year && p.month === month)
   return period?.status === 'locked'
+}
+
+/**
+ * Async period lock check — queries financialperiods table directly.
+ * Use this in mutations or services where hook state isn't available.
+ */
+export async function checkPeriodLocked(date: string): Promise<boolean> {
+  const supabase = getSupabaseClient()
+  const d = new Date(date)
+  const year = d.getFullYear()
+  const month = d.getMonth() + 1
+  const periodId = `${year}-M${String(month).padStart(2, '0')}`
+
+  const { data } = await supabase
+    .from('financialperiods')
+    .select('status')
+    .eq('id', periodId)
+    .single()
+
+  return data?.status === 'closed'
 }
 
 export interface MonthStatus {

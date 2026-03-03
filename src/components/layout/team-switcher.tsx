@@ -27,7 +27,7 @@ export function TeamSwitcher({
   teams: {
     name: string
     logo: LucideIcon
-    plan: string
+    plan?: string
   }[]
 }) {
   const { isMobile } = useSidebar()
@@ -53,10 +53,12 @@ export function TeamSwitcher({
               <div className="grid flex-1 text-left text-sm leading-tight transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0">
                 <span className="truncate font-medium">{activeTeam.name}</span>
                 <div className="flex items-center gap-1.5">
-                  <span className={`truncate text-xs w-fit px-1.5 py-0.5 rounded ${activeTeam.plan === "Max"
-                      ? "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-400"
-                      : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
-                    }`}>{activeTeam.plan}</span>
+                  {activeTeam.plan && (
+                    <span className={`truncate text-xs w-fit px-1.5 py-0.5 rounded ${activeTeam.plan === "Max"
+                        ? "bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-400"
+                        : "bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400"
+                      }`}>{activeTeam.plan}</span>
+                  )}
                   <span className="text-xs px-1.5 py-0.5 rounded bg-violet-100 dark:bg-violet-900 text-violet-700 dark:text-violet-400">
                     {companyTypeName}
                   </span>

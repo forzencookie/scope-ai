@@ -44,6 +44,8 @@ export interface StreamChunk {
 
 export class ScopeBrain {
     private options: ScopeBrainOptions
+    /** Tool names currently available to the LLM (starts with core tools) */
+    private activeToolNames: Set<string>
 
     constructor(options: ScopeBrainOptions = {}) {
         this.options = {
@@ -51,6 +53,10 @@ export class ScopeBrain {
             temperature: 0.7,
             ...options,
         }
+        // Seed with core tools only
+        this.activeToolNames = new Set(
+            aiToolRegistry.getCoreTools().map(t => t.name)
+        )
     }
 
     // =========================================================================
@@ -62,10 +68,10 @@ export class ScopeBrain {
             const modelConfig = this.options.forceModel ?? selectModel(message)
             const modelId = getModelId(modelConfig)
 
-            console.log(`[ScopeBrain] Using model: ${modelId}`)
+            console.log(`[ScopeBrain] Using model: ${modelId}, active tools: ${this.activeToolNames.size}`)
 
             const messages = this.buildMessages(message, context)
-            const tools = this.getAllToolDefinitions()
+            const tools = this.getActiveToolDefinitions()
 
             const { text, toolResults } = await this.callLLMWithTools(modelId, messages, tools, context)
 
@@ -99,10 +105,10 @@ export class ScopeBrain {
             const modelConfig = this.options.forceModel ?? selectModel(message)
             const modelId = getModelId(modelConfig)
 
-            console.log(`[ScopeBrain] Streaming with model: ${modelId}`)
+            console.log(`[ScopeBrain] Streaming with model: ${modelId}, active tools: ${this.activeToolNames.size}`)
 
             const messages = this.buildMessages(message, context)
-            const tools = this.getAllToolDefinitions()
+            const tools = this.getActiveToolDefinitions()
 
             yield* this.streamLLMWithTools(modelId, messages, tools, context)
 
@@ -131,10 +137,12 @@ export class ScopeBrain {
         const allToolResults: AgentToolResult[] = []
         let iterations = 0
         let currentMessages = [...messages]
+        // Use mutable tool list that refreshes when new tools are discovered
+        let currentTools = tools
 
         while (iterations < (this.options.maxToolIterations ?? 10)) {
             const openaiMessages = this.convertToOpenAIMessages(currentMessages)
-            const openaiTools = this.convertToOpenAITools(tools)
+            const openaiTools = this.convertToOpenAITools(currentTools)
 
             const response = await openai.chat.completions.create({
                 model: modelId,
@@ -163,6 +171,15 @@ export class ScopeBrain {
                 })
             )
             allToolResults.push(...toolResults)
+
+            // If search_tools was called, activate discovered tools and refresh tool list
+            for (let i = 0; i < toolCalls.length; i++) {
+                if (toolCalls[i].function.name === 'search_tools') {
+                    this.activateDiscoveredTools(toolResults[i])
+                }
+            }
+            // Refresh tool definitions to include any newly discovered tools
+            currentTools = this.getActiveToolDefinitions()
 
             currentMessages.push({ role: 'assistant', content: textContent })
 
@@ -193,10 +210,11 @@ export class ScopeBrain {
 
         let currentMessages = [...messages]
         let iterations = 0
+        let currentTools = tools
 
         while (iterations < (this.options.maxToolIterations ?? 10)) {
             const openaiMessages = this.convertToOpenAIMessages(currentMessages)
-            const openaiTools = this.convertToOpenAITools(tools)
+            const openaiTools = this.convertToOpenAITools(currentTools)
 
             const stream = await openai.chat.completions.create({
                 model: modelId,
@@ -251,7 +269,14 @@ export class ScopeBrain {
                 const result = await this.executeTool(tc.name, params, context)
                 toolResults.push(result)
                 yield { type: 'tool_result', toolName: tc.name, toolResult: result }
+
+                // If search_tools was called, activate discovered tools
+                if (tc.name === 'search_tools') {
+                    this.activateDiscoveredTools(result)
+                }
             }
+            // Refresh tool definitions to include any newly discovered tools
+            currentTools = this.getActiveToolDefinitions()
 
             currentMessages.push({ role: 'assistant', content: fullText })
 
@@ -324,8 +349,12 @@ export class ScopeBrain {
         return messages
     }
 
-    private getAllToolDefinitions(): LLMToolDefinition[] {
-        return aiToolRegistry.getAll().map(tool => ({
+    /**
+     * Get tool definitions for only the currently active tools.
+     * Starts with core tools (~3), expands as search_tools discovers more.
+     */
+    private getActiveToolDefinitions(): LLMToolDefinition[] {
+        return aiToolRegistry.getByNames([...this.activeToolNames]).map(tool => ({
             type: 'function' as const,
             function: {
                 name: tool.name,
@@ -333,6 +362,25 @@ export class ScopeBrain {
                 parameters: tool.parameters as Record<string, unknown>,
             },
         }))
+    }
+
+    /**
+     * After search_tools executes, extract discovered tool names and activate them.
+     */
+    private activateDiscoveredTools(toolResult: AgentToolResult): void {
+        if (!toolResult.success || !toolResult.result) return
+
+        // search_tools returns { data: Array<{ name, description, domain }> }
+        // But through executeTool, result is the data field directly
+        const results = toolResult.result as unknown
+
+        if (Array.isArray(results)) {
+            for (const item of results) {
+                if (item && typeof item === 'object' && 'name' in item && typeof item.name === 'string') {
+                    this.activeToolNames.add(item.name)
+                }
+            }
+        }
     }
 
     // =========================================================================

@@ -22,6 +22,8 @@ export const getBoardMembersTool = defineTool<Record<string, never>, BoardMember
     description: 'Hämta lista över styrelsemedlemmar (ordförande, VD, ledamöter, suppleanter).',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'parter',
+    keywords: ['styrelse', 'ledamöter', 'styrelsemedlem'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
@@ -71,6 +73,8 @@ export const getBoardMeetingMinutesTool = defineTool<GetBoardMeetingMinutesParam
     description: 'Hämta styrelseprotokoll. Kan filtreras på status.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'parter',
+    keywords: ['styrelsemöte', 'protokoll', 'mötesprotokoll'],
     parameters: {
         type: 'object',
         properties: {
@@ -119,6 +123,8 @@ export const getCompanyMeetingsTool = defineTool<GetCompanyMeetingsParams, Compa
     description: 'Hämta bolagsstämmor och styrelsemöten.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'parter',
+    keywords: ['bolagsstämma', 'möten', 'stämma'],
     parameters: {
         type: 'object',
         properties: {
@@ -174,6 +180,8 @@ export const getAnnualMeetingDeadlineTool = defineTool<{ fiscalYearEnd?: string 
     description: 'Beräkna deadline för årsstämma baserat på räkenskapsårets slut.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'parter',
+    keywords: ['årsstämma', 'deadline', 'datum'],
     parameters: {
         type: 'object',
         properties: {

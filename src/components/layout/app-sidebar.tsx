@@ -40,7 +40,6 @@ const defaultTeam = {
   id: 'default',
   name: 'Mitt Företag',
   logo: Building2,
-  plan: 'Free',
 }
 
 export type SidebarMode = "navigation" | "ai-chat"
@@ -95,7 +94,7 @@ export function AppSidebar({
           id: team.id || `team-${i}`,
           name: team.name,
           logo: i === 0 ? Box : Building2,
-          plan: team.plan || 'Free',
+          orgNumber: team.orgNumber,
         }))
         setTeams(mappedTeams)
       }

@@ -1,15 +1,14 @@
 import { useState, useMemo, useCallback } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useTransactions } from "@/hooks"
+import { useVerifications } from "@/hooks/use-verifications"
 import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
 import { useToast } from "@/components/ui/toast"
-import { basAccounts, type AccountClass } from "@/data/accounts"
-import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
+import { type AccountClass } from "@/data/accounts"
 import { Verification } from "./types"
 
 export function useVerificationsLogic() {
     const toast = useToast()
-    const { transactions, isLoading } = useTransactions()
+    const { verifications: rawVerifications, isLoading } = useVerifications()
     const searchParams = useSearchParams()
     const router = useRouter()
     const accountParam = searchParams.get("account")
@@ -32,35 +31,41 @@ export function useVerificationsLogic() {
         router.push(`/dashboard/bokforing?${params.toString()}`, { scroll: false })
     }, [searchParams, router])
 
-    // Derive verifications from actual booked transactions
+    // Map real verifications to the UI Verification type
     const verifikationer = useMemo(() => {
-        if (!transactions) return []
+        if (!rawVerifications || rawVerifications.length === 0) return []
 
-        const bookedTransactions = transactions.filter(t =>
-            t.status === TRANSACTION_STATUS_LABELS.RECORDED
-        )
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        return rawVerifications.map((v: any) => {
+            const entries = v.rows || v.lines || []
+            const totalDebit = entries.reduce((sum: number, e: { debit?: number }) => sum + (e.debit || 0), 0)
 
-         // Optimization: Create a lookup map for accounts to avoid O(N) search per row
-         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const accountMap = new Map<string, any>();
-        basAccounts.forEach(a => accountMap.set(a.number, a));
+            // Primary account is the first debit entry's account
+            const primaryEntry = entries.find((e: { debit?: number }) => (e.debit || 0) > 0) || entries[0]
+            const konto = primaryEntry?.account || primaryEntry?.account_number?.toString() || '1930'
 
-        return bookedTransactions.map(t => {
-            const accountInfo = accountMap.get(t.account) || accountMap.get(t.category);
+            const series = v.series || 'A'
+            const number = v.number || 0
 
             return {
-                id: t.id,
-                date: t.date,
-                description: t.name,
-                amount: t.amountValue,
-                konto: t.account || "1930",
-                kontoName: accountInfo?.name || t.category || "Okänt konto",
-                hasTransaction: true,
+                id: v.id,
+                verificationNumber: `${series}${number}`,
+                date: v.date || '',
+                description: v.description || '',
+                amount: totalDebit,
+                konto,
+                kontoName: primaryEntry?.account_name || primaryEntry?.description || '',
+                hasTransaction: !!v.source_id,
                 hasUnderlag: true,
-                status: t.status
+                entries: entries.map((e: { account?: string; account_number?: number; debit?: number; credit?: number; description?: string }) => ({
+                    account: e.account || e.account_number?.toString() || '',
+                    debit: e.debit || 0,
+                    credit: e.credit || 0,
+                    description: e.description,
+                })),
             } as Verification
         })
-    }, [transactions])
+    }, [rawVerifications])
 
     // Filter verifikationer by search query and class filter
     const filteredVerifikationer = useMemo(() => {
@@ -140,7 +145,6 @@ export function useVerificationsLogic() {
         filteredVerifikationer,
         stats,
         selection,
-        transactions, // raw transactions if needed
         isLoading
     }
 }

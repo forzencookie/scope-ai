@@ -79,8 +79,9 @@ export interface Team {
   id: string
   name: string
   logo: LucideIcon
-  plan: "Free" | "Pro" | "Max"
+  plan?: "Free" | "Pro" | "Max"
   companyType: CompanyType
+  orgNumber?: string
 }
 
 // ============================================

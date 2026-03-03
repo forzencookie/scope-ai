@@ -17,6 +17,8 @@ export const getVatReportTool = defineTool<{ period?: string; year?: number }, V
     description: 'Visa momsdeklarationer med utgående och ingående moms. Beräknar nettobelopp att betala/få tillbaka. Använd för att förbereda momsredovisning. Vanliga frågor: "dags för momsen", "hur mycket moms ska jag betala", "momsrapporten".',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'skatt',
+    keywords: ['moms', 'momsdeklaration', 'VAT', 'rapport'],
     parameters: {
         type: 'object',
         properties: {

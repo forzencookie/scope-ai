@@ -4,6 +4,8 @@ import { createRoadmap } from "@/services/roadmap-service"
 export const generateRoadmapTool = {
     name: "generate_roadmap",
     description: "Generate a structured step-by-step roadmap for a business goal (e.g., 'Start a company', 'Close fiscal year'). Creates a persistent plan in the database.",
+    domain: 'planning' as const,
+    keywords: ['generera', 'roadmap', 'plan', 'strategi'],
     parameters: {
         type: 'object',
         properties: {

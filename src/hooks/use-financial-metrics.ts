@@ -27,7 +27,7 @@ export interface ExpenseCategory {
 }
 
 export function useFinancialMetrics() {
-    const { verifications, isLoading } = useVerifications()
+    const { verifications, isLoading, error } = useVerifications()
     const { company } = useCompany()
     const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
 
@@ -252,6 +252,7 @@ export function useFinancialMetrics() {
         monthlyMetrics,
         expenseDistribution,
         kpis,
-        isLoading
+        isLoading,
+        error,
     }
 }

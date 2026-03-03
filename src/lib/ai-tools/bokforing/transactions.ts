@@ -31,6 +31,8 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
     description: 'Hämta banktransaktioner för ett datumintervall. Använd för att visa kontoutdrag, hitta specifika betalningar, analysera utgifter, eller förbereda avstämning mot bokföring. Vanliga frågor: "visa mina transaktioner", "vad har jag köpt", "kontoutdrag januari".',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['transaktion', 'kontoutdrag', 'betalning', 'bank'],
     parameters: {
         type: 'object',
         properties: {
@@ -155,6 +157,8 @@ export const categorizeTransactionTool = defineTool<CategorizeTransactionParams,
     description: 'Kategorisera en enskild banktransaktion till ett BAS-konto. Använd efter att ha identifierat vilken typ av kostnad/intäkt transaktionen representerar. T.ex. "Spotify 169 kr" → konto 6993 (IT-tjänster).',
     category: 'write',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['kategorisera', 'bokföra', 'konto', 'transaktion'],
     parameters: {
         type: 'object',
         properties: {
@@ -173,11 +177,40 @@ export const categorizeTransactionTool = defineTool<CategorizeTransactionParams,
         },
         required: ['transactionId', 'category'],
     },
-    execute: async () => {
-        return {
-            success: true,
-            data: { success: true },
-            message: 'Transaktion kategoriserad.',
+    execute: async (params) => {
+        try {
+            const baseUrl = getBaseUrl()
+            const res = await fetch(`${baseUrl}/api/transactions/${params.transactionId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    category: params.category,
+                    account: params.account,
+                }),
+            })
+
+            if (!res.ok) {
+                // Fallback: try PUT if PATCH is not supported
+                const res2 = await fetch(`${baseUrl}/api/transactions/${params.transactionId}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        category: params.category,
+                        account: params.account,
+                    }),
+                })
+                if (!res2.ok) {
+                    return { success: false, error: 'Kunde inte kategorisera transaktion.' }
+                }
+            }
+
+            return {
+                success: true,
+                data: { success: true },
+                message: `Transaktion kategoriserad som "${params.category}"${params.account ? ` (konto ${params.account})` : ''}.`,
+            }
+        } catch {
+            return { success: false, error: 'Kunde inte kategorisera transaktion.' }
         }
     },
 })
@@ -204,6 +237,8 @@ export const createTransactionTool = defineTool<CreateTransactionParams, Created
     description: 'Skapa en manuell verifikation för poster som inte kommer via bank, t.ex. kontant betalning, ägarinsättning, periodisering, eller justering. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['skapa', 'transaktion', 'betalning', 'ny'],
     parameters: {
         type: 'object',
         properties: {
@@ -325,6 +360,8 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
     description: 'Kategorisera flera transaktioner på en gång. Använd när användaren säger "kontera januari", "bokför allt", eller vill snabbt hantera återkommande transaktioner som hyra, löner, eller prenumerationer. Föreslår konton baserat på leverantörsnamn. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['bulk', 'kategorisera', 'flera', 'transaktioner'],
     parameters: {
         type: 'object',
         properties: {
@@ -425,6 +462,8 @@ export const getTransactionsMissingReceiptsTool = defineTool<GetTransactionsMiss
     description: 'Lista transaktioner över 500 kr som saknar bifogat kvitto. Använd för att följa upp dokumentation inför bokslut eller revision. Vanliga frågor: "vilka kvitton saknas", "vad måste jag ladda upp".',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['saknas', 'kvitto', 'transaktion', 'underlag'],
     parameters: {
         type: 'object',
         properties: {
@@ -494,6 +533,8 @@ export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams,
     description: 'Koppla en inbetalning till en kundfaktura för att markera fakturan som betald och bokföra betalningen korrekt. Använd när du ser en betalning på kontot och vill stänga motsvarande faktura. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['matcha', 'betalning', 'faktura', 'koppling'],
     parameters: {
         type: 'object',
         properties: {
@@ -508,23 +549,56 @@ export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams,
         },
         required: ['transactionId', 'invoiceId'],
     },
-    execute: async (params) => {
-        // In a real implementation, this would:
-        // 1. Fetch the transaction
-        // 2. Fetch the invoice
-        // 3. Verify amounts match
-        // 4. Create verification entries
-        // 5. Mark invoice as paid
+    execute: async (params, context) => {
+        // If confirmed, call the payment API and update transaction status
+        if (context?.isConfirmed) {
+            try {
+                const baseUrl = getBaseUrl()
 
+                // 1. Call invoice payment endpoint (creates pending booking + marks invoice as Betald)
+                const payRes = await fetch(`${baseUrl}/api/invoices/${params.invoiceId}/pay`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ transactionId: params.transactionId }),
+                })
+
+                if (!payRes.ok) {
+                    const err = await payRes.json().catch(() => ({}))
+                    return { success: false, error: err.error || 'Kunde inte registrera betalning.' }
+                }
+
+                // 2. Update transaction status to booked
+                await fetch(`${baseUrl}/api/transactions/${params.transactionId}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: 'Bokförd' }),
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        matched: true,
+                        transactionId: params.transactionId,
+                        invoiceId: params.invoiceId,
+                        amount: 0,
+                    },
+                    message: `Betalning matchad mot faktura och markerad som betald.`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte matcha betalning mot faktura.' }
+            }
+        }
+
+        // Preflight: return confirmation request
         return {
             success: true,
             data: {
-                matched: true,
+                matched: false,
                 transactionId: params.transactionId,
                 invoiceId: params.invoiceId,
-                amount: 0, // Would be fetched
+                amount: 0,
             },
-            message: `Betalning matchad mot faktura.`,
+            message: `Betalning förberedd för matchning mot faktura.`,
             confirmationRequired: {
                 title: 'Matcha betalning',
                 description: 'Koppla betalningen till fakturan och markera som betald',

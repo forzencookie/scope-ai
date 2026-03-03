@@ -41,6 +41,8 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
     description: 'Kör en komplett balanskontroll som kontrollerar balansräkningsprov, momsavstämning, kundfordringar, leverantörsskulder, löneavstämning, avskrivningar, eget kapital och periodiseringar. Samlar data från hela bokföringen och korsrefererar som en revisor.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['revision', 'balansräkning', 'granskning', 'kontroll'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()

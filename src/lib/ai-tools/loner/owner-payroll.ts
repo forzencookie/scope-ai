@@ -61,6 +61,8 @@ export const calculateSelfEmploymentFeesTool = defineTool<CalculateSelfEmploymen
     description: 'Beräkna egenavgifter för enskild näringsidkare eller handelsbolagsdelägare.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['egenavgift', 'enskild firma', 'avgift'],
     parameters: {
         type: 'object',
         properties: {
@@ -132,6 +134,8 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
     description: 'Registrera ett delägaruttag (lön, utdelning eller privat uttag).',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'loner',
+    keywords: ['delägaruttag', 'uttag', 'ägare'],
     parameters: {
         type: 'object',
         properties: {
@@ -263,6 +267,8 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
     description: 'Beräkna optimal fördelning mellan lön och utdelning enligt 3:12-reglerna för fåmansbolag.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['3:12', 'optimera', 'utdelning', 'lön'],
     parameters: {
         type: 'object',
         properties: {

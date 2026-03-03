@@ -45,6 +45,8 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
     description: 'Hämta resultaträkning med intäkter, kostnader och årets resultat. Visar hur lönsamt företaget är. Vanliga frågor: "hur går det", "vad är vinsten", "resultat i år".',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['resultaträkning', 'resultat', 'intäkter', 'kostnader'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()

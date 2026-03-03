@@ -21,6 +21,8 @@ const getInvestmentSummaryTool = defineTool({
     parameters: { type: 'object' as const, properties: {} },
     requiresConfirmation: false,
     category: 'read',
+    domain: 'skatt',
+    keywords: ['investering', 'aktier', 'portfölj'],
     execute: async () => {
         const summary = await getInvestmentSummary()
         return {
@@ -37,6 +39,8 @@ const listShareHoldingsTool = defineTool({
     parameters: { type: 'object' as const, properties: {} },
     requiresConfirmation: false,
     category: 'read',
+    domain: 'skatt',
+    keywords: ['aktieinnehav', 'aktier', 'innehav'],
     execute: async () => {
         const shares = await listShareHoldings()
         return {

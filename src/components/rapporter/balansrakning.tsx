@@ -5,12 +5,14 @@ import { CollapsibleTableSection } from "@/components/ui/collapsible-table"
 import { ReportLayout } from "@/components/shared"
 import { useNavigateToAIChat, type PageContext } from "@/lib/ai/context"
 import { useRouter } from "next/navigation"
-import { Download } from "lucide-react"
+import { useMemo } from "react"
+import { Download, AlertTriangle } from "lucide-react"
 import { useFinancialReports } from "@/hooks/use-financial-reports"
 import { SectionCard } from "@/components/ui/section-card"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
+import { formatCurrency } from "@/lib/utils"
 
 // ============================================
 // Balansräkning Component
@@ -22,6 +24,19 @@ export function BalansrakningContent() {
     const router = useRouter()
     const toast = useToast()
     const { balanceSheetSections, isLoading, currentYear, previousYear } = useFinancialReports()
+
+    // Balance check: assets must equal equity + liabilities
+    const balanceDiff = useMemo(() => {
+        if (!balanceSheetSections?.length) return 0
+        const assetTitles = ["Anläggningstillgångar", "Omsättningstillgångar"]
+        const totalAssets = balanceSheetSections
+            .filter(s => assetTitles.includes(s.title))
+            .reduce((sum, s) => sum + s.total, 0)
+        const totalEqLiab = balanceSheetSections
+            .filter(s => !assetTitles.includes(s.title))
+            .reduce((sum, s) => sum + s.total, 0)
+        return Math.round(totalAssets - totalEqLiab)
+    }, [balanceSheetSections])
 
     const handleExportPDF = async () => {
         toast.info("Exporterar", "Förbereder PDF...")
@@ -66,6 +81,16 @@ export function BalansrakningContent() {
                 </Button>
             }
         >
+            {Math.abs(balanceDiff) > 1 && (
+                <div className="flex items-center gap-3 rounded-lg border border-destructive/50 bg-destructive/10 p-4 text-sm text-destructive">
+                    <AlertTriangle className="h-5 w-5 shrink-0" />
+                    <span>
+                        Balansräkningen stämmer inte. Tillgångar och eget kapital + skulder skiljer sig med{" "}
+                        <strong>{formatCurrency(balanceDiff)}</strong>.
+                    </span>
+                </div>
+            )}
+
             <SectionCard
                 title="Balanskontroll"
                 description="Kontrollera att balansräkningen stämmer — momsavstämning, kundfordringar, avskrivningar och mer."

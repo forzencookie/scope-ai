@@ -110,8 +110,8 @@ export const payrollService = {
      */
     async getStats(): Promise<PayrollStats> {
         const supabase = getSupabaseClient()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data, error } = await supabase.rpc('get_payroll_stats') as { data: any, error: any }
+        const { data: rawData, error } = await supabase.rpc('get_payroll_stats')
+        const data = rawData as Record<string, unknown> | null
 
         const getCurrentPeriod = () => {
             const now = new Date()
@@ -122,7 +122,7 @@ export const payrollService = {
 
         const fallbackPeriod = getCurrentPeriod()
 
-        if (error || !data || data.employeeCount === 0) {
+        if (error || !data || Number(data.employeeCount) === 0) {
             return {
                 currentPeriod: fallbackPeriod,
                 employeeCount: 0,
@@ -131,8 +131,9 @@ export const payrollService = {
             }
         }
 
+        const period = String(data.currentPeriod || '')
         return {
-            currentPeriod: (data.currentPeriod && data.currentPeriod !== 'Ingen period') ? data.currentPeriod : fallbackPeriod,
+            currentPeriod: (period && period !== 'Ingen period') ? period : fallbackPeriod,
             employeeCount: Number(data.employeeCount) || 0,
             totalGross: Number(data.totalGross) || 0,
             totalTax: Number(data.totalTax) || 0,
@@ -145,8 +146,7 @@ export const payrollService = {
     async getEmployees(): Promise<Employee[]> {
         const supabase = getSupabaseClient()
         const { data, error } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('employees' as any)
+            .from('employees')
             .select('*')
             .order('name')
 
@@ -163,8 +163,7 @@ export const payrollService = {
     async getPayslips(year?: number, month?: number): Promise<Payslip[]> {
         const supabase = getSupabaseClient()
         let query = supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('payslips' as any)
+            .from('payslips')
             .select('*, employees(name)')
             .order('year', { ascending: false })
             .order('month', { ascending: false })
@@ -187,8 +186,7 @@ export const payrollService = {
     async getAGIReports(year?: number): Promise<AGIReport[]> {
         const supabase = getSupabaseClient()
         let query = supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('agi_reports' as any)
+            .from('agireports')
             .select('*')
             .order('year', { ascending: false })
             .order('month', { ascending: false })

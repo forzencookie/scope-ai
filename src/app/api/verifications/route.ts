@@ -21,16 +21,22 @@ export async function GET() {
 
         const verifications = await userDb.verifications.list({ limit: 200 });
 
-        // Enrich each verification with its relational journal lines
-        const enriched = await Promise.all(
-            verifications.map(async (v) => {
-                const lines = await userDb.verificationLines.listByVerification(v.id);
-                return {
-                    ...v,
-                    lines,
-                };
-            })
-        );
+        // Batch-fetch all verification lines in a single query (fixes N+1)
+        const verificationIds = verifications.map(v => v.id);
+        const allLines = await userDb.verificationLines.listByVerificationIds(verificationIds);
+
+        // Group lines by verification_id
+        const linesByVerification = new Map<string, typeof allLines>();
+        for (const line of allLines) {
+            const existing = linesByVerification.get(line.verification_id) || [];
+            existing.push(line);
+            linesByVerification.set(line.verification_id, existing);
+        }
+
+        const enriched = verifications.map(v => ({
+            ...v,
+            lines: linesByVerification.get(v.id) || [],
+        }));
 
         return NextResponse.json({
             verifications: enriched,

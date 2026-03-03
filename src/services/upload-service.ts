@@ -46,14 +46,22 @@ export async function uploadReceiptFile(file: File, userId: string): Promise<Upl
             return { success: false, error: error.message }
         }
 
-        // Get public URL (even for private buckets, signed URLs work for the owner)
-        const { data: urlData } = supabase.storage
+        // Create signed URL for private bucket (1 hour expiry)
+        const { data: signedData, error: signError } = await supabase.storage
             .from('receipts')
-            .getPublicUrl(data.path)
+            .createSignedUrl(data.path, 3600)
+
+        if (signError || !signedData) {
+            // Fallback to public URL if signing fails
+            const { data: urlData } = supabase.storage
+                .from('receipts')
+                .getPublicUrl(data.path)
+            return { success: true, url: urlData.publicUrl, path: data.path }
+        }
 
         return {
             success: true,
-            url: urlData.publicUrl,
+            url: signedData.signedUrl,
             path: data.path
         }
     } catch (error) {

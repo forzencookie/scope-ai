@@ -5,7 +5,7 @@
  * and execution with audit logging.
  */
 
-import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext } from './types'
+import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext, AIToolDomain } from './types'
 import { db } from '../database/server-db'
 
 // Re-export types that tools may need
@@ -57,6 +57,61 @@ class AIToolRegistry {
      */
     getByCategory(category: AITool['category']): AITool[] {
         return this.getAll().filter(t => t.category === category)
+    }
+
+    /**
+     * Get tools marked as core (always loaded)
+     */
+    getCoreTools(): AITool[] {
+        return this.getAll().filter(t => t.coreTool === true)
+    }
+
+    /**
+     * Search tools by query string. Returns lightweight metadata, not full schemas.
+     * Scoring: name match = 3, keyword match = 2, description match = 1, domain match = 1.
+     */
+    search(query: string, limit: number = 10): Array<{ name: string; description: string; domain?: AIToolDomain }> {
+        const terms = query.toLowerCase().split(/\s+/).filter(Boolean)
+        if (terms.length === 0) return []
+
+        const scored: Array<{ tool: AITool; score: number }> = []
+
+        for (const tool of this.tools.values()) {
+            let score = 0
+            const nameLower = tool.name.toLowerCase()
+            const descLower = tool.description.toLowerCase()
+            const keywordsLower = (tool.keywords || []).map(k => k.toLowerCase())
+            const domainLower = (tool.domain || '').toLowerCase()
+
+            for (const term of terms) {
+                if (nameLower.includes(term)) score += 3
+                if (keywordsLower.some(k => k.includes(term))) score += 2
+                if (descLower.includes(term)) score += 1
+                if (domainLower.includes(term)) score += 1
+            }
+
+            if (score > 0) {
+                scored.push({ tool, score })
+            }
+        }
+
+        return scored
+            .sort((a, b) => b.score - a.score)
+            .slice(0, limit)
+            .map(({ tool }) => ({
+                name: tool.name,
+                description: tool.description,
+                domain: tool.domain,
+            }))
+    }
+
+    /**
+     * Get full tool definitions by name array
+     */
+    getByNames(names: string[]): AITool[] {
+        return names
+            .map(name => this.tools.get(name))
+            .filter((t): t is AITool => t !== undefined)
     }
 
     /**

@@ -223,6 +223,7 @@ export function CompanyProvider({
               isCloselyHeld: company.isCloselyHeld,
               hasEmployees: company.hasEmployees,
               hasMomsRegistration: company.hasMomsRegistration,
+              hasFskatt: company.hasFskatt,
               shareCapital: company.shareCapital,
               totalShares: company.totalShares,
             })

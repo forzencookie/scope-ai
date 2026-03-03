@@ -15,7 +15,7 @@ import type { TransactionFilters, SortConfig, Transaction, TransactionWithAI } f
 import type { TransactionStatus } from "@/lib/status-types"
 import * as transactionService from "@/services/transactions"
 import { useAuth } from "./use-auth"
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { checkPeriodLocked } from './use-month-closing'
 
 // ============================================================================
 // Query Keys - Centralized key management for cache invalidation
@@ -84,18 +84,8 @@ export function useTransactions() {
                 // Check period lock before booking a transaction
                 const transaction = transactions.find(t => t.id === id)
                 if (transaction?.date) {
-                    const txDate = new Date(transaction.date)
-                    const year = txDate.getFullYear()
-                    const month = txDate.getMonth() + 1
-                    const periodId = `${year}-M${String(month).padStart(2, '0')}`
-                    const supabase = getSupabaseClient()
-                    const { data: period } = await supabase
-                        .from('financialperiods')
-                        .select('status')
-                        .eq('id', periodId)
-                        .single()
-
-                    if (period?.status === 'closed') {
+                    const locked = await checkPeriodLocked(transaction.date)
+                    if (locked) {
                         throw new Error('Perioden är låst. Lås upp månaden först.')
                     }
                 }

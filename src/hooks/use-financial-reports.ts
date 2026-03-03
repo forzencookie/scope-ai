@@ -3,6 +3,8 @@ import { useMemo } from "react"
 import { getSupabaseClient } from '@/lib/database/supabase'
 import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports"
 import { useCachedQuery } from "./use-cached-query"
+import { useCompany } from "@/providers/company-provider"
+import { getFiscalYearRange } from "@/lib/bookkeeping/utils"
 
 interface BalanceData {
     bsBalances: AccountBalance[]
@@ -11,31 +13,37 @@ interface BalanceData {
     prevPlBalances: AccountBalance[]
 }
 
-async function fetchAllBalances(): Promise<BalanceData> {
+async function fetchAllBalances(fiscalYearEnd: string): Promise<BalanceData> {
     const supabase = getSupabaseClient()
-    const year = new Date().getFullYear()
-    const prevYear = year - 1
+
+    const now = new Date()
+    const currentFY = getFiscalYearRange(fiscalYearEnd, now)
+
+    // Previous fiscal year: reference a date one year before the current FY start
+    const prevRefDate = new Date(currentFY.start)
+    prevRefDate.setFullYear(prevRefDate.getFullYear() - 1)
+    const previousFY = getFiscalYearRange(fiscalYearEnd, prevRefDate)
 
     const [bsResult, plResult, prevBsResult, prevPlResult] = await Promise.all([
-        // Balance Sheet: All time to current year end
+        // Balance Sheet: All time to current FY end
         supabase.rpc('get_account_balances', {
             p_start_date: '2000-01-01',
-            p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
+            p_end_date: currentFY.endStr
         }),
-        // P&L: Current Year
+        // P&L: Current Fiscal Year
         supabase.rpc('get_account_balances', {
-            p_start_date: new Date(year, 0, 1).toISOString().split('T')[0],
-            p_end_date: new Date(year, 11, 31).toISOString().split('T')[0]
+            p_start_date: currentFY.startStr,
+            p_end_date: currentFY.endStr
         }),
-        // Balance Sheet: All time to previous year end
+        // Balance Sheet: All time to previous FY end
         supabase.rpc('get_account_balances', {
             p_start_date: '2000-01-01',
-            p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+            p_end_date: previousFY.endStr
         }),
-        // P&L: Previous Year
+        // P&L: Previous Fiscal Year
         supabase.rpc('get_account_balances', {
-            p_start_date: new Date(prevYear, 0, 1).toISOString().split('T')[0],
-            p_end_date: new Date(prevYear, 11, 31).toISOString().split('T')[0]
+            p_start_date: previousFY.startStr,
+            p_end_date: previousFY.endStr
         })
     ])
 
@@ -59,9 +67,12 @@ async function fetchAllBalances(): Promise<BalanceData> {
 }
 
 export function useFinancialReports() {
+    const { company } = useCompany()
+    const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
+
     const { data: balances, isLoading } = useCachedQuery<BalanceData>({
-        cacheKey: `financial-reports-${new Date().getFullYear()}`,
-        queryFn: fetchAllBalances,
+        cacheKey: `financial-reports-${fiscalYearEnd}-${new Date().getFullYear()}`,
+        queryFn: () => fetchAllBalances(fiscalYearEnd),
         ttlMs: 3 * 60 * 1000, // 3 minutes — balances don't change frequently
     })
 
@@ -108,9 +119,21 @@ export function useFinancialReports() {
         return mergeComparativeData(currentSections, previousSections)
     }, [bsBalances, prevBsBalances, isLoading])
 
-    // Current and previous year for display
-    const currentYear = new Date().getFullYear()
-    const previousYear = currentYear - 1
+    // Fiscal year display values
+    const currentFY = getFiscalYearRange(fiscalYearEnd, new Date())
+    const prevRefDate = new Date(currentFY.start)
+    prevRefDate.setFullYear(prevRefDate.getFullYear() - 1)
+    const previousFY = getFiscalYearRange(fiscalYearEnd, prevRefDate)
+
+    // For calendar year, show just the year; for broken FY, show range
+    const formatFYLabel = (fy: { start: Date; end: Date }) => {
+        const startYear = fy.start.getFullYear()
+        const endYear = fy.end.getFullYear()
+        return startYear === endYear ? String(endYear) : `${startYear}/${endYear}`
+    }
+
+    const currentYear = formatFYLabel(currentFY)
+    const previousYear = formatFYLabel(previousFY)
 
     return {
         incomeStatement,
@@ -132,15 +155,25 @@ function mergeComparativeData(
 ): FinancialSection[] {
     if (!previousSections) return currentSections
 
-    return currentSections.map((section, sectionIdx) => {
-        const prevSection = previousSections[sectionIdx]
+    // Build a lookup map for previous sections by title
+    const prevByTitle = new Map(previousSections.map(s => [s.title, s]))
+
+    return currentSections.map((section) => {
+        const prevSection = prevByTitle.get(section.title)
+
+        // Build a lookup map for previous items by account id
+        const prevItemById = new Map(
+            (prevSection?.items ?? [])
+                .filter(i => i.id)
+                .map(i => [i.id!, i])
+        )
 
         return {
             ...section,
             previousTotal: prevSection?.total ?? 0,
-            items: section.items.map((item, itemIdx) => ({
+            items: section.items.map((item) => ({
                 ...item,
-                previousValue: prevSection?.items[itemIdx]?.value ?? 0
+                previousValue: (item.id ? prevItemById.get(item.id)?.value : undefined) ?? 0
             }))
         }
     })

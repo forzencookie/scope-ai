@@ -24,6 +24,8 @@ const listPeriodiseringsfondsTools = defineTool({
     parameters: { type: 'object' as const, properties: {} },
     requiresConfirmation: false,
     category: 'read',
+    domain: 'skatt',
+    keywords: ['periodiseringsfond', 'fond', 'lista'],
     execute: async () => {
         const fonder = await listPeriodiseringsfonder()
         return {
@@ -37,6 +39,8 @@ const listPeriodiseringsfondsTools = defineTool({
 const createPeriodiseringsfondTool = defineTool({
     name: 'create_periodiseringsfond',
     description: 'Create a new periodiseringsfond to defer tax. Max 25% of profit for AB, 30% for EF. Must be dissolved within 6 years.',
+    domain: 'skatt',
+    keywords: ['periodiseringsfond', 'skapa', 'avsätta'],
     parameters: {
         type: 'object' as const,
         properties: {
@@ -71,6 +75,8 @@ const createPeriodiseringsfondTool = defineTool({
 const dissolvePeriodiseringsfondTool = defineTool({
     name: 'dissolve_periodiseringsfond',
     description: 'Dissolve (återför) a periodiseringsfond. Can be partial or full dissolution.',
+    domain: 'skatt',
+    keywords: ['periodiseringsfond', 'upplösa', 'återföra'],
     parameters: {
         type: 'object' as const,
         properties: {
@@ -93,6 +99,8 @@ const dissolvePeriodiseringsfondTool = defineTool({
 const getExpiringFonderTool = defineTool({
     name: 'get_expiring_fonder',
     description: 'Get periodiseringsfonder that are expiring within a specified number of months.',
+    domain: 'skatt',
+    keywords: ['periodiseringsfond', 'förfaller', 'utgår'],
     parameters: {
         type: 'object' as const,
         properties: {

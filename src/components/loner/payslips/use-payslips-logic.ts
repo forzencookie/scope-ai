@@ -1,7 +1,8 @@
 "use client"
 
-import { useState, useMemo, useEffect } from "react"
+import { useState, useMemo, useEffect, useCallback } from "react"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
+import { useToast } from "@/components/ui/toast"
 
 export type Payslip = {
     id: string | number
@@ -15,6 +16,7 @@ export type Payslip = {
 }
 
 export function usePayslipsLogic() {
+    const toast = useToast()
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
     const [allPayslips, setAllPayslips] = useState<Payslip[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -143,10 +145,38 @@ export function usePayslipsLogic() {
         } catch { /* ignore */ }
     }
 
-    const handleDelete = (ids: string[]) => {
-        setAllPayslips(prev => prev.filter(p => !ids.includes(String(p.id))))
-        setSelectedIds(new Set())
-    }
+    const handleMarkPaid = useCallback(async (id: string) => {
+        try {
+            const res = await fetch(`/api/payroll/payslips/${id}`, {
+                method: 'PUT',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status: 'paid' }),
+            })
+            if (!res.ok) throw new Error('Failed to update')
+            toast.success("Lönebesked markerat som betalt")
+            fetchPayslips()
+        } catch {
+            toast.error("Kunde inte uppdatera", "Ett fel uppstod")
+        }
+    }, [toast])
+
+    const handleDelete = useCallback(async (ids: string[]) => {
+        try {
+            const results = await Promise.all(
+                ids.map(id => fetch(`/api/payroll/payslips/${id}`, { method: 'DELETE' }))
+            )
+            const failed = results.filter(r => !r.ok)
+            if (failed.length > 0) {
+                toast.error("Kunde inte ta bort alla", `${failed.length} lönebesked kunde inte tas bort (kanske inte utkast).`)
+            } else {
+                toast.success("Borttaget", `${ids.length} lönebesked borttagna`)
+            }
+            setSelectedIds(new Set())
+            fetchPayslips()
+        } catch {
+            toast.error("Kunde inte ta bort", "Ett fel uppstod")
+        }
+    }, [toast])
 
     const clearSelection = () =>  setSelectedIds(new Set())
 
@@ -176,6 +206,7 @@ export function usePayslipsLogic() {
         toggleSelection,
         toggleAll,
         handlePayslipCreated,
+        handleMarkPaid,
         handleDelete,
         clearSelection
     }

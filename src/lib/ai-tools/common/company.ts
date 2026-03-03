@@ -28,6 +28,8 @@ export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | 
     },
     requiresConfirmation: false,
     category: 'read',
+    domain: 'common',
+    keywords: ['företag', 'bolag', 'organisationsnummer', 'info'],
     execute: async (params, context) => {
         // Get user ID from params or context
         const userId = params?.userId || context?.userId
@@ -96,6 +98,8 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
     description: 'Hämta en sammanfattning av företagets ekonomiska status.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['statistik', 'ekonomi', 'omsättning', 'resultat'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const baseUrl = getBaseUrl()

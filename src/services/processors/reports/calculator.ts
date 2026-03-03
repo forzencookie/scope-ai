@@ -65,6 +65,7 @@ export const FinancialReportCalculator = {
     let liabilitiesLong = 0
     let liabilitiesShort = 0
     let untaxedReserves = 0
+    let provisions = 0
 
     balances.forEach(b => {
       const acc = parseInt(b.account)
@@ -74,12 +75,13 @@ export const FinancialReportCalculator = {
       else if (acc >= 1400 && acc <= 1999) assetsCurrent += -balance
       else if (acc >= 2000 && acc <= 2099) equity += balance
       else if (acc >= 2100 && acc <= 2199) untaxedReserves += balance
+      else if (acc >= 2200 && acc <= 2299) provisions += balance
       else if (acc >= 2300 && acc <= 2399) liabilitiesLong += balance
       else if (acc >= 2400 && acc <= 2999) liabilitiesShort += balance
     })
 
     const totalAssets = assetsFixed + assetsCurrent
-    const totalEquityAndLiabilities = equity + untaxedReserves + liabilitiesLong + liabilitiesShort
+    const totalEquityAndLiabilities = equity + untaxedReserves + provisions + liabilitiesLong + liabilitiesShort
 
     return [
       { label: "TILLGÅNGAR", value: 0, isHeader: true, highlight: false },
@@ -89,6 +91,7 @@ export const FinancialReportCalculator = {
       { label: "EGET KAPITAL OCH SKULDER", value: 0, isHeader: true, highlight: false },
       { label: "Eget kapital", value: equity, isHeader: false, highlight: false },
       { label: "Obeskattade reserver", value: untaxedReserves, isHeader: false, highlight: false },
+      { label: "Avsättningar", value: provisions, isHeader: false, highlight: false },
       { label: "Långfristiga skulder", value: liabilitiesLong, isHeader: false, highlight: false },
       { label: "Kortfristiga skulder", value: liabilitiesShort, isHeader: false, highlight: false },
       { label: "SUMMA EGET KAPITAL OCH SKULDER", value: totalEquityAndLiabilities, isHeader: false, highlight: true },
@@ -181,6 +184,7 @@ export const FinancialReportCalculator = {
     const currentAssets = getItemsInRange(1400, 1999)
     const equityItems = getItemsInRange(2000, 2099, true)
     const untaxedItems = getItemsInRange(2100, 2199, true)
+    const provisionItems = getItemsInRange(2200, 2299, true)
     const longLiabilities = getItemsInRange(2300, 2399, true)
     const shortLiabilities = getItemsInRange(2400, 2999, true)
 
@@ -189,6 +193,7 @@ export const FinancialReportCalculator = {
       { title: "Omsättningstillgångar", items: currentAssets, total: currentAssets.reduce((sum, i) => sum + i.value, 0) },
       { title: "Eget kapital", items: equityItems, total: equityItems.reduce((sum, i) => sum + i.value, 0) },
       { title: "Obeskattade reserver", items: untaxedItems, total: untaxedItems.reduce((sum, i) => sum + i.value, 0) },
+      { title: "Avsättningar", items: provisionItems, total: provisionItems.reduce((sum, i) => sum + i.value, 0) },
       { title: "Långfristiga skulder", items: longLiabilities, total: longLiabilities.reduce((sum, i) => sum + i.value, 0) },
       { title: "Kortfristiga skulder", items: shortLiabilities, total: shortLiabilities.reduce((sum, i) => sum + i.value, 0) },
     ]
@@ -223,6 +228,7 @@ export const FinancialReportCalculator = {
       { title: "Eget kapital och skulder", items: [], total: 0 },
       { title: "Eget kapital", items: [], total: 0 },
       { title: "Obeskattade reserver", items: [], total: 0 },
+      { title: "Avsättningar", items: [], total: 0 },
       { title: "Långfristiga skulder", items: [], total: 0 },
       { title: "Kortfristiga skulder", items: [], total: 0 },
     ]

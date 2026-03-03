@@ -19,6 +19,8 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
     description: 'Kör en komplett resultatkontroll som analyserar intäkter, kostnader, bruttovinst, personalkostnader, avskrivningar och periodresultat. Jämför med tidigare perioder och identifierar avvikelser som en revisor.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['revision', 'resultaträkning', 'granskning'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()

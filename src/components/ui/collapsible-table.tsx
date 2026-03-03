@@ -241,8 +241,8 @@ interface CollapsibleTableSectionProps {
     hideTotalHeader?: boolean
     neutral?: boolean     // If true, don't use green/red coloring
     showComparative?: boolean // Show previous year column
-    currentYear?: number  // Current year label
-    previousYear?: number // Previous year label
+    currentYear?: number | string  // Current year label
+    previousYear?: number | string // Previous year label
 }
 
 export function CollapsibleTableSection({

@@ -48,6 +48,8 @@ export const getPayslipsTool = defineTool<GetPayslipsParams, Payslip[]>({
     description: 'Hämta genererade lönebesked för anställda. Kan filtrera på period eller person. Använd för att visa tidigare utbetalningar eller skapa underlag till AGI.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['lönebesked', 'lön', 'lönespecifikation'],
     parameters: {
         type: 'object',
         properties: {
@@ -82,6 +84,8 @@ export const getEmployeesTool = defineTool<Record<string, never>, Employee[]>({
     description: 'Visa alla anställda med deras grundlön, anställningsform och roll. Använd för att få överblick eller inför lönekörning.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['anställda', 'personal', 'medarbetare'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const employees = await payrollService.getEmployees()
@@ -108,6 +112,8 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
     description: 'Kör lönekörning för en månad. Beräknar nettolön, skatt och arbetsgivaravgifter. Skapar lönebesked för alla eller valda anställda. Vanliga frågor: "gör lönerna", "kör lönerna för mars", "betala ut löner". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'loner',
+    keywords: ['lönekörning', 'kör lön', 'nettolön', 'skatt', 'anställd'],
     parameters: {
         type: 'object',
         properties: {
@@ -160,10 +166,15 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             const taxableIncome = gross + benefitTaxValue
 
             // Look up tax deduction from SKV tables using employee's table number
-            // Column 1 = standard (no church tax); fallback to approximate rate if no bracket found
-            const tableNumber = emp.taxTable || 33
-            const skvTax = await taxService.lookupTaxDeduction(currentYear, tableNumber, 1, taxableIncome)
-            const tax = skvTax ?? Math.round(taxableIncome * rates.marginalTaxRateApprox)
+            // Column 1 = standard (no church tax)
+            if (!emp.taxTable) {
+                return { success: false, error: `Skattetabell saknas för ${emp.name}. Ange skattetabell i personalregistret innan lönekörning.` }
+            }
+            const skvTax = await taxService.lookupTaxDeduction(currentYear, emp.taxTable, 1, taxableIncome)
+            if (skvTax === null) {
+                return { success: false, error: `Skattetabell ${emp.taxTable} kunde inte slås upp för ${emp.name} (${currentYear}). Kontrollera att skattetabellen finns i systemet.` }
+            }
+            const tax = skvTax
 
             payslips.push({
                 id: `new-${emp.id}`,
@@ -282,6 +293,8 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
     description: 'Visa arbetsgivardeklarationer (AGI) som skickats eller är klara för inskickning. Innehåller summor för utbetald lön, skatt och arbetsgivaravgifter.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'loner',
+    keywords: ['AGI', 'arbetsgivardeklaration', 'rapport'],
     parameters: {
         type: 'object',
         properties: {
@@ -344,6 +357,8 @@ export const submitAGITool = defineTool<SubmitAGIParams, { submitted: boolean; r
     description: 'Skicka arbetsgivardeklaration (AGI) till Skatteverket. Innehåller alla löner och skatteavdrag för perioden. Deadline: 12:e varje månad. Vanliga frågor: "skicka AGI", "skicka in löneuppgifter". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'loner',
+    keywords: ['AGI', 'deklaration', 'skicka', 'skatteverket'],
     parameters: {
         type: 'object',
         properties: {

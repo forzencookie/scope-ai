@@ -99,7 +99,7 @@ function companyToTeam(company: CompanyInfo): Team {
     return {
         id: company.id,
         name: company.name,
-        plan: 'Free', // TODO: derive from subscription status
+        orgNumber: company.orgNumber || undefined,
     } as Team
 }
 

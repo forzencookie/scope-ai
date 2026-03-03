@@ -4,6 +4,7 @@ import { taxService, type TaxRates } from '@/services/tax-service'
 export interface TaxParameters {
     ibb: number
     schablonRate: number
+    rantebaseratRate: number
 }
 
 export const taxParameterQueryKeys = {
@@ -21,9 +22,10 @@ export function useTaxParameters(year: number) {
     const { data, isLoading, error } = useQuery({
         queryKey: taxParameterQueryKeys.params(year),
         queryFn: async (): Promise<TaxParameters> => {
-            const [ibb, rate] = await Promise.all([
+            const [ibb, rate, ranteRate] = await Promise.all([
                 taxService.getSystemParameter<number>('ibb', year),
-                taxService.getSystemParameter<number>('k10_schablon_rate', year)
+                taxService.getSystemParameter<number>('k10_schablon_rate', year),
+                taxService.getSystemParameter<number>('rantebaserat_rate', year)
             ])
 
             if (ibb == null) {
@@ -36,6 +38,7 @@ export function useTaxParameters(year: number) {
             return {
                 ibb: Number(ibb),
                 schablonRate: Number(rate),
+                rantebaseratRate: Number(ranteRate ?? 0.0976),
             }
         },
         staleTime: 30 * 60 * 1000, // Tax params rarely change — 30 min

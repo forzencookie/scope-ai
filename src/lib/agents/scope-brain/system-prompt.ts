@@ -57,6 +57,9 @@ Efter svaret, erbjud nästa logiska steg.
 Scenarierna nedan visar hur du hanterar vanliga situationer.
 Matcha användarens förfrågan mot närmaste scenario och följ det mönstret.
 
+### 6. Verktygssökning
+Du har tillgång till ett begränsat antal verktyg. Om du behöver en funktion som inte finns bland dina nuvarande verktyg, använd search_tools för att hitta rätt verktyg. Sök brett — t.ex. "skapa faktura", "kör lönerna", "beräkna skatt".
+
 ---
 
 ## Svarsformat
@@ -116,6 +119,12 @@ export function buildSystemPrompt(context: AgentContext): string {
     // 3. Company context
     parts.push(buildCompanyContext(context))
 
+    // 3.5. Activity snapshot (if available)
+    const snapshot = formatActivitySnapshot(context.sharedMemory)
+    if (snapshot) {
+        parts.push(snapshot)
+    }
+
     // 4. User memory (if provided in context)
     const memory = formatUserMemory(context.sharedMemory)
     if (memory) {
@@ -171,6 +180,39 @@ function buildCompanyContext(context: AgentContext): string {
     }
 
     return section
+}
+
+/**
+ * Format activity snapshot for inclusion in prompt.
+ * Gives Scooby immediate awareness of the company's current state (~50 tokens).
+ */
+function formatActivitySnapshot(memory: Record<string, unknown>): string | null {
+    const snapshot = memory?.activitySnapshot as {
+        pendingTransactions?: number
+        overdueInvoices?: number
+        overdueInvoiceTotal?: number
+        monthClosingStatus?: string
+    } | undefined
+
+    if (!snapshot) return null
+
+    const lines: string[] = ['## Aktuell status\n']
+
+    if (snapshot.pendingTransactions !== undefined && snapshot.pendingTransactions > 0) {
+        lines.push(`- ${snapshot.pendingTransactions} obokförda transaktioner`)
+    }
+    if (snapshot.overdueInvoices !== undefined && snapshot.overdueInvoices > 0) {
+        const total = snapshot.overdueInvoiceTotal
+            ? ` (totalt ${snapshot.overdueInvoiceTotal.toLocaleString('sv-SE')} kr)`
+            : ''
+        lines.push(`- ${snapshot.overdueInvoices} förfallen${snapshot.overdueInvoices > 1 ? 'a' : ''} faktura${snapshot.overdueInvoices > 1 ? 'or' : ''}${total}`)
+    }
+    if (snapshot.monthClosingStatus) {
+        lines.push(`- Månadsavslut: ${snapshot.monthClosingStatus}`)
+    }
+
+    // Only return if we have any data beyond the header
+    return lines.length > 1 ? lines.join('\n') : null
 }
 
 /**

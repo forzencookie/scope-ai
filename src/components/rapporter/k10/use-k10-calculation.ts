@@ -9,6 +9,7 @@ export interface K10Data {
     year: string
     schablonbelopp: number
     lonebaseratUtrymme: number
+    rantebaseratUtrymme: number
     gransbelopp: number
     totalDividends: number
     remainingUtrymme: number
@@ -68,6 +69,7 @@ export function useK10Calculation() {
                 year: String(taxYear.year),
                 schablonbelopp: 0,
                 lonebaseratUtrymme: 0,
+                rantebaseratUtrymme: 0,
                 gransbelopp: 0,
                 totalDividends: 0,
                 remainingUtrymme: 0,
@@ -110,23 +112,22 @@ export function useK10Calculation() {
             }, 0)
         }, 0)
 
-        // Calculate Owner's Salary - Check for specific account usually used for owner
-        // Often 7220 "Lön till företagsledare"
+        // Calculate Owner's Salary - Accounts 7210-7229 (Lön till företagsledare/delägare)
         const egenLon = yearVerifications.reduce((sum, v) => {
             return sum + v.rows.reduce((rowSum, r) => {
                 const acc = parseInt(r.account)
-                if (acc === 7220) return rowSum + r.debit
+                if (acc >= 7210 && acc <= 7229) return rowSum + r.debit
                 return rowSum
             }, 0)
         }, 0)
 
-        // Calculate Dividends Taken - Account 2898 "Outnyttjade vinstmedel" (Debit when paid out)
-        // Or 8910 "Skatt på årets resultat"? No, usually booked against Equity.
-        // Let's assume 2898 Debit = Dividend Payout
+        // Calculate Dividends Taken
+        // 2091 = Balanserad vinst (utdelning), 2098 = Vinst/förlust (utdelning), 2898 = Outtagen vinstutdelning
+        const dividendAccounts = [2091, 2098, 2898]
         const totalDividends = yearVerifications.reduce((sum, v) => {
             return sum + v.rows.reduce((rowSum, r) => {
                 const acc = parseInt(r.account)
-                if (acc === 2898 && r.debit > 0) return rowSum + r.debit
+                if (dividendAccounts.includes(acc) && r.debit > 0) return rowSum + r.debit
                 return rowSum
             }, 0)
         }, 0)
@@ -149,8 +150,14 @@ export function useK10Calculation() {
         const klararLonekrav = egenLon >= minLonKrav
         const lonebaseratUtrymme = klararLonekrav ? Math.round(arslonSumma * 0.5 * (agarandel / 100)) : 0
 
+        // Räntebaserat utrymme: omkostnadsbelopp * statslåneränta + 9 pp * ägarandel
+        const rantebaseratUtrymme = Math.round(omkostnadsbelopp * params.rantebaseratRate * (agarandel / 100))
+
+        // Huvudregel = lönebaserat + räntebaserat
+        const huvudregel = lonebaseratUtrymme + rantebaseratUtrymme
+
         // Total Gränsbelopp (Max of Main vs Simplification)
-        const gransbelopp = Math.max(schablonbelopp, lonebaseratUtrymme)
+        const gransbelopp = Math.max(schablonbelopp, huvudregel)
 
         // Calculate sparat utdelningsutrymme from previous K10 declarations
         // Sum up remainingUtrymme from all previous years
@@ -168,6 +175,7 @@ export function useK10Calculation() {
             year: taxYear.year.toString(),
             schablonbelopp,
             lonebaseratUtrymme,
+            rantebaseratUtrymme,
             gransbelopp: totaltUtrymme,
             totalDividends,
             remainingUtrymme,
@@ -179,7 +187,7 @@ export function useK10Calculation() {
             hasData,
             sparatUtdelningsutrymme
         }
-    }, [taxYear.year, verifications, params?.ibb, params?.schablonRate, shareholders, company?.shareCapital, k10History])
+    }, [taxYear.year, verifications, params?.ibb, params?.schablonRate, params?.rantebaseratRate, shareholders, company?.shareCapital, k10History])
 
     return {
         k10Data,

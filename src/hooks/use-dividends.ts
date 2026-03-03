@@ -46,25 +46,14 @@ export function useDividends(): DividendData {
 
     const normalized = normalizeBalances(accountBalances)
 
-    // Restricted equity accounts (credit-normal, flipped to positive by normalizeBalances logic)
-    let aktiekapital = 0
-    let reservfond = 0
+    // Restricted equity: pick aktiekapital + reservfond from raw balances.
+    // These are credit-normal (2xxx), so flip sign same way normalizeBalances does.
+    const restrictedAccounts = [EQUITY_ACCOUNTS.AKTIEKAPITAL, EQUITY_ACCOUNTS.RESERVFOND]
+    const restrictedEquity = accountBalances
+      .filter(e => restrictedAccounts.includes(e.accountNumber ?? ''))
+      .reduce((sum, e) => sum + (e.balance * -1), 0)
 
-    for (const entry of accountBalances) {
-      const acc = entry.accountNumber
-      if (!acc) continue
-      // Raw balance is debit - credit. For credit-normal 2xxx, flip to positive.
-      const displayAmount = entry.balance * -1
-
-      if (acc === EQUITY_ACCOUNTS.AKTIEKAPITAL) {
-        aktiekapital += displayAmount
-      } else if (acc === EQUITY_ACCOUNTS.RESERVFOND) {
-        reservfond += displayAmount
-      }
-    }
-
-    const restrictedEquity = aktiekapital + reservfond
-    // Free equity includes current year result
+    // Free equity = total equity - restricted + current year result (ABL 17:3)
     const freeEquity = normalized.equity - restrictedEquity + normalized.netIncome
 
     return {

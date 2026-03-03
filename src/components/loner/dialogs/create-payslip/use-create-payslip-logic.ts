@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useMemo, useCallback } from "react"
 import { useToast } from "@/components/ui/toast"
-import { useVerifications } from "@/hooks/use-verifications"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import { taxService } from "@/services/tax-service"
 
@@ -68,7 +67,6 @@ export function useCreatePayslipLogic({
     currentPeriod
 }: PayslipCreateDialogProps) {
     const toast = useToast()
-    const { addVerification } = useVerifications()
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
 
     const [employees, setEmployees] = useState<PayslipEmployee[]>([])
@@ -340,8 +338,10 @@ export function useCreatePayslipLogic({
                     payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                     // Store manual person data if not saved as employee
                     manual_employee_name: useManualEntry && !saveAsEmployee ? manualPerson.name : null,
-                    // Client creates its own (more detailed) verification with age-based rates, pension, etc.
-                    skip_verification: true,
+                    // Pass employee name for pending booking description
+                    employee_name: selectedEmp.name,
+                    // Pass age-aware employer contribution rate so API uses it
+                    employer_contribution_rate: employerContributionRate,
                 })
             })
 
@@ -349,33 +349,7 @@ export function useCreatePayslipLogic({
 
             const saved = await response.json()
 
-            // Use the already-computed values (age-aware employer contribution rate)
-            const verificationRows = [
-                { account: "7010", description: `Lön ${selectedEmp.name}`, debit: finalSalary, credit: 0 },
-                { account: "7510", description: `Arbetsgivaravgift ${selectedEmp.name}${isSenior ? ' (reducerad)' : ''}`, debit: employerContribution, credit: 0 },
-                { account: "7411", description: `Tjänstepension ${selectedEmp.name}`, debit: pension, credit: 0 },
-                { account: "2710", description: `Personalskatt ${selectedEmp.name}`, debit: 0, credit: tax },
-                { account: "2730", description: `Arbetsgivaravgift skuld ${selectedEmp.name}`, debit: 0, credit: employerContribution },
-                { account: "2810", description: `Pensionsskuld ${selectedEmp.name}`, debit: 0, credit: pension },
-                { account: "1930", description: `Utbetalning lön ${selectedEmp.name}`, debit: 0, credit: netSalary },
-            ]
-
-            // Add union/A-kassa deduction rows if applicable
-            if (fackavgift > 0) {
-                verificationRows.push({ account: "2790", description: `Fackavgift ${selectedEmp.name}`, debit: 0, credit: fackavgift })
-            }
-            if (akassa > 0) {
-                verificationRows.push({ account: "2790", description: `A-kassa ${selectedEmp.name}`, debit: 0, credit: akassa })
-            }
-
-            // Create verification (ledger entries)
-            await addVerification({
-                description: `Lön ${selectedEmp.name} ${currentPeriod}`,
-                date: new Date().toISOString().split('T')[0],
-                rows: verificationRows,
-            })
-
-            toast.success("Lönebesked skapat!", `${selectedEmp.name}s lön för ${currentPeriod} har registrerats`)
+            toast.success("Lönebesked skapat!", `${selectedEmp.name}s lön för ${currentPeriod} har registrerats. Bokföring väntar på godkännande.`)
             onPayslipCreated(saved.payslip)
             onOpenChange(false)
             resetDialog()

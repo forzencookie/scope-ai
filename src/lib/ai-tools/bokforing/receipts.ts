@@ -35,6 +35,8 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
     description: 'Hämta uppladdade kvitton. Kan filtrera på leverantör, status eller belopp. Använd för att hitta specifika kvitton eller se vilka som behöver hanteras.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['kvitto', 'kvitton', 'utlägg', 'underlag'],
     parameters: {
         type: 'object',
         properties: {
@@ -107,6 +109,8 @@ export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>
     description: 'Registrera ett kvitto manuellt (om det inte laddades upp som bild). Använd för kvitton från kontantköp, lunch med kund, eller andra utgifter. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['skapa', 'kvitto', 'utlägg', 'ny'],
     parameters: {
         type: 'object',
         properties: {
@@ -119,7 +123,51 @@ export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>
         },
         required: ['supplier', 'amount'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
+        const date = params.date || new Date().toISOString().split('T')[0]
+
+        // If confirmed, persist to database
+        if (context?.isConfirmed) {
+            try {
+                const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+                const res = await fetch(`${baseUrl}/api/receipts/processed`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        supplier: params.supplier,
+                        amount: params.amount,
+                        date,
+                        category: params.category || 'Övrigt',
+                        description: params.description,
+                        moms: params.vatRate ? params.amount * params.vatRate : undefined,
+                    }),
+                })
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    return { success: false, error: err.error || 'Kunde inte spara kvitto.' }
+                }
+
+                const data = await res.json()
+                return {
+                    success: true,
+                    data: {
+                        id: data.receipt?.id || data.id,
+                        supplier: params.supplier,
+                        amount: params.amount,
+                        date,
+                        category: params.category,
+                        description: params.description,
+                        vatRate: params.vatRate,
+                    },
+                    message: `Kvitto från ${params.supplier} sparat (${params.amount.toLocaleString('sv-SE')} kr).`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte spara kvitto.' }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Registrera kvitto',
             description: `Kvitto från ${params.supplier}`,
@@ -134,8 +182,8 @@ export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>
 
         return {
             success: true,
-            data: { id: `rcpt-${Date.now()}`, ...params },
-            message: `Kvitto från ${params.supplier} förberett (${params.amount} kr).`,
+            data: { id: 'pending', ...params },
+            message: `Kvitto från ${params.supplier} förberett (${params.amount.toLocaleString('sv-SE')} kr). Bekräfta för att spara.`,
             confirmationRequired: confirmationRequest,
         }
     },
@@ -161,6 +209,8 @@ export const matchReceiptToTransactionTool = defineTool<MatchReceiptToTransactio
     description: 'Koppla ett kvitto till en banktransaktion som bokföringsunderlag. Använd när du har ett kvitto och vill länka det till rätt transaktion. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['matcha', 'kvitto', 'transaktion', 'koppling'],
     parameters: {
         type: 'object',
         properties: {
@@ -205,6 +255,8 @@ export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, R
     description: 'Lista kvitton som inte är kopplade till någon banktransaktion. Använd för att hitta kvitton som behöver matchas eller för att identifiera dubbletter.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['omatchat', 'kvitto', 'saknas', 'ej kopplat'],
     parameters: {
         type: 'object',
         properties: {

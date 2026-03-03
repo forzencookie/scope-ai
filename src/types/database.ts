@@ -12,31 +12,6 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "13.0.5"
   }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
-  }
   public: {
     Tables: {
       accountbalances: {
@@ -704,9 +679,11 @@ export type Database = {
           email: string | null
           fiscal_year_end: string | null
           has_employees: boolean | null
+          has_f_skatt: boolean | null
           has_moms_registration: boolean | null
           id: string
           is_closely_held: boolean | null
+          logo_url: string | null
           name: string
           org_number: string | null
           phone: string | null
@@ -735,9 +712,11 @@ export type Database = {
           email?: string | null
           fiscal_year_end?: string | null
           has_employees?: boolean | null
+          has_f_skatt?: boolean | null
           has_moms_registration?: boolean | null
           id?: string
           is_closely_held?: boolean | null
+          logo_url?: string | null
           name: string
           org_number?: string | null
           phone?: string | null
@@ -766,9 +745,11 @@ export type Database = {
           email?: string | null
           fiscal_year_end?: string | null
           has_employees?: boolean | null
+          has_f_skatt?: boolean | null
           has_moms_registration?: boolean | null
           id?: string
           is_closely_held?: boolean | null
+          logo_url?: string | null
           name?: string
           org_number?: string | null
           phone?: string | null
@@ -972,6 +953,7 @@ export type Database = {
           invoice_number: string
           items: Json | null
           last_reminder_at: string | null
+          ocr_reference: string | null
           paid_amount: number | null
           paid_at: string | null
           payment_reference: string | null
@@ -999,6 +981,7 @@ export type Database = {
           invoice_number: string
           items?: Json | null
           last_reminder_at?: string | null
+          ocr_reference?: string | null
           paid_amount?: number | null
           paid_at?: string | null
           payment_reference?: string | null
@@ -1026,6 +1009,7 @@ export type Database = {
           invoice_number?: string
           items?: Json | null
           last_reminder_at?: string | null
+          ocr_reference?: string | null
           paid_amount?: number | null
           paid_at?: string | null
           payment_reference?: string | null
@@ -1495,6 +1479,51 @@ export type Database = {
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      formaner_catalog: {
+        Row: {
+          bas_account: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          formansvarde_calculation: string | null
+          id: string
+          is_active: boolean
+          max_amount: number | null
+          name: string
+          rules: Json | null
+          tax_free: boolean
+          updated_at: string | null
+        }
+        Insert: {
+          bas_account?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          formansvarde_calculation?: string | null
+          id: string
+          is_active?: boolean
+          max_amount?: number | null
+          name: string
+          rules?: Json | null
+          tax_free?: boolean
+          updated_at?: string | null
+        }
+        Update: {
+          bas_account?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          formansvarde_calculation?: string | null
+          id?: string
+          is_active?: boolean
+          max_amount?: number | null
+          name?: string
+          rules?: Json | null
+          tax_free?: boolean
+          updated_at?: string | null
         }
         Relationships: []
       }
@@ -2083,6 +2112,57 @@ export type Database = {
           },
         ]
       }
+      pending_bookings: {
+        Row: {
+          booked_at: string | null
+          company_id: string | null
+          created_at: string | null
+          description: string
+          id: string
+          metadata: Json | null
+          proposed_date: string
+          proposed_entries: Json
+          proposed_series: string | null
+          source_id: string
+          source_type: string
+          status: string | null
+          user_id: string | null
+          verification_id: string | null
+        }
+        Insert: {
+          booked_at?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description: string
+          id?: string
+          metadata?: Json | null
+          proposed_date: string
+          proposed_entries: Json
+          proposed_series?: string | null
+          source_id: string
+          source_type: string
+          status?: string | null
+          user_id?: string | null
+          verification_id?: string | null
+        }
+        Update: {
+          booked_at?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          description?: string
+          id?: string
+          metadata?: Json | null
+          proposed_date?: string
+          proposed_entries?: Json
+          proposed_series?: string | null
+          source_id?: string
+          source_type?: string
+          status?: string | null
+          user_id?: string | null
+          verification_id?: string | null
+        }
+        Relationships: []
+      }
       periodiseringsfonder: {
         Row: {
           amount: number
@@ -2135,6 +2215,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          avatar_emoji: string | null
           avatar_url: string | null
           created_at: string
           email: string | null
@@ -2147,6 +2228,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          avatar_emoji?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -2159,6 +2241,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          avatar_emoji?: string | null
           avatar_url?: string | null
           created_at?: string
           email?: string | null
@@ -2459,6 +2542,8 @@ export type Database = {
           notes: string | null
           price_per_share: number | null
           share_class: string | null
+          share_number_from: number | null
+          share_number_to: number | null
           shares: number
           to_name: string | null
           to_shareholder_id: string | null
@@ -2478,6 +2563,8 @@ export type Database = {
           notes?: string | null
           price_per_share?: number | null
           share_class?: string | null
+          share_number_from?: number | null
+          share_number_to?: number | null
           shares: number
           to_name?: string | null
           to_shareholder_id?: string | null
@@ -2497,6 +2584,8 @@ export type Database = {
           notes?: string | null
           price_per_share?: number | null
           share_class?: string | null
+          share_number_from?: number | null
+          share_number_to?: number | null
           shares?: number
           to_name?: string | null
           to_shareholder_id?: string | null
@@ -2541,6 +2630,8 @@ export type Database = {
           personal_number: string | null
           phone: string | null
           share_class: string | null
+          share_number_from: number | null
+          share_number_to: number | null
           share_percentage: number | null
           shares: number
           shares_count: number | null
@@ -2566,6 +2657,8 @@ export type Database = {
           personal_number?: string | null
           phone?: string | null
           share_class?: string | null
+          share_number_from?: number | null
+          share_number_to?: number | null
           share_percentage?: number | null
           shares?: number
           shares_count?: number | null
@@ -2591,6 +2684,8 @@ export type Database = {
           personal_number?: string | null
           phone?: string | null
           share_class?: string | null
+          share_number_from?: number | null
+          share_number_to?: number | null
           share_percentage?: number | null
           shares?: number
           shares_count?: number | null
@@ -2682,6 +2777,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      skv_tax_tables: {
+        Row: {
+          column_number: number
+          id: string
+          income_from: number
+          income_to: number
+          table_number: number
+          tax_deduction: number
+          year: number
+        }
+        Insert: {
+          column_number?: number
+          id?: string
+          income_from: number
+          income_to: number
+          table_number: number
+          tax_deduction: number
+          year: number
+        }
+        Update: {
+          column_number?: number
+          id?: string
+          income_from?: number
+          income_to?: number
+          table_number?: number
+          tax_deduction?: number
+          year?: number
+        }
+        Relationships: []
       }
       supplierinvoices: {
         Row: {
@@ -2838,36 +2963,6 @@ export type Database = {
           user_id?: string
           vat_number?: string | null
           website?: string | null
-        }
-        Relationships: []
-      }
-      skv_tax_tables: {
-        Row: {
-          id: string
-          year: number
-          table_number: number
-          column_number: number
-          income_from: number
-          income_to: number
-          tax_deduction: number
-        }
-        Insert: {
-          id?: string
-          year: number
-          table_number: number
-          column_number?: number
-          income_from: number
-          income_to: number
-          tax_deduction: number
-        }
-        Update: {
-          id?: string
-          year?: number
-          table_number?: number
-          column_number?: number
-          income_from?: number
-          income_to?: number
-          tax_deduction?: number
         }
         Relationships: []
       }
@@ -3200,6 +3295,60 @@ export type Database = {
           },
         ]
       }
+      user_memory: {
+        Row: {
+          category: string
+          company_id: string
+          confidence: number | null
+          content: string
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          source_conversation_id: string | null
+          superseded_by: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          category: string
+          company_id: string
+          confidence?: number | null
+          content: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          source_conversation_id?: string | null
+          superseded_by?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          category?: string
+          company_id?: string
+          confidence?: number | null
+          content?: string
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          source_conversation_id?: string | null
+          superseded_by?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_memory_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "user_memory_superseded_by_fkey"
+            columns: ["superseded_by"]
+            isOneToOne: false
+            referencedRelation: "user_memory"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_preferences: {
         Row: {
           compact_sidebar: boolean | null
@@ -3362,6 +3511,53 @@ export type Database = {
         }
         Relationships: []
       }
+      verification_lines: {
+        Row: {
+          account_name: string | null
+          account_number: number
+          company_id: string | null
+          created_at: string | null
+          credit: number
+          debit: number
+          description: string | null
+          id: string
+          user_id: string
+          verification_id: string
+        }
+        Insert: {
+          account_name?: string | null
+          account_number: number
+          company_id?: string | null
+          created_at?: string | null
+          credit?: number
+          debit?: number
+          description?: string | null
+          id?: string
+          user_id: string
+          verification_id: string
+        }
+        Update: {
+          account_name?: string | null
+          account_number?: number
+          company_id?: string | null
+          created_at?: string | null
+          credit?: number
+          debit?: number
+          description?: string | null
+          id?: string
+          user_id?: string
+          verification_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_lines_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "verifications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verifications: {
         Row: {
           company_id: string | null
@@ -3413,60 +3609,6 @@ export type Database = {
         }
         Relationships: []
       }
-      verification_lines: {
-        Row: {
-          id: string
-          verification_id: string
-          account_number: number
-          account_name: string | null
-          debit: number
-          credit: number
-          description: string | null
-          user_id: string
-          company_id: string | null
-          created_at: string | null
-        }
-        Insert: {
-          id?: string
-          verification_id: string
-          account_number: number
-          account_name?: string | null
-          debit?: number
-          credit?: number
-          description?: string | null
-          user_id: string
-          company_id?: string | null
-          created_at?: string | null
-        }
-        Update: {
-          id?: string
-          verification_id?: string
-          account_number?: number
-          account_name?: string | null
-          debit?: number
-          credit?: number
-          description?: string | null
-          user_id?: string
-          company_id?: string | null
-          created_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "verification_lines_verification_id_fkey"
-            columns: ["verification_id"]
-            isOneToOne: false
-            referencedRelation: "verifications"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "verification_lines_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "users"
-            referencedColumns: ["id"]
-          }
-        ]
-      }
     }
     Views: {
       [_ in never]: never
@@ -3476,27 +3618,15 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: number
       }
-      get_account_balances: {
+      book_pending_item_status: {
         Args: {
-          p_start_date?: string | null
-          p_end_date?: string | null
-          p_user_id?: string | null
+          p_entries: Json
+          p_pending_id: string
+          p_source_id: string
+          p_source_type: string
+          p_verification_id: string
         }
-        Returns: {
-          account_number: number
-          account_name: string | null
-          total_debit: number
-          total_credit: number
-          balance: number
-        }[]
-      }
-      get_next_verification_number: {
-        Args: {
-          p_series?: string
-          p_fiscal_year?: number
-          p_user_id?: string | null
-        }
-        Returns: number
+        Returns: undefined
       }
       check_rate_limit_atomic: {
         Args: {
@@ -3524,6 +3654,28 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
       }
+      get_account_balances:
+        | {
+            Args: { date_from: string; date_to: string }
+            Returns: {
+              account: string
+              balance: number
+            }[]
+          }
+        | {
+            Args: {
+              p_end_date?: string
+              p_start_date?: string
+              p_user_id?: string
+            }
+            Returns: {
+              account_name: string
+              account_number: number
+              balance: number
+              total_credit: number
+              total_debit: number
+            }[]
+          }
       get_agi_stats: { Args: { p_year?: number }; Returns: Json }
       get_benefit_stats: { Args: { target_year?: number }; Returns: Json }
       get_dashboard_counts: { Args: never; Returns: Json }
@@ -3593,6 +3745,10 @@ export type Database = {
           revenue: number
         }[]
       }
+      get_next_verification_number: {
+        Args: { p_fiscal_year?: number; p_series?: string; p_user_id?: string }
+        Returns: number
+      }
       get_or_create_monthly_usage: {
         Args: { p_model_id: string; p_provider: string; p_user_id: string }
         Returns: string
@@ -3649,6 +3805,7 @@ export type Database = {
         }
         Returns: undefined
       }
+      is_admin: { Args: never; Returns: boolean }
       verify_rls_status: {
         Args: never
         Returns: {
@@ -3813,9 +3970,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {
       event_category: [

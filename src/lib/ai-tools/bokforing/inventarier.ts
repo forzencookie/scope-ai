@@ -6,6 +6,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { inventarieService, type Inventarie } from '@/services/inventarie-service'
+import { verificationService } from '@/services/verification-service'
 
 // =============================================================================
 // Get Assets Tool
@@ -22,6 +23,8 @@ export const getAssetsTool = defineTool<GetAssetsParams, Inventarie[]>({
     description: 'Hämta inventarier och anläggningstillgångar (maskiner, datorer, möbler etc). Visar inköpspris, kvarvarande värde och avskrivningsstatus.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['inventarier', 'tillgångar', 'anläggningstillgång'],
     parameters: {
         type: 'object',
         properties: {
@@ -72,6 +75,8 @@ export const createAssetTool = defineTool<CreateAssetParams, Inventarie>({
     description: 'Registrera en ny inventarie/anläggningstillgång. Skapar automatiskt avskrivningsplan baserat på ekonomisk livslängd. Använd när användaren köpt dator, maskin, bil, eller annan utrustning över halva prisbasbeloppet. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['skapa', 'inventarie', 'tillgång', 'köp'],
     parameters: {
         type: 'object',
         properties: {
@@ -84,7 +89,7 @@ export const createAssetTool = defineTool<CreateAssetParams, Inventarie>({
         },
         required: ['namn', 'inkopspris'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const inkopsdatum = params.inkopsdatum || new Date().toISOString().split('T')[0]
         const livslangdAr = params.livslangdAr ?? 5
         const kategori = params.kategori || 'Inventarier'
@@ -93,8 +98,42 @@ export const createAssetTool = defineTool<CreateAssetParams, Inventarie>({
         const arligAvskrivning = Math.round(params.inkopspris / livslangdAr)
         const manatligAvskrivning = Math.round(arligAvskrivning / 12)
 
+        // If confirmed, persist to database
+        if (context?.isConfirmed) {
+            try {
+                const saved = await inventarieService.addInventarie({
+                    namn: params.namn,
+                    inkopspris: params.inkopspris,
+                    inkopsdatum,
+                    kategori,
+                    livslangdAr,
+                    anteckningar: params.anteckningar,
+                    status: 'aktiv',
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        id: saved.id,
+                        namn: params.namn,
+                        inkopspris: params.inkopspris,
+                        inkopsdatum,
+                        kategori,
+                        livslangdAr,
+                        anteckningar: params.anteckningar,
+                        status: 'aktiv' as const,
+                    },
+                    message: `Inventarie "${params.namn}" registrerad (${params.inkopspris.toLocaleString('sv-SE')} kr, ${livslangdAr} års avskrivning).`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte spara inventarie.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
         const asset: Inventarie = {
-            id: `inv-${Date.now()}`,
+            id: 'pending',
             namn: params.namn,
             inkopspris: params.inkopspris,
             inkopsdatum,
@@ -153,6 +192,8 @@ export const calculateDepreciationTool = defineTool<CalculateDepreciationParams,
     description: 'Beräkna avskrivning för inventarier. Visar hur mycket som ska skrivas av varje månad/år och kvarvarande bokfört värde.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'bokforing',
+    keywords: ['avskrivning', 'beräkna', 'värdeminskning'],
     parameters: {
         type: 'object',
         properties: {
@@ -232,6 +273,8 @@ export const bookDepreciationTool = defineTool<BookDepreciationParams, BookDepre
     description: 'Bokför månatliga/årliga avskrivningar för inventarier. Skapar verifikation automatiskt. Använd vid månadsavslut eller bokslut. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['bokföra', 'avskrivning', 'inventarie'],
     parameters: {
         type: 'object',
         properties: {
@@ -240,7 +283,7 @@ export const bookDepreciationTool = defineTool<BookDepreciationParams, BookDepre
         },
         required: ['period'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const { inventarier } = await inventarieService.getInventarier({ limit: 100 })
 
         let assets = inventarier.filter(i => i.status === 'aktiv' || !i.status)
@@ -252,6 +295,42 @@ export const bookDepreciationTool = defineTool<BookDepreciationParams, BookDepre
             return sum + Math.round(asset.inkopspris / (asset.livslangdAr * 12))
         }, 0)
 
+        // If confirmed, create real verification
+        if (context?.isConfirmed) {
+            try {
+                // Parse period to get a date (last day of the month)
+                const today = new Date()
+                const date = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+                const assetNames = assets.map(a => a.namn).join(', ')
+                const verification = await verificationService.createVerification({
+                    series: 'A',
+                    date,
+                    description: `Avskrivningar ${params.period}: ${assetNames}`,
+                    entries: [
+                        { account: '7832', debit: totalAmount, credit: 0, description: 'Avskrivningar inventarier' },
+                        { account: '1229', debit: 0, credit: totalAmount, description: 'Ack. avskrivningar inventarier' },
+                    ],
+                    sourceType: 'depreciation',
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        booked: true,
+                        verificationId: verification.id,
+                        amount: totalAmount,
+                        assetCount: assets.length,
+                    },
+                    message: `Avskrivning bokförd: ${verification.series}${verification.number} (${totalAmount.toLocaleString('sv-SE')} kr).`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte bokföra avskrivning.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Bokför avskrivningar',
             description: `Bokför avskrivningar för ${params.period}`,
@@ -270,7 +349,7 @@ export const bookDepreciationTool = defineTool<BookDepreciationParams, BookDepre
             success: true,
             data: {
                 booked: false,
-                verificationId: `ver-${Date.now()}`,
+                verificationId: 'pending',
                 amount: totalAmount,
                 assetCount: assets.length,
             },
@@ -304,6 +383,8 @@ export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResul
     description: 'Avyttra, sälj eller skrota en inventarie. Beräknar vinst/förlust vid försäljning och skapar korrekta bokföringsposter. Använd när användaren säljer bil, dator eller annan utrustning. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'bokforing',
+    keywords: ['avyttra', 'sälja', 'inventarie', 'skrota'],
     parameters: {
         type: 'object',
         properties: {
@@ -314,7 +395,7 @@ export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResul
         },
         required: ['assetId'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const salePrice = params.salePrice ?? 0
         const reason = params.reason ?? 'såld'
         const disposeDate = params.disposeDate || new Date().toISOString().split('T')[0]
@@ -323,19 +404,21 @@ export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResul
         const { inventarier } = await inventarieService.getInventarier({ limit: 100 })
         const asset = inventarier.find(i => i.id === params.assetId)
 
-        let bookValue = 0
-        if (asset) {
-            const totalMonths = asset.livslangdAr * 12
-            const monthlyDep = Math.round(asset.inkopspris / totalMonths)
-            const disposeD = new Date(disposeDate)
-            const purchaseD = new Date(asset.inkopsdatum)
-            const monthsOwned = Math.max(0,
-                (disposeD.getFullYear() - purchaseD.getFullYear()) * 12
-                + (disposeD.getMonth() - purchaseD.getMonth())
-            )
-            const depreciatedMonths = Math.min(monthsOwned, totalMonths)
-            bookValue = Math.max(0, asset.inkopspris - (monthlyDep * depreciatedMonths))
+        if (!asset) {
+            return { success: false, error: `Inventarie ${params.assetId} hittades inte.` }
         }
+
+        const totalMonths = asset.livslangdAr * 12
+        const monthlyDep = Math.round(asset.inkopspris / totalMonths)
+        const disposeD = new Date(disposeDate)
+        const purchaseD = new Date(asset.inkopsdatum)
+        const monthsOwned = Math.max(0,
+            (disposeD.getFullYear() - purchaseD.getFullYear()) * 12
+            + (disposeD.getMonth() - purchaseD.getMonth())
+        )
+        const depreciatedMonths = Math.min(monthsOwned, totalMonths)
+        const totalDepreciated = monthlyDep * depreciatedMonths
+        const bookValue = Math.max(0, asset.inkopspris - totalDepreciated)
 
         const gainLoss = salePrice - bookValue
 
@@ -345,11 +428,65 @@ export const disposeAssetTool = defineTool<DisposeAssetParams, DisposeAssetResul
                 ? `Förlust: ${Math.abs(gainLoss).toLocaleString('sv-SE')} kr`
                 : 'Inget resultat'
 
+        // If confirmed, create disposal verification and update asset status
+        if (context?.isConfirmed) {
+            try {
+                // Build disposal journal entries
+                const entries = [
+                    // Remove accumulated depreciation (debit 1229)
+                    { account: '1229', debit: totalDepreciated, credit: 0, description: 'Ack. avskrivningar' },
+                    // Remove asset at purchase price (credit 1220)
+                    { account: '1220', debit: 0, credit: asset.inkopspris, description: `Avyttring ${asset.namn}` },
+                ]
+
+                // If sold: record sale proceeds
+                if (salePrice > 0) {
+                    entries.push({ account: '1930', debit: salePrice, credit: 0, description: 'Försäljningsintäkt' })
+                }
+
+                // Record gain or loss
+                if (gainLoss > 0) {
+                    entries.push({ account: '3973', debit: 0, credit: gainLoss, description: 'Vinst vid avyttring' })
+                } else if (gainLoss < 0) {
+                    entries.push({ account: '7973', debit: Math.abs(gainLoss), credit: 0, description: 'Förlust vid avyttring' })
+                }
+
+                const verification = await verificationService.createVerification({
+                    series: 'A',
+                    date: disposeDate,
+                    description: `Avyttring: ${asset.namn} (${reason})`,
+                    entries,
+                    sourceType: 'disposal',
+                    sourceId: params.assetId,
+                })
+
+                // Update asset status
+                const newStatus = reason === 'skrotad' || reason === 'förlorad' ? 'avskriven' : 'såld'
+                await inventarieService.updateStatus(params.assetId, newStatus)
+
+                return {
+                    success: true,
+                    data: {
+                        disposed: true,
+                        assetId: params.assetId,
+                        bookValue,
+                        salePrice,
+                        gainLoss,
+                    },
+                    message: `${asset.namn} avyttrad. Verifikation ${verification.series}${verification.number} skapad. ${gainLossText}`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte avyttra inventarie.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Avyttra inventarie',
-            description: `Avyttra inventarie ${params.assetId}`,
+            description: `Avyttra inventarie ${asset.namn}`,
             summary: [
-                { label: 'Inventarie', value: params.assetId },
+                { label: 'Inventarie', value: asset.namn },
                 { label: 'Anledning', value: reason },
                 { label: 'Datum', value: disposeDate },
                 { label: 'Bokfört värde', value: `${bookValue.toLocaleString('sv-SE')} kr` },

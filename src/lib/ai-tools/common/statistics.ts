@@ -24,6 +24,8 @@ export const getCompanyStatisticsTool = defineTool<GetCompanyStatisticsParams, C
     description: 'Hämta omfattande företagsstatistik: intäkter, kostnader, transaktioner, fakturor, anställda, etc.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['statistik', 'intäkter', 'kostnader', 'företag'],
     parameters: {
         type: 'object',
         properties: {
@@ -68,6 +70,8 @@ export const getMonthlyBreakdownTool = defineTool<{ year?: number }, MonthlyFina
     description: 'Hämta månadsvis uppdelning av intäkter och kostnader.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['månadsvis', 'uppdelning', 'månader', 'trend'],
     parameters: {
         type: 'object',
         properties: {
@@ -118,6 +122,8 @@ export const getKPIsTool = defineTool<{ year?: number }, KPIs>({
     description: 'Hämta nyckeltal (KPIs): bruttomarginal, rörelsemarginal, likviditet, skuldsättning.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['nyckeltal', 'KPI', 'marginal', 'likviditet'],
     parameters: {
         type: 'object',
         properties: {
@@ -166,6 +172,8 @@ export const getDashboardCountsTool = defineTool<Record<string, never>, {
     description: 'Hämta snabb översikt: antal transaktioner, fakturor, kvitton, anställda.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'common',
+    keywords: ['översikt', 'antal', 'dashboard', 'räknare'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {

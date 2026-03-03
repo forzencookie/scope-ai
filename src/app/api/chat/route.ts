@@ -293,6 +293,39 @@ export async function POST(request: NextRequest) {
         // === INITIALIZE TOOLS ===
         ensureToolsInitialized()
 
+        // === ACTIVITY SNAPSHOT (lightweight, ~3 fast queries) ===
+        let activitySnapshot: Record<string, unknown> | undefined
+        try {
+            const { getSupabaseClient } = await import('@/lib/database/supabase')
+            const supabase = getSupabaseClient()
+
+            // Fetch pending/unbooked transaction count
+            const { count: pendingTx } = await supabase
+                .from('transactions')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending')
+
+            // Fetch overdue invoices
+            const today = new Date().toISOString().split('T')[0]
+            const { data: overdueInv } = await supabase
+                .from('customerinvoices')
+                .select('total_amount')
+                .eq('status', 'sent')
+                .lt('due_date', today)
+
+            const overdueCount = overdueInv?.length ?? 0
+            const overdueTotal = overdueInv?.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0) ?? 0
+
+            activitySnapshot = {
+                pendingTransactions: pendingTx ?? 0,
+                overdueInvoices: overdueCount,
+                overdueInvoiceTotal: overdueTotal,
+            }
+        } catch (e) {
+            // Non-critical — skip snapshot on failure
+            console.error('[Chat] Activity snapshot failed:', e)
+        }
+
         // === BUILD CONTEXT ===
         const companyType = 'AB' as const
 
@@ -309,6 +342,11 @@ export async function POST(request: NextRequest) {
                 timestamp: new Date(),
             })),
         })
+
+        // Add activity snapshot to context
+        if (activitySnapshot) {
+            context.sharedMemory.activitySnapshot = activitySnapshot
+        }
 
         // Add attachments to context
         if (attachments && attachments.length > 0) {

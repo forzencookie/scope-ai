@@ -4,6 +4,69 @@ Historical record of completed plans, audits, and major changes.
 
 ---
 
+## 2026-02-27: Tool Search — Dynamic Tool Loading for Scooby
+
+Scooby previously loaded all 111 tool definitions (~88K tokens) into every conversation. Now starts with 3 core tools (~2K tokens) and discovers others on demand via `search_tools`.
+
+### Architecture
+
+| Before | After |
+|--------|-------|
+| All 111 tools loaded on every message | 3 core tools + search-on-demand |
+| ~88K tokens before user speaks | ~2K tokens on "hej", ~5K for invoice work |
+| Single flat tool list | Scored keyword search across domains |
+
+### Core Tools (always loaded)
+
+| Tool | Purpose |
+|------|---------|
+| `search_tools` | Meta-tool — discovers all other tools by keyword |
+| `navigate_to` | UI navigation |
+| `get_knowledge` | Loads domain knowledge documents |
+
+### Changes
+
+| File | Change |
+|------|--------|
+| `types.ts` | Added `AIToolDomain`, `domain`, `keywords`, `coreTool` fields to `AITool` |
+| `registry.ts` | Added `getCoreTools()`, `search()` (scored ranking), `getByNames()` |
+| `common/tool-search.ts` | **NEW** — `search_tools` meta-tool |
+| `agent.ts` | `ScopeBrain` tracks `activeToolNames`, starts with core, expands after `search_tools` |
+| `system-prompt.ts` | Added search instruction (instinct #6) + activity snapshot renderer |
+| `route.ts` | Fetches lightweight activity snapshot (pending tx + overdue invoices) |
+| All 30+ tool files | Added `domain` + `keywords` (2-5 Swedish terms each) |
+
+### Search Scoring
+
+Name match = 3 pts, keyword match = 2, description match = 1, domain match = 1. Top 10 returned.
+
+### Activity Snapshot
+
+System prompt now includes ~50 tokens of live state (pending transactions, overdue invoices) so Scooby knows the situation without a tool call.
+
+---
+
+## 2026-02-27: Code Quality Fixes — Cash, Tax, Errors, Dedup, Period Lock
+
+5 fixes from the FUTURE_FEATURES bug list, verified against actual codebase. 2 reported bugs (dividend double-flip, VAT validation) confirmed as non-issues after code inspection.
+
+| Fix | File(s) | What changed |
+|-----|---------|-------------|
+| Cash balance classification | `use-company-statistics.ts`, `bookkeeping/utils.ts` | New `isCashAccount()` restricts to BAS 1900-1959. Was `startsWith('19')` which included 1960-1999 non-cash accounts. Affects kassalikviditet calculation. |
+| SKV tax table fallback removed | `ai-tools/loner/payroll.ts` | Payroll now returns error if employee has no `taxTable` or if SKV lookup fails. Previously silently fell back to `marginalTaxRateApprox` (32%). |
+| Error states added | `use-company-statistics.ts`, `use-financial-metrics.ts` | Both hooks now return `error` field from React Query / useVerifications. Consumers can show error UI instead of silent empty state. |
+| Account classification deduplicated | `use-company-statistics.ts` | Replaced inline `startsWith('1')`, `startsWith('3')`, etc. with `getAccountClass()` and `isCashAccount()` from `bookkeeping/utils.ts`. |
+| Period lock centralized | `verification-service.ts`, `use-transactions-query.ts`, `use-month-closing.ts` | All three period lock implementations now query `financialperiods` table (was: verifications table in service, inline query in transactions). Added shared `checkPeriodLocked()` async utility. |
+
+### Non-issues confirmed
+
+| Item | Finding |
+|------|---------|
+| Dividend double-flipping | Both `normalizeBalances()` and the inline loop use the same `* -1` sign convention. Math is correct. |
+| VAT split validation | `SwedishVatRate` TypeScript union type (`0 | 6 | 12 | 25`) prevents invalid values at compile time. `isValidVatRate()` runtime guard also exists in sales.ts. |
+
+---
+
 ## 2026-02-27: Feature Batch — Onboarding, Memory, Invoices & Cleanup
 
 ### Företagsstatistik Page Removed

@@ -48,7 +48,7 @@ export const receiptService = {
             .range(offset, offset + limit - 1)
 
         if (search) {
-            query = query.or(`merchant.ilike.%${search}%,description.ilike.%${search}%`)
+            query = query.or(`supplier.ilike.%${search}%,vendor.ilike.%${search}%`)
         }
 
         if (statuses.length > 0) {
@@ -75,15 +75,15 @@ export const receiptService = {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const receipts: Receipt[] = (data || []).map((row: any) => ({
             id: row.id,
-            supplier: row.merchant || 'Unknown',
-            date: row.captured_at,
-            amount: String(row.amount_value || row.amount || '0'),  // UI expects string
-            category: row.category_id || 'Övrigt', // category is likely category_id, need join? For now just ID.
+            supplier: row.supplier || row.vendor || 'Okänd',
+            date: row.date || row.captured_at,
+            amount: String(row.amount || row.total_amount || '0'),
+            category: row.category || 'Övrigt',
             status: (row.status as ReceiptStatus) || RECEIPT_STATUSES.PENDING,
-            attachment: row.url || '', // image_url might be 'url'
-            hasAttachment: !!row.url,
-            attachmentUrl: row.url,
-            linkedTransaction: row.transaction_id
+            attachment: row.image_url || row.file_url || '',
+            hasAttachment: !!(row.image_url || row.file_url),
+            attachmentUrl: row.image_url || row.file_url,
+            linkedTransaction: row.transaction_count ? 'linked' : undefined,
         }))
 
         return { receipts, totalCount: count || 0 }

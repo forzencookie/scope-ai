@@ -24,6 +24,8 @@ export const getShareholdersTool = defineTool<GetShareholdersParams, Shareholder
     description: 'Hämta den aktuella aktieboken och lista över alla aktieägare.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'parter',
+    keywords: ['aktieägare', 'delägare', 'ägare'],
     parameters: {
         type: 'object',
         properties: {
@@ -80,6 +82,8 @@ export const getShareRegisterSummaryTool = defineTool<Record<string, never>, {
     description: 'Hämta sammanfattning av aktieboken: antal aktier, aktieägare, aktiekapital.',
     category: 'read',
     requiresConfirmation: false,
+    domain: 'parter',
+    keywords: ['aktiebok', 'aktieregister', 'sammanfattning'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
@@ -120,6 +124,8 @@ export const addShareholderTool = defineTool<AddShareholderParams, Shareholder>(
     description: 'Lägg till en ny aktieägare i aktieboken. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'parter',
+    keywords: ['lägg till', 'aktieägare', 'ny delägare'],
     parameters: {
         type: 'object',
         properties: {
@@ -200,6 +206,8 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
     description: 'Registrera en aktieöverlåtelse mellan parter. Uppdaterar aktieboken automatiskt.',
     category: 'write',
     requiresConfirmation: true,
+    domain: 'parter',
+    keywords: ['överlåta', 'aktier', 'överlåtelse'],
     parameters: {
         type: 'object',
         properties: {

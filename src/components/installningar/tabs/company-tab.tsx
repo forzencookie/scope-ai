@@ -218,6 +218,36 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     </Select>
                 </div>
 
+                <div className="grid gap-2">
+                    <Label>Räkenskapsår</Label>
+                    <Select
+                        value={company?.fiscalYearEnd || '12-31'}
+                        onValueChange={(val: string) => updateCompany({ fiscalYearEnd: val })}
+                    >
+                        <SelectTrigger className="w-full text-left justify-between px-3">
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="12-31">
+                                <span className="font-medium block">Kalenderår (jan–dec)</span>
+                                <span className="text-xs text-muted-foreground">Vanligast för de flesta bolag</span>
+                            </SelectItem>
+                            <SelectItem value="06-30">
+                                <span className="font-medium block">1 jul – 30 jun</span>
+                                <span className="text-xs text-muted-foreground">Brutet räkenskapsår</span>
+                            </SelectItem>
+                            <SelectItem value="08-31">
+                                <span className="font-medium block">1 sep – 31 aug</span>
+                                <span className="text-xs text-muted-foreground">Brutet räkenskapsår</span>
+                            </SelectItem>
+                            <SelectItem value="03-31">
+                                <span className="font-medium block">1 apr – 31 mar</span>
+                                <span className="text-xs text-muted-foreground">Brutet räkenskapsår</span>
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                </div>
+
                 <div className="flex items-center justify-between rounded-lg border p-3">
                     <div className="space-y-0.5">
                         <Label>Fåmansföretag (3:12-regler)</Label>
@@ -232,6 +262,81 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                         className="h-4 w-4 rounded border-gray-300"
                     />
                 </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                        <Label>Innehar F-skattsedel</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Visas på fakturor och avtal
+                        </p>
+                    </div>
+                    <input
+                        type="checkbox"
+                        checked={company?.hasFskatt ?? true}
+                        onChange={(e) => updateCompany({ hasFskatt: e.target.checked })}
+                        className="h-4 w-4 rounded border-gray-300"
+                    />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                        <Label>Momsregistrerad</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Företaget är registrerat för moms hos Skatteverket
+                        </p>
+                    </div>
+                    <input
+                        type="checkbox"
+                        checked={company?.hasMomsRegistration ?? true}
+                        onChange={(e) => updateCompany({ hasMomsRegistration: e.target.checked })}
+                        className="h-4 w-4 rounded border-gray-300"
+                    />
+                </div>
+
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                    <div className="space-y-0.5">
+                        <Label>Har anställda</Label>
+                        <p className="text-xs text-muted-foreground">
+                            Aktiverar lönehantering och arbetsgivaravgifter
+                        </p>
+                    </div>
+                    <input
+                        type="checkbox"
+                        checked={company?.hasEmployees ?? false}
+                        onChange={(e) => updateCompany({ hasEmployees: e.target.checked })}
+                        className="h-4 w-4 rounded border-gray-300"
+                    />
+                </div>
+
+                <SettingsFormField
+                    id="registration-date"
+                    label="Registreringsdatum"
+                    placeholder="2024-01-15"
+                    type="date"
+                    value={company?.registrationDate || ''}
+                    onChange={(e) => updateCompany({ registrationDate: e.target.value || undefined })}
+                />
+
+                {company?.companyType === 'ab' && (
+                    <div className="grid grid-cols-2 gap-4">
+                        <SettingsFormField
+                            id="share-capital"
+                            label="Aktiekapital (SEK)"
+                            placeholder="25000"
+                            type="number"
+                            value={String(company?.shareCapital || '')}
+                            onChange={(e) => updateCompany({ shareCapital: Number(e.target.value) || 0 })}
+                        />
+                        <SettingsFormField
+                            id="total-shares"
+                            label="Antal aktier"
+                            placeholder="500"
+                            type="number"
+                            value={String(company?.totalShares || '')}
+                            onChange={(e) => updateCompany({ totalShares: Number(e.target.value) || 0 })}
+                        />
+                    </div>
+                )}
 
                 <div className="grid grid-cols-2 gap-4">
                     <SettingsFormField

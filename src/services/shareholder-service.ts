@@ -1,37 +1,13 @@
 import { getSupabaseClient } from '@/lib/database/supabase'
+import type { Database } from '@/types/database'
 
-/**
- * Shareholder as stored in the database
- */
-export interface ShareholderRow {
-    id: string
-    name: string
-    ssn_org_nr: string | null
-    personal_number: string | null
-    shares: number
-    shares_count: number | null
-    share_class: string | null
-    share_percentage: number | null
-    ownership_percentage: number | null
-    voting_power: number | null
-    voting_percentage: number | null
-    is_board_member: boolean | null
-    board_role: string | null
-    email: string | null
-    phone: string | null
-    address: string | null
-    acquisition_date: string | null
-    acquisition_price: number | null
-    company_id: string | null
-    user_id: string | null
-    metadata: Record<string, unknown> | null
-    created_at: string | null
-    updated_at: string | null
-}
+type ShareholderRow = Database['public']['Tables']['shareholders']['Row']
+type ShareTransactionRow = Database['public']['Tables']['sharetransactions']['Row']
 
-/**
- * Shareholder for display in UI
- */
+// =============================================================================
+// UI Types
+// =============================================================================
+
 export interface Shareholder {
     id: string
     name: string
@@ -48,54 +24,6 @@ export interface Shareholder {
     acquisitionPrice: number | null
 }
 
-/** Map a database row to the Shareholder UI model. */
-function mapRowToShareholder(row: Record<string, any>, totalShares: number): Shareholder {
-    const sharesCount = row.shares_count || row.shares || 0
-    const ownershipPct = row.ownership_percentage || row.share_percentage ||
-        (totalShares > 0 ? (sharesCount / totalShares) * 100 : 0)
-
-    return {
-        id: row.id,
-        name: row.name,
-        personalOrOrgNumber: row.ssn_org_nr || row.personal_number || '',
-        sharesCount,
-        shareClass: row.share_class || 'A',
-        ownershipPercentage: Math.round(ownershipPct * 100) / 100,
-        votingPercentage: row.voting_percentage || row.voting_power || ownershipPct,
-        isBoardMember: row.is_board_member || false,
-        boardRole: row.board_role,
-        email: row.email,
-        phone: row.phone,
-        acquisitionDate: row.acquisition_date,
-        acquisitionPrice: row.acquisition_price,
-    }
-}
-
-/**
- * Shareholder query options
- */
-export interface GetShareholdersOptions {
-    limit?: number
-    offset?: number
-    search?: string
-    shareClass?: 'A' | 'B'
-    boardMembersOnly?: boolean
-}
-
-/**
- * Share register summary
- */
-export interface ShareRegisterSummary {
-    totalShares: number
-    totalShareholderCount: number
-    sharesByClass: { classA: number; classB: number }
-    totalCapital: number // Based on quota value
-    quotaValue: number
-}
-
-/**
- * Share transaction as stored in the database
- */
 export interface ShareTransaction {
     id: string
     fromShareholderId: string | null
@@ -110,10 +38,53 @@ export interface ShareTransaction {
     notes: string | null
 }
 
+export interface GetShareholdersOptions {
+    limit?: number
+    offset?: number
+    search?: string
+    shareClass?: 'A' | 'B'
+    boardMembersOnly?: boolean
+}
+
+export interface ShareRegisterSummary {
+    totalShares: number
+    totalShareholderCount: number
+    sharesByClass: { classA: number; classB: number }
+    totalCapital: number
+    quotaValue: number
+}
+
+// =============================================================================
+// Mappers
+// =============================================================================
+
+function mapRowToShareholder(row: ShareholderRow, totalShares: number): Shareholder {
+    const sharesCount = row.shares_count ?? row.shares ?? 0
+    const ownershipPct = row.ownership_percentage ??
+        (totalShares > 0 ? (sharesCount / totalShares) * 100 : 0)
+
+    return {
+        id: row.id,
+        name: row.name,
+        personalOrOrgNumber: row.ssn_org_nr ?? '',
+        sharesCount,
+        shareClass: row.share_class ?? 'A',
+        ownershipPercentage: Math.round(ownershipPct * 100) / 100,
+        votingPercentage: row.voting_percentage ?? ownershipPct,
+        isBoardMember: row.is_board_member ?? false,
+        boardRole: row.board_role,
+        email: row.email,
+        phone: row.phone,
+        acquisitionDate: row.acquisition_date,
+        acquisitionPrice: row.acquisition_price,
+    }
+}
+
+// =============================================================================
+// Service
+// =============================================================================
+
 export const shareholderService = {
-    /**
-     * Get all shareholders with optional filters
-     */
     async getShareholders({
         limit = 100,
         offset = 0,
@@ -132,40 +103,25 @@ export const shareholderService = {
         if (search) {
             query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%`)
         }
-
         if (shareClass) {
             query = query.eq('share_class', shareClass)
         }
-
         if (boardMembersOnly) {
             query = query.eq('is_board_member', true)
         }
 
         const { data, error, count } = await query
-
         if (error) throw error
+        if (!data || data.length === 0) return { shareholders: [], totalCount: 0 }
 
-        if (!data || data.length === 0) {
-            return {
-                shareholders: [],
-                totalCount: 0
-            }
-        }
-
-        // Calculate totals for percentage calculations
-        const totalShares = data.reduce((sum, row) => sum + (row.shares_count || row.shares || 0), 0)
-
-        const shareholders: Shareholder[] = data.map((row) => mapRowToShareholder(row, totalShares))
+        const totalShares = data.reduce((sum, row) => sum + (row.shares_count ?? row.shares ?? 0), 0)
 
         return {
-            shareholders,
-            totalCount: count || 0
+            shareholders: data.map((row) => mapRowToShareholder(row, totalShares)),
+            totalCount: count ?? 0,
         }
     },
 
-    /**
-     * Get a single shareholder by ID
-     */
     async getShareholderById(id: string): Promise<Shareholder | null> {
         const supabase = getSupabaseClient()
 
@@ -176,27 +132,9 @@ export const shareholderService = {
             .single()
 
         if (error || !data) return null
-
-        return {
-            id: data.id,
-            name: data.name,
-            personalOrOrgNumber: data.ssn_org_nr || data.personal_number || '',
-            sharesCount: data.shares_count || data.shares || 0,
-            shareClass: data.share_class || 'A',
-            ownershipPercentage: data.ownership_percentage || data.share_percentage || 0,
-            votingPercentage: data.voting_percentage || data.voting_power || 0,
-            isBoardMember: data.is_board_member || false,
-            boardRole: data.board_role,
-            email: data.email,
-            phone: data.phone,
-            acquisitionDate: data.acquisition_date,
-            acquisitionPrice: data.acquisition_price
-        }
+        return mapRowToShareholder(data, 0)
     },
 
-    /**
-     * Get share register summary
-     */
     async getShareRegisterSummary(quotaValue: number = 100): Promise<ShareRegisterSummary> {
         const supabase = getSupabaseClient()
 
@@ -205,13 +143,7 @@ export const shareholderService = {
             .select('shares, shares_count, share_class')
 
         if (!data || data.length === 0) {
-            return {
-                totalShares: 0,
-                totalShareholderCount: 0,
-                sharesByClass: { classA: 0, classB: 0 },
-                totalCapital: 0,
-                quotaValue
-            }
+            return { totalShares: 0, totalShareholderCount: 0, sharesByClass: { classA: 0, classB: 0 }, totalCapital: 0, quotaValue }
         }
 
         let classA = 0
@@ -219,14 +151,10 @@ export const shareholderService = {
         let totalShares = 0
 
         for (const row of data) {
-            const shares = row.shares_count || row.shares || 0
+            const shares = row.shares_count ?? row.shares ?? 0
             totalShares += shares
-
-            if (row.share_class === 'B') {
-                classB += shares
-            } else {
-                classA += shares
-            }
+            if (row.share_class === 'B') classB += shares
+            else classA += shares
         }
 
         return {
@@ -234,13 +162,10 @@ export const shareholderService = {
             totalShareholderCount: data.length,
             sharesByClass: { classA, classB },
             totalCapital: totalShares * quotaValue,
-            quotaValue
+            quotaValue,
         }
     },
 
-    /**
-     * Get board members from shareholders
-     */
     async getBoardMembers() {
         const supabase = getSupabaseClient()
 
@@ -251,70 +176,47 @@ export const shareholderService = {
             .order('board_role', { ascending: true })
 
         if (error) throw error
-
-        if (!data || data.length === 0) {
-            return []
-        }
+        if (!data || data.length === 0) return []
 
         return data.map((row) => ({
             id: row.id,
             name: row.name,
-            personalNumber: row.ssn_org_nr || row.personal_number || '',
-            role: row.board_role || 'Ledamot',
+            personalNumber: row.ssn_org_nr ?? '',
+            role: row.board_role ?? 'Ledamot',
             email: row.email,
-            phone: row.phone
+            phone: row.phone,
         }))
     },
 
-    /**
-     * Get share transactions history
-     */
-    async getShareTransactions({
-        limit = 50,
-        offset = 0
-    } = {}) {
+    async getShareTransactions({ limit = 50, offset = 0 } = {}) {
         const supabase = getSupabaseClient()
 
         const { data, error, count } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('sharetransactions' as any)
-            .select('*, from_shareholder:shareholders!from_shareholder_id(name), to_shareholder:shareholders!to_shareholder_id(name)', { count: 'exact' })
+            .from('sharetransactions')
+            .select('*', { count: 'exact' })
             .order('registration_date', { ascending: false })
             .range(offset, offset + limit - 1)
 
         if (error) throw error
+        if (!data || data.length === 0) return { transactions: [], totalCount: 0 }
 
-        if (!data || data.length === 0) {
-            return {
-                transactions: [],
-                totalCount: 0
-            }
-        }
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const transactions: ShareTransaction[] = (data as any[]).map((row) => ({
+        const transactions: ShareTransaction[] = data.map((row) => ({
             id: row.id,
-            fromShareholderId: row.from_shareholder_id || null,
-            fromShareholderName: row.from_shareholder?.name || null,
-            toShareholderId: row.to_shareholder_id || null,
-            toShareholderName: row.to_shareholder?.name || '',
-            shareCount: row.share_count || row.shares || 0,
-            pricePerShare: row.price_per_share || null,
-            totalPrice: row.price_per_share ? row.price_per_share * (row.share_count || row.shares || 0) : null,
-            registrationDate: row.registration_date || row.transaction_date || row.created_at || '',
-            documentReference: row.document_reference || row.document_url || null,
-            notes: row.notes || null
+            fromShareholderId: row.from_shareholder_id,
+            fromShareholderName: null, // Would need a join to resolve
+            toShareholderId: row.to_shareholder_id,
+            toShareholderName: '', // Would need a join to resolve
+            shareCount: row.share_count,
+            pricePerShare: row.price_per_share,
+            totalPrice: row.total_amount,
+            registrationDate: row.registration_date ?? row.transaction_date,
+            documentReference: row.document_reference,
+            notes: row.notes,
         }))
 
-        return {
-            transactions,
-            totalCount: count || 0
-        }
+        return { transactions, totalCount: count ?? 0 }
     },
 
-    /**
-     * Add a new shareholder with auto-assigned share numbers
-     */
     async addShareholder({
         name,
         personalOrOrgNumber,
@@ -340,14 +242,12 @@ export const shareholderService = {
     }) {
         const supabase = getSupabaseClient()
 
-        // Auto-assign share numbers if not explicitly provided
+        // Auto-assign share numbers if not provided
         let assignedFrom = shareNumberFrom
         let assignedTo = shareNumberTo
 
         if (!assignedFrom && !assignedTo && sharesCount > 0) {
-            // Find the highest share number currently assigned
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data: maxRow } = await (supabase as any)
+            const { data: maxRow } = await supabase
                 .from('shareholders')
                 .select('share_number_to')
                 .not('share_number_to', 'is', null)
@@ -355,29 +255,26 @@ export const shareholderService = {
                 .limit(1)
                 .single()
 
-            const maxNumber = maxRow?.share_number_to || 0
+            const maxNumber = maxRow?.share_number_to ?? 0
             assignedFrom = maxNumber + 1
             assignedTo = maxNumber + sharesCount
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const insertData: any = {
-            name,
-            ssn_org_nr: personalOrOrgNumber,
-            shares: sharesCount,
-            shares_count: sharesCount,
-            share_class: shareClass,
-            email,
-            phone,
-            is_board_member: isBoardMember,
-            board_role: boardRole,
-            share_number_from: assignedFrom || null,
-            share_number_to: assignedTo || null,
-        }
-
         const { data, error } = await supabase
             .from('shareholders')
-            .insert(insertData)
+            .insert({
+                name,
+                ssn_org_nr: personalOrOrgNumber,
+                shares: sharesCount,
+                shares_count: sharesCount,
+                share_class: shareClass,
+                email: email ?? null,
+                phone: phone ?? null,
+                is_board_member: isBoardMember,
+                board_role: boardRole ?? null,
+                share_number_from: assignedFrom ?? null,
+                share_number_to: assignedTo ?? null,
+            })
             .select()
             .single()
 
@@ -386,12 +283,12 @@ export const shareholderService = {
         return {
             id: data.id,
             name: data.name,
-            personalOrOrgNumber: data.ssn_org_nr || '',
-            sharesCount: data.shares_count || data.shares || 0,
-            shareClass: data.share_class || 'A',
-            ownershipPercentage: 0, // Will be recalculated
+            personalOrOrgNumber: data.ssn_org_nr ?? '',
+            sharesCount: data.shares_count ?? data.shares ?? 0,
+            shareClass: data.share_class ?? 'A',
+            ownershipPercentage: 0,
             votingPercentage: 0,
-            isBoardMember: data.is_board_member || false,
+            isBoardMember: data.is_board_member ?? false,
             boardRole: data.board_role,
             email: data.email,
             phone: data.phone,
@@ -400,5 +297,5 @@ export const shareholderService = {
             shareNumberFrom: assignedFrom,
             shareNumberTo: assignedTo,
         }
-    }
+    },
 }
