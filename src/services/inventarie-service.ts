@@ -99,7 +99,9 @@ export const inventarieService = {
         return {
             totalCount: Number(stats.total_items || 0),
             totalInkopsvarde: Number(stats.total_value || 0),
-            kategorier: Number(stats.active_items || 0)
+            // Note: RPC doesn't return category_count, so we use active_items as approximation.
+            // The UI computes exact category count client-side in useInventarier().
+            kategorier: Number((stats as Record<string, unknown>).category_count || stats.active_items || 0)
         }
     },
 

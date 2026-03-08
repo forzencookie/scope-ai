@@ -36,14 +36,15 @@ export function useK10Calculation() {
     const { verifications, isLoading } = useVerifications()
     const { shareholders } = useCompliance()
     const [k10History, setK10History] = useState<K10Report[]>([])
+    const [selectedShareholderIdx, setSelectedShareholderIdx] = useState(0)
 
     // Get dynamic beskattningsår using shared hook
-    const { taxYear } = useTaxPeriod({
+    const { taxYear, setYear, availableYears } = useTaxPeriod({
         fiscalYearEnd: company?.fiscalYearEnd || '12-31',
         type: 'k10'
     })
 
-    const { params, error: taxError } = useTaxParameters(taxYear.year)
+    const { params } = useTaxParameters(taxYear.year)
 
     // Fetch K10 history to calculate sparat utdelningsutrymme
     useEffect(() => {
@@ -63,7 +64,6 @@ export function useK10Calculation() {
 
     // Calculate K10 using dynamic year & real ledger data
     const k10Data = useMemo<K10Data>(() => {
-        // Constants fetched from System Parameters — null means DB unavailable
         if (!params) {
             return {
                 year: String(taxYear.year),
@@ -84,26 +84,21 @@ export function useK10Calculation() {
         }
         const ibb = params.ibb
         const schablonRate = params.schablonRate
-        
-        // Get aktiekapital from company data — 0 means not yet configured
+
         const aktiekapital = company?.shareCapital || 0
         const omkostnadsbelopp = aktiekapital
-        
-        // Calculate ownership percentage from shareholders data
-        // If no shareholders data, assume 100%
+
+        // Calculate ownership percentage for selected shareholder
         const totalShares = shareholders.reduce((sum, s) => sum + (s.shares_count || 0), 0)
-        const primaryShareholder = shareholders.length > 0 ? shareholders[0] : null
-        const primaryShares = primaryShareholder?.shares_count || 0
-        const agarandel = totalShares > 0 ? Math.round((primaryShares / totalShares) * 100) : 100
+        const selectedShareholder = shareholders.length > 0 ? shareholders[selectedShareholderIdx] || shareholders[0] : null
+        const selectedShares = selectedShareholder?.shares_count || 0
+        const agarandel = totalShares > 0 ? Math.round((selectedShares / totalShares) * 100) : 100
 
         // Filter verifications for the tax year
         const yearVerifications = verifications.filter(v => v.date.startsWith(taxYear.year.toString()))
-        
-        // Check if we have any real data
         const hasData = yearVerifications.length > 0 || shareholders.length > 0
 
         // Calculate Total Salaries (Löneunderlag) - Accounts 70xx-73xx
-        // Debit increases expense (positive salary cost)
         const arslonSumma = yearVerifications.reduce((sum, v) => {
             return sum + v.rows.reduce((rowSum, r) => {
                 const acc = parseInt(r.account)
@@ -122,7 +117,7 @@ export function useK10Calculation() {
         }, 0)
 
         // Calculate Dividends Taken
-        // 2091 = Balanserad vinst (utdelning), 2098 = Vinst/förlust (utdelning), 2898 = Outtagen vinstutdelning
+        // 2091 = Balanserad vinst, 2098 = Vinst/förlust, 2898 = Outtagen vinstutdelning
         const dividendAccounts = [2091, 2098, 2898]
         const totalDividends = yearVerifications.reduce((sum, v) => {
             return sum + v.rows.reduce((rowSum, r) => {
@@ -132,17 +127,14 @@ export function useK10Calculation() {
             }, 0)
         }, 0)
 
-        // Schablonbelopp (2.75 * IBB * 9.65%? No, the rule is 2.75 * IBB * ownership portion, wait.)
-        // Original code said: const schablonbelopp = Math.round(ibb2024 * 2.75 * schablonRate * (agarandel / 100))
-        // But schablonRate was undefined in the second implementation in original file.
-        // Actually, Förenklingsregeln says: 2.75 * IBB. That's it.
-        // But the previous file had: `const schablonRate = 2.75` and `const schablonbelopp = Math.round(ibb2024 * schablonRate * (agarandel / 100))`
-        // That matches the simplification rule (2.75 IBB shared among shares).
+        // Per-shareholder dividend portion (proportional to ownership)
+        const shareholderDividends = Math.round(totalDividends * (agarandel / 100))
+
+        // Förenklingsregeln: schablonRate (2.75) × IBB × ägarandel
         const schablonbelopp = Math.round(ibb * schablonRate * (agarandel / 100))
 
         // Lönebaserat utrymme (Main rule)
-        // 50% of total salaries
-        // Requirement: Owner salary must be >= 6 IBB + 5% of total salaries OR 9.6 IBB
+        // Requirement: Owner salary must be >= min(6×IBB + 5%×löner, 9.6×IBB)
         const lonekrav1 = (6 * ibb) + (0.05 * arslonSumma)
         const lonekrav2 = 9.6 * ibb
         const minLonKrav = Math.min(lonekrav1, lonekrav2)
@@ -150,26 +142,29 @@ export function useK10Calculation() {
         const klararLonekrav = egenLon >= minLonKrav
         const lonebaseratUtrymme = klararLonekrav ? Math.round(arslonSumma * 0.5 * (agarandel / 100)) : 0
 
-        // Räntebaserat utrymme: omkostnadsbelopp * statslåneränta + 9 pp * ägarandel
+        // Räntebaserat utrymme: omkostnadsbelopp × (statslåneränta + 9pp) × ägarandel
         const rantebaseratUtrymme = Math.round(omkostnadsbelopp * params.rantebaseratRate * (agarandel / 100))
 
-        // Huvudregel = lönebaserat + räntebaserat
         const huvudregel = lonebaseratUtrymme + rantebaseratUtrymme
-
-        // Total Gränsbelopp (Max of Main vs Simplification)
         const gransbelopp = Math.max(schablonbelopp, huvudregel)
 
-        // Calculate sparat utdelningsutrymme from previous K10 declarations
-        // Sum up remainingUtrymme from all previous years
+        // Sparat utdelningsutrymme with uppräkning (statslåneränta + 3%)
         const sparatUtdelningsutrymme = k10History
             .filter(report => report.tax_year < taxYear.year)
             .reduce((sum, report) => {
                 const remaining = report.data?.remainingUtrymme || 0
-                return sum + (remaining > 0 ? remaining : 0)
+                if (remaining <= 0) return sum
+                // Uppräkning: remaining × (statslåneränta + 3%)
+                // Use rantebaseratRate as proxy (statslåneränta + 9pp), adjust: SLR ≈ rantebaseratRate - 0.09
+                const slr = Math.max(0, (params.rantebaseratRate || 0.09) - 0.09)
+                const upprakningRate = slr + 0.03
+                const yearsAgo = taxYear.year - report.tax_year
+                const uppraknat = Math.round(remaining * Math.pow(1 + upprakningRate, yearsAgo))
+                return sum + uppraknat
             }, 0)
 
         const totaltUtrymme = gransbelopp + sparatUtdelningsutrymme
-        const remainingUtrymme = totaltUtrymme - totalDividends
+        const remainingUtrymme = totaltUtrymme - shareholderDividends
 
         return {
             year: taxYear.year.toString(),
@@ -177,7 +172,7 @@ export function useK10Calculation() {
             lonebaseratUtrymme,
             rantebaseratUtrymme,
             gransbelopp: totaltUtrymme,
-            totalDividends,
+            totalDividends: shareholderDividends,
             remainingUtrymme,
             aktiekapital,
             omkostnadsbelopp,
@@ -187,11 +182,16 @@ export function useK10Calculation() {
             hasData,
             sparatUtdelningsutrymme
         }
-    }, [taxYear.year, verifications, params?.ibb, params?.schablonRate, params?.rantebaseratRate, shareholders, company?.shareCapital, k10History])
+    }, [taxYear.year, verifications, params?.ibb, params?.schablonRate, params?.rantebaseratRate, shareholders, company?.shareCapital, k10History, selectedShareholderIdx])
 
     return {
         k10Data,
         taxYear,
-        isLoading
+        setYear,
+        availableYears,
+        isLoading,
+        shareholders,
+        selectedShareholderIdx,
+        setSelectedShareholderIdx,
     }
 }

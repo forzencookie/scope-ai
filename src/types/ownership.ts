@@ -63,6 +63,7 @@ export interface Partner {
   currentCapitalBalance: number;
   joinDate: string;
   isLimitedLiability: boolean; // true for kommanditdelägare
+  accountBase?: number; // BAS account base for this partner (e.g. 2071, 2074, 2077...)
 }
 
 export interface PartnerWithdrawal {

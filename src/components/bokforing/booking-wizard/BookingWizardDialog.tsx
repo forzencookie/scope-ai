@@ -67,6 +67,7 @@ const SOURCE_TYPE_LABELS: Record<PendingBookingSourceType, string> = {
   dividend_payment: 'Utdelningsbetalning',
   owner_withdrawal: 'Ägaruttag',
   ai_entry: 'AI-genererad',
+  egenavgifter: 'Egenavgifter',
 }
 
 const SOURCE_TYPE_ICONS: Record<PendingBookingSourceType, typeof BookOpen> = {
@@ -79,6 +80,7 @@ const SOURCE_TYPE_ICONS: Record<PendingBookingSourceType, typeof BookOpen> = {
   dividend_payment: Banknote,
   owner_withdrawal: ArrowRightLeft,
   ai_entry: Bot,
+  egenavgifter: Banknote,
 }
 
 // =============================================================================

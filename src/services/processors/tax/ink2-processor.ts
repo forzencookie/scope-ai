@@ -43,8 +43,8 @@ export const INK2SRUProcessor = {
     ]
 
     // Transfer result to main form
-    const profit = taxAdjustments.find(f => f.code === 7670)
-    const loss = taxAdjustments.find(f => f.code === 7770)
+    const profit = taxAdjustments.find(f => f.code === 8020)
+    const loss = taxAdjustments.find(f => f.code === 8021)
 
     if (profit) mainForm.push({ code: 7104, value: profit.value })
     if (loss) mainForm.push({ code: 7114, value: loss.value })
@@ -77,7 +77,7 @@ export const INK2SRUProcessor = {
         revenue,
         expenses,
         profit: typeof profit?.value === 'number' ? profit.value : 0,
-        taxableIncome: (typeof profit?.value === 'number' ? profit.value : 0) - 
+        taxableIncome: (typeof profit?.value === 'number' ? profit.value : 0) -
           (typeof loss?.value === 'number' ? loss.value : 0),
       },
     }

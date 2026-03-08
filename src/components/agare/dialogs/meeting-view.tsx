@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useMemo, useRef } from "react"
+import { useState, useMemo, useRef, useCallback } from "react"
 import {
     Dialog,
     DialogContent,
@@ -829,9 +829,35 @@ function StepGenomford({
         (meeting as GeneralMeeting & { protokollText?: string }).protokollText || ""
     )
     const [isSaving, setIsSaving] = useState(false)
+    const [showAddDecision, setShowAddDecision] = useState(false)
+    const [newDecisionTitle, setNewDecisionTitle] = useState("")
+    const [newDecisionText, setNewDecisionText] = useState("")
+    const [newDecisionType, setNewDecisionType] = useState<'other' | 'dividend'>('other')
+    const [newDecisionAmount, setNewDecisionAmount] = useState("")
     const existingDecisions = meeting.decisions || []
     const displayDate = formatDateLong(meeting.date)
     const agenda = meeting.agenda || FULL_ABL_AGENDA
+
+    const handleAddDecision = useCallback(async () => {
+        if (!onUpdate || !newDecisionTitle.trim()) return
+        const newDecision: GeneralMeetingDecision = {
+            id: `dec-${Date.now()}-${Math.random().toString(36).substr(2, 5)}`,
+            title: newDecisionTitle.trim(),
+            decision: newDecisionText.trim() || newDecisionTitle.trim(),
+            type: newDecisionType,
+            ...(newDecisionType === 'dividend' && newDecisionAmount ? {
+                amount: parseInt(newDecisionAmount.replace(/\s/g, '')),
+            } : {}),
+            booked: false,
+        }
+        const updatedDecisions = [...existingDecisions, newDecision]
+        await onUpdate(meeting, { decisions: updatedDecisions } as Partial<GeneralMeeting>)
+        setNewDecisionTitle("")
+        setNewDecisionText("")
+        setNewDecisionAmount("")
+        setNewDecisionType('other')
+        setShowAddDecision(false)
+    }, [onUpdate, meeting, existingDecisions, newDecisionTitle, newDecisionText, newDecisionType, newDecisionAmount])
 
     const handleAIGenerateProtokoll = () => {
         const decisionsText = existingDecisions.length > 0
@@ -1004,12 +1030,22 @@ Formatera dokumentet professionellt och formellt.`
             </Card>
 
             {/* Decisions */}
-            {existingDecisions.length > 0 && (
-                <div className="space-y-3">
+            <div className="space-y-3">
+                <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-2">
                         <Scale className="h-4 w-4" />
                         Beslut ({existingDecisions.length})
                     </h3>
+                    <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setShowAddDecision(!showAddDecision)}
+                    >
+                        {showAddDecision ? "Avbryt" : "Lägg till beslut"}
+                    </Button>
+                </div>
+
+                {existingDecisions.length > 0 && (
                     <div className="space-y-2">
                         {existingDecisions.map((decision, index) => (
                             <div key={decision.id || index} className="flex items-start justify-between py-2">
@@ -1030,8 +1066,68 @@ Formatera dokumentet professionellt och formellt.`
                             </div>
                         ))}
                     </div>
-                </div>
-            )}
+                )}
+
+                {showAddDecision && (
+                    <Card className="bg-muted/30">
+                        <CardContent className="p-4 space-y-3">
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Rubrik</Label>
+                                <Input
+                                    value={newDecisionTitle}
+                                    onChange={(e) => setNewDecisionTitle(e.target.value)}
+                                    placeholder="T.ex. Fastställande av balans- och resultaträkning"
+                                    className="h-8 text-sm"
+                                />
+                            </div>
+                            <div className="space-y-1.5">
+                                <Label className="text-xs">Beslut</Label>
+                                <Textarea
+                                    value={newDecisionText}
+                                    onChange={(e) => setNewDecisionText(e.target.value)}
+                                    placeholder="Beskrivning av beslutet..."
+                                    className="min-h-[60px] text-sm"
+                                />
+                            </div>
+                            <div className="flex gap-3">
+                                <div className="space-y-1.5">
+                                    <Label className="text-xs">Typ</Label>
+                                    <Select value={newDecisionType} onValueChange={(v) => setNewDecisionType(v as 'other' | 'dividend')}>
+                                        <SelectTrigger className="h-8 text-sm w-[160px]">
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="other">Övrigt beslut</SelectItem>
+                                            <SelectItem value="dividend">Utdelning</SelectItem>
+                                            <SelectItem value="board_election">Styrelseval</SelectItem>
+                                            <SelectItem value="auditor_election">Revisorval</SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                                {newDecisionType === 'dividend' && (
+                                    <div className="space-y-1.5 flex-1">
+                                        <Label className="text-xs">Belopp (kr)</Label>
+                                        <Input
+                                            value={newDecisionAmount}
+                                            onChange={(e) => setNewDecisionAmount(e.target.value)}
+                                            placeholder="100 000"
+                                            type="number"
+                                            className="h-8 text-sm"
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <Button
+                                size="sm"
+                                onClick={handleAddDecision}
+                                disabled={!newDecisionTitle.trim()}
+                            >
+                                Spara beslut
+                            </Button>
+                        </CardContent>
+                    </Card>
+                )}
+            </div>
 
             <div className="border-t" />
 

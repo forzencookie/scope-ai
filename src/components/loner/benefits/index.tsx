@@ -26,6 +26,7 @@ export function BenefitsTab() {
         setIsDetailsOpen,
         handleRowClick,
         handleAssign,
+        handleDeleteBenefit,
         handleRetry
     } = useBenefitsLogic()
 
@@ -167,6 +168,7 @@ export function BenefitsTab() {
                     open={isDetailsOpen}
                     onOpenChange={setIsDetailsOpen}
                     onAssign={handleAssign}
+                    onDelete={handleDeleteBenefit}
                     assignedEmployees={assignedBenefits}
                 />
             </div>

@@ -11,14 +11,6 @@
  */
 
 import { Verification } from "@/hooks/use-verifications"
-// import {
-//     ALL_INK2_FIELDS,
-//     INK2_MAIN_FIELDS,
-//     INK2R_BALANCE_SHEET_FIELDS,
-//     INK2R_INCOME_STATEMENT_FIELDS,
-//     INK2S_FIELDS,
-//     FieldDefinition,
-// } from "./ink2-fields"
 
 // =============================================================================
 // Types
@@ -322,8 +314,11 @@ function calculateTaxAdjustments(balances: AccountBalances, incomeStatement: Ink
     const representation = Math.abs(sumRange(balances, 6070, 6079))
     const nonDeductibleRep = Math.round(representation * 0.5) // 50% non-deductible
 
-    // Calculate taxable result  
-    const justerat = (vinst - forlust) + skatt + nedskrivningFinans + nonDeductibleRep
+    // Tax-exempt dividends (näringsbetingade andelar) — accounts 8012-8019
+    const taxExemptDividends = Math.abs(sumRange(balances, 8012, 8019))
+
+    // Calculate taxable result
+    const justerat = (vinst - forlust) + skatt + nedskrivningFinans + nonDeductibleRep - taxExemptDividends
 
     return [
         // Årets resultat
@@ -341,7 +336,7 @@ function calculateTaxAdjustments(balances: AccountBalances, incomeStatement: Ink
 
         // Bokförda intäkter som inte ska tas upp
         { field: "4.5a", label: "Ackordsvinster", value: 0, section: "Ej skattepliktiga intäkter" },
-        { field: "4.5b", label: "Utdelning", value: 0, section: "Ej skattepliktiga intäkter" },
+        { field: "4.5b", label: "Utdelning (näringsbetingade andelar)", value: taxExemptDividends, section: "Ej skattepliktiga intäkter" },
         { field: "4.5c", label: "Andra bokförda intäkter (ej skattepliktiga)", value: 0, section: "Ej skattepliktiga intäkter" },
 
         // Intäkter som ska tas upp men inte bokförda

@@ -112,10 +112,10 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                 onOpenChange={setDetailsDialogOpen}
                 verification={selectedVerifikation}
                 onDownload={() => {
-                    toast.info("Laddar ner...", `Verifikation #${selectedVerifikation?.id} förbereds för nedladdning.`)
+                    toast.info("Laddar ner...", `Verifikation ${selectedVerifikation?.verificationNumber} förbereds för nedladdning.`)
                 }}
                 onApprove={() => {
-                    toast.success("Verifikation godkänd", `Verifikation #${selectedVerifikation?.id} har godkänts.`)
+                    toast.success("Verifikation godkänd", `Verifikation ${selectedVerifikation?.verificationNumber} har godkänts.`)
                 }}
             />
 

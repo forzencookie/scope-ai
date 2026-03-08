@@ -106,6 +106,11 @@ function getEntityLink(entityType: EntityType, entityId: string | null): string 
     shareholders: `/dashboard/agare?tab=aktiebok&id=${entityId}`,
     companies: `/dashboard/installningar`,
     profiles: `/dashboard/installningar`,
+    roadmaps: `/dashboard/handelser?tab=canvas`,
+    taxreports: `/dashboard/rapporter`,
+    financialperiods: `/dashboard/handelser`,
+    benefits: `/dashboard/loner?tab=formaner`,
+    inventarier: `/dashboard/bokforing?tab=inventarier&id=${entityId}`,
   }
 
   return routes[entityType] || null
@@ -180,6 +185,8 @@ interface ActivityFeedProps {
   entityType?: EntityType
   /** Filter by specific entity ID */
   entityId?: string
+  /** Filter by specific date */
+  dateFilter?: Date | null
   /** Maximum height */
   maxHeight?: string | number
   /** Maximum number of activities to load initially */
@@ -190,22 +197,27 @@ interface ActivityFeedProps {
   title?: string
   /** Class name */
   className?: string
+  /** Empty state message */
+  emptyMessage?: string
 }
 
 export function ActivityFeed({
   entityType,
   entityId,
+  dateFilter,
   maxHeight = 400,
   limit = 20,
   showTitle = true,
   title = "Aktivitet",
   className,
+  emptyMessage,
 }: ActivityFeedProps) {
   const { activities, loading, hasMore, loadMore } = useActivityLog({
     entityType,
     entityId,
+    dateFilter,
     limit,
-    realtime: true,
+    realtime: !dateFilter,
   })
 
   if (loading && activities.length === 0) {
@@ -249,7 +261,7 @@ export function ActivityFeed({
         )}
         <CardContent>
           <p className="text-sm text-muted-foreground text-center py-8">
-            Ingen aktivitet ännu
+            {emptyMessage || "Ingen aktivitet ännu"}
           </p>
         </CardContent>
       </Card>

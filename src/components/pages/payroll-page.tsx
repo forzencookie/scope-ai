@@ -20,7 +20,6 @@ import {
     LazyLonebesked,
     LazyTeamTab,
     LazyBenefitsTab,
-    LazyEgenavgifter,
     LazyDelagaruttag,
 } from "@/components/shared"
 
@@ -69,7 +68,6 @@ function PayrollPageContent() {
                     {currentTab === "lonebesked" && <LazyLonebesked />}
                     {currentTab === "team" && <LazyTeamTab />}
                     {currentTab === "benefits" && <LazyBenefitsTab />}
-                    {currentTab === "egenavgifter" && <LazyEgenavgifter />}
                     {currentTab === "delagaruttag" && <LazyDelagaruttag />}
                 </main>
             </div>

@@ -8,6 +8,7 @@ import { SectionCard } from "@/components/ui/section-card"
 import { Button } from "@/components/ui/button"
 import { CollapsibleTableContainer } from "@/components/ui/collapsible-table"
 import { useNavigateToAIChat, getDefaultAIContext, type AIPageType } from "@/lib/ai/context"
+import { YearSlider } from "@/components/shared/year-slider"
 
 // =============================================================================
 // Types
@@ -43,6 +44,13 @@ export interface TaxReportLayoutProps {
     loadingMessage?: string
     /** Additional dialogs to render */
     dialogs?: ReactNode
+    /** Year navigation — when provided, shows year slider in header */
+    yearNav?: {
+        year: number
+        onYearChange: (year: number) => void
+        minYear?: number
+        maxYear?: number
+    }
 }
 
 // =============================================================================
@@ -72,6 +80,7 @@ export function TaxReportLayout({
     isLoading = false,
     loadingMessage = "Läser in bokföring...",
     dialogs,
+    yearNav,
 }: TaxReportLayoutProps) {
     const navigateToAI = useNavigateToAIChat()
 
@@ -86,11 +95,17 @@ export function TaxReportLayout({
                                 <h2 className="text-xl md:text-2xl font-bold tracking-tight">{title}</h2>
                                 <p className="text-xs sm:text-sm text-muted-foreground mt-1">{subtitle}</p>
                             </div>
-                            {actions && (
-                                <div className="flex items-center gap-2">
-                                    {actions}
-                                </div>
-                            )}
+                            <div className="flex items-center gap-2">
+                                {yearNav && (
+                                    <YearSlider
+                                        year={yearNav.year}
+                                        onYearChange={yearNav.onYearChange}
+                                        minYear={yearNav.minYear}
+                                        maxYear={yearNav.maxYear}
+                                    />
+                                )}
+                                {actions}
+                            </div>
                         </div>
                     </div>
 

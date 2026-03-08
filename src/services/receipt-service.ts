@@ -135,21 +135,4 @@ export const receiptService = {
         return { success: true }
     },
 
-    /**
-     * Link receipt to a transaction
-     */
-    async linkToTransaction(receiptId: string, transactionId: string) {
-        const supabase = getSupabaseClient()
-
-        const { error } = await supabase
-            .from('receipts')
-            .update({
-                linked_transaction_id: transactionId,
-                status: RECEIPT_STATUSES.VERIFIED
-            })
-            .eq('id', receiptId)
-
-        if (error) throw error
-        return { success: true }
-    }
 }

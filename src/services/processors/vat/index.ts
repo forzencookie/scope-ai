@@ -31,6 +31,10 @@ export {
 // Calculator
 export { VatCalculator } from './calculator'
 
+// VAT Box Definitions
+export { VAT_BOXES, VAT_BOX_BY_FIELD, VAT_BOX_BY_NUMBER, findBoxesForAccount, getBoxesForSection } from './vat-boxes'
+export type { VatBoxDefinition, VatBoxFormula, VatBoxSide } from './vat-boxes'
+
 // XML Export
 export { generateVatXML, generateFullVatXML } from './xml-export'
 

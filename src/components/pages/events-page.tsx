@@ -1,76 +1,69 @@
 "use client"
 
-import { Suspense, useState } from "react"
+import { Suspense } from "react"
 import {
-    Calendar,
-    ChevronLeft,
-    ChevronRight,
-    Plus,
     Loader2,
-    Map,
-    History,
-    BookCheck,
+    LayoutDashboard,
+    FileText,
+    Archive,
 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import type { CorporateActionType } from "@/types/events"
 import { cn } from "@/lib/utils"
-import { ActionWizard } from "@/components/agare"
 import { ActivityFeed } from "@/components/shared/activity-feed"
-import { PageHeader } from "@/components/shared"
+import { PageHeader, YearSlider } from "@/components/shared"
 import {
     EventsCalendar,
-    RoadmapView,
     ManadsavslutView,
-    DayDetailDialog,
+    DeadlinesList,
+    CanvasView,
     useHandelserLogic,
     availableYears,
     type ViewType,
 } from "@/components/handelser"
 
-// View tabs configuration
-const viewTabs: { id: ViewType; label: string; icon: typeof BookCheck }[] = [
-    { id: "manadsavslut", label: "Månadsavslut", icon: BookCheck },
-    { id: "calendar", label: "Kalender", icon: Calendar },
-    { id: "roadmap", label: "Planering", icon: Map },
-    { id: "activity", label: "Aktivitetslogg", icon: History },
+// View tabs configuration — Phase 6: 3 tabs
+const viewTabs: { id: ViewType; label: string; icon: typeof LayoutDashboard }[] = [
+    { id: "oversikt", label: "Oversikt", icon: LayoutDashboard },
+    { id: "canvas", label: "Canvas", icon: FileText },
+    { id: "arkiv", label: "Arkiv", icon: Archive },
 ]
 
 // Tab-specific headers
 const tabHeaders: Record<ViewType, { title: string; subtitle: string }> = {
-    manadsavslut: { title: "Månadsavslut", subtitle: "Översikt och avstämning per månad" },
-    calendar: { title: "Kalender", subtitle: "Se händelser i kalendervy" },
-    roadmap: { title: "Planering", subtitle: "Planera kommande åtgärder och händelser" },
-    activity: { title: "Aktivitetslogg", subtitle: "Se vem som gjort vad i företaget" },
+    oversikt: { title: "Oversikt", subtitle: "Manadsavslut och kommande deadlines" },
+    canvas: { title: "Canvas", subtitle: "Planer och AI-genererade dokument" },
+    arkiv: { title: "Arkiv", subtitle: "Kalender och historik dag for dag" },
+}
+
+const MONTH_NAMES_SV = [
+    "januari", "februari", "mars", "april", "maj", "juni",
+    "juli", "augusti", "september", "oktober", "november", "december"
+]
+
+function formatSelectedDay(date: Date): string {
+    return `${date.getDate()} ${MONTH_NAMES_SV[date.getMonth()]} ${date.getFullYear()}`
 }
 
 function HandelserPageContent() {
     const logic = useHandelserLogic()
-    const [selectedDay, setSelectedDay] = useState<Date | null>(null)
 
     const {
         activeView,
         selectedYear,
         calendarMonth,
-        wizardOpen,
         yearEvents,
+        selectedDay,
         setActiveView,
         setSelectedYear,
         setCalendarMonth,
-        setWizardOpen,
-        handleActionComplete,
+        setSelectedDay,
     } = logic
 
     const currentHeader = tabHeaders[activeView]
 
-    // Show year nav for views that need it
-    const showYearNav = activeView === "calendar" || activeView === "manadsavslut"
+    // Show year nav for Oversikt and Arkiv
+    const showYearNav = activeView === "oversikt" || activeView === "arkiv"
     const minYear = availableYears[availableYears.length - 1]
     const maxYear = availableYears[0]
-    // Show new action button only for roadmap view
-    const showNewAction = activeView === "roadmap"
-
-    // Roadmap view only allows creating roadmap items
-    const getAllowedActions = (): CorporateActionType[] => ["roadmap"]
 
     return (
         <div className="flex flex-col min-h-svh">
@@ -99,62 +92,42 @@ function HandelserPageContent() {
                 </div>
             </div>
 
-            {/* Page Header - specific to current tab */}
+            {/* Page Header */}
             <div className="px-4 md:px-6 pt-6">
                 <PageHeader
                     title={currentHeader.title}
                     subtitle={currentHeader.subtitle}
                     actions={
-                        <div className="flex items-center gap-2">
-                            {showYearNav && (
-                                <div className="flex items-center gap-1">
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        disabled={selectedYear <= minYear}
-                                        onClick={() => setSelectedYear(selectedYear - 1)}
-                                    >
-                                        <ChevronLeft className="h-4 w-4" />
-                                    </Button>
-                                    <span className="text-sm font-medium min-w-[4ch] text-center tabular-nums">
-                                        {selectedYear}
-                                    </span>
-                                    <Button
-                                        variant="ghost"
-                                        size="icon"
-                                        className="h-8 w-8"
-                                        disabled={selectedYear >= maxYear}
-                                        onClick={() => setSelectedYear(selectedYear + 1)}
-                                    >
-                                        <ChevronRight className="h-4 w-4" />
-                                    </Button>
-                                </div>
-                            )}
-                            {showNewAction && (
-                                <Button size="sm" className="gap-1.5" onClick={() => setWizardOpen(true)}>
-                                    <Plus className="h-4 w-4" />
-                                    Ny åtgärd
-                                </Button>
-                            )}
-                        </div>
+                        showYearNav ? (
+                            <YearSlider
+                                year={selectedYear}
+                                onYearChange={setSelectedYear}
+                                minYear={minYear}
+                                maxYear={maxYear}
+                            />
+                        ) : undefined
                     }
                 />
             </div>
 
-            {/* Action Wizard Dialog */}
-            <ActionWizard
-                open={wizardOpen}
-                onOpenChange={setWizardOpen}
-                onComplete={handleActionComplete}
-                allowedActions={getAllowedActions()}
-            />
-
             {/* View Content */}
             <div className="p-4 md:p-6">
-                <div className="max-w-4xl w-full space-y-4">
-                    {/* Calendar View */}
-                    {activeView === "calendar" && (
+                <div className="max-w-4xl w-full space-y-6">
+                    {/* Oversikt: Manadsavslut + Deadlines */}
+                    {activeView === "oversikt" && (
+                        <>
+                            <ManadsavslutView year={selectedYear} />
+                            <DeadlinesList />
+                        </>
+                    )}
+
+                    {/* Canvas: Markdown workspace */}
+                    {activeView === "canvas" && (
+                        <CanvasView />
+                    )}
+
+                    {/* Arkiv: Calendar + inline activity feed */}
+                    {activeView === "arkiv" && (
                         <>
                             <EventsCalendar
                                 events={yearEvents}
@@ -166,35 +139,28 @@ function HandelserPageContent() {
                                 }}
                                 onDayClick={(date) => setSelectedDay(date)}
                             />
+
                             {selectedDay && (
-                                <DayDetailDialog
-                                    open={selectedDay !== null}
-                                    onOpenChange={(open) => { if (!open) setSelectedDay(null) }}
-                                    date={selectedDay}
-                                    events={yearEvents}
-                                    onDateChange={(d) => setSelectedDay(d)}
-                                />
+                                <div className="space-y-2">
+                                    <h3 className="text-sm font-medium text-muted-foreground px-1">
+                                        {formatSelectedDay(selectedDay)}
+                                    </h3>
+                                    <ActivityFeed
+                                        dateFilter={selectedDay}
+                                        limit={50}
+                                        showTitle={false}
+                                        className="border shadow-none"
+                                        emptyMessage="Ingen aktivitet denna dag"
+                                    />
+                                </div>
+                            )}
+
+                            {!selectedDay && (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    Klicka pa en dag for att se aktivitet
+                                </p>
                             )}
                         </>
-                    )}
-
-                    {/* Roadmap View */}
-                    {activeView === "roadmap" && (
-                        <RoadmapView onCreateNew={() => setWizardOpen(true)} />
-                    )}
-
-                    {/* Månadsavslut View */}
-                    {activeView === "manadsavslut" && (
-                        <ManadsavslutView year={selectedYear} />
-                    )}
-
-                    {/* Activity Log View */}
-                    {activeView === "activity" && (
-                        <ActivityFeed
-                            limit={50}
-                            showTitle={false}
-                            className="border-0 shadow-none bg-transparent"
-                        />
                     )}
                 </div>
             </div>
@@ -206,7 +172,7 @@ function HandelserPageLoading() {
     return (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            Laddar händelser...
+            Laddar handelser...
         </div>
     )
 }

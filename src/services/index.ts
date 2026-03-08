@@ -10,7 +10,6 @@ export * from "./receipt-service"
 export * from "./account-service"
 
 // Asset & inventory
-export * from "./asset-service"
 export * from "./inventarie-service"
 
 // Tax & compliance

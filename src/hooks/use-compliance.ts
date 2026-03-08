@@ -24,6 +24,8 @@ export interface Shareholder {
     share_class?: 'A' | 'B'
     share_number_from?: number
     share_number_to?: number
+    acquisition_date?: string
+    acquisition_price?: number
 }
 
 export function useCompliance() {

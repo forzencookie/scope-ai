@@ -1,14 +1,21 @@
 "use client"
 
-import { useState } from "react"
-import { Calculator, Plus, FileDown } from "lucide-react"
+import { Bot, FileDown } from "lucide-react"
 import { Button } from "@/components/ui/button"
+import { YearSlider } from "@/components/shared"
 import { TooltipProvider } from "@/components/ui/tooltip"
-import { SectionCard } from "@/components/ui/section-card"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { useCompany } from "@/providers/company-provider"
 import { useToast } from "@/components/ui/toast"
 import { downloadSRUPackage, createK10Declaration } from "@/lib/generators/sru-generator"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+    DropdownMenuLabel,
+    DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu"
 
 // Logic
 import { useK10Calculation } from "./use-k10-calculation"
@@ -17,17 +24,21 @@ import { useK10Calculation } from "./use-k10-calculation"
 import { K10Stats } from "./components/K10Stats"
 import { K10Breakdown } from "./components/K10Breakdown"
 import { K10History } from "./components/K10History"
-import { K10WizardDialog } from "../dialogs/k10-wizard-dialog"
 
 export function K10Content() {
     const navigateToAI = useNavigateToAIChat()
     const { company } = useCompany()
     const toast = useToast()
-    const [isWizardOpen, setIsWizardOpen] = useState(false)
-    const [refreshKey, setRefreshKey] = useState(0)
 
     // Logic Hook
-    const { k10Data, taxYear, isLoading } = useK10Calculation()
+    const {
+        k10Data, taxYear, setYear, availableYears, isLoading,
+        shareholders, selectedShareholderIdx, setSelectedShareholderIdx
+    } = useK10Calculation()
+
+    const selectedShareholder = shareholders.length > 0
+        ? shareholders[selectedShareholderIdx] || shareholders[0]
+        : null
 
     const handleExportSRU = async () => {
         toast.info("Exporterar", "Förbereder K10 SRU-filer...")
@@ -61,11 +72,6 @@ export function K10Content() {
         }
     }
 
-    const handleWizardConfirm = () => {
-        setIsWizardOpen(false)
-        setRefreshKey(prev => prev + 1) // Trigger history refresh
-    }
-
     return (
         <TooltipProvider>
             <div className="w-full space-y-4 md:space-y-6">
@@ -78,14 +84,43 @@ export function K10Content() {
                                 Blankett K10 för fåmansföretag. Beräkna gränsbeloppet för 3:12-reglerna.
                             </p>
                         </div>
-                        <div className="flex gap-2 w-full sm:w-auto">
+                        <div className="flex gap-2 w-full sm:w-auto items-center">
+                            <YearSlider
+                                year={taxYear.year}
+                                onYearChange={setYear}
+                                minYear={availableYears[availableYears.length - 1]}
+                                maxYear={availableYears[0]}
+                            />
+                            {/* Shareholder selector */}
+                            {shareholders.length > 1 && (
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger asChild>
+                                        <Button variant="outline" size="sm" className="w-full sm:w-auto">
+                                            {selectedShareholder?.name || "Välj delägare"}
+                                        </Button>
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end" className="w-56">
+                                        <DropdownMenuLabel>Välj delägare</DropdownMenuLabel>
+                                        <DropdownMenuSeparator />
+                                        {shareholders.map((s, idx) => (
+                                            <DropdownMenuItem
+                                                key={s.id}
+                                                onClick={() => setSelectedShareholderIdx(idx)}
+                                                className={idx === selectedShareholderIdx ? "bg-accent" : ""}
+                                            >
+                                                {s.name} ({s.shares_percentage || Math.round((s.shares_count / shareholders.reduce((sum, sh) => sum + (sh.shares_count || 0), 0)) * 100)}%)
+                                            </DropdownMenuItem>
+                                        ))}
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            )}
                             <Button variant="outline" onClick={handleExportSRU} size="sm" className="w-full sm:w-auto">
                                 <FileDown className="h-4 w-4 sm:mr-2" />
                                 <span className="hidden sm:inline">Exportera SRU</span>
                                 <span className="sm:hidden">SRU</span>
                             </Button>
-                            <Button onClick={() => setIsWizardOpen(true)} size="sm" className="w-full sm:w-auto">
-                                <Plus className="h-4 w-4 sm:mr-2" />
+                            <Button onClick={() => navigateToAI(getDefaultAIContext('k10'))} size="sm" className="w-full sm:w-auto">
+                                <Bot className="h-4 w-4 sm:mr-2" />
                                 <span className="hidden sm:inline">Skapa blankett</span>
                                 <span className="sm:hidden">Ny</span>
                             </Button>
@@ -95,35 +130,15 @@ export function K10Content() {
                     {/* Stats Grid */}
                     <K10Stats data={k10Data} deadline={taxYear.deadlineLabel} isLoading={isLoading} />
 
-                    <SectionCard
-                        title="Optimera K10 med AI"
-                        description="Låt AI analysera ditt löneunderlag och maximera ditt gränsbelopp för lågbeskattad utdelning."
-                        variant="ai"
-                        icon={Calculator}
-                        actionLabel="Beräkna gränsbelopp"
-                        onAction={() => navigateToAI(getDefaultAIContext("k10"))}
-                    />
-
                     <div className="border-b-2 border-border/60" />
 
                     {/* Breakdown Calculation */}
                     <K10Breakdown data={k10Data} />
 
                     {/* History Table */}
-                    <K10History key={refreshKey} />
+                    <K10History />
                 </div>
             </div>
-
-            <K10WizardDialog
-                open={isWizardOpen}
-                onOpenChange={setIsWizardOpen}
-                onConfirm={handleWizardConfirm}
-                data={{
-                    taxYear: taxYear.year,
-                    deadline: taxYear.deadlineLabel,
-                    k10Data: k10Data
-                }}
-            />
-        </TooltipProvider >
+        </TooltipProvider>
     )
 }

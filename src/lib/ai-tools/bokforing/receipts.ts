@@ -190,59 +190,6 @@ export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>
 })
 
 // =============================================================================
-// Match Receipt to Transaction Tool
-// =============================================================================
-
-export interface MatchReceiptToTransactionParams {
-    receiptId: string
-    transactionId: string
-}
-
-export interface ReceiptMatchResult {
-    matched: boolean
-    receiptId: string
-    transactionId: string
-}
-
-export const matchReceiptToTransactionTool = defineTool<MatchReceiptToTransactionParams, ReceiptMatchResult>({
-    name: 'match_receipt_to_transaction',
-    description: 'Koppla ett kvitto till en banktransaktion som bokföringsunderlag. Använd när du har ett kvitto och vill länka det till rätt transaktion. Kräver bekräftelse.',
-    category: 'write',
-    requiresConfirmation: true,
-    domain: 'bokforing',
-    keywords: ['matcha', 'kvitto', 'transaktion', 'koppling'],
-    parameters: {
-        type: 'object',
-        properties: {
-            receiptId: { type: 'string', description: 'ID för kvittot' },
-            transactionId: { type: 'string', description: 'ID för transaktionen' },
-        },
-        required: ['receiptId', 'transactionId'],
-    },
-    execute: async (params) => {
-        return {
-            success: true,
-            data: {
-                matched: false,
-                receiptId: params.receiptId,
-                transactionId: params.transactionId,
-            },
-            message: `Kvitto förberett för koppling till transaktion.`,
-            confirmationRequired: {
-                title: 'Koppla kvitto',
-                description: 'Koppla kvittot som underlag till transaktionen',
-                summary: [
-                    { label: 'Kvitto', value: params.receiptId },
-                    { label: 'Transaktion', value: params.transactionId },
-                ],
-                action: { toolName: 'match_receipt_to_transaction', params },
-                requireCheckbox: false,
-            },
-        }
-    },
-})
-
-// =============================================================================
 // Get Unmatched Receipts Tool
 // =============================================================================
 
@@ -299,6 +246,5 @@ export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, R
 export const receiptTools = [
     getReceiptsTool,
     createReceiptTool,
-    matchReceiptToTransactionTool,
     getUnmatchedReceiptsTool,
 ]

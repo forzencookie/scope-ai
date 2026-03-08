@@ -133,22 +133,28 @@ export const FinancialReportCalculator = {
     const taxItems = getItemsInRange(8900, 8999)
 
     const totalRevenue = revenueItems.reduce((sum, item) => sum + item.value, 0)
-    const ebitda = totalRevenue + 
-      materialItems.reduce((sum, i) => sum + i.value, 0) + 
-      otherExternalItems.reduce((sum, i) => sum + i.value, 0) + 
-      personnelItems.reduce((sum, i) => sum + i.value, 0)
-    const ebit = ebitda + depreciationItems.reduce((sum, i) => sum + i.value, 0)
-    const ebt = ebit + financialItems.reduce((sum, i) => sum + i.value, 0)
-    const netIncome = ebt + taxItems.reduce((sum, i) => sum + i.value, 0)
+    const materialTotal = materialItems.reduce((sum, i) => sum + i.value, 0)
+    const externalTotal = otherExternalItems.reduce((sum, i) => sum + i.value, 0)
+    const personnelTotal = personnelItems.reduce((sum, i) => sum + i.value, 0)
+    const depreciationTotal = depreciationItems.reduce((sum, i) => sum + i.value, 0)
+    const financialTotal = financialItems.reduce((sum, i) => sum + i.value, 0)
+    const taxTotal = taxItems.reduce((sum, i) => sum + i.value, 0)
+
+    const totalCosts = materialTotal + externalTotal + personnelTotal + depreciationTotal
+    const ebit = totalRevenue + totalCosts
+    const ebt = ebit + financialTotal
+    const netIncome = ebt + taxTotal
 
     return [
       { title: "Rörelseintäkter", items: revenueItems, total: totalRevenue },
-      { title: "Kostnader för material och varor", items: materialItems, total: materialItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Övriga externa kostnader", items: otherExternalItems, total: otherExternalItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Personalkostnader", items: personnelItems, total: personnelItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Avskrivningar", items: depreciationItems, total: depreciationItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Finansiella poster", items: financialItems, total: financialItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Skatt", items: taxItems, total: taxItems.reduce((sum, i) => sum + i.value, 0) },
+      { title: "Kostnader för material och varor", items: materialItems, total: materialTotal },
+      { title: "Övriga externa kostnader", items: otherExternalItems, total: externalTotal },
+      { title: "Personalkostnader", items: personnelItems, total: personnelTotal },
+      { title: "Avskrivningar", items: depreciationItems, total: depreciationTotal },
+      { title: "Rörelseresultat (EBIT)", items: [], total: ebit, isHighlight: true },
+      { title: "Finansiella poster", items: financialItems, total: financialTotal },
+      { title: "Resultat före skatt", items: [], total: ebt, isHighlight: true },
+      { title: "Skatt", items: taxItems, total: taxTotal },
       { title: "Årets resultat", items: [{ label: "Nettoresultat", value: netIncome }], total: netIncome, isHighlight: true },
     ]
   },
@@ -188,14 +194,27 @@ export const FinancialReportCalculator = {
     const longLiabilities = getItemsInRange(2300, 2399, true)
     const shortLiabilities = getItemsInRange(2400, 2999, true)
 
+    const fixedTotal = fixedAssets.reduce((sum, i) => sum + i.value, 0)
+    const currentTotal = currentAssets.reduce((sum, i) => sum + i.value, 0)
+    const equityTotal = equityItems.reduce((sum, i) => sum + i.value, 0)
+    const untaxedTotal = untaxedItems.reduce((sum, i) => sum + i.value, 0)
+    const provisionTotal = provisionItems.reduce((sum, i) => sum + i.value, 0)
+    const longTotal = longLiabilities.reduce((sum, i) => sum + i.value, 0)
+    const shortTotal = shortLiabilities.reduce((sum, i) => sum + i.value, 0)
+
+    const totalAssets = fixedTotal + currentTotal
+    const totalEqLiab = equityTotal + untaxedTotal + provisionTotal + longTotal + shortTotal
+
     return [
-      { title: "Anläggningstillgångar", items: fixedAssets, total: fixedAssets.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Omsättningstillgångar", items: currentAssets, total: currentAssets.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Eget kapital", items: equityItems, total: equityItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Obeskattade reserver", items: untaxedItems, total: untaxedItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Avsättningar", items: provisionItems, total: provisionItems.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Långfristiga skulder", items: longLiabilities, total: longLiabilities.reduce((sum, i) => sum + i.value, 0) },
-      { title: "Kortfristiga skulder", items: shortLiabilities, total: shortLiabilities.reduce((sum, i) => sum + i.value, 0) },
+      { title: "Anläggningstillgångar", items: fixedAssets, total: fixedTotal },
+      { title: "Omsättningstillgångar", items: currentAssets, total: currentTotal },
+      { title: "SUMMA TILLGÅNGAR", items: [], total: totalAssets, isHighlight: true },
+      { title: "Eget kapital", items: equityItems, total: equityTotal },
+      { title: "Obeskattade reserver", items: untaxedItems, total: untaxedTotal },
+      { title: "Avsättningar", items: provisionItems, total: provisionTotal },
+      { title: "Långfristiga skulder", items: longLiabilities, total: longTotal },
+      { title: "Kortfristiga skulder", items: shortLiabilities, total: shortTotal },
+      { title: "SUMMA EGET KAPITAL OCH SKULDER", items: [], total: totalEqLiab, isHighlight: true },
     ]
   },
 
@@ -210,7 +229,9 @@ export const FinancialReportCalculator = {
       { title: "Övriga externa kostnader", items: [], total: 0 },
       { title: "Personalkostnader", items: [], total: 0 },
       { title: "Avskrivningar", items: [], total: 0 },
+      { title: "Rörelseresultat (EBIT)", items: [], total: 0, isHighlight: true },
       { title: "Finansiella poster", items: [], total: 0 },
+      { title: "Resultat före skatt", items: [], total: 0, isHighlight: true },
       { title: "Skatt", items: [], total: 0 },
       { title: "Årets resultat", items: [{ label: "Nettoresultat", value: 0 }], total: 0, isHighlight: true },
     ]
@@ -222,15 +243,15 @@ export const FinancialReportCalculator = {
    */
   getEmptyBalanceSheetSections(): FinancialSection[] {
     return [
-      { title: "Tillgångar", items: [], total: 0 },
       { title: "Anläggningstillgångar", items: [], total: 0 },
       { title: "Omsättningstillgångar", items: [], total: 0 },
-      { title: "Eget kapital och skulder", items: [], total: 0 },
+      { title: "SUMMA TILLGÅNGAR", items: [], total: 0, isHighlight: true },
       { title: "Eget kapital", items: [], total: 0 },
       { title: "Obeskattade reserver", items: [], total: 0 },
       { title: "Avsättningar", items: [], total: 0 },
       { title: "Långfristiga skulder", items: [], total: 0 },
       { title: "Kortfristiga skulder", items: [], total: 0 },
+      { title: "SUMMA EGET KAPITAL OCH SKULDER", items: [], total: 0, isHighlight: true },
     ]
   },
 }

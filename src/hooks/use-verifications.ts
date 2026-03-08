@@ -10,8 +10,17 @@ export interface VerificationRow {
     credit: number
 }
 
+/**
+ * API-layer Verification type (simplified for hook consumers).
+ * Uses `rows` instead of `entries` to match API response shape.
+ * Canonical type: `CanonicalVerification` in `@/types`
+ */
 export interface Verification {
     id: string
+    /** BFL series letter, e.g. "A", "B", "Y" */
+    series?: string
+    /** Sequential number within series, e.g. 1, 2, 3 */
+    number?: number
     date: string
     description: string
     rows: VerificationRow[]

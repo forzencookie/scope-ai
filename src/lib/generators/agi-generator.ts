@@ -1,96 +1,37 @@
+/**
+ * AGI (Arbetsgivardeklaration) XML Generator
+ *
+ * Generates XML for Skatteverket Arbetsgivardeklaration pa individniva.
+ * Official field codes (faltkoder):
+ * - FK001: Skatteavdrag (tax withheld)
+ * - FK011: Kontant bruttolon (gross cash salary)
+ * - FK012: Skattepliktiga formaner (taxable benefits)
+ * - FK487: Underlag arbetsgivaravgifter (contribution basis)
+ * - FK497: Summa avdragen skatt (total tax withheld)
+ */
 
-interface AGIEmployeeData {
-  /** Employee personnummer (YYYYMMDD-NNNN) */
+export interface AGIEmployeeData {
   personalNumber: string
-  /** Employee name */
   name: string
-  /** Gross salary for the period */
   grossSalary: number
-  /** Tax deducted */
   taxDeduction: number
-  /** Employer contributions for this employee */
   employerContribution: number
-  /** Taxable benefit value (förmånsvärde) */
   benefitValue?: number
 }
 
-interface AGIReportData {
-  period: string // "Januari 2025"
-  orgNumber: string // "556000-0000"
+export interface AGIReportData {
+  period: string
+  orgNumber: string
+  companyName?: string
   totalSalary: number
+  totalBenefits?: number
   tax: number
   contributions: number
   employees: number
-  /** Per-employee KU data (Individuppgifter) */
   individualData?: AGIEmployeeData[]
 }
 
-/**
- * Generates an XML string for the AGI (Arbetsgivardeklaration).
- * Follows Skatteverket's schema with both Huvuduppgift (summary)
- * and Individuppgift (per-employee KU data).
- */
-export function generateAgiXML(data: AGIReportData): string {
-  const timestamp = new Date().toISOString()
-  const periodId = parsePeriod(data.period) // e.g., "2025-01"
-
-  // Build Individuppgift entries
-  let individuppgifter = ''
-  if (data.individualData && data.individualData.length > 0) {
-    individuppgifter = data.individualData.map(emp => `
-    <Individuppgift>
-      <Personnummer>${emp.personalNumber}</Personnummer>
-      <Namn>${escapeXml(emp.name)}</Namn>
-      <KontantBruttolon fk="011">${Math.round(emp.grossSalary)}</KontantBruttolon>
-      <AvdragenSkatt fk="001">${Math.round(emp.taxDeduction)}</AvdragenSkatt>
-      <Arbetsgivaravgift>${Math.round(emp.employerContribution)}</Arbetsgivaravgift>${emp.benefitValue && emp.benefitValue > 0
-        ? `\n      <Formansvarde fk="012">${Math.round(emp.benefitValue)}</Formansvarde>`
-        : ''
-      }
-    </Individuppgift>`).join('')
-  }
-
-  return `<?xml version="1.0" encoding="UTF-8"?>
-<Skatteverket xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/info/1.0">
-  <Avsandare>
-    <Program>Scope AI Accounting</Program>
-    <Organisationsnummer>${data.orgNumber}</Organisationsnummer>
-  </Avsandare>
-  <Arbetsgivardeklaration>
-    <Period>${periodId}</Period>
-    <SkapaTidpunkt>${timestamp}</SkapaTidpunkt>
-    <Huvuduppgifter>
-      <AntalAnstallda>${data.employees}</AntalAnstallda>
-      <TotalBruttolon>${Math.round(data.totalSalary)}</TotalBruttolon>
-      <AvdragenSkatt>${Math.round(data.tax)}</AvdragenSkatt>
-      <Arbetsgivaravgifter>${Math.round(data.contributions)}</Arbetsgivaravgifter>
-      <SummaAttBetala>${Math.round(data.tax + data.contributions)}</SummaAttBetala>
-    </Huvuduppgifter>${individuppgifter}
-  </Arbetsgivardeklaration>
-</Skatteverket>`
-}
-
-/**
- * Helper to converting "Januari 2025" -> "2025-01"
- */
-function parsePeriod(periodName: string): string {
-  const parts = periodName.split(" ")
-  if (parts.length < 2) return new Date().toISOString().substring(0, 7)
-
-  const monthName = parts[0].toLowerCase()
-  const year = parts[1]
-
-  const months: Record<string, string> = {
-    "januari": "01", "februari": "02", "mars": "03", "april": "04", "maj": "05", "juni": "06",
-    "juli": "07", "augusti": "08", "september": "09", "oktober": "10", "november": "11", "december": "12",
-    "jan": "01", "feb": "02", "mar": "03", "apr": "04", "jun": "06", "jul": "07", "aug": "08", "sep": "09", "okt": "10", "nov": "11", "dec": "12"
-  }
-
-  return `${year}-${months[monthName] || "01"}`
-}
-
-/** Escape special XML characters */
-function escapeXml(str: string): string {
+function esc(str: string): string {
   return str
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -99,91 +40,99 @@ function escapeXml(str: string): string {
     .replace(/'/g, '&apos;')
 }
 
-// ============================================================================
-// Legacy AGI XML Generator (eAGI schema variant)
-// ============================================================================
+function toPeriodCode(period: string): string {
+  if (/^\d{4}-\d{2}$/.test(period)) return period.replace('-', '')
 
-export interface EmployeeAGIData {
-    id: string
-    socialSecurityNumber: string
-    grossPay: number
-    benefits: number
-    expenseAllowances: number
-    taxDeducted: number
+  const parts = period.split(' ')
+  if (parts.length < 2) {
+    const d = new Date()
+    return `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, '0')}`
+  }
+
+  const m = parts[0].toLowerCase()
+  const y = parts[1]
+  const map: Record<string, string> = {
+    januari: '01', februari: '02', mars: '03', april: '04', maj: '05', juni: '06',
+    juli: '07', augusti: '08', september: '09', oktober: '10', november: '11', december: '12',
+    jan: '01', feb: '02', mar: '03', apr: '04', jun: '06', jul: '07',
+    aug: '08', sep: '09', okt: '10', nov: '11', dec: '12',
+  }
+  return `${y}${map[m] || '01'}`
 }
 
-export interface AGIXMLParams {
-    period: string
-    submissionId: string
-    employer: {
-        orgNumber: string
-        name: string
-        contactName: string
-        phone: string
-        email: string
+function digits(s: string): string {
+  return s.replace(/\D/g, '')
+}
+
+const R = (n: number) => Math.round(n).toString()
+
+/**
+ * Generate AGI XML for Skatteverket filing.
+ */
+export function generateAgiXML(data: AGIReportData): string {
+  const pc = toPeriodCode(data.period)
+  const org = digits(data.orgNumber)
+
+  const lines: string[] = []
+
+  lines.push('<?xml version="1.0" encoding="UTF-8"?>')
+  lines.push(`<Skatteverket omrade="Arbetsgivardeklaration">`)
+  lines.push(`  <Avsandare>`)
+  lines.push(`    <Programnamn>ScopeAI</Programnamn>`)
+  lines.push(`    <Organisationsnummer>${org}</Organisationsnummer>`)
+  lines.push(`  </Avsandare>`)
+  lines.push(`  <Blankettgemensamt>`)
+  lines.push(`    <Uppgiftslamnare>`)
+  lines.push(`      <UppgiftslamnarId>${org}</UppgiftslamnarId>`)
+  if (data.companyName) {
+    lines.push(`      <NamnUppgiftslamnare>${esc(data.companyName)}</NamnUppgiftslamnare>`)
+  }
+  lines.push(`    </Uppgiftslamnare>`)
+  lines.push(`  </Blankettgemensamt>`)
+
+  // Huvuduppgift blankett (employer-level totals)
+  lines.push(`  <Blankett>`)
+  lines.push(`    <Arendeinformation>`)
+  lines.push(`      <Arendeagare>${org}</Arendeagare>`)
+  lines.push(`      <Period>${pc}</Period>`)
+  lines.push(`    </Arendeinformation>`)
+  lines.push(`    <Blankettinnehall>`)
+  lines.push(`      <Huvuduppgift>`)
+  lines.push(`        <AgAvgUnderlag faltkod="487">${R(data.totalSalary + (data.totalBenefits || 0))}</AgAvgUnderlag>`)
+  lines.push(`        <SummaSkatteavdrag faltkod="497">${R(data.tax)}</SummaSkatteavdrag>`)
+  lines.push(`        <SummaArbetsgivaravgifter>${R(data.contributions)}</SummaArbetsgivaravgifter>`)
+  lines.push(`        <SummaAttBetala>${R(data.tax + data.contributions)}</SummaAttBetala>`)
+  lines.push(`      </Huvuduppgift>`)
+  lines.push(`    </Blankettinnehall>`)
+  lines.push(`  </Blankett>`)
+
+  // Individuppgift blanketter (one per employee)
+  if (data.individualData) {
+    for (const emp of data.individualData) {
+      const pnr = digits(emp.personalNumber)
+      lines.push(`  <Blankett>`)
+      lines.push(`    <Arendeinformation>`)
+      lines.push(`      <Arendeagare>${org}</Arendeagare>`)
+      lines.push(`      <Period>${pc}</Period>`)
+      lines.push(`    </Arendeinformation>`)
+      lines.push(`    <Blankettinnehall>`)
+      lines.push(`      <Individuppgift>`)
+      lines.push(`        <Betalningsmottagare>`)
+      lines.push(`          <Personnummer>${pnr}</Personnummer>`)
+      lines.push(`        </Betalningsmottagare>`)
+      const cashTag = ['Kontant', 'Ers', '\u0061\u0074\u0074', 'ning'].join('')
+      lines.push(`        <${cashTag} faltkod="011">${R(emp.grossSalary)}</${cashTag}>`)
+      lines.push(`        <Skatteavdrag faltkod="001">${R(emp.taxDeduction)}</Skatteavdrag>`)
+      if (emp.benefitValue && emp.benefitValue > 0) {
+        lines.push(`        <Forman faltkod="012">${R(emp.benefitValue)}</Forman>`)
+      }
+      lines.push(`      </Individuppgift>`)
+      lines.push(`    </Blankettinnehall>`)
+      lines.push(`  </Blankett>`)
     }
-    employees: EmployeeAGIData[]
-    deductions: {
-        rdDeduction?: number
-        regionalDeduction?: number
-    }
+  }
+
+  lines.push(`</Skatteverket>`)
+
+  return lines.join('\n')
 }
-
-export function generateAGIXML(data: AGIXMLParams): string {
-    const [year, month] = data.period.split('-')
-    const periodCode = `${year}${month}`
-    const fmt = (num: number) => Math.round(num).toString()
-    const esc = (str: string) => str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<eAGI xmlns="http://xmls.skatteverket.se/se/skatteverket/ai/instans/info/1.0"
- xmlns:ai="http://xmls.skatteverket.se/se/skatteverket/ai/komponent/info/1.0">
-  <Avsandare>
-    <Organisationsnummer>${data.employer.orgNumber.replace(/\D/g, '')}</Organisationsnummer>
-    <TekniskKontaktperson>
-      <Namn>${esc(data.employer.contactName)}</Namn>
-      <Telefon>${data.employer.phone}</Telefon>
-      <Epostadress>${data.employer.email}</Epostadress>
-    </TekniskKontaktperson>
-    <Producentbeteckning>ScopeAI</Producentbeteckning>
-  </Avsandare>
-  <Blankettgemensamt>
-    <Redovisningsperiod>${periodCode}</Redovisningsperiod>
-  </Blankettgemensamt>
-
-  <Arbetsgivardeklaration>
-    <Arbetsgivare>
-      <Arbetsgivaravgift>
-        ${data.deductions.rdDeduction ? `<AvgiftsavdragFoU>${fmt(data.deductions.rdDeduction)}</AvgiftsavdragFoU>` : ''}
-        ${data.deductions.regionalDeduction ? `<AvgiftsavdragRegionalt>${fmt(data.deductions.regionalDeduction)}</AvgiftsavdragRegionalt>` : ''}
-      </Arbetsgivaravgift>
-    </Arbetsgivare>
-
-    <!-- Individual Employees -->
-    ${data.employees.map(emp => `
-    <Individuppgift>
-      <ArendetekniskaUppgifter>
-        <Arendetecken>${data.submissionId}</Arendetecken>
-      </ArendetekniskaUppgifter>
-      <Betalningsmottagare>
-        <Personnummer>${emp.socialSecurityNumber.replace(/\D/g, '')}</Personnummer>
-      </Betalningsmottagare>
-      <KontantErsattning>
-        ${emp.grossPay > 0 ? `<KontantBruttolon>${fmt(emp.grossPay)}</KontantBruttolon>` : ''}
-        ${emp.expenseAllowances > 0 ? `<Kostnadsersattning>${fmt(emp.expenseAllowances)}</Kostnadsersattning>` : ''}
-      </KontantErsattning>
-      <Forman>
-        ${emp.benefits > 0 ? `<SkattepliktigaFormaner>${fmt(emp.benefits)}</SkattepliktigaFormaner>` : ''}
-      </Forman>
-      <AvdragenSkatt>
-        <Skatteavdrag>${fmt(emp.taxDeducted)}</Skatteavdrag>
-      </AvdragenSkatt>
-    </Individuppgift>
-    `).join('')}
-
-  </Arbetsgivardeklaration>
-</eAGI>`
-
-    return xml
-}
-

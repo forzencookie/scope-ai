@@ -47,8 +47,12 @@ export function useTransactionsLogic({
     const selection = useBulkSelection(filteredTransactions)
 
     const handleTransactionClick = useCallback((transaction: TransactionWithAI) => {
-        selection.toggleItem(transaction.id)
-    }, [selection])
+        // Click opens booking dialog directly for unbooked transactions
+        if (transaction.status !== TRANSACTION_STATUSES.RECORDED) {
+            setSelectedTransactions([transaction])
+            setBookingDialogOpen(true)
+        }
+    }, [])
 
     // Stats Logic
     const stats = useMemo(() => {

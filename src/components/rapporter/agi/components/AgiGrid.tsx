@@ -31,8 +31,6 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
     }
 
     const handleDownload = (report: AGIReport) => {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const reportWithData = report as any
         const xml = generateAgiXML({
             period: report.period,
             orgNumber: company?.orgNumber || "556000-0000",
@@ -40,7 +38,7 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
             tax: report.tax,
             contributions: report.contributions,
             employees: report.employees,
-            individualData: reportWithData.individualData,
+            individualData: report.individualData,
         })
 
         const blob = new Blob([xml], { type: "text/xml" })

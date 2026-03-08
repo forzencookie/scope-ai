@@ -20,6 +20,7 @@ export type PendingBookingSourceType =
   | 'dividend_decision'
   | 'dividend_payment'
   | 'owner_withdrawal'
+  | 'egenavgifter'
   | 'ai_entry'
 
 export type PendingBookingStatus = 'pending' | 'booked' | 'dismissed'

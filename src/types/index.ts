@@ -366,3 +366,63 @@ export function toFullTransaction(simple: SimpleTransaction): Transaction {
     amountValue: parseAmount(simple.amount),
   }
 }
+
+// ============================================
+// Verification Types (Canonical)
+// ============================================
+// NOTE: Layer-specific variants exist:
+//   - hooks/use-verifications.ts: API response model (uses `rows` field)
+//   - services/verification-service.ts: DB model (uses `entries` field + totals)
+//   - components/bokforing/verifikationer/types.ts: Grid display model
+// New code should import from here. Existing code will migrate gradually.
+
+/** A single entry (journal line) within a verification */
+export interface VerificationEntry {
+  account: string
+  accountName?: string
+  debit: number
+  credit: number
+  description?: string
+}
+
+/** Canonical Verification type — the complete accounting verification (verifikat) */
+export interface CanonicalVerification {
+  id: string
+  /** BFL series letter, e.g. "A", "B", "Y" */
+  series: string
+  /** Sequential number within series, e.g. 1, 2, 3 */
+  number: number
+  date: string
+  description: string
+  entries: VerificationEntry[]
+  totalDebit: number
+  totalCredit: number
+  isBalanced: boolean
+  createdAt?: string
+  /** Source that created this verification (e.g. 'manual', 'receipt', 'invoice') */
+  sourceType?: string
+  sourceId?: string
+}
+
+// ============================================
+// Payslip Types (Canonical)
+// ============================================
+// Layer-specific variants exist in:
+//   - services/payroll-service.ts
+//   - components/loner/payslips/use-payslips-logic.ts
+
+export interface Payslip {
+  id: string
+  employeeId: string
+  employeeName: string
+  period: string
+  year: number
+  month: number
+  grossSalary: number
+  taxDeduction: number
+  netSalary: number
+  bonuses: number
+  otherDeductions: number
+  status: 'draft' | 'pending' | 'sent'
+  sentAt?: string
+}

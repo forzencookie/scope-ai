@@ -1,7 +1,7 @@
 "use client"
 
 import dynamic from "next/dynamic"
-import { generateAGIXML } from "@/lib/generators/agi-generator"
+import { generateAgiXML } from "@/lib/generators/agi-generator"
 import { downloadTextFile } from "./utils"
 import { useCompany } from "@/providers/company-provider"
 
@@ -16,18 +16,15 @@ export function AGIReportCard(props: any) {
             {...props}
             actions={{
                 onExportXML: () => {
-                    const xml = generateAGIXML({
+                    const xml = generateAgiXML({
                         period: props.data?.period || "2024-01",
-                        submissionId: `AGI-${Date.now()}`,
-                        employer: {
-                            orgNumber: company?.orgNumber || "",
-                            name: company?.name || "",
-                            contactName: company?.contactPerson || "",
-                            phone: company?.phone || "",
-                            email: company?.email || "",
-                        },
-                        employees: [],
-                        deductions: {}
+                        orgNumber: company?.orgNumber || "",
+                        companyName: company?.name,
+                        totalSalary: props.data?.totalSalary || 0,
+                        tax: props.data?.tax || 0,
+                        contributions: props.data?.contributions || 0,
+                        employees: props.data?.employees || 0,
+                        individualData: props.data?.individualData || [],
                     })
                     downloadTextFile(xml, `agi-${props.data?.period}.xml`)
                 }

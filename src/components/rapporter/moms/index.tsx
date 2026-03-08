@@ -4,7 +4,6 @@ import {
     Bot,
     Clock,
     CheckCircle2,
-    Plus,
 } from "lucide-react"
 import { SearchBar } from "@/components/ui/search-bar"
 import { FilterButton } from "@/components/ui/filter-button"
@@ -17,11 +16,10 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SectionCard } from "@/components/ui/section-card"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
-import { MomsWizardDialog } from "../dialogs/assistent"
+// MomsWizardDialog removed — AI generates momsdeklaration via navigateToAI()
 import { MomsDetailDialog } from "../dialogs/moms"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
-import { useToast } from "@/components/ui/toast"
 
 // Logic
 import { useVatReport } from "./use-vat-report"
@@ -33,7 +31,7 @@ import { MomsList } from "./components/MomsList"
 export function MomsdeklarationContent() {
     const navigateToAI = useNavigateToAIChat()
     const { text } = useTextMode()
-    const toast = useToast()
+
 
     const {
         // State
@@ -42,7 +40,7 @@ export function MomsdeklarationContent() {
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
         selectedReport, setSelectedReport,
-        showAIDialog, setShowAIDialog,
+
 
         // Data
         filteredPeriods,
@@ -67,8 +65,8 @@ export function MomsdeklarationContent() {
                             <p className="text-muted-foreground mt-1">Hantera momsrapporter och skicka till Skatteverket.</p>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
-                                <Plus className="h-4 w-4 mr-2" />
+                            <Button onClick={() => navigateToAI(getDefaultAIContext('moms'))} className="w-full sm:w-auto">
+                                <Bot className="h-4 w-4 mr-2" />
                                 Ny period
                             </Button>
                         </div>
@@ -87,16 +85,6 @@ export function MomsdeklarationContent() {
                     description={text.reports.aiVatDesc}
                     variant="ai"
                     onAction={() => navigateToAI(getDefaultAIContext('moms'))}
-                />
-
-                <MomsWizardDialog
-                    open={showAIDialog}
-                    onOpenChange={setShowAIDialog}
-                    initialData={stats.fullReport}
-                    onConfirm={async () => {
-                        await refreshData()
-                        toast.success("Momsdeklaration skapad", "Din rapport har sparats och perioden har låsts.")
-                    }}
                 />
 
                 {/* Table Actions Toolbar */}
@@ -137,12 +125,8 @@ export function MomsdeklarationContent() {
                 <MomsList
                     periods={filteredPeriods}
                     onSelectReport={setSelectedReport}
-                    onGenerateAI={(report) => {
-                        // Pre-select the report and trigger AI dialog
-                        // straightforward way:
-                        setShowAIDialog(true)
-                        // If we needed to set specific data for the wizard, we might need a state for 'wizardInitialData'
-                        // taking the latest calculated data from the report
+                    onGenerateAI={() => {
+                        navigateToAI(getDefaultAIContext('moms'))
                     }}
                 />
 

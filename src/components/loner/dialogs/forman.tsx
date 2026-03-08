@@ -20,6 +20,7 @@ interface BenefitDetailsDialogProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     onAssign?: (employeeName: string, amount: number, metadata?: Record<string, unknown>) => void
+    onDelete?: (id: string) => void
     assignedEmployees?: EmployeeBenefit[]
 }
 
@@ -28,6 +29,7 @@ export function BenefitDetailsDialog({
     open,
     onOpenChange,
     onAssign,
+    onDelete,
     assignedEmployees = []
 }: BenefitDetailsDialogProps) {
     // Memoize the icon component to prevent re-creation on every render
@@ -95,6 +97,7 @@ export function BenefitDetailsDialog({
                         <EmployeeList
                             benefit={benefit}
                             assignedEmployees={assignedEmployees}
+                            onDelete={onDelete}
                         />
                     </div>
                 </div>

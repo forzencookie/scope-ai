@@ -3,31 +3,24 @@ import { useVerifications } from "@/hooks/use-verifications"
 import { usePartners } from "@/hooks/use-partners"
 import { Withdrawal, getPartnerAccounts } from "@/types/withdrawal"
 
-/**
- * Extract partner index from partner ID (e.g., 'p-1' -> 0, 'p-2' -> 1)
- */
-function partnerIndex(partnerId: string): number {
-  const match = partnerId.match(/p-(\d+)/)
-  return match ? parseInt(match[1]) - 1 : 0
-}
+import type { Partner } from "@/types/ownership"
 
 /**
  * Build a map of withdrawal/deposit accounts to partner IDs for all partners.
- * Supports 3+ partners dynamically.
+ * Uses partner's accountBase from DB when available, falls back to index-based calculation.
  */
-function buildAccountToPartnerMap(partnerIds: string[]): {
+function buildAccountToPartnerMap(partners: Partner[]): {
   withdrawalAccounts: Map<string, string>
   depositAccounts: Map<string, string>
 } {
   const withdrawalAccounts = new Map<string, string>()
   const depositAccounts = new Map<string, string>()
 
-  for (const pid of partnerIds) {
-    const idx = partnerIndex(pid)
-    const accounts = getPartnerAccounts(idx)
-    withdrawalAccounts.set(accounts.withdrawal, pid)
-    depositAccounts.set(accounts.deposit, pid)
-  }
+  partners.forEach((partner, index) => {
+    const accounts = getPartnerAccounts(index, partner.accountBase)
+    withdrawalAccounts.set(accounts.withdrawal, partner.id)
+    depositAccounts.set(accounts.deposit, partner.id)
+  })
 
   return { withdrawalAccounts, depositAccounts }
 }
@@ -36,8 +29,7 @@ export function useOwnerWithdrawals() {
   const { verifications, isLoading } = useVerifications()
   const { partners } = usePartners()
 
-  const partnerIds = useMemo(() => partners.map(p => p.id), [partners])
-  const accountMap = useMemo(() => buildAccountToPartnerMap(partnerIds), [partnerIds])
+  const accountMap = useMemo(() => buildAccountToPartnerMap(partners), [partners])
 
   // Derive withdrawals from Ledger
   const withdrawals = useMemo<Withdrawal[]>(() => {
@@ -148,9 +140,10 @@ export function useOwnerWithdrawals() {
       }
     }
 
-    const idx = partnerIndex(partnerId)
-    const accounts = getPartnerAccounts(idx)
-    const partnerName = partners.find(p => p.id === partnerId)?.name || 'Delägare'
+    const partnerData = partners.find(p => p.id === partnerId)
+    const partnerName = partnerData?.name || 'Delägare'
+    const partnerIdx = partners.indexOf(partnerData!)
+    const accounts = getPartnerAccounts(partnerIdx >= 0 ? partnerIdx : 0, partnerData?.accountBase)
 
     const entries = (type === 'uttag' || type === 'lön')
       ? [

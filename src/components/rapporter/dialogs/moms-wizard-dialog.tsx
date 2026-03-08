@@ -113,25 +113,11 @@ export function MomsWizardDialog({ open, onOpenChange, onConfirm, initialData }:
         setIsSubmitting(true)
 
         try {
-            // Build complete VatReport
+            // Build complete VatReport — preserve any non-form fields from initialData
+            // (e.g. ruta08, ruta23, ruta30-32, ruta42, etc. computed by the calculator)
             const report: VatReport = {
                 ...baseData,
                 ...formData,
-                ruta08: 0,
-                ruta23: 0,
-                ruta24: 0,
-                ruta30: 0,
-                ruta31: 0,
-                ruta32: 0,
-                ruta37: 0,
-                ruta38: 0,
-                ruta40: 0,
-                ruta41: 0,
-                ruta42: 0,
-                ruta50: 0,
-                ruta60: 0,
-                ruta61: 0,
-                ruta62: 0,
             }
             const finalReport = recalculateVatReport(report)
 
@@ -143,7 +129,6 @@ export function MomsWizardDialog({ open, onOpenChange, onConfirm, initialData }:
                     report_type: 'vat',
                     data: finalReport,
                     status: 'draft',
-                    period_start: baseData.period
                 })
             })
 

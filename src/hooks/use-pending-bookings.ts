@@ -18,6 +18,7 @@ export type PendingBookingSourceType =
   | 'dividend_payment'
   | 'owner_withdrawal'
   | 'ai_entry'
+  | 'egenavgifter'
 
 export interface PendingBooking {
   id: string

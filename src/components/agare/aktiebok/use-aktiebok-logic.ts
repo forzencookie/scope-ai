@@ -87,8 +87,8 @@ export function useAktiebokLogic() {
         shares: s.shares_count,
         shareClass: (s.share_class || 'B') as 'A' | 'B',
         ownershipPercentage: Math.round((s.shares_count / totalShares) * 100),
-        acquisitionDate: s.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
-        acquisitionPrice: 0,
+        acquisitionDate: s.acquisition_date || s.created_at?.split('T')[0] || new Date().toISOString().split('T')[0],
+        acquisitionPrice: s.acquisition_price ?? 0,
         votes,
         votesPercentage: Math.round((votes / totalVotes) * 100),
         shareNumberFrom: s.share_number_from,
@@ -241,7 +241,7 @@ export function useAktiebokLogic() {
               { account: "1930", description: "Insättning nyemission", debit: total, credit: 0 },
               { account: EQUITY_ACCOUNTS.AKTIEKAPITAL, description: "Aktiekapital", debit: 0, credit: shares * quotaValue },
               ...(total > shares * quotaValue ? [
-                { account: "2097", description: "Överkursfond", debit: 0, credit: total - (shares * quotaValue) }
+                { account: "2019", description: "Överkursfond", debit: 0, credit: total - (shares * quotaValue) }
               ] : [])
             ]
           })

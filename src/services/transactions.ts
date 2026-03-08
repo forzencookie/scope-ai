@@ -29,7 +29,7 @@ function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
   return {
     id: db.id,
     name: db.name || db.description || 'Unknown Transaction',
-    date: new Date(db.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
+    date: new Date(db.date).toLocaleDateString('sv-SE', { year: 'numeric', month: 'short', day: 'numeric' }),
     timestamp: new Date(db.date),
     amount: formattedAmount,
     amountValue: db.amount_value,

@@ -109,7 +109,7 @@ export const companyStatisticsService = {
             supabase
                 .from('inventarier')
                 .select('id, inkopspris, bokfort_varde, status')
-                .eq('status', 'active'),
+                .eq('status', 'aktiv'),
 
             // Account balances for revenue/expenses
             supabase

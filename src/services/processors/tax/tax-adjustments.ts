@@ -45,17 +45,23 @@ export function calculateTaxAdjustments(
     }
   }
 
+  // Tax-exempt dividends (näringsbetingade andelar) — accounts 8012-8019
+  const taxExemptDividends = Math.abs(sumAccountRange(balances, 8012, 8019))
+  if (taxExemptDividends > 0) {
+    fields.push({ code: 7753, value: taxExemptDividends })
+  }
+
   // Calculate taxable result
   const bookProfit = typeof profitField?.value === 'number' ? profitField.value : 0
   const bookLoss = typeof lossField?.value === 'number' ? lossField.value : 0
   const addBacks = taxExpense + Math.round((representationCost || 0) * 0.5)
 
-  const taxableResult = (bookProfit - bookLoss) + addBacks
+  const taxableResult = (bookProfit - bookLoss) + addBacks - taxExemptDividends
 
   if (taxableResult >= 0) {
-    fields.push({ code: 7670, value: taxableResult }) // Överskott
+    fields.push({ code: 8020, value: taxableResult }) // Överskott (till p. 1.1)
   } else {
-    fields.push({ code: 7770, value: Math.abs(taxableResult) }) // Underskott
+    fields.push({ code: 8021, value: Math.abs(taxableResult) }) // Underskott (till p. 1.2)
   }
 
   return fields

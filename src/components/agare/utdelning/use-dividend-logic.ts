@@ -1,8 +1,8 @@
 import { useMemo, useCallback } from "react"
-import { useVerifications } from "@/hooks/use-verifications"
 import { useCompliance } from "@/hooks/use-compliance"
 import { useToast } from "@/components/ui/toast"
 import { useK10Calculation } from "@/components/rapporter/k10/use-k10-calculation"
+import { useDividends } from "@/hooks/use-dividends"
 
 export interface DividendDecision {
     id: string
@@ -18,25 +18,14 @@ export interface DividendDecision {
 }
 
 export function useDividendLogic() {
-    const { verifications } = useVerifications()
     const { documents: realDocuments, addDocument, updateDocument } = useCompliance()
     const toast = useToast()
     const { k10Data } = useK10Calculation()
+    const { freeEquity } = useDividends()
 
-    // ABL 17:3 — Calculate distributable equity from free equity accounts (2090-2099)
-    // Credit balance = positive equity, debit reduces it
-    const distributableEquity = useMemo(() => {
-        return verifications.reduce((sum, v) => {
-            return sum + v.rows.reduce((rowSum, r) => {
-                const acc = parseInt(r.account)
-                if (acc >= 2090 && acc <= 2099) {
-                    // Credits increase equity, debits decrease it
-                    return rowSum + (r.credit || 0) - (r.debit || 0)
-                }
-                return rowSum
-            }, 0)
-        }, 0)
-    }, [verifications])
+    // ABL 17:3 — distributable equity from proper formula:
+    // Total equity - restricted equity (aktiekapital + reservfond) + current year net income
+    const distributableEquity = freeEquity
 
     // Calculate dividend tax respecting gränsbelopp from K10
     // Within gränsbelopp: 20% capital gains tax
@@ -219,40 +208,6 @@ export function useDividendLogic() {
         return pendingId
     }
 
-    // Step 3: Pay out dividend (creates pending booking for wizard)
-    const payDividend = async (dividend: DividendDecision, paymentDate?: string) => {
-        if (dividend.status !== 'booked') {
-            toast.error("Kan inte betala", "Utdelningen måste vara bokförd först.")
-            return null
-        }
-
-        const date = paymentDate || new Date().toISOString().split('T')[0]
-
-        // Create pending booking — settle liability: Debit 2898 → Credit 1930
-        const pendingId = await createPendingBooking({
-            sourceType: 'dividend_payment',
-            sourceId: dividend.id,
-            description: `Utbetalning utdelning ${dividend.year}`,
-            entries: [
-                { account: "2898", debit: dividend.amount, credit: 0, description: "Reglering utdelningsskuld" },
-                { account: "1930", debit: 0, credit: dividend.amount, description: "Utbetalning till aktieägare" },
-            ],
-            series: 'A',
-            date,
-            metadata: {
-                dividendYear: dividend.year,
-                amount: dividend.amount,
-            },
-        })
-
-        toast.success(
-            "Utbetalning förberedd",
-            `${dividend.amount.toLocaleString('sv-SE')} kr skapad som utkast. Gå till Verifikationer för att bokföra.`
-        )
-
-        return pendingId
-    }
-
     // Legacy function - now just plans the dividend
     const registerDividend = async (year: number, amount: number) => {
         await planDividend(year, amount)
@@ -282,6 +237,7 @@ export function useDividendLogic() {
             beslutad,
             bokford,
             skatt,
+            distributableEquity,
         }
     }, [k10Data.gransbelopp, realDividendHistory])
 
@@ -293,7 +249,6 @@ export function useDividendLogic() {
         // Actions
         planDividend,
         bookDividend,
-        payDividend,
         registerDividend, // Legacy - now just plans
     }
 }

@@ -4,7 +4,6 @@ import * as React from "react"
 import { useState, useEffect, useCallback } from "react"
 import {
     Calendar,
-    UploadCloud,
     FileText,
     CheckCircle2,
     X,
@@ -14,12 +13,10 @@ import {
     Pencil,
     Check,
     AlertCircle,
-    Bot,
     Camera,
     RefreshCw
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import {
     Dialog,
     DialogContent,
@@ -82,7 +79,7 @@ export function UnderlagDialog({
     receipt,
     onSave
 }: UnderlagDialogProps) {
-    const [activeTab, setActiveTab] = useState<"manual" | "ai">("manual")
+    const [editMode, setEditMode] = useState(false)
     const [isSaving, setIsSaving] = useState(false)
 
     // Use AI extraction hook for processing receipts
@@ -115,9 +112,7 @@ export function UnderlagDialog({
     const fileCapture = useFileCapture({
         onFileSelected: async (file) => {
             setFormState(prev => ({ ...prev, file }))
-            if (activeTab === 'ai') {
-                await processWithAI(file)
-            }
+            await processWithAI(file)
         }
     })
 
@@ -139,7 +134,7 @@ export function UnderlagDialog({
                 resetAiState()
                 fileCapture.clearFile()
             }
-            setActiveTab("manual")
+            setEditMode(false)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [open, receipt, mode])
@@ -156,7 +151,7 @@ export function UnderlagDialog({
     }
 
     const handleEditAi = () => {
-        setActiveTab("manual")
+        setEditMode(true)
         switchToManual()
     }
 
@@ -192,132 +187,134 @@ export function UnderlagDialog({
                 {/* Hidden camera input */}
                 <input {...fileCapture.cameraInputProps} ref={fileCapture.cameraInputRef} />
 
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as any)} className="w-full">
-                    {!isViewMode && (
-                        <TabsList className="grid w-full grid-cols-2 mb-4">
-                            <TabsTrigger value="manual" className="gap-2">
-                                <UploadCloud className="h-4 w-4" />
-                                Manuell
-                            </TabsTrigger>
-                            <TabsTrigger value="ai" className="gap-2">
-                                <Bot className="h-4 w-4" />
-                                Skanna med AI
-                            </TabsTrigger>
-                        </TabsList>
-                    )}
-
-                    {/* Manual Tab */}
-                    <TabsContent value="manual" className="space-y-4">
-                        {!formState.file && !formState.fileName ? (
-                            <UploadDropzone
-                                onFilesSelected={fileCapture.handleFileSelect}
-                                accept=".pdf,.jpg,.jpeg,.png"
-                                title="Ladda upp underlag"
-                                description="Valfritt - bifoga kvitto eller faktura"
-                            />
-                        ) : (
-                            <div className="space-y-2">
-                                {fileCapture.imagePreview && (
-                                    <div className="relative rounded-lg overflow-hidden border bg-muted/30">
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
-                                            src={fileCapture.imagePreview}
-                                            alt="Receipt preview"
-                                            className="w-full max-h-32 object-contain"
-                                        />
-                                    </div>
-                                )}
-                                {formState.file && (
-                                    <FilePreview
-                                        file={formState.file}
-                                        onRemove={() => {
-                                            setFormState(prev => ({ ...prev, file: null, fileName: undefined }))
-                                            fileCapture.clearFile()
-                                        }}
-                                    />
-                                )}
-                                {!formState.file && formState.fileName && (
-                                    <div className="flex items-center justify-between p-3 bg-muted/30 rounded-lg border">
-                                        <div className="flex items-center gap-2">
-                                            <FileText className="h-4 w-4 text-muted-foreground" />
-                                            <span className="text-sm truncate">{formState.fileName}</span>
-                                        </div>
-                                        <Button
-                                            variant="ghost"
-                                            size="icon"
-                                            className="h-6 w-6"
-                                            onClick={() => setFormState(prev => ({ ...prev, fileName: undefined }))}
-                                        >
-                                            <X className="h-4 w-4" />
-                                        </Button>
-                                    </div>
-                                )}
-
-                                {/* Form Fields - Now using FormField component */}
-                                <div className="grid gap-4 pt-2">
-                                    <FormField
-                                        type="text"
-                                        label="Leverantör"
-                                        icon={Building2}
-                                        value={formState.supplier}
-                                        onChange={(v) => updateField('supplier', v)}
-                                        placeholder="T.ex. Adobe Systems"
-                                        disabled={isViewMode}
-                                    />
-
-                                    <FormFieldRow>
-                                        <FormField
-                                            type="date"
-                                            label="Datum"
-                                            icon={Calendar}
-                                            value={formState.date}
-                                            onChange={(v) => updateField('date', v)}
-                                            disabled={isViewMode}
-                                        />
-                                        <FormField
-                                            type="text"
-                                            label="Belopp (inkl. moms)"
-                                            icon={Banknote}
-                                            value={formState.amount}
-                                            onChange={(v) => updateField('amount', v)}
-                                            placeholder="0 kr"
-                                            disabled={isViewMode}
-                                        />
-                                    </FormFieldRow>
-
-                                    <FormField
-                                        type="text"
-                                        label="Varav moms"
-                                        icon={Banknote}
-                                        value={formState.moms}
-                                        onChange={(v) => updateField('moms', v)}
-                                        placeholder="0 kr"
-                                        disabled={isViewMode}
-                                    />
-
-                                    <FormField
-                                        type="select"
-                                        label="Kategori"
-                                        icon={Tag}
-                                        value={formState.category}
-                                        onChange={(v) => updateField('category', v)}
-                                        options={CATEGORY_OPTIONS}
-                                        disabled={isViewMode}
-                                    />
-                                </div>
+                {/* View mode: show existing receipt data */}
+                {isViewMode && (
+                    <div className="space-y-4">
+                        {formState.fileName && (
+                            <div className="flex items-center gap-2 p-3 bg-muted/30 rounded-lg border">
+                                <FileText className="h-4 w-4 text-muted-foreground" />
+                                <span className="text-sm truncate">{formState.fileName}</span>
                             </div>
                         )}
-                    </TabsContent>
+                        <div className="grid gap-3">
+                            <div>
+                                <p className="text-xs text-muted-foreground">Leverantör</p>
+                                <p className="font-medium">{formState.supplier || '—'}</p>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Belopp (inkl. moms)</p>
+                                    <p className="font-semibold text-lg">{formState.amount || '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Varav moms</p>
+                                    <p className="font-medium">{formState.moms || '—'}</p>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2">
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Datum</p>
+                                    <p className="text-sm">{formState.date || '—'}</p>
+                                </div>
+                                <div>
+                                    <p className="text-xs text-muted-foreground">Kategori</p>
+                                    <p className="text-sm">{formState.category || '—'}</p>
+                                </div>
+                            </div>
+                        </div>
+                        <DialogFooter>
+                            <Button onClick={() => onOpenChange(false)}>Stäng</Button>
+                        </DialogFooter>
+                    </div>
+                )}
 
-                    {/* AI Tab */}
-                    <TabsContent value="ai" className="space-y-4">
+                {/* Edit mode: show form fields after AI preview or for editing */}
+                {!isViewMode && editMode && (
+                    <div className="space-y-4">
+                        {fileCapture.imagePreview && (
+                            <div className="relative rounded-lg overflow-hidden border bg-muted/30">
+                                {/* eslint-disable-next-line @next/next/no-img-element */}
+                                <img
+                                    src={fileCapture.imagePreview}
+                                    alt="Receipt preview"
+                                    className="w-full max-h-32 object-contain"
+                                />
+                            </div>
+                        )}
+                        {formState.file && (
+                            <FilePreview
+                                file={formState.file}
+                                onRemove={() => {
+                                    setFormState(prev => ({ ...prev, file: null, fileName: undefined }))
+                                    fileCapture.clearFile()
+                                }}
+                            />
+                        )}
+
+                        <div className="grid gap-4">
+                            <FormField
+                                type="text"
+                                label="Leverantör"
+                                icon={Building2}
+                                value={formState.supplier}
+                                onChange={(v) => updateField('supplier', v)}
+                                placeholder="T.ex. Adobe Systems"
+                            />
+                            <FormFieldRow>
+                                <FormField
+                                    type="date"
+                                    label="Datum"
+                                    icon={Calendar}
+                                    value={formState.date}
+                                    onChange={(v) => updateField('date', v)}
+                                />
+                                <FormField
+                                    type="text"
+                                    label="Belopp (inkl. moms)"
+                                    icon={Banknote}
+                                    value={formState.amount}
+                                    onChange={(v) => updateField('amount', v)}
+                                    placeholder="0 kr"
+                                />
+                            </FormFieldRow>
+                            <FormField
+                                type="text"
+                                label="Varav moms"
+                                icon={Banknote}
+                                value={formState.moms}
+                                onChange={(v) => updateField('moms', v)}
+                                placeholder="0 kr"
+                            />
+                            <FormField
+                                type="select"
+                                label="Kategori"
+                                icon={Tag}
+                                value={formState.category}
+                                onChange={(v) => updateField('category', v)}
+                                options={CATEGORY_OPTIONS}
+                            />
+                        </div>
+
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
+                                Avbryt
+                            </Button>
+                            <Button onClick={handleSave} disabled={isSaving}>
+                                {isSaving ? "Sparar..." : "Spara underlag"}
+                            </Button>
+                        </DialogFooter>
+                    </div>
+                )}
+
+                {/* Create mode: AI upload flow */}
+                {!isViewMode && !editMode && (
+                    <div className="space-y-4">
                         {aiState === 'idle' && (
                             <div className="space-y-4">
                                 <UploadDropzone
                                     onFilesSelected={fileCapture.handleFileSelect}
                                     accept=".pdf,.jpg,.jpeg,.png"
-                                    title="Ladda upp för AI-skanning"
+                                    title="Ladda upp kvitto"
                                     description="AI läser av all information automatiskt"
                                 />
                                 <div className="flex justify-center">
@@ -352,7 +349,7 @@ export function UnderlagDialog({
                                         <RefreshCw className="h-4 w-4" />
                                         Försök igen
                                     </Button>
-                                    <Button variant="outline" onClick={() => setActiveTab('manual')}>
+                                    <Button variant="outline" onClick={handleEditAi}>
                                         Fyll i manuellt
                                     </Button>
                                 </div>
@@ -420,26 +417,7 @@ export function UnderlagDialog({
                                 </div>
                             </div>
                         )}
-                    </TabsContent>
-                </Tabs>
-
-                {(activeTab === 'manual' || isViewMode) && (
-                    <DialogFooter className="mt-4">
-                        {!isViewMode ? (
-                            <>
-                                <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isSaving}>
-                                    Avbryt
-                                </Button>
-                                <Button onClick={handleSave} disabled={isSaving}>
-                                    {isSaving ? "Sparar..." : "Spara underlag"}
-                                </Button>
-                            </>
-                        ) : (
-                            <Button onClick={() => onOpenChange(false)}>
-                                Stäng
-                            </Button>
-                        )}
-                    </DialogFooter>
+                    </div>
                 )}
             </DialogContent>
         </Dialog>

@@ -36,7 +36,6 @@ export const allTabs: PayrollTabConfig[] = [
     { id: "lonebesked", label: "Lönekörning", color: "bg-green-500", feature: 'lonebesked' },
     { id: "benefits", label: "Förmåner", color: "bg-purple-500", feature: 'lonebesked' }, // Grouped with payroll/lonebesked feature for now
     { id: "team", label: "Team & Rapportering", color: "bg-blue-500", feature: null }, // Team tab
-    { id: "egenavgifter", label: "Egenavgifter", color: "bg-amber-500", feature: 'egenavgifter' },
     { id: "delagaruttag", label: "Delägaruttag", color: "bg-indigo-500", feature: 'delagaruttag' },
 ]
 

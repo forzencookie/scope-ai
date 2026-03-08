@@ -7,46 +7,72 @@ import {
     Clock,
     Download,
     FileText,
-    Plus,
+    Bot,
 } from "lucide-react"
 import { IconButton } from "@/components/ui/icon-button"
 import { Button } from "@/components/ui/button"
 import { ListCard, ListCardItem } from "@/components/ui/section-card"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { ArsredovisningWizardDialog, type ArsredovisningWizardData } from "./dialogs/arsredovisning-wizard-dialog"
 import { CollapsibleTableHeader } from "@/components/ui/collapsible-table"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
-import { AnnualReportProcessor } from "@/services/processors/annual-report-processor"
+import { AnnualReportProcessor, type FiscalYearRange } from "@/services/processors/annual-report-processor"
 import { ReportPreviewDialog, type ReportSection } from "./dialogs/rapport"
 import { useToast } from "@/components/ui/toast"
 import { useCompany } from "@/providers/company-provider"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { generateXBRL, type XBRLParams } from "@/lib/generators/xbrl-generator"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 export function ArsredovisningContent() {
     const toast = useToast()
-    const [showAIDialog, setShowAIDialog] = useState(false)
+    const navigateToAI = useNavigateToAIChat()
     const { verifications } = useVerifications()
     const { company, companyTypeFullName } = useCompany()
-    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear() - 1)
 
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewTitle, setPreviewTitle] = useState("")
     const [previewSections, setPreviewSections] = useState<ReportSection[]>([])
-    
-    // Calculate fiscal year dynamically
-    const currentYear = new Date().getFullYear()
-    const fiscalYear = currentYear - 1 // Annual report is for previous year
+
+    // Calculate default fiscal year from company settings
+    const defaultFiscalYear = useMemo(() => {
+        const fiscalEnd = company?.fiscalYearEnd || '12-31'
+        const [endMonth, endDay] = fiscalEnd.split('-').map(Number)
+        const now = new Date()
+        let endYear = now.getFullYear() - 1
+        if (endMonth !== 12) {
+            const fyEndThisYear = new Date(now.getFullYear(), endMonth - 1, endDay)
+            if (now >= fyEndThisYear) endYear = now.getFullYear()
+        }
+        return endYear
+    }, [company?.fiscalYearEnd])
+
+    const [selectedYear, setSelectedYear] = useState(defaultFiscalYear)
+
+    const fiscalYearRange = useMemo<FiscalYearRange>(() => {
+        const fiscalEnd = company?.fiscalYearEnd || '12-31'
+        const [endMonth] = fiscalEnd.split('-').map(Number)
+        const end = `${selectedYear}-${fiscalEnd}`
+        const startYear = endMonth === 12 ? selectedYear : selectedYear - 1
+        const startMonth = endMonth === 12 ? 1 : endMonth + 1
+        const start = `${startYear}-${String(startMonth).padStart(2, '0')}-01`
+        return { start, end, year: selectedYear }
+    }, [company?.fiscalYearEnd, selectedYear])
+
+    const { rates: taxRates } = useAllTaxRates(fiscalYearRange.year)
 
     // Calculate financials from verifications
     const incomeLines = useMemo(() =>
-        AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear, taxRates),
-        [verifications, fiscalYear, taxRates]
+        AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYearRange, taxRates),
+        [verifications, fiscalYearRange, taxRates]
     )
     const balanceLines = useMemo(() =>
-        AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${fiscalYear}-12-31`)),
-        [verifications, fiscalYear]
+        AnnualReportProcessor.calculateBalanceSheet(
+            verifications,
+            new Date(fiscalYearRange.end),
+            { taxRates, fiscalYearStart: fiscalYearRange.start }
+        ),
+        [verifications, fiscalYearRange, taxRates]
     )
 
     const financials = useMemo(() => {
@@ -57,53 +83,55 @@ export function ArsredovisningContent() {
         return { revenue, netIncome, totalAssets }
     }, [incomeLines, balanceLines])
 
-    // Prepare data for wizard dialog
-    const wizardData = useMemo<ArsredovisningWizardData>(() => ({
-        fiscalYear,
-        fiscalYearRange: `${fiscalYear}-01-01 – ${fiscalYear}-12-31`,
-        deadline: `30 jun ${currentYear}`,
-        companyType: companyTypeFullName || "Aktiebolag",
-        financials,
-    }), [fiscalYear, currentYear, companyTypeFullName, financials])
+    // Deadline: 7 months after fiscal year end for AB, 6 months for förening
+    const deadline = useMemo(() => {
+        const [y, m] = fiscalYearRange.end.split('-').map(Number)
+        const deadlineDate = new Date(y, m + 6, 0) // 7 months after end
+        const monthNames = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+        return `${deadlineDate.getDate()} ${monthNames[deadlineDate.getMonth()]} ${deadlineDate.getFullYear()}`
+    }, [fiscalYearRange.end])
 
     // Determine section statuses based on real data
     const dynamicReportSections = useMemo(() => {
-        const hasVerifications = verifications.length > 0
-        const yearVerifications = verifications.filter(v => v.date.startsWith(fiscalYear.toString()))
+        const yearVerifications = verifications.filter(v =>
+            v.date >= fiscalYearRange.start && v.date <= fiscalYearRange.end
+        )
         const hasYearData = yearVerifications.length > 0
-        
+
         return [
-            { 
-                name: "Förvaltningsberättelse", 
-                status: "pending", // Always needs manual completion
-                description: "Verksamhetsbeskrivning och väsentliga händelser" 
-            },
-            { 
-                name: "Resultaträkning", 
-                status: hasYearData ? "complete" : "pending",
-                description: "Intäkter, kostnader och årets resultat" 
-            },
-            { 
-                name: "Balansräkning", 
-                status: hasVerifications ? "complete" : "pending",
-                description: "Tillgångar, skulder och eget kapital" 
-            },
-            { 
-                name: "Noter", 
-                status: "pending", // Always needs manual completion
-                description: "Tilläggsupplysningar och redovisningsprinciper" 
-            },
-            { 
-                name: "Underskrifter", 
+            {
+                name: "Förvaltningsberättelse",
                 status: "pending",
-                description: "Styrelsens underskrifter" 
+                description: "Verksamhetsbeskrivning och väsentliga händelser"
+            },
+            {
+                name: "Resultaträkning",
+                status: hasYearData ? "complete" : "pending",
+                description: "Intäkter, kostnader och årets resultat"
+            },
+            {
+                name: "Balansräkning",
+                status: hasYearData ? "complete" : "pending",
+                description: "Tillgångar, skulder och eget kapital"
+            },
+            {
+                name: "Noter",
+                status: "pending",
+                description: "Tilläggsupplysningar och redovisningsprinciper"
+            },
+            {
+                name: "Underskrifter",
+                status: "pending",
+                description: "Styrelsens underskrifter"
             },
         ]
-    }, [verifications, fiscalYear])
+    }, [verifications, fiscalYearRange])
 
     const handleExportXBRL = () => {
         const getLine = (lines: typeof incomeLines, label: string) =>
             lines.find(l => l.label === label)?.value || 0
+
+        const prevStartYear = parseInt(fiscalYearRange.start.split('-')[0]) - 1
 
         const xbrlParams: XBRLParams = {
             company: {
@@ -111,10 +139,10 @@ export function ArsredovisningContent() {
                 orgNumber: company?.orgNumber || '556000-0000',
             },
             period: {
-                currentStart: `${fiscalYear}-01-01`,
-                currentEnd: `${fiscalYear}-12-31`,
-                previousStart: `${fiscalYear - 1}-01-01`,
-                previousEnd: `${fiscalYear - 1}-12-31`,
+                currentStart: fiscalYearRange.start,
+                currentEnd: fiscalYearRange.end,
+                previousStart: `${prevStartYear}-${fiscalYearRange.start.slice(5)}`,
+                previousEnd: `${parseInt(fiscalYearRange.end.split('-')[0]) - 1}-${fiscalYearRange.end.slice(5)}`,
             },
             values: {
                 netTurnover: getLine(incomeLines, 'Nettoomsättning'),
@@ -143,13 +171,13 @@ export function ArsredovisningContent() {
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.href = url
-        link.download = `arsredovisning_${fiscalYear}_${(company?.orgNumber || 'foretag').replace(/\D/g, '')}.xbrl`
+        link.download = `arsredovisning_${fiscalYearRange.year}_${(company?.orgNumber || 'foretag').replace(/\D/g, '')}.xbrl`
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
         URL.revokeObjectURL(url)
 
-        toast.success('iXBRL exporterad', `Årsredovisning ${fiscalYear} har laddats ner som iXBRL.`)
+        toast.success('iXBRL exporterad', `Årsredovisning ${fiscalYearRange.year} har laddats ner som iXBRL.`)
     }
 
     const handleViewReport = (sectionName: string) => {
@@ -157,11 +185,10 @@ export function ArsredovisningContent() {
         let title = sectionName
 
         if (sectionName === "Resultaträkning") {
-            const lines = AnnualReportProcessor.calculateIncomeStatement(verifications, fiscalYear, taxRates)
             sections = [{
                 id: "rr",
-                title: `Resultaträkning ${fiscalYear}`,
-                items: lines.map((line, idx) => ({
+                title: `Resultaträkning ${fiscalYearRange.start} – ${fiscalYearRange.end}`,
+                items: incomeLines.map((line, idx) => ({
                     id: String(idx + 1),
                     label: line.label,
                     value: line.value,
@@ -170,11 +197,10 @@ export function ArsredovisningContent() {
             }]
             title = "Resultaträkning"
         } else if (sectionName === "Balansräkning") {
-            const lines = AnnualReportProcessor.calculateBalanceSheet(verifications, new Date(`${fiscalYear}-12-31`))
             sections = [{
                 id: "br",
-                title: `Balansräkning ${fiscalYear}-12-31`,
-                items: lines.map((line, idx) => ({
+                title: `Balansräkning ${fiscalYearRange.end}`,
+                items: balanceLines.map((line, idx) => ({
                     id: String(idx + 1),
                     label: line.label,
                     value: line.value,
@@ -185,7 +211,7 @@ export function ArsredovisningContent() {
         } else if (sectionName === "Förvaltningsberättelse") {
             sections = [{
                 id: "fb",
-                title: `Förvaltningsberättelse ${fiscalYear}`,
+                title: `Förvaltningsberättelse ${fiscalYearRange.year}`,
                 items: [
                     { id: "1", label: "Allmänt om verksamheten", value: 0, highlight: true },
                     { id: "2", label: "Väsentliga händelser under året", value: 0, highlight: true },
@@ -196,7 +222,7 @@ export function ArsredovisningContent() {
         } else if (sectionName === "Noter") {
             sections = [{
                 id: "noter",
-                title: `Noter ${fiscalYear}`,
+                title: `Noter ${fiscalYearRange.year}`,
                 items: [
                     { id: "1", label: "Not 1. Redovisningsprinciper", value: 0, highlight: true },
                     { id: "2", label: "Not 2. Medelantal anställda", value: 0, highlight: true },
@@ -219,8 +245,8 @@ export function ArsredovisningContent() {
     const stats: TaxReportStat[] = [
         {
             label: "Räkenskapsår",
-            value: fiscalYear.toString(),
-            subtitle: `${fiscalYear}-01-01 – ${fiscalYear}-12-31`,
+            value: fiscalYearRange.year.toString(),
+            subtitle: `${fiscalYearRange.start} – ${fiscalYearRange.end}`,
             icon: Calendar,
         },
         {
@@ -232,7 +258,7 @@ export function ArsredovisningContent() {
         {
             label: "Status",
             value: verifications.length > 0 ? "Under arbete" : "Ej påbörjad",
-            subtitle: `Deadline: 30 jun ${currentYear}`,
+            subtitle: `Deadline: ${deadline}`,
             icon: Clock,
         },
     ]
@@ -245,39 +271,35 @@ export function ArsredovisningContent() {
             aiContext="arsredovisning"
             aiTitle="AI-årsredovisning"
             aiDescription="Genereras automatiskt från bokföringen enligt K2."
+            yearNav={{
+                year: selectedYear,
+                onYearChange: setSelectedYear,
+                minYear: new Date().getFullYear() - 5,
+                maxYear: new Date().getFullYear(),
+            }}
             actions={
                 <Button
-                    onClick={() => setShowAIDialog(true)}
+                    onClick={() => navigateToAI(getDefaultAIContext('arsredovisning'))}
                     className="gap-2 overflow-hidden w-[120px] sm:w-auto"
                 >
-                    <Plus className="h-4 w-4 shrink-0" />
+                    <Bot className="h-4 w-4 shrink-0" />
                     <span className="truncate">Skapa årsredovisning</span>
                 </Button>
             }
             dialogs={
-                <>
-                    <ArsredovisningWizardDialog
-                        open={showAIDialog}
-                        onOpenChange={setShowAIDialog}
-                        data={wizardData}
-                        onConfirm={() => {
-                            toast.success("Årsredovisning sparad", `Årsredovisning för ${fiscalYear} har sparats som utkast.`)
-                        }}
-                    />
-                    <ReportPreviewDialog
-                        open={previewOpen}
-                        onOpenChange={setPreviewOpen}
-                        title={previewTitle}
-                        meta={{
-                            year: fiscalYear.toString(),
-                            yearLabel: "Räkenskapsår",
-                            companyName: company?.name || "Mitt Företag AB",
-                            companyId: company?.orgNumber || "556000-0000",
-                            location: company?.city || "Stockholm"
-                        }}
-                        sections={previewSections}
-                    />
-                </>
+                <ReportPreviewDialog
+                    open={previewOpen}
+                    onOpenChange={setPreviewOpen}
+                    title={previewTitle}
+                    meta={{
+                        year: fiscalYearRange.year.toString(),
+                        yearLabel: "Räkenskapsår",
+                        companyName: company?.name || "Mitt Företag AB",
+                        companyId: company?.orgNumber || "556000-0000",
+                        location: company?.city || "Stockholm"
+                    }}
+                    sections={previewSections}
+                />
             }
         >
             <div className="space-y-4">
@@ -297,7 +319,7 @@ export function ArsredovisningContent() {
                             trailing={
                                 <div className="flex items-center gap-3">
                                     <AppStatusBadge
-                                        status={section.status === "complete" ? "Klar" : section.status === "incomplete" ? "Ofullständig" : "Väntar"}
+                                        status={section.status === "complete" ? "Klar" : "Väntar"}
                                         size="md"
                                     />
                                 </div>

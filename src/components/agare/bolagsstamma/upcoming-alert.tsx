@@ -7,9 +7,10 @@ interface UpcomingAlertProps {
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         nextMeeting: any | null
     }
+    onPrepare?: (meetingId: string) => void
 }
 
-export function UpcomingAlert({ stats }: UpcomingAlertProps) {
+export function UpcomingAlert({ stats, onPrepare }: UpcomingAlertProps) {
     if (stats.daysUntilNext === null || stats.daysUntilNext > 14 || !stats.nextMeeting) {
         return null
     }
@@ -30,7 +31,12 @@ export function UpcomingAlert({ stats }: UpcomingAlertProps) {
                     Se till att dagordning och underlag är redo.
                 </p>
             </div>
-            <Button variant="ghost" size="sm" className="shrink-0 text-blue-600 hover:bg-blue-600/20 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-400/20">
+            <Button
+                variant="ghost"
+                size="sm"
+                className="shrink-0 text-blue-600 hover:bg-blue-600/20 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-400/20"
+                onClick={() => onPrepare?.(stats.nextMeeting.id)}
+            >
                 Förbered nu
             </Button>
         </div>

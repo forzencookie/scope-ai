@@ -19,7 +19,6 @@ export function UtdelningContent() {
         realDividendHistory,
         planDividend,
         bookDividend,
-        payDividend,
     } = useDividendLogic()
     const [showRegisterDialog, setShowRegisterDialog] = useState(false)
     const [previewDividend, setPreviewDividend] = useState<DividendDecision | null>(null)
@@ -48,7 +47,6 @@ export function UtdelningContent() {
                     <UtdelningsTable
                         data={realDividendHistory}
                         onBook={bookDividend}
-                        onPay={payDividend}
                         onDownloadReceipt={setPreviewDividend}
                     />
                 </div>

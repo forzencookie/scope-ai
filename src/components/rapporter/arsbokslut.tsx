@@ -4,12 +4,11 @@ import { useState, useMemo, useCallback } from "react"
 import {
     Building2,
     Clock,
-    Eye,
-    ClipboardEdit,
     Download,
     Calendar,
     Lock,
     Loader2,
+    Bot,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import {
@@ -25,9 +24,9 @@ import { useToast } from "@/components/ui/toast"
 import { formatCurrency } from "@/lib/utils"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
-import { ArsbokslutWizardDialog } from "./dialogs/arsbokslut-wizard-dialog"
 import { ConfirmDialog } from "@/components/ui/alert-dialog"
 import { getFiscalYearRange } from "@/lib/bookkeeping/utils"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 
 // =============================================================================
@@ -35,8 +34,8 @@ import { getFiscalYearRange } from "@/lib/bookkeeping/utils"
 // =============================================================================
 export function ArsbokslutContent() {
     const toast = useToast()
+    const navigateToAI = useNavigateToAIChat()
     const { company, companyType, companyTypeName } = useCompany()
-    const [wizardOpen, setWizardOpen] = useState(false)
     const [isClosing, setIsClosing] = useState(false)
     const [closingConfirmOpen, setClosingConfirmOpen] = useState(false)
     const [closingPreview, setClosingPreview] = useState<{
@@ -45,16 +44,27 @@ export function ArsbokslutContent() {
     } | null>(null)
     const { text } = useTextMode()
 
-    // Use fiscal year range — reference date is "now" so we get the current FY,
-    // but Årsbokslut is for the *previous* completed FY
+    // Calculate default year (previous completed FY)
     const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
-    const currentFY = getFiscalYearRange(fiscalYearEnd, new Date())
-    const prevRefDate = new Date(currentFY.start)
-    prevRefDate.setFullYear(prevRefDate.getFullYear() - 1)
-    const previousFY = getFiscalYearRange(fiscalYearEnd, prevRefDate)
-    const fiscalYear = previousFY.end.getFullYear()
-    const fiscalStartStr = previousFY.startStr
-    const fiscalEndStr = previousFY.endStr
+    const defaultFY = useMemo(() => {
+        const currentFY = getFiscalYearRange(fiscalYearEnd, new Date())
+        const prevRefDate = new Date(currentFY.start)
+        prevRefDate.setFullYear(prevRefDate.getFullYear() - 1)
+        return getFiscalYearRange(fiscalYearEnd, prevRefDate).end.getFullYear()
+    }, [fiscalYearEnd])
+
+    const [selectedYear, setSelectedYear] = useState(defaultFY)
+
+    // Recalculate FY range based on selected year
+    const { fiscalYear, fiscalStartStr, fiscalEndStr } = useMemo(() => {
+        const refDate = new Date(selectedYear, 6, 1) // mid-year reference
+        const fy = getFiscalYearRange(fiscalYearEnd, refDate)
+        return {
+            fiscalYear: selectedYear,
+            fiscalStartStr: fy.startStr,
+            fiscalEndStr: fy.endStr,
+        }
+    }, [selectedYear, fiscalYearEnd])
     const { accountBalances, totals, isLoading } = useAccountBalances()
 
     // Closing entry handler — step 1: fetch preview and show confirmation dialog
@@ -216,15 +226,22 @@ export function ArsbokslutContent() {
         { label: "Kassa och bank", value: Math.round(cash) },
     ]), [fixedAssets, inventory, receivables, cash]);
 
+    // Company type-specific equity label
+    const equityLabel = useMemo(() => {
+        if (companyType === 'hb') return "Eget kapital per delägare"
+        if (companyType === 'kb') return "Eget kapital (komplementär/kommanditdelägare)"
+        return "Eget kapital (inkl. årets resultat)"
+    }, [companyType])
+
     const liabilityItems: CollapsibleTableItem[] = useMemo(() => ([
-        { label: "Eget kapital (inkl. årets resultat)", value: Math.round(equity + result) },
+        { label: equityLabel, value: Math.round(equity + result) },
         { label: "Obeskattade reserver", value: Math.round(untaxedReserves) },
         { label: "Avsättningar", value: Math.round(provisions) },
         { label: "Långfristiga skulder", value: Math.round(longTermLiabilities) },
         { label: "Leverantörsskulder", value: Math.round(payables) },
         { label: "Skatteskulder", value: Math.round(taxes) },
         { label: "Övriga skulder", value: Math.round(otherLiabilities) },
-    ]), [equity, result, untaxedReserves, provisions, longTermLiabilities, payables, taxes, otherLiabilities]);
+    ]), [equityLabel, equity, result, untaxedReserves, provisions, longTermLiabilities, payables, taxes, otherLiabilities]);
 
     const stats: TaxReportStat[] = [
         {
@@ -256,6 +273,12 @@ export function ArsbokslutContent() {
             aiTitle={text.reports.aiYearEnd}
             aiDescription={text.reports.aiYearEndDesc}
             isLoading={isLoading}
+            yearNav={{
+                year: selectedYear,
+                onYearChange: setSelectedYear,
+                minYear: new Date().getFullYear() - 5,
+                maxYear: new Date().getFullYear(),
+            }}
             actions={
                 <Button variant="outline" className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={async () => {
                     toast.info("Förbereder PDF", "Vänta...")
@@ -277,24 +300,8 @@ export function ArsbokslutContent() {
                     title={`Årsbokslut ${fiscalYear}`}
                     subtitle={`Räkenskapsår ${fiscalStartStr} – ${fiscalEndStr}`}
                 >
-                    <Button variant="outline" size="sm" className="h-9">
-                        <Eye className="mr-2 h-4 w-4" />
-                        Visa detaljer
-                    </Button>
-                    <Button variant="outline" size="sm" className="h-9" onClick={async () => {
-                        toast.info("Förbereder PDF", "Vänta...")
-                        try {
-                            await downloadElementAsPDF({ fileName: `arsbokslut-${fiscalYear}`, elementId: 'arsbokslut-content' })
-                            toast.success("Klart", "Årsbokslut har laddats ner som PDF.")
-                        } catch {
-                            toast.error("Fel", "Kunde inte skapa PDF.")
-                        }
-                    }}>
-                        <Download className="mr-2 h-4 w-4" />
-                        Exportera PDF
-                    </Button>
-                    <Button size="sm" className="h-9" onClick={() => setWizardOpen(true)}>
-                        <ClipboardEdit className="mr-2 h-4 w-4" />
+                    <Button size="sm" className="h-9" onClick={() => navigateToAI(getDefaultAIContext('arsbokslut'))}>
+                        <Bot className="mr-2 h-4 w-4" />
                         Generera
                     </Button>
                     <Button
@@ -368,34 +375,6 @@ export function ArsbokslutContent() {
                 onConfirm={handleConfirmClosing}
             />
 
-            <ArsbokslutWizardDialog
-                open={wizardOpen}
-                onOpenChange={setWizardOpen}
-                data={{
-                    sales: Math.round(sales),
-                    materials: Math.round(materials),
-                    externalExpenses: Math.round(externalExpenses),
-                    personnel: Math.round(personnel),
-                    depreciations: Math.round(depreciations),
-                    financialItems: Math.round(financialItems),
-                    result,
-                    fixedAssets: Math.round(fixedAssets),
-                    inventory: Math.round(inventory),
-                    receivables: Math.round(receivables),
-                    cash: Math.round(cash),
-                    totalAssets,
-                    equity: Math.round(equity),
-                    untaxedReserves: Math.round(untaxedReserves),
-                    provisions: Math.round(provisions),
-                    longTermLiabilities: Math.round(longTermLiabilities),
-                    payables: Math.round(payables),
-                    taxes: Math.round(taxes),
-                    otherLiabilities: Math.round(otherLiabilities),
-                    totalEqLiab,
-                    fiscalYear: String(fiscalYear),
-                    companyType: companyTypeName,
-                }}
-            />
         </TaxReportLayout>
     )
 }

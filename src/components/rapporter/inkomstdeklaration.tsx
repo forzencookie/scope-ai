@@ -6,9 +6,8 @@ import {
     TrendingUp,
     Clock,
     FileDown,
-    Plus,
+    Bot,
 } from "lucide-react"
-import { useToast } from "@/components/ui/toast"
 import { Button } from "@/components/ui/button"
 import { FilterButton } from "@/components/ui/filter-button"
 import {
@@ -31,8 +30,8 @@ import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { formatNumber } from "@/lib/utils"
 import { TaxReportLayout, type TaxReportStat } from "@/components/shared"
 import { SRUPreviewDialog } from "./dialogs/sru"
-import { InkomstWizardDialog, type InkomstWizardData } from "./dialogs/inkomst-wizard-dialog"
 import { useCompany } from "@/providers/company-provider"
+import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 
 // =============================================================================
@@ -41,18 +40,16 @@ import { useCompany } from "@/providers/company-provider"
 
 
 export function InkomstdeklarationContent() {
-    // const router = useRouter()
-    const { addToast: toast } = useToast()
+    const navigateToAI = useNavigateToAIChat()
     const { verifications, isLoading } = useVerifications()
     const { company } = useCompany()
     const [showSRUPreview, setShowSRUPreview] = useState(false)
-    const [showAIDialog, setShowAIDialog] = useState(false)
     const [activeFilter, setActiveFilter] = useState<"all" | "incomeStatement" | "balanceSheet" | "taxAdjustments">("all")
 
     // Get dynamic beskattningsår using shared hook
-    const { taxYear } = useTaxPeriod({ 
+    const { taxYear, setYear, availableYears } = useTaxPeriod({
         fiscalYearEnd: company?.fiscalYearEnd || '12-31',
-        type: 'income' 
+        type: 'income'
     })
 
     // Calculate all fields from ledger
@@ -68,32 +65,6 @@ export function InkomstdeklarationContent() {
             result: arsResultat,
             status: INVOICE_STATUS_LABELS.DRAFT,
             deadline: taxYear.deadlineLabel,
-        }
-    }, [calculatedData, taxYear])
-
-    // Prepare data for wizard dialog
-    const wizardData = useMemo<InkomstWizardData>(() => {
-        // Calculate ej avdragsgilla from representation (accounts 6070-6079)
-        const representationTotal = calculatedData.taxAdjustments
-            .find(f => f.field === "4.3c")?.value || 0
-
-        return {
-            taxYear: taxYear.year,
-            deadline: taxYear.deadlineLabel,
-            totals: {
-                revenue: calculatedData.totals.revenue,
-                expenses: calculatedData.totals.expenses,
-                netIncome: calculatedData.totals.netIncome,
-                taxableResult: calculatedData.totals.taxableResult,
-                totalAssets: calculatedData.totals.totalAssets,
-                totalEquityAndLiabilities: calculatedData.totals.totalEquityAndLiabilities,
-            },
-            adjustments: {
-                previousYearLoss: 0, // Would come from previous declaration
-                periodiseringsfondAvsattning: 0,
-                periodiseringsfondAterforing: 0,
-                ejAvdragsgillaKostnader: representationTotal,
-            },
         }
     }, [calculatedData, taxYear])
 
@@ -212,30 +183,23 @@ export function InkomstdeklarationContent() {
             aiContext="inkomstdeklaration"
             aiTitle="AI-inkomstdeklaration"
             aiDescription="INK2-fälten genereras automatiskt från bokföringen."
+            yearNav={{
+                year: taxYear.year,
+                onYearChange: setYear,
+                minYear: availableYears[availableYears.length - 1],
+                maxYear: availableYears[0],
+            }}
             actions={
-                <Button onClick={() => setShowAIDialog(true)} className="gap-2 overflow-hidden w-[120px] sm:w-auto">
-                    <Plus className="h-4 w-4 shrink-0" />
+                <Button onClick={() => navigateToAI(getDefaultAIContext('inkomstdeklaration'))} className="gap-2 overflow-hidden w-[120px] sm:w-auto">
+                    <Bot className="h-4 w-4 shrink-0" />
                     <span className="truncate">Skapa deklaration</span>
                 </Button>
             }
             dialogs={
-                <>
-                    <SRUPreviewDialog
-                        open={showSRUPreview}
-                        onOpenChange={setShowSRUPreview}
-                    />
-                    <InkomstWizardDialog
-                        open={showAIDialog}
-                        onOpenChange={setShowAIDialog}
-                        data={wizardData}
-                        onConfirm={() => {
-                            toast({
-                                title: "Inkomstdeklaration sparad",
-                                description: `INK2 för ${taxYear.year} har sparats som utkast.`,
-                            })
-                        }}
-                    />
-                </>
+                <SRUPreviewDialog
+                    open={showSRUPreview}
+                    onOpenChange={setShowSRUPreview}
+                />
             }
         >
             <CollapsibleTableContainer>

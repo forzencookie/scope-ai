@@ -14,6 +14,7 @@ import { WithdrawalsGrid } from "./withdrawals-grid"
 import { NewWithdrawalDialog } from "./new-withdrawal-dialog"
 import { useOwnerWithdrawals } from "./use-owner-withdrawals"
 import { usePartners } from "@/hooks/use-partners"
+import { useCompany } from "@/providers/company-provider"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -31,7 +32,26 @@ export function DelagaruttagManager() {
     } = useOwnerWithdrawals()
     
     const { partners } = usePartners()
+    const { company } = useCompany()
     const toast = useToast()
+
+    // Guard: this page is for HB/KB only
+    if (company?.companyType === 'ab') {
+        return (
+            <div className="space-y-6">
+                <PageHeader
+                    title="Delägare & Uttag"
+                    subtitle="Denna sida är för handels- och kommanditbolag."
+                />
+                <div className="rounded-lg border bg-muted/40 p-6 text-center">
+                    <Info className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
+                    <p className="text-sm text-muted-foreground">
+                        Delägaruttag hanteras inte här för aktiebolag. Använd istället <strong>Lönekörning</strong> för lön eller <strong>Utdelning</strong> under Ägare.
+                    </p>
+                </div>
+            </div>
+        )
+    }
 
     const [searchQuery, setSearchQuery] = useState("")
     const [partnerFilter, setPartnerFilter] = useState<string | null>(null)
@@ -127,12 +147,11 @@ export function DelagaruttagManager() {
 
                 <div className="space-y-6">
                     <LegalInfoCard
-                        title="Regler för uttag"
-                        // description="Viktiga regler för vinstutdelning och lån"
+                        title="Regler för uttag (HB/KB)"
                         items={[
-                            { content: "Ett förbjudet lån är om bolaget lånar ut pengar till en delägare eller närstående." },
-                            { content: "Utdelning får endast ske efter beslut på bolagsstämma och baseras på fritt eget kapital." },
-                            { content: "Håll koll på skattekontot. Otillåtna lån beskattas som tjänst." },
+                            { content: "Varje delägare har ett eget kapitalkonto. Uttag minskar kapitalkontot, insättningar ökar det." },
+                            { content: "Enligt Handelsbolagslagen (1980:1102) svarar komplementärer solidariskt för bolagets förpliktelser." },
+                            { content: "Delägares andel av vinsten beskattas som inkomst av näringsverksamhet — oavsett om uttag görs." },
                         ]}
                     />
                      <div className="rounded-lg border bg-muted/40 p-4">
@@ -141,8 +160,8 @@ export function DelagaruttagManager() {
                            <h4 className="text-sm font-medium">Bokföringstips</h4>
                         </div>
                         <p className="text-xs text-muted-foreground leading-relaxed">
-                            När du registrerar ett uttag här skapas automatiskt en verifikation i bokföringen.
-                            Uttag bokförs mot konto 2013/2023 och insättningar mot 2018/2028.
+                            När du registrerar ett uttag här skapas en väntande bokning.
+                            Uttag bokförs mot konto 2072/2075 och insättningar mot 2073/2076.
                         </p>
                     </div>
                 </div>

@@ -16,9 +16,6 @@ export function useGeneralMeetings() {
   const { addVerification } = useVerifications()
   const toast = useToast()
 
-  // Debug: Log what documents we're receiving
-  console.log('[useGeneralMeetings] realDocuments:', realDocuments)
-
   // Map real documents to GeneralMeeting format (both general_meeting_minutes and board_meeting_minutes)
   const meetings = useMemo(() => {
     const generalMeetings = (realDocuments || [])
@@ -132,9 +129,6 @@ export function useGeneralMeetings() {
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
   }, [realDocuments])
-
-  // Debug: Log transformed meetings
-  console.log('[useGeneralMeetings] meetings:', meetings)
 
   // Calculate stats directly from meetings array (unified data source)
   const stats = useMemo(() => {
@@ -372,6 +366,8 @@ export function useGeneralMeetings() {
         ...(updates.agenda && { agenda: updates.agenda }),
         ...(updates.kallelseText && { kallelseText: updates.kallelseText }),
         ...(updates.attendeesCount !== undefined && { attendeesCount: updates.attendeesCount }),
+        ...(updates.decisions && { decisions: updates.decisions }),
+        ...((updates as Record<string, unknown>).protokollText !== undefined && { protokollText: (updates as Record<string, unknown>).protokollText }),
       }
 
       // Build update payload

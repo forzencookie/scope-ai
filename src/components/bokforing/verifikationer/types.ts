@@ -1,3 +1,7 @@
+/**
+ * Grid display Verification type (flat, single-line focused).
+ * Canonical type: `CanonicalVerification` in `@/types`
+ */
 export interface Verification {
     id: number | string
     /** BFL display label, e.g. "A1" */

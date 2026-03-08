@@ -166,7 +166,7 @@ export const PAGE_CONTEXTS: PageContext[] = [
             'Kategorisera utgifter',
         ],
         dataEntities: ['Kvitton', 'Leverantörer', 'Utgiftskategorier'],
-        relatedTools: ['get_receipts', 'match_receipt_to_transaction', 'get_unmatched_receipts'],
+        relatedTools: ['get_receipts', 'get_unmatched_receipts'],
         keywords: ['kvitto', 'utgift', 'leverantör', 'inköp', 'utlägg', 'OCR'],
     },
     {
@@ -569,16 +569,17 @@ export const PAGE_CONTEXTS: PageContext[] = [
         category: 'ovrigt',
         url: '/dashboard/handelser',
         icon: Calendar,
-        description: 'Aktivitetslogg och kalender. Visa händelser, deadlines och planering.',
+        description: 'Översikt (månadsavslut + deadlines), Canvas (AI-planer) och Arkiv (kalender + aktivitetslogg).',
         aiCapabilities: [
             'Visa händelser',
             'Skapa påminnelser',
             'Visa kommande deadlines',
             'Sammanfatta aktivitet',
+            'Skapa canvas med plan',
         ],
-        dataEntities: ['Händelser', 'Deadlines', 'Planer'],
+        dataEntities: ['Händelser', 'Deadlines', 'Planer', 'Canvas'],
         relatedTools: ['get_events', 'create_event', 'get_upcoming_deadlines', 'get_activity_summary', 'get_walkthrough_history', 'show_walkthrough'],
-        keywords: ['händelse', 'kalender', 'deadline', 'påminnelse', 'aktivitet'],
+        keywords: ['händelse', 'kalender', 'deadline', 'påminnelse', 'aktivitet', 'canvas', 'översikt', 'arkiv'],
     },
     {
         id: 'installningar',
@@ -664,7 +665,6 @@ Använd 'book_invoice_payment' för att bokföra en inbetalning.`,
 
     kvitton: `Användaren tittar på Kvitton-sidan som visar uppladdade kvitton.
 Använd 'get_receipts' för att hämta kvitton med filter (status, leverantör, datum).
-Använd 'match_receipt_to_transaction' för att koppla ett kvitto till en transaktion.
 AI kan läsa bifogade kvittobilder och extrahera data via OCR.`,
 
     inventarier: `Användaren tittar på Inventarier-sidan som visar anläggningstillgångar.
@@ -766,7 +766,7 @@ Använd 'transfer_shares' för att registrera överlåtelser.`,
     styrelse: `Användaren tittar på Styrelse-sidan.
 Använd 'get_board_members' för att visa styrelseledamöter och suppleanter.`,
 
-    handelser: `Användaren tittar på Händelser-sidan med kalender och aktivitetslogg.
+    handelser: `Användaren tittar på Händelser-sidan. Tre flikar: Översikt (månadsavslut + deadlines), Canvas (AI-planer med checkboxar), Arkiv (kalender + daglig aktivitetslogg).
 Använd 'get_events' för att hämta händelser och deadlines.
 Använd 'create_event' för att skapa en ny händelse eller påminnelse.
 Använd 'get_upcoming_deadlines' för att visa kommande frister.

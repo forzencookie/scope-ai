@@ -1,6 +1,7 @@
 "use client"
 
-import { Bot, Plus } from "lucide-react"
+import { useState } from "react"
+import { Bot } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { FilterButton } from "@/components/ui/filter-button"
@@ -10,29 +11,23 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { SectionCard } from "@/components/ui/section-card"
-import { BulkActionToolbar, PageHeader } from "@/components/shared"
+import { PageHeader } from "@/components/shared"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
-import { useToast } from "@/components/ui/toast"
-import { useEmployerDeclaration } from "./use-employer-declaration"
+import { useEmployerDeclaration, AGIReport } from "./use-employer-declaration"
 import { AgiStats } from "./components/AgiStats"
-import { AgiGrid } from "./components/AgiGrid"
+import { AgiList } from "./components/AgiList"
+import { AGIDetailsDialog } from "@/components/rapporter/dialogs/agi"
 import { Clock, CheckCircle2 } from "lucide-react"
 
 export function AGIContent() {
     const navigateToAI = useNavigateToAIChat()
-    const toast = useToast()
+    const [selectedReport, setSelectedReport] = useState<AGIReport | null>(null)
     const {
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
-        selectedIds,
         filteredReports,
         stats,
         isLoading,
-        toggleSelection,
-        toggleAll,
-        bulkActions,
-        clearSelection
     } = useEmployerDeclaration()
 
     return (
@@ -47,7 +42,7 @@ export function AGIContent() {
                             className="gap-2 overflow-hidden w-[120px] sm:w-auto"
                             onClick={() => navigateToAI(getDefaultAIContext('agi'))}
                         >
-                            <Plus className="h-4 w-4 shrink-0" />
+                            <Bot className="h-4 w-4 shrink-0" />
                             <span className="truncate">Ny period</span>
                         </Button>
                     }
@@ -58,14 +53,6 @@ export function AGIContent() {
 
                 {/* Section Separator */}
                 <div className="border-b-2 border-border/60" />
-
-                <SectionCard
-                    icon={Bot}
-                    title="AI-arbetsgivardeklaration"
-                    description="Låt AI sammanställa och granska din arbetsgivardeklaration automatiskt."
-                    variant="ai"
-                    onAction={() => navigateToAI(getDefaultAIContext('agi'))}
-                />
 
                 {/* Table Actions Toolbar */}
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-2 mb-2">
@@ -101,24 +88,18 @@ export function AGIContent() {
                     </div>
                 </div>
 
-                <div className="relative">
-                    <AgiGrid
-                        reports={filteredReports}
-                        selectedIds={selectedIds}
-                        onToggleSelection={toggleSelection}
-                        onToggleAll={toggleAll}
-                    />
-                 
-                    <BulkActionToolbar
-                        selectedCount={selectedIds.size}
-                        selectedIds={Array.from(selectedIds)}
-                        actions={bulkActions.map(action => ({
-                            ...action,
-                            onClick: () => action.onClick?.(Array.from(selectedIds))
-                        }))}
-                        onClearSelection={clearSelection}
-                    />
-                </div>
+                {/* Period List */}
+                <AgiList
+                    reports={filteredReports}
+                    onSelectReport={setSelectedReport}
+                />
+
+                {/* Detail Dialog */}
+                <AGIDetailsDialog
+                    report={selectedReport}
+                    open={!!selectedReport}
+                    onOpenChange={(open) => !open && setSelectedReport(null)}
+                />
             </div>
         </div>
     )

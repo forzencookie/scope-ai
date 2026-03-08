@@ -18,8 +18,10 @@ export { VAT_ACCOUNTS, PAYMENT_ACCOUNTS, DEFAULT_ACCOUNTS } from '@/lib/bookkeep
 export const EQUITY_ACCOUNTS = {
   /** Aktiekapital (BAS 2011) */
   AKTIEKAPITAL: '2011',
-  /** Reservfond (BAS 2013) */
-  RESERVFOND: '2013',
+  /** Överkursfond (BAS 2019) */
+  OVERKURSFOND: '2019',
+  /** Reservfond (BAS 2085) — AB restricted equity */
+  RESERVFOND: '2085',
   /** Balanserat resultat (BAS 2080) — retained earnings from prior years */
   BALANSERAT_RESULTAT: '2080',
   /** Årets resultat (BAS 2099) */

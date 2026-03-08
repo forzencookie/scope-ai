@@ -94,7 +94,7 @@ function VerificationRow({
             className={cn("cursor-pointer group", highlightClass)}
         >
             <div className="col-span-1 font-mono text-muted-foreground text-xs">
-                {v.id}
+                {v.verificationNumber}
             </div>
             <div className="col-span-2 text-muted-foreground">
                 {v.date}

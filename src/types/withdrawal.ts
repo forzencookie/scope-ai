@@ -34,16 +34,16 @@ export const TYPE_CONFIG: Record<Withdrawal['type'], { label: AppStatus; color: 
 }
 
 // BAS Accounts for partners (HB/KB)
-// Each partner gets a 10-range in the 2000 series:
-// Partner 1: 2010 (capital), 2013 (withdrawal), 2018 (deposit)
-// Partner 2: 2020 (capital), 2023 (withdrawal), 2028 (deposit)
+// BAS standard: 3-account range per partner starting at 2071
+// Partner 1: 2071 (capital), 2072 (withdrawal), 2073 (deposit)
+// Partner 2: 2074 (capital), 2075 (withdrawal), 2076 (deposit)
 // etc.
-export function getPartnerAccounts(partnerIndex: number): { capital: string, withdrawal: string, deposit: string } {
-  const base = 2010 + (partnerIndex * 10)
+export function getPartnerAccounts(partnerIndex: number, accountBase?: number): { capital: string, withdrawal: string, deposit: string } {
+  const base = accountBase ?? (2071 + (partnerIndex * 3))
   return {
     capital: String(base),
-    withdrawal: String(base + 3),
-    deposit: String(base + 8),
+    withdrawal: String(base + 1),
+    deposit: String(base + 2),
   }
 }
 

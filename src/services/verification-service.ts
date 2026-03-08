@@ -30,7 +30,8 @@ export interface VerificationEntry {
 }
 
 /**
- * Verification for display in UI
+ * Service-layer Verification type (DB-mapped, with balance tracking).
+ * Canonical type: `CanonicalVerification` in `@/types`
  */
 export interface Verification {
     id: string

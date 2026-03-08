@@ -128,7 +128,7 @@ export function useAutoVerifikation(): UseAutoVerifikationReturn {
 
     // 4. Unbooked supplier invoices (status = 'mottagen' or 'attesterad')
     const unbookedSupplier = supplierInvoices.filter(
-      (inv) => inv.status === 'mottagen' || inv.status === 'attesterad'
+      (inv) => inv.status === 'Mottagen' || inv.status === 'Attesterad'
     )
     for (const inv of unbookedSupplier) {
       if (pendingSourceIds.has(`supplier_invoice:${inv.id}`)) continue

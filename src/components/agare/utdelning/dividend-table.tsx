@@ -13,7 +13,6 @@ import type { DividendDecision } from "./use-dividend-logic"
 interface UtdelningsTabellProps {
     data: DividendDecision[]
     onBook?: (dividend: DividendDecision) => void
-    onPay?: (dividend: DividendDecision) => void
     onDownloadReceipt?: (dividend: DividendDecision) => void
 }
 
@@ -35,7 +34,7 @@ function getStatusLabel(status: DividendDecision['status']): AppStatus {
     }
 }
 
-export function UtdelningsTable({ data, onBook, onPay, onDownloadReceipt }: UtdelningsTabellProps) {
+export function UtdelningsTable({ data, onBook, onDownloadReceipt }: UtdelningsTabellProps) {
     return (
         <>
             <GridTableHeader columns={columns} />
@@ -69,11 +68,6 @@ export function UtdelningsTable({ data, onBook, onPay, onDownloadReceipt }: Utde
                                         {row.status === 'decided' && onBook && (
                                             <DropdownMenuItem onClick={() => onBook(row)}>
                                                 Bokför utdelning
-                                            </DropdownMenuItem>
-                                        )}
-                                        {row.status === 'booked' && onPay && (
-                                            <DropdownMenuItem onClick={() => onPay(row)}>
-                                                Registrera utbetalning
                                             </DropdownMenuItem>
                                         )}
                                         {row.status === 'planned' && (

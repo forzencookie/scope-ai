@@ -14,17 +14,36 @@ import { OWNER_ACCOUNTS, EQUITY_ACCOUNTS } from '@/data/account-constants'
 
 /**
  * Get the correct private withdrawal account for the company type.
- * EF uses 2013, HB/KB uses 2070, AB doesn't normally have private withdrawals.
+ * EF uses 2013, HB/KB uses partner-specific 2072/2075/etc., AB doesn't normally have private withdrawals.
  */
-async function getWithdrawalAccount(userId?: string): Promise<{ account: string; label: string }> {
+async function getWithdrawalAccount(userId?: string, ownerName?: string): Promise<{ account: string; label: string }> {
     if (userId) {
         try {
             const company = await companyService.getByUserId(userId)
             if (company) {
                 switch (company.companyType) {
                     case 'hb':
-                    case 'kb':
-                        return { account: OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_HB, label: `${OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_HB} (Privata uttag HB/KB)` }
+                    case 'kb': {
+                        // Look up partner-specific account from DB
+                        const { getPartnerAccounts } = await import('@/types/withdrawal')
+                        try {
+                            const res = await fetch('/api/partners')
+                            if (res.ok) {
+                                const { partners } = await res.json()
+                                const partner = ownerName
+                                    ? partners?.find((p: { name: string }) => p.name.toLowerCase().includes(ownerName!.toLowerCase()))
+                                    : partners?.[0]
+                                if (partner) {
+                                    const idx = partners.indexOf(partner)
+                                    const accounts = getPartnerAccounts(idx, partner.accountBase)
+                                    return { account: accounts.withdrawal, label: `${accounts.withdrawal} (Privata uttag ${partner.name})` }
+                                }
+                            }
+                        } catch { /* fall through to default */ }
+                        // Fallback to first partner's default
+                        const defaultAccounts = getPartnerAccounts(0)
+                        return { account: defaultAccounts.withdrawal, label: `${defaultAccounts.withdrawal} (Privata uttag HB/KB)` }
+                    }
                     case 'ab':
                         // AB: private withdrawals are unusual — typically salary or dividend
                         return { account: OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF, label: `${OWNER_ACCOUNTS.PRIVATE_WITHDRAWAL_EF} (Privata uttag — obs: ovanligt för AB)` }
@@ -157,8 +176,8 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
             'uttag': 'Privat uttag',
         }
 
-        // Get company-type-aware withdrawal account
-        const withdrawal = await getWithdrawalAccount(context?.userId as string | undefined)
+        // Get company-type-aware withdrawal account (pass ownerName for HB/KB partner lookup)
+        const withdrawal = await getWithdrawalAccount(context?.userId as string | undefined, ownerName)
 
         const accountMap = {
             'lön': { debit: OWNER_ACCOUNTS.OWNER_SALARY, credit: '1930' },

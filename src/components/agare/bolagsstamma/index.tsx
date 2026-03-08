@@ -68,6 +68,40 @@ export function Bolagsstamma() {
     })
   }
 
+  const handleSaveAndCreateKallelse = async (data: MeetingFormData) => {
+    const result = await createMeeting({
+      date: data.date,
+      year: data.year,
+      time: data.time,
+      location: data.location || 'Ej angivet',
+      type: data.type,
+      agenda: data.agenda
+    })
+    setShowCreateStammaDialog(false)
+    // Open the meeting view dialog at the kallelse step
+    if (result) {
+      const created = meetings.find(m => m.id === result.id) || {
+        ...result,
+        id: result.id,
+        year: typeof data.year === 'string' ? parseInt(data.year) : data.year,
+        date: data.date,
+        status: 'planerad' as const,
+        meetingType: 'bolagsstamma' as const,
+        meetingCategory: 'bolagsstamma' as const,
+        type: data.type,
+        location: data.location || 'Ej angivet',
+        chairperson: 'Ej angivet',
+        secretary: 'Ej angivet',
+        attendeesCount: 0,
+        decisions: [],
+        sharesRepresented: 0,
+        votesRepresented: 0,
+      } as GeneralMeeting
+      setSelectedMeeting(created)
+      setShowViewDialog(true)
+    }
+  }
+
   const handleSaveBoardMeeting = async (data: MeetingFormData) => {
     await createBoardMeeting({
       date: data.date,
@@ -123,7 +157,7 @@ export function Bolagsstamma() {
 
       <MeetingStats stats={stats} />
 
-      <UpcomingAlert stats={stats} />
+      <UpcomingAlert stats={stats} onPrepare={handleMeetingClick} />
 
       <div className="flex flex-col sm:flex-row gap-3 md:gap-4 justify-between items-start sm:items-center">
         <FilterTabs
@@ -164,6 +198,7 @@ export function Bolagsstamma() {
         onOpenChange={setShowCreateStammaDialog}
         type="general"
         onSubmit={handleSaveMeeting}
+        onSaveAndCreateKallelse={handleSaveAndCreateKallelse}
       />
 
       {/* Create styrelsemöte dialog */}

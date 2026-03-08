@@ -3,8 +3,24 @@
 /**
  * useActivityLog - Hook for fetching and displaying activity history
  *
- * Shows who did what and when - the audit trail for accountability.
- * "Johan booked transaction 'Inköp kontorsmaterial' at 14:32"
+ * This is the ACCOUNTABILITY AUDIT TRAIL — "who did what and when".
+ * Example: "Johan booked transaction 'Inköp kontorsmaterial' at 14:32"
+ *
+ * ARCHITECTURE NOTE (Phase 7B):
+ * There are two event systems in the app, serving different purposes:
+ *
+ * 1. `activity_log` table (THIS hook) — Audit trail for accountability
+ *    - Tracks user/system actions with field-level diffs
+ *    - Auto-triggered on DB changes (transactions trigger)
+ *    - Used by: ActivityFeed, Arkiv tab (calendar day view)
+ *
+ * 2. `events` table (useEvents hook) — Company timeline/calendar
+ *    - Tracks company-level happenings from all sources (AI, system, authority)
+ *    - Has workflow status, corporate action types, proof/hash chain
+ *    - Used by: Översikt tab, EventsCalendar, AI tools
+ *
+ * These are intentionally separate: activity_log = granular audit,
+ * events = high-level company narrative.
  */
 
 import { useState, useEffect, useCallback } from "react"
@@ -59,12 +75,19 @@ export type EntityType =
   | "shareholders"
   | "companies"
   | "profiles"
+  | "roadmaps"
+  | "taxreports"
+  | "financialperiods"
+  | "benefits"
+  | "inventarier"
 
 interface UseActivityLogOptions {
   /** Filter by entity type */
   entityType?: EntityType
   /** Filter by specific entity ID */
   entityId?: string
+  /** Filter by specific date (shows only that day's entries) */
+  dateFilter?: Date | null
   /** Number of entries to fetch */
   limit?: number
   /** Enable real-time updates */
@@ -114,6 +137,11 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
   shareholders: "aktieägare",
   companies: "företag",
   profiles: "profil",
+  roadmaps: "canvas",
+  taxreports: "skatterapport",
+  financialperiods: "räkenskapsperiod",
+  benefits: "förmån",
+  inventarier: "inventarie",
 }
 
 // ============================================================================
@@ -122,8 +150,8 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
 
 export const activityLogQueryKeys = {
   all: ["activity-log"] as const,
-  list: (entityType?: string, entityId?: string) =>
-    [...activityLogQueryKeys.all, "list", entityType, entityId] as const,
+  list: (entityType?: string, entityId?: string, dateFilter?: string) =>
+    [...activityLogQueryKeys.all, "list", entityType, entityId, dateFilter] as const,
 }
 
 // ============================================================================
@@ -154,6 +182,7 @@ function mapRow(row: any): ActivityLogEntry {
 export function useActivityLog({
   entityType,
   entityId,
+  dateFilter,
   limit = 20,
   realtime = true,
 }: UseActivityLogOptions = {}): UseActivityLogReturn {
@@ -171,7 +200,7 @@ export function useActivityLog({
     error,
     refetch,
   } = useQuery({
-    queryKey: activityLogQueryKeys.list(entityType, entityId),
+    queryKey: activityLogQueryKeys.list(entityType, entityId, dateFilter?.toISOString()?.split('T')[0]),
     queryFn: async () => {
       let query = supabase
         .from("activity_log")
@@ -185,6 +214,14 @@ export function useActivityLog({
 
       if (entityId) {
         query = query.eq("entity_id", entityId)
+      }
+
+      if (dateFilter) {
+        const dayStart = new Date(dateFilter)
+        dayStart.setHours(0, 0, 0, 0)
+        const dayEnd = new Date(dateFilter)
+        dayEnd.setHours(23, 59, 59, 999)
+        query = query.gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString())
       }
 
       const { data, error: fetchError } = await query

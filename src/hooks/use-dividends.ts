@@ -48,7 +48,7 @@ export function useDividends(): DividendData {
 
     // Restricted equity: pick aktiekapital + reservfond from raw balances.
     // These are credit-normal (2xxx), so flip sign same way normalizeBalances does.
-    const restrictedAccounts = [EQUITY_ACCOUNTS.AKTIEKAPITAL, EQUITY_ACCOUNTS.RESERVFOND]
+    const restrictedAccounts: string[] = [EQUITY_ACCOUNTS.AKTIEKAPITAL, EQUITY_ACCOUNTS.RESERVFOND]
     const restrictedEquity = accountBalances
       .filter(e => restrictedAccounts.includes(e.accountNumber ?? ''))
       .reduce((sum, e) => sum + (e.balance * -1), 0)

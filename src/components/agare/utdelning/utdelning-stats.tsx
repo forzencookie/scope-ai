@@ -1,8 +1,7 @@
-import { DollarSign, FileCheck, Landmark } from "lucide-react"
+import { DollarSign, FileCheck, Landmark, Scale } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { ResponsiveCurrency } from "@/components/ui/responsive-currency"
 import { termExplanations } from "@/components/loner/constants"
-import { formatCurrencyCompact } from "@/lib/formatters"
 
 interface UtdelningStatsProps {
     stats: {
@@ -11,6 +10,7 @@ interface UtdelningStatsProps {
         beslutad: number
         bokford: number
         skatt: number
+        distributableEquity?: number
     }
 }
 
@@ -19,7 +19,17 @@ export function UtdelningStats({ stats }: UtdelningStatsProps) {
     const isOverLimit = totalActive > stats.gransbelopp
 
     return (
-        <StatCardGrid columns={3}>
+        <StatCardGrid columns={4}>
+            <StatCard
+                label="Fritt eget kapital"
+                value={stats.distributableEquity != null
+                    ? <ResponsiveCurrency amount={stats.distributableEquity} />
+                    : "–"
+                }
+                subtitle="Utdelningsbart (ABL 17:3)"
+                headerIcon={Scale}
+                tooltip="Totalt eget kapital minus bundet eget kapital (aktiekapital + reservfond) plus årets resultat. Utdelningen får inte överstiga detta belopp."
+            />
             <StatCard
                 label="Planerad"
                 value={stats.planerad > 0 ? <ResponsiveCurrency amount={stats.planerad} /> : "–"}
@@ -43,9 +53,12 @@ export function UtdelningStats({ stats }: UtdelningStatsProps) {
             <StatCard
                 label="Bokförd"
                 value={stats.bokford > 0 ? <ResponsiveCurrency amount={stats.bokford} /> : "–"}
-                subtitle={stats.bokford > 0 ? `Skatt: ${formatCurrencyCompact(Math.round(stats.bokford * 0.2))}` : "Ingen bokförd utdelning"}
+                subtitle={stats.bokford > 0
+                    ? `Skatt: ~${Math.round(stats.skatt).toLocaleString('sv-SE')} kr`
+                    : "Ingen bokförd utdelning"
+                }
                 headerIcon={Landmark}
-                tooltip="Utdelning som är bokförd och klar för utbetalning."
+                tooltip="Utdelning som är bokförd. Utbetalning sker via bank."
             />
         </StatCardGrid>
     )

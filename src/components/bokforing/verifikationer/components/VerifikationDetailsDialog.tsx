@@ -32,7 +32,7 @@ export function VerifikationDetailsDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Verifikation #{verification.id}</DialogTitle>
+                    <DialogTitle>Verifikation {verification.verificationNumber}</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
                     <div className="grid grid-cols-2 gap-4">

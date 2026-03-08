@@ -1,11 +1,13 @@
 /**
- * VAT XML Export for Skatteverket
- * 
- * Generates XML files compatible with Skatteverket's digital filing system.
- * Based on the official momsdeklaration format.
+ * VAT XML Export for Skatteverket (client-side)
+ *
+ * Generates eSKDUpload XML files conforming to Skatteverket's official DTD Version 6.0.
+ * Uses the same Skatteverket element names as the server-side export.
+ *
+ * Reference: Skatteverket SKV 4700, eSKDUpload DTD 6.0
  */
 
-import { VatReport } from "@/services/processors/vat"
+import { type VatReport, generateFullVatXML } from "@/services/processors/vat"
 
 /**
  * Company information required for VAT declaration
@@ -20,107 +22,11 @@ export interface CompanyInfo {
 }
 
 /**
- * Convert period string to Skatteverket period format
- * "Q4 2024" -> "202410" (YYYYMM for first month of quarter)
- */
-function periodToSkatteverketFormat(period: string): string {
-    const [q, year] = period.split(" ")
-    const quarter = parseInt(q.replace("Q", ""))
-    const month = String((quarter - 1) * 3 + 1).padStart(2, "0")
-    return `${year}${month}`
-}
-
-/**
- * Escape XML special characters
- */
-function escapeXml(str: string): string {
-    return str
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&apos;")
-}
-
-/**
- * Generate a ruta element only if value is non-zero
- */
-function rutaElement(ruta: string, value: number): string {
-    if (value === 0) return ""
-    return `    <Ruta${ruta}>${Math.round(value)}</Ruta${ruta}>\n`
-}
-
-/**
- * Export VAT report to Skatteverket XML format
+ * Export VAT report to Skatteverket eSKDUpload XML format.
+ * Delegates to the canonical generateFullVatXML function.
  */
 export function exportVatReportToXML(report: VatReport, company: CompanyInfo): string {
-    const today = new Date().toISOString().split("T")[0]
-    const periodCode = periodToSkatteverketFormat(report.period)
-
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<Momsdeklaration xmlns="urn:skatteverket:se:moms:deklaration">
-  <Header>
-    <Organisationsnummer>${escapeXml(company.organisationsnummer)}</Organisationsnummer>
-    <Momsregistreringsnummer>${escapeXml(company.momsregistreringsnummer)}</Momsregistreringsnummer>
-    <Foretagsnamn>${escapeXml(company.foretagsnamn)}</Foretagsnamn>
-    <Gatuadress>${escapeXml(company.gatuadress)}</Gatuadress>
-    <Postnummer>${escapeXml(company.postnummer)}</Postnummer>
-    <Postort>${escapeXml(company.postort)}</Postort>
-    <Period>${periodCode}</Period>
-    <Deklarationsdatum>${today}</Deklarationsdatum>
-  </Header>
-  <Deklarationsinnehall>
-`
-
-    // Section A: Momspliktig försäljning
-    xml += rutaElement("05", report.ruta05)
-    xml += rutaElement("06", report.ruta06)
-    xml += rutaElement("07", report.ruta07)
-    xml += rutaElement("08", report.ruta08)
-
-    // Section B: Utgående moms
-    xml += rutaElement("10", report.ruta10)
-    xml += rutaElement("11", report.ruta11)
-    xml += rutaElement("12", report.ruta12)
-
-    // Section C: Omvänd skattskyldighet
-    xml += rutaElement("20", report.ruta20)
-    xml += rutaElement("21", report.ruta21)
-    xml += rutaElement("22", report.ruta22)
-    xml += rutaElement("23", report.ruta23)
-    xml += rutaElement("24", report.ruta24)
-
-    // Section D: Utgående moms på omvänd skattskyldighet
-    xml += rutaElement("30", report.ruta30)
-    xml += rutaElement("31", report.ruta31)
-    xml += rutaElement("32", report.ruta32)
-
-    // Section E: Undantagen försäljning
-    xml += rutaElement("35", report.ruta35)
-    xml += rutaElement("36", report.ruta36)
-    xml += rutaElement("37", report.ruta37)
-    xml += rutaElement("38", report.ruta38)
-    xml += rutaElement("39", report.ruta39)
-    xml += rutaElement("40", report.ruta40)
-    xml += rutaElement("41", report.ruta41)
-    xml += rutaElement("42", report.ruta42)
-
-    // Section F: Ingående moms
-    xml += rutaElement("48", report.ruta48)
-
-    // Section G: Resultat (always include)
-    xml += `    <Ruta49>${Math.round(report.ruta49)}</Ruta49>\n`
-
-    // Section H: Import
-    xml += rutaElement("50", report.ruta50)
-    xml += rutaElement("60", report.ruta60)
-    xml += rutaElement("61", report.ruta61)
-    xml += rutaElement("62", report.ruta62)
-
-    xml += `  </Deklarationsinnehall>
-</Momsdeklaration>`
-
-    return xml
+    return generateFullVatXML(report, company.organisationsnummer, company.foretagsnamn)
 }
 
 /**
@@ -128,12 +34,13 @@ export function exportVatReportToXML(report: VatReport, company: CompanyInfo): s
  */
 export function downloadVatXML(report: VatReport, company: CompanyInfo): void {
     const xml = exportVatReportToXML(report, company)
-    const blob = new Blob([xml], { type: "application/xml;charset=utf-8" })
+    const blob = new Blob([xml], { type: "application/xml;charset=iso-8859-1" })
     const url = URL.createObjectURL(blob)
 
+    const periodSlug = report.period.replace(" ", "_")
     const link = document.createElement("a")
     link.href = url
-    link.download = `momsdeklaration_${report.period.replace(" ", "_")}.xml`
+    link.download = `eSKD_Moms_${periodSlug}.xml`
     document.body.appendChild(link)
     link.click()
     document.body.removeChild(link)

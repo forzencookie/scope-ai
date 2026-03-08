@@ -8,14 +8,56 @@ import { sv } from "date-fns/locale"
 import { BulkAction } from "@/components/shared/bulk-action-toolbar"
 import { Trash2, Download } from "lucide-react"
 
+/**
+ * Get age from Swedish personnummer (YYYYMMDD-NNNN or YYYYMMDDNNNN).
+ * Returns null if invalid.
+ */
+function getAgeFromPersonnummer(pnr: string, referenceYear: number): number | null {
+    if (!pnr || pnr.length < 8) return null
+    const digits = pnr.replace(/\D/g, '')
+    if (digits.length < 8) return null
+    const birthYear = parseInt(digits.substring(0, 4))
+    if (birthYear < 1900 || birthYear > 2100) return null
+    return referenceYear - birthYear
+}
+
+/**
+ * Get employer contribution rate for an employee based on age.
+ * - Under 26 or over 65 at year start: reduced rate (ålderspension only, 10.21%)
+ * - Everyone else: full rate (~31.42%)
+ */
+function getEmployerRate(
+    personalNumber: string,
+    year: number,
+    fullRate: number,
+    seniorRate: number,
+): number {
+    const age = getAgeFromPersonnummer(personalNumber, year)
+    if (age === null) return fullRate
+    // Born 2000 or later (under 26) or born 1959 or earlier (over 65) at start of year
+    if (age < 26 || age >= 66) return seniorRate
+    return fullRate
+}
+
+export interface AGIEmployeeRecord {
+    personalNumber: string
+    name: string
+    grossSalary: number
+    taxDeduction: number
+    employerContribution: number
+    benefitValue: number
+}
+
 export interface AGIReport {
     period: string
     dueDate: string
     status: "pending" | "submitted"
     employees: number
     totalSalary: number
+    totalBenefits: number
     tax: number
     contributions: number
+    individualData: AGIEmployeeRecord[]
 }
 
 export function useEmployerDeclaration() {
@@ -50,9 +92,9 @@ export function useEmployerDeclaration() {
 
     // 1. Generate AGI reports from real payslip data
     const agiReportsState = useMemo<AGIReport[]>(() => {
-        const reportsMap = new Map<string, AGIReport & {
+        const reportsMap = new Map<string, Omit<AGIReport, 'individualData'> & {
             employeeIds: Set<string>,
-            employeeDataMap: Map<string, { name: string; personalNumber: string; grossSalary: number; taxDeduction: number }>
+            employeeDataMap: Map<string, { name: string; personalNumber: string; grossSalary: number; taxDeduction: number; benefitValue: number }>
         }>()
 
         payslips.forEach(p => {
@@ -75,6 +117,7 @@ export function useEmployerDeclaration() {
                     status: "pending",
                     employees: 0,
                     totalSalary: 0,
+                    totalBenefits: 0,
                     tax: 0,
                     contributions: 0,
                     employeeIds: new Set(),
@@ -85,10 +128,23 @@ export function useEmployerDeclaration() {
             const report = reportsMap.get(period)!
             const gross = Number(p.gross_salary) || 0
             const tax = Number(p.tax_deduction) || 0
+            const benefitValue = Number(p.benefit_value) || 0
+            const pnr = p.personal_number || ''
+            const [periodYear] = period.split('-').map(Number)
+
+            // Age-based employer contribution rate
+            const empRate = getEmployerRate(
+                pnr,
+                periodYear,
+                taxRates?.employerContributionRate ?? 0,
+                taxRates?.employerContributionRateSenior ?? taxRates?.employerContributionRate ?? 0,
+            )
 
             report.totalSalary += gross
+            report.totalBenefits += benefitValue
             report.tax += tax
-            report.contributions += Math.round(gross * (taxRates?.employerContributionRate ?? 0))
+            // Employer contributions on gross + benefits (SFL 2 kap 10§)
+            report.contributions += Math.round((gross + benefitValue) * empRate)
 
             // Track unique employees and their data per period
             const empId = p.employee_id || p.id
@@ -98,12 +154,14 @@ export function useEmployerDeclaration() {
                 if (existing) {
                     existing.grossSalary += gross
                     existing.taxDeduction += tax
+                    existing.benefitValue += benefitValue
                 } else {
                     report.employeeDataMap.set(String(empId), {
                         name: p.employee_name || '',
                         personalNumber: p.personal_number || '',
                         grossSalary: gross,
                         taxDeduction: tax,
+                        benefitValue,
                     })
                 }
             }
@@ -111,22 +169,31 @@ export function useEmployerDeclaration() {
 
         return Array.from(reportsMap.entries())
             .sort((a, b) => b[0].localeCompare(a[0]))
-            .map(([, report]) => {
+            .map(([periodKey, report]): AGIReport => {
                 const { employeeIds, employeeDataMap, ...rest } = report
+                const [yearNum] = periodKey.split('-').map(Number)
                 return {
                     ...rest,
                     employees: employeeIds.size || (rest.totalSalary > 0 ? 1 : 0),
-                    // Store individual data for XML generation (not part of AGIReport type but accessible via cast)
-                    individualData: Array.from(employeeDataMap.values()).map(emp => ({
-                        personalNumber: emp.personalNumber,
-                        name: emp.name,
-                        grossSalary: emp.grossSalary,
-                        taxDeduction: emp.taxDeduction,
-                        employerContribution: Math.round(emp.grossSalary * (taxRates?.employerContributionRate ?? 0)),
-                    })),
+                    individualData: Array.from(employeeDataMap.values()).map(emp => {
+                        const rate = getEmployerRate(
+                            emp.personalNumber,
+                            yearNum,
+                            taxRates?.employerContributionRate ?? 0,
+                            taxRates?.employerContributionRateSenior ?? taxRates?.employerContributionRate ?? 0,
+                        )
+                        return {
+                            personalNumber: emp.personalNumber,
+                            name: emp.name,
+                            grossSalary: emp.grossSalary,
+                            taxDeduction: emp.taxDeduction,
+                            benefitValue: emp.benefitValue,
+                            employerContribution: Math.round((emp.grossSalary + emp.benefitValue) * rate),
+                        }
+                    }),
                 }
             })
-    }, [payslips, taxRates?.employerContributionRate])
+    }, [payslips, taxRates?.employerContributionRate, taxRates?.employerContributionRateSenior])
 
     // 2. Stats derived from calculated reports
     const stats = useMemo(() => {
@@ -206,8 +273,6 @@ export function useEmployerDeclaration() {
                 const reports = agiReportsState.filter(r => ids.includes(r.period))
 
                 reports.forEach(report => {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const reportWithData = report as any
                     const xml = generateAgiXML({
                         period: report.period,
                         orgNumber: company?.orgNumber || "556000-0000",
@@ -215,7 +280,7 @@ export function useEmployerDeclaration() {
                         tax: report.tax,
                         contributions: report.contributions,
                         employees: report.employees,
-                        individualData: reportWithData.individualData,
+                        individualData: report.individualData,
                     })
 
                     const blob = new Blob([xml], { type: "text/xml" })

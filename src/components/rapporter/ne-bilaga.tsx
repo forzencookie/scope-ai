@@ -36,6 +36,7 @@ import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
 import { taxService } from "@/services/tax-service"
+import { listPeriodiseringsfonder } from "@/services/processors/periodiseringsfonder-processor"
 
 // =============================================================================
 // NE-bilaga Structure (Swedish Tax Form for Enskild Firma)
@@ -53,6 +54,8 @@ function useNECalculation() {
     const [egenavgifterRate, setEgenavgifterRate] = useState<number | null>(null)
     const [periodiseringsfondMaxRate, setPeriodiseringsfondMaxRate] = useState(0.30)
     const [rateError, setRateError] = useState<string | null>(null)
+    const [periodiseringsfondAvsattning, setPeriodiseringsfondAvsattning] = useState(0)
+    const [periodiseringsfondAterforing, setPeriodiseringsfondAterforing] = useState(0)
 
     // NE-bilaga is for the previous tax year (filed in spring of current year)
     const taxYear = new Date().getFullYear() - 1
@@ -63,13 +66,14 @@ function useNECalculation() {
             setRateError(null)
             const supabase = getSupabaseClient()
             try {
-                // Fetch balances and tax rates in parallel
-                const [balanceResult, taxRates] = await Promise.all([
+                // Fetch balances, tax rates, and periodiseringsfonder in parallel
+                const [balanceResult, taxRates, fonder] = await Promise.all([
                     supabase.rpc('get_account_balances', {
                         p_start_date: `${taxYear}-01-01`,
                         p_end_date: `${taxYear}-12-31`
                     }),
                     taxService.getAllTaxRates(taxYear),
+                    listPeriodiseringsfonder(),
                 ])
                 if (balanceResult.error) throw balanceResult.error
                 setBalances((balanceResult.data || []).map((row: { account_number: string | number; balance: number }) => ({
@@ -81,6 +85,20 @@ function useNECalculation() {
                     setPeriodiseringsfondMaxRate(taxRates.periodiseringsfondMaxEF)
                 } else {
                     setRateError(`Egenavgiftssatser för ${taxYear} saknas i databasen.`)
+                }
+
+                // Calculate periodiseringsfond avsättning (new for this tax year) and återföring (dissolved this year)
+                if (fonder && fonder.length > 0) {
+                    // Avsättning: fond created for this tax year
+                    const newFond = fonder.find(f => f.year === taxYear)
+                    if (newFond) {
+                        setPeriodiseringsfondAvsattning(newFond.amount)
+                    }
+                    // Återföring: fonder dissolved this year (status changed or expired)
+                    const dissolved = fonder
+                        .filter(f => f.year < taxYear && f.dissolvedAmount > 0)
+                        .reduce((sum, f) => sum + f.dissolvedAmount, 0)
+                    setPeriodiseringsfondAterforing(dissolved)
                 }
             } catch (err) {
                 console.error('Failed to fetch NE data:', err)
@@ -120,9 +138,9 @@ function useNECalculation() {
             ? Math.round(resultatForeEgenavgifter * 0.25 * effectiveRate)
             : 0
 
-        // Periodiseringsfond (R14/R15) — would need separate user input or account 2150
-        const periodiseringsfond = 0
-        const aterforing = 0
+        // Periodiseringsfond (R14/R15) — from DB-stored periodiseringsfonder
+        const periodiseringsfond = periodiseringsfondAvsattning
+        const aterforing = periodiseringsfondAterforing
 
         // R24: Taxable result (överskott av näringsverksamhet)
         const resultatEfterAvdrag = resultatForeEgenavgifter - schablonavdrag - periodiseringsfond + aterforing
@@ -176,7 +194,7 @@ function useNECalculation() {
             isLoading,
             taxYear,
         }
-    }, [balances, isLoading, taxYear, egenavgifterRate, periodiseringsfondMaxRate, rateError])
+    }, [balances, isLoading, taxYear, egenavgifterRate, periodiseringsfondMaxRate, rateError, periodiseringsfondAvsattning, periodiseringsfondAterforing])
 }
 
 // =============================================================================

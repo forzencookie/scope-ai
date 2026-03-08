@@ -66,8 +66,8 @@ export function RegisterDividendDialog({ open, onOpenChange, onRegister }: Regis
                             <li><strong>Planera</strong> — Du är här. Förslaget registreras.</li>
                             <li><strong>Besluta</strong> — Håll stämma och godkänn utdelningen.</li>
                             <li><strong>Bokföra</strong> — Bokför beslutet när stämman är klar.</li>
-                            <li><strong>Betala</strong> — Registrera utbetalning till aktieägare.</li>
                         </ol>
+                        <p className="mt-1 text-xs">Utbetalning sker i din bank och bokförs via den inkommande transaktionen.</p>
                     </div>
                     <Button className="w-full" onClick={handleRegister} disabled={isSubmitting || !amount}>
                         {isSubmitting ? "Sparar..." : "Skapa förslag"}

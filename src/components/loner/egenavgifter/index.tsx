@@ -4,7 +4,6 @@ import { useState } from "react"
 import { BookOpen, FileText, Calendar, Info, Download } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
-import { useVerifications } from "@/hooks/use-verifications"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { TaxSettingsCard } from "./tax-settings-card"
 import { CalculationResult } from "./calculation-result"
@@ -14,7 +13,6 @@ import { PageHeader } from "@/components/shared"
 
 export function EgenavgifterCalculator() {
     const toast = useToast()
-    const { addVerification } = useVerifications()
     const [isBooking, setIsBooking] = useState(false)
 
     const {
@@ -37,18 +35,39 @@ export function EgenavgifterCalculator() {
             const monthlyAmount = Math.round(calculation.avgifter / 12)
             const today = new Date().toISOString().split('T')[0]
             const currentMonth = new Date().toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })
+            const sourceId = `egenavgifter-${new Date().getFullYear()}-${new Date().getMonth() + 1}`
 
-            await addVerification({
-                date: today,
-                description: `Egenavgifter ${currentMonth}`,
-                sourceType: 'egenavgifter',
-                rows: [
-                    { account: "2510", description: `Skatteskuld egenavgifter ${currentMonth}`, debit: 0, credit: monthlyAmount },
-                    { account: "6310", description: `Egenavgifter ${currentMonth}`, debit: monthlyAmount, credit: 0 },
-                ]
+            // Check for duplicate booking this month
+            const checkRes = await fetch(`/api/pending-bookings?source_type=egenavgifter`)
+            if (checkRes.ok) {
+                const { bookings } = await checkRes.json()
+                const duplicate = bookings?.find((b: { sourceId: string }) => b.sourceId === sourceId)
+                if (duplicate) {
+                    toast.error("Redan bokfört", `Egenavgifter för ${currentMonth} finns redan som väntande bokning.`)
+                    return
+                }
+            }
+
+            // Create pending booking with correct accounts (7533 debit, 2510 credit)
+            const res = await fetch('/api/pending-bookings', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    sourceType: 'egenavgifter',
+                    sourceId,
+                    description: `Egenavgifter ${currentMonth}`,
+                    entries: [
+                        { account: "7533", description: `Egenavgifter ${currentMonth}`, debit: monthlyAmount, credit: 0 },
+                        { account: "2510", description: `Skatteskuld egenavgifter ${currentMonth}`, debit: 0, credit: monthlyAmount },
+                    ],
+                    date: today,
+                    metadata: { period: currentMonth, amount: monthlyAmount },
+                }),
             })
 
-            toast.success("Egenavgifter bokförda", `${monthlyAmount.toLocaleString('sv-SE')} kr bokfört i verifikationer.`)
+            if (!res.ok) throw new Error('Failed to create pending booking')
+
+            toast.success("Egenavgifter förberedda", `${monthlyAmount.toLocaleString('sv-SE')} kr skapad som väntande bokning.`)
         } catch {
             toast.error("Kunde inte bokföra", "Ett fel uppstod vid bokföring av egenavgifter.")
         } finally {

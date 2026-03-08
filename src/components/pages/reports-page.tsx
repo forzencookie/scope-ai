@@ -23,6 +23,7 @@ import {
     LazyArsbokslut,
     LazyK10,
     LazyAGI,
+    LazyEgenavgifter,
 } from "@/components/shared"
 
 // Tab configuration with feature keys for filtering
@@ -35,6 +36,7 @@ const allTabs: Array<{ id: string; label: string; color: string; feature: Featur
     { id: "arsredovisning", label: "Årsredovisning", color: "bg-indigo-500", feature: "arsredovisning" },
     { id: "arsbokslut", label: "Årsbokslut", color: "bg-indigo-400", feature: "arsbokslut" },
     { id: "k10", label: "K10", color: "bg-purple-400", feature: "k10" },
+    { id: "egenavgifter", label: "Egenavgifter", color: "bg-amber-500", feature: "egenavgifter" },
 ];
 
 function ReportsPageContent() {
@@ -86,6 +88,7 @@ function ReportsPageContent() {
                     {currentTab === "agi" && <LazyAGI />}
                     {currentTab === "arsredovisning" && <LazyArsredovisning />}
                     {currentTab === "arsbokslut" && <LazyArsbokslut />}
+                    {currentTab === "egenavgifter" && <LazyEgenavgifter />}
                 </main>
             </div>
         </TooltipProvider>
