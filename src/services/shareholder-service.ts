@@ -298,4 +298,150 @@ export const shareholderService = {
             shareNumberTo: assignedTo,
         }
     },
+
+    async transferShares({
+        fromShareholderId,
+        toShareholderId,
+        toShareholderName,
+        toShareholderSsnOrgNr,
+        sharesCount,
+        shareClass = 'A',
+        transferDate,
+        pricePerShare,
+    }: {
+        fromShareholderId: string
+        toShareholderId?: string
+        toShareholderName?: string
+        toShareholderSsnOrgNr?: string
+        sharesCount: number
+        shareClass?: 'A' | 'B'
+        transferDate?: string
+        pricePerShare?: number
+    }) {
+        const supabase = getSupabaseClient()
+        const date = transferDate || new Date().toISOString().split('T')[0]
+
+        // 1. Fetch seller and validate
+        const { data: seller, error: sellerErr } = await supabase
+            .from('shareholders')
+            .select('*')
+            .eq('id', fromShareholderId)
+            .single()
+
+        if (sellerErr || !seller) throw new Error('Säljande aktieägare hittades inte.')
+
+        const sellerShares = seller.shares_count ?? seller.shares ?? 0
+        if (sellerShares < sharesCount) {
+            throw new Error(`Otillräckligt antal aktier. ${seller.name} har ${sellerShares} aktier.`)
+        }
+
+        // 2. Resolve buyer — existing or new
+        let buyerId = toShareholderId
+        let buyerName = toShareholderName || ''
+
+        if (!buyerId) {
+            if (!toShareholderName) throw new Error('Köparens namn krävs för ny aktieägare.')
+
+            // Calculate share numbers for the new shareholder
+            const { data: maxRow } = await supabase
+                .from('shareholders')
+                .select('share_number_to')
+                .not('share_number_to', 'is', null)
+                .order('share_number_to', { ascending: false })
+                .limit(1)
+                .single()
+
+            const maxNumber = maxRow?.share_number_to ?? 0
+
+            const { data: newBuyer, error: buyerErr } = await supabase
+                .from('shareholders')
+                .insert({
+                    name: toShareholderName,
+                    ssn_org_nr: toShareholderSsnOrgNr ?? null,
+                    shares: sharesCount,
+                    shares_count: sharesCount,
+                    share_class: shareClass,
+                    share_number_from: maxNumber + 1,
+                    share_number_to: maxNumber + sharesCount,
+                    acquisition_date: date,
+                    acquisition_price: pricePerShare ? pricePerShare * sharesCount : null,
+                })
+                .select()
+                .single()
+
+            if (buyerErr || !newBuyer) throw new Error('Kunde inte skapa ny aktieägare.')
+            buyerId = newBuyer.id
+            buyerName = newBuyer.name
+        } else {
+            // Add shares to existing buyer
+            const { data: buyer, error: bErr } = await supabase
+                .from('shareholders')
+                .select('*')
+                .eq('id', buyerId)
+                .single()
+
+            if (bErr || !buyer) throw new Error('Köpande aktieägare hittades inte.')
+            buyerName = buyer.name
+
+            const buyerCurrentShares = buyer.shares_count ?? buyer.shares ?? 0
+            const { error: updateBuyerErr } = await supabase
+                .from('shareholders')
+                .update({
+                    shares: buyerCurrentShares + sharesCount,
+                    shares_count: buyerCurrentShares + sharesCount,
+                })
+                .eq('id', buyerId)
+
+            if (updateBuyerErr) throw new Error('Kunde inte uppdatera köparens aktier.')
+        }
+
+        // 3. Deduct shares from seller
+        const newSellerShares = sellerShares - sharesCount
+        const { error: updateSellerErr } = await supabase
+            .from('shareholders')
+            .update({
+                shares: newSellerShares,
+                shares_count: newSellerShares,
+            })
+            .eq('id', fromShareholderId)
+
+        if (updateSellerErr) throw new Error('Kunde inte uppdatera säljarens aktier.')
+
+        // 4. Record the transaction
+        const totalAmount = pricePerShare ? pricePerShare * sharesCount : null
+        // Get company_id and user_id from the seller record context
+        const { data: authData } = await supabase.auth.getUser()
+        const userId = authData?.user?.id ?? ''
+        const companyId = seller.company_id ?? ''
+
+        const { data: txn, error: txnErr } = await supabase
+            .from('sharetransactions')
+            .insert({
+                from_shareholder_id: fromShareholderId,
+                to_shareholder_id: buyerId,
+                share_count: sharesCount,
+                price_per_share: pricePerShare ?? null,
+                total_amount: totalAmount,
+                transaction_date: date,
+                registration_date: date,
+                transaction_type: 'transfer',
+                notes: `Överlåtelse av ${sharesCount} ${shareClass}-aktier`,
+                company_id: companyId,
+                user_id: userId,
+            })
+            .select()
+            .single()
+
+        if (txnErr) throw new Error('Kunde inte registrera transaktionen.')
+
+        return {
+            transferId: txn.id,
+            from: { name: seller.name, remainingShares: newSellerShares },
+            to: { name: buyerName, totalShares: sharesCount },
+            sharesTransferred: sharesCount,
+            shareClass,
+            transferDate: date,
+            totalValue: totalAmount ?? undefined,
+        }
+    },
 }

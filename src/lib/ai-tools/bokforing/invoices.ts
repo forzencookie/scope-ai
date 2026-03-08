@@ -412,7 +412,37 @@ export const voidInvoiceTool = defineTool<VoidInvoiceParams, VoidInvoiceResult>(
         },
         required: ['invoiceId', 'reason'],
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
+        // If confirmed, create credit note via API
+        if (context?.isConfirmed) {
+            try {
+                const baseUrl = getBaseUrl()
+                const res = await fetch(`${baseUrl}/api/invoices/${params.invoiceId}/credit-note`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reason: params.reason }),
+                })
+
+                if (!res.ok) {
+                    const err = await res.json().catch(() => ({}))
+                    return { success: false, error: err.error || 'Kunde inte makulera fakturan.' }
+                }
+
+                const data = await res.json()
+                return {
+                    success: true,
+                    data: {
+                        voided: true,
+                        invoiceId: params.invoiceId,
+                        creditNoteId: data.creditNote?.id,
+                    },
+                    message: `Faktura makulerad. Kreditfaktura ${data.creditNote?.credit_note_number || ''} skapad.`,
+                }
+            } catch (error) {
+                return { success: false, error: 'Kunde inte makulera fakturan.' }
+            }
+        }
+
         return {
             success: true,
             data: {

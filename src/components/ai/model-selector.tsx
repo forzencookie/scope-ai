@@ -32,7 +32,7 @@ export function ModelSelector() {
                 <Button
                     variant="ghost"
                     size="sm"
-                    className="h-7 px-2 gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                    className="h-8 px-2 gap-1.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60"
                 >
                     <span>{currentTier.icon}</span>
                     <span className={cn("max-w-[80px] truncate", currentTier.color)}>
@@ -41,30 +41,30 @@ export function ModelSelector() {
                     <ChevronDown className="h-3 w-3 opacity-50" />
                 </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="start" className="w-56">
+            <DropdownMenuContent align="start" className="w-64">
                 {ASSISTANT_TIERS.map((tier) => (
                     <DropdownMenuItem
                         key={tier.level}
                         onClick={() => setModelId(tier.modelId)}
-                        className="flex items-start gap-3 cursor-pointer py-2.5 px-3"
+                        className="flex items-start gap-3 cursor-pointer py-3 px-3"
                     >
-                        <span className="text-lg mt-0.5">{tier.icon}</span>
+                        <span className="text-xl mt-0.5">{tier.icon}</span>
                         <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-2">
                                 <span className={cn(
-                                    "font-medium",
+                                    "text-[15px] font-medium",
                                     tier.color,
                                     currentTier.level === tier.level && "font-semibold"
                                 )}>
                                     {tier.name}
                                 </span>
                                 {tier.multiplier > 1 && (
-                                    <span className="text-[10px] text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
+                                    <span className="text-xs text-muted-foreground bg-muted px-1.5 py-0.5 rounded">
                                         {tier.multiplier}x tokens
                                     </span>
                                 )}
                             </div>
-                            <p className="text-xs text-muted-foreground mt-0.5 leading-snug">
+                            <p className="text-sm text-muted-foreground mt-0.5 leading-snug">
                                 {tier.description}
                             </p>
                         </div>

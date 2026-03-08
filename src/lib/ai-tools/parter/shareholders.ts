@@ -222,30 +222,49 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
         },
         required: ['fromShareholderId', 'sharesCount', 'shareClass'],
     },
-    execute: async (params) => {
-        // Mock implementation - in production this would update Supabase
+    execute: async (params, context) => {
         const transferDate = params.transferDate || new Date().toISOString().split('T')[0]
         const totalValue = params.pricePerShare ? params.pricePerShare * params.sharesCount : undefined
 
-        const result: ShareTransferResult = {
-            transferId: `transfer-${Date.now()}`,
-            from: {
-                name: 'Säljande aktieägare', // Would fetch from DB
-                remainingShares: 500, // Would calculate
-            },
-            to: {
-                name: params.toShareholderName || 'Köpande aktieägare',
-                totalShares: params.sharesCount,
-            },
-            sharesTransferred: params.sharesCount,
-            shareClass: params.shareClass,
-            transferDate,
-            totalValue,
+        // If confirmed, execute the transfer
+        if (context?.isConfirmed) {
+            try {
+                const result = await shareholderService.transferShares({
+                    fromShareholderId: params.fromShareholderId,
+                    toShareholderId: params.toShareholderId,
+                    toShareholderName: params.toShareholderName,
+                    toShareholderSsnOrgNr: params.toShareholderSsnOrgNr,
+                    sharesCount: params.sharesCount,
+                    shareClass: params.shareClass,
+                    transferDate: params.transferDate,
+                    pricePerShare: params.pricePerShare,
+                })
+
+                return {
+                    success: true,
+                    data: result,
+                    message: `Aktieöverlåtelse genomförd. ${result.sharesTransferred} ${result.shareClass}-aktier överlåtna från ${result.from.name} till ${result.to.name}.`,
+                    navigation: {
+                        route: '/dashboard/agare?tab=aktiebok',
+                        label: 'Visa aktiebok',
+                    },
+                }
+            } catch (error) {
+                return { success: false, error: error instanceof Error ? error.message : 'Kunde inte genomföra överlåtelsen.' }
+            }
         }
 
+        // Preflight: fetch seller info for confirmation summary
+        let sellerName = 'Aktieägare'
+        try {
+            const { shareholders } = await shareholderService.getShareholders()
+            const seller = shareholders.find((s: Shareholder) => s.id === params.fromShareholderId)
+            if (seller) sellerName = seller.name
+        } catch { /* use fallback name */ }
+
         const summaryItems: Array<{ label: string; value: string }> = [
-            { label: 'Från', value: result.from.name },
-            { label: 'Till', value: result.to.name },
+            { label: 'Från', value: sellerName },
+            { label: 'Till', value: params.toShareholderName || 'Befintlig aktieägare' },
             { label: 'Antal', value: `${params.sharesCount} ${params.shareClass}-aktier` },
             { label: 'Datum', value: transferDate },
         ]
@@ -255,7 +274,15 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
 
         return {
             success: true,
-            data: result,
+            data: {
+                transferId: '',
+                from: { name: sellerName, remainingShares: 0 },
+                to: { name: params.toShareholderName || 'Köpande aktieägare', totalShares: params.sharesCount },
+                sharesTransferred: params.sharesCount,
+                shareClass: params.shareClass,
+                transferDate,
+                totalValue,
+            },
             message: `Förbereder aktieöverlåtelse av ${params.sharesCount} ${params.shareClass}-aktier.`,
             confirmationRequired: {
                 title: 'Bekräfta aktieöverlåtelse',

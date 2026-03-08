@@ -45,6 +45,8 @@ interface ChatInputProps {
     onFocus?: () => void
     /** Called when textarea loses focus */
     onBlur?: () => void
+    /** Taller landing-page style input */
+    landing?: boolean
 }
 
 export function ChatInput({
@@ -59,7 +61,8 @@ export function ChatInput({
     onPreviewFile,
     showNavLinks = true,
     onFocus,
-    onBlur
+    onBlur,
+    landing = false
 }: ChatInputProps) {
     const textareaRef = useRef<HTMLTextAreaElement>(null)
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -257,9 +260,9 @@ export function ChatInput({
             {/* Input container */}
             <div
                 className={cn(
-                    "bg-muted/40 dark:bg-muted/30 border-2 rounded-xl overflow-hidden transition-all",
+                    "bg-muted/40 dark:bg-muted/30 rounded-xl overflow-hidden transition-all",
                     "focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 focus-within:ring-offset-background",
-                    isDragging ? "border-primary bg-primary/5" : "border-border/50"
+                    isDragging ? "border-2 border-primary bg-primary/5" : ""
                 )}
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
@@ -347,8 +350,13 @@ export function ChatInput({
                         onFocus={onFocus}
                         onBlur={onBlur}
                         placeholder={files.length > 0 ? "Lägg till ett meddelande..." : "Skriv ett meddelande..."}
-                        className="resize-none border-0 bg-transparent px-4 py-3 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full min-h-[40px] max-h-[200px] text-sm leading-relaxed"
-                        rows={1}
+                        className={cn(
+                            "resize-none border-0 bg-transparent px-4 focus-visible:ring-0 focus-visible:ring-offset-0 placeholder:text-muted-foreground w-full max-h-[200px] leading-relaxed",
+                            landing
+                                ? "py-5 min-h-[80px] text-base"
+                                : "py-3 min-h-[40px] text-sm"
+                        )}
+                        rows={landing ? 2 : 1}
                     />
                 </div>
 
