@@ -1,13 +1,6 @@
 "use client"
 
-import { AppSidebar, type SidebarMode } from "@/components/layout"
 import { GlobalSearch } from "@/components/layout/global-search"
-import {
-    SidebarInset,
-    SidebarProvider,
-    SidebarTrigger,
-    useSidebar,
-} from "@/components/ui/sidebar"
 import { ToastProvider } from "@/components/ui/toast"
 import { useOnboarding } from "@/components/onboarding/onboarding-wizard"
 import { CompanyProvider } from "@/providers/company-provider"
@@ -18,24 +11,26 @@ import { AIOverlay } from "@/components/ai"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
-import { ChevronLeft, ChevronRight, MessageSquare, Plus, RefreshCw, Home, BookOpen, PieChart, Users, Building2, Menu } from "lucide-react"
+import { ChevronLeft, ChevronRight, RefreshCw, MessageSquare, Plus } from "lucide-react"
 import { useRouter, usePathname } from "next/navigation"
 import React, { useEffect, useCallback } from "react"
-import Link from "next/link"
 import { useAuth } from "@/hooks/use-auth"
 import { UserTeamSwitcher } from "@/components/layout/user-team-switcher"
 import { QueryProvider } from "@/providers/query-provider"
-import { Box } from "lucide-react"
+import { Building2, Box } from "lucide-react"
 import { cn } from "@/lib/utils"
+import { AIChatPanel } from "@/components/layout/ai-chat-panel"
+import { SettingsDialog } from "@/components/installningar/settings-dialog"
+import { useSearchParams } from "next/navigation"
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
-// Default team based on company provider
 const defaultTeam = {
     id: 'default',
-    name: 'Mitt Företag',
+    name: 'Mitt Foretag',
     logo: Building2,
 }
 
-// Module-level navigation history store (persists across component remounts)
+// Module-level navigation history store
 const navigationStore = {
     historyStack: [] as string[],
     currentIndex: -1,
@@ -56,13 +51,9 @@ const navigationStore = {
             this.isNavigating = false
             return
         }
-
-        // If we're not at the end of the stack, truncate forward history
         if (this.currentIndex < this.historyStack.length - 1) {
             this.historyStack = this.historyStack.slice(0, this.currentIndex + 1)
         }
-
-        // Don't add duplicate consecutive entries
         if (this.historyStack[this.historyStack.length - 1] !== pathname) {
             this.historyStack.push(pathname)
             this.currentIndex = this.historyStack.length - 1
@@ -79,30 +70,23 @@ const navigationStore = {
     }
 }
 
-// Custom hook to track navigation history
 function useNavigationHistory() {
     const pathname = usePathname()
     const router = useRouter()
-
-    // Use actual state for canGoBack/canGoForward to trigger proper re-renders
     const [canGoBack, setCanGoBack] = useState(false)
     const [canGoForward, setCanGoForward] = useState(false)
 
-    // Update state from store
     const updateState = useCallback(() => {
         setCanGoBack(navigationStore.currentIndex > 0)
         setCanGoForward(navigationStore.currentIndex < navigationStore.historyStack.length - 1)
     }, [])
 
-    // Subscribe to store changes
     useEffect(() => {
         return navigationStore.subscribe(updateState)
     }, [updateState])
 
-    // Track pathname changes
     useEffect(() => {
         navigationStore.push(pathname)
-        // Defer state update to avoid synchronous cascading renders
         setTimeout(() => updateState(), 0)
     }, [pathname, updateState])
 
@@ -127,44 +111,13 @@ function useNavigationHistory() {
     return { canGoBack, canGoForward, goBack, goForward }
 }
 
-// Mobile nav link component
-function MobileNavLink({ href, icon: Icon, children, pathname }: { href: string, icon: React.ComponentType<{ className?: string }>, children: React.ReactNode, pathname: string }) {
-    const isActive = pathname === href || pathname.startsWith(href + '/')
-    return (
-        <Link
-            href={href}
-            className={cn(
-                "flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors",
-                isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-            )}
-        >
-            <Icon className="h-4 w-4" />
-            {children}
-        </Link>
-    )
-}
-
-function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSidebarMode: (mode: SidebarMode) => void }) {
+function DashboardToolbar() {
     const { canGoBack, canGoForward, goBack, goForward } = useNavigationHistory()
     const { user } = useAuth()
-    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
     const [isRefreshing, setIsRefreshing] = useState(false)
-    const pathname = usePathname()
-    const prevPathnameRef = React.useRef(pathname)
 
-    // Auto-close menu on navigation (using ref to avoid setState in effect)
-    useEffect(() => {
-        if (prevPathnameRef.current !== pathname) {
-            prevPathnameRef.current = pathname
-            setIsMobileMenuOpen(false)
-        }
-    }, [pathname])
-
-    // Minimal user object for the switcher
     const currentUser = {
-        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Användare',
+        name: user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Anvandare',
         email: user?.email || '',
         avatar: user?.user_metadata?.avatar_url || '',
     }
@@ -172,154 +125,71 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
     const [teams] = useState([{ ...defaultTeam, logo: Box }])
 
     return (
-        <div className="flex flex-col">
-            {/* Desktop Toolbar Row */}
-            <div className="hidden md:flex h-12 items-center px-4 md:px-8 w-full">
-                {/* Sidebar toggle */}
-                <SidebarTrigger className="-ml-2" />
-                {/* Navigation buttons */}
-                <div className="flex items-center gap-0.5 ml-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-full"
-                        onClick={goBack}
-                        disabled={!canGoBack}
-                        title="Bakåt"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-full"
-                        onClick={goForward}
-                        disabled={!canGoForward}
-                        title="Framåt"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
-                {/* Search bar centered */}
-                <div className="flex-1 flex justify-center px-4">
-                    <GlobalSearch />
-                </div>
-                {/* Right side actions */}
-                <div className="flex items-center gap-1 -mr-2">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                            setIsRefreshing(true)
-                            window.dispatchEvent(new CustomEvent("page-refresh"))
-                            setTimeout(() => setIsRefreshing(false), 1200)
-                        }}
-                        title="Uppdatera"
-                    >
-                        <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                            setSidebarMode("ai-chat")
-                            window.dispatchEvent(new CustomEvent("ai-chat-show-history"))
-                        }}
-                        title="Chatthistorik"
-                    >
-                        <MessageSquare className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-8 w-8"
-                        onClick={() => {
-                            setSidebarMode("ai-chat")
-                            window.dispatchEvent(new CustomEvent("ai-chat-new-conversation"))
-                        }}
-                        title="Ny chatt"
-                    >
-                        <Plus className="h-4 w-4" />
-                    </Button>
-                </div>
-            </div>
-
-            {/* Mobile Toolbar Row */}
-            <div className="flex md:hidden h-12 items-center px-2">
-                {/* Mobile: Menu toggle */}
+        <div className="flex h-12 items-center px-4 md:px-6 w-full shrink-0 bg-background">
+            {/* Navigation buttons */}
+            <div className="flex items-center gap-0.5">
                 <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                    className="h-7 w-7 rounded-full"
+                    onClick={goBack}
+                    disabled={!canGoBack}
+                    title="Bakat"
                 >
-                    {isMobileMenuOpen ? <ChevronLeft className="h-5 w-5 rotate-[-90deg]" /> : <Menu className="h-5 w-5" />}
+                    <ChevronLeft className="h-4 w-4" />
                 </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 rounded-full"
+                    onClick={goForward}
+                    disabled={!canGoForward}
+                    title="Framat"
+                >
+                    <ChevronRight className="h-4 w-4" />
+                </Button>
+            </div>
 
-                {/* Navigation buttons */}
-                <div className="flex items-center gap-0.5 ml-1">
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-full"
-                        onClick={goBack}
-                        disabled={!canGoBack}
-                        title="Bakåt"
-                    >
-                        <ChevronLeft className="h-4 w-4" />
-                    </Button>
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7 rounded-full"
-                        onClick={goForward}
-                        disabled={!canGoForward}
-                        title="Framåt"
-                    >
-                        <ChevronRight className="h-4 w-4" />
-                    </Button>
-                </div>
+            {/* Search bar centered */}
+            <div className="flex-1 flex justify-center px-4">
+                <GlobalSearch />
+            </div>
 
-                {/* Spacer */}
-                <div className="flex-1" />
-
-                {/* Right side actions */}
+            {/* Right side actions */}
+            <div className="flex items-center gap-1">
                 <Button
                     variant="ghost"
                     size="icon"
                     className="h-8 w-8"
                     onClick={() => {
-                        setSidebarMode("ai-chat")
-                        window.dispatchEvent(new CustomEvent("ai-chat-new-conversation"))
+                        setIsRefreshing(true)
+                        window.dispatchEvent(new CustomEvent("page-refresh"))
+                        setTimeout(() => setIsRefreshing(false), 1200)
                     }}
+                    title="Uppdatera"
+                >
+                    <RefreshCw className={cn("h-4 w-4", isRefreshing && "animate-spin")} />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => window.dispatchEvent(new CustomEvent("ai-chat-show-history"))}
+                    title="Chatthistorik"
+                >
+                    <MessageSquare className="h-4 w-4" />
+                </Button>
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8"
+                    onClick={() => window.dispatchEvent(new CustomEvent("ai-chat-new-conversation"))}
                     title="Ny chatt"
                 >
                     <Plus className="h-4 w-4" />
                 </Button>
-
-                {/* Profile */}
-                <div className="scale-90 origin-right">
+                <div className="ml-1">
                     <UserTeamSwitcher user={currentUser} teams={teams} compact={true} />
-                </div>
-            </div>
-
-            {/* Mobile Push-Down Navigation Menu */}
-            <div className={cn(
-                "grid transition-all duration-300 ease-in-out md:hidden",
-                isMobileMenuOpen ? "grid-rows-[1fr] opacity-100 mb-2" : "grid-rows-[0fr] opacity-0"
-            )}>
-                <div className="overflow-hidden">
-                    <div className="px-2 pt-1 pb-3 flex flex-col gap-1">
-                        <div className="px-3 py-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                            Navigering
-                        </div>
-                        <MobileNavLink href="/dashboard" icon={Home} pathname={pathname}>Hem</MobileNavLink>
-                        <MobileNavLink href="/dashboard/bokforing" icon={BookOpen} pathname={pathname}>Bokföring</MobileNavLink>
-                        <MobileNavLink href="/dashboard/rapporter" icon={PieChart} pathname={pathname}>Rapporter</MobileNavLink>
-                        <MobileNavLink href="/dashboard/loner" icon={Users} pathname={pathname}>Löner</MobileNavLink>
-                        <MobileNavLink href="/dashboard/agare" icon={Building2} pathname={pathname}>Bolagsstyrning</MobileNavLink>
-                    </div>
                 </div>
             </div>
         </div>
@@ -328,17 +198,31 @@ function DashboardToolbar({ setSidebarMode }: { sidebarMode: SidebarMode; setSid
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { shouldRedirect, isLoading } = useOnboarding()
-    const [sidebarMode, setSidebarMode] = useState<SidebarMode>("navigation")
     const router = useRouter()
+    const pathname = usePathname()
+    const searchParams = useSearchParams()
+    const settingsParam = searchParams?.get("settings")
+    const [settingsOpen, setSettingsOpen] = useState(!!settingsParam)
 
-    // Redirect to onboarding page if needed
+    useEffect(() => {
+        setSettingsOpen(!!settingsParam)
+    }, [settingsParam])
+
+    const handleSettingsOpenChange = (open: boolean) => {
+        if (!open && settingsParam) {
+            const params = new URLSearchParams(searchParams?.toString())
+            params.delete("settings")
+            router.replace(`${pathname}?${params.toString()}`)
+        }
+        setSettingsOpen(open)
+    }
+
     useEffect(() => {
         if (!isLoading && shouldRedirect) {
             router.push('/onboarding')
         }
     }, [isLoading, shouldRedirect, router])
 
-    // Listen for AI navigation events
     useEffect(() => {
         const handleAINavigate = (e: CustomEvent<{ route: string; newTab?: boolean }>) => {
             const { route, newTab } = e.detail
@@ -350,40 +234,48 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         }
 
         window.addEventListener('ai-navigate', handleAINavigate as EventListener)
-        return () => {
-            window.removeEventListener('ai-navigate', handleAINavigate as EventListener)
-        }
+        return () => window.removeEventListener('ai-navigate', handleAINavigate as EventListener)
     }, [router])
 
     return (
-        <>
-            <SidebarProvider
-                className="flex-col"
-                style={
-                    {
-                        "--sidebar-width": sidebarMode === "ai-chat" ? "380px" : "340px",
-                        "--header-height": "calc(var(--spacing) * 12)",
-                    } as React.CSSProperties
-                }
-            >
+        <div className="flex flex-col h-screen">
+            {/* Top toolbar — full width */}
+            <DashboardToolbar />
 
-                {/* Main layout */}
-                <div className="flex flex-1 w-full bg-background relative">
-                    <AppSidebar variant="floating" mode={sidebarMode} onModeChange={setSidebarMode} className="hidden md:flex" />
-                    <SidebarInset>
-                        {/* Toolbar inside content area */}
-                        <DashboardToolbar sidebarMode={sidebarMode} setSidebarMode={setSidebarMode} />
-
-                        <div className="relative w-full h-full bg-background overflow-x-hidden">
-                            {children}
-                            {/* AI Overlay - shows when AI is processing */}
-                            <AIOverlay />
+            {/* AI chat panel + main content */}
+            <div className="flex flex-1 min-h-0">
+                {/* AI Chat Panel — left side, always visible */}
+                <div className="hidden md:flex flex-col w-[380px] xl:w-[440px] 2xl:w-[500px] shrink-0 p-2 pt-0">
+                    {/* Outer layer — subtle grey */}
+                    <div className="flex flex-col flex-1 min-h-0 rounded-xl bg-muted/50">
+                        {/* Scooby header — sits on outer layer */}
+                        <div className="flex items-center gap-2.5 px-4 py-3 shrink-0">
+                            <ScopeAILogo className="h-7 w-7" />
+                            <div className="flex flex-col">
+                                <span className="text-sm font-semibold leading-none">Scooby</span>
+                                <span className="text-[11px] text-muted-foreground leading-tight mt-0.5">AI Assistent</span>
+                            </div>
                         </div>
-                    </SidebarInset>
+                        {/* Inner layer — chat area, darker rounded bg */}
+                        <div className="flex-1 min-h-0 mx-2 mb-2 rounded-lg bg-sidebar-accent overflow-hidden">
+                            <AIChatPanel />
+                        </div>
+                    </div>
                 </div>
-            </SidebarProvider>
 
-        </>
+                {/* Main content — right side */}
+                <div className="flex-1 relative bg-background overflow-x-hidden overflow-y-auto">
+                    {children}
+                    <AIOverlay />
+                </div>
+            </div>
+
+            <SettingsDialog
+                open={settingsOpen}
+                onOpenChange={handleSettingsOpenChange}
+                defaultTab={settingsParam || undefined}
+            />
+        </div>
     )
 }
 
@@ -412,4 +304,3 @@ export default function DashboardLayout({
         </AuthGuard>
     )
 }
-

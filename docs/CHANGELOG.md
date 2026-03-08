@@ -4,6 +4,41 @@ Historical record of completed plans, audits, and major changes.
 
 ---
 
+## 2026-03-08: AI-Native Layout — Remove Sidebar, Always-On Chat Panel
+
+Removed the shadcn sidebar entirely. The app now uses a simple flex layout: toolbar at top, AI chat panel on the left (always visible), main content on the right. No more sidebar mode toggle.
+
+### New Layout Structure
+
+```
+div (h-screen, flex-col)
++-- DashboardToolbar (full width)
+|   Back/Forward | GlobalSearch | Refresh, History, New Chat, User
++-- div (flex-1, flex-row)
+    +-- AI Chat Panel (380-500px, double-layer UI)
+    |   Outer: muted grey bg, Scooby header with logo
+    |   Inner: sidebar-accent bg, chat messages + input
+    |   Category badges: Hem, Bokforing, Loner, Rapporter, Agare
+    +-- Main Content (flex-1, page routes)
+```
+
+### Changes
+
+| File | Change |
+|------|--------|
+| `src/app/dashboard/layout.tsx` | Rewrote — removed SidebarProvider/AppSidebar/SidebarInset, simple flex layout with toolbar + chat panel + content |
+| `src/components/layout/ai-chat-panel.tsx` | **New** — standalone chat panel extracted from ai-chat-sidebar, no shadcn sidebar deps, category badges added |
+| `src/components/layout/user-team-switcher.tsx` | Decoupled from sidebar — uses `useIsMobile` instead of `useSidebar`, plain elements instead of SidebarMenu |
+
+### Removed from layout (files still exist, unused)
+
+- `AppSidebar` / `app-sidebar.tsx` — no longer imported
+- `AIChatSidebar` / `ai-chat-sidebar.tsx` — replaced by `ai-chat-panel.tsx`
+- `SidebarModeDropdown` / `sidebar-mode-dropdown.tsx` — no mode toggle needed
+- `SidebarProvider`, `SidebarInset`, `SidebarTrigger` — not used in layout
+
+---
+
 ## 2026-02-27: Tool Search — Dynamic Tool Loading for Scooby
 
 Scooby previously loaded all 111 tool definitions (~88K tokens) into every conversation. Now starts with 3 core tools (~2K tokens) and discovers others on demand via `search_tools`.

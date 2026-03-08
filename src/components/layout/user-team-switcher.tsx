@@ -19,16 +19,11 @@ import {
     DropdownMenuSubContent,
     DropdownMenuPortal,
 } from "@/components/ui/dropdown-menu"
-import {
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    useSidebar,
-} from "@/components/ui/sidebar"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { useSubscription } from "@/hooks/use-subscription"
 import { TierBadge } from "@/components/shared/tier-badge"
+import { useIsMobile } from "@/hooks/use-mobile"
 
 interface UserTeamSwitcherProps {
     user: { name: string; email: string; avatar: string }
@@ -42,7 +37,7 @@ interface UserTeamSwitcherProps {
 }
 
 export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitcherProps) {
-    const { isMobile } = useSidebar()
+    const isMobile = useIsMobile()
     const { theme, setTheme } = useTheme()
     const router = useRouter()
     const pathname = usePathname()
@@ -85,14 +80,10 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
     }
 
     return (
-        <SidebarMenu>
-            <SidebarMenuItem>
-                <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                        <SidebarMenuButton
-                            size="lg"
-                            className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                        >
+        <div>
+            <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <button className="flex items-center gap-2 rounded-md p-1.5 hover:bg-accent transition-colors outline-none">
                             {/* User Avatar */}
                             <Avatar className="h-8 w-8 rounded-lg">
                                 <AvatarImage src={user.avatar} alt={user.name} />
@@ -100,15 +91,15 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
                             </Avatar>
                             {!compact && (
                                 <>
-                                    <div className="grid flex-1 text-left text-sm leading-tight transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0">
+                                    <div className="grid flex-1 text-left text-sm leading-tight">
                                         <span className="truncate font-medium text-foreground">{user.name}</span>
                                         <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                                     </div>
-                                    <ChevronsUpDown className="ml-auto transition-[opacity,width] duration-200 group-data-[collapsible=icon]:opacity-0 group-data-[collapsible=icon]:w-0" />
+                                    <ChevronsUpDown className="ml-auto" />
                                 </>
                             )}
-                        </SidebarMenuButton>
-                    </DropdownMenuTrigger>
+                    </button>
+                </DropdownMenuTrigger>
                     <DropdownMenuContent
                         className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
                         align="start"
@@ -203,8 +194,7 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
                             {isLoggingOut ? 'Loggar ut...' : 'Logga ut'}
                         </DropdownMenuItem>
                     </DropdownMenuContent>
-                </DropdownMenu>
-            </SidebarMenuItem>
-        </SidebarMenu >
+            </DropdownMenu>
+        </div>
     )
 }
