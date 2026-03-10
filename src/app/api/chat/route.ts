@@ -352,6 +352,27 @@ export async function POST(request: NextRequest) {
             context.sharedMemory.activitySnapshot = activitySnapshot
         }
 
+        // === INJECT USER MEMORIES ===
+        try {
+            const { userMemoryService } = await import('@/services/user-memory-service')
+            const companyId = userDb.companyId || ''
+            if (companyId) {
+                const memories = await userMemoryService.getMemoriesForCompany(companyId)
+                if (memories && memories.length > 0) {
+                    // Inject into context for system prompt — keeps it under ~1k tokens
+                    const injected = memories.slice(0, 20).map(m => ({
+                        content: m.content,
+                        category: m.category,
+                    }))
+                    context.sharedMemory.userMemories = injected
+                    console.log(`[Chat] Injected ${injected.length} memories`)
+                }
+            }
+        } catch (e) {
+            // Non-critical — skip memory on failure
+            console.error('[Chat] Memory injection failed:', e)
+        }
+
         // Add attachments to context
         if (attachments && attachments.length > 0) {
             context.sharedMemory.attachments = attachments.map(a => ({

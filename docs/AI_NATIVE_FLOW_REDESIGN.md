@@ -550,9 +550,9 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [ ] Replace `PayslipCreateDialog` and `InvoiceCreateDialog` with command buttons → chat
 - [ ] Add `returnTo` in `PageContext` so users navigate back after AI action with item highlighted
 - [x] Keep simple dialogs (≤3 fields): `NewTransactionDialog`, inline actions (mark paid, categorize), `VerifikationDetailsDialog` *(already kept, no changes needed)*
-- [ ] Build `QuickActionsMenu` component — ⚡ button + `/` trigger in chat input, searchable dropdown
-- [ ] Create `quick-actions.ts` config with ~20 actions, filtered by company type + feature flags
-- [ ] `useQuickActions()` hook with fuzzy search (matches Swedish + English)
+- [x] Build `QuickActionsMenu` component — ⚡ button + `/` trigger in chat input, searchable dropdown *(built 2026-03-10)*
+- [x] Create `quick-actions.ts` config with ~20 actions, filtered by company type + feature flags *(22 actions, 5 categories)*
+- [x] `useQuickActions()` hook with fuzzy search (matches Swedish + English) *(built 2026-03-10)*
 - [ ] Build Scooby markdown memory — `scooby_memory` text column in Supabase + `read_memory` / `update_memory` tools
 - [ ] Inject memory into system prompt on every request (~500-1000 tokens)
 
