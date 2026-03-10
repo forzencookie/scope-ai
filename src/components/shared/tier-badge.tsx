@@ -31,29 +31,23 @@ const TIER_CONFIG: Record<SubscriptionTier, {
   tooltip: string
   className: string
 }> = {
-  demo: {
-    icon: Sparkles,
-    label: "Demo",
-    tooltip: "Demo-läge med simulerade funktioner",
-    className: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20",
-  },
-  free: {
-    icon: Sparkles,
-    label: "Demo",
-    tooltip: "Demo-läge med simulerade funktioner",
-    className: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20",
-  },
   pro: {
     icon: Star,
     label: "Pro",
     tooltip: "Pro-abonnemang med fulla funktioner",
     className: "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20",
   },
-  enterprise: {
+  max: {
     icon: Building2,
-    label: "Enterprise",
-    tooltip: "Enterprise med prioriterad support",
+    label: "Max",
+    tooltip: "Max med prioriterad support",
     className: "bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20",
+  },
+  enterprise: {
+    icon: Crown,
+    label: "Enterprise",
+    tooltip: "Enterprise med anpassade lösningar",
+    className: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20",
   },
 }
 

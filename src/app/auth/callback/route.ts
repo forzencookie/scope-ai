@@ -13,7 +13,7 @@ export async function GET(request: Request) {
   const code = requestUrl.searchParams.get('code')
   const error = requestUrl.searchParams.get('error')
   const errorDescription = requestUrl.searchParams.get('error_description')
-  const plan = requestUrl.searchParams.get('plan') // 'pro' or 'enterprise' if from pricing flow
+  const plan = requestUrl.searchParams.get('plan') // 'pro' or 'max' if from pricing flow
 
   // Handle OAuth provider errors
   if (error) {
@@ -82,7 +82,7 @@ export async function GET(request: Request) {
   }
 
   // Success - redirect based on plan or let them choose
-  if (plan && ['pro', 'enterprise'].includes(plan)) {
+  if (plan && ['pro', 'max'].includes(plan)) {
     // Redirect to a page that will trigger the Stripe checkout
     // We use a dedicated route since we can't call Stripe directly from server
     const checkoutUrl = new URL('/auth/checkout', requestUrl.origin)

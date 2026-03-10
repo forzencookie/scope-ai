@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
 async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
     const userId = session.metadata?.supabase_user_id
-    const tier = session.metadata?.tier as 'pro' | 'enterprise' | undefined
+    const tier = session.metadata?.tier as 'pro' | 'max' | undefined
     const purchaseType = session.metadata?.purchase_type
 
     if (!userId) {

@@ -51,7 +51,7 @@ export async function signInWithOAuth(provider: 'google' | 'github' | 'azure' | 
   const redirectUrl = new URL('/auth/callback', window.location.origin)
   
   // Pass plan through OAuth flow if provided
-  if (plan && ['pro', 'enterprise'].includes(plan)) {
+  if (plan && ['pro', 'max'].includes(plan)) {
     redirectUrl.searchParams.set('plan', plan)
   }
   

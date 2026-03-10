@@ -20,7 +20,7 @@ import type {
 // =============================================================================
 
 export interface SubscriptionStatus {
-    plan: 'free' | 'demo' | 'starter' | 'professional' | 'enterprise'
+    plan: 'free' | 'demo' | 'starter' | 'professional' | 'max'
     status: 'active' | 'trial' | 'cancelled' | 'past_due'
     currentPeriodEnd: string
     usageThisMonth: {

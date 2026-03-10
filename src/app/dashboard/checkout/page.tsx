@@ -12,7 +12,7 @@ function CheckoutContent() {
     const router = useRouter()
 
     const type = searchParams.get('type') // 'subscription' | 'credits'
-    const tier = searchParams.get('tier') // 'pro' | 'enterprise'
+    const tier = searchParams.get('tier') // 'pro' | 'max'
     const tokens = searchParams.get('tokens') // e.g. '5000000'
 
     const fetchClientSecret = useCallback(async () => {

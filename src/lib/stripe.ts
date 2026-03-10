@@ -45,13 +45,13 @@ export const stripe = {
 
 export const PRICE_IDS = {
     pro: process.env.STRIPE_PRO_PRICE_ID || '',
-    enterprise: process.env.STRIPE_ENTERPRISE_PRICE_ID || '',
+    max: process.env.STRIPE_ENTERPRISE_PRICE_ID || '', // Reusing enterprise env var temporarily for max
 }
 
 // Map Stripe price IDs to subscription tiers
-export function getTierFromPriceId(priceId: string): 'pro' | 'enterprise' | 'free' {
+export function getTierFromPriceId(priceId: string): 'pro' | 'max' | 'free' {
     if (priceId === PRICE_IDS.pro) return 'pro'
-    if (priceId === PRICE_IDS.enterprise) return 'enterprise'
+    if (priceId === PRICE_IDS.max) return 'max'
     return 'free'
 }
 
@@ -109,7 +109,7 @@ export async function getOrCreateCustomer(
 export interface CreateCheckoutOptions {
     userId: string
     email: string
-    tier: 'pro' | 'enterprise'
+    tier: 'pro' | 'max'
     successUrl: string
     cancelUrl: string
     discountCode?: string  // Optional Stripe promotion code
@@ -194,7 +194,7 @@ export async function createPortalSession(
  */
 export async function updateUserTier(
     userId: string,
-    tier: 'free' | 'pro' | 'enterprise'
+    tier: 'pro' | 'max' | 'free'
 ): Promise<void> {
     const { getSupabaseAdmin } = await import('./database/supabase')
     const supabase = getSupabaseAdmin()

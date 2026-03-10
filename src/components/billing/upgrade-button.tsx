@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Loader2, Sparkles, Crown, Zap } from 'lucide-react'
 
 interface UpgradeButtonProps {
-    tier: 'pro' | 'enterprise'
+    tier: 'pro' | 'max'
     currentTier?: string
     variant?: 'default' | 'outline' | 'ghost'
     size?: 'default' | 'sm' | 'lg'
@@ -19,8 +19,8 @@ const TIER_CONFIG = {
         icon: Zap,
         color: 'bg-blue-600 hover:bg-blue-700',
     },
-    enterprise: {
-        label: 'Upgrade to Enterprise',
+    max: {
+        label: 'Upgrade to Max',
         icon: Crown,
         color: 'bg-purple-600 hover:bg-purple-700',
     },
@@ -38,7 +38,7 @@ export function UpgradeButton({
     const Icon = config.icon
 
     // Don't show if user already has this tier or higher
-    const tierOrder = ['free', 'pro', 'enterprise']
+    const tierOrder = ['free', 'pro', 'max']
     const currentIndex = tierOrder.indexOf(currentTier || 'free')
     const targetIndex = tierOrder.indexOf(tier)
 

@@ -60,8 +60,8 @@ interface UseSubscriptionReturn {
 }
 
 const DEFAULT_PROFILE: SubscriptionProfile = {
-  tier: "demo",
-  isDemo: true,
+  tier: "pro",
+  isDemo: false,
   isPaid: false,
 }
 
