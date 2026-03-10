@@ -16,9 +16,12 @@ import {
     ZoomIn,
     Loader2,
     Inbox,
-    LayoutGrid
+    LayoutGrid,
+    Zap,
 } from "lucide-react"
 import Link from "next/link"
+import { QuickActionsMenu } from "@/components/ai/quick-actions-menu"
+import type { QuickAction } from "@/lib/ai/quick-actions"
 
 interface ChatInputProps {
     /** Current textarea value */
@@ -73,6 +76,8 @@ export function ChatInput({
     const [isDragging, setIsDragging] = useState(false)
     const [isListening, setIsListening] = useState(false)
     const [isTranscribing, setIsTranscribing] = useState(false)
+    const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false)
+    const [quickActionSearch, setQuickActionSearch] = useState("")
 
     // Audio recording for Whisper
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -176,6 +181,13 @@ export function ChatInput({
         const newValue = e.target.value
         onChange(newValue)
 
+        // Track "/" search query while QuickActions is open
+        if (isQuickActionsOpen) {
+            // The value might start with "/" from the trigger — strip it for search
+            const raw = newValue.startsWith("/") ? newValue.slice(1) : newValue
+            setQuickActionSearch(raw)
+        }
+
         const textarea = textareaRef.current
         if (!textarea) return
 
@@ -195,11 +207,32 @@ export function ChatInput({
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
+        // "/" on empty input opens QuickActions
+        if (e.key === "/" && !value.trim() && !isQuickActionsOpen) {
+            e.preventDefault()
+            setIsQuickActionsOpen(true)
+            setQuickActionSearch("")
+            return
+        }
+
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
             onSend()
         }
     }
+
+    // Handle quick action selection
+    const handleQuickActionSelect = useCallback((action: QuickAction) => {
+        setIsQuickActionsOpen(false)
+        setQuickActionSearch("")
+        onChange(action.prompt)
+        if (action.autoSend) {
+            // Small delay to let onChange propagate
+            setTimeout(() => onSend(), 0)
+        } else {
+            textareaRef.current?.focus()
+        }
+    }, [onChange, onSend])
 
     // File upload handlers
     const handleFileSelect = useCallback((fileList: FileList | null) => {
@@ -268,6 +301,19 @@ export function ChatInput({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
+                {/* QuickActions menu (above input) */}
+                <QuickActionsMenu
+                    open={isQuickActionsOpen}
+                    onClose={() => {
+                        setIsQuickActionsOpen(false)
+                        setQuickActionSearch("")
+                        // Clear any "/" prefix
+                        if (value.startsWith("/")) onChange("")
+                    }}
+                    onSelect={handleQuickActionSelect}
+                    searchQuery={quickActionSearch}
+                />
+
                 {/* Attached files preview */}
                 {filePreviewUrls.length > 0 && (
                     <div className="px-3 pt-3 flex flex-wrap gap-2">
@@ -387,6 +433,23 @@ export function ChatInput({
                             onClick={() => setIsMentionOpen(!isMentionOpen)}
                         >
                             <AtSign className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className={cn(
+                                "h-7 w-7 rounded-md hover:bg-muted/60",
+                                isQuickActionsOpen
+                                    ? "bg-primary/10 text-primary"
+                                    : "text-muted-foreground hover:text-foreground"
+                            )}
+                            aria-label="Snabbåtgärder"
+                            onClick={() => {
+                                setIsQuickActionsOpen(!isQuickActionsOpen)
+                                setQuickActionSearch("")
+                            }}
+                        >
+                            <Zap className="h-4 w-4" />
                         </Button>
                         <span ref={mentionAnchorRef} className="hidden" />
                         <div className="w-px h-4 bg-border/60 mx-1" />
