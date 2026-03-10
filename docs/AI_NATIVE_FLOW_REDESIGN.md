@@ -628,10 +628,10 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [x] Card actions: command buttons dispatch to `handleSend()`, navigation links use `router.push()` with item highlighting
 
 **Dynamic Empty-State Suggestions:**
-- [ ] Build `GET /api/dashboard/suggestions` endpoint
-- [ ] Build `useDashboardSuggestions()` hook (fetch on mount, cache 5 min)
-- [ ] Build `SuggestionChips` component with priority coloring (red/orange/blue/grey)
-- [ ] Replace static category badges in MainContentArea empty state
+- [x] Build `GET /api/dashboard/suggestions` endpoint *(built client-side: time-aware suggestions in SuggestionChips component, no API needed)*
+- [x] Build `useDashboardSuggestions()` hook (fetch on mount, cache 5 min) *(built as useMemo in SuggestionChips — time-based + defaults)*
+- [x] Build `SuggestionChips` component with priority coloring (red/orange/blue/grey) *(built 2026-03-10)*
+- [x] Replace static category badges in MainContentArea empty state *(SuggestionChips above smaller page nav badges)*
 
 ### Phase 4: Cross-Module Fixes + Search (Week 4-5)
 
