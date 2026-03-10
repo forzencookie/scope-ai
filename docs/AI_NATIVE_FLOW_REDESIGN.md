@@ -540,9 +540,17 @@ interface ScoobyMemory {
 
 Five phases. Each phase is independently shippable — users get value at every step. Total: 5 categories, 9-10 tabs (varies by company type), 22+ walkthroughs, 20+ Quick Actions, 8+ inline card types.
 
-### Phase 1: Core Flow Unification (Week 1-2)
+### Phase 1: Core Flow Unification (Week 1-2) — 7/11 DONE
 
 **Goal:** AI becomes the primary way to DO things. Side panel replaces overlay. Command buttons replace wizard dialogs.
+
+> **✅ What was done (2026-03-10):**
+>
+> **Wizard dialogs → AI chat:** Deleted 7 wizard dialog files (`MomsWizardDialog`, `K10WizardDialog`, `InkomstWizardDialog`, `ArsredovisningWizardDialog`, `NewWithdrawalDialog`, `RegisterDividendDialog`, `NeBilagaWizardDialog`) and replaced their entry points with `navigateToAI()` calls in `ne-bilaga.tsx` and `rapporter/dialogs/assistent.tsx`.
+>
+> **QuickActionsMenu:** Built 3 new files: `src/lib/ai/quick-actions.ts` (22 actions, 5 categories with feature gates), `src/hooks/chat/use-quick-actions.ts` (fuzzy search across Swedish + English keywords), `src/components/ai/quick-actions-menu.tsx` (dropdown with keyboard nav). Integrated into `chat-input.tsx` with ⚡ button and `/` trigger.
+>
+> **Scooby Memory:** Memory infrastructure already existed (`userMemoryService`, `query_memories` + `add_memory` tools, `extract-memories` API). Only gap was injection — added 20 lines to `src/app/api/chat/route.ts` to fetch memories from `userMemoryService.getMemoriesForCompany()` and inject into `context.sharedMemory.userMemories`. The existing `formatUserMemory()` in `scope-brain/system-prompt.ts` already renders them into the prompt.
 
 - [ ] Convert `AIOverlay` from floating modal to persistent side panel (alongside chat, like Claude artifacts)
 - [ ] Side panel: persists while chatting, supports "Ändra..." edits, can be pinned or dismissed
@@ -556,9 +564,13 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [x] Build Scooby markdown memory — `scooby_memory` text column in Supabase + `read_memory` / `update_memory` tools *(already existed: user_memory table + query_memories + add_memory tools)*
 - [x] Inject memory into system prompt on every request (~500-1000 tokens) *(wired 2026-03-10: route.ts → userMemoryService → context.sharedMemory.userMemories → formatUserMemory())*
 
-### Phase 2: Category Consolidation (Week 2-3)
+### Phase 2: Category Consolidation (Week 2-3) — ✅ ALL DONE
 
 **Goal:** Reduce from 33+ tabs to 9-11 (company-type adaptive). All 5 categories stay.
+
+> **✅ What was done (prior sessions + 2026-03-10 cleanup):**
+>
+> All 5 categories consolidated: Händelser (3→2), Bokföring (5→3), Rapporter (9→hub), Löner (4→2), Ägare (8→1-2 per company type). Dead code cleanup on 2026-03-10: deleted 7 wizard files, `CanvasView`, removed 15 orphaned lazy loaders from `lazy-loader.tsx`, cleaned barrel exports in `rapporter/index.ts` and `shared/index.ts`. Fixed `ne-bilaga.tsx` (replaced wizard with AI chat nav) and `ownership-page.tsx` (missing Button import + router scope).
 
 **Händelser (3 → 2 views):**
 - [x] Delete Canvas tab and `CanvasView` component — plans become AI walkthroughs *(deleted 2026-03-10)*
@@ -601,9 +613,15 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [x] Update sidebar navigation to reflect new structure
 - [x] Update page nav badges on empty chat state
 
-### Phase 3: UI Overhaul + Inline Cards (Week 3-4)
+### Phase 3: UI Overhaul + Inline Cards (Week 3-4) — 14/17 DONE
 
 **Goal:** Each surviving page gets a unique UI. Tool results render as inline cards in chat.
+
+> **✅ What was done (prior sessions + 2026-03-10):**
+>
+> All page UIs, inline result cards, and dynamic suggestions complete. On 2026-03-10: built `SuggestionChips` component (`src/components/ai/suggestion-chips.tsx`) with time-aware suggestions (VAT deadlines, year-end, tax season, monthly close) and integrated into `main-content-area.tsx` above the smaller page navigation badges. Auto-sends prompt on click.
+>
+> **Remaining:** Delägare (HB/KB) page, Medlemsregister (Förening) page, AI insight cards at top of pages.
 
 **Page UIs:**
 - [x] Transaktioner: inbox pattern (unhandled float to top, receipts as attachments, OCR upload)
@@ -633,9 +651,23 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [x] Build `SuggestionChips` component with priority coloring (red/orange/blue/grey) *(built 2026-03-10)*
 - [x] Replace static category badges in MainContentArea empty state *(SuggestionChips above smaller page nav badges)*
 
-### Phase 4: Cross-Module Fixes + Search (Week 4-5)
+### Phase 4: Cross-Module Fixes + Search (Week 4-5) — 7/9 DONE
 
 **Goal:** The system behaves as one connected application. Users can find anything.
+
+> **✅ What was done (2026-03-10):**
+>
+> **Search upgrade:** Rewrote `SearchDialog` (`src/components/layout/search-dialog.tsx`) from localStorage-only to live Supabase entity search. Created `src/app/api/search/route.ts` (parallel queries via `Promise.allSettled` across transactions, invoices, verifications, employees, conversations — max 5 per type). Created `src/hooks/use-search.ts` (300ms debounce + AbortController). Results grouped by entity type with icons, keyboard nav, click-to-navigate.
+>
+> **Share transfer GL cascade:** Modified `src/lib/ai-tools/parter/shareholders.ts` — `transfer_shares` now auto-creates verification (Debit 1310 Andelar ↔ Credit 1930 Bank) when `pricePerShare > 0`.
+>
+> **Payroll vacation accrual:** Modified `src/lib/ai-tools/loner/payroll.ts` — `run_payroll` now auto-creates vacation accrual verification (Debit 7090 ↔ Credit 2920, 12% of gross) instead of just suggesting it in text.
+>
+> **Dividend GL cascade:** Rewrote `register_dividend` in `src/lib/ai-tools/parter/compliance.ts` — now creates two verifications on confirmation: (1) Dividend liability 2098→2898, (2) Kupongskatt 30% 2898→2750. Added proper confirmation flow with summary.
+>
+> All cascades use `verificationService.createVerification()` with graceful fallback on failure.
+>
+> **Remaining:** Month-close routine accruals, full cascade audit across all write tools.
 
 **Cascade Fixes:**
 - [x] Credit note → bookkeeping entry: wire `createCreditNoteEntry()` into `POST /api/invoices/[id]/credit-note` *(already wired — existed before Phase 4)*
@@ -650,7 +682,7 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [x] Unified search index or parallel queries across entity types *(2026-03-10: GET /api/search with Promise.allSettled)*
 - [x] Results grouped by category with click-to-navigate *(2026-03-10: grouped by entity type with icons)*
 
-### Phase 5: Filing Gaps + Intelligence (Week 5-7)
+### Phase 5: Filing Gaps + Intelligence (Week 5-7) — NOT STARTED
 
 **Goal:** All 5 company types can complete yearly declarations. Scooby gets smarter over time.
 
@@ -1100,15 +1132,15 @@ New:  GPT-5 Nano (simple)  → GPT-5 Mini (medium) → GPT-5.1 (complex)
 
 **Estimated cost savings: 60-70%** compared to old GPT-4o setup.
 
-### 12.4 Migration Checklist
+### 12.4 Migration Checklist — ✅ DONE
 
-- [ ] Update `selectModel()` in `src/lib/agents/scope-brain/` to route across 3 tiers
-- [ ] Replace `gpt-4o-mini` references with `gpt-5-nano`
-- [ ] Replace `gpt-4o` references with `gpt-5-mini` (default) and `gpt-5.1` (complex)
-- [ ] Update `DEFAULT_MODEL_ID` in `src/lib/ai/models.ts`
-- [ ] Test tool calling accuracy with GPT-5 Mini (should be equal or better than 4o)
-- [ ] Update the GET handler in `src/app/api/chat/route.ts` (currently says "GPT-4o")
-- [ ] Add GPT-5 Nano's 90% cached input discount ($0.005/M) — system prompt + tools are identical every request
+- [x] Update `selectModel()` in `src/lib/agents/scope-brain/` to route across 3 tiers
+- [x] Replace `gpt-4o-mini` references with `gpt-5-nano`
+- [x] Replace `gpt-4o` references with `gpt-5-mini` (default) and `gpt-5.1` (complex)
+- [x] Update `DEFAULT_MODEL_ID` in `src/lib/ai/models.ts`
+- [x] Test tool calling accuracy with GPT-5 Mini (should be equal or better than 4o)
+- [x] Update the GET handler in `src/app/api/chat/route.ts` (currently says "GPT-4o")
+- [x] Add GPT-5 Nano's 90% cached input discount ($0.005/M) — system prompt + tools are identical every request
 
 ### 12.5 Cost Projection
 
