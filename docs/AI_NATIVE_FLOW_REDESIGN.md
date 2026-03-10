@@ -638,17 +638,17 @@ Five phases. Each phase is independently shippable — users get value at every 
 **Goal:** The system behaves as one connected application. Users can find anything.
 
 **Cascade Fixes:**
-- [ ] Credit note → bookkeeping entry: wire `createCreditNoteEntry()` into `POST /api/invoices/[id]/credit-note`
-- [ ] Share transfer → GL entry: create pending booking when `pricePerShare > 0`
-- [ ] Dividends: create `dividends` table + `POST /api/dividends/[id]/pay` + withholding tax posting (debit 2750, credit 2898)
-- [ ] Vacation accrual: auto-create 12% semesterlöneskuld pending booking after `run_payroll`
+- [x] Credit note → bookkeeping entry: wire `createCreditNoteEntry()` into `POST /api/invoices/[id]/credit-note` *(already wired — existed before Phase 4)*
+- [x] Share transfer → GL entry: create pending booking when `pricePerShare > 0` *(2026-03-10: auto-creates verification 1310↔1930)*
+- [x] Dividends: create `dividends` table + `POST /api/dividends/[id]/pay` + withholding tax posting (debit 2750, credit 2898) *(2026-03-10: register_dividend tool now creates 2098→2898 + kupongskatt 2898→2750)*
+- [x] Vacation accrual: auto-create 12% semesterlöneskuld pending booking after `run_payroll` *(2026-03-10: auto-creates verification 7090↔2920)*
 - [ ] Month-close: offer auto-generated routine accruals when user clicks "Lås period"
 - [ ] Ensure every AI write tool cascades to all related modules
 
 **Search:**
-- [ ] Build `SearchDialog` component (Cmd+K trigger) — searches across transactions, invoices, verifications, employees, conversations
-- [ ] Unified search index or parallel queries across entity types
-- [ ] Results grouped by category with click-to-navigate
+- [x] Build `SearchDialog` component (Cmd+K trigger) — searches across transactions, invoices, verifications, employees, conversations *(2026-03-10: rewritten with useSearch hook)*
+- [x] Unified search index or parallel queries across entity types *(2026-03-10: GET /api/search with Promise.allSettled)*
+- [x] Results grouped by category with click-to-navigate *(2026-03-10: grouped by entity type with icons)*
 
 ### Phase 5: Filing Gaps + Intelligence (Week 5-7)
 
