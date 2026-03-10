@@ -87,19 +87,91 @@ export const registerDividendTool = defineTool<RegisterDividendParams, any>({
         },
         required: ['amount', 'year'],
     },
-    execute: async (params) => {
-        const dividendData = {
-            type: 'dividend_decision',
-            amount: params.amount,
-            year: params.year,
-            recipient: params.recipientName || 'Alla aktieägare',
-            date: new Date().toISOString(),
+    execute: async (params, context) => {
+        const dividendDate = new Date().toISOString().split('T')[0]
+        const withholdingTaxRate = 0.30 // 30% kupongskatt for physical persons
+        const withholdingTax = Math.round(params.amount * withholdingTaxRate)
+        const netPayout = params.amount - withholdingTax
+
+        if (context?.isConfirmed) {
+            // === CASCADE: Create GL entries for dividend ===
+            let glMessage = ''
+            try {
+                const { verificationService } = await import('@/services/verification-service')
+
+                // 1. Dividend decision: Debit 2098 (Vinst) → Credit 2898 (Skuld utdelning)
+                await verificationService.createVerification({
+                    date: dividendDate,
+                    description: `Utdelningsbeslut ${params.year}: ${params.amount.toLocaleString('sv-SE')} kr`,
+                    entries: [
+                        { account: '2098', debit: params.amount, credit: 0, description: 'Vinst föregående år' },
+                        { account: '2898', debit: 0, credit: params.amount, description: 'Skuld utdelning till aktieägare' },
+                    ],
+                    sourceType: 'dividend_decision',
+                })
+
+                // 2. Withholding tax: Debit 2898 → Credit 2750
+                await verificationService.createVerification({
+                    date: dividendDate,
+                    description: `Kupongskatt utdelning ${params.year} (${(withholdingTaxRate * 100).toFixed(0)}%)`,
+                    entries: [
+                        { account: '2898', debit: withholdingTax, credit: 0, description: 'Skuld utdelning' },
+                        { account: '2750', debit: 0, credit: withholdingTax, description: 'Skuld kupongskatt' },
+                    ],
+                    sourceType: 'dividend_decision',
+                })
+
+                glMessage = `\n\n✅ Verifikationer skapade:\n- Utdelningsskuld: ${params.amount.toLocaleString('sv-SE')} kr (2098 → 2898)\n- Kupongskatt: ${withholdingTax.toLocaleString('sv-SE')} kr (2898 → 2750)`
+            } catch (glError) {
+                console.error('[Dividend] GL cascade failed:', glError)
+                glMessage = '\n\n⚠️ Verifikationer kunde inte skapas automatiskt — bokför manuellt.'
+            }
+
+            return {
+                success: true,
+                data: {
+                    type: 'dividend_decision',
+                    amount: params.amount,
+                    withholdingTax,
+                    netPayout,
+                    year: params.year,
+                    recipient: params.recipientName || 'Alla aktieägare',
+                    date: dividendDate,
+                },
+                message: `Utdelning registrerad: ${params.amount.toLocaleString('sv-SE')} kr för ${params.year}. Nettoutbetalning: ${netPayout.toLocaleString('sv-SE')} kr (efter ${(withholdingTaxRate * 100).toFixed(0)}% kupongskatt).${glMessage}`,
+                navigation: {
+                    route: '/dashboard/agare?tab=utdelning',
+                    label: 'Visa utdelning',
+                },
+            }
         }
 
+        // Preflight: return confirmation request
         return {
             success: true,
-            data: dividendData,
-            message: `Registrerade utdelning på ${params.amount.toLocaleString('sv-SE')} kr för ${params.year}.`,
+            data: {
+                type: 'dividend_decision',
+                amount: params.amount,
+                withholdingTax,
+                netPayout,
+                year: params.year,
+                recipient: params.recipientName || 'Alla aktieägare',
+                date: dividendDate,
+            },
+            message: `Förbered utdelning på ${params.amount.toLocaleString('sv-SE')} kr för ${params.year}.`,
+            confirmationRequired: {
+                title: 'Registrera utdelning',
+                description: `Utdelningsbeslut — skapar verifikationer i bokföringen.`,
+                summary: [
+                    { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
+                    { label: 'År', value: String(params.year) },
+                    { label: 'Mottagare', value: params.recipientName || 'Alla aktieägare' },
+                    { label: 'Kupongskatt (30%)', value: `${withholdingTax.toLocaleString('sv-SE')} kr` },
+                    { label: 'Nettoutbetalning', value: `${netPayout.toLocaleString('sv-SE')} kr` },
+                ],
+                action: { toolName: 'register_dividend', params },
+                requireCheckbox: true,
+            },
             navigation: {
                 route: '/dashboard/agare?tab=utdelning',
                 label: 'Visa utdelning',
