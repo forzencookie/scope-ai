@@ -1734,3 +1734,28 @@ When a user creates an account and has no company connected yet, the app should 
 2. **Don't build Skatteverket API integration yet.** Manual file upload is fine for launch. API integration requires formal business agreements with the authorities.
 3. **Don't over-engineer the memory system.** Phase 1 is a markdown text column in Supabase + two tools. No vector DB, no graph, no embeddings. ChatGPT's memory is literally the same thing.
 4. **Don't build INK3 for Förening yet.** Most föreningar use INK2. INK3 is a niche variant — add it later if users request it.
+
+## 22. AI SDK Migration (OpenAI Assistants & Vercel AI)
+
+### 22.1 The Current State
+Currently, the app relies on passing arrays of messages manually and uses a rudimentary custom implementation for Scooby's memory (`Scooby markdown memory`). This requires custom logic to handle token limits, message truncation, and context persistence across sessions.
+
+### 22.2 The Target Architecture
+To reach true production readiness and simplify maintenance, we must adopt industry-standard SDKs that handle memory and streaming natively.
+
+1. **OpenAI Assistants API (Node SDK):**
+   - **Threads:** Replace manual message arrays. A `Thread` is created once per user session and its ID is saved in Supabase. All future messages are appended to this thread.
+   - **Native Memory:** OpenAI automatically manages context persistence and truncation within the thread. The "Scooby markdown memory" requirement can be heavily simplified or entirely replaced by the Assistant's native instruction updates and thread history.
+   - **Built-in Tools:** Utilize native tools like `File Search` (for RAG over receipts/documents) and `Code Interpreter` (for generating financial charts/CSVs) instead of building custom vector databases or sandboxes.
+
+2. **Vercel AI SDK (`ai` and `@ai-sdk/openai`):**
+   - **`useChat` Hook:** Replace custom React state and streaming logic in `src/components/layout/ai-chat-panel.tsx`. The Vercel AI SDK handles letter-by-letter streaming, loading states, and error recovery out-of-the-box.
+   - **Generative UI:** Transition from custom `W:` and `D:` string parsing to true Generative UI. The AI can call a tool that returns a React component (like `<InvoiceCard />`), rendering it directly inline without complex regex parsing.
+
+### 22.3 Implementation Steps
+1. Add `ai` and `@ai-sdk/openai` to `package.json`.
+2. Update `/api/chat/route.ts` to use Vercel AI SDK's `streamText` or Assistants API integration.
+3. Update `Supabase` schema to store `openai_thread_id` per user/company.
+4. Refactor `ChatProvider` to utilize `useChat` from the Vercel AI SDK.
+5. Map existing custom tools (e.g., `create_invoice`, `run_payroll`) to Vercel AI SDK's `tool` definitions, allowing them to return the new Inline Result Cards directly.
+
