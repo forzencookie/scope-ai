@@ -23,6 +23,7 @@ const PUBLIC_ROUTES = [
     '/auth/reset-password',
     '/api/auth',
     '/',
+    '/vantelista',
 ]
 
 /**
@@ -137,6 +138,8 @@ export async function middleware(request: NextRequest) {
         }
     }
 
+    const isPreLaunch = process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true'
+
     // Redirect unauthenticated users away from protected routes
     if (isProtectedRoute && !isAuthenticated) {
         const loginUrl = new URL('/login', request.url)
@@ -144,8 +147,16 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl)
     }
 
+    // --- PRE-LAUNCH GATE ---
+    if (isPreLaunch && isAuthenticated && isProtectedRoute) {
+        return NextResponse.redirect(new URL('/vantelista', request.url))
+    }
+
     // Redirect authenticated users away from login/register pages
     if (isPublicRoute && isAuthenticated && (pathname === '/login' || pathname === '/register')) {
+        if (isPreLaunch) {
+            return NextResponse.redirect(new URL('/vantelista', request.url))
+        }
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 

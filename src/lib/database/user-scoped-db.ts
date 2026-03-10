@@ -359,7 +359,7 @@ function createVerificationLinesAccessor(supabase: SupabaseClient<Database>, use
                 p_user_id: userId,
             } as never)
             if (error) console.error('[UserScopedDb] verificationLines.getAccountBalances error:', error)
-            return (data || []) as Array<{ account_number: number; account_name: string | null; total_debit: number; total_credit: number; balance: number }>
+            return (data || []) as unknown as Array<{ account_number: number; account_name: string | null; total_debit: number; total_credit: number; balance: number }>
         },
     }
 }

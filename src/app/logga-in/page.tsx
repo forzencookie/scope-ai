@@ -41,7 +41,7 @@ function LoggaInContent() {
 
     useEffect(() => {
         if (isAuthenticated && !authLoading) {
-            if (plan && ["pro", "enterprise"].includes(plan)) {
+            if (plan && ["pro", "max"].includes(plan)) {
                 redirectToCheckout(plan)
             } else {
                 router.push("/dashboard")
@@ -90,7 +90,7 @@ function LoggaInContent() {
                 if (error) {
                     setError(error.message)
                 } else {
-                    if (plan && ["pro", "enterprise"].includes(plan)) {
+                    if (plan && ["pro", "max"].includes(plan)) {
                         await redirectToCheckout(plan)
                     } else {
                         router.push("/dashboard")

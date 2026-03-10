@@ -11,7 +11,7 @@ function CheckoutRedirectContent() {
   const plan = searchParams.get('plan')
 
   useEffect(() => {
-    if (!plan || !['pro', 'enterprise'].includes(plan)) {
+    if (!plan || !['pro', 'max'].includes(plan)) {
       router.push('/choose-plan')
       return
     }

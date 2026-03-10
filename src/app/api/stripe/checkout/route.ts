@@ -7,7 +7,7 @@ import { createCheckoutSession, PRICE_IDS, getOrCreateCustomer, getStripe } from
  * POST /api/stripe/checkout
  *
  * Creates a Stripe Checkout session for subscription upgrade.
- * Body: { tier: 'pro' | 'enterprise', discountCode?: string, embedded?: boolean }
+ * Body: { tier: 'pro' | 'max', discountCode?: string, embedded?: boolean }
  *
  * When embedded=true, returns { clientSecret } for use with EmbeddedCheckout.
  * Otherwise returns { url } for redirect-based checkout.
@@ -23,12 +23,12 @@ export async function POST(request: NextRequest) {
         const body = await request.json()
         const { tier, discountCode, embedded } = body
 
-        if (!tier || !['pro', 'enterprise'].includes(tier)) {
-            return ApiResponse.badRequest('Invalid tier. Must be "pro" or "enterprise"')
+        if (!tier || !['pro', 'max'].includes(tier)) {
+            return ApiResponse.badRequest('Invalid tier. Must be "pro" or "max"')
         }
 
         // Check if price IDs are configured
-        if (!PRICE_IDS[tier as 'pro' | 'enterprise']) {
+        if (!PRICE_IDS[tier as 'pro' | 'max']) {
             return ApiResponse.serverError(`Price ID not configured for tier: ${tier}`)
         }
 
@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
                 mode: 'subscription',
                 line_items: [
                     {
-                        price: PRICE_IDS[tier as 'pro' | 'enterprise'],
+                        price: PRICE_IDS[tier as 'pro' | 'max'],
                         quantity: 1,
                     },
                 ],
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         const checkoutUrl = await createCheckoutSession({
             userId: auth.userId,
             email: auth.email,
-            tier: tier as 'pro' | 'enterprise',
+            tier: tier as 'pro' | 'max',
             successUrl: `${origin}/dashboard/settings?payment=success`,
             cancelUrl: `${origin}/dashboard/settings?payment=cancelled`,
             discountCode: discountCode || undefined,

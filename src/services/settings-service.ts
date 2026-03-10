@@ -25,7 +25,7 @@ export interface UserProfile {
 }
 
 export interface SubscriptionStatus {
-    plan: 'free' | 'demo' | 'starter' | 'professional' | 'enterprise'
+    plan: 'free' | 'demo' | 'starter' | 'professional' | 'max'
     status: 'active' | 'trial' | 'cancelled' | 'past_due'
     currentPeriodEnd: string
     usageThisMonth: {
@@ -83,7 +83,7 @@ const TIER_LIMITS: Record<string, { tokens: number; requests: number }> = {
     free: { tokens: 50000, requests: 50 },
     starter: { tokens: 500000, requests: 500 },
     professional: { tokens: 2000000, requests: 2000 },
-    enterprise: { tokens: 10000000, requests: 10000 },
+    max: { tokens: 10000000, requests: 10000 },
 }
 
 // =============================================================================

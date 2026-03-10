@@ -9,7 +9,7 @@
 import { NextRequest } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import { getSupabaseAdmin } from '@/lib/database/supabase'
-import { isDemoTier, isPaidTier, type SubscriptionTier } from '@/lib/subscription'
+import { isPaidTier, type SubscriptionTier } from '@/lib/subscription'
 
 const ALLOWED_UPDATES = ['full_name', 'avatar_emoji'] as const
 
@@ -73,13 +73,14 @@ export async function GET(request: NextRequest) {
     }
 
     // Normalize tier and add convenience flags
-    const tier = (profile.subscription_tier === 'free' ? 'demo' : (profile.subscription_tier || 'demo')) as SubscriptionTier
+    const rawTier = profile.subscription_tier
+    const tier = (rawTier === 'enterprise' ? 'max' : (['pro', 'max'].includes(rawTier) ? rawTier : 'pro')) as SubscriptionTier
 
     const normalizedProfile = {
       ...profile,
       subscription_tier: tier,
       // Convenience flags for client - derived server-side for consistency
-      is_demo: isDemoTier(tier),
+      is_demo: false,
       is_paid: isPaidTier(tier),
     }
 

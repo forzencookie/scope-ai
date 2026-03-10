@@ -9,56 +9,58 @@ import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 const plans = [
   {
-    id: "demo",
-    name: "Demo",
-    price: "0 kr",
-    period: "/mån",
-    description: "Utforska appen med simulerad data",
-    highlight: false,
-    icon: Sparkles,
-    features: [
-      "Full tillgång till alla funktioner",
-      "Simulerad AI & data",
-      "Ingen verklig banksynk",
-      "Perfekt för att testa",
-    ],
-    cta: "Starta demo",
-    note: "Ingen data sparas",
-  },
-  {
     id: "pro",
-    name: "Professional",
-    price: "449 kr",
+    name: "Pro",
+    price: "249 kr",
     period: "/mån",
-    description: "AI gör jobbet åt dig",
-    highlight: true,
+    description: "För Enskild Firma och Förening",
+    highlight: false,
     icon: Zap,
     features: [
       "AI-kategoriserar transaktioner",
       "AI-assisterad bokföring",
       "Riktig banksynkronisering",
       "AI-genererade deklarationer",
+      "1 Användare",
+    ],
+    cta: "Välj Pro",
+    note: "Avsluta när som helst",
+  },
+  {
+    id: "max",
+    name: "Max",
+    price: "449 kr",
+    period: "/mån",
+    description: "För Aktiebolag, Handelsbolag och KB",
+    highlight: true,
+    icon: Crown,
+    features: [
+      "Allt i Pro",
+      "Flera användare & team",
+      "K10 och Årsredovisning",
+      "API-åtkomst",
       "Prioriterad support",
     ],
-    cta: "Välj Professional",
+    cta: "Välj Max",
     note: "Avsluta när som helst",
   },
   {
     id: "enterprise",
     name: "Enterprise",
-    price: "Kommer snart",
+    price: "Anpassat",
     period: "",
     description: "För koncerner och flerbolag",
     highlight: false,
-    icon: Crown,
+    icon: Sparkles,
     comingSoon: true,
     features: [
-      "Allt i Professional",
-      "Hantera flera bolag",
-      "API-åtkomst",
+      "Allt i Max",
+      "Obegränsad AI-användning",
+      "Anpassade integrationer",
       "Dedikerad kontaktperson",
+      "SLA & dedikerad support",
     ],
-    cta: "Meddela mig",
+    cta: "Kontakta oss",
     note: null,
   },
 ]
@@ -72,14 +74,8 @@ function PlanSelectionContent() {
       return
     }
 
-    if (planId === "demo") {
-      // Go directly to dashboard as demo user
-      router.push("/dashboard")
-      return
-    }
-
-    if (planId === "pro") {
-      router.push("/dashboard/checkout?type=subscription&tier=pro")
+    if (planId === "pro" || planId === "max") {
+      router.push(`/dashboard/checkout?type=subscription&tier=${planId}`)
     }
   }
 
@@ -101,13 +97,12 @@ function PlanSelectionContent() {
             Välj din plan
           </h1>
           <p className="text-lg text-stone-600 max-w-xl mx-auto">
-            Testa gratis med demo eller kom igång direkt med Professional för
-            fullständig AI-bokföring.
+            Välj den plan som passar din företagsform bäst.
           </p>
         </motion.div>
 
         {/* Plan cards */}
-        <div className="grid md:grid-cols-3 gap-6">
+        <div className="flex flex-col md:flex-row justify-center gap-6 max-w-4xl mx-auto">
           {plans.map((plan, index) => {
             const Icon = plan.icon
 
@@ -118,9 +113,9 @@ function PlanSelectionContent() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
                 className={cn(
-                  "relative rounded-2xl border p-6 transition-all",
+                  "relative rounded-2xl border p-6 transition-all flex-1",
                   plan.highlight
-                    ? "border-stone-900 bg-white shadow-lg scale-[1.02]"
+                    ? "border-stone-900 bg-white shadow-lg scale-[1.02] z-10"
                     : "border-stone-200 bg-stone-50 hover:border-stone-300"
                 )}
               >

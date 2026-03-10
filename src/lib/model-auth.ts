@@ -31,7 +31,7 @@ export interface ModelAuthResult {
     reason?: string
 }
 
-export type UserTier = 'demo' | 'free' | 'pro' | 'enterprise'
+export type UserTier = 'pro' | 'max' | 'enterprise'
 
 export interface UsageStats {
     tokensUsed: number
@@ -58,23 +58,20 @@ export interface SecurityEvent {
 /**
  * Defines which user tiers can access which model tiers.
  * Users can access their tier and all lower tiers.
- * Demo users cannot access any real AI models.
  */
 const TIER_ACCESS: Record<UserTier, ModelTier[]> = {
-    'demo': [], // Demo users get simulated responses, no real AI
-    'free': [], // Free deprecated, treat same as demo
-    'pro': ['free', 'pro'],
-    'enterprise': ['free', 'pro', 'enterprise'],
+    'pro': ['pro'],
+    'max': ['pro', 'max'],
+    'enterprise': ['pro', 'max', 'enterprise'],
 }
 
 /**
  * Monthly token limits per tier
  */
 export const TIER_LIMITS: Record<UserTier, { tokensPerMonth: number; requestsPerDay: number }> = {
-    'demo': { tokensPerMonth: 0, requestsPerDay: 0 }, // Demo gets simulated AI, no real tokens
-    'free': { tokensPerMonth: 0, requestsPerDay: 0 }, // Free deprecated, same as demo
-    'pro': { tokensPerMonth: 500_000, requestsPerDay: 500 },
-    'enterprise': { tokensPerMonth: 5_000_000, requestsPerDay: 5000 },
+    'pro': { tokensPerMonth: 10_000_000, requestsPerDay: 5000 },
+    'max': { tokensPerMonth: 50_000_000, requestsPerDay: 20000 },
+    'enterprise': { tokensPerMonth: 999_999_999, requestsPerDay: 999999 },
 }
 
 // ============================================================================
@@ -83,7 +80,7 @@ export const TIER_LIMITS: Record<UserTier, { tokensPerMonth: number; requestsPer
 
 /**
  * Get user's subscription tier from database
- * Returns 'demo' by default for unauthenticated/new users
+ * Returns 'pro' by default for unauthenticated/new users (so waitlist users can use the app if needed, or based on your default)
  */
 export async function getUserTier(userId: string): Promise<UserTier> {
     try {
@@ -98,34 +95,30 @@ export async function getUserTier(userId: string): Promise<UserTier> {
 
         if (profileError || !profile) {
             console.warn('[ModelAuth] Profile not found for user:', userId)
-            return 'demo'
+            return 'pro'
         }
 
-        const tier = profile.subscription_tier as UserTier
+        const tier = profile.subscription_tier as string
         
-        // Treat 'free' as 'demo' (free is deprecated)
-        if (tier === 'free') {
-            return 'demo'
+        // Map legacy tiers or validate known values
+        if (['pro', 'max', 'enterprise'].includes(tier)) {
+            return tier as UserTier
         }
         
-        // Validate tier is one of our known values
-        if (['demo', 'pro', 'enterprise'].includes(tier)) {
-            return tier
-        }
-        
-        return 'demo'
+        return 'pro'
     } catch (error) {
         console.error('[ModelAuth] Failed to get user tier:', error)
-        // Default to 'demo' to prevent unauthorized access due to DB issues
-        return 'demo'
+        // Default to 'pro' to prevent unauthorized access due to DB issues
+        return 'pro'
     }
 }
 
 /**
  * Check if user is in demo mode (simulated AI, no real API calls)
+ * Demo mode has been removed in the new pricing structure, so always returns false.
  */
 export function isDemoMode(tier: UserTier): boolean {
-    return tier === 'demo' || tier === 'free'
+    return false;
 }
 
 /**

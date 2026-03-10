@@ -55,6 +55,56 @@ function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) 
     )
 }
 
+function WaitlistForm() {
+    const [email, setEmail] = useState("")
+    const [submitted, setSubmitted] = useState(false)
+    const [loading, setLoading] = useState(false)
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault()
+        if (!email) return
+        setLoading(true)
+        
+        // In a real app we'd save this to Supabase. For now we mock the delay.
+        await new Promise(resolve => setTimeout(resolve, 800))
+        
+        setSubmitted(true)
+        setLoading(false)
+    }
+
+    if (submitted) {
+        return (
+            <div className="flex flex-col items-center justify-center py-6 px-6 bg-white/5 rounded-xl border border-white/10 w-full mt-4 animate-in fade-in zoom-in duration-300">
+                <div className="w-12 h-12 rounded-full bg-green-500/20 flex items-center justify-center mb-3">
+                    <Check className="w-6 h-6 text-green-400" />
+                </div>
+                <p className="text-white font-medium text-lg">Tack! Din plats är säkrad.</p>
+                <p className="text-white/60 mt-1">Vi skickar ett mail när vi öppnar upp.</p>
+            </div>
+        )
+    }
+
+    return (
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full mt-4">
+            <input 
+                type="email" 
+                placeholder="Din e-postadress..." 
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
+            />
+            <button 
+                type="submit" 
+                disabled={loading}
+                className="px-8 py-4 bg-[#f5f5f5] text-black rounded-xl hover:bg-white transition-all font-medium text-[15px] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center min-w-[140px]"
+            >
+                {loading ? "Skickar..." : "Gå med i väntelistan"}
+            </button>
+        </form>
+    )
+}
+
 export default function LandingPage() {
     return (
         <TextModeProvider>
@@ -117,129 +167,155 @@ export default function LandingPage() {
                         </div>
                     </section>
 
-                    {/* Section 4: Priser */}
-                    <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
-                        <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
-                            Priser
-                        </h2>
-                        <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">
-
-                            {/* Bento Row 1: Pro — hero card, full width */}
-                            <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
-                                <div className="rounded-[1.6rem] bg-black/30 p-7 md:p-9 flex flex-col md:flex-row md:items-center md:gap-10">
-                                    <div className="md:flex-1">
-                                        <div className="flex items-center gap-3 mb-4">
-                                            <p className="text-xs font-bold text-white/50 tracking-widest uppercase">Pro</p>
-                                            <span className="px-3 py-0.5 rounded-full bg-blue-500/20 border border-blue-500/20 backdrop-blur-md text-[10px] font-bold text-blue-300 tracking-widest uppercase flex items-center gap-1.5">
-                                                Populärast
-                                            </span>
-                                        </div>
-                                        <div className="flex items-end gap-1 mb-6 md:mb-0">
-                                            <span className="text-5xl md:text-6xl font-medium tracking-tight text-white">449</span>
-                                            <span className="text-lg text-white/50 mb-1.5">kr/mån</span>
-                                        </div>
-                                    </div>
-                                    <div className="md:flex-1">
-                                        <ul className="space-y-3 mb-8 md:mb-6">
-                                            <li className="flex items-start gap-3 text-white/70 text-[15px]">
-                                                <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
-                                                Allt i Fri
-                                            </li>
-                                            <li className="flex items-start gap-3 text-white/70 text-[15px]">
-                                                <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
-                                                Obegränsad AI-assistans
-                                            </li>
-                                            <li className="flex items-start gap-3 text-white/70 text-[15px]">
-                                                <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
-                                                Automatisk kvittohantering
-                                            </li>
-                                            <li className="flex items-start gap-3 text-white/70 text-[15px]">
-                                                <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
-                                                Obegränsat antal bolag
-                                            </li>
-                                        </ul>
-                                        <Link
-                                            href="/logga-in"
-                                            className="block w-full py-3 rounded-xl text-center font-medium text-black bg-[#f5f5f5] hover:bg-white transition-all text-[15px] hover:scale-[1.02] active:scale-[0.98]"
-                                        >
-                                            Välj Pro
-                                        </Link>
+                    {/* Section 4: Priser / Waitlist */}
+                    {process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true' ? (
+                        <section className="flex flex-col items-center justify-center min-h-[70vh] px-4 w-full">
+                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
+                                Få tidig åtkomst
+                            </h2>
+                            <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">
+                                <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
+                                    <div className="rounded-[1.6rem] bg-black/30 p-10 md:p-12 flex flex-col items-center text-center">
+                                        <p className="text-lg md:text-xl text-white/70 mb-4 max-w-md font-medium tracking-tight">
+                                            Vi befinner oss i en stängd beta. Anmäl dig till väntelistan för att bli inbjuden först.
+                                        </p>
+                                        
+                                        <WaitlistForm />
+                                        
+                                        <p className="text-white/40 text-sm mt-6">
+                                            Eller <Link href="/logga-in" className="text-white hover:underline transition-colors">skapa ett konto</Link> för att spara dina uppgifter i förväg.
+                                        </p>
                                     </div>
                                 </div>
                             </div>
+                        </section>
+                    ) : (
+                        <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
+                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
+                                Priser
+                            </h2>
+                            <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">
 
-                            {/* Bento Row 2: Fri + Enterprise side by side */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-                                {/* Fri */}
+                                {/* Bento Row 1: Max — hero card, full width */}
                                 <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
-                                    <div className="rounded-[1.6rem] bg-black/30 p-7 flex flex-col h-full">
-                                        <p className="text-xs font-bold text-white/50 tracking-widest uppercase mb-4">Fri</p>
-                                        <div className="flex items-end gap-1 mb-6">
-                                            <span className="text-4xl font-medium tracking-tight text-white">0</span>
-                                            <span className="text-base text-white/50 mb-1">kr/mån</span>
+                                    <div className="rounded-[1.6rem] bg-black/30 p-7 md:p-9 flex flex-col md:flex-row md:items-center md:gap-10">
+                                        <div className="md:flex-1">
+                                            <div className="flex items-center gap-3 mb-4">
+                                                <p className="text-xs font-bold text-white/50 tracking-widest uppercase">Max</p>
+                                                <span className="px-3 py-0.5 rounded-full bg-purple-500/20 border border-purple-500/20 backdrop-blur-md text-[10px] font-bold text-purple-300 tracking-widest uppercase flex items-center gap-1.5">
+                                                    Populärast
+                                                </span>
+                                            </div>
+                                            <div className="flex items-end gap-1 mb-6 md:mb-0">
+                                                <span className="text-5xl md:text-6xl font-medium tracking-tight text-white">449</span>
+                                                <span className="text-lg text-white/50 mb-1.5">kr/mån</span>
+                                            </div>
+                                            <p className="text-sm text-white/50 mt-2">För Aktiebolag, Handelsbolag och KB</p>
                                         </div>
-                                        <ul className="space-y-2.5 mb-8 flex-1">
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                Grundläggande bokföring
-                                            </li>
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                AI-assistans (begränsad)
-                                            </li>
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                1 bolag
-                                            </li>
-                                        </ul>
-                                        <Link
-                                            href="/logga-in"
-                                            className="w-full py-2.5 rounded-xl text-center font-medium text-white/90 bg-white/[0.08] hover:bg-white/[0.12] transition-all text-sm"
-                                        >
-                                            Kom igång gratis
-                                        </Link>
+                                        <div className="md:flex-1">
+                                            <ul className="space-y-3 mb-8 md:mb-6 mt-4 md:mt-0">
+                                                <li className="flex items-start gap-3 text-white/70 text-[15px]">
+                                                    <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
+                                                    Allt i Pro
+                                                </li>
+                                                <li className="flex items-start gap-3 text-white/70 text-[15px]">
+                                                    <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
+                                                    Flera användare & team
+                                                </li>
+                                                <li className="flex items-start gap-3 text-white/70 text-[15px]">
+                                                    <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
+                                                    K10 och Årsredovisning
+                                                </li>
+                                                <li className="flex items-start gap-3 text-white/70 text-[15px]">
+                                                    <Check className="w-4 h-4 mt-0.5 text-white/40 shrink-0" />
+                                                    Prioriterad support
+                                                </li>
+                                            </ul>
+                                            <Link
+                                                href="/logga-in"
+                                                className="block w-full py-3 rounded-xl text-center font-medium text-black bg-[#f5f5f5] hover:bg-white transition-all text-[15px] hover:scale-[1.02] active:scale-[0.98]"
+                                            >
+                                                Välj Max
+                                            </Link>
+                                        </div>
                                     </div>
                                 </div>
 
-                                {/* Enterprise */}
-                                <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
-                                    <div className="rounded-[1.6rem] bg-black/30 p-7 flex flex-col h-full">
-                                        <p className="text-xs font-bold text-white/50 tracking-widest uppercase mb-4">Enterprise</p>
-                                        <div className="flex items-end gap-1 mb-6">
-                                            <span className="text-xl font-medium tracking-tight text-white/60">Kommer snart</span>
+                                {/* Bento Row 2: Pro + Enterprise side by side */}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+
+                                    {/* Pro */}
+                                    <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
+                                        <div className="rounded-[1.6rem] bg-black/30 p-7 flex flex-col h-full">
+                                            <p className="text-xs font-bold text-white/50 tracking-widest uppercase mb-4">Pro</p>
+                                            <div className="flex items-end gap-1 mb-2">
+                                                <span className="text-4xl font-medium tracking-tight text-white">249</span>
+                                                <span className="text-base text-white/50 mb-1">kr/mån</span>
+                                            </div>
+                                            <p className="text-xs text-white/50 mb-6">För Enskild Firma och Förening</p>
+                                            <ul className="space-y-2.5 mb-8 flex-1">
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    AI-kategoriserar transaktioner
+                                                </li>
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    Riktig banksynkronisering
+                                                </li>
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    1 Användare
+                                                </li>
+                                            </ul>
+                                            <Link
+                                                href="/logga-in"
+                                                className="w-full py-2.5 rounded-xl text-center font-medium text-white/90 bg-white/[0.08] hover:bg-white/[0.12] transition-all text-sm"
+                                            >
+                                                Välj Pro
+                                            </Link>
                                         </div>
-                                        <ul className="space-y-2.5 mb-8 flex-1">
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                Allt i Pro
-                                            </li>
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                Dedikerad support
-                                            </li>
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                Anpassade integrationer
-                                            </li>
-                                            <li className="flex items-start gap-2.5 text-white/70 text-sm">
-                                                <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
-                                                SLA &amp; prioriterad åtkomst
-                                            </li>
-                                        </ul>
-                                        <a
-                                            href="mailto:kontakt@scopeai.se"
-                                            className="w-full py-2.5 rounded-xl text-center font-medium text-white/90 bg-white/[0.08] hover:bg-white/[0.12] transition-all text-sm"
-                                        >
-                                            Kontakta oss
-                                        </a>
                                     </div>
+
+                                    {/* Enterprise */}
+                                    <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
+                                        <div className="rounded-[1.6rem] bg-black/30 p-7 flex flex-col h-full">
+                                            <p className="text-xs font-bold text-white/50 tracking-widest uppercase mb-4">Enterprise</p>
+                                            <div className="flex items-end gap-1 mb-2">
+                                                <span className="text-xl font-medium tracking-tight text-white/90">Anpassat</span>
+                                            </div>
+                                            <p className="text-xs text-white/50 mb-6">För koncerner och flerbolag</p>
+                                            <ul className="space-y-2.5 mb-8 flex-1">
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    Allt i Max
+                                                </li>
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    Obegränsad AI-användning
+                                                </li>
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    Anpassade integrationer
+                                                </li>
+                                                <li className="flex items-start gap-2.5 text-white/70 text-sm">
+                                                    <Check className="w-3.5 h-3.5 mt-0.5 text-white/40 shrink-0" />
+                                                    SLA & dedikerad support
+                                                </li>
+                                            </ul>
+                                            <a
+                                                href="mailto:kontakt@scopeai.se"
+                                                className="w-full py-2.5 rounded-xl text-center font-medium text-white/90 bg-white/[0.08] hover:bg-white/[0.12] transition-all text-sm"
+                                            >
+                                                Kontakta oss
+                                            </a>
+                                        </div>
+                                    </div>
+
                                 </div>
 
                             </div>
-
-                        </div>
-                    </section>
+                        </section>
+                    )}
 
                     {/* Section 5: Footer */}
                     <section className="min-h-screen flex flex-col justify-end w-full px-8 pb-0 pt-32 overflow-hidden">

@@ -1,5 +1,5 @@
 export type AIProvider = 'openai'
-export type ModelTier = 'free' | 'pro' | 'enterprise'
+export type ModelTier = 'pro' | 'max' | 'enterprise'
 
 export interface AIModel {
   id: string
@@ -42,7 +42,7 @@ export const ASSISTANT_TIERS: AssistantTier[] = [
     name: 'Snabb',
     description: 'Vardagliga frågor, snabba svar',
     icon: '⚡',
-    modelId: 'gpt-4o-mini',
+    modelId: 'gpt-5-mini',
     multiplier: 1,
     color: 'text-emerald-600 dark:text-emerald-400',
   },
@@ -51,7 +51,7 @@ export const ASSISTANT_TIERS: AssistantTier[] = [
     name: 'Smart',
     description: 'Bokföring, analys, rapporter',
     icon: '🧠',
-    modelId: 'gpt-4o',
+    modelId: 'gpt-5',
     multiplier: 3,
     color: 'text-blue-600 dark:text-blue-400',
   },
@@ -60,7 +60,7 @@ export const ASSISTANT_TIERS: AssistantTier[] = [
     name: 'Expert',
     description: 'Komplex planering, strategiska beslut',
     icon: '🎯',
-    modelId: 'gpt-4o',
+    modelId: 'gpt-5-turbo',
     multiplier: 10,
     color: 'text-purple-600 dark:text-purple-400',
   },
@@ -81,12 +81,12 @@ export function getAssistantTierByModelId(modelId: string): AssistantTier | unde
 // =============================================================================
 
 export const AI_MODELS: AIModel[] = [
-  { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', tier: 'free', description: 'Snabb och kostnadseffektiv' },
-  { id: 'gpt-4o', name: 'GPT-4o', provider: 'openai', tier: 'pro', description: 'Kraftfull och snabb' },
-  { id: 'gpt-4-turbo', name: 'GPT-4 Turbo', provider: 'openai', tier: 'enterprise', description: 'Maximal kapacitet' },
+  { id: 'gpt-5-mini', name: 'GPT-5 Mini', provider: 'openai', tier: 'pro', description: 'Snabb och kostnadseffektiv' },
+  { id: 'gpt-5', name: 'GPT-5', provider: 'openai', tier: 'max', description: 'Kraftfull och snabb' },
+  { id: 'gpt-5-turbo', name: 'GPT-5 Turbo', provider: 'openai', tier: 'enterprise', description: 'Maximal kapacitet' },
 ]
 
-export const DEFAULT_MODEL_ID = 'gpt-4o-mini'
+export const DEFAULT_MODEL_ID = 'gpt-5-mini'
 
 export function getModelById(id: string): AIModel | undefined {
   return AI_MODELS.find(m => m.id === id)
