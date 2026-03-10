@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button"
 import { ArrowLeft, BookOpen, Users, PieChart, Building2, CalendarDays, PawPrint } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AIOverlay } from "@/components/ai"
+import { SuggestionChips } from "@/components/ai/suggestion-chips"
 
 const pageButtons = [
     { label: "Händelser", icon: CalendarDays, href: "/dashboard/handelser", color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25" },
@@ -183,22 +184,33 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                         />
                     </div>
 
-                    {/* Page navigation badges — below chat input */}
+                    {/* Dynamic suggestion chips — context-aware */}
                     {!isIncognito && (
-                        <div className="flex flex-wrap justify-center gap-2 mt-5 lg:mt-6 px-2">
-                            {pageButtons.map((btn) => (
-                                <button
-                                    key={btn.href}
-                                    onClick={() => router.push(btn.href)}
-                                    className={cn(
-                                        "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
-                                        btn.color
-                                    )}
-                                >
-                                    <btn.icon className="h-4 w-4" />
-                                    {btn.label}
-                                </button>
-                            ))}
+                        <div className="mt-5 lg:mt-6 px-2 space-y-3">
+                            <SuggestionChips
+                                onSelect={(prompt) => {
+                                    setTextareaValue(prompt)
+                                    // Auto-send after brief delay
+                                    setTimeout(() => handleSend(), 50)
+                                }}
+                            />
+
+                            {/* Static page navigation — smaller, secondary */}
+                            <div className="flex flex-wrap justify-center gap-2">
+                                {pageButtons.map((btn) => (
+                                    <button
+                                        key={btn.href}
+                                        onClick={() => router.push(btn.href)}
+                                        className={cn(
+                                            "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
+                                            btn.color
+                                        )}
+                                    >
+                                        <btn.icon className="h-3.5 w-3.5" />
+                                        {btn.label}
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>

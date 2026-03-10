@@ -553,8 +553,8 @@ Five phases. Each phase is independently shippable — users get value at every 
 - [x] Build `QuickActionsMenu` component — ⚡ button + `/` trigger in chat input, searchable dropdown *(built 2026-03-10)*
 - [x] Create `quick-actions.ts` config with ~20 actions, filtered by company type + feature flags *(22 actions, 5 categories)*
 - [x] `useQuickActions()` hook with fuzzy search (matches Swedish + English) *(built 2026-03-10)*
-- [ ] Build Scooby markdown memory — `scooby_memory` text column in Supabase + `read_memory` / `update_memory` tools
-- [ ] Inject memory into system prompt on every request (~500-1000 tokens)
+- [x] Build Scooby markdown memory — `scooby_memory` text column in Supabase + `read_memory` / `update_memory` tools *(already existed: user_memory table + query_memories + add_memory tools)*
+- [x] Inject memory into system prompt on every request (~500-1000 tokens) *(wired 2026-03-10: route.ts → userMemoryService → context.sharedMemory.userMemories → formatUserMemory())*
 
 ### Phase 2: Category Consolidation (Week 2-3)
 
