@@ -8,7 +8,7 @@ import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { BuyCreditsDialog } from "@/components/billing"
 import { getGreeting } from "@/lib/chat-utils"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, BookOpen, Users, PieChart, Building2, CalendarDays } from "lucide-react"
+import { ArrowLeft, BookOpen, Users, PieChart, Building2, CalendarDays, PawPrint } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { AIOverlay } from "@/components/ai"
 
@@ -40,6 +40,8 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         setShowBuyCredits,
         handleSend,
         handleCancelConfirmation,
+        isIncognito,
+        toggleIncognito,
     } = useChatContext()
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
@@ -78,10 +80,30 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         )
     }
 
+    // Incognito ghost toggle button (shared across states)
+    const ghostButton = (
+        <button
+            onClick={toggleIncognito}
+            className={cn(
+                "absolute top-3 right-3 p-2 rounded-lg transition-colors z-10",
+                isIncognito
+                    ? "bg-violet-500/15 text-violet-500 hover:bg-violet-500/25"
+                    : "text-muted-foreground/40 hover:text-muted-foreground hover:bg-accent"
+            )}
+            title={isIncognito ? "Stäng av inkognito" : "Aktivera inkognito"}
+        >
+            <PawPrint className={cn("h-5 w-5", isIncognito && "fill-violet-500/30")} />
+        </button>
+    )
+
     // State 1: Empty chat — greeting + inline chat input + badges
     if (messages.length === 0) {
         return (
-            <div className="flex-1 flex flex-col min-h-0 m-2 ml-0 rounded-2xl bg-background overflow-hidden">
+            <div className={cn(
+                "flex-1 flex flex-col min-h-0 m-2 ml-0 rounded-2xl overflow-hidden relative",
+                isIncognito ? "bg-violet-500/[0.03] dark:bg-violet-500/[0.02]" : "bg-background"
+            )}>
+                {ghostButton}
                 <div className="flex-1 flex flex-col items-center justify-center px-4">
                     {/* Pixel Dog Mascot */}
                     <div
@@ -95,6 +117,14 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                         }}
                     >
                         <svg width="64" height="64" viewBox="0 0 16 16" shapeRendering="crispEdges">
+                            {/* Detective cap — only in incognito */}
+                            {isIncognito && (
+                                <>
+                                    <rect x="3" y="1" width="10" height="1" className="fill-slate-600 dark:fill-slate-400" />
+                                    <rect x="4" y="0" width="8" height="1" className="fill-slate-600 dark:fill-slate-400" />
+                                    <rect x="2" y="2" width="12" height="1" className="fill-slate-700 dark:fill-slate-500" />
+                                </>
+                            )}
                             <rect x="2" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500" />
                             <rect x="12" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500" />
                             <rect x="3" y="4" width="10" height="6" className="fill-amber-400 dark:fill-amber-300" />
@@ -128,8 +158,11 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                     </div>
 
                     {/* Greeting text — large and adaptive */}
-                    <h1 className="text-2xl sm:text-3xl lg:text-4xl font-semibold text-foreground text-center mb-6 lg:mb-8">
-                        {getGreeting()}, hur kan jag hjälpa dig?
+                    <h1 className={cn(
+                        "text-2xl sm:text-3xl lg:text-4xl font-semibold text-center mb-6 lg:mb-8",
+                        isIncognito ? "text-muted-foreground" : "text-foreground"
+                    )}>
+                        {isIncognito ? "Du är inkognito" : `${getGreeting()}, hur kan jag hjälpa dig?`}
                     </h1>
 
                     {/* Chat input — inline, right under the text */}
@@ -151,27 +184,31 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                     </div>
 
                     {/* Page navigation badges — below chat input */}
-                    <div className="flex flex-wrap justify-center gap-2 mt-5 lg:mt-6 px-2">
-                        {pageButtons.map((btn) => (
-                            <button
-                                key={btn.href}
-                                onClick={() => router.push(btn.href)}
-                                className={cn(
-                                    "inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium transition-colors",
-                                    btn.color
-                                )}
-                            >
-                                <btn.icon className="h-4 w-4" />
-                                {btn.label}
-                            </button>
-                        ))}
-                    </div>
+                    {!isIncognito && (
+                        <div className="flex flex-wrap justify-center gap-2 mt-5 lg:mt-6 px-2">
+                            {pageButtons.map((btn) => (
+                                <button
+                                    key={btn.href}
+                                    onClick={() => router.push(btn.href)}
+                                    className={cn(
+                                        "inline-flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-colors",
+                                        btn.color
+                                    )}
+                                >
+                                    <btn.icon className="h-4 w-4" />
+                                    {btn.label}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Disclaimer */}
                 <div className="shrink-0 pb-3 pt-1 text-center">
                     <p className="text-[11px] text-muted-foreground/50">
-                        Scooby kan göra misstag. Kontrollera viktig information.
+                        {isIncognito
+                            ? "Inkognitosamtal sparas inte i historiken."
+                            : "Scooby kan göra misstag. Kontrollera viktig information."}
                     </p>
                 </div>
 
@@ -186,7 +223,11 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
 
     // State 2: Active chat
     return (
-        <div className="flex-1 flex flex-col min-h-0 m-2 ml-0 rounded-2xl bg-background overflow-hidden">
+        <div className={cn(
+            "flex-1 flex flex-col min-h-0 m-2 ml-0 rounded-2xl overflow-hidden relative",
+            isIncognito ? "bg-violet-500/[0.03] dark:bg-violet-500/[0.02]" : "bg-background"
+        )}>
+            {ghostButton}
             {/* Messages area */}
             <div className="flex-1 overflow-y-auto px-4">
                 <div className="max-w-3xl mx-auto w-full space-y-4 py-4">
@@ -220,7 +261,9 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                 {/* Disclaimer */}
                 <div className="shrink-0 pb-3 pt-1 text-center">
                     <p className="text-[11px] text-muted-foreground/50">
-                        Scooby kan göra misstag. Kontrollera viktig information.
+                        {isIncognito
+                            ? "Inkognitosamtal sparas inte i historiken."
+                            : "Scooby kan göra misstag. Kontrollera viktig information."}
                     </p>
                 </div>
             </div>

@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/grid-table"
 import type { Payslip } from "./use-payslips-logic"
 import { Calendar, User, Wallet, Banknote, CheckCircle2, FileText, Plus } from "lucide-react"
+import { ActionEmptyState } from "@/components/shared"
+import { useHighlight } from "@/hooks"
 
 interface PayslipsTableProps {
     data: Payslip[]
@@ -54,62 +56,79 @@ export function PayslipsTable({
                 />
                 <GridTableRows>
                     {data.map((slip) => (
-                        <GridTableRow
-                            key={slip.id}
-                            onClick={() => onRowClick(slip)}
-                            selected={selectedIds.has(String(slip.id))}
-                        >
-                            <div className="col-span-3 font-medium truncate flex items-center gap-2">
-                                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
-                                    {slip.employee.substring(0, 2).toUpperCase()}
-                                </div>
-                                <span className="truncate">{slip.employee}</span>
-                            </div>
-                            <div className="col-span-2 text-muted-foreground tabular-nums hidden md:block">
-                                {slip.period}
-                            </div>
-                            <div className="col-span-2 tabular-nums text-muted-foreground hidden md:block">
-                                {formatCurrency(slip.grossSalary)}
-                            </div>
-                            <div className="col-span-2 font-medium tabular-nums">
-                                {formatCurrency(slip.netSalary)}
-                            </div>
-                            <div className="col-span-2">
-                                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                <AppStatusBadge status={slip.status as any} size="sm" />
-                            </div>
-                            <div
-                                className={cn(
-                                    "col-span-1 flex justify-end items-center transition-opacity",
-                                    selectedIds.has(String(slip.id)) ? "opacity-100" : "opacity-0 group-hover:opacity-100"
-                                )}
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <Checkbox
-                                    checked={selectedIds.has(String(slip.id))}
-                                    onCheckedChange={() => onToggleSelection(String(slip.id))}
-                                />
-                            </div>
-                        </GridTableRow>
+                        <PayslipRow 
+                            key={slip.id} 
+                            slip={slip} 
+                            selected={selectedIds.has(String(slip.id))} 
+                            onRowClick={onRowClick} 
+                            onToggleSelection={onToggleSelection} 
+                        />
                     ))}
                     {data.length === 0 && (
-                        <div className="text-center py-12 text-muted-foreground">
-                            <FileText className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                            <p>Inga lönebesked ännu</p>
-                            {onAddPayslip && (
-                                <Button
-                                    variant="outline"
-                                    className="mt-4"
-                                    onClick={onAddPayslip}
-                                >
-                                    <Plus className="h-4 w-4 mr-2" />
-                                    Skapa lönekörning
-                                </Button>
-                            )}
-                        </div>
+                        <ActionEmptyState
+                            icon={Banknote}
+                            title="Inga lönebesked än"
+                            description="Det är dags att förbereda månadens löner. Scooby kan hjälpa dig att räkna ut bruttolön och skatt för alla anställda."
+                            actionLabel="Starta lönekörning"
+                            actionPrompt="Jag vill göra en ny lönekörning för den här månaden"
+                        />
                     )}
                 </GridTableRows>
             </div>
         </div>
+    )
+}
+
+function PayslipRow({ 
+    slip, 
+    selected, 
+    onRowClick, 
+    onToggleSelection 
+}: { 
+    slip: Payslip, 
+    selected: boolean, 
+    onRowClick: (p: Payslip) => void, 
+    onToggleSelection: (id: string) => void 
+}) {
+    const { highlightClass } = useHighlight(String(slip.id))
+
+    return (
+        <GridTableRow
+            onClick={() => onRowClick(slip)}
+            selected={selected}
+            className={highlightClass}
+        >
+            <div className="col-span-3 font-medium truncate flex items-center gap-2">
+                <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">
+                    {slip.employee.substring(0, 2).toUpperCase()}
+                </div>
+                <span className="truncate">{slip.employee}</span>
+            </div>
+            <div className="col-span-2 text-muted-foreground tabular-nums hidden md:block">
+                {slip.period}
+            </div>
+            <div className="col-span-2 tabular-nums text-muted-foreground hidden md:block">
+                {formatCurrency(slip.grossSalary)}
+            </div>
+            <div className="col-span-2 font-medium tabular-nums">
+                {formatCurrency(slip.netSalary)}
+            </div>
+            <div className="col-span-2">
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <AppStatusBadge status={slip.status as any} size="sm" />
+            </div>
+            <div
+                className={cn(
+                    "col-span-1 flex justify-end items-center transition-opacity",
+                    selected ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+                )}
+                onClick={(e) => e.stopPropagation()}
+            >
+                <Checkbox
+                    checked={selected}
+                    onCheckedChange={() => onToggleSelection(String(slip.id))}
+                />
+            </div>
+        </GridTableRow>
     )
 }

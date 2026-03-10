@@ -25,6 +25,15 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
     const [settingsOpen, setSettingsOpen] = useState(!!settingsParam)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
+    // Auto-collapse sidebar on small screens
+    useEffect(() => {
+        const mq = window.matchMedia('(max-width: 1024px)')
+        setSidebarCollapsed(mq.matches)
+        const handler = (e: MediaQueryListEvent) => setSidebarCollapsed(e.matches)
+        mq.addEventListener('change', handler)
+        return () => mq.removeEventListener('change', handler)
+    }, [])
+
     useEffect(() => {
         setSettingsOpen(!!settingsParam)
     }, [settingsParam])
@@ -60,12 +69,12 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
 
     return (
         <ChatProvider>
-            <div className="flex h-screen bg-muted">
+            <div className="flex h-screen bg-background dark:bg-[oklch(0.12_0_0)]">
                 {/* Chat History Sidebar — left, on grey background */}
                 <ChatHistorySidebar
-                    onOpenSettings={() => setSettingsOpen(true)}
                     collapsed={sidebarCollapsed}
                     onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    onOpenSettings={() => setSettingsOpen(true)}
                 />
 
                 {/* Main Content Area — right, rounded dark container */}

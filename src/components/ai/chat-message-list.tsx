@@ -15,6 +15,7 @@ import { ComparisonTable } from "@/components/ai/comparison-table"
 import { ActionTriggerChip } from "@/components/ai/action-trigger-chip"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { BalanceAuditCard } from "@/components/ai/previews/bokforing/balance-audit-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import type { Message } from "@/lib/chat-types"
 import { useState } from "react"
@@ -183,6 +184,20 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any)?.component === 'BalanceAuditCard') && (
                     <div className="my-2">
                         <BalanceAuditCard audit={(message.display.data as any)?.audit} data={(message.display.data as any)?.audit || message.display.data as any} />
+                    </div>
+                )}
+
+                {/* Inline result cards — compact cards for AI action results */}
+                {message.display?.type === 'InlineCard' && (
+                    <div className="my-2">
+                        <InlineCardRenderer card={(message.display as any).data} />
+                    </div>
+                )}
+                {message.display?.type === 'InlineCards' && (
+                    <div className="my-2 space-y-1.5">
+                        {((message.display as any).data?.cards || []).map((card: any, i: number) => (
+                            <InlineCardRenderer key={i} card={card} />
+                        ))}
                     </div>
                 )}
 

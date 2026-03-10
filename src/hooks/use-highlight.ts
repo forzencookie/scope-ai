@@ -7,6 +7,7 @@
 
 import { useAIDialogOptional } from "@/providers/ai-overlay-provider"
 import { useCallback, useMemo } from "react"
+import { useSearchParams } from "next/navigation"
 
 /**
  * Hook to check if a specific content ID should be highlighted
@@ -14,14 +15,23 @@ import { useCallback, useMemo } from "react"
  */
 export function useHighlight(contentId: string | undefined) {
     const context = useAIDialogOptional()
+    const searchParams = useSearchParams()
 
     const isHighlighted = useMemo(() => {
-        if (!context || !contentId) return false
-        return context.highlightedId === contentId
-    }, [context, contentId])
+        if (!contentId) return false
+        
+        // 1. Check AI Overlay context (immediate feedback)
+        if (context && context.highlightedId === contentId) return true
+        
+        // 2. Check search params (navigation-based highlighting)
+        const highlightId = searchParams.get('highlight') || searchParams.get('id')
+        if (highlightId === contentId) return true
+        
+        return false
+    }, [context, contentId, searchParams])
 
     const highlightClass = isHighlighted
-        ? "animate-highlight ring-2 ring-emerald-500/50 bg-emerald-500/5 rounded-lg transition-all duration-500"
+        ? "animate-highlight ring-2 ring-emerald-500/50 bg-emerald-500/10 rounded-lg transition-all duration-700 shadow-sm"
         : ""
 
     return {

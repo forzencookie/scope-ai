@@ -4,34 +4,33 @@ import { Suspense } from "react"
 import {
     Loader2,
     LayoutDashboard,
-    FileText,
     Archive,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ActivityFeed } from "@/components/shared/activity-feed"
 import { PageHeader, YearSlider } from "@/components/shared"
+import { useDynamicTasks } from "@/hooks"
+import { Progress } from "@/components/ui/progress"
+import { Card, CardContent } from "@/components/ui/card"
 import {
     EventsCalendar,
     ManadsavslutView,
     DeadlinesList,
-    CanvasView,
     useHandelserLogic,
     availableYears,
     type ViewType,
 } from "@/components/handelser"
 
-// View tabs configuration — Phase 6: 3 tabs
+// View tabs configuration — 2 views
 const viewTabs: { id: ViewType; label: string; icon: typeof LayoutDashboard }[] = [
-    { id: "oversikt", label: "Oversikt", icon: LayoutDashboard },
-    { id: "canvas", label: "Canvas", icon: FileText },
+    { id: "oversikt", label: "Översikt", icon: LayoutDashboard },
     { id: "arkiv", label: "Arkiv", icon: Archive },
 ]
 
-// Tab-specific headers
+// Tab-specific headers (content swapped: Översikt = calendar+activity+deadlines, Arkiv = månadsavslut)
 const tabHeaders: Record<ViewType, { title: string; subtitle: string }> = {
-    oversikt: { title: "Oversikt", subtitle: "Manadsavslut och kommande deadlines" },
-    canvas: { title: "Canvas", subtitle: "Planer och AI-genererade dokument" },
-    arkiv: { title: "Arkiv", subtitle: "Kalender och historik dag for dag" },
+    oversikt: { title: "Översikt", subtitle: "Kalender, aktivitet och kommande deadlines" },
+    arkiv: { title: "Arkiv", subtitle: "Månadsavslut och periodstängning" },
 }
 
 const MONTH_NAMES_SV = [
@@ -45,6 +44,7 @@ function formatSelectedDay(date: Date): string {
 
 function HandelserPageContent() {
     const logic = useHandelserLogic()
+    const { goals } = useDynamicTasks()
 
     const {
         activeView,
@@ -60,8 +60,6 @@ function HandelserPageContent() {
 
     const currentHeader = tabHeaders[activeView]
 
-    // Show year nav for Oversikt and Arkiv
-    const showYearNav = activeView === "oversikt" || activeView === "arkiv"
     const minYear = availableYears[availableYears.length - 1]
     const maxYear = availableYears[0]
 
@@ -98,14 +96,12 @@ function HandelserPageContent() {
                     title={currentHeader.title}
                     subtitle={currentHeader.subtitle}
                     actions={
-                        showYearNav ? (
-                            <YearSlider
-                                year={selectedYear}
-                                onYearChange={setSelectedYear}
-                                minYear={minYear}
-                                maxYear={maxYear}
-                            />
-                        ) : undefined
+                        <YearSlider
+                            year={selectedYear}
+                            onYearChange={setSelectedYear}
+                            minYear={minYear}
+                            maxYear={maxYear}
+                        />
                     }
                 />
             </div>
@@ -113,21 +109,8 @@ function HandelserPageContent() {
             {/* View Content */}
             <div className="p-4 md:p-6">
                 <div className="max-w-4xl w-full space-y-6">
-                    {/* Oversikt: Manadsavslut + Deadlines */}
+                    {/* Översikt: Calendar + Activity Feed + Deadlines */}
                     {activeView === "oversikt" && (
-                        <>
-                            <ManadsavslutView year={selectedYear} />
-                            <DeadlinesList />
-                        </>
-                    )}
-
-                    {/* Canvas: Markdown workspace */}
-                    {activeView === "canvas" && (
-                        <CanvasView />
-                    )}
-
-                    {/* Arkiv: Calendar + inline activity feed */}
-                    {activeView === "arkiv" && (
                         <>
                             <EventsCalendar
                                 events={yearEvents}
@@ -157,10 +140,59 @@ function HandelserPageContent() {
 
                             {!selectedDay && (
                                 <p className="text-sm text-muted-foreground text-center py-4">
-                                    Klicka pa en dag for att se aktivitet
+                                    Klicka på en dag för att se aktivitet
                                 </p>
                             )}
+
+                            <DeadlinesList />
+
+                            {/* Active Plans Section */}
+                            {goals.length > 0 && (
+                                <div className="space-y-4 pt-4">
+                                    <div className="flex items-center justify-between border-b pb-2">
+                                        <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                                            Aktiva planer
+                                        </h3>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {goals.map((goal) => {
+                                            const completedTasks = goal.tasks.filter(t => t.completed).length
+                                            const progress = Math.round((completedTasks / goal.tasks.length) * 100)
+                                            
+                                            return (
+                                                <Card key={goal.id} className="overflow-hidden border-primary/10 bg-gradient-to-br from-background to-primary/5">
+                                                    <CardContent className="p-4">
+                                                        <div className="flex justify-between items-start mb-3">
+                                                            <div>
+                                                                <h4 className="font-bold text-sm">{goal.name}</h4>
+                                                                <p className="text-xs text-muted-foreground line-clamp-1">{goal.target}</p>
+                                                            </div>
+                                                            <span className="text-[10px] font-bold bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase tracking-wider">
+                                                                {progress}%
+                                                            </span>
+                                                        </div>
+                                                        <Progress value={progress} className="h-1.5 mb-2" />
+                                                        <div className="flex justify-between items-center text-[10px] text-muted-foreground font-medium">
+                                                            <span>{completedTasks} av {goal.tasks.length} steg klara</span>
+                                                            {progress === 100 && (
+                                                                <span className="text-emerald-600 flex items-center gap-1 font-bold">
+                                                                    Klar
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </CardContent>
+                                                </Card>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                            )}
                         </>
+                    )}
+
+                    {/* Arkiv: Månadsavslut grid */}
+                    {activeView === "arkiv" && (
+                        <ManadsavslutView year={selectedYear} />
                     )}
                 </div>
             </div>
@@ -172,7 +204,7 @@ function HandelserPageLoading() {
     return (
         <div className="flex h-64 items-center justify-center text-muted-foreground">
             <Loader2 className="mr-2 h-6 w-6 animate-spin" />
-            Laddar handelser...
+            Laddar händelser...
         </div>
     )
 }

@@ -31,6 +31,7 @@ interface UseSendMessageOptions {
     setConversations: React.Dispatch<React.SetStateAction<Conversation[]>>
     currentConversationId: string | null
     setCurrentConversationId: (id: string | null) => void
+    isIncognito?: boolean
 }
 
 export function useSendMessage({
@@ -38,6 +39,7 @@ export function useSendMessage({
     setConversations,
     currentConversationId,
     setCurrentConversationId,
+    isIncognito = false,
 }: UseSendMessageOptions) {
     const { modelId } = useModel()
     const [isLoading, setIsLoading] = useState(false)
@@ -84,16 +86,19 @@ export function useSendMessage({
             conversationId = crypto.randomUUID()
             const newConversation: Conversation = {
                 id: conversationId,
-                title: generateTitle(updatedMessages),
+                title: isIncognito ? 'Inkognito' : generateTitle(updatedMessages),
                 messages: updatedMessages,
                 createdAt: Date.now(),
-                updatedAt: Date.now()
+                updatedAt: Date.now(),
+                ...(isIncognito && { isIncognito: true }),
             }
             setConversations(prev => [newConversation, ...prev])
             setCurrentConversationId(conversationId)
 
-            // Generate AI title asynchronously
-            generateAITitle(conversationId, updatedMessages, setConversations)
+            // Generate AI title asynchronously (skip in incognito)
+            if (!isIncognito) {
+                generateAITitle(conversationId, updatedMessages, setConversations)
+            }
         } else {
             const currentTitle = conversations.find(c => c.id === conversationId)?.title
 
@@ -103,8 +108,8 @@ export function useSendMessage({
                     : c
             ))
 
-            // Regenerate generic title if needed
-            if (currentTitle === 'Ny konversation' || currentTitle === 'New conversation') {
+            // Regenerate generic title if needed (skip in incognito)
+            if (!isIncognito && (currentTitle === 'Ny konversation' || currentTitle === 'New conversation')) {
                 generateAITitle(conversationId, updatedMessages, setConversations)
             }
         }
@@ -177,7 +182,8 @@ export function useSendMessage({
                     confirmationId,
                     attachments: attachments.length > 0 ? attachments : undefined,
                     mentions: mentions.length > 0 ? mentions : undefined,
-                    model: modelId
+                    model: modelId,
+                    incognito: isIncognito || undefined,
                 })
             })
 
@@ -208,7 +214,7 @@ export function useSendMessage({
         } finally {
             setIsLoading(false)
         }
-    }, [messages, currentConversationId, isLoading, conversations, modelId, setConversations, setCurrentConversationId, parseStreamResponse, dispatchCompletionEvents])
+    }, [messages, currentConversationId, isLoading, conversations, modelId, isIncognito, setConversations, setCurrentConversationId, parseStreamResponse, dispatchCompletionEvents])
 
     const regenerateResponse = useCallback(() => {
         const lastAssistantMessage = [...messages].reverse().find(m => m.role === 'assistant')

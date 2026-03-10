@@ -111,19 +111,35 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                             walkthroughBlocks: walkthroughData,
                         } as StreamData
                     } else if (line.startsWith('D:')) {
-                        const data = JSON.parse(line.slice(2)) as StreamData
+                        const data = JSON.parse(line.slice(2)) as any
+                        
+                        // Transform simplified inline_card type to the display format expected by MessageBubble
+                        let transformedData = { ...data } as StreamData
+                        if (data.type === 'inline_card') {
+                            transformedData = {
+                                ...transformedData,
+                                display: {
+                                    type: 'InlineCard',
+                                    data: {
+                                        cardType: data.cardType,
+                                        data: data.data
+                                    }
+                                }
+                            }
+                        }
+
                         // Merge data chunks instead of overwriting
                         lastData = {
                             ...(lastData || {}),
-                            ...data,
-                            display: data.display || lastData?.display,
-                            toolResults: data.toolResults || lastData?.toolResults,
-                            confirmationRequired: data.confirmationRequired || lastData?.confirmationRequired,
+                            ...transformedData,
+                            display: transformedData.display || lastData?.display,
+                            toolResults: transformedData.toolResults || lastData?.toolResults,
+                            confirmationRequired: transformedData.confirmationRequired || lastData?.confirmationRequired,
                         } as StreamData
 
                         // Handle immediate navigation
-                        if (data.navigation) {
-                            router.push(data.navigation.route)
+                        if (transformedData.navigation) {
+                            router.push(transformedData.navigation.route)
                         }
 
                         setConversations(prev => prev.map(c =>
@@ -134,9 +150,9 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                                         msg.id === assistantMessageId
                                             ? {
                                                 ...msg,
-                                                display: data.display || msg.display,
-                                                confirmationRequired: data.confirmationRequired || msg.confirmationRequired,
-                                                toolResults: data.toolResults || msg.toolResults
+                                                display: transformedData.display || msg.display,
+                                                confirmationRequired: transformedData.confirmationRequired || msg.confirmationRequired,
+                                                toolResults: transformedData.toolResults || msg.toolResults
                                             } as typeof msg
                                             : msg
                                     )
@@ -177,6 +193,8 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
 
         // Display-only components that should render inline in chat, not in the overlay dialog
         const inlineOnlyComponents = new Set<string>([
+            'InlineCard',
+            'InlineCards',
         ])
 
         // Check all data chunks for inline-only display components

@@ -81,6 +81,22 @@ export type MessageDisplay =
             meta?: string
         }
     }
+    | {
+        type: 'InlineCard'
+        data: {
+            cardType: 'invoice' | 'transaction' | 'verification' | 'payroll' | 'report'
+            data: Record<string, unknown>
+        }
+    }
+    | {
+        type: 'InlineCards'
+        data: {
+            cards: Array<{
+                cardType: 'invoice' | 'transaction' | 'verification' | 'payroll' | 'report'
+                data: Record<string, unknown>
+            }>
+        }
+    }
 
 export interface Message {
     id: string
@@ -118,4 +134,6 @@ export interface Conversation {
     messages: Message[]
     createdAt: number
     updatedAt: number
+    /** Incognito conversations are not persisted to DB */
+    isIncognito?: boolean
 }

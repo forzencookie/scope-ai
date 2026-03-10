@@ -18,6 +18,5 @@ export { AGIContent } from './agi'
 // Dialogs
 export { MomsDetailDialog } from './dialogs/moms'
 export { AGIDetailsDialog } from './dialogs/agi'
-export { InkomstWizardDialog, ArsredovisningWizardDialog } from './dialogs/assistent'
 export { ReportPreviewDialog } from './dialogs/rapport'
 export type { ReportSection } from './dialogs/rapport'

@@ -10,7 +10,6 @@ import { NewTransactionDialog } from "../dialogs/ny-transaktion"
 import { BookingDialog } from "../dialogs/bokforing"
 
 // Components
-import { TransactionsStats } from "./components/transactions-stats"
 import { TransactionFilters } from "./components/transaction-filters"
 import { TransactionsTableGrid } from "./components/transactions-table-grid"
 
@@ -68,14 +67,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
             />
 
 
-
-            {/* Stats Overview */}
-            <TransactionsStats
-                totalCount={stats.totalCount}
-                income={stats.income}
-                expenses={stats.expenses}
-                isLoading={isLoading}
-            />
 
             <NewTransactionDialog
                 open={newTransactionDialogOpen}

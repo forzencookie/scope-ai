@@ -229,12 +229,14 @@ export async function POST(request: NextRequest) {
             attachments,
             mentions,
             model: requestedModel,
+            incognito,
         } = body as {
             messages: Array<{ role: string; content: string }>
             conversationId?: string
             attachments?: Array<{ name: string; type: string; data: string }>
             mentions?: Array<{ type: string; label: string; aiContext?: string }>
             model?: string
+            incognito?: boolean
         }
 
         // === VALIDATE MESSAGES ===
@@ -272,22 +274,24 @@ export async function POST(request: NextRequest) {
         const latestUserMessage = messageValidation.data[messageValidation.data.length - 1]
         const latestContent = latestUserMessage?.content || ''
 
-        // === PERSISTENCE: CREATE CONVERSATION ===
+        // === PERSISTENCE: CREATE CONVERSATION (skip in incognito) ===
         let conversationId = reqConversationId
-        if (!conversationId) {
-            const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
-            const conv = await userDb.conversations.create({ title })
-            if (conv && 'id' in conv) conversationId = conv.id
-        }
+        if (!incognito) {
+            if (!conversationId) {
+                const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
+                const conv = await userDb.conversations.create({ title })
+                if (conv && 'id' in conv) conversationId = conv.id
+            }
 
-        // === PERSIST USER MESSAGE ===
-        if (conversationId) {
-            await userDb.messages.create({
-                conversation_id: conversationId,
-                role: 'user',
-                content: latestContent,
-                user_id: userId
-            })
+            // === PERSIST USER MESSAGE ===
+            if (conversationId) {
+                await userDb.messages.create({
+                    conversation_id: conversationId,
+                    role: 'user',
+                    content: latestContent,
+                    user_id: userId
+                })
+            }
         }
 
         // === INITIALIZE TOOLS ===

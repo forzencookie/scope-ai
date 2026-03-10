@@ -1,7 +1,6 @@
 "use client"
 
-import { redirect } from "next/navigation"
-
 export default function DashboardPage() {
-    redirect("/dashboard/handelser")
+    // Chat UI is rendered by MainContentArea in the layout
+    return null
 }

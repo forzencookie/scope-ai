@@ -30,6 +30,7 @@ export interface KanbanCardProps {
     amount: number
     date?: string
     isOverdue?: boolean
+    highlightClass?: string
     extraTags?: React.ReactNode  // For additional tags like VAT
     children?: React.ReactNode  // For action menu content
 }
@@ -40,11 +41,15 @@ export function KanbanCard({
     amount,
     date,
     isOverdue = false,
+    highlightClass,
     extraTags,
     children,
 }: KanbanCardProps) {
     return (
-        <div className="bg-background rounded-lg p-4 border-2 border-transparent hover:border-border transition-colors cursor-pointer group">
+        <div className={cn(
+            "bg-background rounded-lg p-4 border-2 border-transparent hover:border-border transition-colors cursor-pointer group",
+            highlightClass || ""
+        )}>
             {/* Subtitle/Client Label */}
             {subtitle && (
                 <div className="text-xs text-muted-foreground mb-2">

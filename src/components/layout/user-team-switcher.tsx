@@ -80,10 +80,10 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
     }
 
     return (
-        <div>
+        <div className="w-full">
             <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                    <button className="flex items-center gap-2 rounded-md p-1.5 hover:bg-accent transition-colors outline-none">
+                    <button className="flex items-center gap-2 rounded-md p-1.5 w-full hover:bg-accent dark:hover:bg-accent/50 transition-colors outline-none">
                             {/* User Avatar */}
                             <Avatar className="h-8 w-8 rounded-lg">
                                 <AvatarImage src={user.avatar} alt={user.name} />
@@ -95,13 +95,13 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
                                         <span className="truncate font-medium text-foreground">{user.name}</span>
                                         <span className="truncate text-xs text-muted-foreground">{user.email}</span>
                                     </div>
-                                    <ChevronsUpDown className="ml-auto" />
+                                    <ChevronsUpDown className="ml-auto h-3.5 w-3.5 text-muted-foreground/50" />
                                 </>
                             )}
                     </button>
                 </DropdownMenuTrigger>
                     <DropdownMenuContent
-                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg"
+                        className="w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-md"
                         align="start"
                         side={isMobile ? "bottom" : "right"}
                         sideOffset={4}

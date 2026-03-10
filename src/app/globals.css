@@ -159,6 +159,29 @@
     @apply bg-background text-foreground;
   }
 
+  html {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
+  }
+
+  html ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  html ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  html ::-webkit-scrollbar-thumb {
+    background-color: rgba(255, 255, 255, 0.25);
+    border-radius: 9999px;
+  }
+
+  html ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(255, 255, 255, 0.4);
+  }
+
   /* Prevent body scroll when dialog is open */
   body:has([data-slot="dialog-overlay"]) {
     overflow: hidden;
@@ -307,28 +330,11 @@
   display: none;
 }
 
-/* Thin scrollbar utility */
+
+/* Thin scrollbar utility — kept for compat, inherits global styles */
 .scrollbar-thin {
   scrollbar-width: thin;
-  scrollbar-color: var(--border) transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar {
-  height: 8px;
-  width: 8px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: var(--border);
-  border-radius: 4px;
-}
-
-.scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: var(--muted-foreground);
+  scrollbar-color: rgba(255, 255, 255, 0.25) transparent;
 }
 
 /* Grid and dither pattern backgrounds - moved from inline for performance */

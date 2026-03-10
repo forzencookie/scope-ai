@@ -4,8 +4,8 @@ import { useState, useMemo, useCallback } from "react"
 import { useEvents } from "@/hooks/use-events"
 import type { CorporateActionType } from "@/types/events"
 
-// View types — Phase 6 restructure: 4 tabs → 3 tabs
-export type ViewType = "oversikt" | "canvas" | "arkiv"
+// View types — consolidated: 2 views
+export type ViewType = "oversikt" | "arkiv"
 
 // Available years
 const currentYear = new Date().getFullYear()

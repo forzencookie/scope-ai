@@ -1,23 +1,14 @@
 /**
- * Assistent Dialog - Re-exports for backwards compatibility
+ * Assistent Dialog - Deprecated
  * 
- * This file has been refactored. The components are now in separate files:
- * - ai-wizard-dialog.tsx - Base AIWizardDialog component
- * - moms-wizard-dialog.tsx - MomsWizardDialog
- * - inkomst-wizard-dialog.tsx - InkomstWizardDialog
- * - arsredovisning-wizard-dialog.tsx - ArsredovisningWizardDialog
+ * Wizard dialogs have been removed as part of the AI-native flow redesign.
+ * All report generation now routes through Scooby (AI chat) via navigateToAI().
+ * 
+ * The following dialogs were removed:
+ * - MomsWizardDialog → ⚡ "Gör momsen"
+ * - InkomstWizardDialog → ⚡ "Gör inkomstdeklarationen"
+ * - ArsredovisningWizardDialog → ⚡ "Skapa årsredovisningen"
+ * - K10WizardDialog → ⚡ "Beräkna K10"
+ * - ArsbokslutWizardDialog → ⚡ "Stäng räkenskapsåret"
+ * - NEBilagaWizardDialog → ⚡ "Generera NE-bilagan"
  */
-
-// Re-export base component and types
-export {
-    AIWizardDialog,
-    type AIWizardDialogProps,
-    type AIWizardStep1Config,
-    type AIWizardStep2Config,
-    type AIWizardStep3Config,
-} from "./ai-wizard-dialog"
-
-// Re-export specialized wizard dialogs
-export { MomsWizardDialog } from "./moms-wizard-dialog"
-export { InkomstWizardDialog, type InkomstWizardData } from "./inkomst-wizard-dialog"
-export { ArsredovisningWizardDialog, type ArsredovisningWizardData } from "./arsredovisning-wizard-dialog"

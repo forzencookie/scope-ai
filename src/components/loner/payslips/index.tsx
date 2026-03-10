@@ -1,6 +1,6 @@
 "use client"
 
-import { memo } from "react"
+import { memo, useMemo } from "react"
 import { Plus, Send, Download, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
@@ -28,6 +28,7 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
 
     const {
         // State
+        allPayslips,
         filteredPayslips,
         isLoading,
         selectedIds,
@@ -54,6 +55,18 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         handleDelete,
         clearSelection
     } = usePayslipsLogic()
+
+    // Derive the overall period status from current period payslips
+    const periodStatus = useMemo(() => {
+        if (!allPayslips.length) return "draft" as const
+        const periodSlips = allPayslips.filter(p => p.period === stats.currentPeriod)
+        if (!periodSlips.length) return "draft" as const
+        const allPaid = periodSlips.every(p => p.status === "paid")
+        if (allPaid) return "paid" as const
+        const anyReview = periodSlips.some(p => p.status === "review")
+        if (anyReview) return "review" as const
+        return "draft" as const
+    }, [allPayslips, stats.currentPeriod])
 
     const bulkActions: BulkAction[] = [
         {
@@ -85,22 +98,22 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         },
     ]
 
-    return (
-        <div className="w-full space-y-4 md:space-y-6">
-            {/* Page Heading */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <div>
-                    <h2 className="text-2xl font-bold tracking-tight">Lönekörning</h2>
-                    <p className="text-muted-foreground mt-1">Hantera löner och lönespecifikationer för dina anställda.</p>
-                </div>
-                <Button onClick={() => setShowAIDialog(true)} className="w-full sm:w-auto">
-                    <Plus className="h-4 w-4 mr-2" />
-                    Ny lönekörning
-                </Button>
-            </div>
+    const actionButton = (
+        <Button onClick={() => setShowAIDialog(true)} size="lg" className="w-full sm:w-auto">
+            <Plus className="h-4 w-4 mr-2" />
+            Ny lönekörning
+        </Button>
+    )
 
-            {/* Stats Overview */}
-            <PayslipsStats stats={stats} isLoading={isLoading} />
+    return (
+        <div className="w-full space-y-6">
+            {/* Dashboard: Status Banner + Key Metrics */}
+            <PayslipsStats
+                stats={stats}
+                periodStatus={periodStatus}
+                isLoading={isLoading}
+                actionButton={actionButton}
+            />
 
             {/* Dialogs */}
             <PayslipCreateDialog
@@ -119,7 +132,7 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
                 }}
             />
 
-            {/* Table Area */}
+            {/* Table Area — secondary section */}
             <div>
                 <div className="border-b-2 border-border/60" />
 

@@ -19,8 +19,6 @@ import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import {
     LazyLonebesked,
     LazyTeamTab,
-    LazyBenefitsTab,
-    LazyDelagaruttag,
 } from "@/components/shared"
 
 function PayrollPageContent() {
@@ -53,22 +51,16 @@ function PayrollPageContent() {
     return (
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
-                {/* Tabs with preload on hover */}
-                <div className="px-4 md:px-6 pt-6">
-                    <PageTabsLayout
-                        tabs={tabs}
-                        currentTab={currentTab}
-                        onTabChange={setCurrentTab}
-                        lastUpdated={lastUpdated}
-                    />
-                </div>
+                <PageTabsLayout
+                    tabs={tabs}
+                    currentTab={currentTab}
+                    onTabChange={setCurrentTab}
+                />
 
                 {/* Tab Content */}
                 <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
                     {currentTab === "lonebesked" && <LazyLonebesked />}
                     {currentTab === "team" && <LazyTeamTab />}
-                    {currentTab === "benefits" && <LazyBenefitsTab />}
-                    {currentTab === "delagaruttag" && <LazyDelagaruttag />}
                 </main>
             </div>
         </TooltipProvider>

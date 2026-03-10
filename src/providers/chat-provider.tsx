@@ -35,6 +35,9 @@ interface ChatContextValue {
     handleSend: () => void
     handleCancelConfirmation: (messageId: string) => void
     handleNewConversation: () => void
+    // Incognito mode
+    isIncognito: boolean
+    toggleIncognito: () => void
 }
 
 const ChatContext = createContext<ChatContextValue | null>(null)
@@ -49,6 +52,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const { modelId } = useModel()
     const { canAfford, refresh: refreshUsage } = useAIUsage()
     const { isPaid } = useSubscription()
+    const [isIncognito, setIsIncognito] = useState(false)
 
     const {
         conversations,
@@ -61,13 +65,22 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         loadConversation,
         deleteConversation,
         deleteMessage,
-    } = useChat()
+    } = useChat({ isIncognito })
 
     const [textareaValue, setTextareaValue] = useState("")
     const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
     const [attachedFiles, setAttachedFiles] = useState<File[]>([])
     const [isInputFocused, setIsInputFocused] = useState(false)
     const [showBuyCredits, setShowBuyCredits] = useState(false)
+
+    const toggleIncognito = useCallback(() => {
+        setIsIncognito(prev => !prev)
+        // Start a fresh conversation when toggling
+        startNewConversation()
+        setTextareaValue("")
+        setMentionItems([])
+        setAttachedFiles([])
+    }, [startNewConversation])
 
     const handleSend = useCallback(() => {
         if (isPaid && !canAfford(modelId)) {
@@ -205,6 +218,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             handleSend,
             handleCancelConfirmation,
             handleNewConversation,
+            isIncognito,
+            toggleIncognito,
         }}>
             {children}
         </ChatContext.Provider>

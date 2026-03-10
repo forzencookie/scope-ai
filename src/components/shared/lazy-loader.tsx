@@ -53,20 +53,10 @@ export function createLazyComponent<T extends ComponentType<any>>(
 // Pre-defined Lazy Components
 // ============================================================================
 
-// --- Bokföring ---
+// --- Bokföring (active — used by accounting-page.tsx) ---
 export const LazyTransactionsTable = createLazyComponent(
     () => import("@/components/bokforing").then(m => ({ default: m.TransactionsTable })),
     "Laddar transaktioner..."
-)
-
-export const LazyReceiptsTable = createLazyComponent(
-    () => import("@/components/bokforing").then(m => ({ default: m.ReceiptsTable })),
-    "Laddar kvitton..."
-)
-
-export const LazyInventarierTable = createLazyComponent(
-    () => import("@/components/bokforing").then(m => ({ default: m.InventarierTable })),
-    "Laddar inventarier..."
 )
 
 export const LazyUnifiedInvoicesView = createLazyComponent(
@@ -74,49 +64,7 @@ export const LazyUnifiedInvoicesView = createLazyComponent(
     "Laddar fakturor..."
 )
 
-// --- Skatt ---
-export const LazyMomsdeklaration = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.MomsdeklarationContent })),
-    "Laddar momsdeklaration..."
-)
-
-export const LazyInkomstdeklaration = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.InkomstdeklarationContent })),
-    "Laddar inkomstdeklaration..."
-)
-
-export const LazyAGI = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.AGIContent })),
-    "Laddar arbetsgivardeklaration..."
-)
-
-export const LazyArsredovisning = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.ArsredovisningContent })),
-    "Laddar årsredovisning..."
-)
-
-export const LazyArsbokslut = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.ArsbokslutContent })),
-    "Laddar årsbokslut..."
-)
-
-export const LazyK10 = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.K10Content })),
-    "Laddar K10..."
-)
-
-// --- Rapporter ---
-export const LazyResultatrakning = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.ResultatrakningContent })),
-    "Laddar resultaträkning..."
-)
-
-export const LazyBalansrakning = createLazyComponent(
-    () => import("@/components/rapporter").then(m => ({ default: m.BalansrakningContent })),
-    "Laddar balansräkning..."
-)
-
-// --- Löner ---
+// --- Löner (active — used by payroll-page.tsx) ---
 export const LazyLonebesked = createLazyComponent(
     () => import("@/components/loner/payslips").then(m => ({ default: m.LonesbeskContent })),
     "Laddar lönebesked..."
@@ -127,17 +75,7 @@ export const LazyTeamTab = createLazyComponent(
     "Laddar personal..."
 )
 
-export const LazyBenefitsTab = createLazyComponent(
-    () => import("@/components/loner/benefits").then(m => ({ default: m.BenefitsTab })),
-    "Laddar förmåner..."
-)
-
-// --- Ägare & Styrning ---
-export const LazyUtdelning = createLazyComponent(
-    () => import("@/components/agare").then(m => ({ default: m.UtdelningContent })),
-    "Laddar utdelning..."
-)
-
+// --- Ägare & Styrning (active — used by ownership-page.tsx) ---
 export const LazyAktiebok = createLazyComponent(
     () => import("@/components/agare").then(m => ({ default: m.Aktiebok })),
     "Laddar aktiebok..."
@@ -153,7 +91,6 @@ export const LazyMedlemsregister = createLazyComponent(
     "Laddar medlemsregister..."
 )
 
-
 export const LazyBolagsstamma = createLazyComponent(
     () => import("@/components/agare").then(m => ({ default: m.Bolagsstamma })),
     "Laddar bolagsstämma..."
@@ -162,21 +99,6 @@ export const LazyBolagsstamma = createLazyComponent(
 export const LazyArsmote = createLazyComponent(
     () => import("@/components/agare").then(m => ({ default: m.Arsmote })),
     "Laddar årsmöte..."
-)
-
-export const LazyFirmatecknare = createLazyComponent(
-    () => import("@/components/agare").then(m => ({ default: m.Firmatecknare })),
-    "Laddar firmatecknare..."
-)
-
-export const LazyEgenavgifter = createLazyComponent(
-    () => import("@/components/loner").then(m => ({ default: m.Egenavgifter })),
-    "Laddar egenavgifter..."
-)
-
-export const LazyDelagaruttag = createLazyComponent(
-    () => import("@/components/loner").then(m => ({ default: m.Delagaruttag })),
-    "Laddar delägaruttag..."
 )
 
 // --- Onboarding ---

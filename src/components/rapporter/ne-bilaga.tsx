@@ -34,7 +34,7 @@ import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { getSupabaseClient } from "@/lib/database/supabase"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
-import { NEBilagaWizardDialog } from "./dialogs/ne-bilaga-wizard-dialog"
+// NEBilagaWizardDialog removed — AI generates NE-bilaga via navigateToAI()
 import { taxService } from "@/services/tax-service"
 import { listPeriodiseringsfonder } from "@/services/processors/periodiseringsfonder-processor"
 
@@ -206,7 +206,7 @@ export function NEBilagaContent() {
     const { addToast: toast } = useToast()
     const neData = useNECalculation()
     const [showAdjustments, setShowAdjustments] = useState(true)
-    const [wizardOpen, setWizardOpen] = useState(false)
+
 
     const deadlineYear = neData.taxYear + 1
 
@@ -436,9 +436,9 @@ export function NEBilagaContent() {
                             <FileDown className="h-4 w-4 mr-2" />
                             Ladda ner PDF
                         </Button>
-                        <Button onClick={() => setWizardOpen(true)}>
+                        <Button onClick={() => navigateToAI(getDefaultAIContext('ne-bilaga'))}>
                             <ClipboardEdit className="h-4 w-4 mr-2" />
-                            Generera
+                            Generera med AI
                         </Button>
                     </div>
 
@@ -456,31 +456,7 @@ export function NEBilagaContent() {
                 </div>
             </div>
 
-            <NEBilagaWizardDialog
-                open={wizardOpen}
-                onOpenChange={setWizardOpen}
-                data={{
-                    R1: neData.R1,
-                    R5: neData.R5,
-                    R6: neData.R6,
-                    R7: neData.R7,
-                    R8: neData.R8,
-                    R9: neData.R9,
-                    R10: neData.R10,
-                    R11: neData.R11,
-                    R12: neData.R12,
-                    R13: neData.R13,
-                    R14: neData.R14,
-                    R15: neData.R15,
-                    R24: neData.R24,
-                    egenavgifter: neData.egenavgifter,
-                    slutligtResultat: neData.slutligtResultat,
-                    taxYear: neData.taxYear,
-                    egenavgifterRate: neData.egenavgifterRate,
-                    egenavgifterRateDisplay: neData.egenavgifterRateDisplay,
-                    periodiseringsfondMaxRate: neData.periodiseringsfondMaxRate,
-                }}
-            />
+
         </TooltipProvider>
     )
 }

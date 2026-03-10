@@ -18,6 +18,7 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { UnifiedInvoice } from "../types"
+import { useHighlight } from "@/hooks"
 
 interface InvoiceCardProps {
     invoice: UnifiedInvoice
@@ -40,9 +41,11 @@ export const InvoiceCard = React.memo(function InvoiceCard({
 }: InvoiceCardProps) {
     const isCustomer = invoice.direction === "in"
     const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
+    const { highlightClass } = useHighlight(invoice.id)
 
     return (
         <KanbanCard
+            highlightClass={highlightClass}
             title={
                 <span className="flex items-center gap-1.5">
                     <DirectionIcon className={cn(

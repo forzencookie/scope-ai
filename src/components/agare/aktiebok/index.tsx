@@ -21,15 +21,15 @@ import { useTextMode } from "@/providers/text-mode-provider"
 
 // Sub-components
 import { AktiebokStats } from "./components/aktiebok-stats"
-import { ShareholdersGrid } from "./components/ShareholdersGrid"
 import { TransactionsGrid } from "./components/TransactionsGrid"
 import { TransactionDialog } from "./components/TransactionDialog"
 import { useAktiebokLogic } from "./use-aktiebok-logic"
 import { StockTransactionType } from "./types"
 import { AktiebokPreviewDialog } from "../dialogs/aktiebok-preview"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui/badge"
 
 export function Aktiebok() {
-    const { text } = useTextMode()
     const [showExportDialog, setShowExportDialog] = useState(false)
     const {
         stats,
@@ -38,7 +38,6 @@ export function Aktiebok() {
         filteredTransactions,
         searchQuery, setSearchQuery,
         showAddDialog, setShowAddDialog,
-        activeTab, setActiveTab,
         isSubmitting,
 
         txType, setTxType,
@@ -54,32 +53,36 @@ export function Aktiebok() {
     } = useAktiebokLogic()
 
     return (
-        <div className="space-y-4 md:space-y-6">
+        <div className="space-y-8">
             <PageHeader
-                title="Aktiebok"
-                subtitle="Digital aktiebok med historik över ägarförändringar och transaktioner."
+                title="Aktiebok & Styrning"
+                subtitle="Ägarstruktur, rösträttsfördelning och firmateckningsrätt."
                 actions={
-                    <div className="hidden md:block">
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" onClick={() => setShowExportDialog(true)}>
+                            <Download className="h-4 w-4 mr-2" />
+                            Exportera
+                        </Button>
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button size="sm">
                                     <Plus className="h-4 w-4 md:mr-2" />
-                                    <span className="hidden md:inline">Åtgärder</span>
+                                    <span className="hidden md:inline">Ny åtgärd</span>
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
                                 <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
                                     <Plus className="h-4 w-4 mr-2" />
-                                    Lägg till aktieägare
+                                    Nyemission
                                 </DropdownMenuItem>
                                 <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
                                     <ArrowRightLeft className="h-4 w-4 mr-2" />
                                     Registrera överlåtelse
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem onClick={() => setShowExportDialog(true)}>
-                                    <Download className="h-4 w-4 mr-2" />
-                                    Exportera aktiebok
+                                <DropdownMenuItem>
+                                    <Users className="h-4 w-4 mr-2" />
+                                    Ändra styrelse
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>
@@ -87,73 +90,93 @@ export function Aktiebok() {
                 }
             />
 
-            {/* Mobile-only primary action button */}
-            <div className="md:hidden w-full">
-                <Button
-                    className="w-full"
-                    size="lg"
-                    onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}
-                >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Lägg till aktieägare
-                </Button>
-            </div>
-
             <AktiebokStats stats={stats} shareholders={shareholders} />
 
-            {/* Shareholders Table */}
-            {activeTab === 'owners' && (
-                <div className="space-y-4 pt-6 md:pt-8 border-t-2 border-border/60">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 px-1">
-                        <h2 className="text-sm md:text-base font-semibold text-muted-foreground">{text.owners?.shareholdersTable || "Aktieägare"}</h2>
-                        <div className="flex items-center gap-2">
-                            <SearchBar
-                                placeholder={text.owners?.searchOwners || "Sök ägare..."}
-                                value={searchQuery}
-                                onChange={setSearchQuery}
-                                className="flex-1 sm:flex-none"
-                            />
-
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8 shrink-0"
-                                onClick={() => setActiveTab('transactions')}
-                            >
-                                <ArrowRightLeft className="h-4 w-4 sm:mr-2" />
-                                <span className="hidden sm:inline">Transaktioner</span>
-                            </Button>
-                        </div>
+            {/* Top Section: Shareholder Registry (Cards) */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Aktieägare & Roller
+                    </h3>
+                    <div className="flex items-center gap-2">
+                        <SearchBar
+                            placeholder="Sök ägare..."
+                            value={searchQuery}
+                            onChange={setSearchQuery}
+                            className="h-8 w-48"
+                        />
                     </div>
-
-                    <ShareholdersGrid shareholders={filteredShareholders} />
                 </div>
-            )}
 
-            {/* Transactions Table */}
-            {activeTab === 'transactions' && (
-                <div className="space-y-4 pt-8 border-t-2 border-border/60">
-                    <div className="flex items-center justify-between px-1">
-                        <h2 className="text-base font-semibold text-muted-foreground">Transaktioner</h2>
-                        <div className="flex items-center gap-2">
-                            <SearchBar
-                                placeholder={text.owners?.searchTransactions || "Sök..."}
-                                value={searchQuery}
-                                onChange={setSearchQuery}
-                            />
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {filteredShareholders.map((s) => (
+                        <Card key={s.id} className="group hover:border-primary/50 transition-colors overflow-hidden">
+                            <CardHeader className="pb-2 flex flex-row items-start justify-between space-y-0">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center shrink-0">
+                                        <Users className="h-5 w-5 text-muted-foreground" />
+                                    </div>
+                                    <div className="min-w-0">
+                                        <CardTitle className="text-sm font-bold truncate leading-none mb-1">
+                                            {s.name}
+                                        </CardTitle>
+                                        <CardDescription className="text-[10px] font-mono uppercase tracking-tighter">
+                                            {s.personalNumber}
+                                        </CardDescription>
+                                    </div>
+                                </div>
+                                {/* Firmatecknare Badge (Mock logic: top 2 owners or specifically marked) */}
+                                {(s.ownershipPercentage > 40 || s.name.includes("Johan")) && (
+                                    <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1 shrink-0">
+                                        <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
+                                        Tecknar firman
+                                    </Badge>
+                                )}
+                            </CardHeader>
+                            <CardContent className="pt-2">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="space-y-0.5">
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Ägande</p>
+                                        <p className="text-lg font-bold tabular-nums">
+                                            {s.ownershipPercentage}%
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            {s.shares.toLocaleString('sv-SE')} aktier
+                                        </p>
+                                    </div>
+                                    <div className="space-y-0.5">
+                                        <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Rösträtt</p>
+                                        <p className="text-lg font-bold tabular-nums">
+                                            {s.votesPercentage}%
+                                        </p>
+                                        <p className="text-[10px] text-muted-foreground">
+                                            {s.shareClass}-aktier
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="mt-4 pt-3 border-t flex items-center justify-between">
+                                    <span className="text-[11px] text-muted-foreground">
+                                        Ägare sedan {s.acquisitionDate}
+                                    </span>
+                                    <Button variant="ghost" size="sm" className="h-6 text-[10px] px-2">
+                                        Detaljer
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </div>
+            </div>
 
-                            <Button
-                                variant="outline"
-                                size="sm"
-                                className="h-8"
-                                onClick={() => setActiveTab('owners')}
-                            >
-                                <Users className="h-4 w-4 mr-2" />
-                                Aktieägare
-                            </Button>
-                        </div>
-                    </div>
+            {/* Bottom Section: Corporate Event Timeline */}
+            <div className="space-y-4">
+                <div className="flex items-center justify-between border-b pb-2">
+                    <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">
+                        Händelsehistorik
+                    </h3>
+                </div>
 
+                <div className="rounded-xl border bg-card overflow-hidden">
                     <TransactionsGrid
                         transactions={filteredTransactions}
                         getTransactionTypeLabel={(type: string) =>
@@ -163,7 +186,7 @@ export function Aktiebok() {
                         }
                     />
                 </div>
-            )}
+            </div>
 
             <TransactionDialog
                 open={showAddDialog}

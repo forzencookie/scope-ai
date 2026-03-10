@@ -33,10 +33,8 @@ export interface PayrollTabConfig {
 }
 
 export const allTabs: PayrollTabConfig[] = [
-    { id: "lonebesked", label: "Lönekörning", color: "bg-green-500", feature: 'lonebesked' },
-    { id: "benefits", label: "Förmåner", color: "bg-purple-500", feature: 'lonebesked' }, // Grouped with payroll/lonebesked feature for now
-    { id: "team", label: "Team & Rapportering", color: "bg-blue-500", feature: null }, // Team tab
-    { id: "delagaruttag", label: "Delägaruttag", color: "bg-indigo-500", feature: 'delagaruttag' },
+    { id: "lonebesked", label: "Löneöversikt", color: "bg-green-500", feature: 'lonebesked' },
+    { id: "team", label: "Team", color: "bg-blue-500", feature: null },
 ]
 
 // Mock data removed. Data is now fetched from API.

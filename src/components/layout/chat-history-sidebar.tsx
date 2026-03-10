@@ -1,8 +1,10 @@
 "use client"
 
-import { useMemo } from "react"
+import { useMemo, useState } from "react"
 import { useChatContext } from "@/providers/chat-provider"
+import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import {
     Plus,
     Search,
@@ -10,10 +12,14 @@ import {
     Settings,
     PanelLeft,
     Receipt,
+    User,
 } from "lucide-react"
+import { UserTeamSwitcher } from "@/components/layout/user-team-switcher"
+import { Box } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Conversation } from "@/lib/chat-types"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { SearchDialog } from "@/components/layout/search-dialog"
 
 function groupConversationsByDate(conversations: Conversation[]) {
     const now = new Date()
@@ -43,12 +49,13 @@ function groupConversationsByDate(conversations: Conversation[]) {
 const activityItems: { id: string; label: string; icon: typeof Receipt; time: string }[] = []
 
 interface ChatHistorySidebarProps {
-    onOpenSettings: () => void
     collapsed: boolean
     onToggleCollapse: () => void
+    onOpenSettings: () => void
 }
 
-export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse }: ChatHistorySidebarProps) {
+export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings }: ChatHistorySidebarProps) {
+    const { user } = useAuth()
     const {
         conversations,
         currentConversationId,
@@ -56,9 +63,21 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
         handleNewConversation,
     } = useChatContext()
 
-    const grouped = useMemo(
-        () => groupConversationsByDate(conversations),
+    const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Användare'
+    const userEmail = user?.email || ''
+    const userAvatar = user?.user_metadata?.avatar_url || ''
+
+    const [searchOpen, setSearchOpen] = useState(false)
+
+    // Filter out incognito conversations from sidebar
+    const visibleConversations = useMemo(
+        () => conversations.filter(c => !c.isIncognito),
         [conversations]
+    )
+
+    const grouped = useMemo(
+        () => groupConversationsByDate(visibleConversations),
+        [visibleConversations]
     )
 
     return (
@@ -97,7 +116,6 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                             >
                                 {/* eslint-disable-next-line @next/next/no-img-element */}
                                 <img src="/scope-ai-logo.svg" alt="Scope" className="h-6 w-6" />
-                                <span className="text-lg font-bold tracking-tight">Scope</span>
                             </button>
                             <Tooltip>
                                 <TooltipTrigger asChild>
@@ -139,6 +157,7 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                                         variant="ghost"
                                         size="icon"
                                         className="h-9 w-9 rounded-lg text-muted-foreground"
+                                        onClick={() => setSearchOpen(true)}
                                     >
                                         <Search className="h-[18px] w-[18px]" />
                                     </Button>
@@ -156,7 +175,8 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                                 <span>Ny chatt</span>
                             </button>
                             <button
-                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                                onClick={() => setSearchOpen(true)}
+                                className="flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:bg-accent dark:hover:bg-accent/50 hover:text-foreground transition-colors"
                             >
                                 <Search className="h-[18px] w-[18px] shrink-0" />
                                 <span>Sök</span>
@@ -170,7 +190,7 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                     {collapsed ? (
                         /* Collapsed: just icons for recent conversations */
                         <div className="flex flex-col items-center gap-1 pt-2">
-                            {conversations.slice(0, 8).map((conv) => (
+                            {visibleConversations.slice(0, 8).map((conv) => (
                                 <Tooltip key={conv.id}>
                                     <TooltipTrigger asChild>
                                         <button
@@ -196,7 +216,7 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                                 <div className="px-3 pb-2 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
                                     Konversationer
                                 </div>
-                                {conversations.length === 0 ? (
+                                {visibleConversations.length === 0 ? (
                                     <div className="px-3 py-3 text-sm text-muted-foreground">
                                         Inga konversationer ännu
                                     </div>
@@ -219,7 +239,6 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                                                                     : "hover:bg-accent/50 text-foreground/80"
                                                             )}
                                                         >
-                                                            <MessageSquare className="h-4 w-4 shrink-0 opacity-50" />
                                                             <span className="truncate">{conv.title}</span>
                                                         </button>
                                                     ))}
@@ -258,35 +277,56 @@ export function ChatHistorySidebar({ onOpenSettings, collapsed, onToggleCollapse
                     )}
                 </div>
 
-                {/* Bottom: Settings */}
-                <div className={cn("px-2 py-3", collapsed && "flex justify-center")}>
+                {/* Bottom: Settings + User */}
+                <div className={cn("px-2 py-3 flex flex-col gap-1", collapsed && "items-center")}>
                     {collapsed ? (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    className="h-9 w-9 rounded-lg text-muted-foreground"
-                                    onClick={onOpenSettings}
-                                >
-                                    <Settings className="h-[18px] w-[18px]" />
-                                </Button>
-                            </TooltipTrigger>
-                            <TooltipContent side="right">Inställningar</TooltipContent>
-                        </Tooltip>
+                        <>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        className="h-9 w-9 rounded-lg text-muted-foreground"
+                                        onClick={onOpenSettings}
+                                    >
+                                        <Settings className="h-[18px] w-[18px]" />
+                                    </Button>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">Inställningar</TooltipContent>
+                            </Tooltip>
+                            <Tooltip>
+                                <TooltipTrigger asChild>
+                                    <div>
+                                        <UserTeamSwitcher
+                                            user={{ name: userName, email: userEmail, avatar: userAvatar }}
+                                            teams={[{ name: 'Mitt Företag', logo: Box }]}
+                                            compact
+                                        />
+                                    </div>
+                                </TooltipTrigger>
+                                <TooltipContent side="right">{userName}</TooltipContent>
+                            </Tooltip>
+                        </>
                     ) : (
-                        <Button
-                            variant="ghost"
-                            size="sm"
-                            className="w-full justify-start gap-2.5 text-muted-foreground text-sm h-10 px-3"
-                            onClick={onOpenSettings}
-                        >
-                            <Settings className="h-[18px] w-[18px]" />
-                            <span>Inställningar</span>
-                        </Button>
+                        <>
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                className="w-full justify-start gap-2.5 text-muted-foreground text-sm h-10 px-3"
+                                onClick={onOpenSettings}
+                            >
+                                <Settings className="h-[18px] w-[18px]" />
+                                <span>Inställningar</span>
+                            </Button>
+                            <UserTeamSwitcher
+                                user={{ name: userName, email: userEmail, avatar: userAvatar }}
+                                teams={[{ name: 'Mitt Företag', logo: Box }]}
+                            />
+                        </>
                     )}
                 </div>
             </div>
+            <SearchDialog open={searchOpen} onOpenChange={setSearchOpen} />
         </TooltipProvider>
     )
 }

@@ -1,6 +1,7 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect, useRef } from "react"
+import { createPortal } from "react-dom"
 import {
     Tooltip,
     TooltipContent,
@@ -30,10 +31,15 @@ export function PageTabsLayout({
     tabs,
     currentTab,
     onTabChange,
-    lastUpdated,
     maxVisibleTabs = 4
 }: PageTabsLayoutProps) {
     const [showAllTabs, setShowAllTabs] = useState(false)
+    const [portalTarget, setPortalTarget] = useState<HTMLElement | null>(null)
+
+    useEffect(() => {
+        const el = document.getElementById("page-tabs-portal")
+        setPortalTarget(el)
+    }, [])
 
     // Helper to render a single tab button
     const renderTabButton = (tab: TabConfig) => {
@@ -67,63 +73,54 @@ export function PageTabsLayout({
         )
     }
 
-    // Determine which tabs to show based on expansion state
-    const _visibleTabs = showAllTabs ? tabs : tabs.slice(0, maxVisibleTabs)
     const hasMoreTabs = tabs.length > maxVisibleTabs
 
-    return (
+    const tabsContent = (
         <TooltipProvider delayDuration={400}>
-            <div className="w-full">
-                <div className="flex items-center gap-1 pt-1 pb-2 mb-4 border-b-2 border-border/60 overflow-x-auto scrollbar-hide">
+            <div className="flex items-center gap-1 overflow-x-auto scrollbar-hide">
+                {tabs.slice(0, maxVisibleTabs).map(renderTabButton)}
 
-                    {/* Render primary tabs */}
-                    {tabs.slice(0, maxVisibleTabs).map(renderTabButton)}
+                {hasMoreTabs && !showAllTabs && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={() => setShowAllTabs(true)}
+                                className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            >
+                                <Plus className="h-4 w-4" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            <p>Visa fler ({tabs.length - maxVisibleTabs})</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
 
-                    {/* Toggle Button for Overflow */}
-                    {hasMoreTabs && !showAllTabs && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => setShowAllTabs(true)}
-                                    className="flex items-center gap-1 px-3 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                >
-                                    <Plus className="h-4 w-4" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                                <p>Visa fler ({tabs.length - maxVisibleTabs})</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
+                {showAllTabs && tabs.slice(maxVisibleTabs).map(renderTabButton)}
 
-                    {/* Render Expanded Tabs */}
-                    {showAllTabs && tabs.slice(maxVisibleTabs).map(renderTabButton)}
-
-                    {/* Collapse Button */}
-                    {showAllTabs && hasMoreTabs && (
-                        <Tooltip>
-                            <TooltipTrigger asChild>
-                                <button
-                                    onClick={() => setShowAllTabs(false)}
-                                    className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
-                                >
-                                    <X className="h-3.5 w-3.5" />
-                                </button>
-                            </TooltipTrigger>
-                            <TooltipContent side="bottom">
-                                <p>Dölj</p>
-                            </TooltipContent>
-                        </Tooltip>
-                    )}
-
-                    {/* Footer / Last Updated - hidden on mobile */}
-                    {lastUpdated && (
-                        <div className="hidden sm:block ml-auto text-xs sm:text-sm text-muted-foreground pl-4 whitespace-nowrap">
-                            {lastUpdated}
-                        </div>
-                    )}
-                </div>
+                {showAllTabs && hasMoreTabs && (
+                    <Tooltip>
+                        <TooltipTrigger asChild>
+                            <button
+                                onClick={() => setShowAllTabs(false)}
+                                className="flex items-center gap-1 px-2 py-1.5 rounded-md text-sm font-medium transition-all text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            >
+                                <X className="h-3.5 w-3.5" />
+                            </button>
+                        </TooltipTrigger>
+                        <TooltipContent side="bottom">
+                            <p>Dölj</p>
+                        </TooltipContent>
+                    </Tooltip>
+                )}
             </div>
         </TooltipProvider>
     )
+
+    // Portal into the header bar if available, otherwise render inline as fallback
+    if (portalTarget) {
+        return createPortal(tabsContent, portalTarget)
+    }
+
+    return tabsContent
 }

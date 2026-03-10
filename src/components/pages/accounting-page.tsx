@@ -16,8 +16,6 @@ import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 import { useFeature } from "@/providers/company-provider"
 import {
     LazyTransactionsTable,
-    LazyReceiptsTable,
-    LazyInventarierTable,
     LazyUnifiedInvoicesView,
 } from "@/components/shared"
 import { VerifikationerTable } from "@/components/bokforing/verifikationer"
@@ -42,23 +40,9 @@ const allTabs = [
         feature: null, // Available to all
     },
     {
-        id: "kvitton",
-        labelEnkel: "Kvitton",
-        labelAvancerad: "Kvitton",
-        color: "bg-amber-500",
-        feature: null, // Available to all
-    },
-    {
-        id: "inventarier",
-        labelEnkel: "Inventarier",
-        labelAvancerad: "Inventarier",
-        color: "bg-indigo-500",
-        feature: null,
-    },
-    {
         id: "verifikationer",
-        labelEnkel: "Verifikationer",
-        labelAvancerad: "Verifikationer",
+        labelEnkel: "Huvudbok",
+        labelAvancerad: "Huvudbok",
         color: "bg-emerald-500",
         feature: 'verifikationer' as const,
     },
@@ -161,17 +145,11 @@ function AccountingPageContent() {
     return (
         <TooltipProvider>
             <div className="flex flex-col min-h-svh">
-                {/* Tab Content */}
-                <div className="px-4 md:px-6 pt-6">
-                    <PageTabsLayout
-                        tabs={tabs}
-                        currentTab={currentTab}
-                        onTabChange={setCurrentTab}
-                        lastUpdated={
-                            <span>Senaste uppdaterad: {lastRefresh.toLocaleTimeString('sv-SE', { hour: '2-digit', minute: '2-digit' })}</span>
-                        }
-                    />
-                </div>
+                <PageTabsLayout
+                    tabs={tabs}
+                    currentTab={currentTab}
+                    onTabChange={setCurrentTab}
+                />
 
                 <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
                     <div className="space-y-6">
@@ -200,14 +178,6 @@ function AccountingPageContent() {
                         {currentTab === "fakturor" && (
                             <LazyUnifiedInvoicesView />
                         )}
-                        {currentTab === "kvitton" && (
-                            <LazyReceiptsTable />
-                        )}
-
-                        {currentTab === "inventarier" && (
-                            <LazyInventarierTable />
-                        )}
-
                         {currentTab === "verifikationer" && (
                             <VerifikationerTable />
                         )}

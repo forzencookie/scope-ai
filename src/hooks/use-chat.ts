@@ -14,6 +14,8 @@ import type { MentionItem } from '@/components/ai/mention-popover'
 interface UseChatOptions {
     /** Initial conversation ID to load */
     initialConversationId?: string
+    /** Skip persistence when true */
+    isIncognito?: boolean
 }
 
 interface SendMessageOptions {
@@ -65,6 +67,7 @@ export function useChat(options: UseChatOptions = {}) {
         setConversations,
         currentConversationId,
         setCurrentConversationId,
+        isIncognito: options.isIncognito,
     })
 
     return {

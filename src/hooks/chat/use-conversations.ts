@@ -94,13 +94,23 @@ export function useConversations() {
 
     // Start new conversation
     const startNewConversation = useCallback(() => {
-        // Extract memories from the conversation we're leaving
+        // Extract memories from the conversation we're leaving (skip incognito)
         if (currentConversationId) {
-            extractMemories(currentConversationId)
+            const current = queryClient.getQueryData<Conversation[]>(conversationsQueryKey)
+            const conv = current?.find(c => c.id === currentConversationId)
+            if (conv && !conv.isIncognito) {
+                extractMemories(currentConversationId)
+            }
+            // Remove incognito conversations from cache when leaving
+            if (conv?.isIncognito) {
+                queryClient.setQueryData<Conversation[]>(conversationsQueryKey, (old = []) =>
+                    old.filter(c => c.id !== currentConversationId)
+                )
+            }
         }
         setCurrentConversationId(null)
         window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [currentConversationId, extractMemories])
+    }, [currentConversationId, extractMemories, queryClient])
 
     // Load a conversation (fetches messages if not already loaded)
     const loadConversation = useCallback(async (conversationId: string) => {
