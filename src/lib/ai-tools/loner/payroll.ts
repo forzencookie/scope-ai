@@ -244,9 +244,28 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 }
             }
 
-            // Calculate vacation accrual suggestion (Semesterlagen 12%)
+            // === CASCADE: Auto-create vacation pay accrual (Semesterlagen 12%) ===
             const vacationAccrual = Math.round(totalGross * 0.12)
-            const vacationNote = `\n\nSemesterlöneskuld på ${vacationAccrual.toLocaleString('sv-SE')} kr (12% av bruttolön) bör bokföras. Vill du att jag gör det?`
+            let vacationNote = ''
+            if (vacationAccrual > 0) {
+                try {
+                    const { verificationService } = await import('@/services/verification-service')
+                    const accrualDate = new Date().toISOString().split('T')[0]
+                    await verificationService.createVerification({
+                        date: accrualDate,
+                        description: `Semesterlöneskuld ${params.period} (12% av bruttolön)`,
+                        entries: [
+                            { account: '7090', debit: vacationAccrual, credit: 0, description: 'Förändring semesterlöneskuld' },
+                            { account: '2920', debit: 0, credit: vacationAccrual, description: 'Upplupna semesterlöner' },
+                        ],
+                        sourceType: 'payroll_vacation_accrual',
+                    })
+                    vacationNote = `\n\n✅ Semesterlöneskuld bokförd: ${vacationAccrual.toLocaleString('sv-SE')} kr (7090 ↔ 2920).`
+                } catch (accrualError) {
+                    console.error('[Payroll] Vacation accrual cascade failed:', accrualError)
+                    vacationNote = `\n\nSemesterlöneskuld på ${vacationAccrual.toLocaleString('sv-SE')} kr (12% av bruttolön) bör bokföras. Vill du att jag gör det?`
+                }
+            }
 
             return {
                 success: errors.length === 0,

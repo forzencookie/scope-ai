@@ -240,10 +240,31 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
                     pricePerShare: params.pricePerShare,
                 })
 
+                // === CASCADE: Create GL entry when shares have a price ===
+                let glMessage = ''
+                if (totalValue && totalValue > 0) {
+                    try {
+                        const { verificationService } = await import('@/services/verification-service')
+                        await verificationService.createVerification({
+                            date: transferDate,
+                            description: `Aktieöverlåtelse: ${params.sharesCount} ${params.shareClass}-aktier, ${result.from.name} → ${result.to.name}`,
+                            entries: [
+                                { account: '1310', debit: totalValue, credit: 0, description: 'Andelar i koncernföretag' },
+                                { account: '1930', debit: 0, credit: totalValue, description: 'Företagskonto / bank' },
+                            ],
+                            sourceType: 'share_transfer',
+                        })
+                        glMessage = ` Verifikation skapad: ${totalValue.toLocaleString('sv-SE')} kr (1310 ↔ 1930).`
+                    } catch (glError) {
+                        console.error('[ShareTransfer] GL cascade failed:', glError)
+                        glMessage = ' ⚠️ Verifikation kunde inte skapas automatiskt — bokför manuellt.'
+                    }
+                }
+
                 return {
                     success: true,
                     data: result,
-                    message: `Aktieöverlåtelse genomförd. ${result.sharesTransferred} ${result.shareClass}-aktier överlåtna från ${result.from.name} till ${result.to.name}.`,
+                    message: `Aktieöverlåtelse genomförd. ${result.sharesTransferred} ${result.shareClass}-aktier överlåtna från ${result.from.name} till ${result.to.name}.${glMessage}`,
                     navigation: {
                         route: '/dashboard/agare?tab=aktiebok',
                         label: 'Visa aktiebok',
