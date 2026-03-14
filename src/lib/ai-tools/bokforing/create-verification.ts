@@ -15,6 +15,7 @@ export const createVerificationTool: AITool = {
     description: "Proposes a new manual journal entry (verification). Use this when user wants to book something manually. Requires balanced debit/credit rows.",
     requiresConfirmation: true,
     category: 'write',
+    coreTool: true,
     domain: 'bokforing',
     keywords: ['verifikation', 'bokföring', 'kontering', 'debet', 'kredit'],
     parameters: {

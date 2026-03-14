@@ -31,6 +31,7 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
     description: 'Hämta banktransaktioner för ett datumintervall. Använd för att visa kontoutdrag, hitta specifika betalningar, analysera utgifter, eller förbereda avstämning mot bokföring. Vanliga frågor: "visa mina transaktioner", "vad har jag köpt", "kontoutdrag januari".',
     category: 'read',
     requiresConfirmation: false,
+    coreTool: true,
     domain: 'bokforing',
     keywords: ['transaktion', 'kontoutdrag', 'betalning', 'bank'],
     parameters: {

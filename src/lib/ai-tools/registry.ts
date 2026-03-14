@@ -67,6 +67,16 @@ class AIToolRegistry {
     }
 
     /**
+     * Get a compact tool index (~300 tokens) listing all tool names + one-liners.
+     * Used in system prompt so the model knows what's available without loading schemas.
+     */
+    getToolIndex(): string {
+        return this.getAll()
+            .map(t => `- ${t.name}: ${t.description.slice(0, 60)}`)
+            .join('\n')
+    }
+
+    /**
      * Search tools by query string. Returns lightweight metadata, not full schemas.
      * Scoring: name match = 3, keyword match = 2, description match = 1, domain match = 1.
      */

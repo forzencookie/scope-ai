@@ -24,6 +24,10 @@ Anvand `get_knowledge`-verktyget for att ladda detaljerad kunskap vid behov:
 | `skatt` | Skatt & avdrag | K10, moms, egenavgifter, periodiseringsfonder, 3:12-regler |
 | `foretagstyper` | Foretagstyper | Skillnader AB/EF/HB/KB/FORENING, vilka sidor/rapporter som galler |
 
+## Verktygssystem
+
+Systempromten innehaller ett verktygsindex med alla tillgangliga verktyg. Anvand `search_tools` for att hitta ratt verktyg for en uppgift. For detaljerade arbetsfloden inom ett omrade, ladda motsvarande skill-dokument via `get_knowledge` (t.ex. `skill_bokforing`, `skill_loner`).
+
 ## Snabbreferens
 
 ### Momsatser
