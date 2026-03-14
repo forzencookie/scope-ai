@@ -13,6 +13,7 @@ import {
     PanelLeft,
     Receipt,
     User,
+    Trash2,
 } from "lucide-react"
 import { UserTeamSwitcher } from "@/components/layout/user-team-switcher"
 import { Box } from "lucide-react"
@@ -61,6 +62,7 @@ export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings
         currentConversationId,
         loadConversation,
         handleNewConversation,
+        deleteConversation,
     } = useChatContext()
 
     const userName = user?.user_metadata?.full_name || user?.email?.split('@')[0] || 'Användare'
@@ -79,6 +81,11 @@ export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings
         () => groupConversationsByDate(visibleConversations),
         [visibleConversations]
     )
+
+    const handleDelete = (e: React.MouseEvent, id: string) => {
+        e.stopPropagation()
+        deleteConversation(id)
+    }
 
     return (
         <TooltipProvider delayDuration={0}>
@@ -229,18 +236,29 @@ export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings
                                                 </div>
                                                 <div className="flex flex-col gap-0.5">
                                                     {group.convs.map((conv) => (
-                                                        <button
+                                                        <div
                                                             key={conv.id}
-                                                            onClick={() => loadConversation(conv.id)}
                                                             className={cn(
-                                                                "flex items-center gap-2.5 px-3 py-2 text-sm rounded-lg text-left transition-colors w-full",
+                                                                "group flex items-center justify-between gap-2.5 px-3 py-2 text-sm rounded-lg transition-colors w-full cursor-pointer",
                                                                 conv.id === currentConversationId
                                                                     ? "bg-accent text-accent-foreground font-medium"
                                                                     : "hover:bg-accent/50 text-foreground/80"
                                                             )}
+                                                            onClick={() => loadConversation(conv.id)}
                                                         >
-                                                            <span className="truncate">{conv.title}</span>
-                                                        </button>
+                                                            <span className="truncate flex-1">{conv.title}</span>
+                                                            <button
+                                                                onClick={(e) => handleDelete(e, conv.id)}
+                                                                className={cn(
+                                                                    "shrink-0 p-1 rounded-md opacity-0 group-hover:opacity-100 transition-opacity hover:bg-destructive/10 hover:text-destructive",
+                                                                    // Show icon immediately if it's the active conversation to make it clear you can delete it
+                                                                    conv.id === currentConversationId && "opacity-50 hover:opacity-100"
+                                                                )}
+                                                                title="Radera chatt"
+                                                            >
+                                                                <Trash2 className="h-3.5 w-3.5" />
+                                                            </button>
+                                                        </div>
                                                     ))}
                                                 </div>
                                             </div>

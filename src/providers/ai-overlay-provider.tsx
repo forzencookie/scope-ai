@@ -105,6 +105,12 @@ interface AIDialogContextType {
     closeWalkthrough: () => void
     /** Whether the AI is thinking in the background while a walkthrough is displayed */
     isThinkingInBackground: boolean
+    /** Whether the side panel is pinned (prevents auto-close) */
+    isPinned: boolean
+    /** Toggle the pin state of the side panel */
+    togglePin: () => void
+    /** Whether the side panel should be visible (has content to show) */
+    isSidePanelOpen: boolean
 }
 
 const AIDialogContext = createContext<AIDialogContextType | null>(null)
@@ -135,6 +141,10 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
     const [walkthroughContent, setWalkthroughContent] = useState<WalkthroughContent | null>(null)
     const [walkthroughBlocks, setWalkthroughBlocks] = useState<WalkthroughResponse | null>(null)
     const [isThinkingInBackground, setIsThinkingInBackground] = useState(false)
+    const [isPinned, setIsPinned] = useState(false)
+
+    // Side panel is open when there's walkthrough content or complete output to display
+    const isSidePanelOpen = status === "walkthrough" || status === "walkthrough-blocks" || status === "complete" || status === "thinking"
 
     // Helper to determine scene type from content type
     const getSceneType = useCallback((contentType?: string): SceneType => {
@@ -269,7 +279,12 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
         setWalkthroughContent(null)
         setWalkthroughBlocks(null)
         setIsThinkingInBackground(false)
+        setIsPinned(false)
     }, [walkthroughBlocks])
+
+    const togglePin = useCallback(() => {
+        setIsPinned(prev => !prev)
+    }, [])
 
     const accept = useCallback(() => {
         // Set highlight if provided
@@ -324,7 +339,10 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
         walkthroughBlocks,
         closeWalkthrough,
         isThinkingInBackground,
-    }), [status, output, isMobile, sceneType, showThinking, showComplete, hide, accept, requestEdit, highlightedId, clearHighlight, walkthroughContent, walkthroughBlocks, closeWalkthrough, isThinkingInBackground])
+        isPinned,
+        togglePin,
+        isSidePanelOpen,
+    }), [status, output, isMobile, sceneType, showThinking, showComplete, hide, accept, requestEdit, highlightedId, clearHighlight, walkthroughContent, walkthroughBlocks, closeWalkthrough, isThinkingInBackground, isPinned, togglePin, isSidePanelOpen])
 
     return (
         <AIDialogContext.Provider value={value}>

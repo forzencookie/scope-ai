@@ -1,4 +1,20 @@
 import { formatCurrency, cn } from "@/lib/utils"
+import { z } from "zod"
+
+export const GenericListItemSchema = z.object({
+    primary: z.string(),
+    secondary: z.string().optional(),
+    value: z.union([z.string(), z.number()]).optional()
+})
+
+export const GenericListSchema = z.object({
+    title: z.string().optional(),
+    icon: z.string().optional(),
+    items: z.array(GenericListItemSchema).optional(),
+    className: z.string().optional()
+}).catchall(z.unknown())
+
+export type GenericListProps = z.infer<typeof GenericListSchema>
 
 export interface GenericListCardProps {
     title: string
@@ -36,25 +52,24 @@ export function GenericListCard({ title, items }: GenericListCardProps) {
 }
 
 // Smart wrapper that finds array data in props
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function SmartListCard(props: any) {
-    const { title, className, ...rest } = props
+export function SmartListCard(props: GenericListProps) {
+    const { title, className, items: propsItems, icon, ...rest } = props
     
     // If items are already provided in the correct format
-    if (props.items && Array.isArray(props.items)) {
-        return <GenericListCard title={title || "Lista"} items={props.items} />
+    if (propsItems && Array.isArray(propsItems)) {
+        return <GenericListCard title={title || "Lista"} items={propsItems} />
     }
 
     // Otherwise try to find an array in the props
     const dataArray = Object.values(rest).find(v => Array.isArray(v)) as unknown[] | undefined
 
     if (dataArray && dataArray.length > 0) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const items = dataArray.slice(0, 5).map((item: any) => {
+        const items = dataArray.slice(0, 5).map((item: unknown) => {
+            const record = item as Record<string, unknown>
             return {
-                primary: String(item.description || item.vendor || item.name || item.customer || item.title || ""),
-                secondary: String(item.date || item.period || item.dueDate || ""),
-                value: (item.amount || item.value || item.total) as number | undefined,
+                primary: String(record.description || record.vendor || record.name || record.customer || record.title || ""),
+                secondary: String(record.date || record.period || record.dueDate || ""),
+                value: (record.amount || record.value || record.total) as number | undefined,
             }
         })
         return <GenericListCard title={title || "Lista"} items={items} />

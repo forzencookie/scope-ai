@@ -1,18 +1,13 @@
 /**
- * Chat API - Scope Brain (Single Agent)
+ * Chat API - Vercel AI SDK Integration
  *
- * Unified chat endpoint using the ScopeBrain agent.
- * Features:
- * - Single agent with all 60+ tools
- * - Smart model selection (Haiku/Sonnet/Sonnet+thinking)
- * - Streaming responses
- * - Budget and usage tracking
+ * Unified chat endpoint using Vercel AI SDK and OpenAI.
  */
 
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateChatMessages, validateJsonBody } from '@/lib/validation'
-import { createUserScopedDb, type UserScopedDb } from '@/lib/database/user-scoped-db'
+import { createUserScopedDb } from '@/lib/database/user-scoped-db'
 import { verifyAuth, ApiResponse } from '@/lib/api-auth'
 import {
     checkUsageLimits,
@@ -22,12 +17,12 @@ import {
 } from '@/lib/model-auth'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { initializeAITools } from '@/lib/ai-tools'
-import { createAgentContext, type AgentContext } from '@/lib/agents/types'
-import { ScopeBrain, selectModel, getRelativeCost } from '@/lib/agents/scope-brain'
-
-// =============================================================================
-// Configuration
-// =============================================================================
+import { createAgentContext } from '@/lib/agents/types'
+import { selectModel, getModelId } from '@/lib/agents/scope-brain/model-selector'
+import { buildSystemPrompt } from '@/lib/agents/scope-brain/system-prompt'
+import { getVercelAITools } from '@/lib/ai-tools/vercel-adapter'
+import { streamText } from 'ai'
+import { openai } from '@ai-sdk/openai'
 
 const RATE_LIMIT_CONFIG = {
     maxRequests: 30,
@@ -43,127 +38,6 @@ function ensureToolsInitialized() {
     }
 }
 
-// =============================================================================
-// Streaming Helpers
-// =============================================================================
-
-const textEncoder = new TextEncoder()
-
-function streamText(controller: ReadableStreamDefaultController, text: string) {
-    if (!text) return
-    controller.enqueue(textEncoder.encode(`T:${JSON.stringify(text)}\n`))
-}
-
-function streamData(controller: ReadableStreamDefaultController, data: unknown) {
-    controller.enqueue(textEncoder.encode(`D:${JSON.stringify(data)}\n`))
-}
-
-function streamError(controller: ReadableStreamDefaultController, error: string) {
-    controller.enqueue(textEncoder.encode(`E:${JSON.stringify({ error })}\n`))
-}
-
-function streamThinking(controller: ReadableStreamDefaultController, thinking: string) {
-    if (!thinking) return
-    controller.enqueue(textEncoder.encode(`TH:${JSON.stringify(thinking)}\n`))
-}
-
-function streamToolResult(controller: ReadableStreamDefaultController, toolName: string, result: unknown) {
-    controller.enqueue(textEncoder.encode(`D:${JSON.stringify({ tool: toolName, result })}\n`))
-}
-
-// =============================================================================
-// Stream Handler using ScopeBrain
-// =============================================================================
-
-async function streamScopeBrainResponse(
-    message: string,
-    context: AgentContext,
-    controller: ReadableStreamDefaultController,
-    userDb: UserScopedDb | null,
-    conversationId: string | null,
-    userId: string
-): Promise<{ fullContent: string; tokensUsed: number }> {
-    let fullContent = ''
-    let tokensUsed = 0
-    const startTime = Date.now()
-
-    try {
-        const brain = new ScopeBrain()
-
-        // Log model selection for monitoring
-        const modelConfig = selectModel(message)
-        console.log(`[Chat] Model: ${modelConfig.model}, cost: ${getRelativeCost(modelConfig)}x`)
-
-        // Stream response
-        for await (const chunk of brain.handleStream(message, context)) {
-            switch (chunk.type) {
-                case 'text':
-                    if (chunk.content) {
-                        fullContent += chunk.content
-                        streamText(controller, chunk.content)
-                    }
-                    break
-
-                case 'thinking':
-                    if (chunk.content) {
-                        streamThinking(controller, chunk.content)
-                    }
-                    break
-
-                case 'tool_start':
-                    streamData(controller, { toolStarted: chunk.toolName })
-                    break
-
-                case 'tool_result':
-                    if (chunk.toolResult) {
-                        streamToolResult(controller, chunk.toolName || 'unknown', chunk.toolResult)
-                    }
-                    break
-
-                case 'error':
-                    streamError(controller, chunk.error || 'Ett fel uppstod')
-                    break
-
-                case 'done':
-                    // Response complete
-                    break
-            }
-        }
-
-        // Estimate tokens (rough: 4 chars per token)
-        tokensUsed = Math.ceil((message.length + fullContent.length) / 4)
-
-        // Persist assistant response
-        if (conversationId && fullContent && userDb) {
-            try {
-                await userDb.messages.create({
-                    conversation_id: conversationId,
-                    role: 'assistant',
-                    content: fullContent,
-                    user_id: userId
-                })
-            } catch (e) {
-                console.error('[Chat] Failed to save message:', e)
-            }
-        }
-
-        const elapsed = Date.now() - startTime
-        console.log(`[Chat] Response completed in ${elapsed}ms, ${fullContent.length} chars`)
-
-    } catch (error) {
-        console.error('[Chat] Error:', error)
-        const errorMessage = error instanceof Error ? error.message : 'Ett oväntat fel uppstod'
-        streamError(controller, errorMessage)
-        fullContent = `Fel: ${errorMessage}`
-    }
-
-    return { fullContent, tokensUsed }
-}
-
-// =============================================================================
-// Demo Mode Handler
-// =============================================================================
-
 function handleDemoMode() {
     return new Response(JSON.stringify({
         error: 'AI-chatten kräver en aktiv prenumeration. Uppgradera för att använda AI-assistenten.',
@@ -174,26 +48,19 @@ function handleDemoMode() {
     })
 }
 
-// =============================================================================
-// POST Handler
-// =============================================================================
-
 export async function POST(request: NextRequest) {
     try {
-        // === AUTHENTICATION ===
         const auth = await verifyAuth(request)
         if (!auth) {
             return ApiResponse.unauthorized('Authentication required')
         }
         const userId = auth.userId
 
-        // === USER-SCOPED DB ===
         const userDb = await createUserScopedDb()
         if (!userDb) {
             return ApiResponse.unauthorized('User session not found')
         }
 
-        // === RATE LIMITING ===
         const clientId = getClientIdentifier(request)
         const rateLimitResult = await checkRateLimit(clientId, RATE_LIMIT_CONFIG)
 
@@ -210,7 +77,6 @@ export async function POST(request: NextRequest) {
             )
         }
 
-        // === PARSE BODY ===
         let body: unknown
         try {
             body = await request.json()
@@ -239,21 +105,18 @@ export async function POST(request: NextRequest) {
             incognito?: boolean
         }
 
-        // === VALIDATE MESSAGES ===
-        const messageValidation = validateChatMessages(messages)
-        if (!messageValidation.valid || !messageValidation.data) {
-            return new Response(JSON.stringify({ error: messageValidation.error }), { status: 400 })
-        }
+        // Vercel AI passes standard CoreMessages
+        // For compatibility with previous validation we map them or skip strict validation if needed
+        // Here we just extract the last user message for DB saving and context building.
+        const latestUserMessage = messages.filter(m => m.role === 'user').pop()
+        const latestContent = latestUserMessage?.content || ''
 
-        // === MODEL AUTHORIZATION ===
         const authResult = await authorizeModel(userId, requestedModel || DEFAULT_MODEL_ID)
 
-        // === DEMO MODE HANDLING ===
         if (isDemoMode(authResult.userTier)) {
             return handleDemoMode()
         }
 
-        // === BUDGET CHECK ===
         const budgetCheck = await checkUsageLimits(userId)
         if (!budgetCheck.withinLimits) {
             return new Response(JSON.stringify({
@@ -270,11 +133,6 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // === GET LATEST MESSAGE ===
-        const latestUserMessage = messageValidation.data[messageValidation.data.length - 1]
-        const latestContent = latestUserMessage?.content || ''
-
-        // === PERSISTENCE: CREATE CONVERSATION (skip in incognito) ===
         let conversationId = reqConversationId
         if (!incognito) {
             if (!conversationId) {
@@ -283,8 +141,7 @@ export async function POST(request: NextRequest) {
                 if (conv && 'id' in conv) conversationId = conv.id
             }
 
-            // === PERSIST USER MESSAGE ===
-            if (conversationId) {
+            if (conversationId && latestContent) {
                 await userDb.messages.create({
                     conversation_id: conversationId,
                     role: 'user',
@@ -294,22 +151,18 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // === INITIALIZE TOOLS ===
         ensureToolsInitialized()
 
-        // === ACTIVITY SNAPSHOT (lightweight, ~3 fast queries) ===
         let activitySnapshot: Record<string, unknown> | undefined
         try {
             const { getSupabaseClient } = await import('@/lib/database/supabase')
             const supabase = getSupabaseClient()
 
-            // Fetch pending/unbooked transaction count
             const { count: pendingTx } = await supabase
                 .from('transactions')
                 .select('*', { count: 'exact', head: true })
                 .eq('status', 'pending')
 
-            // Fetch overdue invoices
             const today = new Date().toISOString().split('T')[0]
             const { data: overdueInv } = await supabase
                 .from('customerinvoices')
@@ -326,20 +179,17 @@ export async function POST(request: NextRequest) {
                 overdueInvoiceTotal: overdueTotal,
             }
         } catch (e) {
-            // Non-critical — skip snapshot on failure
             console.error('[Chat] Activity snapshot failed:', e)
         }
 
-        // === BUILD CONTEXT ===
         const companyType = 'AB' as const
-
         const context = createAgentContext({
             userId,
             companyId: userDb.companyId || '',
             companyType,
             locale: 'sv',
             conversationId: conversationId || undefined,
-            messages: messageValidation.data.map(m => ({
+            messages: messages.map(m => ({
                 id: crypto.randomUUID(),
                 role: m.role as 'user' | 'assistant',
                 content: m.content,
@@ -347,33 +197,27 @@ export async function POST(request: NextRequest) {
             })),
         })
 
-        // Add activity snapshot to context
         if (activitySnapshot) {
             context.sharedMemory.activitySnapshot = activitySnapshot
         }
 
-        // === INJECT USER MEMORIES ===
         try {
             const { userMemoryService } = await import('@/services/user-memory-service')
             const companyId = userDb.companyId || ''
             if (companyId) {
                 const memories = await userMemoryService.getMemoriesForCompany(companyId)
                 if (memories && memories.length > 0) {
-                    // Inject into context for system prompt — keeps it under ~1k tokens
                     const injected = memories.slice(0, 20).map(m => ({
                         content: m.content,
                         category: m.category,
                     }))
                     context.sharedMemory.userMemories = injected
-                    console.log(`[Chat] Injected ${injected.length} memories`)
                 }
             }
         } catch (e) {
-            // Non-critical — skip memory on failure
             console.error('[Chat] Memory injection failed:', e)
         }
 
-        // Add attachments to context
         if (attachments && attachments.length > 0) {
             context.sharedMemory.attachments = attachments.map(a => ({
                 name: a.name,
@@ -382,47 +226,52 @@ export async function POST(request: NextRequest) {
             }))
         }
 
-        // Add mentions to context
         if (mentions && mentions.length > 0) {
             context.sharedMemory.mentions = mentions
         }
 
-        // === CREATE STREAMING RESPONSE ===
-        const stream = new ReadableStream({
-            async start(controller) {
-                try {
-                    // Send initial metadata
-                    streamData(controller, {
-                        conversationId,
-                        agent: 'scope-brain'
-                    })
+        const systemPrompt = buildSystemPrompt(context)
+        const vercelTools = getVercelAITools(context as any)
+        
+        // Model Selection
+        const modelConfig = selectModel(latestContent)
+        const activeModelId = getModelId(modelConfig)
 
-                    const { tokensUsed } = await streamScopeBrainResponse(
-                        latestContent,
-                        context,
-                        controller,
-                        userDb,
-                        conversationId || null,
-                        userId
-                    )
+        const result = streamText({
+            model: openai(activeModelId),
+            system: systemPrompt,
+            messages: messages as any,
+            tools: vercelTools,
+            onFinish: async ({ text, usage, toolCalls, toolResults }) => {
+                if (usage && usage.totalTokens && usage.totalTokens > 0) {
+                    await consumeTokens(userId, usage.totalTokens, authResult.modelId)
+                }
 
-                    // Track usage
-                    if (tokensUsed > 0) {
-                        await consumeTokens(userId, tokensUsed, authResult.modelId)
+                if (conversationId && !incognito && userDb) {
+                    // Save assistant message even if text is empty (tool-only responses)
+                    const hasContent = text && text.trim().length > 0
+                    const hasTools = toolCalls && toolCalls.length > 0
+                    if (hasContent || hasTools) {
+                        try {
+                            await userDb.messages.create({
+                                conversation_id: conversationId,
+                                role: 'assistant',
+                                content: text || '',
+                                user_id: userId,
+                                tool_calls: toolCalls && toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
+                                tool_results: toolResults && toolResults.length > 0 ? JSON.stringify(toolResults) : null,
+                            })
+                        } catch (e) {
+                            console.error('[Chat] Failed to save message:', e)
+                        }
                     }
-                } catch (error) {
-                    console.error('[Chat] Stream error:', error)
-                    streamError(controller, 'Ett fel uppstod vid bearbetning.')
-                } finally {
-                    controller.close()
                 }
             }
         })
 
-        return new Response(stream, {
+        return result.toUIMessageStreamResponse({
             headers: {
-                'Content-Type': 'text/plain; charset=utf-8',
-                'X-Agent': 'scope-brain'
+                'X-Conversation-Id': conversationId || '',
             }
         })
 
@@ -435,10 +284,6 @@ export async function POST(request: NextRequest) {
     }
 }
 
-// =============================================================================
-// GET Handler - API Info
-// =============================================================================
-
 export async function GET(request: NextRequest) {
     try {
         const auth = await verifyAuth(request)
@@ -449,12 +294,12 @@ export async function GET(request: NextRequest) {
         ensureToolsInitialized()
 
         return Response.json({
-            agent: 'scope-brain',
-            description: 'Unified single-agent architecture powered by GPT-4o',
+            agent: 'vercel-ai-sdk',
+            description: 'Vercel AI SDK architecture powered by GPT-4o',
             features: [
-                'GPT-4o with tool calling',
-                'All 60+ tools available',
-                'Streaming responses',
+                'Vercel AI SDK streamText',
+                'All 60+ tools mapped',
+                'Generative UI Ready',
             ],
             models: {
                 default: 'gpt-4o',

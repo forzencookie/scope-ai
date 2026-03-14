@@ -15,7 +15,6 @@ export { ICON_MAP } from "./constants"
 
 // Dialogs
 export { BookingDialog, type BookingData } from "./dialogs/bokforing"
-export { InvoiceCreateDialog } from "./dialogs/faktura"
 export { SupplierInvoiceDialog } from "./dialogs/leverantor"
 export { UnderlagDialog } from "./dialogs/underlag"
 export { TinkPaymentDialog } from "./dialogs/betalning"

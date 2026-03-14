@@ -84,7 +84,7 @@ export type MessageDisplay =
     | {
         type: 'InlineCard'
         data: {
-            cardType: 'invoice' | 'transaction' | 'verification' | 'payroll' | 'report'
+            cardType: string
             data: Record<string, unknown>
         }
     }
@@ -92,7 +92,7 @@ export type MessageDisplay =
         type: 'InlineCards'
         data: {
             cards: Array<{
-                cardType: 'invoice' | 'transaction' | 'verification' | 'payroll' | 'report'
+                cardType: string
                 data: Record<string, unknown>
             }>
         }
@@ -125,6 +125,14 @@ export interface Message {
     toolResults?: Array<{
         toolName: string
         result: unknown
+    }>
+    /** Tool names currently being executed (for loading states) */
+    pendingTools?: string[]
+    /** Raw tool calls from DB (for reconstructing UIMessage parts on load) */
+    toolCalls?: Array<{
+        toolCallId: string
+        toolName: string
+        args: Record<string, unknown>
     }>
 }
 

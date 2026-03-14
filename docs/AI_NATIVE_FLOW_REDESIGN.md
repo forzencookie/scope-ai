@@ -1,7 +1,12 @@
 # AI-Native Flow Redesign — Launch Readiness Plan
 
+> **SUPERSEDED** — This document has been superseded by `AI_DREAM_STATE.md`.
+> Key changes implemented: full-screen `AIOverlay` replaced by `AISidePanel` (side panel next to chat),
+> duplicate dialogs removed (faktura, payslip wizards), chat-first workflow adopted.
+> Kept for historical context only.
+
 **Date:** 2026-03-09
-**Status:** Draft — Founder Review Required
+**Status:** Superseded (2026-03-13)
 
 ---
 
@@ -552,11 +557,11 @@ Five phases. Each phase is independently shippable — users get value at every 
 >
 > **Scooby Memory:** Memory infrastructure already existed (`userMemoryService`, `query_memories` + `add_memory` tools, `extract-memories` API). Only gap was injection — added 20 lines to `src/app/api/chat/route.ts` to fetch memories from `userMemoryService.getMemoriesForCompany()` and inject into `context.sharedMemory.userMemories`. The existing `formatUserMemory()` in `scope-brain/system-prompt.ts` already renders them into the prompt.
 
-- [ ] Convert `AIOverlay` from floating modal to persistent side panel (alongside chat, like Claude artifacts)
-- [ ] Side panel: persists while chatting, supports "Ändra..." edits, can be pinned or dismissed
+- [x] Convert `AIOverlay` from floating modal to persistent side panel (alongside chat, like Claude artifacts)
+- [x] Side panel: persists while chatting, supports "Ändra..." edits, can be pinned or dismissed
 - [x] Replace wizard dialogs with command buttons → chat: `MomsWizardDialog`, `K10WizardDialog`, `InkomstWizardDialog`, `ArsredovisningWizardDialog`, `NewWithdrawalDialog`, `RegisterDividendDialog` *(deleted 2026-03-10, replaced with navigateToAI())*
-- [ ] Replace `PayslipCreateDialog` and `InvoiceCreateDialog` with command buttons → chat
-- [ ] Add `returnTo` in `PageContext` so users navigate back after AI action with item highlighted
+- [x] Replace `PayslipCreateDialog` and `InvoiceCreateDialog` with command buttons → chat
+- [x] Add `returnTo` in `PageContext` so users navigate back after AI action with item highlighted
 - [x] Keep simple dialogs (≤3 fields): `NewTransactionDialog`, inline actions (mark paid, categorize), `VerifikationDetailsDialog` *(already kept, no changes needed)*
 - [x] Build `QuickActionsMenu` component — ⚡ button + `/` trigger in chat input, searchable dropdown *(built 2026-03-10)*
 - [x] Create `quick-actions.ts` config with ~20 actions, filtered by company type + feature flags *(22 actions, 5 categories)*
@@ -1775,7 +1780,7 @@ Currently, the app relies on passing arrays of messages manually and uses a rudi
 ### 22.2 The Target Architecture
 To reach true production readiness and simplify maintenance, we must adopt industry-standard SDKs that handle memory and streaming natively.
 
-1. **OpenAI Assistants API (Node SDK):**
+1. **OpenAI Assistants API (Discarded for Vercel Native):**
    - **Threads:** Replace manual message arrays. A `Thread` is created once per user session and its ID is saved in Supabase. All future messages are appended to this thread.
    - **Native Memory:** OpenAI automatically manages context persistence and truncation within the thread. The "Scooby markdown memory" requirement can be heavily simplified or entirely replaced by the Assistant's native instruction updates and thread history.
    - **Built-in Tools:** Utilize native tools like `File Search` (for RAG over receipts/documents) and `Code Interpreter` (for generating financial charts/CSVs) instead of building custom vector databases or sandboxes.
@@ -1787,7 +1792,32 @@ To reach true production readiness and simplify maintenance, we must adopt indus
 ### 22.3 Implementation Steps
 1. Add `ai` and `@ai-sdk/openai` to `package.json`.
 2. Update `/api/chat/route.ts` to use Vercel AI SDK's `streamText` or Assistants API integration.
-3. Update `Supabase` schema to store `openai_thread_id` per user/company.
+3. Retain Supabase `messages` table for custom memory control (Option A selected).
 4. Refactor `ChatProvider` to utilize `useChat` from the Vercel AI SDK.
 5. Map existing custom tools (e.g., `create_invoice`, `run_payroll`) to Vercel AI SDK's `tool` definitions, allowing them to return the new Inline Result Cards directly.
+
+## 23. Dialogs to Overlays Migration & Dead Code Cleanup
+
+### 23.1 The Plan
+The app has been significantly simplified to essentially two modes: "AI mode" and "Sidebar". When generating an action, a spinning mode overlay pops up, followed by the actual walkthrough.
+Given this streamlined flow, traditional modal dialogs are largely an outdated UI paradigm for Scope AI. 
+
+**Goal:** Convert any remaining traditional data-entry or confirmation dialogs into Overlays/Walkthroughs that seamlessly integrate with the AI workflow.
+- **Why:** It provides a better, more unified UI. Forms and dialogs interrupt the conversational interface. By moving them into the overlay/side-panel paradigm, the user stays within the AI flow.
+
+### 23.2 Identifying Dead Pages and Dialogs
+Since we reduced the app to fewer pages, many old dialogs and corresponding logic are now orphaned but still exist in the codebase.
+- **Action 1:** Document the exact pages we had before the redesign vs. the pages we have now.
+- **Action 2:** Use `git log` and `git diff` to understand the original purpose of those old pages.
+- **Action 3:** Cross-reference this with unused components and unimported code (using ESLint or TypeScript tools) to definitively safely delete them.
+
+## 24. Engineering Standards & Code Quality
+
+### 24.1 Strictly No "Cheap Fixes" or `as any`
+To maintain a robust, production-ready codebase, the following rule is strictly enforced for all AI agents and developers:
+
+**DO NOT poison the codebase with `as any` or cheap, hacky code fixes.**
+- Production-ready code **does not** use `as any` to bypass TypeScript compiler errors. This is technical debt and hides structural problems.
+- If an implementation hits an architectural depth issue (such as an incompatible type change from a major SDK migration), **do not force a build using `any`**.
+- **Rule:** Stop and discuss it with the project owner. You are not allowed to violate the integrity of the codebase just to "finish a task". Always generate or implement the actual correct TypeScript types.
 

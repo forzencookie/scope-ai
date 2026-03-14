@@ -25,7 +25,9 @@ function mapConversation(conv: any): Conversation {
             role: m.role as 'user' | 'assistant',
             content: m.content || '',
             mentions: m.metadata?.mentions || [],
-            attachments: m.metadata?.attachments || []
+            attachments: m.metadata?.attachments || [],
+            toolCalls: m.tool_calls ? (typeof m.tool_calls === 'string' ? JSON.parse(m.tool_calls) : m.tool_calls) : undefined,
+            toolResults: m.tool_results ? (typeof m.tool_results === 'string' ? JSON.parse(m.tool_results) : m.tool_results) : undefined,
         })),
         createdAt: new Date(conv.created_at).getTime(),
         updatedAt: new Date(conv.updated_at || conv.created_at).getTime()

@@ -1,21 +1,40 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { z } from "zod"
 import { generateVATSru } from "@/lib/generators/sru-generator"
 import { downloadTextFile } from "./utils"
 import { useCompany } from "@/providers/company-provider"
 
 const VATFormPreview = dynamic(() => import("../previews/forms/vat-form-preview").then(m => ({ default: m.VATFormPreview })), { ssr: false })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function VATReportCard(props: any) {
+export const VATDeclarationDataSchema = z.object({
+    period: z.string(),
+    deadline: z.string().optional(),
+    sales25: z.number().optional(),
+    vat25: z.number().optional(),
+    sales12: z.number().optional(),
+    vat12: z.number().optional(),
+    sales6: z.number().optional(),
+    vat6: z.number().optional(),
+    netVAT: z.number().optional()
+})
+
+export const VATReportSchema = z.object({
+    data: VATDeclarationDataSchema,
+    className: z.string().optional()
+})
+
+export type VATReportProps = z.infer<typeof VATReportSchema>
+
+export function VATReportCard(props: VATReportProps) {
     const { company } = useCompany()
 
     return (
         <VATFormPreview
             {...props}
             actions={{
-                onExportXML: () => {
+                onExport: () => {
                     const sru = generateVATSru({
                         orgNumber: company?.orgNumber || "",
                         period: props.data?.period || "2024",

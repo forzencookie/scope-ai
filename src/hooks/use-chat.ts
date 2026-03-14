@@ -2,40 +2,47 @@
 
 /**
  * useChat - Custom hook for chat state and logic
- * Handles conversations, messages, streaming, and persistence
- * 
- * This is a composed hook that combines smaller focused hooks.
+ * Powered by Vercel AI SDK
  */
 
-import { useMemo } from 'react'
-import { useConversations, useSendMessage } from './chat'
+import { useMemo, useEffect, useCallback } from 'react'
+import { useChat as useVercelChat } from '@ai-sdk/react'
+import { DefaultChatTransport, type UIMessage, type UIDataTypes, type UITools, type UIMessagePart } from 'ai'
+import { useConversations } from './chat/use-conversations'
+import { useModel } from '@/providers/model-provider'
 import type { MentionItem } from '@/components/ai/mention-popover'
+import type { Message as AppMessage, Conversation } from '@/lib/chat-types'
+import { fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
+
+/** Derive card type from tool name for proper inline card rendering */
+function deriveCardType(toolName: string): string {
+    const name = toolName.toLowerCase()
+    if (name.includes('invoice') || name.includes('faktura')) return 'invoice'
+    if (name.includes('transaction') || name.includes('transaktion')) return 'transaction'
+    if (name.includes('verification') || name.includes('verifikation') || name.includes('bokför')) return 'verification'
+    if (name.includes('payroll') || name.includes('lön') || name.includes('payslip')) return 'payroll'
+    if (name.includes('vat') || name.includes('moms')) return 'vat'
+    if (name.includes('dividend') || name.includes('utdelning')) return 'dividend'
+    if (name.includes('receipt') || name.includes('kvitto')) return 'receipt'
+    return 'report'
+}
 
 interface UseChatOptions {
-    /** Initial conversation ID to load */
     initialConversationId?: string
-    /** Skip persistence when true */
     isIncognito?: boolean
 }
 
-interface SendMessageOptions {
-    /** Text content to send */
+export interface SendMessageOptions {
     content: string
-    /** Files to attach */
     files?: File[]
-    /** Mentions to include */
     mentions?: MentionItem[]
-    /** ID of message to retry */
     retryMessageId?: string
-    /** ID of confirmation to respond to */
     confirmationId?: string
-    /** Optional action trigger context */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actionTrigger?: any
+    actionTrigger?: unknown
 }
 
 export function useChat(options: UseChatOptions = {}) {
-    // Conversation management
+    const { modelId } = useModel()
     const {
         conversations,
         setConversations,
@@ -45,49 +52,228 @@ export function useChat(options: UseChatOptions = {}) {
         startNewConversation,
         loadConversation,
         deleteConversation,
-        deleteMessage,
+        deleteMessage: deleteConversationMessage,
     } = useConversations()
 
-    // Set initial conversation ID if provided
-    // Note: This is handled in useConversations, but we could enhance it here
-
-    // Derived state
-    const messages = useMemo(() =>
-        currentConversation?.messages || [],
-        [currentConversation]
-    )
-
-    // Message sending
+    // Initialize Vercel's useChat
     const {
-        isLoading,
-        sendMessage,
-        regenerateResponse,
-    } = useSendMessage({
-        conversations,
-        setConversations,
-        currentConversationId,
-        setCurrentConversationId,
-        isIncognito: options.isIncognito,
+        messages: vercelMessages,
+        sendMessage: append,
+        regenerate: reload,
+        status,
+        setMessages: setVercelMessages,
+    } = useVercelChat({
+        id: currentConversationId || 'new',
+        transport: new DefaultChatTransport({
+            api: '/api/chat',
+            body: {
+                conversationId: currentConversationId,
+                model: modelId,
+                incognito: options.isIncognito,
+            },
+        }),
+        onError: (error) => {
+            console.error('[useChat] Stream error:', error)
+            window.dispatchEvent(new CustomEvent('ai-dialog-error', {
+                detail: {
+                    message: 'Något gick fel med AI-assistenten. Försök igen.',
+                    error: error instanceof Error ? error.message : String(error),
+                }
+            }))
+        },
+        onFinish: ({ message }) => {
+            // Trigger completions if necessary based on tool calls
+            const toolInvocations = message.parts
+                ?.filter(p => p.type === 'tool-invocation')
+                .map(p => 'toolInvocation' in p ? (p.toolInvocation as { toolName: string, state: string, result?: unknown }) : undefined)
+                .filter((t): t is NonNullable<typeof t> => Boolean(t)) || []
+
+            if (toolInvocations && toolInvocations.length > 0) {
+                const firstTool = toolInvocations[0]
+                const result = firstTool?.result as Record<string, unknown> | undefined
+
+                if (result) {
+                    const walkthrough = result.walkthrough || (result.data as Record<string, unknown>)?.walkthrough
+                    
+                    if (walkthrough) {
+                        // Open the side panel with the walkthrough
+                        window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough-blocks', {
+                            detail: walkthrough
+                        }))
+                    } else if (result.confirmationRequired) {
+                        const confirmationRequired = result.confirmationRequired as Record<string, unknown>
+                        // Open the side panel for confirmation
+                        window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
+                            detail: {
+                                contentType: 'action',
+                                title: confirmationRequired.title || 'Bekräftelse krävs',
+                                content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
+                                confirmationRequired: result.confirmationRequired,
+                                data: result.data
+                            }
+                        }))
+                    } else if (result.display && typeof result.display === 'object' && 'fullViewRoute' in result.display) {
+                        const display = result.display as Record<string, unknown>
+                        // Fallback for tools that still return legacy display instructions 
+                        // that warrant opening the side panel (e.g. they specify a fullViewRoute or similar)
+                        window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
+                            detail: {
+                                contentType: 'document',
+                                title: display.title || 'Resultat',
+                                content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
+                                display: result.display,
+                                data: result.data
+                            }
+                        }))
+                    }
+                    // If none of the above, it's an inline card or text, no side panel is opened.
+                }
+            }
+        }
     })
 
+    const isLoading = status === 'submitted' || status === 'streaming'
+
+    // Sync Vercel messages when conversation changes
+    useEffect(() => {
+        if (currentConversation && currentConversation.messages) {
+            // Convert AppMessages to Vercel UIMessages, reconstructing tool-invocation parts
+            const mapped = currentConversation.messages.map(m => {
+                const parts: UIMessagePart<UIDataTypes, UITools>[] = []
+
+                // Add text part if there's content
+                if (m.content) {
+                    parts.push({ type: 'text' as const, text: m.content })
+                }
+
+                // Reconstruct tool-invocation parts from stored tool data
+                if (m.toolResults && m.toolResults.length > 0) {
+                    for (const tr of m.toolResults) {
+                        // Find matching toolCall for args
+                        const matchingCall = m.toolCalls?.find(tc => tc.toolName === tr.toolName)
+                        parts.push({
+                            type: 'tool-invocation' as const,
+                            toolInvocation: {
+                                toolCallId: matchingCall?.toolCallId || crypto.randomUUID(),
+                                toolName: tr.toolName,
+                                args: matchingCall?.args || {},
+                                state: 'result' as const,
+                                result: tr.result,
+                            }
+                        })
+                    }
+                }
+
+                // If no parts at all, add empty text
+                if (parts.length === 0) {
+                    parts.push({ type: 'text' as const, text: '' })
+                }
+
+                return {
+                    id: m.id,
+                    role: m.role,
+                    parts,
+                }
+            })
+
+            // Only set if we haven't already synced this conversation
+            if (vercelMessages.length === 0 && mapped.length > 0) {
+                setVercelMessages(mapped)
+            }
+        } else if (!currentConversationId) {
+            setVercelMessages([])
+        }
+    }, [currentConversationId, currentConversation, setVercelMessages]) // removed vercelMessages.length from deps
+
+    // Map Vercel messages to App messages for UI
+    const mappedMessages: AppMessage[] = useMemo(() => {
+        return vercelMessages.map(vm => {
+            const textPart = vm.parts?.find(p => p.type === 'text') as { text: string } | undefined
+            const content = textPart?.text || ''
+            
+            const toolInvocations = vm.parts
+                ?.filter(p => p.type === 'tool-invocation')
+                .map(p => 'toolInvocation' in p ? (p.toolInvocation as { toolName: string, state: string, result?: unknown }) : undefined)
+                .filter((t): t is NonNullable<typeof t> => Boolean(t)) || []
+
+            const appMsg: AppMessage = {
+                id: vm.id,
+                role: vm.role as 'user' | 'assistant',
+                content: content,
+            }
+
+            // Map Vercel tool invocations to App message displays
+            if (toolInvocations && toolInvocations.length > 0) {
+                appMsg.toolResults = toolInvocations.map(t => ({
+                    toolName: t.toolName,
+                    result: t.state === 'result' ? t.result : undefined
+                }))
+
+                // Determine if we should show inline cards based on the tool result
+                const completed = toolInvocations.filter(t => t.state === 'result')
+                if (completed.length > 0) {
+                    appMsg.display = {
+                        type: 'InlineCards',
+                        data: {
+                            cards: completed.map(t => ({
+                                cardType: deriveCardType(t.toolName),
+                                data: t.result as Record<string, unknown>
+                            }))
+                        }
+                    }
+                }
+
+                // Track pending tool calls for loading states
+                const pending = toolInvocations.filter(t => t.state !== 'result')
+                if (pending.length > 0) {
+                    appMsg.pendingTools = pending.map(t => t.toolName)
+                }
+            }
+
+            return appMsg
+        })
+    }, [vercelMessages])
+
+    const sendMessage = useCallback(async (opts: SendMessageOptions) => {
+        let conversationId = currentConversationId
+
+        if (!conversationId) {
+            conversationId = crypto.randomUUID()
+            setCurrentConversationId(conversationId)
+        }
+
+        const attachments = opts.files ? await Promise.all(opts.files.map(fileToBase64)) : undefined
+
+        await append({
+            role: 'user',
+            parts: [{ type: 'text', text: opts.content }],
+            // Pass attachments/mentions in the options
+            // Note: In a full app, we'd map attachments to Vercel's experimental_attachments
+        }, {
+            body: {
+                conversationId,
+                attachments,
+                mentions: opts.mentions,
+            }
+        })
+    }, [append, currentConversationId, setCurrentConversationId])
+
+    const regenerateResponse = useCallback(() => {
+        reload()
+    }, [reload])
+
     return {
-        // State
         conversations,
         currentConversationId,
         currentConversation,
-        messages,
+        messages: mappedMessages,
         isLoading,
-
-        // Actions
         sendMessage,
         regenerateResponse,
         startNewConversation,
         loadConversation,
         deleteConversation,
-        deleteMessage,
+        deleteMessage: deleteConversationMessage,
         setCurrentConversationId,
     }
 }
-
-// Re-export types for convenience
-export type { SendMessageOptions }

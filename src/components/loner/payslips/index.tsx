@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, type BulkAction } from "@/components/shared"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 import { usePayslipsLogic } from "./use-payslips-logic"
 import { PayslipsStats } from "./payslips-stats"
@@ -21,10 +22,10 @@ import { PayslipsTable } from "./payslips-table"
 
 // Dialogs
 import { PayslipDetailsDialog } from "../dialogs/spec"
-import { PayslipCreateDialog } from "../dialogs/create-payslip"
 
 export const LonesbeskContent = memo(function LonesbeskContent() {
     const toast = useToast()
+    const { navigateToAI } = useChatNavigation()
 
     const {
         // State
@@ -41,8 +42,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         // Dialog Control
         viewDialogOpen,
         setViewDialogOpen,
-        showAIDialog,
-        setShowAIDialog,
 
         // Derived Data
         stats,
@@ -51,7 +50,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         handleRowClick,
         toggleSelection,
         toggleAll,
-        handlePayslipCreated,
         handleDelete,
         clearSelection
     } = usePayslipsLogic()
@@ -99,7 +97,7 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
     ]
 
     const actionButton = (
-        <Button onClick={() => setShowAIDialog(true)} size="lg" className="w-full sm:w-auto">
+        <Button onClick={() => navigateToAI({ prompt: "Kör lönerna" })} size="lg" className="w-full sm:w-auto">
             <Plus className="h-4 w-4 mr-2" />
             Ny lönekörning
         </Button>
@@ -116,13 +114,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
             />
 
             {/* Dialogs */}
-            <PayslipCreateDialog
-                open={showAIDialog}
-                onOpenChange={setShowAIDialog}
-                onPayslipCreated={handlePayslipCreated}
-                currentPeriod={stats.currentPeriod}
-            />
-
             <PayslipDetailsDialog
                 payslip={selectedPayslip}
                 open={viewDialogOpen}
@@ -200,7 +191,7 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
                     onToggleAll={toggleAll}
                     onToggleSelection={toggleSelection}
                     onRowClick={handleRowClick}
-                    onAddPayslip={() => setShowAIDialog(true)}
+                    onAddPayslip={() => navigateToAI({ prompt: "Kör lönerna" })}
                 />
             </div>
 

@@ -3,7 +3,9 @@
  * 
  * Note: This file mocks the Supabase client to test the hook in isolation
  */
-import { renderHook, act, waitFor } from '@testing-library/react'
+import { renderHook, act } from '@testing-library/react'
+// @ts-expect-error - waitFor might not be in types
+import { waitFor } from '@testing-library/react'
 import { useAuth } from '../use-auth'
 
 // Mock the supabase-auth module

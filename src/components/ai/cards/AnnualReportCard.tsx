@@ -1,14 +1,46 @@
 "use client"
 
 import dynamic from "next/dynamic"
+import { z } from "zod"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 import { generateXBRL } from "@/lib/generators/xbrl-generator"
 import { downloadTextFile } from "./utils"
 
 const AnnualReportPreview = dynamic(() => import("../previews/documents/annual-report-preview").then(m => ({ default: m.AnnualReportPreview })), { ssr: false })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function AnnualReportCard(props: any) {
+export const AnnualReportSectionSchema = z.object({
+    managementReport: z.boolean(),
+    incomeStatement: z.boolean(),
+    balanceSheet: z.boolean(),
+    notes: z.boolean(),
+    signatures: z.boolean()
+})
+
+export const AnnualReportKeyFigureSchema = z.object({
+    label: z.string(),
+    currentYear: z.union([z.string(), z.number()]),
+    previousYear: z.union([z.string(), z.number()])
+})
+
+export const AnnualReportDataSchema = z.object({
+    companyName: z.string(),
+    orgNumber: z.string(),
+    period: z.string(),
+    fiscalYearStart: z.string(),
+    fiscalYearEnd: z.string(),
+    status: z.enum(["draft", "signed", "submitted"]).default("draft"),
+    sections: AnnualReportSectionSchema,
+    keyFigures: z.array(AnnualReportKeyFigureSchema)
+})
+
+export const AnnualReportSchema = z.object({
+    data: AnnualReportDataSchema,
+    className: z.string().optional()
+})
+
+export type AnnualReportProps = z.infer<typeof AnnualReportSchema>
+
+export function AnnualReportCard(props: AnnualReportProps) {
     return (
         <AnnualReportPreview
             {...props}

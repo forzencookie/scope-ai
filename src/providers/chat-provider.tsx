@@ -8,6 +8,7 @@ import { useModel } from "@/providers/model-provider"
 import type { MentionItem } from "@/components/ai/mention-popover"
 import type { Conversation } from "@/lib/chat-types"
 import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
+import type { ActionTriggerDisplay } from "@/components/ai/action-trigger-chip"
 
 interface ChatContextValue {
     conversations: Conversation[]
@@ -27,8 +28,13 @@ interface ChatContextValue {
     setMentionItems: (v: MentionItem[]) => void
     attachedFiles: File[]
     setAttachedFiles: (v: File[]) => void
+    actionTrigger: ActionTriggerDisplay | null
+    setActionTrigger: (v: ActionTriggerDisplay | null) => void
     isInputFocused: boolean
     setIsInputFocused: (v: boolean) => void
+    // Navigation state
+    returnTo: string | null
+    setReturnTo: (v: string | null) => void
     // Credits
     showBuyCredits: boolean
     setShowBuyCredits: (v: boolean) => void
@@ -70,8 +76,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const [textareaValue, setTextareaValue] = useState("")
     const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
     const [attachedFiles, setAttachedFiles] = useState<File[]>([])
+    const [actionTrigger, setActionTrigger] = useState<ActionTriggerDisplay | null>(null)
     const [isInputFocused, setIsInputFocused] = useState(false)
     const [showBuyCredits, setShowBuyCredits] = useState(false)
+    const [returnTo, setReturnTo] = useState<string | null>(null)
 
     const toggleIncognito = useCallback(() => {
         setIsIncognito(prev => !prev)
@@ -80,6 +88,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setTextareaValue("")
         setMentionItems([])
         setAttachedFiles([])
+        setActionTrigger(null)
     }, [startNewConversation])
 
     const handleSend = useCallback(() => {
@@ -88,17 +97,24 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             return
         }
 
-        const content = textareaValue
         const files = [...attachedFiles]
         const mentions = [...mentionItems]
+        const trigger = actionTrigger
+
+        let finalContent = textareaValue
+        if (trigger && trigger.meta && typeof trigger.meta === 'string') {
+             // If the trigger has a hidden prompt in meta, prepend it
+             finalContent = `${trigger.meta} ${textareaValue}`.trim()
+        }
 
         setTextareaValue("")
         setAttachedFiles([])
         setMentionItems([])
+        setActionTrigger(null)
 
-        sendMessage({ content, files, mentions })
+        sendMessage({ content: finalContent, files, mentions, actionTrigger: trigger || undefined })
         setTimeout(() => refreshUsage(), 2000)
-    }, [textareaValue, attachedFiles, mentionItems, sendMessage, isPaid, canAfford, modelId, refreshUsage])
+    }, [textareaValue, attachedFiles, mentionItems, actionTrigger, sendMessage, isPaid, canAfford, modelId, refreshUsage])
 
     const handleCancelConfirmation = useCallback((messageId: string) => {
         deleteMessage(messageId)
@@ -109,6 +125,8 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setTextareaValue("")
         setMentionItems([])
         setAttachedFiles([])
+        setActionTrigger(null)
+        setReturnTo(null)
     }, [startNewConversation])
 
     // Handle incoming AI context
@@ -116,11 +134,25 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     useEffect(() => {
         handleAIContextRef.current = (context: PageContext) => {
             startNewConversation()
+            if (context.returnTo) {
+                setReturnTo(context.returnTo)
+            }
+            if (context.actionTrigger) {
+                // Determine icon mapping if it's just a string, though PageContext ActionTrigger is typed differently
+                setActionTrigger({
+                    type: 'action-trigger',
+                    icon: context.actionTrigger.icon,
+                    title: context.actionTrigger.title,
+                    subtitle: context.actionTrigger.subtitle,
+                    meta: context.actionTrigger.meta
+                })
+            }
             if (context.autoSend) {
                 sendMessage({
                     content: context.initialPrompt,
-                    actionTrigger: context.actionTrigger
+                    actionTrigger: context.actionTrigger ? { ...context.actionTrigger } : undefined
                 })
+                setActionTrigger(null) // clear it since it was sent
             } else {
                 setTextareaValue(context.initialPrompt)
             }
@@ -211,8 +243,12 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             setMentionItems,
             attachedFiles,
             setAttachedFiles,
+            actionTrigger,
+            setActionTrigger,
             isInputFocused,
             setIsInputFocused,
+            returnTo,
+            setReturnTo,
             showBuyCredits,
             setShowBuyCredits,
             handleSend,

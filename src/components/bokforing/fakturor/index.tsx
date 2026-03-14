@@ -25,11 +25,11 @@ import {
 
 // Child Components
 import { KanbanBoard, KanbanColumn } from "@/components/shared/kanban"
-import { InvoiceCreateDialog } from "../dialogs/faktura"
 import { SupplierInvoiceDialog } from "../dialogs/leverantor"
 import { InvoicesEmptyState } from "./components/InvoicesEmptyState"
 import { InvoicesStats } from "./components/invoices-stats"
 import { InvoiceCard } from "./components/InvoiceCard"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 // Constants & Types
 import { UNIFIED_COLUMNS, CUSTOMER_COLUMNS, SUPPLIER_COLUMNS } from "./constants"
@@ -41,6 +41,7 @@ import { useCompany } from "@/providers/company-provider"
 import { generateInvoicePDF, type InvoicePDFCompanyInfo } from "@/lib/generators/pdf-generator"
 
 export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
+    const { navigateToAI } = useChatNavigation()
     const {
         // State
         viewFilter, setViewFilter,
@@ -149,7 +150,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                         key={column.id}
                         title={column.title}
                         count={columnInvoices.length}
-                        onAddNew={column.id === "draft" ? () => setCustomerDialogOpen(true) : undefined}
+                        onAddNew={column.id === "draft" ? () => navigateToAI({ prompt: "Skapa en ny kundfaktura" }) : undefined}
                     >
                         {columnInvoices.map(renderCard)}
                     </KanbanColumn>
@@ -195,7 +196,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
-                        <DropdownMenuItem onClick={() => setCustomerDialogOpen(true)}>
+                        <DropdownMenuItem onClick={() => navigateToAI({ prompt: "Skapa en ny kundfaktura" })}>
                             <ArrowDownLeft className="h-4 w-4 mr-2 text-green-600" />
                             Kundfaktura (inkommande)
                         </DropdownMenuItem>
@@ -299,12 +300,6 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                 )}
 
             {/* Dialogs */}
-            <InvoiceCreateDialog
-                open={customerDialogOpen}
-                onOpenChange={setCustomerDialogOpen}
-                onInvoiceCreated={handleInvoiceCreated}
-                existingInvoiceCount={customerInvoices.length}
-            />
             <SupplierInvoiceDialog
                 open={supplierDialogOpen}
                 onOpenChange={setSupplierDialogOpen}

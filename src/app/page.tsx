@@ -85,19 +85,23 @@ function WaitlistForm() {
     }
 
     return (
-        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-3 w-full mt-4">
+        <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row gap-2 w-full mt-2">
             <input 
                 type="email" 
                 placeholder="Din e-postadress..." 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="flex-1 px-5 py-4 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 transition-colors"
+                className="flex-1 px-5 py-3.5 bg-white/5 border border-white/10 rounded-xl text-white placeholder:text-white/40 focus:outline-none focus:border-white/30 focus:bg-white/10 transition-colors text-[15px]"
             />
             <button 
                 type="submit" 
-                disabled={loading}
-                className="px-8 py-4 bg-[#f5f5f5] text-black rounded-xl hover:bg-white transition-all font-medium text-[15px] hover:scale-[1.02] active:scale-[0.98] disabled:opacity-70 disabled:hover:scale-100 flex items-center justify-center min-w-[140px]"
+                disabled={loading || !email}
+                className={`px-6 py-3.5 rounded-xl font-medium transition-all text-[15px] flex items-center justify-center min-w-[160px] ${
+                    !email 
+                        ? 'bg-white/10 text-white/40 cursor-not-allowed' 
+                        : 'bg-[#f5f5f5] text-black hover:bg-white hover:scale-[1.02] active:scale-[0.98]'
+                }`}
             >
                 {loading ? "Skickar..." : "Gå med i väntelistan"}
             </button>
@@ -106,6 +110,14 @@ function WaitlistForm() {
 }
 
 export default function LandingPage() {
+    const [isPreLaunch, setIsPreLaunch] = useState(false)
+    const [mounted, setMounted] = useState(false)
+
+    useEffect(() => {
+        setMounted(true)
+        setIsPreLaunch(process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true')
+    }, [])
+
     return (
         <TextModeProvider>
             <div
@@ -168,22 +180,28 @@ export default function LandingPage() {
                     </section>
 
                     {/* Section 4: Priser / Waitlist */}
-                    {process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true' ? (
-                        <section className="flex flex-col items-center justify-center min-h-[70vh] px-4 w-full">
-                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
+                    {mounted && (
+                        isPreLaunch ? (
+                        <section className="flex flex-col items-center justify-center min-h-[70vh] px-4 w-full mt-24 md:mt-0">
+                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-8 md:mb-12 leading-tight">
                                 Få tidig åtkomst
                             </h2>
-                            <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">
+                            <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[540px]">
                                 <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
-                                    <div className="rounded-[1.6rem] bg-black/30 p-10 md:p-12 flex flex-col items-center text-center">
-                                        <p className="text-lg md:text-xl text-white/70 mb-4 max-w-md font-medium tracking-tight">
-                                            Vi befinner oss i en stängd beta. Anmäl dig till väntelistan för att bli inbjuden först.
-                                        </p>
+                                    <div className="rounded-[1.6rem] bg-black/30 p-8 md:p-10 flex flex-col items-center text-center">
+                                        <div className="mb-6 space-y-1">
+                                            <p className="text-base md:text-lg text-white/90 font-medium tracking-tight">
+                                                Få exklusiv tillgång före alla andra.
+                                            </p>
+                                            <p className="text-sm md:text-base text-white/60">
+                                                Skriv upp dig på väntelistan och bli först att uppleva framtidens bokföring.
+                                            </p>
+                                        </div>
                                         
                                         <WaitlistForm />
                                         
-                                        <p className="text-white/40 text-sm mt-6">
-                                            Eller <Link href="/logga-in" className="text-white hover:underline transition-colors">skapa ett konto</Link> för att spara dina uppgifter i förväg.
+                                        <p className="text-white/40 text-sm mt-8">
+                                            Eller <Link href="/logga-in" className="text-white hover:underline transition-colors">skapa ett konto</Link> för att spara dina uppgifter.
                                         </p>
                                     </div>
                                 </div>
@@ -315,7 +333,7 @@ export default function LandingPage() {
 
                             </div>
                         </section>
-                    )}
+                    ))}
 
                     {/* Section 5: Footer */}
                     <section className="min-h-screen flex flex-col justify-end w-full px-8 pb-0 pt-32 overflow-hidden">

@@ -88,24 +88,25 @@ const STATUS_CONFIG = {
 interface WalkthroughOverlayProps {
     content: WalkthroughContent
     onClose: () => void
+    embedded?: boolean
 }
 
-export function WalkthroughOverlay({ content, onClose }: WalkthroughOverlayProps) {
+export function WalkthroughOverlay({ content, onClose, embedded }: WalkthroughOverlayProps) {
     // Detect style: if any section has a `status` field, use audit-style
     const isAuditStyle = content.sections.some(s => s.status != null) && !content.result
 
     if (isAuditStyle) {
-        return <AuditWalkthrough content={content} onClose={onClose} />
+        return <AuditWalkthrough content={content} onClose={onClose} embedded={embedded} />
     }
 
-    return <DocumentWalkthrough content={content} onClose={onClose} />
+    return <DocumentWalkthrough content={content} onClose={onClose} embedded={embedded} />
 }
 
 // =============================================================================
 // Audit-style walkthrough (balanskontroll)
 // =============================================================================
 
-function AuditWalkthrough({ content, onClose }: WalkthroughOverlayProps) {
+function AuditWalkthrough({ content, onClose, embedded }: WalkthroughOverlayProps) {
     const passCount = content.sections.filter(s => s.status === "pass").length
     const total = content.sections.length
 
@@ -114,20 +115,27 @@ function AuditWalkthrough({ content, onClose }: WalkthroughOverlayProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 overflow-y-auto bg-background"
+            className={cn(
+                embedded ? "w-full overflow-y-auto bg-background" : "absolute inset-0 z-50 overflow-y-auto bg-background"
+            )}
         >
-            <button
-                onClick={onClose}
-                className="fixed top-4 right-4 z-10 rounded-md p-2 hover:bg-muted transition-colors"
-            >
-                <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+            {!embedded && (
+                <button
+                    onClick={onClose}
+                    className="fixed top-4 right-4 z-10 rounded-md p-2 hover:bg-muted transition-colors"
+                >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+            )}
 
             <motion.article
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
-                className="mx-auto max-w-3xl px-6 py-12 font-sans"
+                className={cn(
+                    "mx-auto max-w-3xl font-sans",
+                    embedded ? "px-5 py-6" : "px-6 py-12"
+                )}
             >
                 <header className="mb-6">
                     <h1 className="text-2xl font-semibold tracking-tight">{content.title}</h1>
@@ -209,7 +217,7 @@ function AuditWalkthrough({ content, onClose }: WalkthroughOverlayProps) {
 // Document-style walkthrough (momsdeklaration, financial reports)
 // =============================================================================
 
-function DocumentWalkthrough({ content, onClose }: WalkthroughOverlayProps) {
+function DocumentWalkthrough({ content, onClose, embedded }: WalkthroughOverlayProps) {
     const [isApproved, setIsApproved] = useState(false)
 
     const handleApprove = () => {
@@ -222,20 +230,27 @@ function DocumentWalkthrough({ content, onClose }: WalkthroughOverlayProps) {
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="absolute inset-0 z-50 flex items-center justify-center bg-background"
+            className={cn(
+                embedded ? "w-full flex items-start justify-center bg-background" : "absolute inset-0 z-50 flex items-center justify-center bg-background"
+            )}
         >
-            <button
-                onClick={onClose}
-                className="absolute top-4 right-4 z-10 rounded-md p-2 hover:bg-muted transition-colors"
-            >
-                <X className="h-4 w-4 text-muted-foreground" />
-            </button>
+            {!embedded && (
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 z-10 rounded-md p-2 hover:bg-muted transition-colors"
+                >
+                    <X className="h-4 w-4 text-muted-foreground" />
+                </button>
+            )}
 
             <motion.article
                 initial={{ opacity: 0, y: 12 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: 0.05 }}
-                className="w-full max-w-3xl max-h-[85vh] overflow-y-auto px-6"
+                className={cn(
+                    "w-full max-w-3xl max-h-[85vh] overflow-y-auto",
+                    embedded ? "px-5 py-6" : "px-6"
+                )}
             >
                 <header className="mb-6">
                     <h1 className="text-2xl font-bold tracking-tight">{content.title}</h1>

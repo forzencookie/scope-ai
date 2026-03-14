@@ -201,8 +201,22 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                     </div>
                 )}
 
+                {/* Pending tool calls — show loading while tools execute */}
+                {message.pendingTools && message.pendingTools.length > 0 && (
+                    <div className="w-full">
+                        <AiProcessingState
+                            className="py-2 items-start"
+                            messages={[
+                                "Kör verktyg...",
+                                "Hämtar data...",
+                                "Bearbetar...",
+                            ]}
+                        />
+                    </div>
+                )}
+
                 {/* Typing Indicator / Processing State */}
-                {isLoading && isLast && !message.content && !message.display && !message.confirmationRequired && (
+                {isLoading && isLast && !message.content && !message.display && !message.confirmationRequired && !message.pendingTools?.length && (
                     <div className="w-full">
                         <AiProcessingState
                             className="py-2 items-start"

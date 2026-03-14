@@ -83,6 +83,7 @@ interface WalkthroughRendererProps {
   isThinking?: boolean
   onBlockEdit?: (blockIndex: number, blockType: string) => void
   className?: string
+  embedded?: boolean
 }
 
 function extractLabel(block: BlockProps): string {
@@ -93,28 +94,36 @@ function extractLabel(block: BlockProps): string {
   return block.type
 }
 
-export function WalkthroughRenderer({ response, onClose, isThinking, onBlockEdit, className }: WalkthroughRendererProps) {
+export function WalkthroughRenderer({ response, onClose, isThinking, onBlockEdit, className, embedded }: WalkthroughRendererProps) {
   return (
     <motion.div
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className={cn("absolute inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-sm", className)}
+      className={cn(
+        embedded ? "w-full" : "absolute inset-0 z-50 overflow-y-auto bg-background/95 backdrop-blur-sm",
+        className
+      )}
     >
       {/* Close button */}
-      <button
-        onClick={onClose}
-        className="fixed top-4 right-4 z-10 rounded-md p-2 hover:bg-muted transition-colors"
-      >
-        <X className="h-4 w-4 text-muted-foreground" />
-      </button>
+      {!embedded && (
+        <button
+          onClick={onClose}
+          className="fixed top-4 right-4 z-10 rounded-md p-2 hover:bg-muted transition-colors"
+        >
+          <X className="h-4 w-4 text-muted-foreground" />
+        </button>
+      )}
 
       {/* Document body */}
       <motion.article
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.05 }}
-        className="mx-auto max-w-3xl px-6 py-12"
+        className={cn(
+          "mx-auto max-w-3xl",
+          embedded ? "px-5 py-6" : "px-6 py-12"
+        )}
       >
         {/* Title */}
         <header className="mb-6">

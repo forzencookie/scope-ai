@@ -22,6 +22,7 @@ import {
 import Link from "next/link"
 import { QuickActionsMenu } from "@/components/ai/quick-actions-menu"
 import type { QuickAction } from "@/lib/ai/quick-actions"
+import type { ActionTriggerDisplay } from "@/components/ai/action-trigger-chip"
 
 interface ChatInputProps {
     /** Current textarea value */
@@ -40,6 +41,10 @@ interface ChatInputProps {
     mentions: MentionItem[]
     /** Called when mentions change */
     onMentionsChange: (mentions: MentionItem[]) => void
+    /** Optional action trigger */
+    actionTrigger?: ActionTriggerDisplay | null
+    /** Called when action trigger changes */
+    onActionTriggerChange?: (trigger: ActionTriggerDisplay | null) => void
     /** Called when a file preview should be shown */
     onPreviewFile?: (file: { url: string; name: string }) => void
     /** Whether to show navigation links below input */
@@ -61,6 +66,8 @@ export function ChatInput({
     onFilesChange,
     mentions,
     onMentionsChange,
+    actionTrigger,
+    onActionTriggerChange,
     onPreviewFile,
     showNavLinks = true,
     onFocus,
@@ -181,11 +188,20 @@ export function ChatInput({
         const newValue = e.target.value
         onChange(newValue)
 
-        // Track "/" search query while QuickActions is open
-        if (isQuickActionsOpen) {
-            // The value might start with "/" from the trigger — strip it for search
-            const raw = newValue.startsWith("/") ? newValue.slice(1) : newValue
-            setQuickActionSearch(raw)
+        if (newValue.startsWith("/")) {
+            if (!isQuickActionsOpen) {
+                setIsQuickActionsOpen(true)
+            }
+            setQuickActionSearch(newValue.slice(1))
+        } else if (isQuickActionsOpen) {
+            // If they had a slash and deleted it, close the menu
+            if (value.startsWith("/") && newValue === "") {
+                setIsQuickActionsOpen(false)
+                setQuickActionSearch("")
+            } else {
+                // If opened via lightning bolt, use the full text to search
+                setQuickActionSearch(newValue)
+            }
         }
 
         const textarea = textareaRef.current
@@ -207,16 +223,10 @@ export function ChatInput({
     }
 
     const handleKeyDown = (e: React.KeyboardEvent) => {
-        // "/" on empty input opens QuickActions
-        if (e.key === "/" && !value.trim() && !isQuickActionsOpen) {
-            e.preventDefault()
-            setIsQuickActionsOpen(true)
-            setQuickActionSearch("")
-            return
-        }
-
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
+            // Don't send if the Quick Actions menu is open and the user is trying to select an item
+            if (isQuickActionsOpen) return
             onSend()
         }
     }
@@ -225,14 +235,28 @@ export function ChatInput({
     const handleQuickActionSelect = useCallback((action: QuickAction) => {
         setIsQuickActionsOpen(false)
         setQuickActionSearch("")
-        onChange(action.prompt)
+        
+        const trigger: ActionTriggerDisplay = {
+            type: 'action-trigger',
+            icon: action.icon.name || 'zap', // Default to zap if icon name is unavailable
+            title: action.label,
+            meta: action.prompt
+        }
+
+        if (onActionTriggerChange) {
+            onActionTriggerChange(trigger)
+            onChange("") // Clear the slash command
+        } else {
+            onChange(action.prompt)
+        }
+
         if (action.autoSend) {
             // Small delay to let onChange propagate
-            setTimeout(() => onSend(), 0)
+            setTimeout(() => onSend(), 50)
         } else {
             textareaRef.current?.focus()
         }
-    }, [onChange, onSend])
+    }, [onChange, onSend, onActionTriggerChange])
 
     // File upload handlers
     const handleFileSelect = useCallback((fileList: FileList | null) => {
@@ -271,10 +295,28 @@ export function ChatInput({
 
     const isImageFile = (file: File) => file.type.startsWith('image/')
 
-    const canSend = !isLoading && (value.trim() || files.length > 0)
+    const canSend = !isLoading && (value.trim() || files.length > 0 || actionTrigger)
 
     return (
-        <div className="w-full max-w-2xl mx-auto">
+        <div className={cn("w-full max-w-2xl mx-auto relative", landing && "mt-4")}>
+            {/* QuickActions menu (anchored to the input) */}
+            <div className="absolute bottom-full left-0 w-full z-50 px-2 pb-2 pointer-events-none">
+                <div className="pointer-events-auto">
+                    <QuickActionsMenu
+                        open={isQuickActionsOpen}
+                        onClose={() => {
+                            setIsQuickActionsOpen(false)
+                            setQuickActionSearch("")
+                            // Clear any "/" prefix only if we're explicitly closing it without selection
+                            // and the text is ONLY a slash
+                            if (value === "/") onChange("")
+                        }}
+                        onSelect={handleQuickActionSelect}
+                        searchQuery={quickActionSearch}
+                    />
+                </div>
+            </div>
+
             {/* Hidden file input - key ensures it re-initializes properly */}
             <input
                 key="file-input"
@@ -301,19 +343,6 @@ export function ChatInput({
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
             >
-                {/* QuickActions menu (above input) */}
-                <QuickActionsMenu
-                    open={isQuickActionsOpen}
-                    onClose={() => {
-                        setIsQuickActionsOpen(false)
-                        setQuickActionSearch("")
-                        // Clear any "/" prefix
-                        if (value.startsWith("/")) onChange("")
-                    }}
-                    onSelect={handleQuickActionSelect}
-                    searchQuery={quickActionSearch}
-                />
-
                 {/* Attached files preview */}
                 {filePreviewUrls.length > 0 && (
                     <div className="px-3 pt-3 flex flex-wrap gap-2">
@@ -366,9 +395,23 @@ export function ChatInput({
                     </div>
                 )}
 
-                {/* Mention badges */}
-                {mentions.length > 0 && (
-                    <div className="px-3 pt-3 flex flex-wrap gap-2">
+                {/* Mention & Action Trigger badges */}
+                {(mentions.length > 0 || actionTrigger) && (
+                    <div className="px-3 pt-3 flex flex-wrap gap-2 items-center">
+                        {actionTrigger && (
+                            <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-primary/10 text-primary text-sm font-medium">
+                                <Zap className="h-3.5 w-3.5" />
+                                <span>{actionTrigger.title}</span>
+                                <button
+                                    onClick={() => onActionTriggerChange?.(null)}
+                                    className="ml-1 hover:text-destructive transition-colors rounded-full"
+                                    title="Ta bort kommandot"
+                                >
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                        )}
+                        
                         {mentions.map((item, index) => (
                             <MentionBadge
                                 key={item.id}

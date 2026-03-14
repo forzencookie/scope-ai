@@ -29,6 +29,8 @@ export interface PageContext {
     initialPrompt: string
     /** Whether to auto-send the message on arrival */
     autoSend?: boolean
+    /** The route to return to after tool completion */
+    returnTo?: string
     /** Action trigger display (shows chip instead of raw prompt) */
     actionTrigger?: {
         icon: 'document' | 'meeting' | 'receipt' | 'invoice' | 'decision' | 'shareholders' | 'audit'
