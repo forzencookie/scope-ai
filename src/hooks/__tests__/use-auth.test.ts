@@ -4,7 +4,6 @@
  * Note: This file mocks the Supabase client to test the hook in isolation
  */
 import { renderHook, act } from '@testing-library/react'
-// @ts-expect-error - waitFor might not be in types
 import { waitFor } from '@testing-library/react'
 import { useAuth } from '../use-auth'
 
@@ -18,7 +17,7 @@ const mockOnAuthStateChange = jest.fn()
 const mockResetPassword = jest.fn()
 const mockUpdatePassword = jest.fn()
 
-jest.mock('@/lib/database/supabase-auth', () => ({
+jest.mock('@/lib/database/auth', () => ({
     signIn: (...args: unknown[]) => mockSignIn(...args),
     signUp: (...args: unknown[]) => mockSignUp(...args),
     signOut: (...args: unknown[]) => mockSignOut(...args),

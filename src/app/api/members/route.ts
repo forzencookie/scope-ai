@@ -1,21 +1,23 @@
 /**
  * Members API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function GET() {
   try {
-    const userDb = await createUserScopedDb();
-    
-    if (!userDb) {
+    const ctx = await getAuthContext();
+
+    if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { data, error } = await userDb.client
+    const { supabase, userId, companyId } = ctx;
+
+    const { data, error } = await supabase
       .from('members')
       .select('*')
       .order('name', { ascending: true })
@@ -38,8 +40,8 @@ export async function GET() {
 
     return NextResponse.json({
       members,
-      userId: userDb.userId,
-      companyId: userDb.companyId,
+      userId,
+      companyId,
     })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error';
@@ -49,14 +51,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const userDb = await createUserScopedDb();
-    
-    if (!userDb) {
+    const ctx = await getAuthContext();
+
+    if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { supabase, companyId } = ctx;
     const json = await request.json()
-    
+
     // Transform camelCase to snake_case
     const dbPayload = {
         member_number: json.memberNumber,
@@ -68,10 +71,10 @@ export async function POST(request: Request) {
         membership_type: json.membershipType,
         last_paid_year: json.lastPaidYear,
         roles: json.roles,
-        company_id: userDb.companyId,
+        company_id: companyId,
     }
 
-    const { data, error } = await userDb.client
+    const { data, error } = await supabase
       .from('members')
       .insert(dbPayload)
       .select()

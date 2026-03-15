@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { parseSIE } from '@/lib/parsers/sie-parser'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { randomUUID } from "crypto"
 
 export async function POST(req: NextRequest) {
@@ -18,16 +18,15 @@ export async function POST(req: NextRequest) {
         const text = await file.text()
         const data = parseSIE(text)
 
-        // Get user-scoped database connection
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        // Get authenticated database connection
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return NextResponse.json(
                 { error: "Unauthorized" },
                 { status: 401 }
             )
         }
-        const supabase = userDb.client
-        const userId = userDb.userId
+        const { supabase, userId } = ctx
 
         // Track import statistics
         let transactionsInserted = 0

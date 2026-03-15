@@ -1,6 +1,6 @@
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { normalizeBalances } from './use-normalized-balances'
 import { useCompany } from '@/providers/company-provider'
 import { getAccountClass, isCashAccount } from '@/lib/bookkeeping/utils'
@@ -11,9 +11,15 @@ export const companyStatisticsQueryKeys = {
     dashboard: () => [...companyStatisticsQueryKeys.all, "dashboard"] as const,
 }
 
+interface MonthlyFlowEntry {
+    month: string
+    revenue: number
+    expenses: number
+    result: number
+}
+
 interface DashboardRpcData {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    monthlyFlow: any[]
+    monthlyFlow: MonthlyFlowEntry[]
     dashboardCounts: {
         transactions: { total: number; unbooked: number }
         invoices: { sent: number; overdue: number; totalValue: number }
@@ -32,7 +38,7 @@ export function useCompanyStatistics() {
     } = useQuery({
         queryKey: companyStatisticsQueryKeys.dashboard(),
         queryFn: async (): Promise<DashboardRpcData> => {
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             const year = new Date().getFullYear()
             const prevYearStart = `${year - 1}-01-01`
             const prevYearEnd = `${year - 1}-12-31`

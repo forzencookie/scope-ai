@@ -4,7 +4,7 @@
  * Handles file uploads to Supabase Storage buckets
  */
 
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 export type UploadResult = {
     success: true
@@ -24,7 +24,7 @@ export type UploadResult = {
  */
 export async function uploadReceiptFile(file: File, userId: string): Promise<UploadResult> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Generate unique filename to avoid collisions
         const timestamp = Date.now()
@@ -79,7 +79,7 @@ export async function uploadReceiptFile(file: File, userId: string): Promise<Upl
  */
 export async function uploadAvatarFile(file: File, userId: string): Promise<UploadResult> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const extension = file.name.split('.').pop() || 'jpg'
         const path = `${userId}/avatar.${extension}`
@@ -125,7 +125,7 @@ export async function uploadAvatarFile(file: File, userId: string): Promise<Uplo
  */
 export async function uploadCompanyLogo(file: File, userId: string): Promise<UploadResult> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const extension = file.name.split('.').pop() || 'png'
         const path = `${userId}/logo.${extension}`
@@ -166,7 +166,7 @@ export async function uploadCompanyLogo(file: File, userId: string): Promise<Upl
  */
 export async function getReceiptSignedUrl(path: string, expiresIn = 3600): Promise<string | null> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase.storage
             .from('receipts')
@@ -191,7 +191,7 @@ export async function getReceiptSignedUrl(path: string, expiresIn = 3600): Promi
  */
 export async function deleteReceiptFile(path: string): Promise<boolean> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { error } = await supabase.storage
             .from('receipts')

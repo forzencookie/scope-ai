@@ -96,13 +96,14 @@ export function UnderlagDialog({
         apiEndpoint: '/api/ai/extract-receipt',
         initialState: initialFormState,
         transformResponse: (data) => {
-            const { supplier, date, amount, moms, category } = data
+            const val = (field: typeof data[string]) =>
+                field && typeof field === 'object' ? String(field.value ?? '') : String(field ?? '')
             return {
-                supplier: supplier?.value || supplier || '',
-                date: date?.value || date || new Date().toISOString().split('T')[0],
-                amount: `${amount?.value || amount} kr` || '',
-                moms: moms ? `${moms?.value || moms} kr` : '',
-                category: category?.value || category || 'Övriga kostnader',
+                supplier: val(data.supplier) || '',
+                date: val(data.date) || new Date().toISOString().split('T')[0],
+                amount: `${val(data.amount)} kr` || '',
+                moms: data.moms ? `${val(data.moms)} kr` : '',
+                category: val(data.category) || 'Övriga kostnader',
                 status: RECEIPT_STATUSES.REVIEW_NEEDED
             }
         }

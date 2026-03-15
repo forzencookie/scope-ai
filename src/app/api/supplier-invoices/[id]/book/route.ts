@@ -4,11 +4,11 @@
  * Uses the bookkeeping engine to create proper double-entry journal entries
  * with VAT handling and source tracking.
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { pendingBookingService } from '@/services/pending-booking-service'
 import { createPurchaseEntry } from '@/lib/bookkeeping'
 import type { BookingData } from '@/components/bokforing/dialogs/bokforing'
@@ -19,17 +19,24 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { supabase } = ctx;
 
         const body = (await request.json()) as BookingData & { accountingMethod?: 'cash' | 'invoice' }
         const { id } = await params
 
         // Fetch the invoice to get details
-        const invoice = await userDb.supplierInvoices.getById(id);
+        const { data: invoice } = await supabase
+            .from('supplierinvoices')
+            .select('*')
+            .eq('id', id)
+            .single();
+
         const amount = invoice ? Number(invoice.total_amount) || 0 : (body.amount || 0);
 
         // Use the bookkeeping engine for proper VAT-split journal entries

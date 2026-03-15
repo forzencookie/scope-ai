@@ -11,8 +11,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext, verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { userMemoryService } from '@/services/user-memory-service'
 
 // =============================================================================
@@ -47,23 +46,35 @@ Viktigt:
 
 export async function POST(request: NextRequest) {
     try {
-        const auth = await verifyAuth(request)
-        if (!auth) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return ApiResponse.unauthorized('Authentication required')
         }
+        const { supabase, userId } = ctx
 
         const { conversationId, companyId } = await request.json()
         if (!conversationId || !companyId) {
             return ApiResponse.badRequest('conversationId and companyId are required')
         }
 
-        // Get conversation messages
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
-            return ApiResponse.unauthorized('Could not create user-scoped DB')
+        // Verify conversation ownership
+        const { data: conv } = await supabase
+            .from('conversations')
+            .select('id')
+            .eq('id', conversationId)
+            .eq('user_id', userId)
+            .single()
+
+        if (!conv) {
+            return ApiResponse.notFound('Conversation not found')
         }
 
-        const messages = await userDb.messages.listByConversation(conversationId)
+        // Get conversation messages
+        const { data: messages } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', conversationId)
+            .order('created_at', { ascending: true })
         if (!messages || messages.length < 2) {
             // Too short to extract anything meaningful
             return Response.json({ extracted: 0, memories: [] })

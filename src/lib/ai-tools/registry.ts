@@ -6,7 +6,8 @@
  */
 
 import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext, AIToolDomain } from './types'
-import { db } from '../database/server-db'
+import { createAdminClient } from '../database/client'
+import type { Json } from '@/types/database'
 
 // Re-export types that tools may need
 export type { AIConfirmationRequest } from './types'
@@ -71,9 +72,20 @@ class AIToolRegistry {
      * Used in system prompt so the model knows what's available without loading schemas.
      */
     getToolIndex(): string {
-        return this.getAll()
-            .map(t => `- ${t.name}: ${t.description.slice(0, 60)}`)
-            .join('\n')
+        const byDomain = new Map<string, AITool[]>()
+        for (const t of this.tools.values()) {
+            const domain = t.domain || 'common'
+            if (!byDomain.has(domain)) byDomain.set(domain, [])
+            byDomain.get(domain)!.push(t)
+        }
+        const lines: string[] = []
+        for (const [domain, tools] of byDomain) {
+            lines.push(`### ${domain}`)
+            for (const t of tools) {
+                lines.push(`- ${t.name}: ${t.description.slice(0, 60)}`)
+            }
+        }
+        return lines.join('\n')
     }
 
     /**
@@ -207,7 +219,7 @@ class AIToolRegistry {
             }
             if (Date.now() > pending.expiresAt) {
                 this.pendingConfirmations.delete(options.confirmationId)
-                this.deleteConfirmationFromDB(options.confirmationId).catch(() => {})
+                this.deleteConfirmationFromDB(options.confirmationId).catch(e => console.warn('[Registry] Cleanup failed:', e))
                 return {
                     success: false,
                     error: 'Confirmation expired. Please try again.',
@@ -215,7 +227,7 @@ class AIToolRegistry {
             }
             // Clear the pending confirmation from both cache and DB
             this.pendingConfirmations.delete(options.confirmationId)
-            this.deleteConfirmationFromDB(options.confirmationId).catch(() => {})
+            this.deleteConfirmationFromDB(options.confirmationId).catch(e => console.warn('[Registry] Cleanup failed:', e))
             // Mark context as confirmed so the tool knows to persist
             context.isConfirmed = true
         }
@@ -259,13 +271,15 @@ class AIToolRegistry {
 
         // Persist to database for accounting compliance
         try {
-            await db.logAIToolExecution({
-                toolName: log.toolName,
-                parameters: (log.params as Record<string, unknown>) || {},
-                result: log.result,
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                status: (log.result as any)?.success === false ? 'error' : 'success',
-                userId: log.userId,
+            const supabase = createAdminClient()
+            const resultObj = log.result as unknown as Record<string, unknown> | undefined
+            const status = resultObj?.success === false ? 'error' : 'success'
+            await supabase.from('ai_audit_log').insert({
+                tool_name: log.toolName,
+                parameters: ((log.params ?? {}) as unknown) as Json,
+                result: (log.result as unknown) as Json,
+                status,
+                user_id: log.userId,
             })
         } catch (error) {
             console.error('[AI Tool Audit] Failed to persist log:', error)
@@ -305,18 +319,19 @@ class AIToolRegistry {
         userId?: string,
     ): Promise<void> {
         try {
-            await db.logAIToolExecution({
-                toolName: `__confirmation__:${pending.id}`,
+            const supabase = createAdminClient()
+            await supabase.from('ai_audit_log').insert({
+                tool_name: `__confirmation__:${pending.id}`,
                 parameters: {
                     originalTool: toolName,
                     originalParams: params as Record<string, unknown>,
                     request: pending.request as unknown as Record<string, unknown>,
                     createdAt: pending.createdAt,
                     expiresAt: pending.expiresAt,
-                },
-                result: { status: 'pending' },
+                } as unknown as Json,
+                result: { status: 'pending' } as Json,
                 status: 'pending',
-                userId: userId || 'system',
+                user_id: userId || 'system',
             })
         } catch (error) {
             console.error('[AI Tool Registry] Confirmation persist failed:', error)
@@ -328,8 +343,8 @@ class AIToolRegistry {
      */
     private async loadConfirmationFromDB(confirmationId: string): Promise<PendingConfirmation | null> {
         try {
-            const { getSupabaseAdmin } = await import('../database/supabase')
-            const supabase = getSupabaseAdmin()
+            const { createAdminClient } = await import('../database/client')
+            const supabase = createAdminClient()
             const { data } = await supabase
                 .from('ai_audit_log')
                 .select('parameters')
@@ -359,8 +374,8 @@ class AIToolRegistry {
      */
     private async deleteConfirmationFromDB(confirmationId: string): Promise<void> {
         try {
-            const { getSupabaseAdmin } = await import('../database/supabase')
-            const supabase = getSupabaseAdmin()
+            const { createAdminClient } = await import('../database/client')
+            const supabase = createAdminClient()
             await supabase
                 .from('ai_audit_log')
                 .delete()
@@ -378,7 +393,7 @@ class AIToolRegistry {
         for (const [id, pending] of this.pendingConfirmations) {
             if (now > pending.expiresAt) {
                 this.pendingConfirmations.delete(id)
-                this.deleteConfirmationFromDB(id).catch(() => {})
+                this.deleteConfirmationFromDB(id).catch(e => console.warn('[Registry] Cleanup failed:', e))
             }
         }
     }

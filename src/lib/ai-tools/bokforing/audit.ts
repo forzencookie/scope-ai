@@ -6,8 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { db } from '../../database/server-db'
-import { getSupabaseAdmin } from '../../database/supabase'
+import { createAdminClient } from '../../database/client'
 
 // =============================================================================
 // Types
@@ -48,7 +47,7 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
         const year = new Date().getFullYear()
         const dateFrom = `${year}-01-01`
         const dateTo = `${year}-12-31`
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
 
         // Gather all data in parallel
         const [
@@ -63,11 +62,11 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
                 p_start_date: '2000-01-01',
                 p_end_date: dateTo,
             }),
-            db.getCustomerInvoices({ limit: 500 }),
-            db.getSupplierInvoices({ limit: 500 }),
-            db.getPayslips(500),
-            db.getShareholders(),
-            db.getTaxReports('vat'),
+            supabase.from('customerinvoices').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
+            supabase.from('supplierinvoices').select('*').order('due_date', { ascending: true }).limit(500).then(r => r.data || []),
+            supabase.from('payslips').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
+            supabase.from('shareholders').select('*').order('shares_count', { ascending: false }).then(r => r.data || []),
+            supabase.from('taxreports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
         ])
 
         const balances: Array<{ account: string; balance: number }> = (balancesResult.data || []).map((row: { account_number: number; balance: number }) => ({

@@ -1,24 +1,33 @@
 /**
  * Chat History API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Get conversations for the authenticated user only
-        const conversations = await userDb.conversations.list({ limit: 50 });
+        const { supabase, userId } = ctx;
 
-        return NextResponse.json(conversations);
+        // Get conversations for the authenticated user only
+        const { data: conversations, error } = await supabase
+            .from('conversations')
+            .select('*')
+            .eq('user_id', userId)
+            .order('updated_at', { ascending: false })
+            .limit(50);
+
+        if (error) throw error;
+
+        return NextResponse.json(conversations || []);
     } catch (error) {
         console.error("Error fetching chat history:", error);
         return NextResponse.json({ error: "Failed to fetch conversations" }, { status: 500 });

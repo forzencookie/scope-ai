@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import {
   pendingBookingService,
   type PendingBookingSourceType,
@@ -15,9 +15,9 @@ import type { VerificationEntry } from '@/services/verification-service'
  */
 export async function GET(req: NextRequest) {
   try {
-    const userDb = await createUserScopedDb()
+    const ctx = await getAuthContext()
 
-    if (!userDb) {
+    if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -54,9 +54,9 @@ export async function GET(req: NextRequest) {
  */
 export async function POST(req: NextRequest) {
   try {
-    const userDb = await createUserScopedDb()
+    const ctx = await getAuthContext()
 
-    if (!userDb) {
+    if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 

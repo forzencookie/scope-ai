@@ -7,8 +7,7 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateChatMessages, validateJsonBody } from '@/lib/validation'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { getAuthContext, verifyAuth, ApiResponse } from '@/lib/database/auth'
 import {
     checkUsageLimits,
     consumeTokens,
@@ -20,7 +19,7 @@ import { initializeAITools } from '@/lib/ai-tools'
 import { createAgentContext } from '@/lib/agents/types'
 import { selectModel, getModelId } from '@/lib/agents/scope-brain/model-selector'
 import { buildSystemPrompt } from '@/lib/agents/scope-brain/system-prompt'
-import { getVercelAITools } from '@/lib/ai-tools/vercel-adapter'
+import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 
@@ -56,10 +55,11 @@ export async function POST(request: NextRequest) {
         }
         const userId = auth.userId
 
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return ApiResponse.unauthorized('User session not found')
         }
+        const { supabase, companyId } = ctx
 
         const clientId = getClientIdentifier(request)
         const rateLimitResult = await checkRateLimit(clientId, RATE_LIMIT_CONFIG)
@@ -137,17 +137,25 @@ export async function POST(request: NextRequest) {
         if (!incognito) {
             if (!conversationId) {
                 const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
-                const conv = await userDb.conversations.create({ title })
+                const { data: conv } = await supabase
+                    .from('conversations')
+                    .insert({ title, user_id: userId })
+                    .select()
+                    .single()
                 if (conv && 'id' in conv) conversationId = conv.id
             }
 
             if (conversationId && latestContent) {
-                await userDb.messages.create({
-                    conversation_id: conversationId,
-                    role: 'user',
-                    content: latestContent,
-                    user_id: userId
-                })
+                await supabase
+                    .from('messages')
+                    .insert({
+                        conversation_id: conversationId,
+                        role: 'user',
+                        content: latestContent,
+                        user_id: userId
+                    })
+                    .select()
+                    .single()
             }
         }
 
@@ -155,9 +163,6 @@ export async function POST(request: NextRequest) {
 
         let activitySnapshot: Record<string, unknown> | undefined
         try {
-            const { getSupabaseClient } = await import('@/lib/database/supabase')
-            const supabase = getSupabaseClient()
-
             const { count: pendingTx } = await supabase
                 .from('transactions')
                 .select('*', { count: 'exact', head: true })
@@ -185,7 +190,7 @@ export async function POST(request: NextRequest) {
         const companyType = 'AB' as const
         const context = createAgentContext({
             userId,
-            companyId: userDb.companyId || '',
+            companyId: companyId || '',
             companyType,
             locale: 'sv',
             conversationId: conversationId || undefined,
@@ -203,7 +208,6 @@ export async function POST(request: NextRequest) {
 
         try {
             const { userMemoryService } = await import('@/services/user-memory-service')
-            const companyId = userDb.companyId || ''
             if (companyId) {
                 const memories = await userMemoryService.getMemoriesForCompany(companyId)
                 if (memories && memories.length > 0) {
@@ -231,8 +235,11 @@ export async function POST(request: NextRequest) {
         }
 
         const systemPrompt = buildSystemPrompt(context)
-        const vercelTools = getVercelAITools(context as any)
-        
+        const deferredConfig = createDeferredToolConfig({
+            userId: context.userId,
+            companyId: context.companyId,
+        })
+
         // Model Selection
         const modelConfig = selectModel(latestContent)
         const activeModelId = getModelId(modelConfig)
@@ -240,27 +247,31 @@ export async function POST(request: NextRequest) {
         const result = streamText({
             model: openai(activeModelId),
             system: systemPrompt,
-            messages: messages as any,
-            tools: vercelTools,
+            messages: messages as Array<{ role: 'user' | 'assistant'; content: string }>,
+            ...deferredConfig,
             onFinish: async ({ text, usage, toolCalls, toolResults }) => {
                 if (usage && usage.totalTokens && usage.totalTokens > 0) {
                     await consumeTokens(userId, usage.totalTokens, authResult.modelId)
                 }
 
-                if (conversationId && !incognito && userDb) {
+                if (conversationId && !incognito) {
                     // Save assistant message even if text is empty (tool-only responses)
                     const hasContent = text && text.trim().length > 0
                     const hasTools = toolCalls && toolCalls.length > 0
                     if (hasContent || hasTools) {
                         try {
-                            await userDb.messages.create({
-                                conversation_id: conversationId,
-                                role: 'assistant',
-                                content: text || '',
-                                user_id: userId,
-                                tool_calls: toolCalls && toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
-                                tool_results: toolResults && toolResults.length > 0 ? JSON.stringify(toolResults) : null,
-                            })
+                            await supabase
+                                .from('messages')
+                                .insert({
+                                    conversation_id: conversationId,
+                                    role: 'assistant',
+                                    content: text || '',
+                                    user_id: userId,
+                                    tool_calls: toolCalls && toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
+                                    tool_results: toolResults && toolResults.length > 0 ? JSON.stringify(toolResults) : null,
+                                })
+                                .select()
+                                .single()
                         } catch (e) {
                             console.error('[Chat] Failed to save message:', e)
                         }

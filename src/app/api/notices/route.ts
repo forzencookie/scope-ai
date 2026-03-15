@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 interface NoticeRequest {
     meetingId: string
@@ -18,9 +18,9 @@ interface NoticeRequest {
 
 export async function POST(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb()
-        
-        if (!userDb) {
+        const ctx = await getAuthContext()
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
@@ -71,9 +71,9 @@ export async function POST(request: NextRequest) {
  */
 export async function GET(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb()
-        
-        if (!userDb) {
+        const ctx = await getAuthContext()
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 

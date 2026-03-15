@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 // Default integration states for new users
 const DEFAULT_INTEGRATIONS: Record<string, boolean> = {
@@ -23,11 +23,11 @@ interface IntegrationRow {
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
-        const supabase = userDb.client
+        const { supabase } = ctx
 
         // Fetch user's integrations
         const { data, error } = await supabase
@@ -55,12 +55,11 @@ export async function GET() {
 
 export async function POST(request: Request) {
     try {
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
-        const supabase = userDb.client
-        const userId = userDb.userId
+        const { supabase, userId } = ctx
 
         const body = await request.json()
         const { id, connected } = body

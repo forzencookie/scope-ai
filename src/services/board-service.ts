@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 /**
  * Board member from shareholders table
@@ -60,7 +60,7 @@ export const boardService = {
      * Get board members from shareholders with is_board_member = true
      */
     async getBoardMembers(): Promise<BoardMember[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('shareholders')
@@ -96,7 +96,7 @@ export const boardService = {
      * In Swedish companies, signatories are typically specified in bolagsordningen
      */
     async getSignatories(): Promise<Signatory[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('shareholders')
@@ -151,7 +151,7 @@ export const boardService = {
         offset?: number
         status?: 'draft' | 'approved' | 'archived'
     } = {}): Promise<{ minutes: BoardMeetingMinutes[]; totalCount: number }> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('corporate_documents' as any)
@@ -219,7 +219,7 @@ export const boardService = {
         offset?: number
         type?: 'annual' | 'extraordinary' | 'board'
     } = {}): Promise<{ meetings: CompanyMeeting[]; totalCount: number }> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Determine which document types to fetch
         let docType: string | null = null

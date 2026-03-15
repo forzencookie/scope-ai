@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { getSupabaseAdmin } from '../../database/supabase'
+import { createAdminClient } from '../../database/client'
 
 // =============================================================================
 // Types
@@ -40,7 +40,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
     keywords: ['status', 'reconcile', 'uppdatera', 'kontrollera', 'granska', 'kolla', 'avstämning'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
         const today = new Date().toISOString().split('T')[0]
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 

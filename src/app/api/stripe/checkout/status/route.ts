@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { ApiResponse } from '@/lib/api-auth'
+import { ApiResponse } from '@/lib/database/auth'
 import { getStripe } from '@/lib/stripe'
 
 /**

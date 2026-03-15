@@ -15,8 +15,19 @@ const mockResetPasswordForEmail = jest.fn()
 const mockUpdateUser = jest.fn()
 const mockOnAuthStateChange = jest.fn()
 
-jest.mock('@/lib/database/supabase', () => ({
-    supabase: {
+// Mock next/server to avoid Request global requirement
+jest.mock('next/server', () => ({
+    NextRequest: jest.fn(),
+    NextResponse: { json: jest.fn() },
+}))
+
+// Mock next/headers to avoid server-only requirement
+jest.mock('next/headers', () => ({
+    cookies: jest.fn(),
+}))
+
+jest.mock('@/lib/database/client', () => ({
+    createBrowserClient: () => ({
         auth: {
             signUp: (...args: unknown[]) => mockSignUp(...args),
             signInWithPassword: (...args: unknown[]) => mockSignInWithPassword(...args),
@@ -28,7 +39,8 @@ jest.mock('@/lib/database/supabase', () => ({
             updateUser: (...args: unknown[]) => mockUpdateUser(...args),
             onAuthStateChange: (...args: unknown[]) => mockOnAuthStateChange(...args),
         },
-    },
+    }),
+    createServerClient: jest.fn(),
 }))
 
 import {
@@ -41,7 +53,7 @@ import {
     resetPassword,
     updatePassword,
     onAuthStateChange,
-} from '../database/supabase-auth'
+} from '../database/auth'
 
 describe('Supabase Auth Functions', () => {
     const mockUser = {

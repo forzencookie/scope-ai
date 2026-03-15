@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 import type { PostgrestError } from '@supabase/supabase-js'
 
@@ -50,7 +50,7 @@ export const vatService = {
      * Get VAT declarations, optionally filtered by year.
      */
     async getDeclarations(year?: number): Promise<VATDeclaration[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const query = supabase
             .from('vatdeclarations')
             .select('*')
@@ -91,7 +91,7 @@ export const vatService = {
      * Get current/next VAT period stats.
      */
     async getCurrentStats(): Promise<VATStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Get the next upcoming VAT declaration
         const { data, error } = await supabase
@@ -130,7 +130,7 @@ export const vatService = {
      * Calculate VAT from verifications for a date range (using RPC).
      */
     async calculateFromVerifications(startDate: string, _endDate: string): Promise<{ outputVat: number; inputVat: number; netVat: number }> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const year = parseInt(startDate.substring(0, 4)) || new Date().getFullYear()
         const { data, error } = await supabase.rpc('get_vat_stats', {

@@ -14,6 +14,24 @@ import type { MentionItem } from '@/components/ai/mention-popover'
 import type { Message as AppMessage, Conversation } from '@/lib/chat-types'
 import { fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
 
+/** Extract tool invocations from message parts */
+interface ToolInvocationData {
+    toolName: string
+    state: string
+    result?: unknown
+}
+
+function extractToolInvocations(parts: UIMessagePart<UIDataTypes, UITools>[] | undefined): ToolInvocationData[] {
+    if (!parts) return []
+    return parts
+        .filter(p => p.type === 'tool-invocation')
+        .map(p => {
+            const part = p as Record<string, unknown>
+            return 'toolInvocation' in part ? part.toolInvocation as ToolInvocationData : undefined
+        })
+        .filter((t): t is ToolInvocationData => t != null)
+}
+
 /** Derive card type from tool name for proper inline card rendering */
 function deriveCardType(toolName: string): string {
     const name = toolName.toLowerCase()
@@ -82,11 +100,10 @@ export function useChat(options: UseChatOptions = {}) {
             }))
         },
         onFinish: ({ message }) => {
+            window.dispatchEvent(new Event('ai-stream-complete'))
+
             // Trigger completions if necessary based on tool calls
-            const toolInvocations = message.parts
-                ?.filter(p => p.type === 'tool-invocation')
-                .map(p => 'toolInvocation' in p ? (p.toolInvocation as { toolName: string, state: string, result?: unknown }) : undefined)
-                .filter((t): t is NonNullable<typeof t> => Boolean(t)) || []
+            const toolInvocations = extractToolInvocations(message.parts)
 
             if (toolInvocations && toolInvocations.length > 0) {
                 const firstTool = toolInvocations[0]
@@ -159,8 +176,8 @@ export function useChat(options: UseChatOptions = {}) {
                                 args: matchingCall?.args || {},
                                 state: 'result' as const,
                                 result: tr.result,
-                            }
-                        })
+                            },
+                        } as unknown as UIMessagePart<UIDataTypes, UITools>)
                     }
                 }
 
@@ -188,13 +205,10 @@ export function useChat(options: UseChatOptions = {}) {
     // Map Vercel messages to App messages for UI
     const mappedMessages: AppMessage[] = useMemo(() => {
         return vercelMessages.map(vm => {
-            const textPart = vm.parts?.find(p => p.type === 'text') as { text: string } | undefined
-            const content = textPart?.text || ''
+            const textPart = vm.parts?.find(p => p.type === 'text')
+            const content = textPart && 'text' in textPart ? (textPart as { text: string }).text : ''
             
-            const toolInvocations = vm.parts
-                ?.filter(p => p.type === 'tool-invocation')
-                .map(p => 'toolInvocation' in p ? (p.toolInvocation as { toolName: string, state: string, result?: unknown }) : undefined)
-                .filter((t): t is NonNullable<typeof t> => Boolean(t)) || []
+            const toolInvocations = extractToolInvocations(vm.parts)
 
             const appMsg: AppMessage = {
                 id: vm.id,

@@ -1,4 +1,4 @@
-import { tool, jsonSchema, type ToolSet } from 'ai'
+import { tool, jsonSchema, stepCountIs, type ToolSet } from 'ai'
 import { ZodTypeAny } from 'zod'
 import { aiToolRegistry } from './registry'
 import type { AITool, InteractionContext } from './types'
@@ -32,7 +32,9 @@ function makeExecute(t: AITool, context: InteractionContext) {
             display: result.display,
             navigation: result.navigation,
             confirmationRequired: result.confirmationRequired,
-            walkthrough: (result as unknown as Record<string, unknown>).walkthrough,
+            walkthrough: (result && typeof result === 'object' && 'walkthrough' in result)
+                ? (result as Record<string, unknown>).walkthrough
+                : undefined,
         }
     }
 }
@@ -72,9 +74,43 @@ export function getVercelAITools(context: InteractionContext): ToolSet {
 }
 
 /**
- * Get only core tools (coreTool: true) in Vercel AI SDK format.
- * Use for token-efficient requests where deferred loading handles the rest.
+ * Create a deferred tool loading config for streamText().
+ *
+ * Registers ALL tools in the `tools` ToolSet (schemas available for validation)
+ * but only exposes core tools via `activeTools` initially (~5 tools, ~2K tokens).
+ * When `search_tools` executes in step N, `prepareStep` for step N+1 reads
+ * discovered tool names and expands `activeTools` to include them.
+ *
+ * Token savings: ~85-90% reduction (from ~40-50K to ~4-6K in tool schemas).
  */
-export function getVercelAICoreTools(context: InteractionContext): ToolSet {
-    return convertToVercelTools(aiToolRegistry.getCoreTools(), context)
+export function createDeferredToolConfig(context: InteractionContext) {
+    const allTools = getVercelAITools(context)
+    const coreNames = aiToolRegistry.getCoreTools().map(t => t.name) as Array<keyof typeof allTools>
+    const discoveredTools = new Set<string>()
+
+    return {
+        tools: allTools,
+        activeTools: coreNames,
+        stopWhen: stepCountIs(10),
+        prepareStep({ steps }: { steps: Array<{ toolResults: Array<{ toolName: string; output: unknown }> }> }) {
+            const lastStep = steps[steps.length - 1]
+            if (lastStep?.toolResults) {
+                for (const tr of lastStep.toolResults) {
+                    if (tr.toolName === 'search_tools') {
+                        const output = tr.output as { success?: boolean; data?: Array<{ name: string }> }
+                        if (output?.success && Array.isArray(output?.data)) {
+                            for (const item of output.data) {
+                                if (item?.name && aiToolRegistry.has(item.name)) {
+                                    discoveredTools.add(item.name)
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            return {
+                activeTools: [...coreNames, ...discoveredTools] as Array<keyof typeof allTools>,
+            }
+        },
+    }
 }

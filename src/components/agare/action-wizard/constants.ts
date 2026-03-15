@@ -5,11 +5,11 @@ import {
     Building2,
     FileText,
     Map,
+    type LucideIcon,
 } from "lucide-react"
 import type { CorporateActionType } from "@/types/events"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const actionIcons: Record<CorporateActionType, any> = {
+export const actionIcons: Record<CorporateActionType, LucideIcon> = {
     board_change: Users,
     dividend: Coins,
     capital_change: TrendingUp,
@@ -17,6 +17,28 @@ export const actionIcons: Record<CorporateActionType, any> = {
     statute_change: FileText,
     roadmap: Map,
 }
+
+/** Data shapes emitted by each wizard form. */
+export interface BoardChangeData {
+    changeDate: string
+    boardMembers: string[]
+}
+
+export interface DividendData {
+    dividendTotal: string
+}
+
+export interface RoadmapData {
+    roadmapTitle: string
+    description: string
+}
+
+export interface GenericActionData {
+    description: string
+    effectiveDate: string
+}
+
+export type WizardFormData = BoardChangeData | DividendData | RoadmapData | GenericActionData
 
 export const actionTypes: CorporateActionType[] = [
     'board_change',

@@ -7,11 +7,11 @@
  * Supports per-line VAT rates from invoice items — groups line items by
  * VAT rate and creates correct revenue + output VAT entries for each group.
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 import { pendingBookingService } from '@/services/pending-booking-service';
 import { createSalesEntry, createMultiVatSalesEntry } from '@/lib/bookkeeping';
 import type { SwedishVatRate } from '@/lib/bookkeeping';
@@ -28,16 +28,21 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase } = ctx;
         const { id } = await params;
 
         // Find the invoice
-        const invoice = await userDb.customerInvoices.getById(id);
+        const { data: invoice } = await supabase
+            .from('customerinvoices')
+            .select('*')
+            .eq('id', id)
+            .single();
 
         if (!invoice) {
             return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -48,7 +53,10 @@ export async function POST(
         }
 
         // Update Invoice Status
-        await userDb.customerInvoices.update(id, { status: 'skickad' });
+        await supabase
+            .from('customerinvoices')
+            .update({ status: 'skickad' })
+            .eq('id', id);
 
         // Read optional accountingMethod from request body
         let accountingMethod: 'cash' | 'invoice' | undefined;

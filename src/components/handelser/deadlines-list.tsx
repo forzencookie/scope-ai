@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 import { useCompany } from "@/providers/company-provider"
 import { cn } from "@/lib/utils"
 import type { CompanyType } from "@/lib/company-types"
@@ -47,7 +47,7 @@ export function DeadlinesList() {
   const { data: deadlines = [] } = useQuery<Deadline[]>({
     queryKey: ["deadlines", fiscalYearEnd, companyType],
     queryFn: async () => {
-      const supabase = getSupabaseClient()
+      const supabase = createBrowserClient()
       const today = new Date()
       const items: Deadline[] = []
 

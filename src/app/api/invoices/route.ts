@@ -1,27 +1,35 @@
 /**
  * Customer Invoices API
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 import { generateOCR } from '@/lib/ocr';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const invoices = await userDb.customerInvoices.list({ limit: 100 });
+        const { supabase, userId, companyId } = ctx;
+
+        const { data: invoices, error } = await supabase
+            .from('customerinvoices')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(100);
+
+        if (error) console.error('[Invoices] list error:', error);
 
         return NextResponse.json({
-            invoices,
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            invoices: invoices || [],
+            userId,
+            companyId,
         });
     } catch (error) {
         console.error("Failed to fetch invoices:", error);
@@ -31,11 +39,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { supabase, userId, companyId } = ctx;
 
         const body = await req.json();
 
@@ -44,7 +54,20 @@ export async function POST(req: NextRequest) {
         }
 
         // Get next invoice number
-        const invoiceNumber = await userDb.customerInvoices.getNextInvoiceNumber();
+        const year = new Date().getFullYear();
+        const { data: lastInvoices } = await supabase
+            .from('customerinvoices')
+            .select('invoice_number')
+            .like('invoice_number', `FAK-${year}-%`)
+            .order('invoice_number', { ascending: false })
+            .limit(1);
+
+        let nextNum = 1;
+        if (lastInvoices && lastInvoices.length > 0) {
+            const lastNum = parseInt(lastInvoices[0].invoice_number.split('-')[2]) || 0;
+            nextNum = lastNum + 1;
+        }
+        const invoiceNumber = `FAK-${year}-${String(nextNum).padStart(4, '0')}`;
 
         // Calculate totals from line items if provided
         let subtotal = 0;
@@ -91,11 +114,17 @@ export async function POST(req: NextRequest) {
             currency: body.currency || 'SEK',
             // payment_reference stores the customer reference (Er referens)
             payment_reference: body.reference || null,
-            user_id: userDb.userId,
-            company_id: userDb.companyId || '',
+            user_id: userId,
+            company_id: companyId || '',
         };
 
-        const created = await userDb.customerInvoices.create(invoiceData);
+        const { data: created, error } = await supabase
+            .from('customerinvoices')
+            .insert(invoiceData)
+            .select()
+            .single();
+
+        if (error) console.error('[Invoices] create error:', error);
 
         if (!created) {
             return NextResponse.json({ error: "Kunde inte spara faktura" }, { status: 500 });

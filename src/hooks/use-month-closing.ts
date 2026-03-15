@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useVerifications } from "./use-verifications"
 import { useCompany } from "@/providers/company-provider"
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import {
     getApplicableChecks,
     resolveChecks,
@@ -32,7 +32,7 @@ export function isPeriodLocked(date: string, periods: MonthStatus[]): boolean {
  * Use this in mutations or services where hook state isn't available.
  */
 export async function checkPeriodLocked(date: string): Promise<boolean> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const d = new Date(date)
   const year = d.getFullYear()
   const month = d.getMonth() + 1
@@ -60,7 +60,7 @@ export interface MonthStatus {
 }
 
 export function useMonthClosing() {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     const { verifications } = useVerifications()
     const { company } = useCompany()
     const [periods, setPeriods] = useState<MonthStatus[]>([])

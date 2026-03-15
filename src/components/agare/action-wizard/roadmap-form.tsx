@@ -6,10 +6,11 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+import type { RoadmapData } from "./constants"
+
 interface RoadmapFormProps {
     onBack: () => void
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSubmit: (data: any) => void
+    onSubmit: (data: RoadmapData) => void
 }
 
 export function RoadmapForm({ onBack, onSubmit }: RoadmapFormProps) {

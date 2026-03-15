@@ -8,7 +8,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { basAccounts } from '@/data/accounts'
 
 // ---------------------------------------------------------------------------

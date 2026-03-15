@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { createCreditNoteEntry } from '@/lib/bookkeeping/entries/sales'
 
 export async function POST(
@@ -20,17 +20,23 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
+        const { supabase, userId, companyId } = ctx
         const { id: invoiceId } = await params
         const body = await request.json().catch(() => ({}))
         const reason = body.reason || 'Kreditering'
 
         // Fetch original invoice
-        const invoice = await userDb.customerInvoices.getById(invoiceId)
+        const { data: invoice } = await supabase
+            .from('customerinvoices')
+            .select('*')
+            .eq('id', invoiceId)
+            .single()
+
         if (!invoice) {
             return NextResponse.json({ error: 'Faktura hittades inte' }, { status: 404 })
         }
@@ -42,7 +48,7 @@ export async function POST(
 
         // Generate credit note number
         const year = new Date().getFullYear()
-        const { data: existingCreditNotes } = await userDb.client
+        const { data: existingCreditNotes } = await supabase
             .from('customerinvoices')
             .select('invoice_number')
             .like('invoice_number', `KF-${year}-%`)
@@ -96,19 +102,27 @@ export async function POST(
                     rows: journalEntry.rows,
                 },
             },
-            user_id: userDb.userId,
-            company_id: userDb.companyId || '',
+            user_id: userId,
+            company_id: companyId || '',
         }
 
-        const created = await userDb.customerInvoices.create(creditNoteData)
+        const { data: created, error } = await supabase
+            .from('customerinvoices')
+            .insert(creditNoteData)
+            .select()
+            .single()
+
+        if (error) console.error('[CreditNote] create error:', error)
+
         if (!created) {
             return NextResponse.json({ error: 'Kunde inte skapa kreditfaktura' }, { status: 500 })
         }
 
         // Update original invoice status to 'Krediterad'
-        await userDb.customerInvoices.update(invoice.id, {
-            status: 'Krediterad',
-        })
+        await supabase
+            .from('customerinvoices')
+            .update({ status: 'Krediterad' })
+            .eq('id', invoice.id)
 
         return NextResponse.json({
             success: true,

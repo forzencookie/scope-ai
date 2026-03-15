@@ -1,10 +1,10 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { verificationService, type VerificationEntry } from './verification-service'
 import { logAuditEntry } from '@/lib/audit'
 
 // pending_bookings generated types don't match PendingBookingRow — needs migration to align columns
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db() { return getSupabaseClient() as any }
+function db() { return createBrowserClient() as any }
 
 // =============================================================================
 // Types
@@ -123,7 +123,7 @@ export const pendingBookingService = {
 
     // Get company_id from membership
     const { data: membership } = await supabase
-      .from('companymembers')
+      .from('company_members')
       .select('company_id')
       .eq('user_id', user.id)
       .single()
@@ -248,7 +248,7 @@ export const pendingBookingService = {
       // Compensate: delete the orphaned verification so the user can retry
       console.error('[PendingBookingService] Atomic status update failed, compensating:', rpcError)
       try {
-        const realSupabase = getSupabaseClient()
+        const realSupabase = createBrowserClient()
         await realSupabase.from('verification_lines').delete().eq('verification_id', verification.id)
         await realSupabase.from('verifications').delete().eq('id', verification.id)
       } catch (cleanupErr) {

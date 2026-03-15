@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import type { PostgrestError } from '@supabase/supabase-js'
 
 interface VatStatsRpcResult {
@@ -31,7 +31,7 @@ export const taxService = {
      * Get aggregated VAT stats for a specific date range (e.g. Quarter)
      */
     async getVatStats(startDate: string, _endDate: string): Promise<VatStats | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const year = parseInt(startDate.substring(0, 4)) || new Date().getFullYear()
         const { data, error } = await supabase.rpc('get_vat_stats', {
             p_year: year
@@ -54,7 +54,7 @@ export const taxService = {
      * Get aggregated AGI stats for a specific month
      */
     async getAgiStats(year: number, _month: number): Promise<AgiStats | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase.rpc('get_agi_stats', {
             p_year: year
         }) as { data: AgiStatsRpcResult | null, error: PostgrestError | null }
@@ -75,7 +75,7 @@ export const taxService = {
      * Get system parameter for a specific year (e.g. IBB)
      */
     async getSystemParameter<T>(key: string, year: number): Promise<T | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
             .from('system_parameters')
             .select('value')
@@ -101,7 +101,7 @@ export const taxService = {
         columnNumber: number,
         monthlyIncome: number
     ): Promise<number | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('skv_tax_tables')
@@ -129,7 +129,7 @@ export const taxService = {
      */
     async getAllTaxRates(year: number): Promise<TaxRates | null> {
         try {
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             const { data, error } = await supabase
                 .from('system_parameters')
                 .select('key, value')

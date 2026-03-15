@@ -5,7 +5,7 @@
  * AI tools call these functions to manage periodiseringsfonder.
  */
 
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
+import { createBrowserClient, isSupabaseConfigured } from '@/lib/database/client'
 import type { Periodiseringsfond, CreatePeriodiseringsfondInput, TaxSavingsCalculation } from './ai-tool-types'
 import { taxService } from '@/services/tax-service'
 
@@ -39,7 +39,7 @@ export async function listPeriodiseringsfonder(): Promise<Periodiseringsfond[]> 
         return []
     }
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     const { data, error } = await supabase
         .from('periodiseringsfonder')
         .select('*')
@@ -67,7 +67,7 @@ export async function createPeriodiseringsfond(
     // Calculate expiry date (6 years from end of tax year)
     const expiresAt = new Date(input.year + 6, 11, 31) // Dec 31, 6 years later
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     const { data, error } = await supabase
         .from('periodiseringsfonder')
         .insert({
@@ -100,7 +100,7 @@ export async function dissolvePeriodiseringsfond(
         return null
     }
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     // First get the current fond
     const { data: existingData } = await supabase
@@ -149,7 +149,7 @@ export async function getExpiringFonder(withinMonths: number = 12): Promise<Peri
     const futureDate = new Date()
     futureDate.setMonth(futureDate.getMonth() + withinMonths)
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     const { data, error } = await supabase
         .from('periodiseringsfonder')
         .select('*')

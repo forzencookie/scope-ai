@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { pendingBookingService } from '@/services/pending-booking-service'
 import { verificationService, type VerificationEntry } from '@/services/verification-service'
 import { createSimpleEntry } from '@/lib/bookkeeping'
@@ -11,11 +11,13 @@ export async function POST(
 ) {
     const { id } = await params
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { supabase } = ctx;
 
         const body = await request.json()
         const { category, debitAccount, creditAccount, description, vatRate } = body
@@ -28,7 +30,12 @@ export async function POST(
         }
 
         // 1. Fetch the transaction to get details
-        const transaction = await userDb.transactions.getById(id)
+        const { data: transaction } = await supabase
+            .from('transactions')
+            .select('*')
+            .eq('id', id)
+            .single();
+
         if (!transaction) {
             return NextResponse.json({ success: false, error: 'Transaction not found' }, { status: 404 })
         }
@@ -83,9 +90,10 @@ export async function POST(
         })
 
         // 5. Update Transaction category (but NOT status — that happens on booking confirmation)
-        await userDb.transactions.update(id, {
-            category: category,
-        })
+        await supabase
+            .from('transactions')
+            .update({ category })
+            .eq('id', id);
 
         return NextResponse.json({
             success: true,

@@ -1,4 +1,16 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
+import type { Database } from '@/types/database'
+
+type EmployeeRow = Database['public']['Tables']['employees']['Row']
+type PayslipRow = Database['public']['Tables']['payslips']['Row'] & {
+    employees?: { name: string } | null
+}
+type AGIReportRow = Database['public']['Tables']['agireports']['Row'] & {
+    year?: number | null
+    month?: number | null
+    due_date?: string | null
+    employee_count?: number | null
+}
 
 
 export type PayrollStats = {
@@ -51,56 +63,53 @@ export type AGIReport = {
 }
 
 /** Map a database row to the Employee UI model. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRowToEmployee(e: any): Employee {
+function mapRowToEmployee(e: EmployeeRow): Employee {
     return {
         id: e.id,
         name: e.name,
-        personalNumber: e.personal_number,
-        role: e.role,
+        personalNumber: e.personal_number ?? undefined,
+        role: e.role ?? undefined,
         monthlySalary: Number(e.monthly_salary) || 0,
         taxTable: e.tax_table || 33,
-        startDate: e.start_date,
-        email: e.email,
-        status: e.status || 'active',
+        startDate: e.start_date ?? undefined,
+        email: e.email ?? undefined,
+        status: (e.status as Employee['status']) || 'active',
     }
 }
 
 /** Map a database row to the Payslip UI model. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRowToPayslip(p: any): Payslip {
+function mapRowToPayslip(p: PayslipRow): Payslip {
     return {
         id: p.id,
-        employeeId: p.employee_id,
+        employeeId: p.employee_id || '',
         employeeName: p.employees?.name || 'Okänd',
         period: p.period,
-        year: p.year,
-        month: p.month,
+        year: p.year || 0,
+        month: p.month || 0,
         grossSalary: Number(p.gross_salary) || 0,
         taxDeduction: Number(p.tax_deduction) || 0,
         netSalary: Number(p.net_salary) || 0,
         bonuses: Number(p.bonuses) || 0,
-        otherDeductions: Number(p.other_deductions) || 0,
-        status: p.status || 'draft',
-        sentAt: p.sent_at,
+        otherDeductions: Number(p.deductions) || 0,
+        status: (p.status as Payslip['status']) || 'draft',
+        sentAt: p.paid_at ?? undefined,
     }
 }
 
 /** Map a database row to the AGIReport UI model. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRowToAGIReport(r: any): AGIReport {
+function mapRowToAGIReport(r: AGIReportRow): AGIReport {
     return {
         id: r.id,
-        period: r.period,
-        year: r.year,
-        month: r.month,
-        dueDate: r.due_date,
+        period: r.period || '',
+        year: r.year || 0,
+        month: r.month || 0,
+        dueDate: r.due_date || '',
         employeeCount: r.employee_count || 0,
         totalSalary: Number(r.total_salary) || 0,
         totalTax: Number(r.total_tax) || 0,
         employerContributions: Number(r.employer_contributions) || 0,
-        status: r.status || 'draft',
-        submittedAt: r.submitted_at,
+        status: (r.status as AGIReport['status']) || 'draft',
+        submittedAt: r.updated_at ?? undefined,
     }
 }
 
@@ -109,7 +118,7 @@ export const payrollService = {
      * Get aggregate statistics for payroll from the database.
      */
     async getStats(): Promise<PayrollStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data: rawData, error } = await supabase.rpc('get_payroll_stats')
         const data = rawData as Record<string, unknown> | null
 
@@ -144,7 +153,7 @@ export const payrollService = {
      * Get all employees for current user.
      */
     async getEmployees(): Promise<Employee[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
             .from('employees')
             .select('*')
@@ -161,7 +170,7 @@ export const payrollService = {
      * Get payslips, optionally filtered by year/month.
      */
     async getPayslips(year?: number, month?: number): Promise<Payslip[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         let query = supabase
             .from('payslips')
             .select('*, employees(name)')
@@ -184,7 +193,7 @@ export const payrollService = {
      * Get AGI reports, optionally filtered by year.
      */
     async getAGIReports(year?: number): Promise<AGIReport[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         let query = supabase
             .from('agireports')
             .select('*')

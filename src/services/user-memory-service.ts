@@ -12,7 +12,7 @@
  * - pending: Things being considered (e.g., "Considering hiring", expires after 30 days)
  */
 
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 // =============================================================================
 // Types
@@ -59,7 +59,7 @@ class UserMemoryService {
      * Active = not superseded and not expired.
      */
     async getMemoriesForCompany(companyId: string): Promise<UserMemory[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('user_memory')
@@ -81,7 +81,7 @@ class UserMemoryService {
      * Get memories by category.
      */
     async getMemoriesByCategory(companyId: string, category: MemoryCategory): Promise<UserMemory[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('user_memory')
@@ -105,7 +105,7 @@ class UserMemoryService {
      * For semantic search, use queryRelevantMemories.
      */
     async searchMemories(companyId: string, query: string): Promise<UserMemory[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('user_memory')
@@ -130,7 +130,7 @@ class UserMemoryService {
      * Checks for similar existing memories and supersedes if appropriate.
      */
     async addMemory(params: CreateMemoryParams): Promise<UserMemory | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Calculate expiry if specified
         let expiresAt: string | null = null
@@ -170,7 +170,7 @@ class UserMemoryService {
         newContent: string,
         params?: { category?: MemoryCategory; confidence?: number }
     ): Promise<UserMemory | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Get the old memory
         const { data: oldMemory, error: fetchError } = await supabase
@@ -222,7 +222,7 @@ class UserMemoryService {
      * The memory is marked as replaced but not physically deleted.
      */
     async supersedeMemory(memoryId: string, replacementId: string): Promise<boolean> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { error } = await supabase
             .from('user_memory')
@@ -242,7 +242,7 @@ class UserMemoryService {
      * Actually creates a "deletion" record for audit trail.
      */
     async deleteMemory(memoryId: string): Promise<boolean> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Get the old memory
         const { data: oldMemory, error: fetchError } = await supabase
@@ -287,7 +287,7 @@ class UserMemoryService {
      * Get memory history (including superseded versions).
      */
     async getMemoryHistory(memoryId: string): Promise<UserMemory[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const history: UserMemory[] = []
         let currentId: string | null = memoryId

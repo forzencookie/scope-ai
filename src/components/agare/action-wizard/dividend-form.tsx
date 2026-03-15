@@ -6,12 +6,12 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import type { Shareholder } from "@/hooks/use-compliance"
+import type { DividendData } from "./constants"
 
 interface DividendFormProps {
     shareholders: Shareholder[]
     onBack: () => void
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSubmit: (data: any) => void
+    onSubmit: (data: DividendData) => void
 }
 
 export function DividendForm({ shareholders, onBack, onSubmit }: DividendFormProps) {

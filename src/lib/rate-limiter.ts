@@ -17,7 +17,9 @@
  * ```
  */
 
-import { supabase } from './database/supabase'
+import { createBrowserClient } from './database/client'
+
+const supabase = createBrowserClient()
 
 // ============================================================================
 // Types

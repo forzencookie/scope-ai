@@ -67,8 +67,8 @@ export async function getOrCreateCustomer(
     email: string,
     name?: string
 ): Promise<string> {
-    const { getSupabaseAdmin } = await import('./database/supabase')
-    const supabase = getSupabaseAdmin()
+    const { createAdminClient } = await import('./database/client')
+    const supabase = createAdminClient()
 
     // Check if user already has a Stripe customer ID
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -196,8 +196,8 @@ export async function updateUserTier(
     userId: string,
     tier: 'pro' | 'max' | 'free'
 ): Promise<void> {
-    const { getSupabaseAdmin } = await import('./database/supabase')
-    const supabase = getSupabaseAdmin()
+    const { createAdminClient } = await import('./database/client')
+    const supabase = createAdminClient()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
@@ -212,8 +212,8 @@ export async function updateUserTier(
  * Get user ID from Stripe customer ID
  */
 export async function getUserIdFromCustomer(customerId: string): Promise<string | null> {
-    const { getSupabaseAdmin } = await import('./database/supabase')
-    const supabase = getSupabaseAdmin()
+    const { createAdminClient } = await import('./database/client')
+    const supabase = createAdminClient()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data } = await supabase
@@ -238,8 +238,8 @@ export async function addUserCredits(
     stripePaymentId?: string,
     pricePaidCents?: number
 ): Promise<void> {
-    const { getSupabaseAdmin } = await import('./database/supabase')
-    const supabase = getSupabaseAdmin()
+    const { createAdminClient } = await import('./database/client')
+    const supabase = createAdminClient()
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase.rpc('add_user_credits' as any, {
@@ -261,8 +261,8 @@ export async function addUserCredits(
  * Get a user's current credit balance
  */
 export async function getUserCredits(userId: string): Promise<number> {
-    const { getSupabaseAdmin } = await import('./database/supabase')
-    const supabase = getSupabaseAdmin()
+    const { createAdminClient } = await import('./database/client')
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase.rpc('get_user_credits', {
         p_user_id: userId,

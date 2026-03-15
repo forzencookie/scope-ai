@@ -5,7 +5,7 @@
  * (API routes, services) where the client-side useActivityLog hook is unavailable.
  */
 
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import type { Json } from '@/types/database'
 
 export type AuditAction =
@@ -32,7 +32,7 @@ export async function logAuditEntry(params: {
     metadata?: Record<string, unknown>
 }): Promise<void> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 

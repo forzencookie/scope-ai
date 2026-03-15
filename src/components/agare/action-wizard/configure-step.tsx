@@ -6,16 +6,15 @@ import { BoardChangeForm } from "./board-change-form"
 import { DividendForm } from "./dividend-form"
 import { RoadmapForm } from "./roadmap-form"
 import { GenericForm } from "./generic-form"
+import type { WizardFormData } from "./constants"
 
 interface ConfigureStepProps {
     actionType: CorporateActionType
     onBack: () => void
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSubmit: (data: any) => void
+    onSubmit: (data: WizardFormData) => void
     shareholders: Shareholder[]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function ConfigureStep({ actionType, onBack, onSubmit, shareholders }: ConfigureStepProps) {
     if (actionType === 'board_change') {
         return <BoardChangeForm onBack={onBack} onSubmit={onSubmit} />

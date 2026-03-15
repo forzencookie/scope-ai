@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createMiddlewareSupabaseClient } from '@/lib/database/supabase-server'
+import { createMiddlewareClient } from '@/lib/database/client'
 
 /**
  * Protected routes that require authentication
@@ -66,7 +66,7 @@ export async function middleware(request: NextRequest) {
     })
 
     // Create Supabase client with middleware cookie handling
-    const supabase = createMiddlewareSupabaseClient(request, response)
+    const supabase = createMiddlewareClient(request, response)
 
     // Refresh session if needed - this updates cookies
     const { data: { user }, error } = await supabase.auth.getUser()

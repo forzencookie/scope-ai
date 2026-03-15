@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { getStripe } from '@/lib/stripe'
-import { getSupabaseAdmin } from '@/lib/database/supabase'
+import { createAdminClient } from '@/lib/database/client'
 
 /**
  * GET /api/stripe/billing-history
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
             return ApiResponse.unauthorized('Authentication required')
         }
 
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
 
         // Get user's Stripe customer ID
         // eslint-disable-next-line @typescript-eslint/no-explicit-any

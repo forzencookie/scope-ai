@@ -10,7 +10,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo } 
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
 import { getMyCompany, updateCompany as updateCompanyInDb } from "@/services/company-service"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 
 // ============================================
 // Types
@@ -202,7 +202,7 @@ export function CompanyProvider({
         if (!company.id) return // Skip if no company ID yet
         setIsSaving(true)
         try {
-          const supabase = getSupabaseClient()
+          const supabase = createBrowserClient()
           const { data: { user } } = await supabase.auth.getUser()
           if (user) {
             await updateCompanyInDb(company.id, user.id, {

@@ -61,7 +61,7 @@ export * from './planning/roadmap'
 // ============================================================================
 
 import { aiToolRegistry } from './registry'
-import { toolsToOpenAIFunctions, type AITool } from './types'
+import type { AITool } from './types'
 import { bokforingTools } from './bokforing'
 import { lonerTools } from './loner'
 import { skattTools } from './skatt'
@@ -83,8 +83,8 @@ export function initializeAITools(): void {
         ...planningTools,
     ]
 
-    for (const tool of allTools) {
-        aiToolRegistry.register(tool as unknown as AITool)
+    for (const tool of allTools as AITool[]) {
+        aiToolRegistry.register(tool)
     }
 
     console.log(`[AI Tools] Registered ${aiToolRegistry.getAll().length} tools`)
@@ -96,10 +96,4 @@ export function initializeAITools(): void {
     console.log(`  - Planning: ${planningTools.length} tools`)
 }
 
-/**
- * Get all tools in OpenAI function calling format
- */
-export function getOpenAITools() {
-    return toolsToOpenAIFunctions(aiToolRegistry.getAll())
-}
 

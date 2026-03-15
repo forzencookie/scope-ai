@@ -4,11 +4,11 @@
  * Records customer payment on a booked invoice.
  * Uses the bookkeeping engine to create proper payment journal entries.
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 import { pendingBookingService } from '@/services/pending-booking-service';
 import { createPaymentReceivedEntry } from '@/lib/bookkeeping';
 
@@ -17,15 +17,20 @@ export async function POST(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase } = ctx;
         const { id } = await params;
 
-        const invoice = await userDb.customerInvoices.getById(id);
+        const { data: invoice } = await supabase
+            .from('customerinvoices')
+            .select('*')
+            .eq('id', id)
+            .single();
 
         if (!invoice) {
             return NextResponse.json({ error: "Invoice not found" }, { status: 404 });
@@ -67,7 +72,10 @@ export async function POST(
         });
 
         // Update invoice status to Betald
-        await userDb.customerInvoices.update(id, { status: 'Betald' });
+        await supabase
+            .from('customerinvoices')
+            .update({ status: 'Betald' })
+            .eq('id', id);
 
         return NextResponse.json({ success: true, pendingBookingId: pending.id });
 

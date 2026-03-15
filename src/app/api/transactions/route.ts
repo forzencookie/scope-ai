@@ -1,11 +1,11 @@
 /**
  * Transactions API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 // Helper to format transaction for frontend
 function formatTransaction(tx: Record<string, unknown>) {
@@ -31,11 +31,13 @@ function formatTransaction(tx: Record<string, unknown>) {
 
 export async function GET(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { supabase, userId, companyId } = ctx;
 
         const { searchParams } = new URL(request.url);
         const limit = parseInt(searchParams.get('limit') || '200', 10);
@@ -43,13 +45,24 @@ export async function GET(request: NextRequest) {
         const endDate = searchParams.get('endDate') || undefined;
         const status = searchParams.get('status') || undefined;
 
-        const transactions = await userDb.transactions.list({ limit, startDate, endDate, status });
+        let query = supabase
+            .from('transactions')
+            .select('*')
+            .order('date', { ascending: false })
+            .limit(limit);
+
+        if (startDate) query = query.gte('date', startDate);
+        if (endDate) query = query.lte('date', endDate);
+        if (status) query = query.eq('status', status);
+
+        const { data: transactions, error } = await query;
+        if (error) console.error('[Transactions] list error:', error);
 
         return NextResponse.json({
             success: true,
-            transactions: transactions.map(formatTransaction),
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            transactions: (transactions || []).map(tx => formatTransaction(tx as Record<string, unknown>)),
+            userId,
+            companyId,
             timestamp: new Date()
         })
     } catch (error) {
@@ -60,14 +73,23 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase, userId, companyId } = ctx;
+
         const body = await request.json();
-        const transaction = await userDb.transactions.create(body);
+
+        const { data: transaction, error } = await supabase
+            .from('transactions')
+            .insert({ ...body, user_id: body.user_id ?? userId, company_id: body.company_id ?? companyId })
+            .select()
+            .single();
+
+        if (error) console.error('[Transactions] create error:', error);
 
         if (!transaction) {
             return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });

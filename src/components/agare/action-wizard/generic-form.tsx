@@ -6,10 +6,11 @@ import { Card } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 
+import type { GenericActionData } from "./constants"
+
 interface GenericFormProps {
     onBack: () => void
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSubmit: (data: any) => void
+    onSubmit: (data: GenericActionData) => void
 }
 
 export function GenericForm({ onBack, onSubmit }: GenericFormProps) {

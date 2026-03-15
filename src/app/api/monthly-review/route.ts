@@ -11,7 +11,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 interface StatusBreakdown {
     status: string
@@ -109,10 +109,11 @@ function groupByStatus<T extends Record<string, unknown>>(
 
 export async function GET(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const { supabase } = ctx
 
         const { searchParams } = new URL(request.url)
         const year = parseInt(searchParams.get('year') || '') || new Date().getFullYear()
@@ -133,62 +134,62 @@ export async function GET(request: NextRequest) {
         // Run 8 parallel queries
         const results = await Promise.allSettled([
             // 0: Transactions
-            userDb.client
+            supabase
                 .from('transactions')
                 .select('id, status')
                 .gte('date', startDate)
                 .lte('date', endDate),
 
             // 1: Customer invoices
-            userDb.client
+            supabase
                 .from('customerinvoices')
                 .select('id, status')
                 .gte('invoice_date', startDate)
                 .lte('invoice_date', endDate),
 
             // 2: Supplier invoices
-            userDb.client
+            supabase
                 .from('supplierinvoices')
                 .select('id, status')
                 .gte('issue_date', startDate)
                 .lte('issue_date', endDate),
 
             // 3: Receipts
-            userDb.client
+            supabase
                 .from('receipts')
                 .select('id, status')
                 .gte('date', startDate)
                 .lte('date', endDate),
 
             // 4: Payslips
-            userDb.client
+            supabase
                 .from('payslips')
                 .select('id, status')
                 .eq('year', year)
                 .eq('month', month),
 
             // 5: VAT reports
-            userDb.client
+            supabase
                 .from('taxreports')
                 .select('id, status, period_id')
                 .eq('type', 'vat')
                 .eq('period_id', quarterPeriodId),
 
             // 6: Verifications (count only)
-            userDb.client
+            supabase
                 .from('verifications')
                 .select('id', { count: 'exact', head: true })
                 .gte('date', startDate)
                 .lte('date', endDate),
 
             // 7: Financial balances
-            userDb.client.rpc('get_account_balances', {
+            supabase.rpc('get_account_balances', {
                 p_start_date: startDate,
                 p_end_date: endDate,
             }),
 
             // 8: AI conversations in this month
-            userDb.client
+            supabase
                 .from('conversations')
                 .select('id, title, created_at')
                 .gte('created_at', `${startDate}T00:00:00`)
@@ -196,7 +197,7 @@ export async function GET(request: NextRequest) {
                 .order('created_at', { ascending: false }),
 
             // 9: Completed roadmap steps in this month
-            userDb.client
+            supabase
                 .from('roadmap_steps')
                 .select('id, title, updated_at')
                 .eq('status', 'completed')

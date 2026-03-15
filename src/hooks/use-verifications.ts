@@ -1,7 +1,7 @@
 
 import { useCallback, useState } from "react"
 import { useCachedQuery } from "./use-cached-query"
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 export interface VerificationRow {
     account: string
@@ -59,7 +59,7 @@ export function useVerifications() {
             const month = verDate.getMonth() + 1
             const periodId = `${year}-M${String(month).padStart(2, '0')}`
 
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             const { data: period } = await supabase
                 .from('financialperiods')
                 .select('status')

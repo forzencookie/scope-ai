@@ -5,18 +5,19 @@
  */
 
 import { NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Use raw client for tables not yet in typed accessors
-        const { data: periods, error } = await userDb.client
+        const { supabase, userId, companyId } = ctx;
+
+        const { data: periods, error } = await supabase
             .from('financialperiods')
             .select('*')
             .order('start_date', { ascending: false });
@@ -25,8 +26,8 @@ export async function GET() {
 
         return NextResponse.json({
             periods: periods || [],
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            userId,
+            companyId,
         });
     } catch (error) {
         console.error("Failed to fetch financial periods:", error);

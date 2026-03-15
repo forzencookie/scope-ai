@@ -113,8 +113,6 @@ export interface AgentContext {
     // Current request
     originalMessage: string
     intent?: Intent
-    currentIntent?: Intent    // Active intent during processing
-    
     // Agent coordination
     activeAgent?: AgentDomain
     handoffStack: AgentDomain[]     // Track agent-to-agent handoffs
@@ -131,13 +129,6 @@ export interface AgentContext {
 /**
  * Create a fresh context for a new conversation.
  */
-export function createAgentContext(
-    userId: string,
-    companyId: string,
-    companyType: AgentContext['companyType'],
-    message: string,
-    conversationId?: string
-): AgentContext
 export function createAgentContext(config: {
     userId: string
     companyId: string
@@ -147,64 +138,29 @@ export function createAgentContext(config: {
     conversationId?: string
     messages?: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: Date }>
     modelId?: string
-}): AgentContext
-export function createAgentContext(
-    userIdOrConfig: string | {
-        userId: string
-        companyId: string
-        companyType: AgentContext['companyType']
-        companyName?: string
-        locale?: 'sv' | 'en'
-        conversationId?: string
-        messages?: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: Date }>
-        modelId?: string
-    },
-    companyId?: string,
-    companyType?: AgentContext['companyType'],
-    message?: string,
-    conversationId?: string
-): AgentContext {
-    // Object-based signature
-    if (typeof userIdOrConfig === 'object') {
-        const config = userIdOrConfig
-        const conversationHistory: AgentMessage[] = (config.messages || []).map(m => ({
-            id: m.id,
-            type: 'request' as const,
-            from: m.role === 'user' ? 'user' as const : 'orchestrator' as const,
-            to: 'orchestrator' as const,
-            content: m.content,
-            correlationId: config.conversationId || crypto.randomUUID(),
-            timestamp: m.timestamp.getTime(),
-        }))
-        
-        return {
-            userId: config.userId,
-            companyId: config.companyId,
-            companyType: config.companyType,
-            companyName: config.companyName,
-            conversationId: config.conversationId || crypto.randomUUID(),
-            conversationHistory,
-            originalMessage: config.messages?.[config.messages.length - 1]?.content || '',
-            handoffStack: [],
-            consultationDepth: 0,
-            sharedMemory: { modelId: config.modelId },
-            locale: config.locale || 'sv',
-            timestamp: Date.now(),
-        }
-    }
-    
-    // Positional arguments signature (backwards compatible)
+}): AgentContext {
+    const conversationHistory: AgentMessage[] = (config.messages || []).map(m => ({
+        id: m.id,
+        type: 'request' as const,
+        from: m.role === 'user' ? 'user' as const : 'orchestrator' as const,
+        to: 'orchestrator' as const,
+        content: m.content,
+        correlationId: config.conversationId || crypto.randomUUID(),
+        timestamp: m.timestamp.getTime(),
+    }))
+
     return {
-        userId: userIdOrConfig,
-        companyId: companyId!,
-        companyType: companyType!,
-        conversationId: conversationId || crypto.randomUUID(),
-        conversationHistory: [],
-        originalMessage: message || '',
+        userId: config.userId,
+        companyId: config.companyId,
+        companyType: config.companyType,
+        companyName: config.companyName,
+        conversationId: config.conversationId || crypto.randomUUID(),
+        conversationHistory,
+        originalMessage: config.messages?.[config.messages.length - 1]?.content || '',
         handoffStack: [],
         consultationDepth: 0,
-        sharedMemory: {},
-        locale: 'sv',
+        sharedMemory: { modelId: config.modelId },
+        locale: config.locale || 'sv',
         timestamp: Date.now(),
     }
 }

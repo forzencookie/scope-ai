@@ -57,9 +57,8 @@ export function useTeams() {
         navigationService.getCurrentTeam(),
       ])
 
-      if (currentResponse.success) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        setCurrentTeam((currentResponse.data as any) || null)
+      if (currentResponse.success && currentResponse.data) {
+        setCurrentTeam(currentResponse.data)
       } else {
         setCurrentTeam(null)
       }

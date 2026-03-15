@@ -10,7 +10,7 @@
  * and 2099 is the current year result on the balance sheet.
  */
 
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { verificationService } from './verification-service'
 import { taxService } from './tax-service'
 
@@ -56,7 +56,7 @@ export const closingEntryService = {
      * Returns all journal lines that would be created.
      */
     async previewClosingEntries(year: number, companyType: 'AB' | 'EF' = 'AB'): Promise<ClosingEntryPreview> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Check if already closed (look for series "Y" verifications in this year)
         const { data: existingClosing } = await supabase

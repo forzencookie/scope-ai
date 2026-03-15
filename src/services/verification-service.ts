@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import type { Json } from '@/types/database'
 import { logAuditEntry } from '@/lib/audit'
 import { isValidAccount } from '@/lib/bookkeeping/utils'
@@ -102,7 +102,7 @@ export const verificationService = {
         endDate,
         year
     }: GetVerificationsOptions = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('verifications')
@@ -156,7 +156,7 @@ export const verificationService = {
      * Get a single verification by ID
      */
     async getVerificationById(id: string): Promise<Verification | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('verifications')
@@ -174,7 +174,7 @@ export const verificationService = {
      * Uses the database RPC for atomic numbering (BFL 5:7 compliance).
      */
     async getNextVerificationNumber(series: string = 'A', year?: number): Promise<number> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
 
         const { data: { user } } = await supabase.auth.getUser()
@@ -198,7 +198,7 @@ export const verificationService = {
      * Get verification statistics
      */
     async getStats(): Promise<VerificationStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const currentYear = new Date().getFullYear()
 
         // Get total count
@@ -235,7 +235,7 @@ export const verificationService = {
      * (single source of truth, set by månadsavslut / period close).
      */
     async isPeriodLocked(date: string): Promise<boolean> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const d = new Date(date)
         const year = d.getFullYear()
         const month = d.getMonth() + 1
@@ -322,7 +322,7 @@ export const verificationService = {
             throw new Error(`Perioden ${monthName} är låst. Kan inte skapa verifikationer i en stängd period.`)
         }
 
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Get next number via atomic RPC (BFL 5:7)
         const year = new Date(date).getFullYear()
@@ -435,7 +435,7 @@ export const verificationService = {
             }
         }
 
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const updatePayload: Record<string, unknown> = {}
         if (updates.description !== undefined) updatePayload.description = updates.description
         if (updates.date !== undefined) updatePayload.date = updates.date
@@ -476,7 +476,7 @@ export const verificationService = {
             throw new Error('Kan inte radera verifikation i en låst period (BFL 5:4, 7 kap)')
         }
 
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { error } = await supabase
             .from('verifications')
             .delete()

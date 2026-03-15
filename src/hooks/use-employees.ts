@@ -1,7 +1,7 @@
 
 import { useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 export interface Employee {
     id: string
@@ -41,7 +41,7 @@ export function useEmployees() {
     } = useQuery({
         queryKey: employeeQueryKeys.list(),
         queryFn: async () => {
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             const { data, error } = await supabase.rpc('get_employee_balances')
             if (error) throw error
             return (data || []) as Employee[]
@@ -51,7 +51,7 @@ export function useEmployees() {
 
     const addMutation = useMutation({
         mutationFn: async (employee: NewEmployee): Promise<Employee> => {
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             const { data, error } = await supabase
                 .from('employees')
                 .insert({

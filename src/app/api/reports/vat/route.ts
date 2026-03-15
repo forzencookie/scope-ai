@@ -5,18 +5,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase, userId, companyId } = ctx;
+
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: reports, error } = await userDb.client
+        const { data: reports, error } = await supabase
             .from('taxreports' as any)
             .select('*')
             .eq('type', 'vat')
@@ -26,8 +28,8 @@ export async function GET() {
 
         return NextResponse.json({
             reports: reports || [],
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            userId,
+            companyId,
         });
     } catch (error) {
         console.error("Failed to fetch VAT reports:", error);
@@ -37,12 +39,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase, companyId } = ctx;
         const report = await req.json();
 
         if (!report.period_id) {
@@ -50,11 +53,11 @@ export async function POST(req: NextRequest) {
         }
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: savedReport, error } = await userDb.client
+        const { data: savedReport, error } = await supabase
             .from('taxreports' as any)
             .upsert({
                 ...report,
-                company_id: userDb.companyId,
+                company_id: companyId,
             })
             .select()
             .single();
@@ -63,7 +66,7 @@ export async function POST(req: NextRequest) {
 
         // If status is 'submitted', update the financial period status too
         if (report.status === 'submitted') {
-            await userDb.client
+            await supabase
                 .from('financialperiods')
                 .update({ status: 'submitted' })
                 .eq('id', report.period_id);

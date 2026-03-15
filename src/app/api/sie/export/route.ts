@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { 
     generateSIE, 
     generateSIEFilename,
@@ -40,16 +40,16 @@ export async function GET(req: NextRequest) {
             )
         }
 
-        // Get user-scoped database connection
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        // Get authenticated database connection
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return NextResponse.json(
                 { error: "Unauthorized" },
                 { status: 401 }
             )
         }
 
-        const supabase = userDb.client
+        const { supabase } = ctx
 
         // =====================================================================
         // Fetch company info

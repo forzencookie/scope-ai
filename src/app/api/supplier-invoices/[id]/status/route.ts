@@ -1,29 +1,37 @@
 /**
  * Supplier Invoice Status Update API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function POST(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase } = ctx;
         const { id } = await params;
         const body = await req.json();
         const status = body.status;
 
         // Update via RLS-protected client
-        const updated = await userDb.supplierInvoices.update(id, { status });
+        const { data: updated, error } = await supabase
+            .from('supplierinvoices')
+            .update({ status })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) console.error('[SupplierInvoices] status update error:', error);
 
         if (updated) {
             return NextResponse.json({ success: true, status });

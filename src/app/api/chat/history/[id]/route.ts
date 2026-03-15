@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function GET(
     _request: Request,
@@ -13,22 +13,33 @@ export async function GET(
 ) {
     try {
         const { id } = await params;
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const { supabase, userId } = ctx;
 
-        const conversation = await userDb.conversations.getById(id);
+        const { data: conversation } = await supabase
+            .from('conversations')
+            .select('*')
+            .eq('id', id)
+            .eq('user_id', userId)
+            .single();
+
         if (!conversation) {
             return NextResponse.json({ error: 'Not found' }, { status: 404 });
         }
 
-        const messages = await userDb.messages.listByConversation(id);
+        const { data: messages } = await supabase
+            .from('messages')
+            .select('*')
+            .eq('conversation_id', id)
+            .order('created_at', { ascending: true });
 
         return NextResponse.json({
             ...conversation,
-            messages,
+            messages: messages || [],
         });
     } catch (error) {
         console.error("Error fetching conversation:", error);

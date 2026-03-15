@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 export type Benefit = {
     id: string
@@ -35,7 +35,7 @@ export const benefitService = {
      * Get aggregate statistics for benefits for a specific year
      */
     async getStats(year: number): Promise<BenefitStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data: rawData, error } = await supabase.rpc('get_benefit_stats', { target_year: year })
         const data = rawData as Record<string, unknown> | null
 
@@ -66,7 +66,7 @@ export const benefitService = {
      * Get all available benefits.
      */
     async getBenefits(): Promise<Benefit[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
             .from('benefits')
             .select('*')
@@ -94,7 +94,7 @@ export const benefitService = {
      * Get benefits assigned to an employee.
      */
     async getEmployeeBenefits(employeeId: string): Promise<EmployeeBenefit[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
             // eslint-disable-next-line @typescript-eslint/no-explicit-any
             .from('employee_benefits' as any)

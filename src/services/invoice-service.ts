@@ -1,4 +1,8 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
+import type { Database } from '@/types/database'
+
+type CustomerInvoiceRow = Database['public']['Tables']['customerinvoices']['Row']
+type SupplierInvoiceRow = Database['public']['Tables']['supplierinvoices']['Row']
 
 // Types matching schema.sql
 export type CustomerInvoice = {
@@ -36,37 +40,35 @@ export type InvoiceStats = {
 }
 
 /** Map a database row to the CustomerInvoice UI model. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRowToCustomerInvoice(row: any): CustomerInvoice {
+function mapRowToCustomerInvoice(row: CustomerInvoiceRow): CustomerInvoice {
     return {
         id: row.id,
         invoiceNumber: row.invoice_number || row.id,
         customer: row.customer_name,
-        email: row.customer_email,
-        amount: Number(row.amount),
+        email: row.customer_email ?? undefined,
+        amount: Number(row.subtotal),
         vatAmount: row.vat_amount ? Number(row.vat_amount) : undefined,
         totalAmount: Number(row.total_amount),
         issueDate: row.invoice_date,
         dueDate: row.due_date,
-        status: row.status,
+        status: row.status || 'draft',
     }
 }
 
 /** Map a database row to the SupplierInvoice UI model. */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRowToSupplierInvoice(row: any): SupplierInvoice {
+function mapRowToSupplierInvoice(row: SupplierInvoiceRow): SupplierInvoice {
     const amount = Number(row.amount) || 0
     const vatAmount = row.vat_amount != null ? Number(row.vat_amount) : undefined
     return {
         id: row.id,
         invoiceNumber: row.ocr || row.id,
-        supplierName: row.supplier_name,
+        supplierName: row.supplier_name || 'Okänd',
         amount,
         vatAmount,
         totalAmount: Number(row.total_amount) || amount,
         invoiceDate: row.issue_date || row.created_at || new Date().toISOString(),
-        dueDate: row.due_date,
-        status: row.status as SupplierInvoice['status'],
+        dueDate: row.due_date || '',
+        status: (row.status as SupplierInvoice['status']) || 'Mottagen',
         currency: 'SEK',
     }
 }
@@ -86,7 +88,7 @@ export const invoiceService = {
         status?: string
         startDate?: string
     } = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('customerinvoices')
@@ -130,7 +132,7 @@ export const invoiceService = {
         status?: string
         startDate?: string
     } = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('supplierinvoices')
@@ -165,7 +167,7 @@ export const invoiceService = {
      * Uses parallel queries for optimal performance
      */
     async getStats(): Promise<InvoiceStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase.rpc('get_invoice_stats')
 
@@ -206,7 +208,7 @@ export const invoiceService = {
      * Update customer invoice status
      */
     async updateCustomerInvoiceStatus(id: string, status: string) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { error } = await supabase
             .from('customerinvoices')
@@ -221,7 +223,7 @@ export const invoiceService = {
      * Update supplier invoice status
      */
     async updateSupplierInvoiceStatus(id: string, status: string) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { error } = await supabase
             .from('supplierinvoices')

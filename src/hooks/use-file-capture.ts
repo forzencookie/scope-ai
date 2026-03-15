@@ -95,8 +95,7 @@ export function useFileCapture({
         accept: enableCamera ? "image/*" : accept,
         capture: enableCamera ? "environment" : undefined,
         className: "hidden",
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        onChange: handleCameraChange as any,
+        onChange: handleCameraChange,
     }
 
     return {

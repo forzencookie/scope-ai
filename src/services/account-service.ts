@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 /**
  * Account Balance Row - represents an account from BAS kontoplan
@@ -126,7 +126,7 @@ export const accountService = {
         period,
         accountClass
     }: GetAccountsOptions = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
 
         let query = supabase
@@ -181,7 +181,7 @@ export const accountService = {
      * Get balance for a specific account
      */
     async getAccountBalance(accountNumber: string, year?: number): Promise<Account | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
 
         const { data, error } = await supabase
@@ -218,7 +218,7 @@ export const accountService = {
      * Get balance sheet summary (assets, liabilities, equity)
      */
     async getBalanceSheetSummary(year?: number): Promise<AccountBalanceSummary> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
 
         const { data } = await supabase

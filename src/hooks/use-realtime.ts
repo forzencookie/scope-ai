@@ -12,7 +12,7 @@
  */
 
 import { useEffect, useState, useCallback, useRef } from "react"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 import { useAuth } from "./use-auth"
 import type { RealtimeChannel, RealtimePresenceState } from "@supabase/supabase-js"
 
@@ -80,7 +80,7 @@ export function useRealtime({
   const [onlineUsers, setOnlineUsers] = useState<PresenceUser[]>([])
   const [isConnected, setIsConnected] = useState(false)
   const channelRef = useRef<RealtimeChannel | null>(null)
-  const supabaseRef = useRef(getSupabaseClient())
+  const supabaseRef = useRef(createBrowserClient())
 
   // Initialize channel and subscriptions
   useEffect(() => {

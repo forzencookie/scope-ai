@@ -8,7 +8,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { getFiscalYearRange } from '@/lib/bookkeeping/utils'
 
 interface MonthlySummary {
@@ -55,17 +55,18 @@ function getFiscalMonths(fiscalYearEnd: string, referenceYear: number) {
 
 export async function GET(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb()
+        const ctx = await getAuthContext()
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const { supabase, userId, companyId } = ctx
 
         const { searchParams } = new URL(request.url)
         const year = parseInt(searchParams.get('year') || '') || new Date().getFullYear()
 
         // Fetch fiscal year end from company settings
-        const { data: companyData } = await userDb.client
+        const { data: companyData } = await supabase
             .from('companies')
             .select('fiscal_year_end')
             .single()
@@ -78,7 +79,7 @@ export async function GET(request: NextRequest) {
         const fyEndDate = fiscalMonths[fiscalMonths.length - 1].endDate
 
         // Fetch all verifications for the fiscal year
-        const { data: verifications, error: vError } = await userDb.client
+        const { data: verifications, error: vError } = await supabase
             .from('verifications')
             .select('id, date, is_locked')
             .gte('date', fyStartDate)
@@ -87,7 +88,7 @@ export async function GET(request: NextRequest) {
         if (vError) throw vError
 
         // Fetch pending (unbookmarked) transaction counts
-        const { data: pendingRows } = await userDb.client
+        const { data: pendingRows } = await supabase
             .from('transactions')
             .select('date')
             .eq('status', 'Att bokföra')
@@ -105,7 +106,7 @@ export async function GET(request: NextRequest) {
 
         // Fetch account balances per fiscal month (12 parallel calls)
         const monthBalancePromises = fiscalMonths.map(fm =>
-            userDb.client.rpc('get_account_balances', {
+            supabase.rpc('get_account_balances', {
                 p_start_date: fm.startDate,
                 p_end_date: fm.endDate,
             })
@@ -163,11 +164,12 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb()
+        const ctx = await getAuthContext()
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
+        const { supabase, userId, companyId } = ctx
 
         const body = await request.json()
         const { year, month, action } = body as { year: number; month: number; action: 'close' | 'reopen' }
@@ -183,7 +185,7 @@ export async function POST(request: NextRequest) {
         const isLocked = action === 'close'
 
         // Lock/unlock all verifications in the period
-        const { data, error } = await userDb.client
+        const { data, error } = await supabase
             .from('verifications')
             .update({ is_locked: isLocked })
             .gte('date', startDate)
@@ -195,18 +197,18 @@ export async function POST(request: NextRequest) {
         // Sync financialperiods table for consistent period locking
         const periodId = `${year}-M${String(month).padStart(2, '0')}`
         const monthName = MONTH_NAMES_SV[month - 1]
-        if (userDb.companyId) {
-            const { error: fpError } = await userDb.client
+        if (companyId) {
+            const { error: fpError } = await supabase
                 .from('financialperiods')
                 .upsert({
                     id: periodId,
-                    company_id: userDb.companyId,
+                    company_id: companyId,
                     name: `${monthName} ${year}`,
                     start_date: startDate,
                     end_date: endDate,
                     status: isLocked ? 'closed' : 'open',
                     locked_at: isLocked ? new Date().toISOString() : null,
-                    locked_by: isLocked ? userDb.userId : null,
+                    locked_by: isLocked ? userId : null,
                 }, { onConflict: 'id' })
 
             if (fpError) {

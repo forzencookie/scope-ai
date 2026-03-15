@@ -3,7 +3,7 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactions } from '@/hooks/use-transactions-query'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { useCompany } from '@/providers/company-provider'
 
 export interface DynamicTask {
@@ -38,7 +38,7 @@ function useStatCounts(): StatCounts & { isLoading: boolean } {
     const { data, isLoading } = useQuery<StatCounts>({
         queryKey: dynamicTaskQueryKeys.statCounts(),
         queryFn: async () => {
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             const today = new Date().toISOString().split('T')[0]
 
             const [draftRes, overdueRes, payslipRes] = await Promise.all([

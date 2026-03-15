@@ -8,22 +8,38 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import type { Database } from '@/types/database';
+import { getAuthContext } from '@/lib/database/auth';
 import { verificationService } from '@/services/verification-service';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const { supabase, userId, companyId } = ctx;
 
-        const verifications = await userDb.verifications.list({ limit: 200 });
+        const { data: verifications } = await supabase
+            .from('verifications')
+            .select('*')
+            .order('date', { ascending: false })
+            .limit(200);
+
+        const vList = verifications || [];
 
         // Batch-fetch all verification lines in a single query (fixes N+1)
-        const verificationIds = verifications.map(v => v.id);
-        const allLines = await userDb.verificationLines.listByVerificationIds(verificationIds);
+        const verificationIds = vList.map(v => v.id);
+        let allLines: Database['public']['Tables']['verification_lines']['Row'][] = [];
+        if (verificationIds.length > 0) {
+            const { data } = await supabase
+                .from('verification_lines')
+                .select('*')
+                .in('verification_id', verificationIds)
+                .order('created_at', { ascending: true })
+            allLines = data || [];
+        }
 
         // Group lines by verification_id
         const linesByVerification = new Map<string, typeof allLines>();
@@ -33,15 +49,15 @@ export async function GET() {
             linesByVerification.set(line.verification_id, existing);
         }
 
-        const enriched = verifications.map(v => ({
+        const enriched = vList.map(v => ({
             ...v,
             lines: linesByVerification.get(v.id) || [],
         }));
 
         return NextResponse.json({
             verifications: enriched,
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            userId,
+            companyId,
         });
     } catch (error) {
         console.error("Failed to fetch verifications:", error);
@@ -51,11 +67,12 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const { supabase, userId, companyId } = ctx;
 
         const body = await req.json();
 
@@ -81,10 +98,16 @@ export async function POST(req: NextRequest) {
         }
 
         // Bare verification (no lines) — legacy fallback
-        const saved = await userDb.verifications.create({
-            date: body.date || new Date().toISOString().split('T')[0],
-            description: body.description,
-        });
+        const { data: saved } = await supabase
+            .from('verifications')
+            .insert({
+                date: body.date || new Date().toISOString().split('T')[0],
+                description: body.description,
+                user_id: userId,
+                company_id: companyId,
+            })
+            .select()
+            .single();
 
         if (!saved) {
             return NextResponse.json({ error: "Failed to create" }, { status: 500 });

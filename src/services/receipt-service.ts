@@ -1,5 +1,8 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { RECEIPT_STATUSES, type ReceiptStatus } from '@/lib/status-types'
+import type { Database } from '@/types/database'
+
+type ReceiptRow = Database['public']['Tables']['receipts']['Row']
 
 // Type matching schema.sql and existing Receipt type from @/types
 export type Receipt = {
@@ -39,7 +42,7 @@ export const receiptService = {
         statuses?: string[]
         startDate?: string
     } = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('receipts')
@@ -72,17 +75,16 @@ export const receiptService = {
         }
 
         // Map DB columns to UI Receipt type
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const receipts: Receipt[] = (data || []).map((row: any) => ({
+        const receipts: Receipt[] = (data || []).map((row: ReceiptRow) => ({
             id: row.id,
             supplier: row.supplier || row.vendor || 'Okänd',
-            date: row.date || row.captured_at,
+            date: row.date || row.captured_at || '',
             amount: String(row.amount || row.total_amount || '0'),
             category: row.category || 'Övrigt',
             status: (row.status as ReceiptStatus) || RECEIPT_STATUSES.PENDING,
             attachment: row.image_url || row.file_url || '',
             hasAttachment: !!(row.image_url || row.file_url),
-            attachmentUrl: row.image_url || row.file_url,
+            attachmentUrl: row.image_url || row.file_url || undefined,
             linkedTransaction: row.transaction_count ? 'linked' : undefined,
         }))
 
@@ -94,7 +96,7 @@ export const receiptService = {
      * Uses parallel queries for optimal performance
      */
     async getStats(): Promise<ReceiptStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase.rpc('get_receipt_stats')
 
@@ -124,7 +126,7 @@ export const receiptService = {
      * Update receipt status
      */
     async updateReceiptStatus(id: string, status: string) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { error } = await supabase
             .from('receipts')

@@ -5,9 +5,9 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { uploadCompanyLogo } from '@/services/upload-service'
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 const MAX_SIZE = 2 * 1024 * 1024 // 2MB
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/webp', 'image/svg+xml']
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Update company logo_url in database
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         await supabase
             .from('companies')
             .update({ logo_url: result.url } as Record<string, unknown>)

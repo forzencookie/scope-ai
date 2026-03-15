@@ -59,8 +59,8 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
   keywords: ['användning', 'tokens', 'budget', 'kvot'],
   execute: async (_params, context) => {
     // Get usage from database
-    const { getSupabaseClient } = await import('@/lib/database/supabase')
-    const supabase = getSupabaseClient()
+    const { createBrowserClient } = await import('@/lib/database/client')
+    const supabase = createBrowserClient()
 
     const userId = context.userId
     if (!userId) {

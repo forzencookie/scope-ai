@@ -11,7 +11,7 @@ import {
   onAuthStateChange,
   resetPassword,
   updatePassword
-} from '@/lib/database/supabase-auth'
+} from '@/lib/database/auth'
 
 export function useAuth() {
   const [user, setUser] = useState<User | null>(null)

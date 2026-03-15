@@ -4,29 +4,36 @@
  * GET: List all payslips
  * POST: Create a payslip and auto-generate salary verification (journal entries)
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 import { pendingBookingService } from '@/services/pending-booking-service';
 import { taxService } from '@/services/tax-service';
 import { createSalaryEntry } from '@/lib/bookkeeping';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const payslips = await userDb.payslips.list();
+        const { supabase, userId, companyId } = ctx;
+
+        const { data: payslips, error } = await supabase
+            .from('payslips')
+            .select('*')
+            .order('created_at', { ascending: false });
+
+        if (error) throw error;
 
         return NextResponse.json({
-            payslips,
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            payslips: payslips || [],
+            userId,
+            companyId,
         });
     } catch (error) {
         console.error("Failed to fetch payslips:", error);
@@ -36,16 +43,22 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
+        const ctx = await getAuthContext();
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase, userId } = ctx;
         const body = await req.json();
-        const saved = await userDb.payslips.create(body);
 
-        if (!saved) {
+        const { data: saved, error: insertError } = await supabase
+            .from('payslips')
+            .insert({ ...body, user_id: body.user_id ?? userId })
+            .select()
+            .single();
+
+        if (insertError || !saved) {
             return NextResponse.json({ error: "Failed to create" }, { status: 500 });
         }
 

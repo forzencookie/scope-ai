@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerSupabaseClient } from "@/lib/database/supabase-server"
+import { createServerClient } from "@/lib/database/client"
 
 export interface UserPreferences {
     // Notifications
@@ -54,7 +54,7 @@ const defaultPreferences: UserPreferences = {
 
 export async function GET() {
     try {
-        const supabase = await createServerSupabaseClient()
+        const supabase = await createServerClient()
         
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {
@@ -86,7 +86,7 @@ export async function GET() {
 
 export async function PUT(request: Request) {
     try {
-        const supabase = await createServerSupabaseClient()
+        const supabase = await createServerClient()
         
         const { data: { user }, error: authError } = await supabase.auth.getUser()
         if (authError || !user) {

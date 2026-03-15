@@ -6,8 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { db } from '../../database/server-db'
-import { getSupabaseAdmin } from '../../database/supabase'
+import { createAdminClient } from '../../database/client'
 import type { AuditCheck, AuditResult } from './audit'
 
 // =============================================================================
@@ -29,7 +28,7 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
         const dateTo = `${year}-12-31`
         const prevDateFrom = `${prevYear}-01-01`
         const prevDateTo = `${prevYear}-12-31`
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
 
         // Gather all data in parallel
         const [
@@ -45,7 +44,7 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
                 p_start_date: prevDateFrom,
                 p_end_date: prevDateTo,
             }),
-            db.getPayslips(500),
+            supabase.from('payslips').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
         ])
 
         const mapBalances = (data: typeof currentBalances.data): Array<{ account: string; balance: number }> =>

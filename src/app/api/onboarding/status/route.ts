@@ -6,11 +6,11 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/database/supabase-server'
+import { createServerClient } from '@/lib/database/client'
 
 export async function GET() {
     try {
-        const supabase = await createServerSupabaseClient()
+        const supabase = await createServerClient()
         const { data: { user }, error: authError } = await supabase.auth.getUser()
 
         if (authError || !user) {
@@ -46,7 +46,7 @@ export async function GET() {
 
 export async function PATCH(req: NextRequest) {
     try {
-        const supabase = await createServerSupabaseClient()
+        const supabase = await createServerClient()
         const { data: { user }, error: authError } = await supabase.auth.getUser()
 
         if (authError || !user) {

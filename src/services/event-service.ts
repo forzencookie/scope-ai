@@ -10,7 +10,7 @@ import type {
     EventSource,
     EventCategory,
 } from '@/types/events'
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 /**
  * Map DB result to HändelseEvent
@@ -44,7 +44,7 @@ function mapDtoToEvent(dto: any): HändelseEvent {
  * Get all events from storage
  */
 export async function getEvents(filters?: EventFilters & { limit?: number; offset?: number }): Promise<{ events: HändelseEvent[]; totalCount: number }> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     let query = supabase
         .from('events')
@@ -96,7 +96,7 @@ export async function getEvents(filters?: EventFilters & { limit?: number; offse
  * Get event counts by source
  */
 export async function getEventCountsBySource(): Promise<Record<EventSource, number>> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     const counts: Record<EventSource, number> = {
         ai: 0, user: 0, system: 0, document: 0, authority: 0,
     }
@@ -126,7 +126,7 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
  * Emit a new event to the timeline
  */
 export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent | null> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     // Get current user for RLS security
     const { data: { user } } = await supabase.auth.getUser()

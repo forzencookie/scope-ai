@@ -18,6 +18,7 @@ import { StepSelect } from "./step-select"
 import { ConfigureStep } from "./configure-step"
 import { StepPreview } from "./step-preview"
 import { StepComplete } from "./step-complete"
+import type { WizardFormData } from "./constants"
 
 interface ActionWizardProps {
     open: boolean
@@ -32,8 +33,7 @@ type WizardStep = 'select' | 'configure' | 'preview' | 'complete'
 export function ActionWizard({ open, onOpenChange, onComplete, allowedActions }: ActionWizardProps) {
     const [step, setStep] = useState<WizardStep>('select')
     const [selectedAction, setSelectedAction] = useState<CorporateActionType | null>(null)
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [actionData, setActionData] = useState<any>(null)
+    const [actionData, setActionData] = useState<WizardFormData | null>(null)
 
     const { shareholders, addDocument, isAddingDoc } = useCompliance()
     const [isCreatingRoadmap, setIsCreatingRoadmap] = useState(false)
@@ -43,8 +43,7 @@ export function ActionWizard({ open, onOpenChange, onComplete, allowedActions }:
         setStep('configure')
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const handleConfigure = (data: any) => {
+    const handleConfigure = (data: WizardFormData) => {
         setActionData(data)
         setStep('preview')
     }
@@ -57,8 +56,8 @@ export function ActionWizard({ open, onOpenChange, onComplete, allowedActions }:
     }
 
     const handleComplete = async () => {
-        if (selectedAction) {
-            if (selectedAction === 'roadmap') {
+        if (selectedAction && actionData) {
+            if (selectedAction === 'roadmap' && 'roadmapTitle' in actionData) {
                 if (isCreatingRoadmap) return // Prevent double submission
                 setIsCreatingRoadmap(true)
                 try {
@@ -79,10 +78,13 @@ export function ActionWizard({ open, onOpenChange, onComplete, allowedActions }:
                 return
             } else {
                 const meta = corporateActionTypeMeta[selectedAction]
+                const date = ('changeDate' in actionData ? actionData.changeDate : undefined)
+                    || ('effectiveDate' in actionData ? actionData.effectiveDate : undefined)
+                    || new Date().toISOString().split('T')[0]
                 await addDocument({
                     type: 'board_meeting_minutes',
                     title: `${meta.label} - ${new Date().toLocaleDateString()}`,
-                    date: actionData?.changeDate || actionData?.effectiveDate || new Date().toISOString().split('T')[0],
+                    date,
                     content: JSON.stringify(actionData),
                     status: 'draft',
                     source: 'manual'

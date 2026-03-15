@@ -5,21 +5,20 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
 
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        // Use raw client for tables not yet in typed accessors
-        const supabase = userDb.client;
+        const { supabase } = ctx;
 
         if (type === 'shareholders') {
             const { data: shareholders, error } = await supabase
@@ -47,20 +46,20 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
         const body = await request.json()
         // Use 'action' key to avoid collision with document's 'type' field
         const { action, ...data } = body
-        const supabase = userDb.client;
+        const { supabase, userId, companyId } = ctx;
 
         if (action === 'document') {
             // Note: corporate_documents doesn't have company_id column, only user_id
-            const insertData = { ...data, user_id: userDb.userId }
+            const insertData = { ...data, user_id: userId }
             console.log('[Compliance API] Inserting document:', insertData)
             const { data: newDoc, error } = await supabase
                 .from('corporate_documents' as any)
@@ -80,7 +79,7 @@ export async function POST(request: NextRequest) {
                 .from('corporate_documents' as any)
                 .update(updates)
                 .eq('id', id)
-                .eq('user_id', userDb.userId) // Ensure user owns this document
+                .eq('user_id', userId) // Ensure user owns this document
                 .select()
                 .single();
             
@@ -106,7 +105,7 @@ export async function POST(request: NextRequest) {
             const { id: _id, ...newShareholder } = data
             const { data: created, error } = await supabase
                 .from('shareholders')
-                .insert({ ...newShareholder, company_id: userDb.companyId })
+                .insert({ ...newShareholder, company_id: companyId })
                 .select()
                 .single();
             

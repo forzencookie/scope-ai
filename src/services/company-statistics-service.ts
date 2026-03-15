@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 /**
  * Company-wide statistics aggregated from multiple tables
@@ -65,7 +65,7 @@ export const companyStatisticsService = {
      * Get comprehensive company statistics
      */
     async getStatistics(year?: number): Promise<CompanyStatistics> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
         const yearStart = `${targetYear}-01-01`
         const yearEnd = `${targetYear}-12-31`
@@ -222,7 +222,7 @@ export const companyStatisticsService = {
      * Get monthly financial summary for the year
      */
     async getMonthlyBreakdown(year?: number): Promise<MonthlyFinancialSummary[]> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
 
         // Get all transactions for the year grouped by month
@@ -275,7 +275,7 @@ export const companyStatisticsService = {
         debtToEquity: number
         returnOnEquity: number
     }> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const targetYear = year || new Date().getFullYear()
 
         const { data: balances } = await supabase
@@ -353,7 +353,7 @@ export const companyStatisticsService = {
         receipts: { total: number; unmatched: number }
         employees: { total: number }
     }> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const today = new Date().toISOString().split('T')[0]
 
         const [transactions, invoices, receipts, employees] = await Promise.all([

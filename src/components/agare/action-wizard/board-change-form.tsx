@@ -7,10 +7,11 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Minus, Plus } from "lucide-react"
 
+import type { BoardChangeData } from "./constants"
+
 interface BoardChangeFormProps {
     onBack: () => void
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    onSubmit: (data: any) => void
+    onSubmit: (data: BoardChangeData) => void
 }
 
 export function BoardChangeForm({ onBack, onSubmit }: BoardChangeFormProps) {

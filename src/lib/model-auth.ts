@@ -8,7 +8,7 @@
 
 // TODO: Run `npx supabase gen types typescript` after applying migration
 
-import { getSupabaseAdmin } from './database/supabase'
+import { createAdminClient } from './database/client'
 import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './ai/models'
 
 // ============================================================================
@@ -84,7 +84,7 @@ export const TIER_LIMITS: Record<UserTier, { tokensPerMonth: number; requestsPer
  */
 export async function getUserTier(userId: string): Promise<UserTier> {
     try {
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
 
         // Query the profiles table for subscription tier
         const { data: profile, error: profileError } = await supabase
@@ -198,7 +198,7 @@ export async function trackUsage(
     tokensUsed: number = 0
 ): Promise<void> {
     try {
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
 
         // Use the database function to increment usage
         await supabase.rpc('increment_ai_usage', {
@@ -218,7 +218,7 @@ export async function trackUsage(
  */
 export async function getMonthlyUsage(userId: string): Promise<UsageStats | null> {
     try {
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
         const periodStart = new Date()
         periodStart.setDate(1)
         periodStart.setHours(0, 0, 0, 0)
@@ -263,7 +263,7 @@ export async function checkUsageLimits(userId: string): Promise<{
     tierTokensRemaining: number
     purchasedCreditsRemaining: number
 }> {
-    const supabase = getSupabaseAdmin()
+    const supabase = createAdminClient()
     const userTier = await getUserTier(userId)
     const limits = TIER_LIMITS[userTier]
     const usage = await getMonthlyUsage(userId)
@@ -299,7 +299,7 @@ export async function consumeTokens(
     tokensToConsume: number,
     modelId: string
 ): Promise<{ success: boolean; source: 'tier' | 'credits' | 'mixed'; tokensFromCredits: number }> {
-    const supabase = getSupabaseAdmin()
+    const supabase = createAdminClient()
     const limits = await checkUsageLimits(userId)
     
     // Apply model multiplier for effective cost
@@ -350,7 +350,7 @@ export async function consumeTokens(
  */
 export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
     try {
-        const supabase = getSupabaseAdmin()
+        const supabase = createAdminClient()
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await supabase.from('security_audit_log' as any).insert({

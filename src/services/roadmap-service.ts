@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import type { Roadmap, CreateRoadmapInput, UpdateRoadmapStepInput, RoadmapStatus } from '@/types/roadmap'
 
 // Local storage key for fallback/dev
@@ -21,7 +21,7 @@ function saveLocalRoadmaps(roadmaps: Roadmap[]) {
 
 export async function getRoadmaps(): Promise<Roadmap[]> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
             .from('roadmaps')
             .select('*, steps:roadmap_steps(*)')
@@ -38,7 +38,7 @@ export async function getRoadmaps(): Promise<Roadmap[]> {
 
 export async function getRoadmap(id: string): Promise<Roadmap | null> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase
             .from('roadmaps')
             .select('*, steps:roadmap_steps(*)')
@@ -57,7 +57,7 @@ export async function getRoadmap(id: string): Promise<Roadmap | null> {
 
 export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data: userData } = await supabase.auth.getUser()
 
         if (!userData.user) {
@@ -145,7 +145,7 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
 
 export async function updateRoadmapStatus(id: string, status: RoadmapStatus): Promise<void> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { error } = await supabase
             .from('roadmaps')
             .update({ status })
@@ -166,7 +166,7 @@ export async function updateRoadmapStatus(id: string, status: RoadmapStatus): Pr
 
 export async function updateStep(stepId: string, updates: UpdateRoadmapStepInput): Promise<void> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { error } = await supabase
             .from('roadmap_steps')
             .update(updates)
@@ -197,7 +197,7 @@ export async function updateStep(stepId: string, updates: UpdateRoadmapStepInput
 
 export async function deleteRoadmap(id: string): Promise<void> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         // Steps are cascade deleted via foreign key
         const { error } = await supabase
             .from('roadmaps')

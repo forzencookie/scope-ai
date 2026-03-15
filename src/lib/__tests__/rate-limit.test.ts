@@ -3,8 +3,8 @@
  */
 
 // Mock Supabase before importing rate-limit
-jest.mock('@/lib/database/supabase', () => ({
-    supabase: {
+jest.mock('@/lib/database/client', () => ({
+    createBrowserClient: () => ({
         from: jest.fn(() => ({
             select: jest.fn().mockReturnThis(),
             insert: jest.fn().mockReturnThis(),
@@ -13,7 +13,7 @@ jest.mock('@/lib/database/supabase', () => ({
             eq: jest.fn().mockReturnThis(),
             single: jest.fn().mockResolvedValue({ data: null, error: null }),
         })),
-    },
+    }),
 }))
 
 import {

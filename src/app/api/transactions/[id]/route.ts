@@ -1,11 +1,11 @@
 /**
  * Transaction Update API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 export async function PATCH(
     request: NextRequest,
@@ -13,11 +13,13 @@ export async function PATCH(
 ) {
     const { id } = await params
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { supabase } = ctx;
 
         const body = await request.json()
 
@@ -26,7 +28,14 @@ export async function PATCH(
         }
 
         // Update transaction via RLS-protected client
-        const updated = await userDb.transactions.update(id, body)
+        const { data: updated, error } = await supabase
+            .from('transactions')
+            .update(body)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) console.error(`[Transactions] update error for ${id}:`, error);
 
         if (!updated) {
             return NextResponse.json({ success: false, error: 'Transaction not found or update failed' }, { status: 404 })

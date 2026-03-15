@@ -1,27 +1,34 @@
 /**
  * Employees API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 import { taxService } from '@/services/tax-service';
 
 export async function GET() {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const employees = await userDb.employees.list();
-        
+        const { supabase, userId, companyId } = ctx;
+
+        const { data: employees, error } = await supabase
+            .from('employees')
+            .select('*')
+            .order('name', { ascending: true });
+
+        if (error) throw error;
+
         return NextResponse.json({
-            employees,
-            userId: userDb.userId,
-            companyId: userDb.companyId,
+            employees: employees || [],
+            userId,
+            companyId,
         });
     } catch (error) {
         console.error("Failed to fetch employees:", error);
@@ -31,36 +38,41 @@ export async function GET() {
 
 export async function POST(req: Request) {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase, userId } = ctx;
         const body = await req.json();
 
         if (!body.name) {
             return NextResponse.json({ error: "Name is required" }, { status: 400 });
         }
 
-        const employee = await userDb.employees.create({
-            name: body.name,
-            role: body.role || null,
-            email: body.email || null,
-            phone: body.phone || null,
-            personal_number: body.personal_number || null,
-            monthly_salary: Number(body.monthly_salary ?? body.salary) || 0,
-            employment_type: body.employment_type || null,
-            tax_rate: body.tax_rate != null ? Number(body.tax_rate) : await taxService.getAllTaxRates(new Date().getFullYear()).then(r => r?.marginalTaxRateApprox ?? 0.32),
-            tax_table: body.tax_table != null ? Number(body.tax_table) : null,
-            tax_column: body.tax_column != null ? Number(body.tax_column) : null,
-            kommun: body.kommun || null,
-            status: body.status || 'active',
-            start_date: body.employment_date || body.start_date || new Date().toISOString().split('T')[0],
-            user_id: userDb.userId,
-        });
+        const { data: employee, error } = await supabase
+            .from('employees')
+            .insert({
+                name: body.name,
+                role: body.role || null,
+                email: body.email || null,
+                phone: body.phone || null,
+                personal_number: body.personal_number || null,
+                monthly_salary: Number(body.monthly_salary ?? body.salary) || 0,
+                employment_type: body.employment_type || null,
+                tax_rate: body.tax_rate != null ? Number(body.tax_rate) : await taxService.getAllTaxRates(new Date().getFullYear()).then(r => r?.marginalTaxRateApprox ?? 0.32),
+                tax_table: body.tax_table != null ? Number(body.tax_table) : null,
+                tax_column: body.tax_column != null ? Number(body.tax_column) : null,
+                kommun: body.kommun || null,
+                status: body.status || 'active',
+                start_date: body.employment_date || body.start_date || new Date().toISOString().split('T')[0],
+                user_id: userId,
+            })
+            .select()
+            .single();
 
-        if (!employee) {
+        if (error || !employee) {
             return NextResponse.json({ error: "Failed to create" }, { status: 500 });
         }
 

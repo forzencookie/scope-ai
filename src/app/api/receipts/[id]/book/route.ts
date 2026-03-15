@@ -3,11 +3,11 @@
  *
  * POST: Creates a pending booking from a receipt (journal entry)
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { pendingBookingService } from '@/services/pending-booking-service'
 import { createSimpleEntry } from '@/lib/bookkeeping'
 import type { SwedishVatRate } from '@/lib/bookkeeping'
@@ -19,13 +19,20 @@ export async function POST(
 ) {
     const { id } = await params
     try {
-        const userDb = await createUserScopedDb()
+        const ctx = await getAuthContext()
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const receipt = await userDb.receipts.getById(id)
+        const { supabase } = ctx;
+
+        const { data: receipt } = await supabase
+            .from('receipts')
+            .select('*')
+            .eq('id', id)
+            .single()
+
         if (!receipt) {
             return NextResponse.json({ error: 'Receipt not found' }, { status: 404 })
         }
@@ -78,7 +85,10 @@ export async function POST(
         })
 
         // Update receipt status
-        await userDb.receipts.update(id, { status: 'recorded' })
+        await supabase
+            .from('receipts')
+            .update({ status: 'recorded' })
+            .eq('id', id)
 
         return NextResponse.json({
             success: true,

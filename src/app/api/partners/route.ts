@@ -1,53 +1,61 @@
 /**
  * Partners API
- * 
- * SECURITY: Requires authentication and uses user-scoped database
- * Previously used anon client which bypassed RLS!
+ *
+ * SECURITY: Requires authentication via getAuthContext()
  */
-import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { NextResponse } from 'next/server'
+import { getAuthContext, ApiResponse } from '@/lib/database/auth'
 
-export async function GET(request: NextRequest) {
-  // Verify authentication
-  const auth = await verifyAuth(request)
-  if (!auth) {
-    return ApiResponse.unauthorized('Authentication required')
-  }
-
+export async function GET() {
   try {
-    const db = await createUserScopedDb()
-    if (!db) {
-      return ApiResponse.unauthorized('Could not establish database connection')
+    const ctx = await getAuthContext()
+    if (!ctx) {
+      return ApiResponse.unauthorized('Authentication required')
     }
-    const partners = await db.partners.list()
 
-    return NextResponse.json({ partners })
+    const { supabase, companyId } = ctx;
+
+    let query = supabase
+      .from('partners')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (companyId) {
+      query = query.eq('company_id', companyId);
+    }
+
+    const { data: partners, error } = await query;
+
+    if (error) throw error;
+
+    return NextResponse.json({ partners: partners || [] })
   } catch (error: unknown) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }
 
-export async function POST(request: NextRequest) {
-  // Verify authentication
-  const auth = await verifyAuth(request)
-  if (!auth) {
-    return ApiResponse.unauthorized('Authentication required')
-  }
-
+export async function POST(request: Request) {
   try {
-    const json = await request.json()
-    const db = await createUserScopedDb()
-    if (!db) {
-      return ApiResponse.unauthorized('Could not establish database connection')
+    const ctx = await getAuthContext()
+    if (!ctx) {
+      return ApiResponse.unauthorized('Authentication required')
     }
-    
-    // Add user_id to the partner data
-    const partner = await db.partners.create({
-      ...json,
-      user_id: auth.userId
-    })
+
+    const { supabase, userId, companyId } = ctx;
+    const json = await request.json()
+
+    const { data: partner, error } = await supabase
+      .from('partners')
+      .insert({
+        ...json,
+        company_id: json.company_id ?? companyId,
+        user_id: userId,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
 
     return NextResponse.json({ partner })
   } catch (error: unknown) {

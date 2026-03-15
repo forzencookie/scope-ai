@@ -14,8 +14,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { verifyAuth, getAuthContext, ApiResponse } from '@/lib/database/auth'
 
 // =============================================================================
 // Types
@@ -51,10 +50,11 @@ export async function GET(request: NextRequest) {
             return Response.json({ groups: [], total: 0 })
         }
 
-        const userDb = await createUserScopedDb()
-        if (!userDb) {
+        const ctx = await getAuthContext()
+        if (!ctx) {
             return ApiResponse.unauthorized('User session not found')
         }
+        const { supabase } = ctx
 
         const searchPattern = `%${q}%`
         const limit = 5
@@ -62,7 +62,7 @@ export async function GET(request: NextRequest) {
         // Run all queries in parallel
         const [transactions, invoices, verifications, employees, conversations] = await Promise.allSettled([
             // Transactions
-            userDb.client
+            supabase
                 .from('transactions')
                 .select('id, description, amount, date, status')
                 .or(`description.ilike.${searchPattern}`)
@@ -70,7 +70,7 @@ export async function GET(request: NextRequest) {
                 .limit(limit),
 
             // Customer invoices
-            userDb.client
+            supabase
                 .from('customerinvoices')
                 .select('id, customer_name, invoice_number, total_amount, status')
                 .or(`customer_name.ilike.${searchPattern},invoice_number.ilike.${searchPattern}`)
@@ -78,7 +78,7 @@ export async function GET(request: NextRequest) {
                 .limit(limit),
 
             // Verifications
-            userDb.client
+            supabase
                 .from('verifications')
                 .select('id, series, number, description, date')
                 .ilike('description', searchPattern)
@@ -86,14 +86,14 @@ export async function GET(request: NextRequest) {
                 .limit(limit),
 
             // Employees
-            userDb.client
+            supabase
                 .from('employees')
                 .select('id, name, role, email')
                 .or(`name.ilike.${searchPattern},email.ilike.${searchPattern}`)
                 .limit(limit),
 
             // Conversations
-            userDb.client
+            supabase
                 .from('conversations')
                 .select('id, title, updated_at')
                 .ilike('title', searchPattern)

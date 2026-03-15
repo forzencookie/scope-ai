@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createServerSupabaseClient } from '@/lib/database/supabase-server'
+import { createServerClient } from '@/lib/database/client'
 
 /**
  * POST /api/auth/logout
@@ -7,7 +7,7 @@ import { createServerSupabaseClient } from '@/lib/database/supabase-server'
  */
 export async function POST(_request: NextRequest) {
     try {
-        const supabase = await createServerSupabaseClient()
+        const supabase = await createServerClient()
 
         // Sign out from Supabase - this invalidates the session
         const { error } = await supabase.auth.signOut()

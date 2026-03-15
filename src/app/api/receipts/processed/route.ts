@@ -4,29 +4,36 @@
  * GET: Fetches receipts from Supabase with RLS enforcement
  * POST: Creates a new receipt
  *
- * Security: Uses user-scoped DB access - RLS automatically filters
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 export async function GET() {
   try {
-    // Get user-scoped database access (enforces RLS)
-    const userDb = await createUserScopedDb()
+    const ctx = await getAuthContext()
 
-    if (!userDb) {
+    if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const { supabase, userId, companyId } = ctx;
+
     // Fetch receipts - RLS automatically filters by user's company
-    const receipts = await userDb.receipts.list({ limit: 100 })
+    const { data: receipts, error } = await supabase
+        .from('receipts')
+        .select('*')
+        .order('captured_at', { ascending: false })
+        .limit(100)
+
+    if (error) console.error('[Receipts] list error:', error)
 
     return NextResponse.json({
-      receipts: receipts.map(r => ({ ...r, attachmentUrl: r.image_url })),
-      count: receipts.length,
-      userId: userDb.userId,
-      companyId: userDb.companyId,
+      receipts: (receipts || []).map(r => ({ ...r, attachmentUrl: r.image_url })),
+      count: (receipts || []).length,
+      userId,
+      companyId,
     })
 
   } catch (error) {
@@ -40,11 +47,13 @@ export async function GET() {
 
 export async function POST(req: NextRequest) {
   try {
-    const userDb = await createUserScopedDb()
+    const ctx = await getAuthContext()
 
-    if (!userDb) {
+    if (!ctx) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
+
+    const { supabase, userId, companyId } = ctx;
 
     const body = await req.json()
 
@@ -78,11 +87,17 @@ export async function POST(req: NextRequest) {
       file_url: body.fileUrl || null,
       source: 'manual',
       metadata: vatAmount > 0 ? { vatAmount } : null,
-      user_id: userDb.userId,
-      company_id: userDb.companyId,
+      user_id: userId,
+      company_id: companyId,
     }
 
-    const created = await userDb.receipts.create(receiptData)
+    const { data: created, error } = await supabase
+        .from('receipts')
+        .insert(receiptData)
+        .select()
+        .single()
+
+    if (error) console.error('[Receipts] create error:', error)
 
     if (!created) {
       return NextResponse.json({ error: 'Failed to save receipt' }, { status: 500 })

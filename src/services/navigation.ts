@@ -4,7 +4,7 @@
 // Provides user, team/company, and navigation data.
 // Uses direct Supabase auth + company-service (Pattern A).
 
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { getMyCompany, type CompanyInfo } from './company-service'
 import type { User, Team, NavItem, NavigationData, ApiResponse } from "@/types"
 import { navPlatform, navSettings } from "@/data/navigation"
@@ -15,7 +15,7 @@ import { navPlatform, navSettings } from "@/data/navigation"
 
 export async function getCurrentUser(): Promise<ApiResponse<User>> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data: { user }, error } = await supabase.auth.getUser()
 
         if (error || !user) {
@@ -50,7 +50,7 @@ export async function getCurrentUser(): Promise<ApiResponse<User>> {
 
 export async function updateUser(user: Partial<User>): Promise<ApiResponse<User>> {
     try {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data, error } = await supabase.auth.updateUser({
             data: {
                 full_name: user.name,

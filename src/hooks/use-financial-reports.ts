@@ -1,6 +1,6 @@
 
 import { useMemo } from "react"
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports"
 import { useCachedQuery } from "./use-cached-query"
 import { useCompany } from "@/providers/company-provider"
@@ -14,7 +14,7 @@ interface BalanceData {
 }
 
 async function fetchAllBalances(fiscalYearEnd: string): Promise<BalanceData> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     const now = new Date()
     const currentFY = getFiscalYearRange(fiscalYearEnd, now)

@@ -5,7 +5,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { uploadAvatarFile } from '@/services/upload-service'
 
 const MAX_SIZE = 2 * 1024 * 1024 // 2MB

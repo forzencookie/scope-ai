@@ -113,8 +113,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setActionTrigger(null)
 
         sendMessage({ content: finalContent, files, mentions, actionTrigger: trigger || undefined })
-        setTimeout(() => refreshUsage(), 2000)
-    }, [textareaValue, attachedFiles, mentionItems, actionTrigger, sendMessage, isPaid, canAfford, modelId, refreshUsage])
+    }, [textareaValue, attachedFiles, mentionItems, actionTrigger, sendMessage, isPaid, canAfford, modelId])
+
+    // Refresh usage when AI stream completes (event dispatched from use-chat.ts)
+    useEffect(() => {
+        const handler = () => refreshUsage()
+        window.addEventListener('ai-stream-complete', handler)
+        return () => window.removeEventListener('ai-stream-complete', handler)
+    }, [refreshUsage])
 
     const handleCancelConfirmation = useCallback((messageId: string) => {
         deleteMessage(messageId)

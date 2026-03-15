@@ -4,7 +4,7 @@
  * Supabase-backed operations for share holdings (aktieinnehav).
  */
 
-import { getSupabaseClient, isSupabaseConfigured } from '@/lib/database/supabase'
+import { createBrowserClient, isSupabaseConfigured } from '@/lib/database/client'
 import type {
     ShareHolding,
     CreateShareHoldingInput,
@@ -39,7 +39,7 @@ const supabase = () => {
     if (!isSupabaseConfigured()) {
         throw new Error('Supabase not configured')
     }
-    return getSupabaseClient()
+    return createBrowserClient()
 }
 
 // Generic list function
@@ -176,15 +176,13 @@ export const deleteShareHolding = (id: string) => deleteFromTable('shareholdings
  */
 export async function recordDividend(id: string, amount: number): Promise<ShareHolding | null> {
     try {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: existing } = await supabase()
-            .from('shareholdings' as any)
+            .from('shareholdings')
             .select('dividend_received')
             .eq('id', id)
             .single()
 
-        const row = existing as { dividend_received?: number } | null
-        const newTotal = (row?.dividend_received || 0) + amount
+        const newTotal = (existing?.dividend_received || 0) + amount
         return updateShareHolding(id, { dividendReceived: newTotal })
     } catch {
         return null

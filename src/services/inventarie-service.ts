@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 
 
 // Types matching schema.sql inventarier table
@@ -32,7 +32,7 @@ export const inventarieService = {
         offset?: number
         kategori?: string
     } = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('inventarier')
@@ -76,7 +76,7 @@ export const inventarieService = {
      * Uses parallel queries for optimal performance
      */
     async getStats(): Promise<InventarieStats> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase.rpc('get_inventory_stats')
 
@@ -109,7 +109,7 @@ export const inventarieService = {
      * Add a new inventarie
      */
     async addInventarie(inventarie: Omit<Inventarie, 'id'>) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const id = crypto.randomUUID()
 
@@ -135,7 +135,7 @@ export const inventarieService = {
      * Update the status of an inventarie (e.g. aktiv → såld)
      */
     async updateStatus(id: string, status: 'aktiv' | 'såld' | 'avskriven') {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('inventarier')
@@ -152,7 +152,7 @@ export const inventarieService = {
      * Delete an inventarie
      */
     async deleteInventarie(id: string) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { error } = await supabase
             .from('inventarier')

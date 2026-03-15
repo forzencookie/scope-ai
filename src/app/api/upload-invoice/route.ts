@@ -1,12 +1,12 @@
 /**
  * Invoice Upload API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses getAuthContext() with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 function getOpenAIClient() {
     return new OpenAI({
@@ -16,11 +16,13 @@ function getOpenAIClient() {
 
 export async function POST(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+
+        const { supabase, userId, companyId } = ctx;
 
         const formData = await request.formData()
         const file = formData.get('file') as File
@@ -93,7 +95,7 @@ Format it as a readable email body.`
         console.log('[Upload] Detected sender:', sender)
 
         // Create inbox item with extracted text (formatted as email)
-        const newItem = await userDb.inboxItems.create({
+        const insertData = {
             // sender: sender,
             // title: `Uploaded: ${file.name}`,
             // description: extractedText,
@@ -101,7 +103,17 @@ Format it as a readable email body.`
             // category: 'other',
             // read: false,  // Column doesn't exist in schema
             // starred: false,
-        })
+            user_id: userId,
+            company_id: companyId,
+        }
+
+        const { data: newItem, error } = await supabase
+            .from('inboxitems')
+            .insert(insertData)
+            .select()
+            .single()
+
+        if (error) console.error('[Upload] create error:', error)
 
         console.log('[Upload] Created inbox item:', newItem?.id)
 

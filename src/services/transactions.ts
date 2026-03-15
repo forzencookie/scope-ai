@@ -13,7 +13,7 @@ import type {
 } from "@/types"
 import type { TransactionStatus } from "@/lib/status-types"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 import type { Tables } from "@/types/database"
 
 type DbTransaction = Tables<"transactions">
@@ -88,14 +88,14 @@ function errorResponse<T>(error: string, data: T): ApiResponse<T> {
 // ============================================
 
 export async function getTransactions(userId: string): Promise<ApiResponse<Transaction[]>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false })
   if (error) return errorResponse('Failed to fetch transactions', [])
   return successResponse(data.map(t => mapDbToTransaction(t)))
 }
 
 export async function getTransactionsWithAI(userId: string): Promise<ApiResponse<TransactionWithAI[]>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false })
   if (error) return errorResponse('Failed to fetch transactions', [])
 
@@ -114,7 +114,7 @@ export async function getTransactionsPaginated(
   filters?: TransactionFilters,
   sort?: SortConfig<Transaction>
 ): Promise<PaginatedResponse<TransactionWithAI>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   let query = supabase.from('transactions').select('*', { count: 'exact' }).eq('user_id', userId)
 
   if (filters) {
@@ -152,28 +152,28 @@ export async function getTransactionsPaginated(
 }
 
 export async function getTransaction(id: string, userId: string): Promise<ApiResponse<TransactionWithAI | null>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').select('*').eq('id', id).eq('user_id', userId).single()
   if (error) return errorResponseNull('Transaction not found')
   return successResponse({ ...mapDbToTransaction(data), aiSuggestion: undefined, isAIApproved: false })
 }
 
 export async function getTransactionsByStatus(userId: string, status: TransactionStatus): Promise<ApiResponse<TransactionWithAI[]>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).eq('status', status).order('date', { ascending: false })
   if (error) return errorResponse('Failed to fetch transactions', [])
   return successResponse(data.map(t => ({ ...mapDbToTransaction(t), aiSuggestion: undefined, isAIApproved: false })))
 }
 
 export async function updateTransactionStatus(id: string, userId: string, status: TransactionStatus): Promise<ApiResponse<TransactionWithAI | null>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').update({ status }).eq('id', id).eq('user_id', userId).select('*').single()
   if (error) return errorResponseNull('Failed to update status')
   return successResponse({ ...mapDbToTransaction(data), aiSuggestion: undefined, isAIApproved: false })
 }
 
 export async function updateTransaction(id: string, userId: string, updates: Partial<Transaction>): Promise<ApiResponse<TransactionWithAI | null>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const dbUpdates: Record<string, unknown> = {}
   if (updates.name !== undefined) dbUpdates.name = updates.name
   if (updates.amountValue !== undefined) dbUpdates.amount_value = updates.amountValue
@@ -187,7 +187,7 @@ export async function updateTransaction(id: string, userId: string, updates: Par
 }
 
 export async function deleteTransaction(id: string, userId: string): Promise<ApiResponse<boolean>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', userId)
   if (error) return errorResponse('Failed to delete transaction', false)
   return successResponse(true)
@@ -219,14 +219,14 @@ export async function bulkApproveAISuggestions(userId: string, ids: string[]): P
 }
 
 export async function bulkUpdateStatus(userId: string, ids: string[], status: TransactionStatus): Promise<ApiResponse<TransactionWithAI[]>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').update({ status }).in('id', ids).eq('user_id', userId).select('*')
   if (error) return errorResponse('Failed to bulk update status', [])
   return successResponse(data.map(t => ({ ...mapDbToTransaction(t), aiSuggestion: undefined, isAIApproved: false })))
 }
 
 export async function bulkDeleteTransactions(userId: string, ids: string[]): Promise<ApiResponse<boolean>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { error } = await supabase.from('transactions').delete().in('id', ids).eq('user_id', userId)
   if (error) return errorResponse('Failed to bulk delete transactions', false)
   return successResponse(true)
@@ -248,7 +248,7 @@ export interface TransactionStats {
 }
 
 export async function getTransactionStats(userId: string): Promise<ApiResponse<TransactionStats>> {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
   const { data, error } = await supabase.from('transactions').select('status, amount_value').eq('user_id', userId)
 
   if (error) return errorResponse('Failed to fetch stats', { total: 0, totalCount: 0, income: 0, expenses: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0 })

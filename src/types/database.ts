@@ -1862,6 +1862,50 @@ export type Database = {
           },
         ]
       }
+      messages: {
+        Row: {
+          content: string
+          conversation_id: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          role: string
+          tool_calls: string | null
+          tool_results: string | null
+          user_id: string
+        }
+        Insert: {
+          content: string
+          conversation_id: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role: string
+          tool_calls?: string | null
+          tool_results?: string | null
+          user_id: string
+        }
+        Update: {
+          content?: string
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          role?: string
+          tool_calls?: string | null
+          tool_results?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "messages_conversation_id_fkey"
+            columns: ["conversation_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthclosings: {
         Row: {
           checks: Json | null
@@ -2698,6 +2742,65 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "shareholders_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      shareholdings: {
+        Row: {
+          bas_account: string | null
+          company_id: string
+          company_name: string
+          created_at: string
+          current_value: number | null
+          dividend_received: number | null
+          holding_type: string | null
+          id: string
+          notes: string | null
+          org_number: string | null
+          purchase_date: string | null
+          purchase_price: number | null
+          shares_count: number
+          updated_at: string
+        }
+        Insert: {
+          bas_account?: string | null
+          company_id?: string
+          company_name: string
+          created_at?: string
+          current_value?: number | null
+          dividend_received?: number | null
+          holding_type?: string | null
+          id?: string
+          notes?: string | null
+          org_number?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          shares_count: number
+          updated_at?: string
+        }
+        Update: {
+          bas_account?: string | null
+          company_id?: string
+          company_name?: string
+          created_at?: string
+          current_value?: number | null
+          dividend_received?: number | null
+          holding_type?: string | null
+          id?: string
+          notes?: string | null
+          org_number?: string | null
+          purchase_date?: string | null
+          purchase_price?: number | null
+          shares_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "shareholdings_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"

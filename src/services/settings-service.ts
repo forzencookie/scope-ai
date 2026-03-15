@@ -5,8 +5,8 @@
  * Queries real data from Supabase with proper authentication.
  */
 
-import { getSupabaseClient } from '@/lib/database/supabase'
-import { getSupabaseAdmin } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
+import { createAdminClient } from '@/lib/database/client'
 import { getMonthlyUsage, checkUsageLimits } from '@/lib/model-auth'
 
 // =============================================================================
@@ -94,7 +94,7 @@ const TIER_LIMITS: Record<string, { tokens: number; requests: number }> = {
  * Get user profile from the database
  */
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
-    const supabase = getSupabaseAdmin()
+    const supabase = createAdminClient()
 
     const { data, error } = await supabase
         .from('profiles')
@@ -165,7 +165,7 @@ const DEFAULT_NOTIFICATIONS: NotificationPreferences = {
  * Get notification preferences from settings table
  */
 export async function getNotificationPreferences(userId: string): Promise<NotificationPreferences> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     const { data, error } = await supabase
         .from('settings')
@@ -200,7 +200,7 @@ export async function updateNotificationPreference(
     setting: string,
     enabled: boolean
 ): Promise<NotificationPreferences> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     const key = `notification_${channel}`
 
     // Get current settings
@@ -249,7 +249,7 @@ const INTEGRATION_TYPE_MAP: Record<string, Integration['type']> = {
  * Get all integrations for the current user
  */
 export async function getIntegrations(): Promise<Integration[]> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     const { data, error } = await supabase
         .from('integrations')
@@ -279,7 +279,7 @@ export async function getIntegrations(): Promise<Integration[]> {
  * Get bank connections for the current user
  */
 export async function getBankConnections(): Promise<BankConnection[]> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     const { data, error } = await supabase
         .from('bankconnections')
@@ -311,7 +311,7 @@ export async function initiateBankConnection(
     bankName: string,
     provider: string = 'tink'
 ): Promise<{ success: boolean; connectionId?: string; redirectUrl?: string; error?: string }> {
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
 
     // Create pending connection record
     const { data, error } = await supabase

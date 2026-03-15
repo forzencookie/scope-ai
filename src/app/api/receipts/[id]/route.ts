@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 
 export async function DELETE(
     _request: NextRequest,
@@ -15,13 +15,13 @@ export async function DELETE(
 ) {
     const { id } = await params
     try {
-        const userDb = await createUserScopedDb()
+        const ctx = await getAuthContext()
 
-        if (!userDb) {
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        const { error } = await userDb.client
+        const { error } = await ctx.supabase
             .from('receipts')
             .delete()
             .eq('id', id)

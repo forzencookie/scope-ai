@@ -5,7 +5,7 @@
  * Includes catalog of all Swedish benefits and assignment tracking.
  */
 
-import { getSupabaseClient, isSupabaseConfigured } from './database/supabase'
+import { createBrowserClient, isSupabaseConfigured } from './database/client'
 import type {
     FormanCatalogItem,
     EmployeeBenefit,
@@ -58,7 +58,7 @@ export async function listAvailableBenefits(
 ): Promise<FormanCatalogItem[]> {
     // Try Supabase first
     if (isSupabaseConfigured()) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
             .from('formaner_catalog' as any)
@@ -80,7 +80,7 @@ export async function listAvailableBenefits(
  */
 export async function getBenefitDetails(id: string): Promise<FormanCatalogItem | null> {
     if (isSupabaseConfigured()) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data } = await supabase
             .from('formaner_catalog' as any)
@@ -124,7 +124,7 @@ export async function assignBenefit(
     const benefit = await getBenefitDetails(input.benefitType)
     const formansvarde = benefit?.taxFree ? 0 : calculateFormansvarde(input.benefitType, input.amount)
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
         .from('employee_benefits' as any)
@@ -157,7 +157,7 @@ export async function getEmployeeBenefits(
 ): Promise<EmployeeBenefit[]> {
     if (!isSupabaseConfigured()) return []
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
         .from('employee_benefits' as any)
@@ -182,7 +182,7 @@ export async function getAllAssignedBenefits(
 ): Promise<EmployeeBenefit[]> {
     if (!isSupabaseConfigured()) return []
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
         .from('employee_benefits' as any)
@@ -204,7 +204,7 @@ export async function getAllAssignedBenefits(
 export async function deleteAssignedBenefit(id: string): Promise<boolean> {
     if (!isSupabaseConfigured()) return false
 
-    const supabase = getSupabaseClient()
+    const supabase = createBrowserClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await supabase
         .from('employee_benefits' as any)
@@ -225,7 +225,7 @@ export async function deleteAssignedBenefit(id: string): Promise<boolean> {
 async function getBenefitLimit(benefitType: string, year: number): Promise<number | null> {
     // Try system_parameters first (e.g., key = "benefit_limit_friskvard", year = 2026)
     if (isSupabaseConfigured()) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const { data } = await supabase
             .from('system_parameters')
             .select('value')

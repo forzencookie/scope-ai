@@ -1,11 +1,10 @@
 /**
  * Database Access Layer
- * 
- * This module re-exports Supabase clients, authentication, and scoped database access.
+ *
+ * Canonical exports from consolidated modules.
+ * - client.ts: Supabase client factories (browser, server, middleware)
+ * - auth.ts: Authentication helpers, API auth, getAuthContext()
  */
 
-export * from './supabase'
-export * from './supabase-server'
-export * from './supabase-auth'
-export * from './server-db'
-export * from './user-scoped-db'
+export * from './client'
+export * from './auth'

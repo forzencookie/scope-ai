@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { createUserScopedDb } from '@/lib/database/user-scoped-db'
+import { getAuthContext } from '@/lib/database/auth'
 import { randomUUID } from 'crypto'
 import OpenAI from 'openai'
 
@@ -183,11 +183,12 @@ function parseCSV(text: string): CSVRow[] {
 
 export async function POST(request: NextRequest) {
     try {
-        const userDb = await createUserScopedDb();
-        
-        if (!userDb) {
+        const ctx = await getAuthContext();
+
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
+        const { supabase, userId, companyId } = ctx;
 
         const formData = await request.formData()
         const file = formData.get('file') as File
@@ -215,30 +216,42 @@ export async function POST(request: NextRequest) {
             const baseId = `zr-${Date.now()}`
 
             if (data.cashAmount > 0) {
-                const cashTx = await userDb.transactions.create({
-                    id: `${baseId}-cash`,
-                    description: 'Kontantförsäljning (Z-rapport)',
-                    name: 'Kontantförsäljning (Z-rapport)',
-                    amount: String(data.cashAmount),
-                    amount_value: data.cashAmount,
-                    date: data.date,
-                    status: 'pending',
-                    source: 'z-rapport',
-                })
+                const { data: cashTx } = await supabase
+                    .from('transactions')
+                    .insert({
+                        id: `${baseId}-cash`,
+                        description: 'Kontantförsäljning (Z-rapport)',
+                        name: 'Kontantförsäljning (Z-rapport)',
+                        amount: String(data.cashAmount),
+                        amount_value: data.cashAmount,
+                        date: data.date,
+                        status: 'pending',
+                        source: 'z-rapport',
+                        user_id: userId,
+                        company_id: companyId,
+                    } as never)
+                    .select()
+                    .single()
                 if (cashTx) createdTransactions.push(cashTx)
             }
 
             if (data.cardAmount > 0) {
-                const cardTx = await userDb.transactions.create({
-                    id: `${baseId}-card`,
-                    description: 'Kortförsäljning (Z-rapport)',
-                    name: 'Kortförsäljning (Z-rapport)',
-                    amount: String(data.cardAmount),
-                    amount_value: data.cardAmount,
-                    date: data.date,
-                    status: 'pending',
-                    source: 'z-rapport',
-                })
+                const { data: cardTx } = await supabase
+                    .from('transactions')
+                    .insert({
+                        id: `${baseId}-card`,
+                        description: 'Kortförsäljning (Z-rapport)',
+                        name: 'Kortförsäljning (Z-rapport)',
+                        amount: String(data.cardAmount),
+                        amount_value: data.cardAmount,
+                        date: data.date,
+                        status: 'pending',
+                        source: 'z-rapport',
+                        user_id: userId,
+                        company_id: companyId,
+                    } as never)
+                    .select()
+                    .single()
                 if (cardTx) createdTransactions.push(cardTx)
             }
 
@@ -248,16 +261,22 @@ export async function POST(request: NextRequest) {
             const rows = parseCSV(text)
 
             for (const row of rows) {
-                const tx = await userDb.transactions.create({
-                    id: randomUUID(),
-                    name: row.description,
-                    description: row.description,
-                    amount: String(row.amount),
-                    amount_value: Number(row.amount),
-                    date: row.date,
-                    status: 'pending',
-                    source: 'csv-import',
-                })
+                const { data: tx } = await supabase
+                    .from('transactions')
+                    .insert({
+                        id: randomUUID(),
+                        name: row.description,
+                        description: row.description,
+                        amount: String(row.amount),
+                        amount_value: Number(row.amount),
+                        date: row.date,
+                        status: 'pending',
+                        source: 'csv-import',
+                        user_id: userId,
+                        company_id: companyId,
+                    } as never)
+                    .select()
+                    .single()
                 if (tx) createdTransactions.push(tx)
             }
         } else if (type === 'ocr') {
@@ -270,16 +289,22 @@ export async function POST(request: NextRequest) {
                 const rows = parseCSV(text)
 
                 for (const row of rows) {
-                    const tx = await userDb.transactions.create({
-                        id: randomUUID(),
-                        name: row.description,
-                        description: row.description,
-                        amount: String(row.amount),
-                        amount_value: Number(row.amount),
-                        date: row.date,
-                        status: 'pending',
-                        source: 'ocr-import',
-                    })
+                    const { data: tx } = await supabase
+                        .from('transactions')
+                        .insert({
+                            id: randomUUID(),
+                            name: row.description,
+                            description: row.description,
+                            amount: String(row.amount),
+                            amount_value: Number(row.amount),
+                            date: row.date,
+                            status: 'pending',
+                            source: 'ocr-import',
+                            user_id: userId,
+                            company_id: companyId,
+                        } as never)
+                        .select()
+                        .single()
                     if (tx) createdTransactions.push(tx)
                 }
             } else {
@@ -295,16 +320,22 @@ export async function POST(request: NextRequest) {
                 }
 
                 for (const t of transactions) {
-                    const tx = await userDb.transactions.create({
-                        id: randomUUID(),
-                        name: t.description,
-                        description: t.description,
-                        amount: String(t.amount),
-                        amount_value: Number(t.amount),
-                        date: t.date,
-                        status: 'pending',
-                        source: 'ocr-import',
-                    })
+                    const { data: tx } = await supabase
+                        .from('transactions')
+                        .insert({
+                            id: randomUUID(),
+                            name: t.description,
+                            description: t.description,
+                            amount: String(t.amount),
+                            amount_value: Number(t.amount),
+                            date: t.date,
+                            status: 'pending',
+                            source: 'ocr-import',
+                            user_id: userId,
+                            company_id: companyId,
+                        } as never)
+                        .select()
+                        .single()
                     if (tx) createdTransactions.push(tx)
                 }
             }

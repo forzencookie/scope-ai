@@ -1,4 +1,4 @@
-import { getSupabaseClient } from '@/lib/database/supabase'
+import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 
 type ShareholderRow = Database['public']['Tables']['shareholders']['Row']
@@ -92,7 +92,7 @@ export const shareholderService = {
         shareClass,
         boardMembersOnly
     }: GetShareholdersOptions = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         let query = supabase
             .from('shareholders')
@@ -123,7 +123,7 @@ export const shareholderService = {
     },
 
     async getShareholderById(id: string): Promise<Shareholder | null> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('shareholders')
@@ -136,7 +136,7 @@ export const shareholderService = {
     },
 
     async getShareRegisterSummary(quotaValue: number = 100): Promise<ShareRegisterSummary> {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data } = await supabase
             .from('shareholders')
@@ -167,7 +167,7 @@ export const shareholderService = {
     },
 
     async getBoardMembers() {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error } = await supabase
             .from('shareholders')
@@ -189,7 +189,7 @@ export const shareholderService = {
     },
 
     async getShareTransactions({ limit = 50, offset = 0 } = {}) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         const { data, error, count } = await supabase
             .from('sharetransactions')
@@ -240,7 +240,7 @@ export const shareholderService = {
         shareNumberFrom?: number
         shareNumberTo?: number
     }) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
 
         // Auto-assign share numbers if not provided
         let assignedFrom = shareNumberFrom
@@ -318,7 +318,7 @@ export const shareholderService = {
         transferDate?: string
         pricePerShare?: number
     }) {
-        const supabase = getSupabaseClient()
+        const supabase = createBrowserClient()
         const date = transferDate || new Date().toISOString().split('T')[0]
 
         // 1. Fetch seller and validate

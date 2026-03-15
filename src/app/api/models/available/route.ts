@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/api-auth'
+import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { getAvailableModels, getUserTier, TIER_LIMITS, getMonthlyUsage } from '@/lib/model-auth'
 
 /**

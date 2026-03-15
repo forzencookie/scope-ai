@@ -14,7 +14,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { useSubscription } from "./use-subscription"
 import { TIER_TOKEN_LIMITS, getModelMultiplier } from "@/lib/subscription"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 
 // Query key for AI usage - shared across all useAIUsage calls
 export const aiUsageQueryKey = ["ai", "usage"] as const
@@ -71,7 +71,7 @@ export function useAIUsage(): UseAIUsageReturn {
     queryFn: async (): Promise<AIUsageStats | null> => {
       if (!user) return null
 
-      const supabase = getSupabaseClient()
+      const supabase = createBrowserClient()
       const { start, end } = getCurrentBillingPeriod()
 
       // Fetch usage for current period - include model_id for multiplier calculation

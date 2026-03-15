@@ -26,7 +26,7 @@
 import { useState, useEffect, useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 
 // ============================================================================
 // Types
@@ -192,7 +192,7 @@ export function useActivityLog({
   const [hasMore, setHasMore] = useState(true)
   const [loadMoreOffset, setLoadMoreOffset] = useState(0)
 
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
 
   const {
     data: initialActivities = [],
@@ -329,7 +329,7 @@ export async function logActivity(params: {
   changes?: Record<string, { from: unknown; to: unknown }>
   metadata?: Record<string, unknown>
 }) {
-  const supabase = getSupabaseClient()
+  const supabase = createBrowserClient()
 
   const {
     data: { user },

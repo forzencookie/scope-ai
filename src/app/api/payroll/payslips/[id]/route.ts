@@ -6,23 +6,30 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { createUserScopedDb } from '@/lib/database/user-scoped-db';
+import { getAuthContext } from '@/lib/database/auth';
 
 export async function PUT(
     req: NextRequest,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb();
-        if (!userDb) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase } = ctx;
         const { id } = await params;
         const body = await req.json();
-        const updated = await userDb.payslips.update(id, body);
 
-        if (!updated) {
+        const { data: updated, error } = await supabase
+            .from('payslips')
+            .update(body)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error || !updated) {
             return NextResponse.json({ error: 'Payslip not found' }, { status: 404 });
         }
 
@@ -38,16 +45,22 @@ export async function DELETE(
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
-        const userDb = await createUserScopedDb();
-        if (!userDb) {
+        const ctx = await getAuthContext();
+        if (!ctx) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        const { supabase } = ctx;
         const { id } = await params;
 
         // Only allow deletion of draft payslips
-        const existing = await userDb.payslips.getById(id);
-        if (!existing) {
+        const { data: existing, error: fetchError } = await supabase
+            .from('payslips')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !existing) {
             return NextResponse.json({ error: 'Payslip not found' }, { status: 404 });
         }
         if (existing.status !== 'draft') {
@@ -57,8 +70,12 @@ export async function DELETE(
             );
         }
 
-        const deleted = await userDb.payslips.delete(id);
-        if (!deleted) {
+        const { error: deleteError } = await supabase
+            .from('payslips')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) {
             return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
         }
 

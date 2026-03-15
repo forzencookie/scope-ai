@@ -31,7 +31,7 @@ import {
 } from "@/components/ui/collapsible-table"
 import { SectionCard } from "@/components/ui/section-card"
 import { INVOICE_STATUS_LABELS } from "@/lib/localization"
-import { getSupabaseClient } from "@/lib/database/supabase"
+import { createBrowserClient } from "@/lib/database/client"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 // NEBilagaWizardDialog removed — AI generates NE-bilaga via navigateToAI()
@@ -64,7 +64,7 @@ function useNECalculation() {
         async function fetchData() {
             setIsLoading(true)
             setRateError(null)
-            const supabase = getSupabaseClient()
+            const supabase = createBrowserClient()
             try {
                 // Fetch balances, tax rates, and periodiseringsfonder in parallel
                 const [balanceResult, taxRates, fonder] = await Promise.all([

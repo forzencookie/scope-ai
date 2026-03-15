@@ -205,8 +205,6 @@ export function MomsDetailDialog({
     // Sync editedReport with report prop
     useEffect(() => {
         if (report) {
-            // Sync state with props
-            // eslint-disable-next-line
             setEditedReport({ ...report })
         }
     }, [report])
