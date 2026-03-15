@@ -20,7 +20,7 @@ export async function GET() {
 
     // Fetch invoices - RLS automatically filters by user's company
     const { data: dbInvoices, error } = await supabase
-        .from('supplierinvoices')
+        .from('supplier_invoices')
         .select('*')
         .order('due_date', { ascending: true })
         .limit(100)
@@ -82,7 +82,7 @@ export async function POST(request: NextRequest) {
 
     // Create the invoice
     const { data: invoice, error } = await supabase
-        .from('supplierinvoices')
+        .from('supplier_invoices')
         .insert({
           id: invoiceId,
           company_id: companyId,

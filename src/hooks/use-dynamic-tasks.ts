@@ -43,11 +43,11 @@ function useStatCounts(): StatCounts & { isLoading: boolean } {
 
             const [draftRes, overdueRes, payslipRes] = await Promise.all([
                 supabase
-                    .from('customerinvoices')
+                    .from('customer_invoices')
                     .select('id', { count: 'exact', head: true })
                     .eq('status', 'DRAFT'),
                 supabase
-                    .from('customerinvoices')
+                    .from('customer_invoices')
                     .select('id', { count: 'exact', head: true })
                     .lt('due_date', today)
                     .not('status', 'in', '("PAID","CANCELLED")'),

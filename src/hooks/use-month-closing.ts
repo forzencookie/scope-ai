@@ -39,7 +39,7 @@ export async function checkPeriodLocked(date: string): Promise<boolean> {
   const periodId = `${year}-M${String(month).padStart(2, '0')}`
 
   const { data } = await supabase
-    .from('financialperiods')
+    .from('financial_periods')
     .select('status')
     .eq('id', periodId)
     .single()
@@ -74,7 +74,7 @@ export function useMonthClosing() {
         async function loadPeriods() {
             try {
                 const { data, error } = await supabase
-                    .from('financialperiods')
+                    .from('financial_periods')
                     .select('*')
                     .eq('type', 'monthly')
 
@@ -154,7 +154,7 @@ export function useMonthClosing() {
             }
 
             const { error } = await supabase
-                .from('financialperiods')
+                .from('financial_periods')
                 .upsert({
                     id: periodId,
                     company_id: company.id,

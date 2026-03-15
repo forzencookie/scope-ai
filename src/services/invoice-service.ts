@@ -1,8 +1,8 @@
 import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 
-type CustomerInvoiceRow = Database['public']['Tables']['customerinvoices']['Row']
-type SupplierInvoiceRow = Database['public']['Tables']['supplierinvoices']['Row']
+type CustomerInvoiceRow = Database['public']['Tables']['customer_invoices']['Row']
+type SupplierInvoiceRow = Database['public']['Tables']['supplier_invoices']['Row']
 
 // Types matching schema.sql
 export type CustomerInvoice = {
@@ -91,7 +91,7 @@ export const invoiceService = {
         const supabase = createBrowserClient()
 
         let query = supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('*', { count: 'exact' })
             .order('due_date', { ascending: true })
             .range(offset, offset + limit - 1)
@@ -135,7 +135,7 @@ export const invoiceService = {
         const supabase = createBrowserClient()
 
         let query = supabase
-            .from('supplierinvoices')
+            .from('supplier_invoices')
             .select('*', { count: 'exact' })
             .order('due_date', { ascending: true })
             .range(offset, offset + limit - 1)
@@ -211,7 +211,7 @@ export const invoiceService = {
         const supabase = createBrowserClient()
 
         const { error } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .update({ status })
             .eq('id', id)
 
@@ -226,7 +226,7 @@ export const invoiceService = {
         const supabase = createBrowserClient()
 
         const { error } = await supabase
-            .from('supplierinvoices')
+            .from('supplier_invoices')
             .update({ status })
             .eq('id', id)
 

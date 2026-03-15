@@ -8,7 +8,7 @@
 
 import { NextRequest } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/database/auth'
-import { createAdminClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/client'
 import { isPaidTier, type SubscriptionTier } from '@/lib/subscription'
 
 const ALLOWED_UPDATES = ['full_name', 'avatar_emoji'] as const
@@ -31,7 +31,7 @@ export async function PATCH(request: NextRequest) {
       return ApiResponse.badRequest('No valid fields to update')
     }
 
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { error } = await (supabase as any)
       .from('profiles')
@@ -59,7 +59,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Query profile from Supabase using admin client
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data: profile, error } = await (supabase as any)
       .from('profiles')

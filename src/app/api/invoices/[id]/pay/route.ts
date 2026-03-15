@@ -27,7 +27,7 @@ export async function POST(
         const { id } = await params;
 
         const { data: invoice } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('*')
             .eq('id', id)
             .single();
@@ -73,7 +73,7 @@ export async function POST(
 
         // Update invoice status to Betald
         await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .update({ status: 'Betald' })
             .eq('id', id);
 

@@ -76,7 +76,7 @@ export function useAIUsage(): UseAIUsageReturn {
 
       // Fetch usage for current period - include model_id for multiplier calculation
       const { data: usageData, error: usageError } = await supabase
-        .from("aiusage")
+        .from("ai_usage")
         .select("tokens_used, requests_count, model_id")
         .eq("user_id", user.id)
         .gte("period_start", start.toISOString())

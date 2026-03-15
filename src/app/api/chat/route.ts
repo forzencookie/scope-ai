@@ -170,7 +170,7 @@ export async function POST(request: NextRequest) {
 
             const today = new Date().toISOString().split('T')[0]
             const { data: overdueInv } = await supabase
-                .from('customerinvoices')
+                .from('customer_invoices')
                 .select('total_amount')
                 .eq('status', 'sent')
                 .lt('due_date', today)

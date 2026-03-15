@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { createAdminClient } from '../../database/client'
+import { createServerClient } from '../../database/client'
 import type { AuditCheck, AuditResult } from './audit'
 
 // =============================================================================
@@ -28,7 +28,7 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
         const dateTo = `${year}-12-31`
         const prevDateFrom = `${prevYear}-01-01`
         const prevDateTo = `${prevYear}-12-31`
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
 
         // Gather all data in parallel
         const [

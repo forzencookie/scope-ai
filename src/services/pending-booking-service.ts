@@ -99,9 +99,9 @@ function mapRowToPendingBooking(row: PendingBookingRow): PendingBooking {
 
 const SOURCE_TABLE_MAP: Record<string, { table: string; statusValue: string }> = {
   payslip: { table: 'payslips', statusValue: 'booked' },
-  customer_invoice: { table: 'customerinvoices', statusValue: 'Bokförd' },
-  supplier_invoice: { table: 'supplierinvoices', statusValue: 'Bokförd' },
-  invoice_payment: { table: 'customerinvoices', statusValue: 'Betald' },
+  customer_invoice: { table: 'customer_invoices', statusValue: 'Bokförd' },
+  supplier_invoice: { table: 'supplier_invoices', statusValue: 'Bokförd' },
+  invoice_payment: { table: 'customer_invoices', statusValue: 'Betald' },
   transaction: { table: 'transactions', statusValue: 'Bokförd' },
   dividend_decision: { table: 'dividends', statusValue: 'booked' },
   dividend_payment: { table: 'dividends', statusValue: 'paid' },

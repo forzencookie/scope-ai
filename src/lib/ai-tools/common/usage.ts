@@ -77,7 +77,7 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
 
     // Fetch usage for current period
     const { data: usageData } = await supabase
-      .from('aiusage')
+      .from('ai_usage')
       .select('tokens_used, model_id')
       .eq('user_id', userId)
       .gte('period_start', periodStart.toISOString())
@@ -106,7 +106,7 @@ VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, i
 
     // Fetch purchased credits from user_credits table
     const { data: creditsData } = await supabase
-      .from('usercredits')
+      .from('user_credits')
       .select('credits_remaining')
       .eq('user_id', userId)
       .eq('is_active', true)

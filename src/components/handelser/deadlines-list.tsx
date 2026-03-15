@@ -53,7 +53,7 @@ export function DeadlinesList() {
 
       // Fetch pending tax calendar items
       const { data: taxItems } = await supabase
-        .from("taxcalendar")
+        .from("tax_calendar")
         .select("id, title, due_date, deadline_type, status")
         .in("status", ["pending", "overdue"])
         .order("due_date", { ascending: true })

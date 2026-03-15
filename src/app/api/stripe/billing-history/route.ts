@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { getStripe } from '@/lib/stripe'
-import { createAdminClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/client'
 
 /**
  * GET /api/stripe/billing-history
@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
             return ApiResponse.unauthorized('Authentication required')
         }
 
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
 
         // Get user's Stripe customer ID
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
         // Fetch credit purchases from our DB
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: credits } = await supabase
-            .from('usercredits' as any)
+            .from('user_credits' as any)
             .select('id, credits_purchased, price_paid_cents, currency, stripe_payment_id, purchased_at')
             .eq('user_id', auth.userId)
             .order('purchased_at', { ascending: false })

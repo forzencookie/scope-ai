@@ -6,7 +6,7 @@
  */
 
 import { createBrowserClient } from '@/lib/database/client'
-import { createAdminClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/client'
 import { getMonthlyUsage, checkUsageLimits } from '@/lib/model-auth'
 
 // =============================================================================
@@ -94,7 +94,7 @@ const TIER_LIMITS: Record<string, { tokens: number; requests: number }> = {
  * Get user profile from the database
  */
 export async function getUserProfile(userId: string): Promise<UserProfile | null> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
 
     const { data, error } = await supabase
         .from('profiles')
@@ -282,7 +282,7 @@ export async function getBankConnections(): Promise<BankConnection[]> {
     const supabase = createBrowserClient()
 
     const { data, error } = await supabase
-        .from('bankconnections')
+        .from('bank_connections')
         .select('id, bank_name, account_id, account_type, status, last_sync_at, provider, error_message')
 
     if (error) {
@@ -315,7 +315,7 @@ export async function initiateBankConnection(
 
     // Create pending connection record
     const { data, error } = await supabase
-        .from('bankconnections')
+        .from('bank_connections')
         .insert({
             user_id: userId,
             company_id: companyId,

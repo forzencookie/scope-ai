@@ -19,7 +19,7 @@ export async function GET() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: reports, error } = await supabase
-            .from('taxreports' as any)
+            .from('tax_reports' as any)
             .select('*')
             .eq('type', 'k10')
             .order('created_at', { ascending: false });
@@ -50,7 +50,7 @@ export async function POST(req: NextRequest) {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: savedReport, error } = await supabase
-            .from('taxreports' as any)
+            .from('tax_reports' as any)
             .insert({
                 type: 'k10',
                 tax_year: report.taxYear,

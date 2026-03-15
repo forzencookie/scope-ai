@@ -2,20 +2,6 @@
  * Tests for rate limiting functionality (in-memory implementation)
  */
 
-// Mock Supabase before importing rate-limit
-jest.mock('@/lib/database/client', () => ({
-    createBrowserClient: () => ({
-        from: jest.fn(() => ({
-            select: jest.fn().mockReturnThis(),
-            insert: jest.fn().mockReturnThis(),
-            update: jest.fn().mockReturnThis(),
-            delete: jest.fn().mockReturnThis(),
-            eq: jest.fn().mockReturnThis(),
-            single: jest.fn().mockResolvedValue({ data: null, error: null }),
-        })),
-    }),
-}))
-
 import {
     checkRateLimit,
     clearRateLimitStore,

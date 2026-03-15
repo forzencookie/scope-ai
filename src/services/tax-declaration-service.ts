@@ -3,7 +3,7 @@ import type { Database } from '@/types/database'
 
 // The generated DB types for these tables are incomplete stubs.
 // We extend the Row types with the columns the mappers actually access.
-type IncomeDeclarationRow = Database['public']['Tables']['incomedeclarations']['Row'] & {
+type IncomeDeclarationRow = Database['public']['Tables']['income_declarations']['Row'] & {
     tax_year?: number | null
     due_date?: string | null
     revenue?: number | null
@@ -14,7 +14,7 @@ type IncomeDeclarationRow = Database['public']['Tables']['incomedeclarations']['
     submitted_at?: string | null
 }
 
-type NEAppendixRow = Database['public']['Tables']['neappendices']['Row'] & {
+type NEAppendixRow = Database['public']['Tables']['ne_appendices']['Row'] & {
     tax_year?: number | null
     business_income?: number | null
     business_expenses?: number | null
@@ -25,7 +25,7 @@ type NEAppendixRow = Database['public']['Tables']['neappendices']['Row'] & {
     submitted_at?: string | null
 }
 
-type AnnualClosingRow = Database['public']['Tables']['annualclosings']['Row'] & {
+type AnnualClosingRow = Database['public']['Tables']['annual_closings']['Row'] & {
     fiscal_year_start?: string | null
     fiscal_year_end?: string | null
     total_revenue?: number | null
@@ -37,7 +37,7 @@ type AnnualClosingRow = Database['public']['Tables']['annualclosings']['Row'] & 
     completed_at?: string | null
 }
 
-type AnnualReportRow = Database['public']['Tables']['annualreports']['Row'] & {
+type AnnualReportRow = Database['public']['Tables']['annual_reports']['Row'] & {
     fiscal_year?: number | null
     company_name?: string | null
     org_number?: string | null
@@ -67,7 +67,7 @@ export type IncomeDeclaration = {
 
 export async function getIncomeDeclarations(taxYear?: number): Promise<IncomeDeclaration[]> {
     const supabase = createBrowserClient()
-    let query = supabase.from('incomedeclarations').select('*').order('tax_year', { ascending: false })
+    let query = supabase.from('income_declarations').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch income declarations:', error); return [] }
@@ -102,7 +102,7 @@ export type NEAppendix = {
 
 export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
     const supabase = createBrowserClient()
-    let query = supabase.from('neappendices').select('*').order('tax_year', { ascending: false })
+    let query = supabase.from('ne_appendices').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch NE appendix:', error); return [] }
@@ -140,7 +140,7 @@ export type AnnualClosing = {
 
 export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClosing[]> {
     const supabase = createBrowserClient()
-    let query = supabase.from('annualclosings').select('*').order('fiscal_year', { ascending: false })
+    let query = supabase.from('annual_closings').select('*').order('fiscal_year', { ascending: false })
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch annual closings:', error); return [] }
@@ -180,7 +180,7 @@ export type AnnualReport = {
 
 export async function getAnnualReports(fiscalYear?: number): Promise<AnnualReport[]> {
     const supabase = createBrowserClient()
-    let query = supabase.from('annualreports').select('*').order('fiscal_year', { ascending: false })
+    let query = supabase.from('annual_reports').select('*').order('fiscal_year', { ascending: false })
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
     if (error) { console.error('Failed to fetch annual reports:', error); return [] }

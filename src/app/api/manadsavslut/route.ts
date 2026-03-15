@@ -199,7 +199,7 @@ export async function POST(request: NextRequest) {
         const monthName = MONTH_NAMES_SV[month - 1]
         if (companyId) {
             const { error: fpError } = await supabase
-                .from('financialperiods')
+                .from('financial_periods')
                 .upsert({
                     id: periodId,
                     company_id: companyId,

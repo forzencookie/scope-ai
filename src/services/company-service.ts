@@ -5,7 +5,7 @@
  * This is the source of truth for company data - NOT localStorage.
  */
 
-import { createBrowserClient, createAdminClient } from '@/lib/database/client'
+import { createBrowserClient, createServerClient } from '@/lib/database/client'
 import type { CompanyType } from '@/lib/company-types'
 
 // Re-export for convenience
@@ -132,7 +132,7 @@ function mapRowToCompany(row: CompanyRow): CompanyInfo {
  * Get company info for a user (uses RLS)
  */
 export async function getCompanyByUserId(userId: string): Promise<CompanyInfo | null> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
 
     const { data, error } = await supabase
         .from('companies')
@@ -183,7 +183,7 @@ export async function createCompany(
     userId: string,
     data: CompanyUpdate & { name: string }
 ): Promise<CompanyInfo | null> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
 
     const insertData = {
         user_id: userId,
@@ -232,7 +232,7 @@ export async function updateCompany(
     userId: string,
     updates: CompanyUpdate
 ): Promise<CompanyInfo | null> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
 
     const updateData: Record<string, unknown> = {
         updated_at: new Date().toISOString(),

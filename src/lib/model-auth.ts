@@ -8,7 +8,7 @@
 
 // TODO: Run `npx supabase gen types typescript` after applying migration
 
-import { createAdminClient } from './database/client'
+import { createServerClient } from './database/client'
 import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './ai/models'
 
 // ============================================================================
@@ -38,17 +38,6 @@ export interface UsageStats {
     requestsCount: number
     periodStart: Date
     periodEnd: Date
-}
-
-export interface SecurityEvent {
-    eventType: 'unauthorized_model_access' | 'rate_limit_exceeded' | 'suspicious_activity' | 'auth_failure' | 'admin_action'
-    userId?: string
-    requestedResource?: string
-    allowedResource?: string
-    userTier?: string
-    ipAddress?: string
-    userAgent?: string
-    metadata?: Record<string, unknown>
 }
 
 // ============================================================================
@@ -84,7 +73,7 @@ export const TIER_LIMITS: Record<UserTier, { tokensPerMonth: number; requestsPer
  */
 export async function getUserTier(userId: string): Promise<UserTier> {
     try {
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
 
         // Query the profiles table for subscription tier
         const { data: profile, error: profileError } = await supabase
@@ -198,7 +187,7 @@ export async function trackUsage(
     tokensUsed: number = 0
 ): Promise<void> {
     try {
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
 
         // Use the database function to increment usage
         await supabase.rpc('increment_ai_usage', {
@@ -218,7 +207,7 @@ export async function trackUsage(
  */
 export async function getMonthlyUsage(userId: string): Promise<UsageStats | null> {
     try {
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
         const periodStart = new Date()
         periodStart.setDate(1)
         periodStart.setHours(0, 0, 0, 0)
@@ -263,7 +252,7 @@ export async function checkUsageLimits(userId: string): Promise<{
     tierTokensRemaining: number
     purchasedCreditsRemaining: number
 }> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
     const userTier = await getUserTier(userId)
     const limits = TIER_LIMITS[userTier]
     const usage = await getMonthlyUsage(userId)
@@ -299,7 +288,7 @@ export async function consumeTokens(
     tokensToConsume: number,
     modelId: string
 ): Promise<{ success: boolean; source: 'tier' | 'credits' | 'mixed'; tokensFromCredits: number }> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
     const limits = await checkUsageLimits(userId)
     
     // Apply model multiplier for effective cost
@@ -341,57 +330,3 @@ export async function consumeTokens(
     return { success: true, source, tokensFromCredits }
 }
 
-// ============================================================================
-// Security Audit Logging
-// ============================================================================
-
-/**
- * Log a security event for audit purposes
- */
-export async function logSecurityEvent(event: SecurityEvent): Promise<void> {
-    try {
-        const supabase = createAdminClient()
-
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabase.from('security_audit_log' as any).insert({
-            user_id: event.userId,
-            event_type: event.eventType,
-            requested_resource: event.requestedResource,
-            allowed_resource: event.allowedResource,
-            user_tier: event.userTier,
-            ip_address: event.ipAddress,
-            user_agent: event.userAgent,
-            metadata: event.metadata || {}
-        })
-    } catch (error) {
-        // Log to console as fallback - never fail the request
-        console.error('[SecurityAudit] Failed to log event:', event, error)
-    }
-}
-
-/**
- * Log an unauthorized model access attempt
- */
-export async function logUnauthorizedModelAccess(
-    userId: string,
-    requestedModel: string,
-    allowedModel: string,
-    userTier: string,
-    request?: Request
-): Promise<void> {
-    await logSecurityEvent({
-        eventType: 'unauthorized_model_access',
-        userId,
-        requestedResource: requestedModel,
-        allowedResource: allowedModel,
-        userTier,
-        ipAddress: request?.headers.get('x-forwarded-for') ||
-            request?.headers.get('x-real-ip') ||
-            undefined,
-        userAgent: request?.headers.get('user-agent') || undefined,
-        metadata: {
-            timestamp: new Date().toISOString(),
-            severity: 'warning'
-        }
-    })
-}

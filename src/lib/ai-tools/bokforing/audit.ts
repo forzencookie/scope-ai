@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { createAdminClient } from '../../database/client'
+import { createServerClient } from '../../database/client'
 
 // =============================================================================
 // Types
@@ -47,7 +47,7 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
         const year = new Date().getFullYear()
         const dateFrom = `${year}-01-01`
         const dateTo = `${year}-12-31`
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
 
         // Gather all data in parallel
         const [
@@ -62,11 +62,11 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
                 p_start_date: '2000-01-01',
                 p_end_date: dateTo,
             }),
-            supabase.from('customerinvoices').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
-            supabase.from('supplierinvoices').select('*').order('due_date', { ascending: true }).limit(500).then(r => r.data || []),
+            supabase.from('customer_invoices').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
+            supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }).limit(500).then(r => r.data || []),
             supabase.from('payslips').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
             supabase.from('shareholders').select('*').order('shares_count', { ascending: false }).then(r => r.data || []),
-            supabase.from('taxreports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
+            supabase.from('tax_reports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
         ])
 
         const balances: Array<{ account: string; balance: number }> = (balancesResult.data || []).map((row: { account_number: number; balance: number }) => ({

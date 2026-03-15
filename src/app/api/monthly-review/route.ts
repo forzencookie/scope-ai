@@ -142,14 +142,14 @@ export async function GET(request: NextRequest) {
 
             // 1: Customer invoices
             supabase
-                .from('customerinvoices')
+                .from('customer_invoices')
                 .select('id, status')
                 .gte('invoice_date', startDate)
                 .lte('invoice_date', endDate),
 
             // 2: Supplier invoices
             supabase
-                .from('supplierinvoices')
+                .from('supplier_invoices')
                 .select('id, status')
                 .gte('issue_date', startDate)
                 .lte('issue_date', endDate),
@@ -170,7 +170,7 @@ export async function GET(request: NextRequest) {
 
             // 5: VAT reports
             supabase
-                .from('taxreports')
+                .from('tax_reports')
                 .select('id, status, period_id')
                 .eq('type', 'vat')
                 .eq('period_id', quarterPeriodId),

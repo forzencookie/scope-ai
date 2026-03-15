@@ -6,7 +6,7 @@
  */
 
 import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext, AIToolDomain } from './types'
-import { createAdminClient } from '../database/client'
+import { createServerClient } from '../database/client'
 import type { Json } from '@/types/database'
 
 // Re-export types that tools may need
@@ -271,7 +271,7 @@ class AIToolRegistry {
 
         // Persist to database for accounting compliance
         try {
-            const supabase = createAdminClient()
+            const supabase = await createServerClient()
             const resultObj = log.result as unknown as Record<string, unknown> | undefined
             const status = resultObj?.success === false ? 'error' : 'success'
             await supabase.from('ai_audit_log').insert({
@@ -319,7 +319,7 @@ class AIToolRegistry {
         userId?: string,
     ): Promise<void> {
         try {
-            const supabase = createAdminClient()
+            const supabase = await createServerClient()
             await supabase.from('ai_audit_log').insert({
                 tool_name: `__confirmation__:${pending.id}`,
                 parameters: {
@@ -343,8 +343,8 @@ class AIToolRegistry {
      */
     private async loadConfirmationFromDB(confirmationId: string): Promise<PendingConfirmation | null> {
         try {
-            const { createAdminClient } = await import('../database/client')
-            const supabase = createAdminClient()
+            const { createServerClient } = await import('../database/client')
+            const supabase = await createServerClient()
             const { data } = await supabase
                 .from('ai_audit_log')
                 .select('parameters')
@@ -374,8 +374,8 @@ class AIToolRegistry {
      */
     private async deleteConfirmationFromDB(confirmationId: string): Promise<void> {
         try {
-            const { createAdminClient } = await import('../database/client')
-            const supabase = createAdminClient()
+            const { createServerClient } = await import('../database/client')
+            const supabase = await createServerClient()
             await supabase
                 .from('ai_audit_log')
                 .delete()

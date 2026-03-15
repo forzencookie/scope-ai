@@ -97,8 +97,8 @@ function getEntityLink(entityType: EntityType, entityId: string | null): string 
 
   const routes: Record<EntityType, string> = {
     transactions: `/dashboard/bokforing?tab=transaktioner&id=${entityId}`,
-    customerinvoices: `/dashboard/bokforing?tab=fakturor&id=${entityId}`,
-    supplierinvoices: `/dashboard/bokforing?tab=fakturor&id=${entityId}`,
+    customer_invoices: `/dashboard/bokforing?tab=fakturor&id=${entityId}`,
+    supplier_invoices: `/dashboard/bokforing?tab=fakturor&id=${entityId}`,
     receipts: `/dashboard/bokforing?tab=kvitton&id=${entityId}`,
     verifications: `/dashboard/bokforing?tab=verifikationer&id=${entityId}`,
     payslips: `/dashboard/loner?tab=lonebesked&id=${entityId}`,
@@ -107,8 +107,8 @@ function getEntityLink(entityType: EntityType, entityId: string | null): string 
     companies: `/dashboard/installningar`,
     profiles: `/dashboard/installningar`,
     roadmaps: `/dashboard/handelser?tab=canvas`,
-    taxreports: `/dashboard/rapporter`,
-    financialperiods: `/dashboard/handelser`,
+    tax_reports: `/dashboard/rapporter`,
+    financial_periods: `/dashboard/handelser`,
     benefits: `/dashboard/loner?tab=formaner`,
     inventarier: `/dashboard/bokforing?tab=inventarier&id=${entityId}`,
   }

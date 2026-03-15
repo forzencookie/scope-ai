@@ -115,7 +115,7 @@ export async function GET(req: NextRequest) {
         // Fetch account balances
         // =====================================================================
         const { data: balancesData, error: balError } = await supabase
-            .from('accountbalances')
+            .from('account_balances')
             .select('*')
             .eq('year', year)
 

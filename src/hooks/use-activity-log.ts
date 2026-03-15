@@ -66,8 +66,8 @@ export type ActivityAction =
 
 export type EntityType =
   | "transactions"
-  | "customerinvoices"
-  | "supplierinvoices"
+  | "customer_invoices"
+  | "supplier_invoices"
   | "receipts"
   | "verifications"
   | "payslips"
@@ -76,8 +76,8 @@ export type EntityType =
   | "companies"
   | "profiles"
   | "roadmaps"
-  | "taxreports"
-  | "financialperiods"
+  | "tax_reports"
+  | "financial_periods"
   | "benefits"
   | "inventarier"
 
@@ -128,8 +128,8 @@ export const ACTION_LABELS: Record<ActivityAction, string> = {
 
 export const ENTITY_LABELS: Record<EntityType, string> = {
   transactions: "transaktion",
-  customerinvoices: "kundfaktura",
-  supplierinvoices: "leverantörsfaktura",
+  customer_invoices: "kundfaktura",
+  supplier_invoices: "leverantörsfaktura",
   receipts: "kvitto",
   verifications: "verifikation",
   payslips: "lönebesked",
@@ -138,8 +138,8 @@ export const ENTITY_LABELS: Record<EntityType, string> = {
   companies: "företag",
   profiles: "profil",
   roadmaps: "canvas",
-  taxreports: "skatterapport",
-  financialperiods: "räkenskapsperiod",
+  tax_reports: "skatterapport",
+  financial_periods: "räkenskapsperiod",
   benefits: "förmån",
   inventarier: "inventarie",
 }

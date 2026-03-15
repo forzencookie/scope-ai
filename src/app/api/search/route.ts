@@ -71,7 +71,7 @@ export async function GET(request: NextRequest) {
 
             // Customer invoices
             supabase
-                .from('customerinvoices')
+                .from('customer_invoices')
                 .select('id, customer_name, invoice_number, total_amount, status')
                 .or(`customer_name.ilike.${searchPattern},invoice_number.ilike.${searchPattern}`)
                 .order('invoice_date', { ascending: false })

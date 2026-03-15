@@ -25,7 +25,7 @@ export async function POST(
 
         // Update via RLS-protected client
         const { data: updated, error } = await supabase
-            .from('supplierinvoices')
+            .from('supplier_invoices')
             .update({ status })
             .eq('id', id)
             .select()

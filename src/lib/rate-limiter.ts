@@ -1,34 +1,14 @@
 /**
- * Consolidated Rate Limiter
- * 
- * Provides rate limiting with automatic environment detection:
- * - Production: Supabase-backed (persistent, distributed)
- * - Development: In-memory (simple, no external dependencies)
- * 
- * Usage:
- * ```ts
- * import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
- * 
- * const clientId = getClientIdentifier(request)
- * const result = await checkRateLimit(clientId)
- * if (!result.success) {
- *   return new Response('Too Many Requests', { status: 429 })
- * }
- * ```
+ * Rate Limiter (in-memory)
+ *
+ * Simple sliding-window rate limiter using an in-memory Map.
+ * Sufficient for single-instance deployments. When deploying to
+ * serverless (Vercel), swap to Vercel KV / Upstash Redis.
  */
-
-import { createBrowserClient } from './database/client'
-
-const supabase = createBrowserClient()
 
 // ============================================================================
 // Types
 // ============================================================================
-
-interface RateLimitRow {
-    count: number
-    reset_time: string
-}
 
 export interface RateLimitConfig {
     /** Maximum number of requests allowed in the window */
@@ -73,31 +53,26 @@ function validateIpAddress(ip: string | null | undefined): string | null {
 // Client Identification
 // ============================================================================
 
-const TRUST_PROXY_HEADERS =
-    process.env.TRUST_PROXY_HEADERS === 'true' ||
-    process.env.VERCEL === '1' ||
-    process.env.CF_PAGES === '1'
-
 /**
- * Get client identifier from request headers
- * Safely handles proxy headers based on environment configuration
+ * Get client identifier from request headers.
+ * Safely handles proxy headers on trusted platforms (Vercel, Cloudflare).
  */
 export function getClientIdentifier(request: Request): string {
-    const isTrusted = TRUST_PROXY_HEADERS || process.env.VERCEL === '1' || process.env.CF_PAGES === '1'
+    const isTrusted =
+        process.env.TRUST_PROXY_HEADERS === 'true' ||
+        process.env.VERCEL === '1' ||
+        process.env.CF_PAGES === '1'
 
     if (isTrusted) {
-        // Cloudflare
         const cfIp = validateIpAddress(request.headers.get('cf-connecting-ip'))
         if (cfIp) return `ip:${cfIp}`
 
-        // X-Forwarded-For (take first IP)
         const xff = request.headers.get('x-forwarded-for')
         if (xff) {
             const firstIp = validateIpAddress(xff.split(',')[0])
             if (firstIp) return `ip:${firstIp}`
         }
 
-        // X-Real-IP
         const realIp = validateIpAddress(request.headers.get('x-real-ip'))
         if (realIp) return `ip:${realIp}`
     }
@@ -106,7 +81,7 @@ export function getClientIdentifier(request: Request): string {
 }
 
 // ============================================================================
-// In-Memory Rate Limiter (Development)
+// In-Memory Store
 // ============================================================================
 
 interface RateLimitEntry {
@@ -114,14 +89,20 @@ interface RateLimitEntry {
     resetTime: number
 }
 
-const memoryStore = new Map<string, RateLimitEntry>()
+const store = new Map<string, RateLimitEntry>()
 
-function checkRateLimitMemory(identifier: string, config: RateLimitConfig): RateLimitResult {
+/**
+ * Check if a request should be rate limited.
+ */
+export async function checkRateLimit(
+    identifier: string,
+    config: RateLimitConfig = DEFAULT_CONFIG
+): Promise<RateLimitResult> {
     const now = Date.now()
-    const entry = memoryStore.get(identifier)
+    const entry = store.get(identifier)
 
     if (!entry || now >= entry.resetTime) {
-        memoryStore.set(identifier, { count: 1, resetTime: now + config.windowMs })
+        store.set(identifier, { count: 1, resetTime: now + config.windowMs })
         return { success: true, remaining: config.maxRequests - 1, resetTime: now + config.windowMs }
     }
 
@@ -138,121 +119,22 @@ function checkRateLimitMemory(identifier: string, config: RateLimitConfig): Rate
     return { success: true, remaining: config.maxRequests - entry.count, resetTime: entry.resetTime }
 }
 
-// ============================================================================
-// Supabase Rate Limiter (Production)
-// ============================================================================
-
-async function checkRateLimitSupabase(identifier: string, config: RateLimitConfig): Promise<RateLimitResult> {
-    const now = Date.now()
-    const resetTime = now + config.windowMs
-
-    try {
-        // Try to get existing entry
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const { data: existing } = await supabase
-            .from('rate_limits' as any)
-            .select('count, reset_time')
-            .eq('identifier', identifier)
-            .single()
-
-        if (existing) {
-            const row = existing as unknown as RateLimitRow
-            const existingResetTime = new Date(row.reset_time).getTime()
-
-            // Window expired - reset
-            if (now >= existingResetTime) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                await supabase
-                    .from('rate_limits' as any)
-                    .update({ count: 1, reset_time: new Date(resetTime).toISOString() })
-                    .eq('identifier', identifier)
-
-                return { success: true, remaining: config.maxRequests - 1, resetTime }
-            }
-
-            // Rate limit exceeded
-            if (row.count >= config.maxRequests) {
-                return {
-                    success: false,
-                    remaining: 0,
-                    resetTime: existingResetTime,
-                    retryAfter: Math.ceil((existingResetTime - now) / 1000),
-                }
-            }
-
-            // Increment counter
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            await supabase
-                .from('rate_limits' as any)
-                .update({ count: row.count + 1 })
-                .eq('identifier', identifier)
-
-            return { success: true, remaining: config.maxRequests - row.count - 1, resetTime: existingResetTime }
-        }
-
-        // No existing entry - create new one
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabase
-            .from('rate_limits' as any)
-            .insert({ identifier, count: 1, reset_time: new Date(resetTime).toISOString() })
-
-        return { success: true, remaining: config.maxRequests - 1, resetTime }
-    } catch (error) {
-        console.error('Rate limit check failed, allowing request:', error)
-        return { success: true, remaining: config.maxRequests, resetTime }
-    }
-}
-
-// ============================================================================
-// Main API
-// ============================================================================
-
-const useSupabase = process.env.USE_SUPABASE_RATE_LIMIT === 'true' || process.env.NODE_ENV === 'production'
-
 /**
- * Check if a request should be rate limited
- * 
- * @param identifier - Unique identifier for the client (use getClientIdentifier)
- * @param config - Rate limit configuration (optional)
- * @returns Result indicating if request is allowed
- */
-export async function checkRateLimit(
-    identifier: string,
-    config: RateLimitConfig = DEFAULT_CONFIG
-): Promise<RateLimitResult> {
-    if (useSupabase) {
-        return checkRateLimitSupabase(identifier, config)
-    }
-    return checkRateLimitMemory(identifier, config)
-}
-
-/**
- * Clear the rate limit store (useful for testing)
+ * Clear all entries (for testing).
  */
 export async function clearRateLimitStore(): Promise<void> {
-    if (useSupabase) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabase.from('rate_limits' as any).delete().neq('identifier', '')
-    } else {
-        memoryStore.clear()
-    }
+    store.clear()
 }
 
 /**
- * Clean up expired entries (call periodically in production)
+ * Remove expired entries to prevent memory leaks.
  */
 export async function cleanupExpiredEntries(): Promise<void> {
-    if (useSupabase) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        await supabase.from('rate_limits' as any).delete().lt('reset_time', new Date().toISOString())
-    } else {
-        const now = Date.now()
-        for (const [key, entry] of memoryStore.entries()) {
-            if (now > entry.resetTime) memoryStore.delete(key)
-        }
+    const now = Date.now()
+    for (const [key, entry] of store.entries()) {
+        if (now > entry.resetTime) store.delete(key)
     }
 }
 
 // Legacy exports for backwards compatibility
 export { DEFAULT_CONFIG as DEFAULT_RATE_LIMIT_CONFIG }
-export { checkRateLimit as checkRateLimitSupabase }

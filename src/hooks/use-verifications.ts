@@ -61,7 +61,7 @@ export function useVerifications() {
 
             const supabase = createBrowserClient()
             const { data: period } = await supabase
-                .from('financialperiods')
+                .from('financial_periods')
                 .select('status')
                 .eq('id', periodId)
                 .single()

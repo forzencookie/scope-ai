@@ -88,7 +88,7 @@ export const companyStatisticsService = {
 
             // Invoice statistics (customer invoices)
             supabase
-                .from('customerinvoices')
+                .from('customer_invoices')
                 .select('id, total_amount, status, due_date', { count: 'exact' })
                 .gte('invoice_date', yearStart)
                 .lte('invoice_date', yearEnd),
@@ -113,7 +113,7 @@ export const companyStatisticsService = {
 
             // Account balances for revenue/expenses
             supabase
-                .from('accountbalances')
+                .from('account_balances')
                 .select('account_number, balance')
                 .eq('year', targetYear)
         ])
@@ -279,7 +279,7 @@ export const companyStatisticsService = {
         const targetYear = year || new Date().getFullYear()
 
         const { data: balances } = await supabase
-            .from('accountbalances')
+            .from('account_balances')
             .select('account_number, balance')
             .eq('year', targetYear)
 
@@ -358,7 +358,7 @@ export const companyStatisticsService = {
 
         const [transactions, invoices, receipts, employees] = await Promise.all([
             supabase.from('transactions').select('status', { count: 'exact' }),
-            supabase.from('customerinvoices').select('status, due_date', { count: 'exact' }),
+            supabase.from('customer_invoices').select('status, due_date', { count: 'exact' }),
             supabase.from('receipts').select('status', { count: 'exact' }),
             supabase.from('employees').select('id', { count: 'exact' }).eq('status', 'active')
         ])

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { createPortalSession } from '@/lib/stripe'
-import { createAdminClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/client'
 
 /**
  * POST /api/stripe/portal
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
             return ApiResponse.unauthorized('Authentication required')
         }
 
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
 
         // Get user's Stripe customer ID
         const { data: profile } = await supabase

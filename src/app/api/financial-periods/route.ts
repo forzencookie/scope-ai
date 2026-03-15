@@ -18,7 +18,7 @@ export async function GET() {
         const { supabase, userId, companyId } = ctx;
 
         const { data: periods, error } = await supabase
-            .from('financialperiods')
+            .from('financial_periods')
             .select('*')
             .order('start_date', { ascending: false });
 

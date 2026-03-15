@@ -32,7 +32,7 @@ export async function POST(
 
         // Fetch original invoice
         const { data: invoice } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('*')
             .eq('id', invoiceId)
             .single()
@@ -49,7 +49,7 @@ export async function POST(
         // Generate credit note number
         const year = new Date().getFullYear()
         const { data: existingCreditNotes } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('invoice_number')
             .like('invoice_number', `KF-${year}-%`)
             .order('invoice_number', { ascending: false })
@@ -107,7 +107,7 @@ export async function POST(
         }
 
         const { data: created, error } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .insert(creditNoteData)
             .select()
             .single()
@@ -120,7 +120,7 @@ export async function POST(
 
         // Update original invoice status to 'Krediterad'
         await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .update({ status: 'Krediterad' })
             .eq('id', invoice.id)
 

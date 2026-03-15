@@ -18,10 +18,6 @@ export type { Tables, TablesInsert, TablesUpdate } from "./database"
 import type { Tables } from "./database"
 export type DbUser = Tables<"profiles">
 export type DbTransaction = Tables<"transactions">
-// export type DbReceipt = Tables<"receipts"> // Table missing in DB
-export type DbCategory = Tables<"categories">
-export type DbTaxReport = Tables<"taxreports">
-export type DbAiLog = Tables<"ailogs">
 
 // ============================================
 // Bank Types (Simulator → Bank → Dashboard flow)

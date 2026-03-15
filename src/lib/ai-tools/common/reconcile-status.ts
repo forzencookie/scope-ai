@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { createAdminClient } from '../../database/client'
+import { createServerClient } from '../../database/client'
 
 // =============================================================================
 // Types
@@ -40,7 +40,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
     keywords: ['status', 'reconcile', 'uppdatera', 'kontrollera', 'granska', 'kolla', 'avstämning'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        const supabase = createAdminClient()
+        const supabase = await createServerClient()
         const today = new Date().toISOString().split('T')[0]
         const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -62,7 +62,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
 
             // 2. Overdue invoices
             supabase
-                .from('customerinvoices')
+                .from('customer_invoices')
                 .select('id, invoice_number, customer_name, total_amount, due_date, status')
                 .in('status', ['Skickad', 'sent'])
                 .lt('due_date', today)

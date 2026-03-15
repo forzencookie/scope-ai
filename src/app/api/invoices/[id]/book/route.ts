@@ -39,7 +39,7 @@ export async function POST(
 
         // Find the invoice
         const { data: invoice } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('*')
             .eq('id', id)
             .single();
@@ -54,7 +54,7 @@ export async function POST(
 
         // Update Invoice Status
         await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .update({ status: 'skickad' })
             .eq('id', id);
 

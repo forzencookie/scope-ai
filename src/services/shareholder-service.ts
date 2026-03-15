@@ -2,7 +2,7 @@ import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 
 type ShareholderRow = Database['public']['Tables']['shareholders']['Row']
-type ShareTransactionRow = Database['public']['Tables']['sharetransactions']['Row']
+type ShareTransactionRow = Database['public']['Tables']['share_transactions']['Row']
 
 // =============================================================================
 // UI Types
@@ -192,7 +192,7 @@ export const shareholderService = {
         const supabase = createBrowserClient()
 
         const { data, error, count } = await supabase
-            .from('sharetransactions')
+            .from('share_transactions')
             .select('*', { count: 'exact' })
             .order('registration_date', { ascending: false })
             .range(offset, offset + limit - 1)
@@ -415,7 +415,7 @@ export const shareholderService = {
         const companyId = seller.company_id ?? ''
 
         const { data: txn, error: txnErr } = await supabase
-            .from('sharetransactions')
+            .from('share_transactions')
             .insert({
                 from_shareholder_id: fromShareholderId,
                 to_shareholder_id: buyerId,

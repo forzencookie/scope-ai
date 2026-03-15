@@ -130,7 +130,7 @@ export const accountService = {
         const targetYear = year || new Date().getFullYear()
 
         let query = supabase
-            .from('accountbalances')
+            .from('account_balances')
             .select('*', { count: 'exact' })
             .eq('year', targetYear)
             .order('account_number', { ascending: true })
@@ -185,7 +185,7 @@ export const accountService = {
         const targetYear = year || new Date().getFullYear()
 
         const { data, error } = await supabase
-            .from('accountbalances')
+            .from('account_balances')
             .select('*')
             .eq('account_number', accountNumber)
             .eq('year', targetYear)
@@ -222,7 +222,7 @@ export const accountService = {
         const targetYear = year || new Date().getFullYear()
 
         const { data } = await supabase
-            .from('accountbalances')
+            .from('account_balances')
             .select('account_number, balance')
             .eq('year', targetYear)
 

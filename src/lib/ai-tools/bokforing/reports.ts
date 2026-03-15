@@ -12,7 +12,7 @@ import {
 } from '@/services/processors/reports'
 import { FinancialReportCalculator } from '@/services/processors/reports/calculator'
 import { companyService } from '@/services/company-service'
-import { createAdminClient } from '../../database/client'
+import { createServerClient } from '../../database/client'
 import { taxService } from '@/services/tax-service'
 
 // =============================================================================
@@ -20,7 +20,7 @@ import { taxService } from '@/services/tax-service'
 // =============================================================================
 
 async function fetchAccountBalances(startDate: string, endDate: string): Promise<AccountBalance[]> {
-    const supabase = createAdminClient()
+    const supabase = await createServerClient()
     const { data, error } = await supabase.rpc('get_account_balances', {
         p_start_date: startDate,
         p_end_date: endDate,

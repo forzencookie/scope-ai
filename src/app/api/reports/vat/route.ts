@@ -19,7 +19,7 @@ export async function GET() {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: reports, error } = await supabase
-            .from('taxreports' as any)
+            .from('tax_reports' as any)
             .select('*')
             .eq('type', 'vat')
             .order('created_at', { ascending: false });
@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
 
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: savedReport, error } = await supabase
-            .from('taxreports' as any)
+            .from('tax_reports' as any)
             .upsert({
                 ...report,
                 company_id: companyId,
@@ -67,7 +67,7 @@ export async function POST(req: NextRequest) {
         // If status is 'submitted', update the financial period status too
         if (report.status === 'submitted') {
             await supabase
-                .from('financialperiods')
+                .from('financial_periods')
                 .update({ status: 'submitted' })
                 .eq('id', report.period_id);
         }

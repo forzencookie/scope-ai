@@ -2,7 +2,7 @@ import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 import type { PostgrestError } from '@supabase/supabase-js'
 
-type VatDeclarationsTable = Database['public']['Tables']['vatdeclarations']
+type VatDeclarationsTable = Database['public']['Tables']['vat_declarations']
 type VatDeclarationRow = VatDeclarationsTable['Row']
 
 interface VatDeclarationData {
@@ -52,7 +52,7 @@ export const vatService = {
     async getDeclarations(year?: number): Promise<VATDeclaration[]> {
         const supabase = createBrowserClient()
         const query = supabase
-            .from('vatdeclarations')
+            .from('vat_declarations')
             .select('*')
             .order('period', { ascending: false })
 
@@ -95,7 +95,7 @@ export const vatService = {
 
         // Get the next upcoming VAT declaration
         const { data, error } = await supabase
-            .from('vatdeclarations')
+            .from('vat_declarations')
             .select('*')
             .eq('status', 'upcoming')
             // .order('due_date', { ascending: true }) // Column does not exist

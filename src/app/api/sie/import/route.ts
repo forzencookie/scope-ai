@@ -83,7 +83,7 @@ export async function POST(req: NextRequest) {
                 data.fiskalYear[0]?.end?.slice(0, 7) || new Date().toISOString().slice(0, 7)
 
             const { error } = await supabase
-                .from('accountbalances')
+                .from('account_balances')
                 .upsert({
                     user_id: userId,
                     account_number: balance.account,

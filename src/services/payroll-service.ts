@@ -5,7 +5,7 @@ type EmployeeRow = Database['public']['Tables']['employees']['Row']
 type PayslipRow = Database['public']['Tables']['payslips']['Row'] & {
     employees?: { name: string } | null
 }
-type AGIReportRow = Database['public']['Tables']['agireports']['Row'] & {
+type AGIReportRow = Database['public']['Tables']['agi_reports']['Row'] & {
     year?: number | null
     month?: number | null
     due_date?: string | null
@@ -195,7 +195,7 @@ export const payrollService = {
     async getAGIReports(year?: number): Promise<AGIReport[]> {
         const supabase = createBrowserClient()
         let query = supabase
-            .from('agireports')
+            .from('agi_reports')
             .select('*')
             .order('year', { ascending: false })
             .order('month', { ascending: false })

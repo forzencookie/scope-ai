@@ -137,7 +137,7 @@ async function seed() {
     for (const inv of mockInvoices) {
         const status = normalizeInvoiceStatus(inv.status)
         if (inv.type === 'customer') {
-            const { error } = await supabase.from('customerinvoices').upsert({
+            const { error } = await supabase.from('customer_invoices').upsert({
                 id: generateUUID(inv.id),
                 invoice_number: inv.number,
                 invoice_date: inv.date,
@@ -151,7 +151,7 @@ async function seed() {
             })
             if (error) console.error(`CustInvoice Error (${inv.id}):`, error.message)
         } else {
-            const { error } = await supabase.from('supplierinvoices').upsert({
+            const { error } = await supabase.from('supplier_invoices').upsert({
                 id: generateUUID(inv.id),
                 invoice_number: inv.number,
                 supplier_name: inv.customer,

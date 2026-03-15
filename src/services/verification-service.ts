@@ -242,7 +242,7 @@ export const verificationService = {
         const periodId = `${year}-M${String(month).padStart(2, '0')}`
 
         const { data } = await supabase
-            .from('financialperiods')
+            .from('financial_periods')
             .select('status')
             .eq('id', periodId)
             .single()

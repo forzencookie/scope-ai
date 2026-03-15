@@ -108,7 +108,7 @@ Format it as a readable email body.`
         }
 
         const { data: newItem, error } = await supabase
-            .from('inboxitems')
+            .from('inbox_items')
             .insert(insertData)
             .select()
             .single()

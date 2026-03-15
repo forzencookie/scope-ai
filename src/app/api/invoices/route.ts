@@ -19,7 +19,7 @@ export async function GET() {
         const { supabase, userId, companyId } = ctx;
 
         const { data: invoices, error } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('*')
             .order('created_at', { ascending: false })
             .limit(100);
@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
         // Get next invoice number
         const year = new Date().getFullYear();
         const { data: lastInvoices } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .select('invoice_number')
             .like('invoice_number', `FAK-${year}-%`)
             .order('invoice_number', { ascending: false })
@@ -119,7 +119,7 @@ export async function POST(req: NextRequest) {
         };
 
         const { data: created, error } = await supabase
-            .from('customerinvoices')
+            .from('customer_invoices')
             .insert(invoiceData)
             .select()
             .single();
