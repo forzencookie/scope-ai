@@ -103,14 +103,6 @@ export async function getUserTier(userId: string): Promise<UserTier> {
 }
 
 /**
- * Check if user is in demo mode (simulated AI, no real API calls)
- * Demo mode has been removed in the new pricing structure, so always returns false.
- */
-export function isDemoMode(tier: UserTier): boolean {
-    return false;
-}
-
-/**
  * Authorize a model request
  * Returns the authorized model ID (original if allowed, fallback if not)
  */

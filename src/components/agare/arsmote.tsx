@@ -3,13 +3,11 @@
 import * as React from "react"
 import { useState, useMemo, memo } from "react"
 import {
-  Plus,
   Download,
   CheckCircle,
   Clock,
   FileText,
   Send,
-  MessageSquare,
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
@@ -25,11 +23,6 @@ import {
 import { Card, CardContent } from "@/components/ui/card"
 import { HandHeart } from "lucide-react"
 
-// Dialogs
-import { MotionDialog } from "./dialogs/motion"
-import { PlanMeetingDialog } from "./dialogs/mote"
-import { SendNoticeDialog } from "./dialogs/kallelse"
-
 // Components
 import { NextMeetingCard } from "./arsmote/next-meeting-card"
 import { AnnualMeetingsGrid } from "./arsmote/annual-meetings-grid"
@@ -39,49 +32,18 @@ import { useArsmoteStats } from "./arsmote/use-arsmote-stats"
 // Types
 import { type AnnualMeeting } from "@/types/meeting"
 
-// Standard agenda for annual meeting
-const standardAgenda = [
-  'Mötets öppnande',
-  'Val av mötesordförande',
-  'Val av mötessekreterare',
-  'Val av justerare tillika rösträknare',
-  'Godkännande av dagordning',
-  'Fråga om mötet är stadgeenligt utlyst',
-  'Fastställande av röstlängd',
-  'Verksamhetsberättelse',
-  'Ekonomisk redovisning',
-  'Revisionsberättelse',
-  'Fråga om ansvarsfrihet för styrelsen',
-  'Beslut om medlemsavgifter',
-  'Behandling av inkomna motioner',
-  'Val av ordförande',
-  'Val av övriga styrelseledamöter',
-  'Val av revisorer',
-  'Val av valberedning',
-  'Övriga frågor',
-  'Mötets avslutande',
-]
-
 export const Arsmote = memo(function Arsmote() {
-  const { 
-    meetings, 
-    stats, 
-    isLoading, 
-    members,
-    addDocument
+  const {
+    meetings,
+    stats,
+    isLoading,
   } = useArsmoteStats()
 
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
-  
-  // Dialog states
-  const [showCreateDialog, setShowCreateDialog] = useState(false)
-  const [showMotionDialog, setShowMotionDialog] = useState(false)
-  const [showSendNoticeDialog, setShowSendNoticeDialog] = useState(false)
-  
+
   // Selection states
   const [selectedMeeting, setSelectedMeeting] = useState<AnnualMeeting | null>(null)
-  const [noticeMeeting, setNoticeMeeting] = useState<AnnualMeeting | null>(null)
 
   // Filter meetings
   const filteredMeetings = useMemo(() => {
@@ -112,11 +74,6 @@ export const Arsmote = memo(function Arsmote() {
     return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
   }, [meetings, searchQuery, statusFilter])
 
-  const handleOpenNotice = (meeting: AnnualMeeting) => {
-    setNoticeMeeting(meeting)
-    setShowSendNoticeDialog(true)
-  }
-
   if (isLoading) {
     return (
       <div className="space-y-6">
@@ -137,18 +94,6 @@ export const Arsmote = memo(function Arsmote() {
       <PageHeader
         title="Årsmöte"
         subtitle="Planera, dokumentera och förvalta föreningens årsmöten."
-        actions={
-          <>
-            <Button variant="outline" size="sm" onClick={() => setShowMotionDialog(true)} className="flex-1 sm:flex-none">
-              <MessageSquare className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Ny motion</span>
-            </Button>
-            <Button size="sm" onClick={() => setShowCreateDialog(true)} className="flex-1 sm:flex-none">
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Planera årsmöte</span>
-            </Button>
-          </>
-        }
       />
 
       {/* Next Meeting Hero Card */}
@@ -157,7 +102,6 @@ export const Arsmote = memo(function Arsmote() {
         prepProgress={stats.prepProgress}
         preparationItems={stats.preparationItems}
         stats={stats}
-        onOpenCreateDialog={() => setShowCreateDialog(true)}
       />
 
       {/* Section Separator */}
@@ -219,7 +163,6 @@ export const Arsmote = memo(function Arsmote() {
         meetings={filteredMeetings}
         selectedMeetingId={selectedMeeting?.id || null}
         onSelectMeeting={setSelectedMeeting}
-        onOpenNotice={handleOpenNotice}
       />
 
       {/* Expanded Meeting Details */}
@@ -239,56 +182,13 @@ export const Arsmote = memo(function Arsmote() {
             <p className="text-muted-foreground mb-4">
               {searchQuery ? 'Inga årsmöten matchade din sökning' : 'Planera ditt första årsmöte'}
             </p>
-            <Button onClick={() => setShowCreateDialog(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Planera årsmöte
-            </Button>
+            <p className="text-sm text-muted-foreground">
+              Be Scooby planera ett årsmöte via chatten.
+            </p>
           </CardContent>
         </Card>
       )}
 
-      {/* Dialogs */}
-      <MotionDialog
-        open={showMotionDialog}
-        onOpenChange={setShowMotionDialog}
-        onSubmit={(data) => {
-          console.log("Motion submitted", data)
-        }}
-      />
-
-      <PlanMeetingDialog
-        open={showCreateDialog}
-        onOpenChange={setShowCreateDialog}
-        type="annual"
-        defaultAgenda={standardAgenda}
-        onSubmit={(data) => {
-          addDocument({
-            type: 'general_meeting_minutes',
-            title: `${data.type === 'extra' ? 'Extra årsmöte' : 'Ordinarie årsmöte'} ${data.year}`,
-            date: data.date,
-            content: JSON.stringify({
-              year: parseInt(data.year),
-              location: data.location,
-              type: data.type,
-              decisions: [],
-              motions: [],
-              attendeesCount: 0
-            }),
-            status: 'draft',
-            source: 'manual'
-          })
-          setShowCreateDialog(false)
-        }}
-      />
-
-      <SendNoticeDialog
-        open={showSendNoticeDialog}
-        onOpenChange={setShowSendNoticeDialog}
-        variant="association"
-        recipientCount={members.filter(m => m.status === 'aktiv').length}
-        meeting={noticeMeeting || undefined}
-        onSubmit={() => console.log("Notice prepared")}
-      />
     </div>
   )
 })

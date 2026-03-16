@@ -71,7 +71,6 @@ DO $$
 DECLARE
   func_record RECORD;
   func_list TEXT[] := ARRAY[
-    'clear_demo_data',
     'add_user_credits',
     'get_shareholder_stats_v1',
     'get_meeting_stats_v1',

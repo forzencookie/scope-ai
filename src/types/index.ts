@@ -3,6 +3,24 @@
 // Single source of truth for all application types
 // ============================================
 
+// ============================================
+// Booking Types (shared across services and API routes)
+// ============================================
+
+export interface BookingData {
+    entityId: string
+    entityType?: 'transaction' | 'invoice' | 'receipt'
+    useAiSuggestion: boolean
+    category: string
+    debitAccount: string
+    creditAccount: string
+    description: string
+    amount?: number
+    attachmentUrl?: string
+    attachmentName?: string
+    accountingMethod?: 'cash' | 'invoice'
+}
+
 import { LucideIcon } from "lucide-react"
 import { parseAmount, parseDateSafe } from "@/lib/utils"
 
@@ -18,19 +36,6 @@ export type { Tables, TablesInsert, TablesUpdate } from "./database"
 import type { Tables } from "./database"
 export type DbUser = Tables<"profiles">
 export type DbTransaction = Tables<"transactions">
-
-// ============================================
-// Bank Types (Simulator → Bank → Dashboard flow)
-// ============================================
-
-export type {
-  NakedBankTransaction,
-  EnrichedTransaction,
-  TransactionCategory,
-  BankAccountType,
-  BankAccountInfo,
-} from "./bank"
-export { categoryMeta, bankAccountMeta } from "./bank"
 
 // Re-export status types from the existing status-types module
 export type {
@@ -68,14 +73,14 @@ export interface User {
   name: string
   email: string
   avatar: string
-  plan: "Free" | "Pro" | "Max"
+  plan: "Pro" | "Max"
 }
 
 export interface Team {
   id: string
   name: string
   logo: LucideIcon
-  plan?: "Free" | "Pro" | "Max"
+  plan?: "Pro" | "Max"
   companyType: CompanyType
   orgNumber?: string
 }
@@ -167,27 +172,6 @@ export interface DashboardData {
   recentActivity: RecentActivity[]
   quickLinks: QuickLink[]
 }
-
-// ============================================
-// Inbox Types
-// ============================================
-
-export type InboxCategory = "skatt" | "myndighet" | "faktura" | "kvitto" | "leverantorsfaktura" | "annat" | "other"
-
-export interface InboxItem {
-  id: string
-  sender: string
-  title: string
-  description: string
-  date: string
-  timestamp: Date
-  category: InboxCategory
-  read: boolean
-  starred: boolean
-  attachments?: string[]
-}
-
-export type InboxFilter = "all" | "unread" | "starred"
 
 // ============================================
 // Transaction Types

@@ -1,6 +1,5 @@
 import {
   Building2,
-  CreditCard,
   FileText,
   Users,
   Landmark,
@@ -97,31 +96,6 @@ export const onboardingSteps: OnboardingStep[] = [
     color: "text-pink-600",
     bgColor: "bg-pink-500/10",
     optional: true,
-  },
-  {
-    id: "bank",
-    title: "Koppla din bank",
-    description: "Säker anslutning via Open Banking — dina transaktioner hämtas automatiskt varje dag.",
-    icon: CreditCard,
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-500/10",
-    integrations: [
-      { name: "SEB", logo: "/logos/seb.svg", popular: true },
-      { name: "Swedbank", logo: "/logos/swedbank.svg", popular: true },
-      { name: "Nordea", logo: "/logos/nordea.svg", popular: true },
-      { name: "Handelsbanken", logo: "/logos/handelsbanken.svg" },
-      { name: "Danske Bank", logo: "/logos/danske.svg" },
-    ],
-    moreBanks: [
-      { name: "Sparbankerna", logo: "/logos/sparbanken.svg" },
-      { name: "Länsförsäkringar", logo: "/logos/lansforsakringar.svg" },
-      { name: "ICA Banken", logo: "/logos/ica.svg" },
-      { name: "Skandiabanken", logo: "/logos/skandia.svg" },
-      { name: "SBAB", logo: "/logos/sbab.svg" },
-      { name: "Avanza", logo: "/logos/avanza.svg" },
-      { name: "Nordnet", logo: "/logos/nordnet.svg" },
-      { name: "Klarna", logo: "/logos/klarna.svg" },
-    ],
   },
   {
     id: "import-history",

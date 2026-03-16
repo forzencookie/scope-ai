@@ -73,7 +73,7 @@ CREATE POLICY "Users can view own transactions"
     FOR SELECT
     USING (
         auth.uid() = user_id 
-        OR user_id IS NULL  -- Allow anonymous/demo transactions
+        OR user_id IS NULL
     );
 
 -- Policy: Users can insert their own transactions
@@ -82,7 +82,7 @@ CREATE POLICY "Users can insert own transactions"
     FOR INSERT
     WITH CHECK (
         auth.uid() = user_id 
-        OR user_id IS NULL  -- Allow anonymous/demo transactions
+        OR user_id IS NULL
     );
 
 -- Policy: Users can update their own transactions
@@ -125,7 +125,7 @@ CREATE TRIGGER update_transactions_updated_at
 
 -- Grant permissions
 GRANT ALL ON public.transactions TO authenticated;
-GRANT ALL ON public.transactions TO anon; -- For demo mode
+GRANT ALL ON public.transactions TO anon;
 GRANT ALL ON public.transactions TO service_role;
 
 -- ============================================

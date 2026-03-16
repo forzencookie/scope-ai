@@ -8,7 +8,7 @@
  */
 
 import * as React from "react"
-import { Crown, Sparkles, Star, Building2, type LucideIcon } from "lucide-react"
+import { Crown, Star, Building2, type LucideIcon } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSubscription, type SubscriptionTier } from "@/hooks/use-subscription"
 import { Badge } from "@/components/ui/badge"
@@ -111,15 +111,15 @@ export function TierBadge({
  * Inline tier indicator for use in text
  */
 export function TierIndicator({ className }: { className?: string }) {
-  const { tier, tierName, tierColor, isDemo } = useSubscription()
-  
+  const { tierName, tierColor } = useSubscription()
+
   return (
     <span className={cn(
       "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium",
       tierColor,
       className
     )}>
-      {isDemo ? <Sparkles className="h-3 w-3" /> : <Crown className="h-3 w-3" />}
+      <Crown className="h-3 w-3" />
       {tierName}
     </span>
   )

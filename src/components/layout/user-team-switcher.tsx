@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, User, Sun, Moon, Monitor, Check, Zap } from "lucide-react"
+import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings, User, Sun, Moon, Monitor, Check } from "lucide-react"
 import type { LucideIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 
@@ -43,7 +43,7 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
     const pathname = usePathname()
     const searchParams = useSearchParams()
     const { signOut } = useAuth()
-    const { isDemo, tierName: _tierName } = useSubscription()
+    useSubscription()
     const [activeTeam, setActiveTeam] = React.useState(teams[0])
     const [isLoggingOut, setIsLoggingOut] = React.useState(false)
 
@@ -124,12 +124,6 @@ export function UserTeamSwitcher({ user, teams, compact = false }: UserTeamSwitc
                                 <span className="text-xs text-muted-foreground">Abonnemang</span>
                                 <TierBadge size="sm" showTooltip={false} />
                             </div>
-                            {isDemo && (
-                                <DropdownMenuItem onClick={() => router.push('/priser')}>
-                                    <Zap className="mr-2 h-4 w-4 text-amber-500" />
-                                    Uppgradera till Pro
-                                </DropdownMenuItem>
-                            )}
                         </DropdownMenuGroup>
                         <DropdownMenuSeparator />
                         <DropdownMenuGroup>

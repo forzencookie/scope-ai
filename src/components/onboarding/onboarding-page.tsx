@@ -18,7 +18,6 @@ import {
     ShareholdersStep,
     PartnersStep,
     ProfileStep,
-    BankStep,
     ImportHistoryStep,
     DocumentsStep,
     TeamStep,
@@ -154,8 +153,6 @@ export function OnboardingPage({ onComplete, onSkip }: OnboardingPageProps) {
                 )
             case "profile":
                 return <ProfileStep />
-            case "bank":
-                return <BankStep />
             case "import-history":
                 return <ImportHistoryStep />
             case "documents":

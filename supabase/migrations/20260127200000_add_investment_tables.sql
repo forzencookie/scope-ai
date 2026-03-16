@@ -21,7 +21,6 @@ CREATE TABLE IF NOT EXISTS periodiseringsfonder (
     status TEXT NOT NULL DEFAULT 'active' CHECK (status IN ('active', 'partially_dissolved', 'dissolved', 'expired')),
     notes TEXT,
     
-    is_demo_data BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -68,7 +67,6 @@ CREATE TABLE IF NOT EXISTS shareholdings (
     bas_account TEXT DEFAULT '1350',                 -- BAS account for booking
     notes TEXT,
     
-    is_demo_data BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -123,7 +121,6 @@ CREATE TABLE IF NOT EXISTS taxreports (
     data JSONB,                                      -- Additional report data
     notes TEXT,
     
-    is_demo_data BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMPTZ DEFAULT NOW(),
     updated_at TIMESTAMPTZ DEFAULT NOW()
 );

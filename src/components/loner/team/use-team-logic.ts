@@ -1,37 +1,19 @@
 "use client"
 
 import { useState, useMemo, useEffect } from "react"
-import { useToast } from "@/components/ui/toast"
 import { useEmployees } from "@/hooks/use-employees"
 import { useVerifications } from "@/hooks/use-verifications"
 import { getEmployeeBenefits } from "@/lib/formaner"
-import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import type { SalaryRecord, ExpenseRecord } from "./dialogs"
 
 export function useTeamLogic() {
-    const toast = useToast()
-    const { verifications, addVerification } = useVerifications()
-    const { employees, isLoading, addEmployee } = useEmployees()
-    const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
+    const { verifications } = useVerifications()
+    const { employees, isLoading } = useEmployees()
 
-    const [reportDialogOpen, setReportDialogOpen] = useState(false)
-    const [selectedEmployee, setSelectedEmployee] = useState<string | null>(null)
-    const [reportType, setReportType] = useState<'time' | 'expense' | 'mileage'>('time')
     const [dossierOpen, setDossierOpen] = useState(false)
     const [dossierEmployeeId, setDossierEmployeeId] = useState<string | null>(null)
     const [payslipsCache, setPayslipsCache] = useState<SalaryRecord[]>([])
     const [dossierBenefits, setDossierBenefits] = useState<string[]>([])
-
-    // Form state
-    const [amount, setAmount] = useState("")
-    const [km, setKm] = useState("")
-    const [desc, setDesc] = useState("")
-    const [hours, setHours] = useState("")
-
-    // New Employee State
-    const [newEmployeeDialogOpen, setNewEmployeeDialogOpen] = useState(false)
-    const [newEmployee, setNewEmployee] = useState({ name: '', role: '', email: '', salary: '', kommun: '' })
-    const [isSaving, setIsSaving] = useState(false)
 
     // Calculate balances from ledger
     const employeeBalances = useMemo(() => {
@@ -42,10 +24,10 @@ export function useTeamLogic() {
 
         verifications.forEach(v => {
             const relevantRows = v.rows.filter(r => r.account === '2820' || r.account === '7330');
-            
+
             if (relevantRows.length > 0) {
                 const emp = employees.find(e => v.description.includes(e.name) || relevantRows.some(r => r.description.includes(e.name)))
-                
+
                 if (emp) {
                     relevantRows.forEach(r => {
                         if (r.account === '2820') {
@@ -126,92 +108,10 @@ export function useTeamLogic() {
         setDossierOpen(true)
     }
 
-    const handleAddEmployee = async () => {
-        if (!newEmployee.name || !newEmployee.role) {
-            toast.error("Saknas uppgifter", "Namn och roll krävs")
-            return
-        }
-
-        setIsSaving(true)
-        try {
-            await addEmployee({
-                name: newEmployee.name,
-                role: newEmployee.role,
-                email: newEmployee.email || undefined,
-                salary: parseFloat(newEmployee.salary) || 0,
-                kommun: newEmployee.kommun || undefined
-            })
-            toast.success("Anställd tillagd", `${newEmployee.name} har lagts till i teamet.`)
-            setNewEmployeeDialogOpen(false)
-            setNewEmployee({ name: '', role: '', email: '', salary: '', kommun: '' })
-        } catch {
-            toast.error("Ett fel uppstod", "Kunde inte spara anställd.")
-        } finally {
-            setIsSaving(false)
-        }
-    }
-
-    const handleReport = async () => {
-        const emp = employees.find(e => e.id === selectedEmployee)
-        if (!emp) return
-
-        if (reportType === 'expense') {
-            const val = parseFloat(amount)
-            if (!val) return
-
-            await addVerification({
-                date: new Date().toISOString().split('T')[0],
-                description: `Utlägg ${emp.name} - ${desc}`,
-                sourceType: 'manual', 
-                rows: [
-                    { account: "4000", description: desc || "Utlägg", debit: val, credit: 0 },
-                    { account: "2820", description: `Skuld till ${emp.name}`, debit: 0, credit: val }
-                ]
-            })
-            toast.success("Utlägg sparat", `Bokfört ${val} kr på 4000/2820`)
-        } else if (reportType === 'mileage') {
-            const dist = parseFloat(km)
-            if (!dist) return
-            const krVal = dist * (taxRates?.mileageRate ?? 0)
-
-            await addVerification({
-                date: new Date().toISOString().split('T')[0],
-                description: `Milersättning ${emp.name} - ${desc}`,
-                sourceType: 'manual',
-                rows: [
-                    { account: "7330", description: `${dist} km bilersättning`, debit: krVal, credit: 0 },
-                    { account: "2820", description: `Skuld till ${emp.name}`, debit: 0, credit: krVal }
-                ]
-            })
-            toast.success("Resa sparad", `Bokfört ${krVal} kr (${dist} km)`)
-        } else {
-            toast.info("Tidrapport sparad", "Tid har registrerats (Bokförs vid lönekörning)")
-        }
-
-        setReportDialogOpen(false)
-        setAmount("")
-        setKm("")
-        setDesc("")
-    }
-
     return {
-        // State
         employees,
         isLoading,
         employeeBalances,
-        
-        reportDialogOpen, setReportDialogOpen,
-        selectedEmployee, setSelectedEmployee,
-        reportType, setReportType,
-        
-        amount, setAmount,
-        km, setKm,
-        desc, setDesc,
-        hours, setHours,
-        
-        newEmployeeDialogOpen, setNewEmployeeDialogOpen,
-        newEmployee, setNewEmployee,
-        isSaving,
 
         // Dossier
         dossierOpen, setDossierOpen,
@@ -220,9 +120,5 @@ export function useTeamLogic() {
         payslipsCache,
         dossierExpenses,
         dossierBenefits,
-
-        // Handlers
-        handleAddEmployee,
-        handleReport
     }
 }

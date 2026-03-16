@@ -42,7 +42,22 @@ import { formatDateLong, cn } from "@/lib/utils"
 import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/ownership"
 import { type MeetingStatus } from "@/lib/status-types"
 import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
-import { FULL_ABL_AGENDA } from "./mote"
+const FULL_ABL_AGENDA = [
+    "Stämmans öppnande",
+    "Val av ordförande vid stämman",
+    "Upprättande och godkännande av röstlängd",
+    "Val av en eller två justeringspersoner",
+    "Prövning av om stämman blivit behörigen sammankallad",
+    "Godkännande av dagordning",
+    "Framläggande av årsredovisningen och revisionsberättelsen",
+    "Fastställande av resultaträkning och balansräkning",
+    "Beslut om disposition av vinst eller förlust enligt fastställd balansräkning",
+    "Beslut om ansvarsfrihet för styrelseledamöter",
+    "Fastställande av arvoden till styrelsen",
+    "Val av styrelse och eventuell revisor",
+    "Övriga ärenden",
+    "Stämmans avslutande"
+]
 import { useCompany } from "@/providers/company-provider"
 import {
     generateAnnualMeetingNoticePDF,

@@ -20,7 +20,7 @@ import type {
 // =============================================================================
 
 export interface SubscriptionStatus {
-    plan: 'free' | 'demo' | 'starter' | 'professional' | 'max'
+    plan: 'starter' | 'professional' | 'max'
     status: 'active' | 'trial' | 'cancelled' | 'past_due'
     currentPeriodEnd: string
     usageThisMonth: {
@@ -228,146 +228,6 @@ export const listActiveIntegrationsTool = defineTool<Record<string, never>, Inte
     },
 })
 
-export interface ConnectBankParams {
-    bankName: string
-    accountType?: 'business' | 'personal'
-}
-
-export const connectBankAccountTool = defineTool<ConnectBankParams, { initiated: boolean; redirectUrl?: string }>({
-    name: 'connect_bank_account',
-    description: 'Initiera koppling till bankkonto via Open Banking (PSD2). Kräver bekräftelse.',
-    category: 'write',
-    requiresConfirmation: true,
-    domain: 'common',
-    keywords: ['bank', 'koppla', 'PSD2', 'konto'],
-    parameters: {
-        type: 'object',
-        properties: {
-            bankName: { type: 'string', description: 'Bankens namn (t.ex. SEB, Nordea, Swedbank, Handelsbanken)' },
-            accountType: { type: 'string', enum: ['business', 'personal'], description: 'Kontotyp' },
-        },
-        required: ['bankName'],
-    },
-    execute: async (params, context) => {
-        const userId = context?.userId
-        const companyId = context?.companyId
-
-        if (!userId) {
-            return {
-                success: false,
-                error: 'Användare ej autentiserad',
-            }
-        }
-
-        const supportedBanks = ['SEB', 'Nordea', 'Swedbank', 'Handelsbanken', 'Danske Bank', 'Länsförsäkringar']
-        const bankMatch = supportedBanks.find(b => b.toLowerCase().includes(params.bankName.toLowerCase()))
-
-        if (!bankMatch) {
-            return {
-                success: false,
-                error: `${params.bankName} stöds inte ännu. Stödda banker: ${supportedBanks.join(', ')}`,
-            }
-        }
-
-        // Initiate real bank connection in database
-        const result = await settingsService.initiateBankConnection(
-            userId,
-            companyId || userId, // Use userId as fallback for companyId
-            bankMatch,
-            'tink' // Default provider
-        )
-
-        if (!result.success) {
-            return {
-                success: false,
-                error: result.error || 'Kunde inte initiera bankkoppling',
-            }
-        }
-
-        return {
-            success: true,
-            data: {
-                initiated: true,
-                redirectUrl: result.redirectUrl,
-            },
-            message: `Redo att koppla ${bankMatch}. Du kommer att omdirigeras till bankens inloggning.`,
-            confirmationRequired: {
-                title: 'Anslut bankkonto',
-                description: `Du kommer att omdirigeras till ${bankMatch} för att auktorisera åtkomst till ditt företagskonto.`,
-                summary: [
-                    { label: 'Bank', value: bankMatch },
-                    { label: 'Kontotyp', value: params.accountType === 'personal' ? 'Privat' : 'Företag' },
-                    { label: 'Åtkomst', value: 'Läsa transaktioner & saldon' },
-                ],
-                action: { toolName: 'connect_bank_account', params },
-            },
-        }
-    },
-})
-
-export interface SyncBankParams {
-    integrationId?: string
-    days?: number
-}
-
-export const syncBankTransactionsTool = defineTool<SyncBankParams, { synced: number; newTransactions: number }>({
-    name: 'sync_bank_transactions',
-    description: 'Synka banktransaktioner manuellt från anslutna bankkonton.',
-    category: 'write',
-    requiresConfirmation: false,
-    domain: 'common',
-    keywords: ['synka', 'bank', 'transaktioner', 'importera'],
-    parameters: {
-        type: 'object',
-        properties: {
-            integrationId: { type: 'string', description: 'Specifik integration att synka (alla om utelämnad)' },
-            days: { type: 'number', description: 'Antal dagar bakåt att synka (standard: 30)' },
-        },
-    },
-    execute: async (params) => {
-        const days = params.days || 30
-
-        // Sync real bank transactions
-        const result = await settingsService.syncBankTransactions(params.integrationId, days)
-
-        if (result.errors.length > 0) {
-            return {
-                success: false,
-                error: result.errors.join('. '),
-                data: {
-                    synced: result.synced,
-                    newTransactions: result.newTransactions,
-                },
-            }
-        }
-
-        if (result.synced === 0) {
-            return {
-                success: true,
-                data: result,
-                message: 'Inga anslutna bankkonton hittades. Anslut ett bankkonto först.',
-                navigation: {
-                    route: '/dashboard/installningar?tab=integrations',
-                    label: 'Anslut bank',
-                },
-            }
-        }
-
-        return {
-            success: true,
-            data: {
-                synced: result.synced,
-                newTransactions: result.newTransactions,
-            },
-            message: `Synkade ${days} dagars transaktioner från ${result.synced} bank${result.synced > 1 ? 'er' : ''}. ${result.newTransactions} nya transaktioner importerades.`,
-            navigation: {
-                route: '/dashboard/bokforing?tab=transaktioner',
-                label: 'Visa transaktioner',
-            },
-        }
-    },
-})
-
 // =============================================================================
 // Export
 // =============================================================================
@@ -377,6 +237,4 @@ export const settingsTools = [
     getNotificationPreferencesTool,
     updateNotificationPreferencesTool,
     listActiveIntegrationsTool,
-    connectBankAccountTool,
-    syncBankTransactionsTool,
 ]

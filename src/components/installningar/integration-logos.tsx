@@ -63,18 +63,6 @@ export function NordeaLogo({ className }: { className?: string }) {
   )
 }
 
-export function KivraLogo({ className }: { className?: string }) {
-  return (
-    <Image 
-      src="/kivra.svg" 
-      alt="Kivra" 
-      width={24} 
-      height={24} 
-      className={className}
-    />
-  )
-}
-
 export function BankIDLogo({ className }: { className?: string }) {
   return (
     <Image 
@@ -94,6 +82,5 @@ export const IntegrationLogos = {
   Swedbank: SwedbankLogo,
   Handelsbanken: HandelsbankenLogo,
   Nordea: NordeaLogo,
-  Kivra: KivraLogo,
   BankID: BankIDLogo,
 }

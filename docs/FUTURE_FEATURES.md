@@ -42,9 +42,6 @@ Low priority. Manual/CSV at launch.
 ### Email Infrastructure (Resend)
 Infrastructure stub exists in `src/lib/email.ts`. Postponed until core features are solid.
 
-### Guided App Tour
-Post-onboarding interactive walkthrough. Postponed until core features are solid.
-
 ---
 
 ## QA

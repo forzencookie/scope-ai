@@ -1,14 +1,14 @@
 "use client"
 
 import { useState, useEffect, useCallback } from "react"
-import { CreditCard, Sparkles, Zap, AlertCircle, TrendingUp, Loader2, ExternalLink } from "lucide-react"
+import { CreditCard, Zap, AlertCircle, TrendingUp, Loader2, ExternalLink } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { useTextMode } from "@/providers/text-mode-provider"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useAIUsage, formatTokens } from "@/hooks/use-ai-usage"
-import { CREDIT_PACKAGES, TIER_TOKEN_LIMITS } from "@/lib/subscription"
+import { CREDIT_PACKAGES } from "@/lib/subscription"
 import {
     SettingsPageHeader,
     SettingsSection,
@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils"
 
 function UsageBar() {
-    const { tier, tierName, isDemo } = useSubscription()
+    const { tierName } = useSubscription()
     const { usage, loading } = useAIUsage()
 
     if (loading) {
@@ -26,29 +26,6 @@ function UsageBar() {
                 <div className="h-4 bg-muted rounded w-1/3 mb-3" />
                 <div className="h-2 bg-muted rounded w-full mb-2" />
                 <div className="h-3 bg-muted rounded w-1/4" />
-            </div>
-        )
-    }
-
-    if (isDemo) {
-        return (
-            <div className="rounded-lg border border-amber-500/20 bg-amber-500/5 p-4">
-                <div className="flex items-start gap-3">
-                    <AlertCircle className="h-5 w-5 text-amber-500 mt-0.5" />
-                    <div>
-                        <p className="font-medium text-amber-700 dark:text-amber-400">
-                            Demo-läge – Simulerad AI
-                        </p>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            Du använder simulerade AI-svar. Uppgradera till Pro för att få tillgång till
-                            riktig AI med {formatTokens(TIER_TOKEN_LIMITS.pro)} tokens per månad.
-                        </p>
-                        <Button size="sm" className="mt-3" onClick={() => handleUpgrade()}>
-                            <Sparkles className="h-4 w-4 mr-2" />
-                            Uppgradera till Pro
-                        </Button>
-                    </div>
-                </div>
             </div>
         )
     }
@@ -117,15 +94,7 @@ function UsageBar() {
     )
 }
 
-function handleUpgrade() {
-    window.location.href = "/dashboard/checkout?type=subscription&tier=pro"
-}
-
 function BuyCreditsSection() {
-    const { isDemo } = useSubscription()
-
-    if (isDemo) return null
-
     const handleBuyCredits = (tokens: number) => {
         window.location.href = `/dashboard/checkout?type=credits&tokens=${tokens}`
     }
@@ -218,7 +187,7 @@ function useBillingHistory() {
 
 export function BillingTab() {
     const { text } = useTextMode()
-    const { tierName, isDemo } = useSubscription()
+    const { tierName } = useSubscription()
     const { items: billingItems, paymentMethod, loading: billingLoading } = useBillingHistory()
     const [portalLoading, setPortalLoading] = useState(false)
 
@@ -252,24 +221,17 @@ export function BillingTab() {
                     <div>
                         <p className="font-medium">{tierName}-plan</p>
                         <p className="text-sm text-muted-foreground">
-                            {isDemo ? "Gratis" : "449 kr/månad"}
+                            449 kr/månad
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        {!isDemo && (
-                            <Button variant="outline" size="sm" onClick={openPortal} disabled={portalLoading}>
-                                {portalLoading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                                Hantera prenumeration
-                                <ExternalLink className="h-3 w-3 ml-1" />
-                            </Button>
-                        )}
-                        <span className={cn(
-                            "text-xs px-2 py-1 rounded-full",
-                            isDemo
-                                ? "bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400"
-                                : "bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400"
-                        )}>
-                            {isDemo ? "Demo" : text.settings.active}
+                        <Button variant="outline" size="sm" onClick={openPortal} disabled={portalLoading}>
+                            {portalLoading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                            Hantera prenumeration
+                            <ExternalLink className="h-3 w-3 ml-1" />
+                        </Button>
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
+                            {text.settings.active}
                         </span>
                     </div>
                 </div>
@@ -283,68 +245,64 @@ export function BillingTab() {
 
             <Separator />
 
-            {/* Payment Method - only show for paid users */}
-            {!isDemo && (
-                <SettingsSection title={text.settings.paymentMethod}>
-                    <div className="flex items-center justify-between rounded-lg border-2 border-border/60 p-4">
-                        <div className="flex items-center gap-3">
-                            <CreditCard className="h-5 w-5 text-muted-foreground" />
-                            {billingLoading ? (
-                                <div className="animate-pulse">
-                                    <div className="h-4 bg-muted rounded w-32 mb-1" />
-                                    <div className="h-3 bg-muted rounded w-20" />
-                                </div>
-                            ) : paymentMethod ? (
-                                <div>
-                                    <p className="text-sm font-medium">
-                                        •••• •••• •••• {paymentMethod.last4}
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} — {text.settings.expires} {paymentMethod.expMonth}/{paymentMethod.expYear}
-                                    </p>
-                                </div>
-                            ) : (
-                                <p className="text-sm text-muted-foreground">Inget betalkort registrerat</p>
-                            )}
-                        </div>
-                        <Button variant="ghost" size="sm" onClick={openPortal} disabled={portalLoading}>
-                            {portalLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : text.actions.edit}
-                        </Button>
+            {/* Payment Method */}
+            <SettingsSection title={text.settings.paymentMethod}>
+                <div className="flex items-center justify-between rounded-lg border-2 border-border/60 p-4">
+                    <div className="flex items-center gap-3">
+                        <CreditCard className="h-5 w-5 text-muted-foreground" />
+                        {billingLoading ? (
+                            <div className="animate-pulse">
+                                <div className="h-4 bg-muted rounded w-32 mb-1" />
+                                <div className="h-3 bg-muted rounded w-20" />
+                            </div>
+                        ) : paymentMethod ? (
+                            <div>
+                                <p className="text-sm font-medium">
+                                    •••• •••• •••• {paymentMethod.last4}
+                                </p>
+                                <p className="text-xs text-muted-foreground">
+                                    {paymentMethod.brand.charAt(0).toUpperCase() + paymentMethod.brand.slice(1)} — {text.settings.expires} {paymentMethod.expMonth}/{paymentMethod.expYear}
+                                </p>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Inget betalkort registrerat</p>
+                        )}
                     </div>
-                </SettingsSection>
-            )}
+                    <Button variant="ghost" size="sm" onClick={openPortal} disabled={portalLoading}>
+                        {portalLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : text.actions.edit}
+                    </Button>
+                </div>
+            </SettingsSection>
 
-            {/* Billing History - only show for paid users */}
-            {!isDemo && (
-                <SettingsSection title={text.settings.billingHistory}>
-                    {billingLoading ? (
-                        <div className="space-y-3 animate-pulse">
-                            {[1, 2, 3].map((i) => (
-                                <div key={i} className="h-8 bg-muted rounded" />
-                            ))}
-                        </div>
-                    ) : billingItems.length === 0 ? (
-                        <p className="text-sm text-muted-foreground py-4 text-center">
-                            Ingen betalningshistorik ännu.
-                        </p>
-                    ) : (
-                        <div className="space-y-1">
-                            {billingItems.map((item) => (
-                                <BillingHistoryRow
-                                    key={item.id}
-                                    date={new Date(item.date).toLocaleDateString("sv-SE")}
-                                    id={item.id}
-                                    paymentMethod={item.type === "credits" ? "Credits" : "Prenumeration"}
-                                    amount={item.amount}
-                                    status={item.status}
-                                    onDownloadReceipt={item.receiptUrl ? () => window.open(item.receiptUrl, "_blank") : undefined}
-                                    onViewInvoice={item.invoiceUrl ? () => window.open(item.invoiceUrl, "_blank") : undefined}
-                                />
-                            ))}
-                        </div>
-                    )}
-                </SettingsSection>
-            )}
+            {/* Billing History */}
+            <SettingsSection title={text.settings.billingHistory}>
+                {billingLoading ? (
+                    <div className="space-y-3 animate-pulse">
+                        {[1, 2, 3].map((i) => (
+                            <div key={i} className="h-8 bg-muted rounded" />
+                        ))}
+                    </div>
+                ) : billingItems.length === 0 ? (
+                    <p className="text-sm text-muted-foreground py-4 text-center">
+                        Ingen betalningshistorik ännu.
+                    </p>
+                ) : (
+                    <div className="space-y-1">
+                        {billingItems.map((item) => (
+                            <BillingHistoryRow
+                                key={item.id}
+                                date={new Date(item.date).toLocaleDateString("sv-SE")}
+                                id={item.id}
+                                paymentMethod={item.type === "credits" ? "Credits" : "Prenumeration"}
+                                amount={item.amount}
+                                status={item.status}
+                                onDownloadReceipt={item.receiptUrl ? () => window.open(item.receiptUrl, "_blank") : undefined}
+                                onViewInvoice={item.invoiceUrl ? () => window.open(item.invoiceUrl, "_blank") : undefined}
+                            />
+                        ))}
+                    </div>
+                )}
+            </SettingsSection>
         </div>
     )
 }

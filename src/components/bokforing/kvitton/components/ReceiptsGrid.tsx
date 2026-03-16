@@ -14,7 +14,6 @@ import {
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
 import { parseAmount, cn } from "@/lib/utils"
-import { BookOpen } from "lucide-react"
 import { useHighlight } from "@/hooks"
 
 interface ReceiptsGridProps {
@@ -29,8 +28,6 @@ interface ReceiptsGridProps {
     }
     onViewDetails: (receipt: Receipt) => void
     onDelete: (id: string) => void
-    onBook?: (receipt: Receipt) => void
-    onUpload: () => void
     isInvoiceMethod: boolean
     hasActiveFilters: boolean
 }
@@ -41,8 +38,6 @@ export function ReceiptsGrid({
     selection,
     onViewDetails,
     onDelete,
-    onBook,
-    onUpload,
     isInvoiceMethod,
     hasActiveFilters
 }: ReceiptsGridProps) {
@@ -71,14 +66,13 @@ export function ReceiptsGrid({
 
                 <GridTableRows>
                     {receipts.map((receipt) => (
-                        <ReceiptRow 
+                        <ReceiptRow
                             key={receipt.id}
                             receipt={receipt}
                             text={text}
                             selection={selection}
                             onViewDetails={onViewDetails}
                             onDelete={onDelete}
-                            onBook={onBook}
                             isInvoiceMethod={isInvoiceMethod}
                         />
                     ))}
@@ -107,7 +101,6 @@ interface ReceiptRowProps {
     }
     onViewDetails: (receipt: Receipt) => void
     onDelete: (id: string) => void
-    onBook?: (receipt: Receipt) => void
     isInvoiceMethod: boolean
 }
 
@@ -117,7 +110,6 @@ function ReceiptRow({
     selection,
     onViewDetails,
     onDelete,
-    onBook,
     isInvoiceMethod
 }: ReceiptRowProps) {
     const { highlightClass } = useHighlight(receipt.id)
@@ -168,12 +160,6 @@ function ReceiptRow({
                         <DropdownMenuItem onClick={() => onViewDetails(receipt)}>
                             {text.actions.edit}
                         </DropdownMenuItem>
-                        {isInvoiceMethod && onBook && (
-                            <DropdownMenuItem onClick={() => onBook(receipt)}>
-                                <BookOpen className="h-4 w-4 mr-2" />
-                                Bokför
-                            </DropdownMenuItem>
-                        )}
                         <DropdownMenuSeparator />
                         <DropdownMenuItem className="text-red-600" onClick={() => onDelete(receipt.id)}>
                             {text.actions.delete}

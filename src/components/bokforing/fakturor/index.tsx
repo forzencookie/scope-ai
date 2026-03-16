@@ -25,7 +25,6 @@ import {
 
 // Child Components
 import { KanbanBoard, KanbanColumn } from "@/components/shared/kanban"
-import { SupplierInvoiceDialog } from "../dialogs/leverantor"
 import { InvoicesEmptyState } from "./components/InvoicesEmptyState"
 import { InvoicesStats } from "./components/invoices-stats"
 import { InvoiceCard } from "./components/InvoiceCard"
@@ -47,7 +46,6 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         viewFilter, setViewFilter,
         setPeriodFilter,
         customerDialogOpen, setCustomerDialogOpen,
-        supplierDialogOpen, setSupplierDialogOpen,
         isLoading,
 
         // Pagination
@@ -170,7 +168,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                         key={column.id}
                         title={column.title}
                         count={columnInvoices.length}
-                        onAddNew={column.id === "mottagen" ? () => setSupplierDialogOpen(true) : undefined}
+                        onAddNew={column.id === "mottagen" ? () => navigateToAI({ prompt: "Registrera en ny leverantörsfaktura" }) : undefined}
                     >
                         {columnInvoices.map(renderCard)}
                     </KanbanColumn>
@@ -200,7 +198,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                             <ArrowDownLeft className="h-4 w-4 mr-2 text-green-600" />
                             Kundfaktura (inkommande)
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => setSupplierDialogOpen(true)}>
+                        <DropdownMenuItem onClick={() => navigateToAI({ prompt: "Registrera en ny leverantörsfaktura" })}>
                             <ArrowUpRight className="h-4 w-4 mr-2 text-red-600" />
                             Leverantörsfaktura (utgående)
                         </DropdownMenuItem>
@@ -299,12 +297,6 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                     </div>
                 )}
 
-            {/* Dialogs */}
-            <SupplierInvoiceDialog
-                open={supplierDialogOpen}
-                onOpenChange={setSupplierDialogOpen}
-                onInvoiceCreated={handleInvoiceCreated}
-            />
         </div>
     )
 })

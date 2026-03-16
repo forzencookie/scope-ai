@@ -1,15 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
 import { PageHeader } from "@/components/shared"
 import { useDividendLogic, type DividendDecision } from "./use-dividend-logic"
 import { UtdelningStats } from "./utdelning-stats"
 import { RulesCard } from "./rules-card"
 import { DividendCalculator } from "./dividend-calculator"
 import { UtdelningsTable } from "./dividend-table"
-import { RegisterDividendDialog } from "./register-dividend-dialog"
 import { UtdelningsaviPreviewDialog } from "../dialogs/utdelningsavi-preview"
 
 export function UtdelningContent() {
@@ -17,10 +14,8 @@ export function UtdelningContent() {
         stats,
         k10Data,
         realDividendHistory,
-        planDividend,
         bookDividend,
     } = useDividendLogic()
-    const [showRegisterDialog, setShowRegisterDialog] = useState(false)
     const [previewDividend, setPreviewDividend] = useState<DividendDecision | null>(null)
 
     return (
@@ -28,13 +23,6 @@ export function UtdelningContent() {
             <PageHeader
                 title="Utdelning"
                 subtitle="Planera, besluta och bokför utdelning till aktieägare."
-                actions={
-                    <Button size="sm" onClick={() => setShowRegisterDialog(true)}>
-                        <Plus className="h-4 w-4 sm:mr-2" />
-                        <span className="hidden sm:inline">Planera utdelning</span>
-                        <span className="sm:hidden">Ny</span>
-                    </Button>
-                }
             />
 
             <UtdelningStats stats={stats} />
@@ -54,12 +42,6 @@ export function UtdelningContent() {
                     <DividendCalculator k10Data={k10Data} />
                 </div>
             </div>
-
-            <RegisterDividendDialog
-                open={showRegisterDialog}
-                onOpenChange={setShowRegisterDialog}
-                onRegister={planDividend}
-            />
 
             <UtdelningsaviPreviewDialog
                 open={!!previewDividend}

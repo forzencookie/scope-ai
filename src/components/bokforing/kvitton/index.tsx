@@ -1,13 +1,11 @@
 "use client"
 
 import { memo } from "react"
-import { UploadCloud, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
 import { BulkActionToolbar, PageHeader } from "@/components/shared"
 import { DeleteConfirmDialog } from "@/components/shared/delete-confirm-dialog"
-import { UnderlagDialog } from "../dialogs/underlag"
-import { BookingDialog } from "../dialogs/bokforing"
 import { RECEIPT_STATUSES } from "@/lib/status-types"
 
 // Components
@@ -22,11 +20,6 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
         // State
         text,
         isInvoiceMethod,
-        uploadDialogOpen, setUploadDialogOpen,
-        detailsDialogOpen, setDetailsDialogOpen,
-        selectedReceipt,
-        bookingDialogOpen, setBookingDialogOpen,
-        selectedReceiptForBooking,
         deleteConfirmation,
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
@@ -37,7 +30,7 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
         isLoading,
         bulkActions,
         bulkSelection,
-        
+
         // Pagination
         page, setPage, pageSize, totalCount,
 
@@ -45,9 +38,6 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
         handleDeleteClick,
         handleConfirmDelete,
         handleViewDetails,
-        handleSaveReceipt,
-        openBookingDialog,
-        handleBook
     } = useReceiptsLogic()
 
     return (
@@ -56,12 +46,6 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
             <PageHeader
                 title={text.receipts.title || "Kvitton logg"}
                 subtitle={text.receipts.subtitle || "Ladda upp och hantera dina kvitton"}
-                actions={
-                    <Button className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={() => setUploadDialogOpen(true)}>
-                        <UploadCloud className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{text.receipts.upload || "Ladda upp"}</span>
-                    </Button>
-                }
             />
 
             {/* Dashboard / Stats */}
@@ -75,35 +59,6 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
             <DeleteConfirmDialog
                 {...deleteConfirmation.dialogProps}
                 onConfirm={handleConfirmDelete}
-            />
-
-            <UnderlagDialog
-                open={uploadDialogOpen}
-                onOpenChange={setUploadDialogOpen}
-                mode="create"
-                onSave={handleSaveReceipt}
-            />
-
-            <UnderlagDialog
-                open={detailsDialogOpen}
-                onOpenChange={setDetailsDialogOpen}
-                mode="view"
-                receipt={selectedReceipt || undefined}
-            />
-
-            <BookingDialog
-                open={bookingDialogOpen}
-                onOpenChange={setBookingDialogOpen}
-                entity={selectedReceiptForBooking ? {
-                    id: selectedReceiptForBooking.id,
-                    name: selectedReceiptForBooking.supplier,
-                    date: selectedReceiptForBooking.date,
-                    amount: selectedReceiptForBooking.amount,
-                    type: 'receipt',
-                    status: selectedReceiptForBooking.status,
-                    category: selectedReceiptForBooking.category
-                } : null}
-                onBook={handleBook}
             />
 
             {/* Main Content */}
@@ -129,8 +84,6 @@ export const ReceiptsTable = memo(function ReceiptsTable() {
                     selection={bulkSelection}
                     onViewDetails={handleViewDetails}
                     onDelete={handleDeleteClick}
-                    onBook={openBookingDialog}
-                    onUpload={() => setUploadDialogOpen(true)}
                     isInvoiceMethod={isInvoiceMethod}
                     hasActiveFilters={Boolean(searchQuery || statusFilter.length > 0)}
                 />

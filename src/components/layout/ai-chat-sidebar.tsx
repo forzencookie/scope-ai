@@ -33,7 +33,7 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
     const isCollapsed = state === "collapsed"
     const { modelId } = useModel()
     const { canAfford, refresh: refreshUsage } = useAIUsage()
-    const { isDemo, isPaid } = useSubscription()
+    const { isPaid } = useSubscription()
 
     const {
         conversations,

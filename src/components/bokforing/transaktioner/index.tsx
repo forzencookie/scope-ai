@@ -1,13 +1,11 @@
 "use client"
 
 import { memo } from "react"
-import { Plus, ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
 import { PageHeader } from "@/components/shared"
 import { useTextMode } from "@/providers/text-mode-provider"
-import { NewTransactionDialog } from "../dialogs/ny-transaktion"
-import { BookingDialog } from "../dialogs/bokforing"
 
 // Components
 import { TransactionFilters } from "./components/transaction-filters"
@@ -30,13 +28,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
     const { text } = useTextMode()
 
     const {
-        // State
-        newTransactionDialogOpen, setNewTransactionDialogOpen,
-        bookingDialogOpen, setBookingDialogOpen,
-        selectedTransactions,
-        aiSuggestion,
-        aiSuggestionLoading,
-
         // Hooks
         filter,
         selection,
@@ -49,7 +40,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
 
         // Handlers
         handleTransactionClick,
-        handleBook
     } = useTransactionsLogic(props)
 
     return (
@@ -58,19 +48,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
             <PageHeader
                 title={text.transactions?.title || "Transaktioner"}
                 subtitle={text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}
-                actions={
-                    <Button className="gap-2 overflow-hidden w-[120px] sm:w-auto" onClick={() => setNewTransactionDialogOpen(true)}>
-                        <Plus className="h-4 w-4 shrink-0" />
-                        <span className="truncate">{text.transactions?.newTransaction || "Ny transaktion"}</span>
-                    </Button>
-                }
-            />
-
-
-
-            <NewTransactionDialog
-                open={newTransactionDialogOpen}
-                onOpenChange={setNewTransactionDialogOpen}
             />
 
             {/* Table Area */}
@@ -91,7 +68,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                     selection={selection}
                     onTransactionClick={handleTransactionClick}
                     hasActiveFilters={filter.hasActiveFilters}
-                    onAddTransaction={() => setNewTransactionDialogOpen(true)}
                 />
             </div>
 
@@ -132,24 +108,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 actions={bulkActions}
             />
 
-            {/* Booking Dialog */}
-            <BookingDialog
-                open={bookingDialogOpen}
-                onOpenChange={setBookingDialogOpen}
-                entity={selectedTransactions[0] ? {
-                    id: selectedTransactions[0].id,
-                    name: selectedTransactions[0].name,
-                    date: selectedTransactions[0].date,
-                    amount: selectedTransactions[0].amount,
-                    type: 'transaction',
-                    status: selectedTransactions[0].status,
-                    account: selectedTransactions[0].account,
-                    category: selectedTransactions[0].category
-                } : null}
-                aiSuggestion={aiSuggestion}
-                aiSuggestionLoading={aiSuggestionLoading}
-                onBook={handleBook}
-            />
         </div>
     )
 })

@@ -14,7 +14,6 @@ export function useInvoicesLogic() {
     const [viewFilter, setViewFilter] = useState<ViewFilter>("all")
     const [periodFilter, setPeriodFilter] = useState<PeriodFilter>("all")
     const [customerDialogOpen, setCustomerDialogOpen] = useState(false)
-    const [supplierDialogOpen, setSupplierDialogOpen] = useState(false)
 
     // Derived State: Start Date
     const startDate = useMemo(() => {
@@ -173,7 +172,6 @@ export function useInvoicesLogic() {
         viewFilter, setViewFilter,
         periodFilter, setPeriodFilter,
         customerDialogOpen, setCustomerDialogOpen,
-        supplierDialogOpen, setSupplierDialogOpen,
         isLoading,
         
         // Pagination

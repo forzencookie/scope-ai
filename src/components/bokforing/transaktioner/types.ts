@@ -1,6 +1,6 @@
 import { TransactionWithAI } from "@/types"
 import type { TransactionStats } from '@/services/transactions'
-import { BookingData } from "../dialogs/bokforing"
+import { BookingData } from "@/types"
 
 export interface TransactionsTableProps {
     title?: string

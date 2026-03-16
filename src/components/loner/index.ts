@@ -23,5 +23,4 @@ export { DelagaruttagManager as Delagaruttag } from "./delagaruttag"
 
 // Dialog components
 export { PayslipDetailsDialog } from "./dialogs/spec"
-export { BenefitDetailsDialog } from "./dialogs/forman"
 export { getBenefitIcon } from "./dialogs/forman/constants"

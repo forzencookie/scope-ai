@@ -79,8 +79,7 @@ export async function GET(request: NextRequest) {
     const normalizedProfile = {
       ...profile,
       subscription_tier: tier,
-      // Convenience flags for client - derived server-side for consistency
-      is_demo: false,
+      // Convenience flag for client - derived server-side for consistency
       is_paid: isPaidTier(tier),
     }
 

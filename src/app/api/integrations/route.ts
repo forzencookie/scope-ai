@@ -3,13 +3,6 @@ import { getAuthContext } from '@/lib/database/auth'
 
 // Default integration states for new users
 const DEFAULT_INTEGRATIONS: Record<string, boolean> = {
-    // Email Providers
-    'gmail': false,
-    'yahoo': false,
-    'outlook': false,
-    // Digital Post
-    'kivra': false,
-    // Other integrations
     'bankgirot': true,
     'swish': true,
     'google-calendar': false,

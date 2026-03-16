@@ -31,7 +31,6 @@ interface TransactionsTableGridProps {
     }
     onTransactionClick: (transaction: TransactionWithAI) => void
     hasActiveFilters: boolean
-    onAddTransaction: () => void
 }
 
 export function TransactionsTableGrid({
@@ -39,7 +38,6 @@ export function TransactionsTableGrid({
     selection,
     onTransactionClick,
     hasActiveFilters,
-    onAddTransaction
 }: TransactionsTableGridProps) {
     const { text } = useTextMode()
 

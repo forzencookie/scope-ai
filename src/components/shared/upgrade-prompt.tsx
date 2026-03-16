@@ -3,7 +3,7 @@
 /**
  * Upgrade Prompt
  * 
- * Shown when demo users try to access features that require a paid subscription.
+ * Shown when free-tier users try to access features that require a paid subscription.
  * Can be displayed inline or as a modal dialog.
  */
 
@@ -159,7 +159,7 @@ export function UpgradeButton({
 
 /**
  * Feature gate wrapper
- * Shows children for paid users, upgrade prompt for demo users
+ * Shows children for paid users, upgrade prompt for free-tier users
  */
 export function FeatureGate({
   feature,

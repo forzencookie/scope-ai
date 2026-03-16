@@ -7,7 +7,6 @@ import {
   Users,
   Mail,
   Phone,
-  Plus,
   MoreHorizontal,
   Download,
 } from "lucide-react"
@@ -38,7 +37,6 @@ import { useMembers, type Member } from "@/hooks/use-members"
 // Components
 import { useMemberStats } from "./medlemsregister/use-member-stats"
 import { MembersStats } from "./medlemsregister/members-stats"
-import { AddMemberDialog } from "./medlemsregister/add-member-dialog"
 
 // Helper to convert member status to centralized status type
 const getMembershipStatusLabel = (status: Member['status']): MembershipStatus => {
@@ -69,8 +67,6 @@ export function Medlemsregister() {
   const [changes] = useState<MembershipChange[]>([])
   const [searchQuery, setSearchQuery] = useState("")
   const [statusFilter, setStatusFilter] = useState<string | null>(null)
-  const [showAddDialog, setShowAddDialog] = useState(false)
-
   // Filter members
   const filteredMembers = useMemo(() => {
     let result = members
@@ -108,16 +104,10 @@ export function Medlemsregister() {
         title="Medlemsregister"
         subtitle="Hantera medlemmar, medlemsavgifter och roller."
         actions={
-          <>
-            <Button variant="outline" size="sm">
-              <Download className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Exportera lista</span>
-            </Button>
-            <Button size="sm" onClick={() => setShowAddDialog(true)}>
-              <Plus className="h-4 w-4 sm:mr-2" />
-              <span className="hidden sm:inline">Lägg till medlem</span>
-            </Button>
-          </>
+          <Button variant="outline" size="sm">
+            <Download className="h-4 w-4 sm:mr-2" />
+            <span className="hidden sm:inline">Exportera lista</span>
+          </Button>
         }
       />
 
@@ -250,11 +240,6 @@ export function Medlemsregister() {
         </div>
       </div>
         
-      <AddMemberDialog 
-        open={showAddDialog} 
-        onOpenChange={setShowAddDialog} 
-        memberCount={members.length} 
-      />
     </div>
   )
 }

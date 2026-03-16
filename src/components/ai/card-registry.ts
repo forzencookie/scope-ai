@@ -1,11 +1,8 @@
 /**
- * @deprecated This card registry is being replaced by the block system.
- * New AI outputs should use the W: protocol with block primitives.
- * See: src/components/ai/blocks/block-renderer.tsx
- * 
- * This registry remains for backwards compatibility with:
- * - Existing tool outputs that still use display field
- * - Legacy 'complete' status in ai-overlay.tsx
+ * Card registry — maps card type strings to React components.
+ * Cards are Layer 1 (compact inline previews in chat).
+ * Blocks are Layer 2 (detailed walkthrough overlay content).
+ * These are complementary systems, not replacements.
  */
 import { ComponentType } from "react"
 import { ActivityCard } from "./activity-card"

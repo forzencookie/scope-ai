@@ -17,12 +17,6 @@ export interface OnboardingAction {
   external?: boolean
 }
 
-export interface OnboardingIntegration {
-  name: string
-  logo: string
-  popular?: boolean
-}
-
 export interface OnboardingOption {
   label: string
   description: string
@@ -57,8 +51,6 @@ export interface OnboardingStep {
   // Step-specific data
   fields?: OnboardingField[]
   action?: OnboardingAction
-  integrations?: OnboardingIntegration[]
-  moreBanks?: OnboardingIntegration[]
   options?: OnboardingOption[]
   roles?: OnboardingRole[]
 }

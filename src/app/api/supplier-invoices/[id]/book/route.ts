@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/database/auth'
 import { pendingBookingService } from '@/services/pending-booking-service'
 import { createPurchaseEntry } from '@/lib/bookkeeping'
-import type { BookingData } from '@/components/bokforing/dialogs/bokforing'
+import type { BookingData } from '@/types'
 import type { SwedishVatRate } from '@/lib/bookkeeping'
 
 export async function POST(

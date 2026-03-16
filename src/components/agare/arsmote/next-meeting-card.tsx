@@ -1,6 +1,5 @@
 import { formatDateLong, cn } from "@/lib/utils"
-import { HandHeart, MapPin, CheckCircle, Clock, Plus } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { HandHeart, MapPin, CheckCircle, Clock } from "lucide-react"
 import { AppStatusBadge } from "@/components/ui/status-badge"
 import { getAnnualMeetingStatusLabel } from "@/lib/meeting-utils"
 import { type AnnualMeeting } from "@/types/meeting"
@@ -15,7 +14,6 @@ interface NextMeetingCardProps {
     daysUntilNext: number | null
     completedCount: number
   }
-  onOpenCreateDialog: () => void
 }
 
 export function NextMeetingCard({
@@ -23,7 +21,6 @@ export function NextMeetingCard({
   prepProgress,
   preparationItems,
   stats,
-  onOpenCreateDialog
 }: NextMeetingCardProps) {
   if (!nextMeeting) {
     return (
@@ -31,13 +28,9 @@ export function NextMeetingCard({
         <div className="text-center py-8">
           <HandHeart className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
           <h3 className="text-lg font-semibold mb-2">Inget årsmöte planerat</h3>
-          <p className="text-sm text-muted-foreground mb-4">
-            Planera ett årsmöte för att komma igång med förberedelserna.
+          <p className="text-sm text-muted-foreground">
+            Be Scooby planera ett årsmöte via chatten.
           </p>
-          <Button onClick={onOpenCreateDialog}>
-            <Plus className="h-4 w-4 mr-2" />
-            Planera årsmöte
-          </Button>
         </div>
       </div>
     )

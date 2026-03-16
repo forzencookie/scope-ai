@@ -9,8 +9,8 @@
  * PERFORMANCE: Uses React Query for automatic caching and deduplication.
  * Multiple components calling useSubscription() share the same cached data.
  * 
- * SECURITY: isPaid/isDemo flags are derived server-side to ensure consistency.
- * Client cannot manipulate these values - they come from the verified profile API.
+ * SECURITY: isPaid flag is derived server-side to ensure consistency.
+ * Client cannot manipulate this value - it comes from the verified profile API.
  */
 
 import { useCallback, useMemo } from "react"
@@ -32,7 +32,6 @@ export const subscriptionQueryKey = ["subscription", "profile"] as const
 // Profile data from server
 interface SubscriptionProfile {
   tier: SubscriptionTier
-  isDemo: boolean
   isPaid: boolean
 }
 
@@ -43,8 +42,6 @@ interface UseSubscriptionReturn {
   tierName: string
   /** Tailwind classes for tier badge */
   tierColor: string
-  /** Whether user is in demo mode (server-derived) */
-  isDemo: boolean
   /** Whether user has paid subscription (server-derived) */
   isPaid: boolean
   /** Loading state */
@@ -61,7 +58,6 @@ interface UseSubscriptionReturn {
 
 const DEFAULT_PROFILE: SubscriptionProfile = {
   tier: "pro",
-  isDemo: false,
   isPaid: false,
 }
 
@@ -83,7 +79,6 @@ export function useSubscription(): UseSubscriptionReturn {
         return {
           // Use server-provided values - these are authoritative
           tier: data.subscription_tier as SubscriptionTier,
-          isDemo: data.is_demo ?? true,
           isPaid: data.is_paid ?? false,
         }
       }
@@ -120,8 +115,7 @@ export function useSubscription(): UseSubscriptionReturn {
       tier: profile.tier,
       tierName: TIER_DISPLAY_NAMES[profile.tier],
       tierColor: TIER_COLORS[profile.tier],
-      // Use server-derived flags - cannot be manipulated client-side
-      isDemo: profile.isDemo,
+      // Use server-derived flag - cannot be manipulated client-side
       isPaid: profile.isPaid,
       // Use isPending OR isFetching to ensure we wait for real data
       loading: isPending || isFetching || authLoading,

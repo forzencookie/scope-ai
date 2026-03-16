@@ -1,9 +1,10 @@
 "use client"
 
 /**
- * @deprecated Use BlockRenderer from ./blocks instead.
- * This renderer is kept for backwards compatibility.
- * New AI outputs use W: protocol and block primitives.
+ * Card renderer — renders compact inline preview cards in chat.
+ * Cards = Layer 1 (inline chat previews).
+ * Blocks = Layer 2 (walkthrough overlay content).
+ * Both are needed — they serve different purposes.
  */
 
 import { cn } from "@/lib/utils"

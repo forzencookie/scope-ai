@@ -11,7 +11,6 @@ import { getAuthContext, verifyAuth, ApiResponse } from '@/lib/database/auth'
 import {
     checkUsageLimits,
     consumeTokens,
-    isDemoMode,
     authorizeModel
 } from '@/lib/model-auth'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
@@ -35,16 +34,6 @@ function ensureToolsInitialized() {
         toolsInitialized = true
         console.log('[Chat] AI Tools initialized')
     }
-}
-
-function handleDemoMode() {
-    return new Response(JSON.stringify({
-        error: 'AI-chatten kräver en aktiv prenumeration. Uppgradera för att använda AI-assistenten.',
-        code: 'DEMO_MODE',
-    }), {
-        status: 402,
-        headers: { 'Content-Type': 'application/json' }
-    })
 }
 
 export async function POST(request: NextRequest) {
@@ -112,10 +101,6 @@ export async function POST(request: NextRequest) {
         const latestContent = latestUserMessage?.content || ''
 
         const authResult = await authorizeModel(userId, requestedModel || DEFAULT_MODEL_ID)
-
-        if (isDemoMode(authResult.userTier)) {
-            return handleDemoMode()
-        }
 
         const budgetCheck = await checkUsageLimits(userId)
         if (!budgetCheck.withinLimits) {

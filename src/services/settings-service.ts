@@ -25,7 +25,7 @@ export interface UserProfile {
 }
 
 export interface SubscriptionStatus {
-    plan: 'free' | 'demo' | 'starter' | 'professional' | 'max'
+    plan: 'starter' | 'professional' | 'max'
     status: 'active' | 'trial' | 'cancelled' | 'past_due'
     currentPeriodEnd: string
     usageThisMonth: {
@@ -63,24 +63,11 @@ export interface Integration {
     provider?: string
 }
 
-export interface BankConnection {
-    id: string
-    bankName: string
-    accountId: string | null
-    accountType: string | null
-    status: string | null
-    lastSyncAt: string | null
-    provider: string
-    errorMessage: string | null
-}
-
 // =============================================================================
 // Tier Limits Configuration
 // =============================================================================
 
 const TIER_LIMITS: Record<string, { tokens: number; requests: number }> = {
-    demo: { tokens: 50000, requests: 50 },
-    free: { tokens: 50000, requests: 50 },
     starter: { tokens: 500000, requests: 500 },
     professional: { tokens: 2000000, requests: 2000 },
     max: { tokens: 10000000, requests: 10000 },
@@ -121,8 +108,8 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
     const usage = await getMonthlyUsage(userId)
     const limits = await checkUsageLimits(userId)
 
-    const tier = (profile.subscription_tier || 'demo') as keyof typeof TIER_LIMITS
-    const tierConfig = TIER_LIMITS[tier] || TIER_LIMITS.demo
+    const tier = (profile.subscription_tier || 'starter') as keyof typeof TIER_LIMITS
+    const tierConfig = TIER_LIMITS[tier] || TIER_LIMITS.starter
 
     // Calculate period end (end of current month)
     const now = new Date()
@@ -235,10 +222,6 @@ export async function updateNotificationPreference(
 // =============================================================================
 
 const INTEGRATION_TYPE_MAP: Record<string, Integration['type']> = {
-    gmail: 'email',
-    outlook: 'email',
-    yahoo: 'email',
-    kivra: 'other',
     bankgirot: 'payment',
     swish: 'payment',
     'google-calendar': 'calendar',
@@ -272,95 +255,6 @@ export async function getIntegrations(): Promise<Integration[]> {
 }
 
 // =============================================================================
-// Bank Connections
-// =============================================================================
-
-/**
- * Get bank connections for the current user
- */
-export async function getBankConnections(): Promise<BankConnection[]> {
-    const supabase = createBrowserClient()
-
-    const { data, error } = await supabase
-        .from('bank_connections')
-        .select('id, bank_name, account_id, account_type, status, last_sync_at, provider, error_message')
-
-    if (error) {
-        console.error('[SettingsService] Failed to fetch bank connections:', error)
-        return []
-    }
-
-    return (data || []).map((row) => ({
-        id: row.id,
-        bankName: row.bank_name,
-        accountId: row.account_id,
-        accountType: row.account_type,
-        status: row.status,
-        lastSyncAt: row.last_sync_at,
-        provider: row.provider,
-        errorMessage: row.error_message,
-    }))
-}
-
-/**
- * Initiate a bank connection (would redirect to Open Banking provider)
- */
-export async function initiateBankConnection(
-    userId: string,
-    companyId: string,
-    bankName: string,
-    provider: string = 'tink'
-): Promise<{ success: boolean; connectionId?: string; redirectUrl?: string; error?: string }> {
-    const supabase = createBrowserClient()
-
-    // Create pending connection record
-    const { data, error } = await supabase
-        .from('bank_connections')
-        .insert({
-            user_id: userId,
-            company_id: companyId,
-            bank_name: bankName,
-            provider,
-            status: 'pending',
-            created_at: new Date().toISOString(),
-        } as never)
-        .select('id')
-        .single()
-
-    if (error) {
-        console.error('[SettingsService] Failed to create bank connection:', error)
-        return { success: false, error: 'Kunde inte initiera bankkoppling' }
-    }
-
-    // In production, would generate OAuth URL to bank provider
-    const connectionId = data.id
-    const redirectUrl = `/api/integrations/bank/connect?connection=${connectionId}&bank=${encodeURIComponent(bankName)}`
-
-    return {
-        success: true,
-        connectionId,
-        redirectUrl,
-    }
-}
-
-/**
- * Sync transactions from connected banks.
- * Currently a stub — bank integration is manual/CSV only at launch.
- * When Tink/Open Banking is integrated, this will call the provider API.
- */
-export async function syncBankTransactions(
-    _connectionId?: string,
-    _days: number = 30
-): Promise<{ synced: number; newTransactions: number; errors: string[] }> {
-    // No live bank API integration yet — return zero with clear indication
-    return {
-        synced: 0,
-        newTransactions: 0,
-        errors: ['Banksynk är inte aktiverad. Importera transaktioner via CSV eller lägg in manuellt.'],
-    }
-}
-
-// =============================================================================
 // Export
 // =============================================================================
 
@@ -370,7 +264,4 @@ export const settingsService = {
     getNotificationPreferences,
     updateNotificationPreference,
     getIntegrations,
-    getBankConnections,
-    initiateBankConnection,
-    syncBankTransactions,
 }

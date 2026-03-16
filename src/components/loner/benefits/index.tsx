@@ -1,15 +1,14 @@
 "use client"
 
-import { Plus, Banknote, Check, Gift, ArrowRight } from "lucide-react"
+import { Banknote, Check, Gift, ArrowRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { SearchBar } from "@/components/ui/search-bar"
 import { DataErrorState, StatCardSkeleton } from "@/components/ui/data-error-state"
-import { ErrorBoundary, PageHeader, SectionErrorBoundary } from "@/components/shared"
+import { PageHeader, SectionErrorBoundary } from "@/components/shared"
 
 import { useBenefitsLogic } from "./use-benefits-logic"
 import { BenefitSection } from "./benefit-section"
-import { BenefitDetailsDialog } from "../dialogs/forman"
 
 export function BenefitsTab() {
     const {
@@ -21,12 +20,7 @@ export function BenefitsTab() {
         setSearchQuery,
         groupedBenefits,
         assignedBenefits,
-        selectedBenefit,
-        isDetailsOpen,
-        setIsDetailsOpen,
         handleRowClick,
-        handleAssign,
-        handleDeleteBenefit,
         handleRetry
     } = useBenefitsLogic()
 
@@ -53,12 +47,6 @@ export function BenefitsTab() {
                 <PageHeader
                     title="Förmåner"
                     subtitle="Hantera personalförmåner och skattefria avdrag."
-                    actions={
-                        <Button onClick={() => document.getElementById('benefits-search')?.focus()}>
-                            <Plus className="h-4 w-4 mr-2" />
-                            Registrera förmån
-                        </Button>
-                    }
                 />
 
                 {/* KPI Cards */}
@@ -163,14 +151,6 @@ export function BenefitsTab() {
                     </>
                 )}
 
-                <BenefitDetailsDialog
-                    benefit={selectedBenefit}
-                    open={isDetailsOpen}
-                    onOpenChange={setIsDetailsOpen}
-                    onAssign={handleAssign}
-                    onDelete={handleDeleteBenefit}
-                    assignedEmployees={assignedBenefits}
-                />
             </div>
         </SectionErrorBoundary>
     )

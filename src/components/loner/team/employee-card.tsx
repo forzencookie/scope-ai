@@ -1,9 +1,8 @@
 "use client"
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { MoreHorizontal, FileText, Wallet, Car } from "lucide-react"
+import { Wallet, Car } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 interface Employee {
@@ -16,7 +15,6 @@ interface EmployeeCardProps {
     employee: Employee
     balance: number
     mileage: number
-    onReport: () => void
     onViewDossier: () => void
 }
 
@@ -24,7 +22,7 @@ const formatCurrency = (val: number) => {
     return new Intl.NumberFormat('sv-SE', { style: 'currency', currency: 'SEK' }).format(val)
 }
 
-export function EmployeeCard({ employee, balance, mileage, onReport, onViewDossier }: EmployeeCardProps) {
+export function EmployeeCard({ employee, balance, mileage, onViewDossier }: EmployeeCardProps) {
     return (
         <Card className="overflow-hidden cursor-pointer hover:border-primary/40 transition-colors" onClick={onViewDossier}>
             <CardHeader className="flex flex-row items-center gap-4 bg-muted/20 pb-4">
@@ -38,9 +36,6 @@ export function EmployeeCard({ employee, balance, mileage, onReport, onViewDossi
                     <CardTitle className="text-base">{employee.name}</CardTitle>
                     <CardDescription>{employee.role}</CardDescription>
                 </div>
-                <Button variant="ghost" size="icon" className="ml-auto">
-                    <MoreHorizontal className="h-4 w-4" />
-                </Button>
             </CardHeader>
             <CardContent className="p-4 grid gap-3">
                 <div className="grid grid-cols-2 gap-2 text-sm">
@@ -61,15 +56,6 @@ export function EmployeeCard({ employee, balance, mileage, onReport, onViewDossi
                         </span>
                     </div>
                 </div>
-
-                <Button
-                    variant="outline"
-                    className="w-full mt-2"
-                    onClick={(e) => { e.stopPropagation(); onReport() }}
-                >
-                    <FileText className="h-4 w-4 mr-2" />
-                    Rapportera
-                </Button>
             </CardContent>
         </Card>
     )

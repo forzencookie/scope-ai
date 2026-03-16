@@ -1,15 +1,12 @@
 "use client"
 
-import { memo, useState } from "react"
+import { memo } from "react"
 import {
-    BookOpen,
     X,
     CreditCard,
 } from "lucide-react"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, PageHeader } from "@/components/shared"
-import { Button } from "@/components/ui/button"
-import { Badge } from "@/components/ui/badge"
 import { SearchBar } from "@/components/ui/search-bar"
 import { FilterButton } from "@/components/ui/filter-button"
 import {
@@ -20,7 +17,6 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { accountClassLabels, type AccountClass } from "@/data/accounts"
-import { AutoVerifikationDialog } from "./auto-dialog"
 
 // Sub-components
 import { VerifikationerStats } from "./components/VerifikationerStats"
@@ -29,7 +25,6 @@ import { VerifikationerGrid } from "./components/VerifikationerGrid"
 
 // Logic & hooks
 import { useVerificationsLogic } from "./use-verifications-logic"
-import { usePendingBookings } from "@/hooks/use-pending-bookings"
 
 export const VerifikationerTable = memo(function VerifikationerTable() {
     const toast = useToast()
@@ -54,11 +49,8 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
         isLoading,
     } = useVerificationsLogic()
 
-    // Pending bookings (for the badge count)
-    const { pendingCount } = usePendingBookings()
 
-    // Auto-verifikation dialog state
-    const [autoDialogOpen, setAutoDialogOpen] = useState(false)
+
 
     return (
         <div className="w-full space-y-6">
@@ -68,17 +60,6 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                 subtitle={accountParam
                     ? `Systematisk översikt för konto ${accountParam} (${filteredVerifikationer[0]?.kontoName || 'Laddar...'})`
                     : "Se alla bokförda transaktioner och verifikationer."}
-                actions={
-                    <Button className="gap-2" onClick={() => setAutoDialogOpen(true)}>
-                        <BookOpen className="h-4 w-4 shrink-0" />
-                        <span className="truncate">Bokföra</span>
-                        {pendingCount > 0 && (
-                            <Badge variant="secondary" className="text-xs ml-1">
-                                {pendingCount}
-                            </Badge>
-                        )}
-                    </Button>
-                }
             />
 
             {/* Active Account Filter Badge */}
@@ -99,12 +80,6 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
 
             {/* Stats Cards */}
             <VerifikationerStats stats={stats} isLoading={isLoading} />
-
-            {/* Auto-Verifikation Dialog (replaces old VerifikationDialog + BookingWizard + pending section) */}
-            <AutoVerifikationDialog
-                open={autoDialogOpen}
-                onOpenChange={setAutoDialogOpen}
-            />
 
             {/* Details Dialog */}
             <VerifikationDetailsDialog

@@ -8,7 +8,6 @@ import {
   MapPin,
   MoreHorizontal,
   Download,
-  Send,
   CheckCircle,
   Sparkles,
 } from "lucide-react"
@@ -34,14 +33,12 @@ interface AnnualMeetingsGridProps {
   meetings: AnnualMeeting[]
   selectedMeetingId: string | null
   onSelectMeeting: (meeting: AnnualMeeting | null) => void
-  onOpenNotice: (meeting: AnnualMeeting) => void
 }
 
-export function AnnualMeetingsGrid({ 
-  meetings, 
-  selectedMeetingId, 
+export function AnnualMeetingsGrid({
+  meetings,
+  selectedMeetingId,
   onSelectMeeting,
-  onOpenNotice 
 }: AnnualMeetingsGridProps) {
   return (
     <div className="overflow-x-auto pb-4 -mx-2">
@@ -128,12 +125,6 @@ export function AnnualMeetingsGrid({
                       Ladda ned PDF
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    {(meeting.status === 'planerad' || meeting.status === 'kallad') && (
-                      <DropdownMenuItem onClick={() => onOpenNotice(meeting)}>
-                        <Send className="h-4 w-4 mr-2" />
-                        Skicka kallelse
-                      </DropdownMenuItem>
-                    )}
                     {meeting.status === 'genomförd' && (
                       <DropdownMenuItem>
                         <CheckCircle className="h-4 w-4 mr-2" />
