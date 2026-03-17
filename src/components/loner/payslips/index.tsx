@@ -20,9 +20,6 @@ import { usePayslipsLogic } from "./use-payslips-logic"
 import { PayslipsStats } from "./payslips-stats"
 import { PayslipsTable } from "./payslips-table"
 
-// Dialogs
-import { PayslipDetailsDialog } from "../dialogs/spec"
-
 export const LonesbeskContent = memo(function LonesbeskContent() {
     const toast = useToast()
     const { navigateToAI } = useChatNavigation()
@@ -111,16 +108,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
                 periodStatus={periodStatus}
                 isLoading={isLoading}
                 actionButton={actionButton}
-            />
-
-            {/* Dialogs */}
-            <PayslipDetailsDialog
-                payslip={selectedPayslip}
-                open={viewDialogOpen}
-                onOpenChange={setViewDialogOpen}
-                onSend={() => {
-                    toast.success("Lönespecifikation skickad", "Skickades till anställd")
-                }}
             />
 
             {/* Table Area — secondary section */}

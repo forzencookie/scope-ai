@@ -26,7 +26,8 @@ export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, FormanCata
     description: 'Hämta tillgängliga personalförmåner (t.ex. friskvård, bilförmån).',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'loner',
+  allowedCompanyTypes: [],
+  domain: 'loner',
     keywords: ['förmåner', 'friskvård', 'tillgängliga'],
     parameters: {
         type: 'object',
@@ -138,7 +139,8 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
     description: 'Tilldela en förmån till en anställd. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'loner',
+  allowedCompanyTypes: [],
+  domain: 'loner',
     keywords: ['tilldela', 'förmån', 'anställd'],
     parameters: {
         type: 'object',

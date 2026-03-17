@@ -161,14 +161,7 @@ export function OnboardingWizard({ isOpen, onClose, onComplete }: OnboardingWiza
             <ScopeAILogo className="h-7 w-7" />
             <span className="font-semibold text-lg">Scope AI</span>
           </div>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="text-muted-foreground hover:text-foreground"
-          >
-            Hoppa över för nu
-            <ChevronRight className="h-4 w-4 ml-1" />
-          </Button>
+          {/* Skip button removed - onboarding is mandatory */}
         </div>
 
         {/* Main content */}
@@ -270,7 +263,7 @@ interface OnboardingStatus {
 
 export function useOnboarding() {
   const [showOnboarding, setShowOnboarding] = React.useState(false)
-  const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(true)
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = React.useState(false)
   const [isLoading, setIsLoading] = React.useState(true)
   const [shouldRedirect, setShouldRedirect] = React.useState(false)
 

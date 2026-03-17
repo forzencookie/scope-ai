@@ -26,7 +26,8 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, Complia
     description: 'Hämta bolagsdokument som styrelseprotokoll, stämmoprotokoll eller aktieboken. Använd för att hitta tidigare beslut, kontrollera ägande, eller förbereda intyg.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['dokument', 'compliance', 'bolagshandlingar'],
     parameters: {
         type: 'object',
@@ -88,7 +89,8 @@ export const registerDividendTool = defineTool<RegisterDividendParams, DividendR
     description: 'Registrera ett utdelningsbeslut från bolagsstämma. Skapar underlag för K10 och Skatteverket. Vanliga frågor: "ta utdelning", "bestämde 100 000 i utdelning". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['utdelning', 'dividend', 'vinstutdelning'],
     parameters: {
         type: 'object',
@@ -217,7 +219,9 @@ export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, BoardMi
     name: 'draft_board_minutes',
     description: 'Skapa utkast till styrelseprotokoll eller årsstämmoprotokoll. Fyller i mallen med beslut och närvarande. Använd när användaren behöver protokoll.',
     category: 'write',
-    requiresConfirmation: false, // We use the preview as "drafting" step
+    requiresConfirmation: false,
+  allowedCompanyTypes: ["ab"],
+  // We use the preview as "drafting" step
     domain: 'parter',
     keywords: ['styrelseprotokoll', 'protokoll', 'styrelsemöte'],
     parameters: {
@@ -325,7 +329,8 @@ export const getSignatoriesTool = defineTool<Record<string, never>, Signatory[]>
     description: 'Visa firmatecknare för bolaget och deras behörigheter (ensam/tillsammans). Hämtas från Bolagsverket via API.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['firmatecknare', 'signatur', 'behörighet'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
@@ -578,7 +583,8 @@ export const getComplianceDeadlinesTool = defineTool<{ daysAhead?: number }, Com
     description: 'Visa kommande deadlines för bolagsrättsliga och skattemässiga förpliktelser baserat på räkenskapsår. Inkluderar moms, AGI, årsredovisning och bolagsstämma. Vanliga frågor: "när ska momsen in", "vad har jag för deadlines", "nästa förfallodag".',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['deadline', 'bolagsverket', 'compliance'],
     parameters: {
         type: 'object',
@@ -663,7 +669,8 @@ export const prepareAgmTool = defineTool<PrepareAgmParams, AgmDocumentsResult>({
     description: 'Förbered underlag och dagordning för årsstämma.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['årsstämma', 'bolagsstämma', 'stämma'],
     parameters: {
         type: 'object',

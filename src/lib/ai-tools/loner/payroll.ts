@@ -9,6 +9,8 @@ import { payrollService, type Payslip, type Employee, type AGIReport } from '@/s
 import { companyService } from '@/services/company-service'
 import { taxService } from '@/services/tax-service'
 import { getEmployeeBenefits } from '@/lib/formaner'
+import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '@/lib/bookkeeping'
+import { verificationService } from '@/services/verification-service'
 
 // =============================================================================
 // Helpers
@@ -48,6 +50,7 @@ export const getPayslipsTool = defineTool<GetPayslipsParams, Payslip[]>({
     description: 'Hämta genererade lönebesked för anställda. Kan filtrera på period eller person. Använd för att visa tidigare utbetalningar eller skapa underlag till AGI.',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: [],
     domain: 'loner',
     keywords: ['lönebesked', 'lön', 'lönespecifikation'],
     parameters: {
@@ -58,10 +61,6 @@ export const getPayslipsTool = defineTool<GetPayslipsParams, Payslip[]>({
         },
     },
     execute: async (params) => {
-        // Fetch real payslips using the service
-        // Note: The service expects year/month numbers, but the AI tool gets string "December 2024".
-        // For now, we'll fetch all and filter in memory, or parse the date.
-        // Let's fetch all (default) and filter.
         let payslips = await payrollService.getPayslips()
 
         if (params.period) {
@@ -84,6 +83,7 @@ export const getEmployeesTool = defineTool<Record<string, never>, Employee[]>({
     description: 'Visa alla anställda med deras grundlön, anställningsform och roll. Använd för att få överblick eller inför lönekörning.',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: [],
     domain: 'loner',
     keywords: ['anställda', 'personal', 'medarbetare'],
     parameters: { type: 'object', properties: {} },
@@ -112,6 +112,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
     description: 'Kör lönekörning för en månad. Beräknar nettolön, skatt och arbetsgivaravgifter. Skapar lönebesked för alla eller valda anställda. Vanliga frågor: "gör lönerna", "kör lönerna för mars", "betala ut löner". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    allowedCompanyTypes: ['ab'],
     domain: 'loner',
     keywords: ['lönekörning', 'kör lön', 'nettolön', 'skatt', 'anställd'],
     parameters: {
@@ -123,20 +124,6 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         required: ['period'],
     },
     execute: async (params, context) => {
-        // Fetch company info for display
-        let companyName = ''
-        let orgNumber = ''
-        const userId = context?.userId
-        if (userId) {
-            try {
-                const company = await companyService.getByUserId(userId)
-                if (company) {
-                    companyName = company.name
-                    orgNumber = company.orgNumber || ''
-                }
-            } catch { /* use empty */ }
-        }
-
         // Fetch real employees
         const realEmployees = await payrollService.getEmployees()
         let employees = [...realEmployees]
@@ -147,8 +134,6 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             )
         }
 
-        // Calculate payslips from real employee data
-        // Fetch tax rates and employee benefits for accurate employer contributions
         const currentYear = new Date().getFullYear()
         const rates = await taxService.getAllTaxRates(currentYear)
         if (!rates) {
@@ -158,15 +143,9 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         const payslips: Payslip[] = []
         for (const emp of employees) {
             const gross = emp.monthlySalary || 0
-
-            // Fetch monthly taxable benefit value for this employee
             const benefitTaxValue = await getMonthlyBenefitValue(emp.name, currentYear)
-
-            // Taxable income = gross salary + taxable benefit value (SFL 11 kap)
             const taxableIncome = gross + benefitTaxValue
 
-            // Look up tax deduction from SKV tables using employee's table number
-            // Column 1 = standard (no church tax)
             if (!emp.taxTable) {
                 return { success: false, error: `Skattetabell saknas för ${emp.name}. Ange skattetabell i personalregistret innan lönekörning.` }
             }
@@ -189,7 +168,6 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 bonuses: 0,
                 otherDeductions: 0,
                 status: 'draft',
-                sentAt: undefined,
             })
         }
 
@@ -197,37 +175,28 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
         const totalNet = payslips.reduce((sum, p) => sum + p.netSalary, 0)
         const totalTax = payslips.reduce((sum, p) => sum + p.taxDeduction, 0)
 
-        // If confirmed, persist all payslips to database
         if (context?.isConfirmed) {
-            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
             const savedPayslips: Payslip[] = []
             const errors: string[] = []
-            const currentYear = new Date().getFullYear()
-            const rates = await taxService.getAllTaxRates(currentYear)
-            if (!rates) {
-                return { success: false, error: `Skattesatser för ${currentYear} saknas — kan inte spara löner.` }
-            }
+            const accrualDate = new Date().toISOString().split('T')[0]
 
             for (const payslip of payslips) {
                 try {
-                    // Include taxable benefits in employer contribution basis (SLF 2 kap 10§)
                     const benefitTaxValue = await getMonthlyBenefitValue(payslip.employeeName, currentYear)
                     const employerContributionBasis = payslip.grossSalary + benefitTaxValue
-                    const employerContribution = Math.round(employerContributionBasis * rates.employerContributionRate)
-                    const res = await fetch(`${baseUrl}/api/payroll/payslips`, {
+                    const employerContribution = calculateEmployerContributions(employerContributionBasis, rates.employerContributionRate)
+                    
+                    const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL || ''}/api/payroll/payslips`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
                             employee_id: payslip.employeeId,
-                            employee_name: payslip.employeeName,
                             period: payslip.period,
                             gross_salary: payslip.grossSalary,
                             tax_deduction: payslip.taxDeduction,
                             net_salary: payslip.netSalary,
                             employer_contributions: employerContribution,
                             employer_contribution_rate: rates.employerContributionRate,
-                            bonuses: payslip.bonuses,
-                            deductions: payslip.otherDeductions,
                             status: 'draft',
                             payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                         }),
@@ -236,34 +205,64 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                     if (res.ok) {
                         const data = await res.json()
                         savedPayslips.push({ ...payslip, id: data.payslip?.id || payslip.id })
+
+                        const entry = createSalaryEntry({
+                            date: accrualDate,
+                            description: `Lön ${payslip.period} - ${payslip.employeeName}`,
+                            salary: {
+                                grossSalary: payslip.grossSalary,
+                                preliminaryTax: payslip.taxDeduction,
+                                employerContributions: employerContribution,
+                            },
+                            paidImmediately: false,
+                        })
+
+                        await verificationService.createVerification({
+                            series: 'L',
+                            date: entry.date,
+                            description: entry.description,
+                            entries: entry.rows.map(r => ({
+                                account: r.account,
+                                debit: r.debit,
+                                credit: r.credit,
+                                description: r.description,
+                            })),
+                            sourceType: 'payroll_salary',
+                            sourceId: String(data.payslip?.id || payslip.id)
+                        })
                     } else {
                         errors.push(`${payslip.employeeName}: Kunde inte spara`)
                     }
-                } catch {
-                    errors.push(`${payslip.employeeName}: Nätverksfel`)
+                } catch (e) {
+                    console.error('[Payroll] Failed to process employee:', payslip.employeeName, e)
+                    errors.push(`${payslip.employeeName}: Internt fel`)
                 }
             }
 
-            // === CASCADE: Auto-create vacation pay accrual (Semesterlagen 12%) ===
-            const vacationAccrual = Math.round(totalGross * 0.12)
             let vacationNote = ''
-            if (vacationAccrual > 0) {
+            if (totalGross > 0) {
                 try {
-                    const { verificationService } = await import('@/services/verification-service')
-                    const accrualDate = new Date().toISOString().split('T')[0]
-                    await verificationService.createVerification({
+                    const vacationEntry = createVacationAccrual({
+                        grossSalary: totalGross,
                         date: accrualDate,
-                        description: `Semesterlöneskuld ${params.period} (12% av bruttolön)`,
-                        entries: [
-                            { account: '7090', debit: vacationAccrual, credit: 0, description: 'Förändring semesterlöneskuld' },
-                            { account: '2920', debit: 0, credit: vacationAccrual, description: 'Upplupna semesterlöner' },
-                        ],
+                        description: `Semesterlöneskuld ${params.period}`,
+                    })
+
+                    await verificationService.createVerification({
+                        series: 'L',
+                        date: vacationEntry.date,
+                        description: vacationEntry.description,
+                        entries: vacationEntry.rows.map(r => ({
+                            account: r.account,
+                            debit: r.debit,
+                            credit: r.credit,
+                            description: r.description,
+                        })),
                         sourceType: 'payroll_vacation_accrual',
                     })
-                    vacationNote = `\n\n✅ Semesterlöneskuld bokförd: ${vacationAccrual.toLocaleString('sv-SE')} kr (7090 ↔ 2920).`
+                    vacationNote = `\n\n✅ Semesterlöneskuld bokförd: ${(totalGross * 0.12).toLocaleString('sv-SE')} kr.`
                 } catch (accrualError) {
-                    console.error('[Payroll] Vacation accrual cascade failed:', accrualError)
-                    vacationNote = `\n\nSemesterlöneskuld på ${vacationAccrual.toLocaleString('sv-SE')} kr (12% av bruttolön) bör bokföras. Vill du att jag gör det?`
+                    vacationNote = `\n\n⚠️ Semesterlöneskuld kunde inte bokföras automatiskt.`
                 }
             }
 
@@ -271,13 +270,11 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 success: errors.length === 0,
                 data: savedPayslips,
                 message: errors.length === 0
-                    ? `Lönekörning klar! ${savedPayslips.length} lönebesked sparade. Total brutto: ${totalGross.toLocaleString('sv-SE')} kr.${vacationNote}`
+                    ? `Lönekörning klar! ${savedPayslips.length} lönebesked sparade.${vacationNote}`
                     : `${savedPayslips.length} av ${payslips.length} lönebesked sparade. Fel: ${errors.join('; ')}`,
-                ...(errors.length > 0 ? { error: errors.join('; ') } : {}),
             }
         }
 
-        // Preflight: return confirmation request
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Kör lönekörning',
             description: `Lönekörning för ${params.period}`,
@@ -301,8 +298,6 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
     },
 })
 
-// ... (CalculateSalaryTool remains same)
-
 // =============================================================================
 // AGI Tools
 // =============================================================================
@@ -312,6 +307,7 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
     description: 'Visa arbetsgivardeklarationer (AGI) som skickats eller är klara för inskickning. Innehåller summor för utbetald lön, skatt och arbetsgivaravgifter.',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: ['ab'],
     domain: 'loner',
     keywords: ['AGI', 'arbetsgivardeklaration', 'rapport'],
     parameters: {
@@ -321,7 +317,6 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
         },
     },
     execute: async (params) => {
-        // Fetch real reports
         let reports = await payrollService.getAGIReports()
 
         if (params.period) {
@@ -337,28 +332,6 @@ export const getAGIReportsTool = defineTool<{ period?: string }, AGIReport[]>({
         }
 
         const r = reports[0];
-
-        // Sum monthly taxable benefits across all employees for AGI basis
-        let totalMonthlyBenefits = 0
-        try {
-            const employees = await payrollService.getEmployees()
-            const currentYear = new Date().getFullYear()
-            for (const emp of employees) {
-                totalMonthlyBenefits += await getMonthlyBenefitValue(emp.name, currentYear)
-            }
-        } catch { /* no benefits data */ }
-
-        const totalGrossPay = r.totalSalary || 0
-        const agiData = {
-            period: r.period,
-            employeeCount: r.employeeCount || 0,
-            totalGrossPay,
-            totalBenefits: totalMonthlyBenefits,
-            totalTaxDeduction: r.totalTax || 0,
-            employerFeeBasis: totalGrossPay + totalMonthlyBenefits,
-            totalEmployerFee: r.employerContributions || 0,
-        }
-
         return {
             success: true,
             data: reports,
@@ -376,6 +349,7 @@ export const submitAGITool = defineTool<SubmitAGIParams, { submitted: boolean; r
     description: 'Skicka arbetsgivardeklaration (AGI) till Skatteverket. Innehåller alla löner och skatteavdrag för perioden. Deadline: 12:e varje månad. Vanliga frågor: "skicka AGI", "skicka in löneuppgifter". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
+    allowedCompanyTypes: ['ab'],
     domain: 'loner',
     keywords: ['AGI', 'deklaration', 'skicka', 'skatteverket'],
     parameters: {
@@ -386,7 +360,6 @@ export const submitAGITool = defineTool<SubmitAGIParams, { submitted: boolean; r
         required: ['period'],
     },
     execute: async (params) => {
-        // Simulation, but using cleaner logic (no hardcoded totals)
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Skicka AGI',
             description: `Arbetsgivardeklaration för ${params.period} (Simulering)`,

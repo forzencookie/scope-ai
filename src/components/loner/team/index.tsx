@@ -4,7 +4,7 @@ import { Users } from "lucide-react"
 import { PageHeader } from "@/components/shared"
 import { useTeamLogic } from "./use-team-logic"
 import { EmployeeCard } from "./employee-card"
-import { EmployeeDossierDialog } from "./dialogs"
+import { EmployeeDossierOverlay } from "./employee-dossier-overlay"
 
 export default function TeamTab() {
     const {
@@ -55,7 +55,7 @@ export default function TeamTab() {
                 </div>
             )}
 
-            <EmployeeDossierDialog
+            <EmployeeDossierOverlay
                 open={dossierOpen}
                 onOpenChange={setDossierOpen}
                 employee={dossierEmployee}

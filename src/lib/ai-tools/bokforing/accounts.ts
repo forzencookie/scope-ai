@@ -23,7 +23,8 @@ export const getAccountsTool = defineTool<GetAccountsParams, Account[]>({
     description: 'Hämta konton från BAS-kontoplanen. Kan filtrera på kontoklass (1=Tillgångar, 2=Skulder, 3=Intäkter, 4-8=Kostnader) och sökterm. Använd för att hitta rätt konto att bokföra på.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['konton', 'kontoplan', 'BAS', 'konto'],
     parameters: {
         type: 'object',
@@ -98,7 +99,8 @@ export const getAccountBalanceTool = defineTool<GetAccountBalanceParams, Account
     description: 'Hämta saldo för ett specifikt bokföringskonto. Använd för att se aktuellt saldo på bankkonto, skattekonto, eller liknande.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['saldo', 'kontosaldo', 'balans'],
     parameters: {
         type: 'object',
@@ -143,7 +145,8 @@ export const getBalanceSheetSummaryTool = defineTool<{ year?: number }, AccountB
     description: 'Hämta sammanfattning av balansräkningen: totala tillgångar, skulder, eget kapital och resultat. Använd för snabb överblick över bolagets ekonomiska ställning.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['balansräkning', 'sammanfattning', 'balans'],
     parameters: {
         type: 'object',
@@ -182,7 +185,8 @@ export const getChartOfAccountsTool = defineTool<{ year?: number }, Record<strin
     description: 'Hämta hela kontoplanen grupperad efter kontoklass. Använd för att se vilka konton som används eller för att exportera kontoplan.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['kontoplan', 'BAS', 'kontolista'],
     parameters: {
         type: 'object',

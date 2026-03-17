@@ -35,7 +35,8 @@ export const getReceiptsTool = defineTool<GetReceiptsParams, Receipt[]>({
     description: 'Hämta uppladdade kvitton. Kan filtrera på leverantör, status eller belopp. Använd för att hitta specifika kvitton eller se vilka som behöver hanteras.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['kvitto', 'kvitton', 'utlägg', 'underlag'],
     parameters: {
         type: 'object',
@@ -109,7 +110,8 @@ export const createReceiptTool = defineTool<CreateReceiptParams, CreatedReceipt>
     description: 'Registrera ett kvitto manuellt (om det inte laddades upp som bild). Använd för kvitton från kontantköp, lunch med kund, eller andra utgifter. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['skapa', 'kvitto', 'utlägg', 'ny'],
     parameters: {
         type: 'object',
@@ -202,7 +204,8 @@ export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, R
     description: 'Lista kvitton som inte är kopplade till någon banktransaktion. Använd för att hitta kvitton som behöver matchas eller för att identifiera dubbletter.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['omatchat', 'kvitto', 'saknas', 'ej kopplat'],
     parameters: {
         type: 'object',

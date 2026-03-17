@@ -10,10 +10,11 @@ import { CalculationResult } from "./calculation-result"
 import { MonthlyTrend } from "./monthly-trend"
 import { useTaxCalculator } from "./use-tax-calculator"
 import { PageHeader } from "@/components/shared"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 export function EgenavgifterCalculator() {
     const toast = useToast()
-    const [isBooking, setIsBooking] = useState(false)
+    const { navigateToAI } = useChatNavigation()
 
     const {
         annualProfit,
@@ -27,52 +28,13 @@ export function EgenavgifterCalculator() {
         monthlyData
     } = useTaxCalculator()
 
-    const handleBookEgenavgifter = async () => {
-        if (isBooking) return
-        setIsBooking(true)
-
-        try {
-            const monthlyAmount = Math.round(calculation.avgifter / 12)
-            const today = new Date().toISOString().split('T')[0]
-            const currentMonth = new Date().toLocaleDateString('sv-SE', { month: 'long', year: 'numeric' })
-            const sourceId = `egenavgifter-${new Date().getFullYear()}-${new Date().getMonth() + 1}`
-
-            // Check for duplicate booking this month
-            const checkRes = await fetch(`/api/pending-bookings?source_type=egenavgifter`)
-            if (checkRes.ok) {
-                const { bookings } = await checkRes.json()
-                const duplicate = bookings?.find((b: { sourceId: string }) => b.sourceId === sourceId)
-                if (duplicate) {
-                    toast.error("Redan bokfört", `Egenavgifter för ${currentMonth} finns redan som väntande bokning.`)
-                    return
-                }
-            }
-
-            // Create pending booking with correct accounts (7533 debit, 2510 credit)
-            const res = await fetch('/api/pending-bookings', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    sourceType: 'egenavgifter',
-                    sourceId,
-                    description: `Egenavgifter ${currentMonth}`,
-                    entries: [
-                        { account: "7533", description: `Egenavgifter ${currentMonth}`, debit: monthlyAmount, credit: 0 },
-                        { account: "2510", description: `Skatteskuld egenavgifter ${currentMonth}`, debit: 0, credit: monthlyAmount },
-                    ],
-                    date: today,
-                    metadata: { period: currentMonth, amount: monthlyAmount },
-                }),
-            })
-
-            if (!res.ok) throw new Error('Failed to create pending booking')
-
-            toast.success("Egenavgifter förberedda", `${monthlyAmount.toLocaleString('sv-SE')} kr skapad som väntande bokning.`)
-        } catch {
-            toast.error("Kunde inte bokföra", "Ett fel uppstod vid bokföring av egenavgifter.")
-        } finally {
-            setIsBooking(false)
-        }
+    const handleBookEgenavgifter = () => {
+        const monthlyAmount = Math.round(calculation.avgifter / 12)
+        const currentMonth = new Date().toLocaleDateString('sv-SE', { month: 'long' })
+        
+        navigateToAI({ 
+            prompt: `Jag vill bokföra mina egenavgifter för ${currentMonth}. Det beräknade beloppet är ${monthlyAmount} kr.` 
+        })
     }
 
     return (
@@ -94,9 +56,9 @@ export function EgenavgifterCalculator() {
                             <Download className="h-4 w-4 mr-2" />
                             PDF
                         </Button>
-                        <Button onClick={handleBookEgenavgifter} disabled={isBooking || calculation.avgifter <= 0}>
+                        <Button onClick={handleBookEgenavgifter} disabled={calculation.avgifter <= 0}>
                             <BookOpen className="h-4 w-4 mr-2" />
-                            {isBooking ? "Bokför..." : "Bokför egenavgifter"}
+                            Bokför egenavgifter
                         </Button>
                     </div>
                  }

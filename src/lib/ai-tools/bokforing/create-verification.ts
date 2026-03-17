@@ -1,7 +1,7 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
 import { verificationService } from '@/services/verification-service'
-import { isValidAccount } from '@/lib/bookkeeping/utils'
+import { createSimpleEntry, validateJournalEntry } from '@/lib/bookkeeping'
 
 interface VerificationRow {
     account: string
@@ -43,41 +43,44 @@ export const createVerificationTool: AITool = {
 
     execute: async (params: unknown, context: InteractionContext) => {
         const { description, date, rows } = params as { description: string, date?: string, rows: VerificationRow[] }
+        const entryDate = date || new Date().toISOString().split('T')[0]
 
-        // Validate account numbers against BAS kontoplan
-        const invalidAccounts = rows
-            .map(r => r.account)
-            .filter(acc => !isValidAccount(acc))
-        if (invalidAccounts.length > 0) {
+        // 1. Use the Bookkeeping Engine to create the entry
+        // This ensures the entry follows the standard internal model
+        const entry = createSimpleEntry({
+            date: entryDate,
+            description,
+            rows: rows.map(r => ({
+                account: r.account,
+                debit: r.debit || 0,
+                credit: r.credit || 0,
+                description: r.description
+            }))
+        })
+
+        // 2. Validate using the engine rules (BFL compliance)
+        const validation = validateJournalEntry(entry)
+        if (!validation.valid) {
             return {
                 success: false,
-                error: `Ogiltiga kontonummer: ${invalidAccounts.join(', ')}. Kontrollera att kontona finns i BAS-kontoplanen.`,
+                error: `Verifikationen är ogiltig: ${validation.errors.join('. ')}`,
             }
         }
 
-        // Validate balance
-        const totalDebit = rows.reduce((sum, r) => sum + (r.debit || 0), 0)
-        const totalCredit = rows.reduce((sum, r) => sum + (r.credit || 0), 0)
-
-        if (Math.abs(totalDebit - totalCredit) > 0.01) {
-            return {
-                success: false,
-                error: `Verifikationen balanserar inte. Debet: ${totalDebit} kr, Kredit: ${totalCredit} kr. Differens: ${Math.abs(totalDebit - totalCredit)} kr.`,
-            }
-        }
-
-        // If confirmed in chat, create the verification directly (no double-confirm via pending)
+        // 3. Persistence flow
         if (context?.isConfirmed) {
             try {
+                // Pass the engine-validated entry to the service for DB persistence
+                // This guarantees sequential numbering and period lock checks
                 const verification = await verificationService.createVerification({
-                    series: 'A',
-                    date: date || new Date().toISOString().split('T')[0],
-                    description,
-                    entries: rows.map(r => ({
+                    series: entry.series || 'A',
+                    date: entry.date,
+                    description: entry.description,
+                    entries: entry.rows.map(r => ({
                         account: r.account,
-                        debit: r.debit || 0,
-                        credit: r.credit || 0,
-                        description: r.description || description,
+                        debit: r.debit,
+                        credit: r.credit,
+                        description: r.description || entry.description,
                     })),
                     sourceType: 'ai_entry',
                 })
@@ -93,15 +96,13 @@ export const createVerificationTool: AITool = {
             } catch (error) {
                 return {
                     success: false,
-                    error: error instanceof Error ? error.message : 'Kunde inte skapa verifikation.',
+                    error: error instanceof Error ? error.message : 'Kunde inte spara verifikationen.',
                 }
             }
         }
 
-        // Preflight: return confirmation request
-        const rowSummary = rows.map(r =>
-            `${r.account}: ${r.debit ? `D ${r.debit}` : ''} ${r.credit ? `K ${r.credit}` : ''}`
-        ).join(', ')
+        // 4. Preflight UI: return confirmation request
+        const totalAmount = entry.rows.reduce((sum, r) => sum + r.debit, 0)
 
         return {
             success: true,
@@ -111,9 +112,9 @@ export const createVerificationTool: AITool = {
                 description: "Detta skapar en verifikation i bokföringen.",
                 summary: [
                     { label: "Verifikation", value: description },
-                    { label: "Datum", value: date || new Date().toISOString().split('T')[0] },
-                    { label: "Rader", value: `${rows.length} rader` },
-                    { label: "Belopp", value: `${totalDebit.toLocaleString('sv-SE')} kr` },
+                    { label: "Datum", value: entry.date },
+                    { label: "Rader", value: `${entry.rows.length} rader` },
+                    { label: "Belopp", value: `${totalAmount.toLocaleString('sv-SE')} kr` },
                 ],
                 action: {
                     toolName: "create_verification",

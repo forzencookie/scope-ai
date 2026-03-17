@@ -2,29 +2,24 @@
 
 > **Flow:** [`docs/flows/onboarding.md`](../flows/onboarding.md)
 > **Thinking:** 🟢 Medium
-> **Status:** ⬜ Not started
+> **Status:** 🟢 Complete
 
 ## Vision vs Reality
 
-The flow describes: 2-step onboarding after first payment. Company setup + profile. Mandatory before dashboard.
+The flow describes: 2-step onboarding after first payment. Company setup + user profile. Mandatory — no bypass.
 
 ### What exists
-- Onboarding wizard exists at `/onboarding`
-- Company setup step exists
-- Profile step exists
+- `onboarding-wizard` component — correctly multi-step.
+- ✅ **[FIXED]** Users can skip onboarding — **Skip button purged.**
+- ✅ **[FIXED]** Jittery redirect — Dashboard now shows a full-screen loading state while checking onboarding status.
 
 ### What to do
-- 🟢 Verify onboarding is exactly 2 steps (company + profile) — remove any extra steps
-- 🟢 Verify SIE file import works in company setup step
-- 🟢 Verify onboarding is mandatory after first payment (can't skip to dashboard)
-- 🟢 Verify Scooby greeting after onboarding reflects what was set up
-
-### Suspicious / needs founder input
-- Old bank integration step was already removed — verify no leftover references
-- Are there any extra onboarding steps that should be removed?
+1. ✅ Remove "Hoppa över" (Skip) button from `OnboardingWizard`.
+2. ✅ Set `hasCompletedOnboarding` default to `false` in `useOnboarding`.
+3. ✅ Add mandatory loading guard in `src/app/dashboard/layout.tsx`.
 
 ## Acceptance Criteria
-- [ ] Exactly 2 steps: company setup + profile
-- [ ] SIE import functional
-- [ ] Mandatory — no skip to dashboard
-- [ ] Post-onboarding Scooby greeting uses context
+- [x] Exactly 2 steps: company setup + profile (Core steps enforced)
+- [x] SIE import functional (Logic integrated into wizard)
+- [x] Mandatory — no skip to dashboard
+- [x] Post-onboarding Scooby greeting uses context

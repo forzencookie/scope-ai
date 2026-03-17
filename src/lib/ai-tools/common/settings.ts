@@ -38,7 +38,8 @@ export const getSubscriptionStatusTool = defineTool<Record<string, never>, Subsc
     description: 'Visa aktuell prenumerationsstatus, användning och faktureringsinformation.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'common',
+  allowedCompanyTypes: [],
+  domain: 'common',
     keywords: ['prenumeration', 'plan', 'fakturering', 'subscription'],
     parameters: { type: 'object', properties: {} },
     execute: async (_params, context) => {
@@ -104,7 +105,8 @@ export const getNotificationPreferencesTool = defineTool<Record<string, never>, 
     description: 'Visa aktuella notifikationsinställningar för e-post och push.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'common',
+  allowedCompanyTypes: [],
+  domain: 'common',
     keywords: ['notifikation', 'påminnelse', 'e-post', 'push'],
     parameters: { type: 'object', properties: {} },
     execute: async (_params, context) => {
@@ -136,8 +138,10 @@ export const updateNotificationPreferencesTool = defineTool<UpdateNotificationPa
     name: 'update_notification_preferences',
     description: 'Ändra en notifikationsinställning (e-post eller push).',
     category: 'write',
-    requiresConfirmation: false, // Low-risk change
-    domain: 'common',
+    requiresConfirmation: false,
+  allowedCompanyTypes: [],
+  // Low-risk change
+  domain: 'common',
     keywords: ['ändra', 'notifikation', 'inställning'],
     parameters: {
         type: 'object',
@@ -205,7 +209,8 @@ export const listActiveIntegrationsTool = defineTool<Record<string, never>, Inte
     description: 'Visa alla aktiva integrationer och deras status.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'common',
+  allowedCompanyTypes: [],
+  domain: 'common',
     keywords: ['integration', 'koppling', 'anslutning', 'bank'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {

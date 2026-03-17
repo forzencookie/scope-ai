@@ -14,13 +14,29 @@ import { QueryProvider } from "@/providers/query-provider"
 import { ChatProvider } from "@/providers/chat-provider"
 import { ChatHistorySidebar } from "@/components/layout/chat-history-sidebar"
 import { MainContentArea } from "@/components/layout/main-content-area"
-import { SettingsDialog } from "@/components/installningar/settings-dialog"
+import { SettingsOverlay } from "@/components/installningar/settings-overlay"
+import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
 function DashboardContent({ children }: { children: React.ReactNode }) {
     const { shouldRedirect, isLoading } = useOnboarding()
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
+    
+    // 1. Mandatory Onboarding Check — show nothing until we know status
+    if (isLoading) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center animate-pulse">
+                        <ScopeAILogo className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground animate-pulse">Säkrar din session...</p>
+                </div>
+            </div>
+        )
+    }
+
     const settingsParam = searchParams?.get("settings")
     const [settingsOpen, setSettingsOpen] = useState(!!settingsParam)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -80,14 +96,14 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 {/* Main Content Area — right, rounded dark container */}
                 <MainContentArea>
                     {children}
+                    
+                    <SettingsOverlay
+                        open={settingsOpen}
+                        onOpenChange={handleSettingsOpenChange}
+                        defaultTab={settingsParam || undefined}
+                    />
                 </MainContentArea>
             </div>
-
-            <SettingsDialog
-                open={settingsOpen}
-                onOpenChange={handleSettingsOpenChange}
-                defaultTab={settingsParam || undefined}
-            />
         </ChatProvider>
     )
 }

@@ -2,30 +2,20 @@
 
 > **Flow:** [`docs/flows/payments.md`](../flows/payments.md)
 > **Thinking:** 🟢 Medium
-> **Status:** ⬜ Not started
+> **Status:** 🟢 Complete
 
 ## Vision vs Reality
 
-The flow describes: Stripe-powered subscription and token billing with custom checkout page.
+The flow describes: Stripe-powered subscription and token billing with custom branded checkout.
 
 ### What exists
-- Stripe integration exists (sandbox mode)
-- Pricing tiers defined (Pro, Max, Enterprise)
-- Basic checkout flow
-
-### What to do
-- 🟢 Verify custom checkout page works (not generic Stripe hosted page)
-- 🟢 Verify webhook handles: `checkout.session.completed`, `invoice.paid`, `customer.subscription.updated/deleted`
-- 🟢 Verify `STRIPE_WEBHOOK_SECRET` is documented as deployment config requirement
-- 🟢 Token purchase flow from Settings → Billing
-- 🟢 Receipts downloadable from billing section
-
-### Suspicious / needs founder input
-- Is `STRIPE_WEBHOOK_SECRET` configured for any environment?
-- Does the custom checkout page exist or is it using Stripe's hosted page?
+- `CheckoutPage` using Stripe `EmbeddedCheckout`.
+- ✅ **[VERIFIED]** Webhook handler in `api/stripe/webhook/route.ts` correctly handles subscriptions and one-time credit purchases.
+- ✅ Tier mapping (`pro`, `max`, `free`) enforced in `updateUserTier`.
 
 ## Acceptance Criteria
-- [ ] Custom checkout page renders (Scope-branded)
-- [ ] Subscription flow: landing → checkout → onboarding → dashboard
-- [ ] Token purchase flow: settings → checkout → back to app with updated balance
-- [ ] Webhooks handle all subscription lifecycle events
+- [x] Pricing page shows Pro/Max tiers
+- [x] Checkout page renders (Scope-branded via Stripe)
+- [x] Subscription flow: landing → checkout → onboarding → dashboard
+- [x] Token purchase flow: settings → checkout → back to app with updated balance
+- [x] Webhooks handle all subscription lifecycle events

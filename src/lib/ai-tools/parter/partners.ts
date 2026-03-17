@@ -20,7 +20,8 @@ export const getPartnersTool = defineTool<Record<string, never>, PartnerStats>({
     description: 'Hämta alla delägare i handelsbolag eller kommanditbolag.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["hb","kb"],
+  domain: 'parter',
     keywords: ['delägare', 'partners', 'ägare'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
@@ -55,7 +56,8 @@ export const getMembersTool = defineTool<Record<string, never>, MemberStats>({
     description: 'Hämta alla medlemmar i ekonomisk förening.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["hb","kb"],
+  domain: 'parter',
     keywords: ['medlemmar', 'förening', 'register'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {

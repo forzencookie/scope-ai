@@ -3,32 +3,36 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import { useToast } from "@/components/ui/toast"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 export type Payslip = {
-    id: string | number
+    id: string
     employee: string
     period: string
     grossSalary: number
     netSalary: number
     tax: number
     status: string
-    paymentDate?: string
+    paymentDate: string | null
 }
 
+/**
+ * usePayslipsLogic - Read-only logic for the Payroll dashboard.
+ * 
+ * ALL MUTATIONS (Running payroll, marking paid, deletions) are handled by Scooby.
+ * This hook purely maps database state to the UI.
+ */
 export function usePayslipsLogic() {
-    const toast = useToast()
+    const { navigateToAI } = useChatNavigation()
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
     const [allPayslips, setAllPayslips] = useState<Payslip[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string[]>([])
-    const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
-    const [viewDialogOpen, setViewDialogOpen] = useState(false)
-    const [showAIDialog, setShowAIDialog] = useState(false)
-    const [employeeCount, setEmployeeCount] = useState(0)
 
     // Fetch real employee count
+    const [employeeCount, setEmployeeCount] = useState(0)
     useEffect(() => {
         const fetchCount = async () => {
             try {
@@ -41,22 +45,22 @@ export function usePayslipsLogic() {
     }, [])
 
     // Fetch real payslips
-    const fetchPayslips = async () => {
+    const fetchPayslips = useCallback(async () => {
         setIsLoading(true)
         try {
             const res = await fetch('/api/payroll/payslips')
             const data = await res.json()
             if (data.payslips) {
-                // Map DB format to UI format
-                setAllPayslips(data.payslips.map((p: { id: string | number; employees?: { name?: string }; period: string; gross_salary: number; net_salary: number; tax_deduction: number; status: string; payment_date?: string }) => ({
-                    id: p.id,
+                // Map DB format to UI format with DETERMINISTIC values
+                setAllPayslips(data.payslips.map((p: any) => ({
+                    id: String(p.id),
                     employee: p.employees?.name || 'Okänd anställd',
-                    period: p.period,
-                    grossSalary: Number(p.gross_salary),
-                    netSalary: Number(p.net_salary),
-                    tax: Number(p.tax_deduction),
-                    status: p.status,
-                    paymentDate: p.payment_date
+                    period: p.period || 'Okänd period',
+                    grossSalary: Number(p.gross_salary) || 0,
+                    netSalary: Number(p.net_salary) || 0,
+                    tax: Number(p.tax_deduction) || 0,
+                    status: p.status || 'draft',
+                    paymentDate: p.payment_date || null
                 })))
             }
         } catch (err) {
@@ -64,15 +68,14 @@ export function usePayslipsLogic() {
         } finally {
             setIsLoading(false)
         }
-    }
+    }, [])
 
     useEffect(() => {
         fetchPayslips()
-    }, [])
+    }, [fetchPayslips])
 
     const handleRowClick = (slip: Payslip) => {
-        setSelectedPayslip(slip)
-        setViewDialogOpen(true)
+        navigateToAI({ prompt: `Jag vill se detaljer för lönebeskedet för ${slip.employee} period ${slip.period}.` })
     }
 
     const stats = useMemo(() => {
@@ -134,49 +137,6 @@ export function usePayslipsLogic() {
         }
     }
 
-    const handlePayslipCreated = async () => {
-        fetchPayslips()
-        // Refresh employee count in case a new employee was saved
-        try {
-            const res = await fetch('/api/employees')
-            const data = await res.json()
-            if (data.employees) setEmployeeCount(data.employees.length)
-        } catch { /* ignore */ }
-    }
-
-    const handleMarkPaid = useCallback(async (id: string) => {
-        try {
-            const res = await fetch(`/api/payroll/payslips/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: 'paid' }),
-            })
-            if (!res.ok) throw new Error('Failed to update')
-            toast.success("Lönebesked markerat som betalt")
-            fetchPayslips()
-        } catch {
-            toast.error("Kunde inte uppdatera", "Ett fel uppstod")
-        }
-    }, [toast])
-
-    const handleDelete = useCallback(async (ids: string[]) => {
-        try {
-            const results = await Promise.all(
-                ids.map(id => fetch(`/api/payroll/payslips/${id}`, { method: 'DELETE' }))
-            )
-            const failed = results.filter(r => !r.ok)
-            if (failed.length > 0) {
-                toast.error("Kunde inte ta bort alla", `${failed.length} lönebesked kunde inte tas bort (kanske inte utkast).`)
-            } else {
-                toast.success("Borttaget", `${ids.length} lönebesked borttagna`)
-            }
-            setSelectedIds(new Set())
-            fetchPayslips()
-        } catch {
-            toast.error("Kunde inte ta bort", "Ett fel uppstod")
-        }
-    }, [toast])
-
     const clearSelection = () =>  setSelectedIds(new Set())
 
     return {
@@ -189,13 +149,6 @@ export function usePayslipsLogic() {
         setSearchQuery,
         statusFilter, 
         setStatusFilter,
-        selectedPayslip,
-        
-        // Dialog Control
-        viewDialogOpen,
-        setViewDialogOpen,
-        showAIDialog,
-        setShowAIDialog,
 
         // Derived Data
         stats,
@@ -204,9 +157,7 @@ export function usePayslipsLogic() {
         handleRowClick,
         toggleSelection,
         toggleAll,
-        handlePayslipCreated,
-        handleMarkPaid,
-        handleDelete,
-        clearSelection
+        clearSelection,
+        refresh: fetchPayslips
     }
 }

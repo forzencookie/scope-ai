@@ -14,6 +14,7 @@ export * from './memory'
 export * from './knowledge'
 export * from './tool-search'
 export * from './reconcile-status'
+export * from './summary'
 
 import { navigationTools } from './navigation'
 import { companyTools } from './company'
@@ -25,6 +26,7 @@ import { memoryTools } from './memory'
 import { knowledgeTools } from './knowledge'
 import { toolSearchTools } from './tool-search'
 import { reconcileTools } from './reconcile-status'
+import { summaryTools } from './summary'
 
 export const commonTools = [
     ...navigationTools,
@@ -37,4 +39,5 @@ export const commonTools = [
     ...knowledgeTools,
     ...toolSearchTools,
     ...reconcileTools,
+    ...summaryTools,
 ]

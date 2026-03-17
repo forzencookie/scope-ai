@@ -30,8 +30,8 @@ export type FunctionParameters = {
 
 export interface InteractionContext {
     userId: string
-    companyId: string | null
-    [key: string]: unknown
+    companyId: string
+    isConfirmed: boolean
 }
 
 // =============================================================================
@@ -80,6 +80,9 @@ export interface AITool<TParams = unknown, TResult = unknown> {
      * Returns a structured result.
      */
     execute: (params: TParams, context: InteractionContext) => Promise<AIToolResult<TResult>>
+
+    /** List of company types allowed to execute this tool. Empty array = allowed for all. */
+    allowedCompanyTypes: Array<'ab' | 'ef' | 'hb' | 'kb' | 'forening'>
 }
 
 // =============================================================================

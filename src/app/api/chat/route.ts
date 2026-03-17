@@ -78,21 +78,19 @@ export async function POST(request: NextRequest) {
             return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400 })
         }
 
-        const {
-            messages,
-            conversationId: reqConversationId,
-            attachments,
-            mentions,
-            model: requestedModel,
-            incognito,
-        } = body as {
-            messages: Array<{ role: string; content: string }>
-            conversationId?: string
-            attachments?: Array<{ name: string; type: string; data: string }>
-            mentions?: Array<{ type: string; label: string; aiContext?: string }>
-            model?: string
-            incognito?: boolean
-        }
+        const messagesInput = (body as { messages: Array<{ role: string; content: string }> }).messages
+        const conversationIdInput = (body as { conversationId?: string }).conversationId
+        const attachmentsInput = (body as { attachments?: Array<{ name: string; type: string; data: string }> }).attachments
+        const mentionsInput = (body as { mentions?: Array<{ type: string; label: string; aiContext?: string }> }).mentions
+        const requestedModelInput = (body as { model?: string }).model
+        const incognitoInput = (body as { incognito?: boolean }).incognito || false
+
+        const messages = messagesInput
+        const conversationId = conversationIdInput
+        const attachments = attachmentsInput
+        const mentions = mentionsInput
+        const requestedModel = requestedModelInput
+        const incognito = incognitoInput
 
         // Vercel AI passes standard CoreMessages
         // For compatibility with previous validation we map them or skip strict validation if needed
@@ -172,19 +170,38 @@ export async function POST(request: NextRequest) {
             console.error('[Chat] Activity snapshot failed:', e)
         }
 
-        const companyType = 'AB' as const
+        const { data: company, error: companyError } = await supabase
+            .from('companies')
+            .select('company_type')
+            .single()
+
+        if (companyError || !company) {
+            return new Response(JSON.stringify({ error: 'Företagsinformation saknas. Slutför onboarding.' }), { status: 400 })
+        }
+
+        // Map database string to our strict union type
+        const rawType = company.company_type || 'AB'
+        const companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' = 
+            rawType === 'EF' ? 'EF' :
+            rawType === 'HB' ? 'HB' :
+            rawType === 'KB' ? 'KB' :
+            rawType === 'FORENING' ? 'FORENING' : 'AB'
+        
         const context = createAgentContext({
             userId,
             companyId: companyId || '',
             companyType,
             locale: 'sv',
             conversationId: conversationId || undefined,
-            messages: messages.map(m => ({
-                id: crypto.randomUUID(),
-                role: m.role as 'user' | 'assistant',
-                content: m.content,
-                timestamp: new Date(),
-            })),
+            messages: messages.map(m => {
+                const role: 'user' | 'assistant' = m.role === 'user' ? 'user' : 'assistant'
+                return {
+                    id: crypto.randomUUID(),
+                    role,
+                    content: m.content,
+                    timestamp: new Date(),
+                }
+            }),
         })
 
         if (activitySnapshot) {
@@ -195,8 +212,29 @@ export async function POST(request: NextRequest) {
             const { userMemoryService } = await import('@/services/user-memory-service')
             if (companyId) {
                 const memories = await userMemoryService.getMemoriesForCompany(companyId)
-                if (memories && memories.length > 0) {
-                    const injected = memories.slice(0, 20).map(m => ({
+                
+                // Smart Relevance Filtering
+                // Only inject memories that are relevant to the current conversation
+                const query = latestContent.toLowerCase()
+                const relevantMemories = memories.filter(m => {
+                    const content = m.content.toLowerCase()
+                    
+                    // Always include preferences (they define Scooby's personality)
+                    if (m.category === 'preference') return true
+                    
+                    // Keywords for topical filtering
+                    const keywords = [
+                        'lön', 'anställd', 'skatt', 'moms', 'utdelning', 'aktie', 
+                        'faktura', 'kvitto', 'bank', 'resultat', 'balans', 'bokslut'
+                    ]
+                    
+                    // If user is asking about a specific topic, include relevant decisions/pending items
+                    return keywords.some(k => query.includes(k) && content.includes(k))
+                })
+
+                if (relevantMemories.length > 0) {
+                    // Limit to top 15 most relevant/recent to save tokens
+                    const injected = relevantMemories.slice(0, 15).map(m => ({
                         content: m.content,
                         category: m.category,
                     }))

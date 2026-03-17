@@ -24,7 +24,8 @@ export const getShareholdersTool = defineTool<GetShareholdersParams, Shareholder
     description: 'Hämta den aktuella aktieboken och lista över alla aktieägare.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['aktieägare', 'delägare', 'ägare'],
     parameters: {
         type: 'object',
@@ -124,7 +125,8 @@ export const addShareholderTool = defineTool<AddShareholderParams, Shareholder>(
     description: 'Lägg till en ny aktieägare i aktieboken. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['lägg till', 'aktieägare', 'ny delägare'],
     parameters: {
         type: 'object',
@@ -228,7 +230,8 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
     description: 'Registrera en aktieöverlåtelse mellan parter. Uppdaterar aktieboken automatiskt.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'parter',
+  allowedCompanyTypes: ["ab"],
+  domain: 'parter',
     keywords: ['överlåta', 'aktier', 'överlåtelse'],
     parameters: {
         type: 'object',

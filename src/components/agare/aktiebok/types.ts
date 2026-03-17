@@ -10,7 +10,7 @@ export interface AktiebokStats {
 export interface ShareholderDisplay {
     id: string
     name: string
-    personalNumber?: string
+    personalNumber: string
     type: 'person' | 'company'
     shares: number
     shareClass: 'A' | 'B'
@@ -18,15 +18,15 @@ export interface ShareholderDisplay {
     acquisitionDate: string
     votes: number
     votesPercentage: number
-    shareNumberFrom?: number
-    shareNumberTo?: number
+    shareNumberFrom: number | null
+    shareNumberTo: number | null
 }
 
 export interface TransactionDisplay {
     id: string
     date: string
     type: string
-    fromShareholder?: string
+    fromShareholder: string
     toShareholder: string
     shares: number
     shareClass: string

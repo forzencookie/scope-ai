@@ -54,6 +54,7 @@ Använd detta diskret för att:
 VIKTIGT: Var diskret. Lägg till påminnelsen naturligt i slutet av ditt svar, inte mitt i.`,
   parameters: { type: 'object' as const, properties: {} },
   requiresConfirmation: false,
+  allowedCompanyTypes: [],
   category: 'read',
   domain: 'common',
   keywords: ['användning', 'tokens', 'budget', 'kvot'],
@@ -175,6 +176,7 @@ export const getUsageStatsTool = defineTool<Record<string, never>, UsageStatus>(
   description: 'Hämta detaljerad statistik om användarens AI-tokenanvändning denna månad. Använd detta om användaren specifikt frågar om sin användning.',
   parameters: { type: 'object' as const, properties: {} },
   requiresConfirmation: false,
+  allowedCompanyTypes: [],
   category: 'read',
   domain: 'common',
   keywords: ['statistik', 'användning', 'tokens', 'AI'],
@@ -256,6 +258,7 @@ Om användaren valt ett paket, returnera checkout-länken.`,
     },
   },
   requiresConfirmation: false,
+  allowedCompanyTypes: [],
   category: 'read',
   execute: async (params, _context) => {
     const { CREDIT_PACKAGES } = await import('@/lib/subscription')

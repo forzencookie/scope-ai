@@ -22,6 +22,7 @@ export const getBoardMembersTool = defineTool<Record<string, never>, BoardMember
     description: 'Hämta lista över styrelsemedlemmar (ordförande, VD, ledamöter, suppleanter).',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: ['ab', 'forening'],
     domain: 'parter',
     keywords: ['styrelse', 'ledamöter', 'styrelsemedlem'],
     parameters: { type: 'object', properties: {} },
@@ -70,9 +71,10 @@ export interface GetBoardMeetingMinutesParams {
 
 export const getBoardMeetingMinutesTool = defineTool<GetBoardMeetingMinutesParams, BoardMeetingMinutes[]>({
     name: 'get_board_meeting_minutes',
-    description: 'Hämta styrelseprotokoll. Kan filtreras på status.',
+    description: 'Hämta styrelseprotokoll. Kan filtrera på status.',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: ['ab', 'forening'],
     domain: 'parter',
     keywords: ['styrelsemöte', 'protokoll', 'mötesprotokoll'],
     parameters: {
@@ -123,6 +125,7 @@ export const getCompanyMeetingsTool = defineTool<GetCompanyMeetingsParams, Compa
     description: 'Hämta bolagsstämmor och styrelsemöten.',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: ['ab', 'forening'],
     domain: 'parter',
     keywords: ['bolagsstämma', 'möten', 'stämma'],
     parameters: {
@@ -180,6 +183,7 @@ export const getAnnualMeetingDeadlineTool = defineTool<{ fiscalYearEnd?: string 
     description: 'Beräkna deadline för årsstämma baserat på räkenskapsårets slut.',
     category: 'read',
     requiresConfirmation: false,
+    allowedCompanyTypes: ['ab'],
     domain: 'parter',
     keywords: ['årsstämma', 'deadline', 'datum'],
     parameters: {

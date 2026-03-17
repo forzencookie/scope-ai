@@ -17,7 +17,8 @@ export const getRoadmapsTool = defineTool<{ status?: string }, Roadmap[]>({
     description: 'Visa alla affärsplaner och deras framsteg.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'planning',
+  allowedCompanyTypes: [],
+  domain: 'planning',
     keywords: ['plan', 'roadmap', 'planering'],
     parameters: {
         type: 'object',
@@ -77,7 +78,8 @@ export const createRoadmapTool = defineTool<CreateRoadmapParams, Roadmap>({
     description: 'Skapa en ny affärsplan med steg. Använd för att bryta ner stora mål i hanterbara delar.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'planning',
+  allowedCompanyTypes: [],
+  domain: 'planning',
     keywords: ['skapa', 'plan', 'roadmap', 'mål'],
     parameters: {
         type: 'object',
@@ -144,8 +146,10 @@ export const updateRoadmapStepTool = defineTool<UpdateRoadmapStepParams, Roadmap
     name: 'update_roadmap_step',
     description: 'Uppdatera status för ett steg i en affärsplan.',
     category: 'write',
-    requiresConfirmation: false, // Low-risk status toggle
-    domain: 'planning',
+    requiresConfirmation: false,
+  allowedCompanyTypes: [],
+  // Low-risk status toggle
+  domain: 'planning',
     keywords: ['uppdatera', 'steg', 'roadmap', 'framsteg'],
     parameters: {
         type: 'object',
@@ -205,7 +209,8 @@ export const generateRoadmapSuggestionsTool = defineTool<{ goal: string; context
     description: 'Generera AI-förslag på steg för att uppnå ett affärsmål. Returnerar en plan som kan användas med create_roadmap.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'planning',
+  allowedCompanyTypes: [],
+  domain: 'planning',
     keywords: ['förslag', 'roadmap', 'rekommendation'],
     parameters: {
         type: 'object',

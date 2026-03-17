@@ -17,7 +17,8 @@ export const getVatReportTool = defineTool<{ period?: string; year?: number }, V
     description: 'Visa momsdeklarationer med utgående och ingående moms. Beräknar nettobelopp att betala/få tillbaka. Använd för att förbereda momsredovisning. Vanliga frågor: "dags för momsen", "hur mycket moms ska jag betala", "momsrapporten".',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'skatt',
+  allowedCompanyTypes: [],
+  domain: 'skatt',
     keywords: ['moms', 'momsdeklaration', 'VAT', 'rapport'],
     parameters: {
         type: 'object',
@@ -100,7 +101,8 @@ export const submitVatTool = defineTool<SubmitVatParams, { submitted: boolean; r
     description: 'Skicka momsdeklaration till Skatteverket för en period. Deadline: 12:e (26:e för stora företag). Visar förhandsgranskning innan bekräftelse. Vanliga frågor: "skicka momsen", "deklarera moms". Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    parameters: {
+  allowedCompanyTypes: [],
+  parameters: {
         type: 'object',
         properties: {
             period: { type: 'string', description: 'Period (t.ex. "Q4 2024")' },

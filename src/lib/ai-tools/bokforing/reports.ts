@@ -45,7 +45,8 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
     description: 'Hämta resultaträkning med intäkter, kostnader och årets resultat. Visar hur lönsamt företaget är. Vanliga frågor: "hur går det", "vad är vinsten", "resultat i år".',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['resultaträkning', 'resultat', 'intäkter', 'kostnader'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
@@ -82,7 +83,8 @@ export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFi
     description: 'Hämta balansräkning med tillgångar, skulder och eget kapital. Visar företagets ekonomiska ställning. Använd för att kolla soliditet, likviditet, eller svara på "hur mycket pengar har vi", "vad är vi skyldiga".',
     category: 'read',
     requiresConfirmation: false,
-    parameters: { type: 'object', properties: {} },
+  allowedCompanyTypes: [],
+  parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()
         const balances = await fetchAccountBalances('2000-01-01', `${year}-12-31`)
@@ -126,7 +128,8 @@ export const exportSIETool = defineTool<ExportSIEParams, { filename: string; url
     description: 'Exportera bokföringen som SIE-fil (svenskt standardformat). Använd för revision, byte av bokföringsprogram, eller när revisorn begär underlag. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    parameters: {
+  allowedCompanyTypes: [],
+  parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'År att exportera' },
@@ -180,7 +183,8 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, Fin
     description: 'Skapa en samlad finansiell rapport med resultat- och balansräkning för en period. Kan jämföra mot tidigare år.',
     category: 'read',
     requiresConfirmation: false,
-    parameters: {
+  allowedCompanyTypes: [],
+  parameters: {
         type: 'object',
         properties: {
             period: { type: 'string', description: 'Period (t.ex. "2024")' },
@@ -263,7 +267,9 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, AnnualReport
     name: 'draft_annual_report',
     description: 'Skapa utkast för årsredovisning (K2). Innehåller förvaltningsberättelse, resultaträkning, balansräkning och noter. Använd när användaren vill göra sin årsredovisning eller frågar om bokslut.',
     category: 'write',
-    requiresConfirmation: false, // Preview first
+    requiresConfirmation: false,
+  allowedCompanyTypes: [],
+  // Preview first
     parameters: {
         type: 'object',
         properties: {
@@ -380,7 +386,8 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
     description: 'Förbered inkomstdeklaration (INK2) för aktiebolag. Beräknar bolagsskatt och visar skatteoptimeringsförslag som periodiseringsfond. Använd när användaren vill deklarera eller frågar om skatt.',
     category: 'write',
     requiresConfirmation: false,
-    parameters: {
+  allowedCompanyTypes: ["ab"],
+  parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'Inkomstår' },
@@ -498,7 +505,8 @@ export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResu
     description: 'Stäng räkenskapsåret och skapa bokslutsposter. Överför årets resultat till eget kapital och skapar ingående balanser för nästa år. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-    parameters: {
+  allowedCompanyTypes: [],
+  parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'Räkenskapsår att stänga' },
@@ -588,7 +596,8 @@ export const generateManagementReportTool = defineTool<GenerateManagementReportP
     description: 'Generera förvaltningsberättelse för årsredovisningen. AI skriver texten baserat på årets siffror. Använd när användaren behöver hjälp att skriva förvaltningsberättelsen.',
     category: 'write',
     requiresConfirmation: false,
-    parameters: {
+  allowedCompanyTypes: [],
+  parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'Räkenskapsår' },

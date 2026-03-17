@@ -170,6 +170,27 @@ class AIToolRegistry {
             }
         }
 
+        // 1. Company-Type Guard (Enforce legal scope)
+        if (tool.allowedCompanyTypes.length > 0) {
+            const { companyService } = await import('@/services/company-service')
+            const company = await companyService.getByUserId(context.userId)
+            
+            if (!company || !tool.allowedCompanyTypes.includes(company.companyType)) {
+                const typeLabels: Record<string, string> = {
+                    ab: 'aktiebolag',
+                    ef: 'enskild firma',
+                    hb: 'handelsbolag',
+                    kb: 'kommanditbolag',
+                    forening: 'förening'
+                }
+                const allowedLabels = tool.allowedCompanyTypes.map(t => typeLabels[t] || t).join(' eller ')
+                return {
+                    success: false,
+                    error: `Denna funktion (${name}) är endast tillgänglig för ${allowedLabels}. Ditt företag är registrerat som ${typeLabels[company?.companyType || ''] || 'okänd typ'}.`,
+                }
+            }
+        }
+
         // Check if confirmation is required and not yet provided
         if (tool.requiresConfirmation && !options?.skipConfirmation && !options?.confirmationId) {
             // Return a confirmation request instead of executing

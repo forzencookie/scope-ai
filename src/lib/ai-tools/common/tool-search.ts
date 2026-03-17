@@ -25,7 +25,8 @@ export const searchToolsTool = defineTool<SearchToolsParams, SearchToolsResult[]
     description: 'Sök efter verktyg du kan använda. Beskriv vad du vill göra, t.ex. "skapa faktura", "kör lönerna", "beräkna skatt", "visa kvitton". Returnerar en lista med matchande verktyg som du sedan kan anropa.',
     category: 'read',
     requiresConfirmation: false,
-    coreTool: true,
+  allowedCompanyTypes: [],
+  coreTool: true,
     domain: 'common',
     keywords: ['verktyg', 'sök', 'hitta', 'funktion', 'tool', 'search'],
     parameters: {

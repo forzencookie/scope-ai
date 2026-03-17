@@ -1,6 +1,9 @@
 "use client"
 
+import * as React from "react"
 import { memo } from "react"
+import { TransactionDetailsOverlay } from "./components/transaction-details-overlay"
+import { TransactionWithAI } from "@/types"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
@@ -42,8 +45,26 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
         handleTransactionClick,
     } = useTransactionsLogic(props)
 
+    const [selectedTransaction, setSelectedTransaction] = React.useState<TransactionWithAI | null>(null)
+
+    const onRowClick = (transaction: TransactionWithAI) => {
+        const isBooked = transaction.status === "Bokförd"
+        if (isBooked) {
+            setSelectedTransaction(transaction)
+        } else {
+            handleTransactionClick(transaction)
+        }
+    }
+
     return (
         <div className="w-full space-y-4 md:space-y-6">
+            {/* Overlay for booked details */}
+            <TransactionDetailsOverlay
+                isOpen={!!selectedTransaction}
+                onClose={() => setSelectedTransaction(null)}
+                transaction={selectedTransaction}
+            />
+
             {/* Page Heading */}
             <PageHeader
                 title={text.transactions?.title || "Transaktioner"}
@@ -66,7 +87,7 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
                 <TransactionsTableGrid
                     transactions={filteredTransactions}
                     selection={selection}
-                    onTransactionClick={handleTransactionClick}
+                    onTransactionClick={onRowClick}
                     hasActiveFilters={filter.hasActiveFilters}
                 />
             </div>

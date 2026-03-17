@@ -36,7 +36,8 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
     description: 'Skannar appdata efter inaktuella eller inkonsekventa tillstånd. Kontrollerar obokförda transaktioner, förfallna fakturor, omatchade kvitton, utkast-lönebesked och gamla väntande bokningar. Returnerar en lista med åtgärdsförslag.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'common',
+  allowedCompanyTypes: [],
+  domain: 'common',
     keywords: ['status', 'reconcile', 'uppdatera', 'kontrollera', 'granska', 'kolla', 'avstämning'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
@@ -109,7 +110,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (unbookedTx.data ?? []).slice(0, 5).map(t => ({
                     id: t.id,
                     description: `${t.description ?? 'Okänd'} — ${t.amount} kr`,
-                    date: t.date ?? undefined,
+                    date: t.date ,
                 })),
             })
         }
@@ -126,7 +127,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (overdueInvoices.data ?? []).slice(0, 5).map(i => ({
                     id: i.id,
                     description: `${i.invoice_number ?? '—'} ${i.customer_name ?? ''} — ${i.total_amount} kr`,
-                    date: i.due_date ?? undefined,
+                    date: i.due_date ,
                 })),
             })
         }
@@ -143,7 +144,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (unmatchedReceipts.data ?? []).slice(0, 5).map(r => ({
                     id: r.id,
                     description: `${r.supplier ?? 'Okänd butik'} — ${r.amount ?? '?'} kr`,
-                    date: r.captured_at ?? undefined,
+                    date: r.captured_at ,
                 })),
             })
         }
@@ -160,7 +161,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (draftPayslips.data ?? []).slice(0, 5).map(p => ({
                     id: p.id,
                     description: 'Utkast lönebesked',
-                    date: p.created_at ?? undefined,
+                    date: p.created_at ,
                 })),
             })
         }
@@ -177,7 +178,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (stalePending.data ?? []).slice(0, 5).map(b => ({
                     id: b.id,
                     description: `${b.source_type ?? 'Okänd källa'}: ${b.description ?? '—'}`,
-                    date: b.created_at ?? undefined,
+                    date: b.created_at ,
                 })),
             })
         }

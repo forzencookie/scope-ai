@@ -110,7 +110,7 @@ export function useAktiebokLogic() {
 
       return {
         id: String(v.id),
-        date: v.date,
+        date: v.date || '',
         type,
         fromShareholder: type === 'Nyemission' ? 'Bolaget' : (fromName || '—'),
         toShareholder: toName,

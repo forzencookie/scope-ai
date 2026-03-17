@@ -38,7 +38,8 @@ export const queryMemoriesTool = defineTool<QueryMemoriesParams, QueryMemoriesRe
     description: 'Sök i användarens minnesbank för att hitta relevant tidigare kontext. Använd när du misstänker att användaren har diskuterat ett ämne tidigare, eller för att personalisera svaret baserat på deras preferenser och tidigare beslut.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'common',
+  allowedCompanyTypes: [],
+  domain: 'common',
     keywords: ['minne', 'komma ihåg', 'tidigare', 'preferens'],
     parameters: {
         type: 'object',
@@ -130,8 +131,10 @@ export const addMemoryTool = defineTool<AddMemoryParams, AddMemoryResult>({
     name: 'add_memory',
     description: 'Spara ett nytt minne om användaren. Använd för att komma ihåg viktiga beslut, preferenser, eller pågående överväganden som användaren nämner.',
     category: 'write',
-    requiresConfirmation: false, // Low-risk, can be undone
-    domain: 'common',
+    requiresConfirmation: false,
+  allowedCompanyTypes: [],
+  // Low-risk, can be undone
+  domain: 'common',
     keywords: ['spara', 'minne', 'komma ihåg', 'notera'],
     parameters: {
         type: 'object',

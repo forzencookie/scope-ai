@@ -25,7 +25,8 @@ export const getVerificationsTool = defineTool<GetVerificationsParams, Verificat
     description: 'Hämta verifikationer (bokföringsposter) från huvudboken. Kan filtreras på serie, datum och sökterm. Använd för att hitta specifika bokföringsposter eller förstå vad en viss post gäller.',
     category: 'read',
     requiresConfirmation: false,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['verifikation', 'verifikat', 'bokföring', 'lista'],
     parameters: {
         type: 'object',
@@ -139,7 +140,8 @@ export const periodizeExpenseTool = defineTool<PeriodizeExpenseParams, Periodize
     description: 'Periodisera en kostnad över flera månader. Skapar automatiska bokföringsposter.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['periodisera', 'kostnad', 'fördela'],
     parameters: {
         type: 'object',
@@ -249,7 +251,8 @@ export const reverseVerificationTool = defineTool<ReverseVerificationParams, Rev
     description: 'Återför/ångra en verifikation genom att skapa en motbokning.',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['reversera', 'ångra', 'verifikation', 'korrigera'],
     parameters: {
         type: 'object',
@@ -357,7 +360,8 @@ export const createAccrualTool = defineTool<CreateAccrualParams, AccrualResult>(
     description: 'Skapa periodavgränsningspost (upplupen kostnad/intäkt, förutbetald kostnad/intäkt).',
     category: 'write',
     requiresConfirmation: true,
-    domain: 'bokforing',
+  allowedCompanyTypes: [],
+  domain: 'bokforing',
     keywords: ['upplupen', 'periodisering', 'accrual'],
     parameters: {
         type: 'object',
