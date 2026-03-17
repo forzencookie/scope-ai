@@ -1,12 +1,31 @@
 /**
  * Onboarding Status API
- * 
+ *
  * GET: Check if user needs to see onboarding
  * PATCH: Update onboarding status (complete or skip)
+ *
+ * Stores onboarding state in user_preferences.preferences JSON column,
+ * since profiles table doesn't have onboarding-specific columns.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@/lib/database/client'
+
+interface OnboardingPreferences {
+    onboarding_completed_at?: string | null
+    onboarding_skipped?: boolean
+}
+
+function extractOnboarding(preferences: unknown): OnboardingPreferences {
+    if (preferences && typeof preferences === 'object' && !Array.isArray(preferences)) {
+        const prefs = preferences as Record<string, unknown>
+        return {
+            onboarding_completed_at: typeof prefs.onboarding_completed_at === 'string' ? prefs.onboarding_completed_at : null,
+            onboarding_skipped: typeof prefs.onboarding_skipped === 'boolean' ? prefs.onboarding_skipped : false,
+        }
+    }
+    return { onboarding_completed_at: null, onboarding_skipped: false }
+}
 
 export async function GET() {
     try {
@@ -17,26 +36,36 @@ export async function GET() {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
         }
 
-        // Get profile with onboarding status
-        const { data: profile, error } = await supabase
+        // Get profile created_at
+        const { data: profile } = await supabase
             .from('profiles')
-            .select('onboarding_completed_at, onboarding_skipped, created_at')
+            .select('created_at')
             .eq('id', user.id)
             .single()
 
-        if (error) {
-            console.error('[Onboarding] Failed to fetch profile:', error)
+        // Get onboarding status from user_preferences
+        const { data: prefs, error } = await supabase
+            .from('user_preferences')
+            .select('preferences')
+            .eq('user_id', user.id)
+            .single()
+
+        if (error && error.code !== 'PGRST116') {
+            // PGRST116 = no rows found, which is fine (new user)
+            console.error('[Onboarding] Failed to fetch preferences:', error)
             return NextResponse.json({ error: 'Failed to fetch onboarding status' }, { status: 500 })
         }
 
+        const onboarding = extractOnboarding(prefs?.preferences)
+
         // Determine if user should see onboarding
-        const needsOnboarding = !profile.onboarding_completed_at && !profile.onboarding_skipped
-        
+        const needsOnboarding = !onboarding.onboarding_completed_at && !onboarding.onboarding_skipped
+
         return NextResponse.json({
             needsOnboarding,
-            completedAt: profile.onboarding_completed_at,
-            skipped: profile.onboarding_skipped,
-            accountCreatedAt: profile.created_at,
+            completedAt: onboarding.onboarding_completed_at,
+            skipped: onboarding.onboarding_skipped,
+            accountCreatedAt: profile?.created_at,
         })
     } catch (error) {
         console.error('[Onboarding] Error:', error)
@@ -60,25 +89,49 @@ export async function PATCH(req: NextRequest) {
             return NextResponse.json({ error: 'Invalid action. Use "complete" or "skip"' }, { status: 400 })
         }
 
-        const updateData = action === 'complete'
-            ? { onboarding_completed_at: new Date().toISOString(), onboarding_skipped: false }
-            : { onboarding_skipped: true }
+        // Read existing preferences
+        const { data: existing } = await supabase
+            .from('user_preferences')
+            .select('id, preferences')
+            .eq('user_id', user.id)
+            .single()
 
-        const { error } = await supabase
-            .from('profiles')
-            .update(updateData)
-            .eq('id', user.id)
+        const existingPrefs = (existing?.preferences && typeof existing.preferences === 'object' && !Array.isArray(existing.preferences))
+            ? existing.preferences as Record<string, unknown>
+            : {}
 
-        if (error) {
-            console.error('[Onboarding] Failed to update status:', error)
-            return NextResponse.json({ error: 'Failed to update onboarding status' }, { status: 500 })
+        const updatedPrefs = action === 'complete'
+            ? { ...existingPrefs, onboarding_completed_at: new Date().toISOString(), onboarding_skipped: false }
+            : { ...existingPrefs, onboarding_skipped: true }
+
+        if (existing) {
+            // Update existing row
+            const { error } = await supabase
+                .from('user_preferences')
+                .update({ preferences: updatedPrefs })
+                .eq('id', existing.id)
+
+            if (error) {
+                console.error('[Onboarding] Failed to update status:', error)
+                return NextResponse.json({ error: 'Failed to update onboarding status' }, { status: 500 })
+            }
+        } else {
+            // Insert new row
+            const { error } = await supabase
+                .from('user_preferences')
+                .insert({ user_id: user.id, preferences: updatedPrefs })
+
+            if (error) {
+                console.error('[Onboarding] Failed to insert status:', error)
+                return NextResponse.json({ error: 'Failed to update onboarding status' }, { status: 500 })
+            }
         }
 
-        return NextResponse.json({ 
-            success: true, 
+        return NextResponse.json({
+            success: true,
             action,
-            message: action === 'complete' 
-                ? 'Onboarding completed successfully' 
+            message: action === 'complete'
+                ? 'Onboarding completed successfully'
                 : 'Onboarding skipped'
         })
     } catch (error) {

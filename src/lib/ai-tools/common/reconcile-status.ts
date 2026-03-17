@@ -72,7 +72,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
             // 3. Unmatched receipts (status = 'Väntar')
             supabase
                 .from('receipts')
-                .select('id, vendor, amount, captured_at')
+                .select('id, supplier, amount, captured_at')
                 .eq('status', 'Väntar')
                 .order('captured_at', { ascending: false })
                 .limit(50),
@@ -109,7 +109,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (unbookedTx.data ?? []).slice(0, 5).map(t => ({
                     id: t.id,
                     description: `${t.description ?? 'Okänd'} — ${t.amount} kr`,
-                    date: t.date,
+                    date: t.date ?? undefined,
                 })),
             })
         }
@@ -126,7 +126,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: (overdueInvoices.data ?? []).slice(0, 5).map(i => ({
                     id: i.id,
                     description: `${i.invoice_number ?? '—'} ${i.customer_name ?? ''} — ${i.total_amount} kr`,
-                    date: i.due_date,
+                    date: i.due_date ?? undefined,
                 })),
             })
         }
@@ -142,7 +142,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 suggestion: 'Jag kan försöka matcha dessa mot dina banktransaktioner.',
                 details: (unmatchedReceipts.data ?? []).slice(0, 5).map(r => ({
                     id: r.id,
-                    description: `${r.vendor ?? 'Okänd butik'} — ${r.amount ?? '?'} kr`,
+                    description: `${r.supplier ?? 'Okänd butik'} — ${r.amount ?? '?'} kr`,
                     date: r.captured_at ?? undefined,
                 })),
             })

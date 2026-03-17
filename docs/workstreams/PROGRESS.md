@@ -17,6 +17,8 @@
 | 03 | [Tool–Service Consistency](03-tool-service-consistency.md) — 8 files with 15+ service bypasses, duplicate tool name, inconsistent validation | 🟢 Medium | ⬜ Not started |
 | 04 | [Generator Fixes](04-generator-fixes.md) — SRU bug (phone vs orgnr), disconnected model ID system | 🟢 Medium | ⬜ Not started |
 
-**Medium mode sessions — work through 01 → 02 → 03 → 04 in order.**
+**Dependency chain:** `fix/database-schema.md` → 01 → 02 → 03 → 04
+
+WS-01 (Type Safety) is **blocked** by the database schema fix — no point regenerating types for a wrong schema. Start with `docs/fix/database-schema.md` (drop dead tables, replace `corporate_documents` with `meetings`, recreate `dividends`, extend `partners`/`members`), then work 01 → 02 → 03 → 04 in order.
 
 After these are done, the codebase is clean. Then move to `docs/fix/` to build toward the vision.

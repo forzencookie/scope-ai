@@ -39,8 +39,15 @@ export interface K10Data {
 
 export interface K10FormPreviewProps {
     data: K10Data
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    actions?: any // Simplified
+    actions?: {
+        onConfirm?: () => void
+        onCancel?: () => void
+        onEdit?: () => void
+        onExport?: () => void
+        onSubmit?: () => void
+        isLoading?: boolean
+        confirmLabel?: string
+    }
     className?: string
 }
 

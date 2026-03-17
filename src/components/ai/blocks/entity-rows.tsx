@@ -78,11 +78,10 @@ const ROW_COMPONENTS = {
 } as const
 
 export function EntityRows({ variant, items }: EntityRowsProps) {
-  const RowComponent = ROW_COMPONENTS[variant]
+  const RowComponent = ROW_COMPONENTS[variant] as React.ComponentType<EmployeeRowProps | InvoiceRowProps | TransactionRowProps | ReceiptRowProps>
   return (
     <div className="rounded-lg border divide-y">
-      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-      {items.map((item, i) => <RowComponent key={i} {...item as any} />)}
+      {items.map((item, i) => <RowComponent key={i} {...(item as EmployeeRowProps & InvoiceRowProps & TransactionRowProps & ReceiptRowProps)} />)}
     </div>
   )
 }

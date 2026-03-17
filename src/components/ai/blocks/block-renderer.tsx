@@ -32,36 +32,42 @@ import { Annotation } from "./annotation"
 import { Columns } from "./columns"
 import { Metric } from "./metric"
 
-/* eslint-disable @typescript-eslint/no-explicit-any */
-const BLOCK_MAP: Record<string, React.ComponentType<any>> = {
-  "stat-cards": StatCards,
-  "financial-table": FinancialTable,
-  "data-table": DataTable,
-  "chart": Chart,
-  "ranked-list": RankedList,
-  "timeline": Timeline,
-  "checklist": Checklist,
-  "info-card": InfoCard,
-  "legal-paragraphs": LegalParagraphs,
-  "key-value": KeyValue,
-  "comparison": Comparison,
-  "action-bar": ActionBar,
-  "separator": BlockSeparator,
-  "heading": Heading,
-  "prose": Prose,
-  "status-check": StatusCheck,
-  "document-preview": DocumentPreview,
-  "form-fields": FormFields,
-  "progress-bar": ProgressBar,
-  "confirmation": ConfirmationBlock,
-  "entity-rows": EntityRows,
-  "collapsed-group": CollapsedGroup,
-  "inline-choice": InlineChoice,
-  "annotation": Annotation,
-  "columns": Columns,
-  "metric": Metric,
+// Block components each have their own props interface. The renderer passes
+// block.props (typed as Record<string, unknown>) at runtime. We use a widening
+// helper identical to the card registry pattern.
+type BlockComponent = React.ComponentType<Record<string, unknown>>
+function block(c: React.ComponentType<never>): BlockComponent {
+  return c as unknown as BlockComponent
 }
-/* eslint-enable @typescript-eslint/no-explicit-any */
+
+const BLOCK_MAP: Record<string, BlockComponent> = {
+  "stat-cards": block(StatCards),
+  "financial-table": block(FinancialTable),
+  "data-table": block(DataTable),
+  "chart": block(Chart),
+  "ranked-list": block(RankedList),
+  "timeline": block(Timeline),
+  "checklist": block(Checklist),
+  "info-card": block(InfoCard),
+  "legal-paragraphs": block(LegalParagraphs),
+  "key-value": block(KeyValue),
+  "comparison": block(Comparison),
+  "action-bar": block(ActionBar),
+  "separator": block(BlockSeparator),
+  "heading": block(Heading),
+  "prose": block(Prose),
+  "status-check": block(StatusCheck),
+  "document-preview": block(DocumentPreview),
+  "form-fields": block(FormFields),
+  "progress-bar": block(ProgressBar),
+  "confirmation": block(ConfirmationBlock),
+  "entity-rows": block(EntityRows),
+  "collapsed-group": block(CollapsedGroup),
+  "inline-choice": block(InlineChoice),
+  "annotation": block(Annotation),
+  "columns": block(Columns),
+  "metric": block(Metric),
+}
 
 export function BlockRenderer({ block }: { block: BlockProps }) {
   const Component = BLOCK_MAP[block.type]

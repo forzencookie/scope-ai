@@ -1,6 +1,7 @@
 "use client"
 
 import React from "react"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, FileText, Image as ImageIcon } from "lucide-react"
@@ -17,12 +18,20 @@ import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { BalanceAuditCard } from "@/components/ai/previews/bokforing/balance-audit-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 import { MentionBadge } from "@/components/ai/mention-popover"
-import type { Message } from "@/lib/chat-types"
+import type { Message, MessageDisplay } from "@/lib/chat-types"
+import type { InlineCardData } from "@/components/ai/cards/inline"
 import { useState } from "react"
 
 // Attachment preview with image error fallback
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-const AttachmentPreview = React.memo(function AttachmentPreview({ attachment }: { attachment: any }) {
+interface AttachmentData {
+    name?: string
+    type?: string
+    url?: string
+    data?: string
+    content?: string
+}
+
+const AttachmentPreview = React.memo(function AttachmentPreview({ attachment }: { attachment: AttachmentData }) {
     const [imageError, setImageError] = useState(false)
     const isImage = attachment.type?.startsWith('image/')
 
@@ -42,13 +51,14 @@ const AttachmentPreview = React.memo(function AttachmentPreview({ attachment }: 
     return (
         <div className="flex items-center gap-2 bg-muted/60 rounded-lg p-2 pr-3 text-xs max-w-[200px]">
             {showImage ? (
-                <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
+                <div className="w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0 relative">
+                    <Image
                         src={imageSrc}
                         alt={attachment.name || 'Bild'}
-                        className="w-full h-full object-cover"
+                        fill
+                        className="object-cover"
                         onError={() => setImageError(true)}
+                        unoptimized
                     />
                 </div>
             ) : (
@@ -121,8 +131,18 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {message.confirmationRequired && (
                     <div className="md:hidden">
                         <ConfirmationCard
-                            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                            confirmation={message.confirmationRequired as any}
+                            confirmation={{
+                                title: message.confirmationRequired.type,
+                                description: message.confirmationRequired.action,
+                                summary: Object.entries(message.confirmationRequired.data).map(([label, value]) => ({
+                                    label,
+                                    value: String(value),
+                                })),
+                                action: {
+                                    toolName: message.confirmationRequired.type,
+                                    params: message.confirmationRequired.data,
+                                },
+                            }}
                             isLoading={isLoading && isLast}
                             onConfirm={() => onConfirm(message.confirmationRequired!.id)}
                             onCancel={() => onCancelConfirmation(message.id)}
@@ -145,13 +165,12 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                                 tasks={message.display.data.tasks || []}
                             />
                         )}
-                        {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                        {message.display.type === ('BenefitsTable' as any) && (
+                        {message.display.type === 'BenefitsTable' && (
                             <div className="rounded-lg border border-border p-4 bg-muted/30">
                                 <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
                                 <ul className="space-y-2">
                                     { }
-                                    {((message.display.data as { benefits?: Array<{ id?: string; name?: string; category?: string }> }).benefits || []).map((b) => (
+                                    {(message.display.data.benefits || []).map((b) => (
                                         <li key={b.id || Math.random()} className="text-xs flex justify-between items-center">
                                             <span>{b.name}</span>
                                             <span className="text-muted-foreground">{b.category}</span>
@@ -181,21 +200,24 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 )}
 
                 {/* Inline-only cards (always visible, no overlay) */}
-                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any)?.component === 'BalanceAuditCard') && (
+                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as MessageDisplay & { component?: string }).component === 'BalanceAuditCard') && (
                     <div className="my-2">
-                        <BalanceAuditCard audit={(message.display.data as any)?.audit} data={(message.display.data as any)?.audit || message.display.data as any} />
+                        <BalanceAuditCard
+                            audit={(message.display.data as Record<string, unknown>).audit as Parameters<typeof BalanceAuditCard>[0]['audit']}
+                            data={((message.display.data as Record<string, unknown>).audit || message.display.data) as Parameters<typeof BalanceAuditCard>[0]['data']}
+                        />
                     </div>
                 )}
 
                 {/* Inline result cards — compact cards for AI action results */}
                 {message.display?.type === 'InlineCard' && (
                     <div className="my-2">
-                        <InlineCardRenderer card={(message.display as any).data} />
+                        <InlineCardRenderer card={message.display.data as InlineCardData} />
                     </div>
                 )}
                 {message.display?.type === 'InlineCards' && (
                     <div className="my-2 space-y-1.5">
-                        {((message.display as any).data?.cards || []).map((card: any, i: number) => (
+                        {((message.display.data as Record<string, unknown>).cards as InlineCardData[] || []).map((card: InlineCardData, i: number) => (
                             <InlineCardRenderer key={i} card={card} />
                         ))}
                     </div>
@@ -281,9 +303,8 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                             {/* Attachments */}
                             {message.attachments && message.attachments.length > 0 && (
                                 <div className="flex flex-wrap gap-2 justify-end">
-                                    {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                                    {message.attachments.map((att: any, i: number) => (
-                                        <AttachmentPreview key={att.id || att.name || `att-${i}`} attachment={att} />
+                                    {message.attachments.map((att, i) => (
+                                        <AttachmentPreview key={att.name || `att-${i}`} attachment={att} />
                                     ))}
                                 </div>
                             )}

@@ -51,7 +51,7 @@ export const receiptService = {
             .range(offset, offset + limit - 1)
 
         if (search) {
-            query = query.or(`supplier.ilike.%${search}%,vendor.ilike.%${search}%`)
+            query = query.or(`supplier.ilike.%${search}%`)
         }
 
         if (statuses.length > 0) {
@@ -77,7 +77,7 @@ export const receiptService = {
         // Map DB columns to UI Receipt type
         const receipts: Receipt[] = (data || []).map((row: ReceiptRow) => ({
             id: row.id,
-            supplier: row.supplier || row.vendor || 'Okänd',
+            supplier: row.supplier || 'Okänd',
             date: row.date || row.captured_at || '',
             amount: String(row.amount || row.total_amount || '0'),
             category: row.category || 'Övrigt',
@@ -85,7 +85,7 @@ export const receiptService = {
             attachment: row.image_url || row.file_url || '',
             hasAttachment: !!(row.image_url || row.file_url),
             attachmentUrl: row.image_url || row.file_url || undefined,
-            linkedTransaction: row.transaction_count ? 'linked' : undefined,
+            linkedTransaction: undefined,
         }))
 
         return { receipts, totalCount: count || 0 }
@@ -105,20 +105,19 @@ export const receiptService = {
             return { total: 0, matchedCount: 0, unmatchedCount: 0, totalAmount: 0 }
         }
 
-        // RPC returns array because of RETURNS TABLE
-        const stats = Array.isArray(data) ? data[0] : data
+        // RPC returns Json — cast to record for property access
+        const raw = Array.isArray(data) ? data[0] : data
+        const stats = (raw ?? {}) as Record<string, unknown>
 
-        if (!stats) {
+        if (!raw) {
             return { total: 0, matchedCount: 0, unmatchedCount: 0, totalAmount: 0 }
         }
 
-        // Note: The RPC function doesn't currently return totalAmount
-        // So we default it to 0 for now to avoid NaN
         return {
             total: Number(stats.total_receipts || 0),
             matchedCount: Number(stats.processed_receipts || 0),
             unmatchedCount: Number(stats.pending_receipts || 0),
-            totalAmount: 0 // Will need to update RPC if we want this value
+            totalAmount: 0
         }
     },
 

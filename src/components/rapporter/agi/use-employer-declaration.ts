@@ -66,8 +66,19 @@ export function useEmployerDeclaration() {
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
 
     // State
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [payslips, setPayslips] = useState<any[]>([])
+    interface RawPayslip {
+        id: string
+        employee_id?: string
+        employee_name?: string
+        personal_number?: string
+        period: string
+        gross_salary: number
+        net_salary: number
+        tax_deduction: number
+        benefit_value?: number
+        status: string
+    }
+    const [payslips, setPayslips] = useState<RawPayslip[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [searchQuery, setSearchQuery] = useState("")
     const [statusFilter, setStatusFilter] = useState<string | null>(null)

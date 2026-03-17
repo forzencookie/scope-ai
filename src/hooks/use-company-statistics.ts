@@ -47,12 +47,12 @@ export function useCompanyStatistics() {
                 supabase.rpc('get_monthly_cashflow', { p_year: year }),
                 supabase.rpc('get_dashboard_counts'),
                 supabase.rpc('get_account_balances', {
-                    p_start_date: '2000-01-01',
-                    p_end_date: new Date().toISOString().split('T')[0]
+                    p_date_from: '2000-01-01',
+                    p_date_to: new Date().toISOString().split('T')[0]
                 }),
                 supabase.rpc('get_account_balances', {
-                    p_start_date: prevYearStart,
-                    p_end_date: prevYearEnd
+                    p_date_from: prevYearStart,
+                    p_date_to: prevYearEnd
                 })
             ])
 
@@ -70,11 +70,11 @@ export function useCompanyStatistics() {
             return {
                 monthlyFlow: flowRes.data || [],
                 dashboardCounts: counts,
-                accountBalances: (balancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
+                accountBalances: (balancesRes.data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
                     account: String(row.account_number),
                     balance: row.balance
                 })),
-                prevYearBalances: (prevBalancesRes.data || []).map((row: { account_number: number; balance: number }) => ({
+                prevYearBalances: (prevBalancesRes.data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
                     account: String(row.account_number),
                     balance: row.balance
                 })),

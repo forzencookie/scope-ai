@@ -59,7 +59,7 @@ export interface ShareRegisterSummary {
 // =============================================================================
 
 function mapRowToShareholder(row: ShareholderRow, totalShares: number): Shareholder {
-    const sharesCount = row.shares_count ?? row.shares ?? 0
+    const sharesCount = row.shares ?? 0
     const ownershipPct = row.ownership_percentage ??
         (totalShares > 0 ? (sharesCount / totalShares) * 100 : 0)
 
@@ -114,7 +114,7 @@ export const shareholderService = {
         if (error) throw error
         if (!data || data.length === 0) return { shareholders: [], totalCount: 0 }
 
-        const totalShares = data.reduce((sum, row) => sum + (row.shares_count ?? row.shares ?? 0), 0)
+        const totalShares = data.reduce((sum, row) => sum + (row.shares ?? 0), 0)
 
         return {
             shareholders: data.map((row) => mapRowToShareholder(row, totalShares)),
@@ -140,7 +140,7 @@ export const shareholderService = {
 
         const { data } = await supabase
             .from('shareholders')
-            .select('shares, shares_count, share_class')
+            .select('shares, share_class')
 
         if (!data || data.length === 0) {
             return { totalShares: 0, totalShareholderCount: 0, sharesByClass: { classA: 0, classB: 0 }, totalCapital: 0, quotaValue }
@@ -151,7 +151,7 @@ export const shareholderService = {
         let totalShares = 0
 
         for (const row of data) {
-            const shares = row.shares_count ?? row.shares ?? 0
+            const shares = row.shares ?? 0
             totalShares += shares
             if (row.share_class === 'B') classB += shares
             else classA += shares
@@ -206,10 +206,10 @@ export const shareholderService = {
             fromShareholderName: null, // Would need a join to resolve
             toShareholderId: row.to_shareholder_id,
             toShareholderName: '', // Would need a join to resolve
-            shareCount: row.share_count,
+            shareCount: row.share_count ?? 0,
             pricePerShare: row.price_per_share,
             totalPrice: row.total_amount,
-            registrationDate: row.registration_date ?? row.transaction_date,
+            registrationDate: row.registration_date ?? row.transaction_date ?? '',
             documentReference: row.document_reference,
             notes: row.notes,
         }))
@@ -242,6 +242,17 @@ export const shareholderService = {
     }) {
         const supabase = createBrowserClient()
 
+        // Get user and company context
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Ej inloggad.')
+
+        const { data: company } = await supabase
+            .from('companies')
+            .select('id')
+            .single()
+
+        if (!company) throw new Error('Företag saknas.')
+
         // Auto-assign share numbers if not provided
         let assignedFrom = shareNumberFrom
         let assignedTo = shareNumberTo
@@ -263,10 +274,11 @@ export const shareholderService = {
         const { data, error } = await supabase
             .from('shareholders')
             .insert({
+                company_id: company.id,
+                user_id: user.id,
                 name,
                 ssn_org_nr: personalOrOrgNumber,
                 shares: sharesCount,
-                shares_count: sharesCount,
                 share_class: shareClass,
                 email: email ?? null,
                 phone: phone ?? null,
@@ -284,7 +296,7 @@ export const shareholderService = {
             id: data.id,
             name: data.name,
             personalOrOrgNumber: data.ssn_org_nr ?? '',
-            sharesCount: data.shares_count ?? data.shares ?? 0,
+            sharesCount: data.shares ?? 0,
             shareClass: data.share_class ?? 'A',
             ownershipPercentage: 0,
             votingPercentage: 0,
@@ -294,9 +306,7 @@ export const shareholderService = {
             phone: data.phone,
             acquisitionDate: data.acquisition_date,
             acquisitionPrice: data.acquisition_price,
-            shareNumberFrom: assignedFrom,
-            shareNumberTo: assignedTo,
-        }
+        } as Shareholder
     },
 
     async transferShares({
@@ -321,6 +331,10 @@ export const shareholderService = {
         const supabase = createBrowserClient()
         const date = transferDate || new Date().toISOString().split('T')[0]
 
+        // Get user context
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Ej inloggad.')
+
         // 1. Fetch seller and validate
         const { data: seller, error: sellerErr } = await supabase
             .from('shareholders')
@@ -330,10 +344,12 @@ export const shareholderService = {
 
         if (sellerErr || !seller) throw new Error('Säljande aktieägare hittades inte.')
 
-        const sellerShares = seller.shares_count ?? seller.shares ?? 0
+        const sellerShares = seller.shares ?? 0
         if (sellerShares < sharesCount) {
             throw new Error(`Otillräckligt antal aktier. ${seller.name} har ${sellerShares} aktier.`)
         }
+
+        const companyId = seller.company_id
 
         // 2. Resolve buyer — existing or new
         let buyerId = toShareholderId
@@ -356,10 +372,11 @@ export const shareholderService = {
             const { data: newBuyer, error: buyerErr } = await supabase
                 .from('shareholders')
                 .insert({
+                    company_id: companyId,
+                    user_id: user.id,
                     name: toShareholderName,
                     ssn_org_nr: toShareholderSsnOrgNr ?? null,
                     shares: sharesCount,
-                    shares_count: sharesCount,
                     share_class: shareClass,
                     share_number_from: maxNumber + 1,
                     share_number_to: maxNumber + sharesCount,
@@ -383,12 +400,11 @@ export const shareholderService = {
             if (bErr || !buyer) throw new Error('Köpande aktieägare hittades inte.')
             buyerName = buyer.name
 
-            const buyerCurrentShares = buyer.shares_count ?? buyer.shares ?? 0
+            const buyerCurrentShares = buyer.shares ?? 0
             const { error: updateBuyerErr } = await supabase
                 .from('shareholders')
                 .update({
                     shares: buyerCurrentShares + sharesCount,
-                    shares_count: buyerCurrentShares + sharesCount,
                 })
                 .eq('id', buyerId)
 
@@ -401,7 +417,6 @@ export const shareholderService = {
             .from('shareholders')
             .update({
                 shares: newSellerShares,
-                shares_count: newSellerShares,
             })
             .eq('id', fromShareholderId)
 
@@ -409,10 +424,6 @@ export const shareholderService = {
 
         // 4. Record the transaction
         const totalAmount = pricePerShare ? pricePerShare * sharesCount : null
-        // Get company_id and user_id from the seller record context
-        const { data: authData } = await supabase.auth.getUser()
-        const userId = authData?.user?.id ?? ''
-        const companyId = seller.company_id ?? ''
 
         const { data: txn, error: txnErr } = await supabase
             .from('share_transactions')
@@ -427,7 +438,7 @@ export const shareholderService = {
                 transaction_type: 'transfer',
                 notes: `Överlåtelse av ${sharesCount} ${shareClass}-aktier`,
                 company_id: companyId,
-                user_id: userId,
+                user_id: user.id,
             })
             .select()
             .single()

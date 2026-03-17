@@ -9,10 +9,6 @@ const DEFAULT_INTEGRATIONS: Record<string, boolean> = {
     'skatteverket': false,
 }
 
-interface IntegrationRow {
-    integration_id: string
-    connected: boolean
-}
 
 export async function GET() {
     try {
@@ -24,7 +20,7 @@ export async function GET() {
 
         // Fetch user's integrations
         const { data, error } = await supabase
-            .from('integrations' as never)
+            .from('integrations')
             .select('integration_id, connected')
 
         if (error) {
@@ -34,9 +30,11 @@ export async function GET() {
 
         // Merge with defaults (user settings override defaults)
         const integrations = { ...DEFAULT_INTEGRATIONS }
-        const rows = (data || []) as unknown as IntegrationRow[]
+        const rows = data || []
         for (const row of rows) {
-            integrations[row.integration_id] = row.connected
+            if (row.integration_id) {
+                integrations[row.integration_id] = row.connected ?? false
+            }
         }
 
         return NextResponse.json({ integrations })
@@ -63,14 +61,14 @@ export async function POST(request: Request) {
 
         // Upsert the integration state
         const { error } = await supabase
-            .from('integrations' as never)
+            .from('integrations')
             .upsert({
                 user_id: userId,
                 integration_id: id,
                 connected,
                 connected_at: connected ? new Date().toISOString() : null,
                 updated_at: new Date().toISOString(),
-            } as never, {
+            }, {
                 onConflict: 'user_id,integration_id'
             })
 
@@ -81,13 +79,15 @@ export async function POST(request: Request) {
 
         // Fetch all integrations to return current state
         const { data: allData } = await supabase
-            .from('integrations' as never)
+            .from('integrations')
             .select('integration_id, connected')
 
         const integrations = { ...DEFAULT_INTEGRATIONS }
-        const rows = (allData || []) as unknown as IntegrationRow[]
+        const rows = allData || []
         for (const row of rows) {
-            integrations[row.integration_id] = row.connected
+            if (row.integration_id) {
+                integrations[row.integration_id] = row.connected ?? false
+            }
         }
 
         return NextResponse.json({

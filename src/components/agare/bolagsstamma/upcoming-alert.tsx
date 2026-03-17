@@ -1,11 +1,17 @@
 import { Button } from "@/components/ui/button"
 import { formatDateLong } from "@/lib/utils"
 
+interface NextMeetingInfo {
+    id: string
+    date: string
+    type?: string
+    meetingCategory?: string
+}
+
 interface UpcomingAlertProps {
     stats: {
         daysUntilNext: number | null
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        nextMeeting: any | null
+        nextMeeting: NextMeetingInfo | null
     }
     onPrepare?: (meetingId: string) => void
 }
@@ -35,7 +41,7 @@ export function UpcomingAlert({ stats, onPrepare }: UpcomingAlertProps) {
                 variant="ghost"
                 size="sm"
                 className="shrink-0 text-blue-600 hover:bg-blue-600/20 hover:text-blue-700 dark:text-blue-400 dark:hover:bg-blue-400/20"
-                onClick={() => onPrepare?.(stats.nextMeeting.id)}
+                onClick={() => stats.nextMeeting && onPrepare?.(stats.nextMeeting.id)}
             >
                 Förbered nu
             </Button>

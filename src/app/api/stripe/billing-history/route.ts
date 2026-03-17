@@ -22,9 +22,8 @@ export async function GET(request: NextRequest) {
         const supabase = await createServerClient()
 
         // Get user's Stripe customer ID
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: profile } = await supabase
-            .from('profiles' as any)
+            .from('profiles')
             .select('stripe_customer_id')
             .eq('id', auth.userId)
             .single()
@@ -32,9 +31,8 @@ export async function GET(request: NextRequest) {
         const customerId = (profile as { stripe_customer_id?: string } | null)?.stripe_customer_id
 
         // Fetch credit purchases from our DB
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: credits } = await supabase
-            .from('user_credits' as any)
+            .from('user_credits')
             .select('id, credits_purchased, price_paid_cents, currency, stripe_payment_id, purchased_at')
             .eq('user_id', auth.userId)
             .order('purchased_at', { ascending: false })
@@ -55,22 +53,14 @@ export async function GET(request: NextRequest) {
 
         // Add credit purchases
         if (credits) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            for (const credit of (credits as unknown) as Array<{
-                id: string
-                credits_purchased: number
-                price_paid_cents: number | null
-                currency: string
-                stripe_payment_id: string | null
-                purchased_at: string
-            }>) {
+            for (const credit of credits) {
                 const priceSek = credit.price_paid_cents
                     ? Math.round(credit.price_paid_cents / 100)
                     : 0
                 items.push({
                     id: credit.id.slice(0, 8),
-                    date: credit.purchased_at,
-                    description: `AI Credits — ${(credit.credits_purchased / 1_000_000).toFixed(0)}M tokens`,
+                    date: credit.purchased_at || new Date().toISOString(),
+                    description: `AI Credits — ${((credit.credits_purchased || 0) / 1_000_000).toFixed(0)}M tokens`,
                     amount: `${priceSek} kr`,
                     status: 'Betald',
                     type: 'credits',

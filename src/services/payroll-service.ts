@@ -8,8 +8,14 @@ type PayslipRow = Database['public']['Tables']['payslips']['Row'] & {
 type AGIReportRow = Database['public']['Tables']['agi_reports']['Row'] & {
     year?: number | null
     month?: number | null
+    period?: string | null
     due_date?: string | null
     employee_count?: number | null
+    total_salary?: number | null
+    total_tax?: number | null
+    employer_contributions?: number | null
+    status?: string | null
+    updated_at?: string | null
 }
 
 
@@ -70,7 +76,7 @@ function mapRowToEmployee(e: EmployeeRow): Employee {
         personalNumber: e.personal_number ?? undefined,
         role: e.role ?? undefined,
         monthlySalary: Number(e.monthly_salary) || 0,
-        taxTable: e.tax_table || 33,
+        taxTable: e.tax_table_number || 33,
         startDate: e.start_date ?? undefined,
         email: e.email ?? undefined,
         status: (e.status as Employee['status']) || 'active',
@@ -79,20 +85,23 @@ function mapRowToEmployee(e: EmployeeRow): Employee {
 
 /** Map a database row to the Payslip UI model. */
 function mapRowToPayslip(p: PayslipRow): Payslip {
+    // Derive year/month from period string (e.g. "2026-03")
+    const periodStr = p.period ?? ''
+    const [yearStr, monthStr] = periodStr.split('-')
     return {
         id: p.id,
         employeeId: p.employee_id || '',
         employeeName: p.employees?.name || 'Okänd',
-        period: p.period,
-        year: p.year || 0,
-        month: p.month || 0,
+        period: periodStr,
+        year: parseInt(yearStr) || 0,
+        month: parseInt(monthStr) || 0,
         grossSalary: Number(p.gross_salary) || 0,
         taxDeduction: Number(p.tax_deduction) || 0,
         netSalary: Number(p.net_salary) || 0,
         bonuses: Number(p.bonuses) || 0,
         otherDeductions: Number(p.deductions) || 0,
         status: (p.status as Payslip['status']) || 'draft',
-        sentAt: p.paid_at ?? undefined,
+        sentAt: p.payment_date ?? undefined,
     }
 }
 
@@ -115,8 +124,47 @@ function mapRowToAGIReport(r: AGIReportRow): AGIReport {
 
 export const payrollService = {
     /**
-     * Get aggregate statistics for payroll from the database.
+     * Create a new employee
      */
+    async createEmployee(params: {
+        name: string
+        role?: string
+        email?: string
+        monthlySalary: number
+        kommun?: string
+    }): Promise<Employee> {
+        const supabase = createBrowserClient()
+
+        // Get user and company context
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single()
+        ])
+
+        if (!user || !company) throw new Error('Ej inloggad eller företag saknas.')
+
+        const { data, error } = await supabase
+            .from('employees')
+            .insert({
+                user_id: user.id,
+                company_id: company.id,
+                name: params.name,
+                role: params.role || null,
+                email: params.email || null,
+                monthly_salary: params.monthlySalary,
+                kommun: params.kommun || null,
+                status: 'active'
+            })
+            .select()
+            .single()
+
+        if (error) throw error
+        return mapRowToEmployee(data)
+    },
+
+    /**
+     * Get aggregate statistics for payroll from the database.
+    ...
     async getStats(): Promise<PayrollStats> {
         const supabase = createBrowserClient()
         const { data: rawData, error } = await supabase.rpc('get_payroll_stats')
@@ -174,11 +222,15 @@ export const payrollService = {
         let query = supabase
             .from('payslips')
             .select('*, employees(name)')
-            .order('year', { ascending: false })
-            .order('month', { ascending: false })
+            .order('period', { ascending: false })
 
-        if (year) query = query.eq('year', year)
-        if (month) query = query.eq('month', month)
+        // Filter by period prefix (e.g. "2026" or "2026-03")
+        if (year && month) {
+            const periodFilter = `${year}-${String(month).padStart(2, '0')}`
+            query = query.eq('period', periodFilter)
+        } else if (year) {
+            query = query.like('period', `${year}-%`)
+        }
 
         const { data, error } = await query
 
@@ -194,13 +246,10 @@ export const payrollService = {
      */
     async getAGIReports(year?: number): Promise<AGIReport[]> {
         const supabase = createBrowserClient()
-        let query = supabase
+        const query = supabase
             .from('agi_reports')
             .select('*')
-            .order('year', { ascending: false })
-            .order('month', { ascending: false })
-
-        if (year) query = query.eq('year', year)
+            .order('created_at', { ascending: false })
 
         const { data, error } = await query
 

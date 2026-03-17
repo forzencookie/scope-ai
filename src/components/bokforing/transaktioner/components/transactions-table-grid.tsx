@@ -10,6 +10,7 @@ import {
     ArrowRightLeft,
     Receipt,
 } from "lucide-react"
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
@@ -145,17 +146,20 @@ export function TransactionsTableGrid({
     )
 }
 
-function TransactionRow({ 
-    transaction, 
-    isUnbooked, 
-    selection, 
+function TransactionRow({
+    transaction,
+    isUnbooked,
+    selection,
     onTransactionClick,
     hasReceipt
-}: { 
-    transaction: TransactionWithAI, 
-    isUnbooked: boolean, 
-    selection: any, 
-    onTransactionClick: any,
+}: {
+    transaction: TransactionWithAI
+    isUnbooked: boolean
+    selection: {
+        isSelected: (id: string) => boolean
+        toggleItem: (id: string) => void
+    }
+    onTransactionClick: (transaction: TransactionWithAI) => void
     hasReceipt: boolean
 }) {
     const { highlightClass } = useHighlight(transaction.id)
@@ -172,16 +176,21 @@ function TransactionRow({
         >
             <div className="col-span-3 font-medium truncate flex items-center gap-2">
                 {hasReceipt ? (
-                    <div className="w-7 h-7 rounded bg-muted overflow-hidden shrink-0 border border-border/50 shadow-sm">
-                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                        <img
+                    <div className="w-7 h-7 rounded bg-muted overflow-hidden shrink-0 border border-border/50 shadow-sm relative">
+                        <Image
                             src={transaction.attachments![0]}
                             alt="Kvitto"
-                            className="w-full h-full object-cover"
+                            fill
+                            className="object-cover"
+                            unoptimized
                             onError={(e) => {
                                 // Fallback if image fails to load
-                                (e.target as any).style.display = 'none';
-                                (e.target as any).parentElement.innerHTML = '<div class="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground uppercase font-bold bg-muted">K</div>';
+                                const target = e.target as HTMLImageElement;
+                                target.style.display = 'none';
+                                const parent = target.parentElement;
+                                if (parent) {
+                                    parent.innerHTML = '<div class="w-full h-full flex items-center justify-center text-[10px] text-muted-foreground uppercase font-bold bg-muted">K</div>';
+                                }
                             }}
                         />
                     </div>

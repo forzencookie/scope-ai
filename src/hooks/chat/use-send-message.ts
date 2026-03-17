@@ -272,17 +272,19 @@ async function handleErrorResponse(
                                 ...msg,
                                 content: '⚠️ Du har förbrukat din AI-budget för denna månad. Köp fler credits för att fortsätta använda AI.',
                                 display: {
-                                    component: 'BuyCreditsPrompt',
-                                    props: {
-                                        packages: [
-                                            { tokens: 2000000, price: 99, label: '2M tokens' },
-                                            { tokens: 5000000, price: 199, label: '5M tokens', popular: true, savings: 'Spara 20%' },
-                                            { tokens: 15000000, price: 499, label: '15M tokens', savings: 'Spara 33%' },
-                                        ]
+                                    type: 'InlineCard' as const,
+                                    data: {
+                                        cardType: 'BuyCreditsPrompt',
+                                        data: {
+                                            packages: [
+                                                { tokens: 2000000, price: 99, label: '2M tokens' },
+                                                { tokens: 5000000, price: 199, label: '5M tokens', popular: true, savings: 'Spara 20%' },
+                                                { tokens: 15000000, price: 499, label: '15M tokens', savings: 'Spara 33%' },
+                                            ],
+                                            title: 'Köp AI-credits',
+                                        },
                                     },
-                                    title: 'Köp AI-credits'
-                                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                                } as any
+                                }
                             }
                             : msg
                     )

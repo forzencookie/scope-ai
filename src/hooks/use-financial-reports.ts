@@ -27,23 +27,23 @@ async function fetchAllBalances(fiscalYearEnd: string): Promise<BalanceData> {
     const [bsResult, plResult, prevBsResult, prevPlResult] = await Promise.all([
         // Balance Sheet: All time to current FY end
         supabase.rpc('get_account_balances', {
-            p_start_date: '2000-01-01',
-            p_end_date: currentFY.endStr
+            p_date_from: '2000-01-01',
+            p_date_to: currentFY.endStr
         }),
         // P&L: Current Fiscal Year
         supabase.rpc('get_account_balances', {
-            p_start_date: currentFY.startStr,
-            p_end_date: currentFY.endStr
+            p_date_from: currentFY.startStr,
+            p_date_to: currentFY.endStr
         }),
         // Balance Sheet: All time to previous FY end
         supabase.rpc('get_account_balances', {
-            p_start_date: '2000-01-01',
-            p_end_date: previousFY.endStr
+            p_date_from: '2000-01-01',
+            p_date_to: previousFY.endStr
         }),
         // P&L: Previous Fiscal Year
         supabase.rpc('get_account_balances', {
-            p_start_date: previousFY.startStr,
-            p_end_date: previousFY.endStr
+            p_date_from: previousFY.startStr,
+            p_date_to: previousFY.endStr
         })
     ])
 

@@ -9,27 +9,10 @@ import type {
     ShareHolding,
     CreateShareHoldingInput,
 } from './ai-tool-types'
+import type { Database } from '@/types/database'
 
-// =============================================================================
-// Database Row Types
-// =============================================================================
-
-interface ShareHoldingRow {
-    id: string
-    company_id: string
-    company_name: string
-    org_number?: string
-    holding_type?: string
-    shares_count: number
-    purchase_date?: string
-    purchase_price?: number
-    current_value?: number
-    dividend_received?: number
-    bas_account?: string
-    notes?: string
-    created_at: string
-    updated_at: string
-}
+type ShareholdingsRow = Database['public']['Tables']['shareholdings']['Row']
+type ShareholdingsInsert = Database['public']['Tables']['shareholdings']['Insert']
 
 // =============================================================================
 // Shared Utilities
@@ -42,81 +25,101 @@ const supabase = () => {
     return createBrowserClient()
 }
 
-// Generic list function
-async function listFromTable<TRow, TResult>(
-    table: string,
-    mapper: (row: TRow) => TResult,
-    orderBy: string = 'created_at'
-): Promise<TResult[]> {
+// =============================================================================
+// Share Holdings (Aktieinnehav)
+// =============================================================================
+
+const mapShareHolding = (row: ShareholdingsRow): ShareHolding => ({
+    id: row.id,
+    companyId: row.company_id || '',
+    companyName: row.company_name || '',
+    orgNumber: row.org_number || undefined,
+    holdingType: (row.holding_type || 'other') as ShareHolding['holdingType'],
+    sharesCount: row.shares_count || 0,
+    purchaseDate: row.purchase_date ? new Date(row.purchase_date) : undefined,
+    purchasePrice: row.purchase_price ? Number(row.purchase_price) : undefined,
+    currentValue: row.current_value ? Number(row.current_value) : undefined,
+    dividendReceived: Number(row.dividend_received || 0),
+    basAccount: row.bas_account || '1350',
+    notes: row.notes || undefined,
+    createdAt: new Date(row.created_at || ''),
+    updatedAt: new Date(row.updated_at || ''),
+})
+
+export async function listShareHoldings(): Promise<ShareHolding[]> {
     try {
         const { data, error } = await supabase()
-            .from(table as any)
+            .from('shareholdings')
             .select('*')
-            .order(orderBy, { ascending: false })
+            .order('company_name', { ascending: false })
 
         if (error) {
-            console.error(`Error fetching ${table}:`, error)
+            console.error('Error fetching shareholdings:', error)
             return []
         }
-        return ((data || []) as TRow[]).map(mapper)
+        return (data || []).map(mapShareHolding)
     } catch {
         return []
     }
 }
 
-// Generic create function
-async function createInTable<TRow, TResult>(
-    table: string,
-    input: Record<string, unknown>,
-    mapper: (row: TRow) => TResult
-): Promise<TResult | null> {
+export async function createShareHolding(input: CreateShareHoldingInput): Promise<ShareHolding | null> {
     try {
+        const payload: ShareholdingsInsert = {
+            company_name: input.companyName,
+            org_number: input.orgNumber,
+            holding_type: input.holdingType ?? 'other',
+            shares_count: input.sharesCount,
+            purchase_date: input.purchaseDate?.toISOString().split('T')[0],
+            purchase_price: input.purchasePrice,
+            current_value: input.purchasePrice,
+            notes: input.notes,
+        }
         const { data, error } = await supabase()
-            .from(table as any)
-            .insert(input)
+            .from('shareholdings')
+            .insert(payload)
             .select()
             .single()
 
         if (error) {
-            console.error(`Error creating in ${table}:`, error)
+            console.error('Error creating shareholding:', error)
             return null
         }
-        return mapper(data as TRow)
+        return mapShareHolding(data)
     } catch {
         return null
     }
 }
 
-// Generic update function
-async function updateInTable<TRow, TResult>(
-    table: string,
-    id: string,
-    updates: Record<string, unknown>,
-    mapper: (row: TRow) => TResult
-): Promise<TResult | null> {
+export async function updateShareHolding(id: string, updates: Partial<ShareHolding>): Promise<ShareHolding | null> {
     try {
+        const payload: Database['public']['Tables']['shareholdings']['Update'] = {
+            ...(updates.currentValue !== undefined && { current_value: updates.currentValue }),
+            ...(updates.dividendReceived !== undefined && { dividend_received: updates.dividendReceived }),
+            ...(updates.notes !== undefined && { notes: updates.notes }),
+            updated_at: new Date().toISOString(),
+        }
         const { data, error } = await supabase()
-            .from(table as any)
-            .update({ ...updates, updated_at: new Date().toISOString() })
+            .from('shareholdings')
+            .update(payload)
             .eq('id', id)
             .select()
             .single()
 
         if (error) {
-            console.error(`Error updating in ${table}:`, error)
+            console.error('Error updating shareholding:', error)
             return null
         }
-        return mapper(data as TRow)
+        return mapShareHolding(data)
     } catch {
         return null
     }
 }
 
-// Generic delete function
-async function deleteFromTable(table: string, id: string): Promise<boolean> {
+export async function deleteShareHolding(id: string): Promise<boolean> {
     try {
         const { error } = await supabase()
-            .from(table as any)
+            .from('shareholdings')
             .delete()
             .eq('id', id)
 
@@ -125,51 +128,6 @@ async function deleteFromTable(table: string, id: string): Promise<boolean> {
         return false
     }
 }
-
-// =============================================================================
-// Share Holdings (Aktieinnehav)
-// =============================================================================
-
-const mapShareHolding = (row: ShareHoldingRow): ShareHolding => ({
-    id: row.id,
-    companyId: row.company_id,
-    companyName: row.company_name,
-    orgNumber: row.org_number,
-    holdingType: (row.holding_type || 'other') as ShareHolding['holdingType'],
-    sharesCount: row.shares_count,
-    purchaseDate: row.purchase_date ? new Date(row.purchase_date) : undefined,
-    purchasePrice: row.purchase_price ? Number(row.purchase_price) : undefined,
-    currentValue: row.current_value ? Number(row.current_value) : undefined,
-    dividendReceived: Number(row.dividend_received || 0),
-    basAccount: row.bas_account || '1350',
-    notes: row.notes,
-    createdAt: new Date(row.created_at),
-    updatedAt: new Date(row.updated_at),
-})
-
-export const listShareHoldings = () => 
-    listFromTable<ShareHoldingRow, ShareHolding>('shareholdings', mapShareHolding, 'company_name')
-
-export const createShareHolding = (input: CreateShareHoldingInput) =>
-    createInTable<ShareHoldingRow, ShareHolding>('shareholdings', {
-        company_name: input.companyName,
-        org_number: input.orgNumber,
-        holding_type: input.holdingType ?? 'other',
-        shares_count: input.sharesCount,
-        purchase_date: input.purchaseDate?.toISOString().split('T')[0],
-        purchase_price: input.purchasePrice,
-        current_value: input.purchasePrice, // Start at purchase price
-        notes: input.notes,
-    }, mapShareHolding)
-
-export const updateShareHolding = (id: string, updates: Partial<ShareHolding>) =>
-    updateInTable<ShareHoldingRow, ShareHolding>('shareholdings', id, {
-        ...(updates.currentValue && { current_value: updates.currentValue }),
-        ...(updates.dividendReceived && { dividend_received: updates.dividendReceived }),
-        ...(updates.notes !== undefined && { notes: updates.notes }),
-    }, mapShareHolding)
-
-export const deleteShareHolding = (id: string) => deleteFromTable('shareholdings', id)
 
 /**
  * Record dividend received

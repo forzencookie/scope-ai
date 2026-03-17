@@ -9,7 +9,7 @@ export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from '
 export { ActionTriggerChip, type ActionTriggerDisplay, type ActionTriggerIcon } from './action-trigger-chip'
 
 // AI Overlay Experience
-export { AISidePanel } from './ai-side-panel'
+export { AIOverlay } from './ai-overlay'
 export {
     PixelDog,
     PixelBear,

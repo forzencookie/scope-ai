@@ -18,8 +18,7 @@ export function useMemberStats() {
       const { data, error } = await supabase.rpc('get_member_stats')
 
       if (!error && data) {
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const rpcStats = data as any
+        const rpcStats = data as Record<string, unknown>
         setStats(prev => ({
           ...prev,
           totalMembers: Number(rpcStats.totalMembers) || 0,

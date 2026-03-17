@@ -1,21 +1,9 @@
 
 import { useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { createBrowserClient } from '@/lib/database/client'
+import { payrollService, type Employee } from "@/services/payroll-service"
 
-export interface Employee {
-    id: string
-    name: string
-    role: string
-    email?: string
-    salary: number
-    status: string
-    balance: number // 2820 Debt
-    mileage: number // 7330 Mileage Cost
-    kommun?: string
-    tax_rate?: number
-    personal_number?: string
-}
+export type { Employee }
 
 export interface NewEmployee {
     name: string
@@ -41,38 +29,20 @@ export function useEmployees() {
     } = useQuery({
         queryKey: employeeQueryKeys.list(),
         queryFn: async () => {
-            const supabase = createBrowserClient()
-            const { data, error } = await supabase.rpc('get_employee_balances')
-            if (error) throw error
-            return (data || []) as Employee[]
+            return await payrollService.getEmployees()
         },
         staleTime: 5 * 60 * 1000,
     })
 
     const addMutation = useMutation({
         mutationFn: async (employee: NewEmployee): Promise<Employee> => {
-            const supabase = createBrowserClient()
-            const { data, error } = await supabase
-                .from('employees')
-                .insert({
-                    name: employee.name,
-                    role: employee.role,
-                    email: employee.email,
-                    monthly_salary: employee.salary,
-                    kommun: employee.kommun || null,
-                    status: 'active'
-                })
-                .select()
-                .single()
-
-            if (error) throw error
-
-            return {
-                ...data,
-                salary: data.monthly_salary,
-                balance: 0,
-                mileage: 0
-            } as Employee
+            return await payrollService.createEmployee({
+                name: employee.name,
+                role: employee.role,
+                email: employee.email,
+                monthlySalary: employee.salary,
+                kommun: employee.kommun,
+            })
         },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: employeeQueryKeys.all })

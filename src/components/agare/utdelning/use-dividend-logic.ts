@@ -58,7 +58,7 @@ export function useDividendLogic() {
         const meetings = (realDocuments || [])
             .filter(doc => doc.type === 'general_meeting_minutes')
             .map(doc => {
-                let content = { year: new Date(doc.date).getFullYear(), decisions: [] as any[] }
+                let content: { year: number; decisions: Array<{ id?: string; type?: string; amount?: number; booked?: boolean }> } = { year: new Date(doc.date).getFullYear(), decisions: [] }
                 try {
                     const parsed = JSON.parse(doc.content)
                     content = { ...content, ...parsed }
@@ -68,8 +68,8 @@ export function useDividendLogic() {
 
         meetings.forEach(meeting => {
             (meeting.decisions || [])
-                .filter((d: any) => d.type === 'dividend' && d.amount)
-                .forEach((d: any) => {
+                .filter((d) => d.type === 'dividend' && d.amount)
+                .forEach((d) => {
                     const amount = d.amount || 0
                     const { tax, taxRate } = calculateDividendTax(amount)
 
@@ -91,7 +91,7 @@ export function useDividendLogic() {
                         status,
                         meetingId: meeting.id,
                         meetingDate: meeting.date,
-                        decisionId: d.id,
+                        decisionId: d.id ?? '',
                     })
                 })
         })

@@ -19,6 +19,7 @@ import {
     LayoutGrid,
     Zap,
 } from "lucide-react"
+import Image from "next/image"
 import Link from "next/link"
 import { QuickActionsMenu } from "@/components/ai/quick-actions-menu"
 import type { QuickAction } from "@/lib/ai/quick-actions"
@@ -360,11 +361,12 @@ export function ChatInput({
                                         }}
                                         className="relative w-10 h-10 rounded overflow-hidden bg-muted flex-shrink-0 cursor-pointer z-10"
                                     >
-                                        {/* eslint-disable-next-line @next/next/no-img-element */}
-                                        <img
+                                        <Image
                                             src={url}
                                             alt={file.name}
-                                            className="w-full h-full object-cover"
+                                            fill
+                                            className="object-cover"
+                                            unoptimized
                                         />
                                         <div className="absolute inset-0 bg-black/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center">
                                             <ZoomIn className="h-4 w-4 text-white" />

@@ -107,8 +107,8 @@ export async function GET(request: NextRequest) {
         // Fetch account balances per fiscal month (12 parallel calls)
         const monthBalancePromises = fiscalMonths.map(fm =>
             supabase.rpc('get_account_balances', {
-                p_start_date: fm.startDate,
-                p_end_date: fm.endDate,
+                p_date_from: fm.startDate,
+                p_date_to: fm.endDate,
             })
         )
 
@@ -133,7 +133,7 @@ export async function GET(request: NextRequest) {
             let expenses = 0
 
             for (const row of balanceData) {
-                const acc = row.account_number as number
+                const acc = Number(row.account_number)
                 const balance = row.balance as number
                 if (acc >= 3000 && acc <= 3999) {
                     revenue += Math.abs(balance) // Revenue is credit-normal

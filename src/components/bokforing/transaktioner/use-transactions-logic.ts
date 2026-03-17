@@ -6,12 +6,14 @@ import { useBulkSelection, type BulkAction } from "@/components/shared/bulk-acti
 import { parseAmount } from "@/lib/utils"
 import { TRANSACTION_STATUSES, type TransactionWithAI } from "@/types"
 import type { TransactionsTableProps } from "./types"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 export function useTransactionsLogic({
     transactions = [],
     stats: externalStats,
     isLoading,
 }: TransactionsTableProps) {
+    const { navigateToAI } = useChatNavigation()
 
     // Table Logic
     const filter = useTableFilter<TransactionWithAI>({
@@ -37,9 +39,20 @@ export function useTransactionsLogic({
     // Selection Logic
     const selection = useBulkSelection(filteredTransactions)
 
-    const handleTransactionClick = useCallback((_transaction: TransactionWithAI) => {
-        // Read-only — mutations handled by AI chat
-    }, [])
+    const handleTransactionClick = useCallback((transaction: TransactionWithAI) => {
+        // If unbooked, ask Scooby to handle it
+        const isUnbooked = transaction.status === TRANSACTION_STATUSES.TO_RECORD || 
+                          transaction.status === TRANSACTION_STATUSES.MISSING_DOCUMENTATION
+        
+        if (isUnbooked) {
+            navigateToAI({ 
+                prompt: `Hjälp mig att bokföra transaktionen "${transaction.name}" på ${transaction.amount} från ${transaction.date}.` 
+            })
+        } else {
+            // For booked items, we just show details (future: open Page Overlay)
+            console.log("View booked transaction:", transaction.id)
+        }
+    }, [navigateToAI])
 
     // Stats Logic
     const stats = useMemo(() => {

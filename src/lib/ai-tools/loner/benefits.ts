@@ -5,6 +5,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
+import type { FormanCatalogItem } from '../../ai/tool-types'
 import {
     listAvailableBenefits,
     getBenefitDetails,
@@ -20,8 +21,7 @@ export interface GetBenefitsParams {
     category?: 'tax_free' | 'taxable' | 'deduction'
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, any[]>({
+export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, FormanCatalogItem[]>({
     name: 'get_available_benefits',
     description: 'Hämta tillgängliga personalförmåner (t.ex. friskvård, bilförmån).',
     category: 'read',

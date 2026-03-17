@@ -83,7 +83,7 @@ export function DayDetailDialog({
     useEffect(() => {
         userEditingRef.current = false
         setNotesValue(getDayNote(year, month, day))
-    }, [year, month, day]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [year, month, day, getDayNote])
 
     // Debounced save
     const handleNotesChange = (value: string) => {

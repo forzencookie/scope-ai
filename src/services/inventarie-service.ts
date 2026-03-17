@@ -34,9 +34,14 @@ export const inventarieService = {
     } = {}) {
         const supabase = createBrowserClient()
 
+        // Get company context for explicit filtering
+        const { data: company } = await supabase.from('companies').select('id').single()
+        if (!company) return { inventarier: [], totalCount: 0 }
+
         let query = supabase
             .from('inventarier')
             .select('*', { count: 'exact' })
+            .eq('company_id', company.id)
             .order('inkopsdatum', { ascending: false })
             .range(offset, offset + limit - 1)
 
@@ -57,15 +62,14 @@ export const inventarieService = {
         }
 
         // Map snake_case DB columns to camelCase for UI
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const inventarier: Inventarie[] = (data || []).map((row: any) => ({
+        const inventarier: Inventarie[] = (data || []).map((row) => ({
             id: row.id,
-            namn: row.namn,
+            namn: row.namn ?? '',
             kategori: row.kategori || 'Inventarier',
-            inkopsdatum: row.inkopsdatum,
+            inkopsdatum: row.inkopsdatum ?? '',
             inkopspris: Number(row.inkopspris),
             livslangdAr: row.livslangd_ar || 5,
-            anteckningar: row.anteckningar
+            anteckningar: row.anteckningar ?? undefined,
         }))
 
         return { inventarier, totalCount: count || 0 }
@@ -85,8 +89,11 @@ export const inventarieService = {
             return { totalCount: 0, totalInkopsvarde: 0, kategorier: 0 }
         }
 
-        // Handle array return (RETURNS TABLE)
-        const stats = Array.isArray(data) ? data[0] : data
+        // Handle array return (RETURNS TABLE) — RPC returns Json
+        const raw = Array.isArray(data) ? data[0] : data
+        const stats = (raw && typeof raw === 'object' && !Array.isArray(raw))
+            ? raw as Record<string, unknown>
+            : null
 
         if (!stats) {
             return {
@@ -99,9 +106,7 @@ export const inventarieService = {
         return {
             totalCount: Number(stats.total_items || 0),
             totalInkopsvarde: Number(stats.total_value || 0),
-            // Note: RPC doesn't return category_count, so we use active_items as approximation.
-            // The UI computes exact category count client-side in useInventarier().
-            kategorier: Number((stats as Record<string, unknown>).category_count || stats.active_items || 0)
+            kategorier: Number(stats.category_count || stats.active_items || 0)
         }
     },
 
@@ -111,19 +116,29 @@ export const inventarieService = {
     async addInventarie(inventarie: Omit<Inventarie, 'id'>) {
         const supabase = createBrowserClient()
 
+        // Get current user and company context for security
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single()
+        ])
+
+        if (!user || !company) throw new Error('Ingen inloggad användare eller företag saknas')
+
         const id = crypto.randomUUID()
 
         const { data, error } = await supabase
             .from('inventarier')
             .insert({
                 id,
+                user_id: user.id,
+                company_id: company.id,
                 namn: inventarie.namn,
                 kategori: inventarie.kategori,
                 inkopsdatum: inventarie.inkopsdatum,
                 inkopspris: inventarie.inkopspris,
                 livslangd_ar: inventarie.livslangdAr,
                 anteckningar: inventarie.anteckningar,
-            } as never)
+            })
             .select()
             .single()
 
@@ -139,7 +154,7 @@ export const inventarieService = {
 
         const { data, error } = await supabase
             .from('inventarier')
-            .update({ status } as never)
+            .update({ status })
             .eq('id', id)
             .select()
             .single()

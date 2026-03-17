@@ -88,8 +88,8 @@ export const queryMemoriesTool = defineTool<QueryMemoriesParams, QueryMemoriesRe
                 memories: memories.map(m => ({
                     content: m.content,
                     category: m.category,
-                    confidence: m.confidence,
-                    createdAt: m.createdAt,
+                    confidence: m.confidence ?? 0,
+                    createdAt: m.createdAt ?? new Date().toISOString(),
                 })),
                 count: memories.length,
             }
@@ -118,7 +118,6 @@ export const queryMemoriesTool = defineTool<QueryMemoriesParams, QueryMemoriesRe
 export interface AddMemoryParams {
     content: string
     category: MemoryCategory
-    expiresInDays?: number
 }
 
 export interface AddMemoryResult {
@@ -146,10 +145,6 @@ export const addMemoryTool = defineTool<AddMemoryParams, AddMemoryResult>({
                 enum: ['decision', 'preference', 'pending'],
                 description: 'Kategori: decision (beslut taget), preference (preferens), pending (under övervägande)',
             },
-            expiresInDays: {
-                type: 'number',
-                description: 'Antal dagar tills minnet förfaller (standard: aldrig för decision/preference, 30 för pending)',
-            },
         },
         required: ['content', 'category'],
     },
@@ -161,15 +156,11 @@ export const addMemoryTool = defineTool<AddMemoryParams, AddMemoryResult>({
             }
         }
 
-        // Default expiry for pending items
-        const expiresInDays = params.expiresInDays ?? (params.category === 'pending' ? 30 : undefined)
-
         try {
             const memory = await userMemoryService.addMemory({
                 companyId: context.companyId,
                 content: params.content,
                 category: params.category,
-                expiresInDays,
             })
 
             if (!memory) {

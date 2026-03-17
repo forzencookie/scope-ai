@@ -19,6 +19,9 @@ import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import {
     LazyLonebesked,
     LazyTeamTab,
+    LazyFormaner,
+    LazyEgenavgifter,
+    LazyDelagaruttag,
 } from "@/components/shared"
 
 function PayrollPageContent() {
@@ -61,6 +64,9 @@ function PayrollPageContent() {
                 <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
                     {currentTab === "lonebesked" && <LazyLonebesked />}
                     {currentTab === "team" && <LazyTeamTab />}
+                    {currentTab === "formaner" && <LazyFormaner />}
+                    {currentTab === "egenavgifter" && <LazyEgenavgifter />}
+                    {currentTab === "delagaruttag" && <LazyDelagaruttag />}
                 </main>
             </div>
         </TooltipProvider>

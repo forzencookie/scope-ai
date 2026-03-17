@@ -43,9 +43,13 @@ export {
     // Bokföring
     LazyTransactionsTable,
     LazyUnifiedInvoicesView,
+    LazyInventarierTable,
     // Löner
     LazyLonebesked,
     LazyTeamTab,
+    LazyFormaner,
+    LazyEgenavgifter,
+    LazyDelagaruttag,
     // Ägare & Styrning
     LazyAktiebok,
     LazyDelagare,
@@ -55,3 +59,4 @@ export {
     // Onboarding
     LazyOnboardingWizard,
 } from "./lazy-loader"
+export { PageOverlay } from './page-overlay'

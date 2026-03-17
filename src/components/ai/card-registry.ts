@@ -4,7 +4,7 @@
  * Blocks are Layer 2 (detailed walkthrough overlay content).
  * These are complementary systems, not replacements.
  */
-import { ComponentType } from "react"
+import type { ComponentType } from "react"
 import { ActivityCard } from "./activity-card"
 import { ReceiptCard } from "./cards/ReceiptCard"
 import { TransactionCard } from "./cards/TransactionCard"
@@ -35,116 +35,129 @@ import { ResultatAuditCard } from "./previews/bokforing/resultat-audit-card"
 import { AIUsageCard } from "./cards/AIUsageCard"
 import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
 
-// Type definition for the registry
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-type CardComponent = ComponentType<any>
+// Each card component has its own specific props interface. The registry stores
+// them heterogeneously — callers spread parsed JSON data as props at runtime.
+// We use a permissive function signature so diverse components can coexist.
+//
+// At the call site (card-renderer.tsx), props are always Record<string, unknown>
+// built from parsed AI output, so the loose typing here is accurate.
+type CardComponent = ComponentType<Record<string, unknown>>
+
+// Widening helper — accepts any React component and returns CardComponent.
+// This is safe because the renderer always passes Record<string, unknown> props.
+// Widening helper — bridges specific component prop types to the generic registry type.
+// This uses `unknown` for the input and returns CardComponent for the map.
+// Safe because the card-renderer always passes Record<string, unknown> props at runtime.
+function card(c: ComponentType<never>): CardComponent {
+    return c as unknown as CardComponent
+}
 
 export const CARD_REGISTRY: Record<string, CardComponent> = {
     // Basic Cards
-    receiptcard: ReceiptCard,
-    receipt: ReceiptCard,
+    receiptcard: card(ReceiptCard),
+    receipt: card(ReceiptCard),
 
-    transactioncard: TransactionCard,
-    transaction: TransactionCard,
+    transactioncard: card(TransactionCard),
+    transaction: card(TransactionCard),
 
-    invoicecard: InvoiceCard,
-    invoice: InvoiceCard,
+    invoicecard: card(InvoiceCard),
+    invoice: card(InvoiceCard),
 
-    taskchecklist: TaskChecklist,
-    checklist: TaskChecklist,
+    taskchecklist: card(TaskChecklist),
+    checklist: card(TaskChecklist),
 
-    activitycard: ActivityCard,
-    activity: ActivityCard,
+    activitycard: card(ActivityCard),
+    activity: card(ActivityCard),
 
-    summarycard: SummaryCard,
-    summary: SummaryCard,
-    calculation: SummaryCard,
-    salarycalculation: SummaryCard,
-    k10summary: SummaryCard,
+    summarycard: card(SummaryCard),
+    summary: card(SummaryCard),
+    calculation: card(SummaryCard),
+    salarycalculation: card(SummaryCard),
+    k10summary: card(SummaryCard),
 
     // Document Previews
-    payslippreview: PayslipCard,
-    lonebesked: PayslipCard,
+    payslippreview: card(PayslipCard),
+    lonebesked: card(PayslipCard),
 
-    vatformpreview: VATReportCard,
-    momsredovisning: VATReportCard,
-    vat: VATReportCard,
+    vatformpreview: card(VATReportCard),
+    momsredovisning: card(VATReportCard),
+    vat: card(VATReportCard),
 
-    agiformpreview: AGIReportCard,
-    agi: AGIReportCard,
-    arbetsgivardeklaration: AGIReportCard,
+    agiformpreview: card(AGIReportCard),
+    agi: card(AGIReportCard),
+    arbetsgivardeklaration: card(AGIReportCard),
 
-    boardminutespreview: BoardMinutesCard,
-    styrelseprotokoll: BoardMinutesCard,
-    protocol: BoardMinutesCard,
-    meeting: BoardMinutesCard,
+    boardminutespreview: card(BoardMinutesCard),
+    styrelseprotokoll: card(BoardMinutesCard),
+    protocol: card(BoardMinutesCard),
+    meeting: card(BoardMinutesCard),
 
-    financialreportpreview: FinancialReportCard,
-    financialreport: FinancialReportCard,
-    resultat: FinancialReportCard,
-    balans: FinancialReportCard,
-    resultatbalans: FinancialReportCard,
+    financialreportpreview: card(FinancialReportCard),
+    financialreport: card(FinancialReportCard),
+    resultat: card(FinancialReportCard),
+    balans: card(FinancialReportCard),
+    resultatbalans: card(FinancialReportCard),
 
-    shareregisterpreview: ShareRegisterCard,
-    shareregister: ShareRegisterCard,
-    aktiebok: ShareRegisterCard,
-    shares: ShareRegisterCard,
+    shareregisterpreview: card(ShareRegisterCard),
+    shareregister: card(ShareRegisterCard),
+    aktiebok: card(ShareRegisterCard),
+    shares: card(ShareRegisterCard),
 
-    k10formpreview: K10Card,
-    k10: K10Card,
+    k10formpreview: card(K10Card),
+    k10: card(K10Card),
 
-    taxdeclarationpreview: TaxDeclarationCard,
-    taxdeclaration: TaxDeclarationCard,
-    inkomstdeklaration: TaxDeclarationCard,
-    ink2: TaxDeclarationCard,
+    taxdeclarationpreview: card(TaxDeclarationCard),
+    taxdeclaration: card(TaxDeclarationCard),
+    inkomstdeklaration: card(TaxDeclarationCard),
+    ink2: card(TaxDeclarationCard),
 
-    annualreportpreview: AnnualReportCard,
-    annualreport: AnnualReportCard,
-    arsredovisning: AnnualReportCard,
+    annualreportpreview: card(AnnualReportCard),
+    annualreport: card(AnnualReportCard),
+    arsredovisning: card(AnnualReportCard),
 
-    roadmappreview: RoadmapCard,
-    roadmap: RoadmapCard,
-    plan: RoadmapCard,
-    planering: RoadmapCard,
+    roadmappreview: card(RoadmapCard),
+    roadmap: card(RoadmapCard),
+    plan: card(RoadmapCard),
+    planering: card(RoadmapCard),
 
-    employeepreview: EmployeeCard,
-    employee: EmployeeCard,
-    newemployee: EmployeeCard,
+    employeepreview: card(EmployeeCard),
+    employee: card(EmployeeCard),
+    newemployee: card(EmployeeCard),
 
-    verificationpreview: VerificationCard,
-    verification: VerificationCard,
+    verificationpreview: card(VerificationCard),
+    verification: card(VerificationCard),
 
     // Lists (use SmartListCard to handle raw array data)
-    genericlist: SmartListCard,
-    list: SmartListCard,
-    transactionstable: SmartListCard,
-    receiptstable: SmartListCard,
-    invoicestable: SmartListCard,
-    employeelist: SmartListCard,
-    payslipstable: SmartListCard,
-    shareholderlist: SmartListCard,
-    partnerlist: SmartListCard,
-    memberlist: SmartListCard,
-    deadlineslist: SmartListCard,
-    benefitstable: SmartListCard,
-    vatsummary: SmartListCard,
+    genericlist: card(SmartListCard),
+    list: card(SmartListCard),
+    transactionstable: card(SmartListCard),
+    receiptstable: card(SmartListCard),
+    invoicestable: card(SmartListCard),
+    employeelist: card(SmartListCard),
+    payslipstable: card(SmartListCard),
+    shareholderlist: card(SmartListCard),
+    partnerlist: card(SmartListCard),
+    memberlist: card(SmartListCard),
+    deadlineslist: card(SmartListCard),
+    benefitstable: card(SmartListCard),
+    vatsummary: card(SmartListCard),
 
     // Audit
-    balanceauditcard: BalanceAuditCard,
-    balanskontroll: BalanceAuditCard,
-    audit: BalanceAuditCard,
+    balanceauditcard: card(BalanceAuditCard),
+    balanskontroll: card(BalanceAuditCard),
+    audit: card(BalanceAuditCard),
 
-    resultatauditcard: ResultatAuditCard,
-    resultatkontroll: ResultatAuditCard,
+    resultatauditcard: card(ResultatAuditCard),
+    resultatkontroll: card(ResultatAuditCard),
 
     // Billing/Usage
-    aiusagecard: AIUsageCard,
-    usage: AIUsageCard,
+    aiusagecard: card(AIUsageCard),
+    usage: card(AIUsageCard),
 
-    buycreditsprompt: BuyCreditsPrompt,
-    creditsprompt: BuyCreditsPrompt,
+    buycreditsprompt: card(BuyCreditsPrompt),
+    creditsprompt: card(BuyCreditsPrompt),
 
-    buycreditscheckout: BuyCreditsCheckout,
-    creditscheckout: BuyCreditsCheckout,
-    buyconfirm: BuyCreditsCheckout,
+    buycreditscheckout: card(BuyCreditsCheckout),
+    creditscheckout: card(BuyCreditsCheckout),
+    buyconfirm: card(BuyCreditsCheckout),
 }

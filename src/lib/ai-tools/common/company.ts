@@ -130,17 +130,14 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
             })
             if (txRes.ok) {
                 const txData = await txRes.json()
-                const transactions = txData.transactions || []
+                interface TransactionEntry { amount?: number }
+                const transactions: TransactionEntry[] = txData.transactions || []
                 revenue = transactions
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .filter((t: any) => (t.amount || 0) > 0)
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .reduce((sum: number, t: any) => sum + (t.amount || 0), 0)
+                    .filter((t) => (t.amount || 0) > 0)
+                    .reduce((sum: number, t) => sum + (t.amount || 0), 0)
                 expenses = transactions
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .filter((t: any) => (t.amount || 0) < 0)
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    .reduce((sum: number, t: any) => sum + Math.abs(t.amount || 0), 0)
+                    .filter((t) => (t.amount || 0) < 0)
+                    .reduce((sum: number, t) => sum + Math.abs(t.amount || 0), 0)
                 profit = revenue - expenses
             }
 

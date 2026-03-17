@@ -47,11 +47,11 @@ export async function POST(request: NextRequest) {
             success: true
         })
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
+    } catch (error: unknown) {
         console.error('Transcription error:', error)
+        const message = error instanceof Error ? error.message : 'Transcription failed'
         return NextResponse.json(
-            { error: error.message || 'Transcription failed' },
+            { error: message },
             { status: 500 }
         )
     }

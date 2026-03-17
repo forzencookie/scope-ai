@@ -61,11 +61,12 @@ export function DeadlinesList() {
 
       if (taxItems) {
         for (const item of taxItems) {
+          if (!item.due_date) continue
           const dueDate = new Date(item.due_date)
           const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
           items.push({
             id: item.id,
-            title: item.title,
+            title: item.title ?? '',
             dueDate,
             daysUntil,
             type: item.deadline_type as Deadline["type"],

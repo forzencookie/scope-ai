@@ -33,14 +33,13 @@ export function LoadingSpinner({ message = "Laddar..." }: LoadingSpinnerProps) {
  *     "Laddar transaktioner..."
  * )
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function createLazyComponent<T extends ComponentType<any>>(
-    importFn: () => Promise<{ default: T }>,
+export function createLazyComponent(
+    importFn: () => Promise<{ default: ComponentType<never> }>,
     loadingMessage?: string
-): ComponentType<React.ComponentProps<T>> {
-    const LazyComponent = lazy(importFn)
+): ComponentType<Record<string, unknown>> {
+    const LazyComponent = lazy(importFn as unknown as () => Promise<{ default: ComponentType<Record<string, unknown>> }>)
 
-    return function LazyWrapper(props: React.ComponentProps<T>) {
+    return function LazyWrapper(props: Record<string, unknown>) {
         return (
             <Suspense fallback={<LoadingSpinner message={loadingMessage} />}>
                 <LazyComponent {...props} />
@@ -64,6 +63,11 @@ export const LazyUnifiedInvoicesView = createLazyComponent(
     "Laddar fakturor..."
 )
 
+export const LazyInventarierTable = createLazyComponent(
+    () => import("@/components/bokforing/inventarier").then(m => ({ default: m.InventarierTable })),
+    "Laddar tillgångar..."
+)
+
 // --- Löner (active — used by payroll-page.tsx) ---
 export const LazyLonebesked = createLazyComponent(
     () => import("@/components/loner/payslips").then(m => ({ default: m.LonesbeskContent })),
@@ -73,6 +77,21 @@ export const LazyLonebesked = createLazyComponent(
 export const LazyTeamTab = createLazyComponent(
     () => import("@/components/loner/team"),
     "Laddar personal..."
+)
+
+export const LazyFormaner = createLazyComponent(
+    () => import("@/components/loner/benefits").then(m => ({ default: m.BenefitsView })),
+    "Laddar förmåner..."
+)
+
+export const LazyEgenavgifter = createLazyComponent(
+    () => import("@/components/loner/egenavgifter").then(m => ({ default: m.EgenavgifterView })),
+    "Laddar egenavgifter..."
+)
+
+export const LazyDelagaruttag = createLazyComponent(
+    () => import("@/components/loner/delagaruttag").then(m => ({ default: m.WithdrawalsView })),
+    "Laddar delägaruttag..."
 )
 
 // --- Ägare & Styrning (active — used by ownership-page.tsx) ---

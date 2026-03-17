@@ -166,7 +166,7 @@ export const accountService = {
             accountName: row.account_name,
             balance: row.balance || 0,
             period: row.period,
-            year: row.year,
+            year: row.year || targetYear,
             accountClass: getAccountClass(row.account_number),
             accountType: getAccountType(row.account_number)
         }))
@@ -201,7 +201,7 @@ export const accountService = {
             accountName: data.account_name,
             balance: data.balance || 0,
             period: data.period,
-            year: data.year,
+            year: data.year || targetYear,
             accountClass: getAccountClass(data.account_number),
             accountType: getAccountType(data.account_number)
         }

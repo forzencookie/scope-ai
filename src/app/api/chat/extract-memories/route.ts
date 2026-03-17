@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
         // Build a condensed transcript (skip tool calls/results for efficiency)
         const transcript = messages
             .filter((m: { role: string }) => m.role === 'user' || m.role === 'assistant')
-            .map((m: { role: string; content: string }) => `${m.role === 'user' ? 'Användare' : 'Scooby'}: ${(m.content || '').slice(0, 500)}`)
+            .map((m) => `${m.role === 'user' ? 'Användare' : 'Scooby'}: ${(m.content || '').slice(0, 500)}`)
             .join('\n\n')
 
         // Skip if transcript is too short
@@ -134,8 +134,7 @@ export async function POST(request: NextRequest) {
                 content: item.content,
                 category: item.category as 'decision' | 'preference' | 'pending',
                 confidence: item.confidence,
-                sourceConversationId: conversationId,
-                expiresInDays: item.category === 'pending' ? 30 : undefined,
+                sourceMessageId: conversationId,
             })
 
             if (memory) {

@@ -1,6 +1,6 @@
 "use client"
 
-import { createContext, useContext, useState, useCallback, useEffect, useMemo, useRef, type ReactNode } from "react"
+import { createContext, useContext, useState, useCallback, useEffect, useMemo, type ReactNode } from "react"
 import type { SceneType } from "@/components/ai/pixel-mascots"
 import type { WalkthroughContent } from "@/components/ai/walkthrough-overlay"
 import type { WalkthroughResponse } from "@/components/ai/blocks"
@@ -56,7 +56,7 @@ export interface AIDialogOutput {
     }
 }
 
-// Map content types to scene types
+// Map content types to scene types for pixel mascot
 const CONTENT_TO_SCENE: Record<string, SceneType> = {
     receipt: 'reading',
     receipts: 'reading',
@@ -75,25 +75,25 @@ const CONTENT_TO_SCENE: Record<string, SceneType> = {
 }
 
 interface AIDialogContextType {
-    /** Current status of the AI dialog */
+    /** Current status of the AI overlay */
     status: AIDialogStatus
     /** Output data when status is "complete" */
     output: AIDialogOutput | null
-    /** Whether we're on mobile (no overlay) */
+    /** Whether we're on mobile (adjusts layout) */
     isMobile: boolean
     /** Current scene type for thinking animation */
     sceneType: SceneType
-    /** Show the AI dialog in thinking state */
+    /** Show the AI overlay in thinking state */
     showThinking: (contentType?: string) => void
-    /** Show the AI dialog with completed output */
+    /** Show the AI overlay with completed output */
     showComplete: (output: AIDialogOutput) => void
-    /** Hide the AI dialog */
+    /** Hide the AI overlay */
     hide: () => void
-    /** Accept the output and trigger highlight */
+    /** Accept the output and trigger highlight/navigation */
     accept: () => void
-    /** Request edit (focuses sidebar input) */
+    /** Request edit (focuses chat input) */
     requestEdit: () => void
-    /** ID currently being highlighted */
+    /** ID currently being highlighted in the dashboard */
     highlightedId: string | null
     /** Clear the highlight */
     clearHighlight: () => void
@@ -105,12 +105,8 @@ interface AIDialogContextType {
     closeWalkthrough: () => void
     /** Whether the AI is thinking in the background while a walkthrough is displayed */
     isThinkingInBackground: boolean
-    /** Whether the side panel is pinned (prevents auto-close) */
-    isPinned: boolean
-    /** Toggle the pin state of the side panel */
-    togglePin: () => void
-    /** Whether the side panel should be visible (has content to show) */
-    isSidePanelOpen: boolean
+    /** Whether the AI overlay should be visible (has content to show) */
+    isAIOverlayOpen: boolean
 }
 
 const AIDialogContext = createContext<AIDialogContextType | null>(null)
@@ -123,7 +119,6 @@ export function useAIDialog() {
     return context
 }
 
-// Optional hook that doesn't throw if not in provider
 export function useAIDialogOptional() {
     return useContext(AIDialogContext)
 }
@@ -141,10 +136,9 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
     const [walkthroughContent, setWalkthroughContent] = useState<WalkthroughContent | null>(null)
     const [walkthroughBlocks, setWalkthroughBlocks] = useState<WalkthroughResponse | null>(null)
     const [isThinkingInBackground, setIsThinkingInBackground] = useState(false)
-    const [isPinned, setIsPinned] = useState(false)
 
-    // Side panel is open when there's walkthrough content or complete output to display
-    const isSidePanelOpen = status === "walkthrough" || status === "walkthrough-blocks" || status === "complete" || status === "thinking"
+    // The overlay is open when status is anything other than "hidden"
+    const isAIOverlayOpen = status !== "hidden"
 
     // Helper to determine scene type from content type
     const getSceneType = useCallback((contentType?: string): SceneType => {
@@ -163,59 +157,50 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
         return () => window.removeEventListener("resize", checkMobile)
     }, [])
 
-    // Listen for AI events from use-chat hook
+    // Listen for AI events from chat engine
     useEffect(() => {
         const handleAIStart = (e: CustomEvent<{ contentType?: string }>) => {
-            if (!isMobile) {
-                // Don't replace a visible walkthrough with thinking state
-                if (status === "walkthrough" || status === "walkthrough-blocks") {
-                    setIsThinkingInBackground(true)
-                    return
-                }
-                setStatus("thinking")
-                setOutput(null)
-                setSceneType(getSceneType(e.detail?.contentType))
+            // Don't replace a visible walkthrough with thinking state
+            if (status === "walkthrough" || status === "walkthrough-blocks") {
+                setIsThinkingInBackground(true)
+                return
             }
+            setStatus("thinking")
+            setOutput(null)
+            setSceneType(getSceneType(e.detail?.contentType))
         }
 
         const handleAIComplete = (e: CustomEvent<AIDialogOutput>) => {
-            if (!isMobile) {
-                setIsThinkingInBackground(false)
-                setStatus("complete")
-                setOutput(e.detail)
-            }
+            setIsThinkingInBackground(false)
+            setStatus("complete")
+            setOutput(e.detail)
         }
 
         const handleAIError = (e: CustomEvent<AIDialogOutput>) => {
-            if (!isMobile) {
-                setIsThinkingInBackground(false)
-                setStatus("error")
-                setOutput(e.detail)
-                setSceneType("error")
-            }
+            setIsThinkingInBackground(false)
+            setStatus("error")
+            setOutput(e.detail)
+            setSceneType("error")
         }
 
         const handleAIHide = () => {
             setStatus("hidden")
             setOutput(null)
             setWalkthroughContent(null)
+            setWalkthroughBlocks(null)
         }
 
         const handleAIWalkthrough = (e: CustomEvent<WalkthroughContent>) => {
-            if (!isMobile) {
-                setStatus("walkthrough")
-                setWalkthroughContent(e.detail)
-                setOutput(null)
-            }
+            setStatus("walkthrough")
+            setWalkthroughContent(e.detail)
+            setOutput(null)
         }
 
         const handleAIWalkthroughBlocks = (e: CustomEvent<WalkthroughResponse>) => {
-            if (!isMobile) {
-                setIsThinkingInBackground(false)
-                setStatus("walkthrough-blocks")
-                setWalkthroughBlocks(e.detail)
-                setOutput(null)
-            }
+            setIsThinkingInBackground(false)
+            setStatus("walkthrough-blocks")
+            setWalkthroughBlocks(e.detail)
+            setOutput(null)
         }
 
         window.addEventListener("ai-dialog-start", handleAIStart as EventListener)
@@ -233,22 +218,18 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
             window.removeEventListener("ai-dialog-walkthrough", handleAIWalkthrough as EventListener)
             window.removeEventListener("ai-dialog-walkthrough-blocks", handleAIWalkthroughBlocks as EventListener)
         }
-    }, [isMobile, getSceneType, status])
+    }, [getSceneType, status])
 
     const showThinking = useCallback((contentType?: string) => {
-        if (!isMobile) {
-            setStatus("thinking")
-            setOutput(null)
-            setSceneType(getSceneType(contentType))
-        }
-    }, [isMobile, getSceneType])
+        setStatus("thinking")
+        setOutput(null)
+        setSceneType(getSceneType(contentType))
+    }, [getSceneType])
 
     const showComplete = useCallback((newOutput: AIDialogOutput) => {
-        if (!isMobile) {
-            setStatus("complete")
-            setOutput(newOutput)
-        }
-    }, [isMobile])
+        setStatus("complete")
+        setOutput(newOutput)
+    }, [])
 
     const hide = useCallback(() => {
         setStatus("hidden")
@@ -258,33 +239,26 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
     }, [])
 
     const closeWalkthrough = useCallback(() => {
-        // Persist walkthrough to händelser before clearing
+        // Persist walkthrough action to timeline before clearing
         if (walkthroughBlocks) {
             emitEvent({
                 source: 'ai',
                 category: 'system',
                 action: 'walkthrough_generated',
                 title: walkthroughBlocks.title,
-                actor: { type: 'ai', name: 'Scope AI' },
+                actor: { type: 'ai', name: 'Scooby' },
                 description: walkthroughBlocks.subtitle,
                 metadata: {
                     walkthroughBlocks,
                     closedAt: new Date().toISOString(),
                 },
-            }).catch(() => {
-                // Fire-and-forget — don't block close on network failure
-            })
+            }).catch(console.error)
         }
         setStatus("hidden")
         setWalkthroughContent(null)
         setWalkthroughBlocks(null)
         setIsThinkingInBackground(false)
-        setIsPinned(false)
     }, [walkthroughBlocks])
-
-    const togglePin = useCallback(() => {
-        setIsPinned(prev => !prev)
-    }, [])
 
     const accept = useCallback(() => {
         // Set highlight if provided
@@ -313,7 +287,7 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
     }, [output, hide])
 
     const requestEdit = useCallback(() => {
-        // Focus the sidebar chat input with prefill hint
+        // Focus the chat input with prefill hint
         window.dispatchEvent(new CustomEvent("ai-chat-focus-input", {
             detail: { prefill: "Ändra så att " }
         }))
@@ -339,10 +313,8 @@ export function AIDialogProvider({ children }: AIDialogProviderProps) {
         walkthroughBlocks,
         closeWalkthrough,
         isThinkingInBackground,
-        isPinned,
-        togglePin,
-        isSidePanelOpen,
-    }), [status, output, isMobile, sceneType, showThinking, showComplete, hide, accept, requestEdit, highlightedId, clearHighlight, walkthroughContent, walkthroughBlocks, closeWalkthrough, isThinkingInBackground, isPinned, togglePin, isSidePanelOpen])
+        isAIOverlayOpen,
+    }), [status, output, isMobile, sceneType, showThinking, showComplete, hide, accept, requestEdit, highlightedId, clearHighlight, walkthroughContent, walkthroughBlocks, closeWalkthrough, isThinkingInBackground, isAIOverlayOpen])
 
     return (
         <AIDialogContext.Provider value={value}>

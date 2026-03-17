@@ -11,7 +11,7 @@ import { getGreeting } from "@/lib/chat-utils"
 import { Button } from "@/components/ui/button"
 import { ArrowLeft, BookOpen, Users, PieChart, Building2, CalendarDays, PawPrint } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { AISidePanel } from "@/components/ai"
+import { AIOverlay } from "@/components/ai"
 import { SuggestionChips } from "@/components/ai/suggestion-chips"
 
 const pageButtons = [
@@ -25,7 +25,7 @@ const pageButtons = [
 export function MainContentArea({ children }: { children?: React.ReactNode }) {
     const pathname = usePathname()
     const router = useRouter()
-    const { isSidePanelOpen } = useAIDialog()
+    const { isAIOverlayOpen } = useAIDialog()
     const {
         messages,
         isLoading,
@@ -79,7 +79,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         // State 3: Page view
         if (!isDashboardRoot) {
             return (
-                <div className={cn("flex-1 flex flex-col min-h-0 relative", isSidePanelOpen && "hidden lg:flex border-r border-border")}>
+                <div className={cn("flex-1 flex flex-col min-h-0 relative", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
                     {/* Header bar: Back button + page tabs portal */}
                     <div className="shrink-0 px-4 pt-3 pb-1 flex items-center">
                         <Button
@@ -104,7 +104,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         // State 1: Empty chat — greeting + inline chat input
         if (messages.length === 0) {
             return (
-                <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isSidePanelOpen && "hidden lg:flex border-r border-border")}>
+                <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
                     {ghostButton}
                     <div className="flex-1 flex flex-col items-center justify-center px-4">
                         {/* Pixel Dog Mascot */}
@@ -223,7 +223,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
 
         // State 2: Active chat
         return (
-            <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isSidePanelOpen && "hidden lg:flex border-r border-border")}>
+            <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
                 {ghostButton}
                 {/* Messages area */}
                 <div className="flex-1 overflow-y-auto px-4">
@@ -275,13 +275,13 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
             "flex-1 flex flex-row min-h-0 m-2 ml-0 rounded-2xl overflow-hidden bg-background",
             isIncognito && "bg-violet-500/[0.03] dark:bg-violet-500/[0.02]"
         )}>
-            {renderContent()}
-            
-            {isSidePanelOpen && (
-                <div className="w-full lg:w-[45%] flex-shrink-0 flex flex-col min-h-0">
-                    <AISidePanel />
-                </div>
-            )}
+            <div className="flex-1 flex flex-col min-h-0 relative">
+                {renderContent()}
+
+                {isAIOverlayOpen && (
+                    <AIOverlay />
+                )}
+            </div>
 
             <BuyCreditsDialog
                 open={showBuyCredits}

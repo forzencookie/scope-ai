@@ -89,9 +89,6 @@ export const VerifikationerTable = memo(function VerifikationerTable() {
                 onDownload={() => {
                     toast.info("Laddar ner...", `Verifikation ${selectedVerifikation?.verificationNumber} förbereds för nedladdning.`)
                 }}
-                onApprove={() => {
-                    toast.success("Verifikation godkänd", `Verifikation ${selectedVerifikation?.verificationNumber} har godkänts.`)
-                }}
             />
 
             {/* Table Section */}

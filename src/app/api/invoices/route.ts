@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 
         let nextNum = 1;
         if (lastInvoices && lastInvoices.length > 0) {
-            const lastNum = parseInt(lastInvoices[0].invoice_number.split('-')[2]) || 0;
+            const lastNum = parseInt(lastInvoices[0]?.invoice_number?.split('-')[2] ?? '0') || 0;
             nextNum = lastNum + 1;
         }
         const invoiceNumber = `FAK-${year}-${String(nextNum).padStart(4, '0')}`;
@@ -111,7 +111,6 @@ export async function POST(req: NextRequest) {
                 notes: body.notes || null,
             },
             status: body.status || 'Utkast',
-            currency: body.currency || 'SEK',
             // payment_reference stores the customer reference (Er referens)
             payment_reference: body.reference || null,
             user_id: userId,
@@ -145,7 +144,7 @@ export async function POST(req: NextRequest) {
             issueDate: created.invoice_date,
             dueDate: created.due_date,
             status: created.status,
-            currency: created.currency,
+            currency: body.currency || 'SEK',
             reference: created.payment_reference,
             bankgiro: storedItems?.bankgiro || null,
             plusgiro: storedItems?.plusgiro || null,

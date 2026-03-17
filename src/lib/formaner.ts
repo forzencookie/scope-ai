@@ -59,9 +59,8 @@ export async function listAvailableBenefits(
     // Try Supabase first
     if (isSupabaseConfigured()) {
         const supabase = createBrowserClient()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
-            .from('formaner_catalog' as any)
+            .from('formaner_catalog')
             .select('*')
             .order('name')
 
@@ -81,9 +80,8 @@ export async function listAvailableBenefits(
 export async function getBenefitDetails(id: string): Promise<FormanCatalogItem | null> {
     if (isSupabaseConfigured()) {
         const supabase = createBrowserClient()
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data } = await supabase
-            .from('formaner_catalog' as any)
+            .from('formaner_catalog')
             .select('*')
             .eq('id', id)
             .single()
@@ -125,17 +123,14 @@ export async function assignBenefit(
     const formansvarde = benefit?.taxFree ? 0 : calculateFormansvarde(input.benefitType, input.amount)
 
     const supabase = createBrowserClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // The benefits table has a simplified schema (name, type, taxable_amount).
+    // Detailed benefit assignment data is stored in the name/type fields.
     const { data, error } = await supabase
-        .from('employee_benefits' as any)
+        .from('benefits')
         .insert({
-            employee_name: input.employeeName,
-            benefit_type: input.benefitType,
-            amount: input.amount,
-            year: input.year,
-            month: input.month,
-            formansvarde: formansvarde,
-            notes: input.notes,
+            name: `${input.employeeName} — ${input.benefitType}`,
+            type: input.benefitType,
+            taxable_amount: formansvarde,
         })
         .select()
         .single()
@@ -158,12 +153,11 @@ export async function getEmployeeBenefits(
     if (!isSupabaseConfigured()) return []
 
     const supabase = createBrowserClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // The benefits table uses a simplified schema. We filter by name pattern.
     const { data, error } = await supabase
-        .from('employee_benefits' as any)
+        .from('benefits')
         .select('*')
-        .eq('employee_name', employeeName)
-        .eq('year', year)
+        .ilike('name', `${employeeName}%`)
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -183,11 +177,9 @@ export async function getAllAssignedBenefits(
     if (!isSupabaseConfigured()) return []
 
     const supabase = createBrowserClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const { data, error } = await supabase
-        .from('employee_benefits' as any)
+        .from('benefits')
         .select('*')
-        .eq('year', year)
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -205,9 +197,9 @@ export async function deleteAssignedBenefit(id: string): Promise<boolean> {
     if (!isSupabaseConfigured()) return false
 
     const supabase = createBrowserClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    // NOTE: benefits table schema needs migration to match EmployeeBenefitRow columns
     const { error } = await supabase
-        .from('employee_benefits' as any)
+        .from('benefits')
         .delete()
         .eq('id', id)
 

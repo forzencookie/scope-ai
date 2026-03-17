@@ -16,8 +16,12 @@ export interface GetComplianceDocsParams {
     limit?: number
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>({
+interface ComplianceDoc {
+    type: string
+    [key: string]: unknown
+}
+
+export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, ComplianceDoc[]>({
     name: 'get_compliance_docs',
     description: 'Hämta bolagsdokument som styrelseprotokoll, stämmoprotokoll eller aktieboken. Använd för att hitta tidigare beslut, kontrollera ägande, eller förbereda intyg.',
     category: 'read',
@@ -39,8 +43,7 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, any[]>(
                 let docs = data.documents || []
 
                 if (params.type) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    docs = docs.filter((d: any) => d.type === params.type)
+                    docs = docs.filter((d: ComplianceDoc) => d.type === params.type)
                 }
 
                 const limit = params.limit || 5
@@ -70,8 +73,17 @@ export interface RegisterDividendParams {
     recipientName?: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const registerDividendTool = defineTool<RegisterDividendParams, any>({
+interface DividendResult {
+    type: string
+    amount: number
+    withholdingTax: number
+    netPayout: number
+    year: number
+    recipient: string
+    date: string
+}
+
+export const registerDividendTool = defineTool<RegisterDividendParams, DividendResult>({
     name: 'register_dividend',
     description: 'Registrera ett utdelningsbeslut från bolagsstämma. Skapar underlag för K10 och Skatteverket. Vanliga frågor: "ta utdelning", "bestämde 100 000 i utdelning". Kräver bekräftelse.',
     category: 'write',
@@ -188,8 +200,20 @@ export interface DraftBoardMinutesParams {
     decisions?: string[]
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
+interface BoardMinutesResult {
+    companyName: string
+    meetingType: string
+    meetingNumber: string
+    date: string
+    time: string
+    location: string
+    attendees: Array<{ name: string; role: string; present: boolean }>
+    agenda: string[]
+    decisions: Array<{ id: string; paragraph: string; title: string; description: string; decision: string; type: string }>
+    signatures: Array<{ role: string; name: string }>
+}
+
+export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, BoardMinutesResult>({
     name: 'draft_board_minutes',
     description: 'Skapa utkast till styrelseprotokoll eller årsstämmoprotokoll. Fyller i mallen med beslut och närvarande. Använd när användaren behöver protokoll.',
     category: 'write',
@@ -238,7 +262,10 @@ export const draftBoardMinutesTool = defineTool<DraftBoardMinutesParams, any>({
         if (!companyName) {
             return {
                 success: false,
-                data: {},
+                data: {
+                    companyName: '', meetingType: '', meetingNumber: '', date: '', time: '',
+                    location: '', attendees: [], agenda: [], decisions: [], signatures: [],
+                },
                 message: 'Företagsinformation saknas. Gå till Inställningar > Företag för att fylla i uppgifter.',
             }
         }

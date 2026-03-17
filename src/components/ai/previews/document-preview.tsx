@@ -10,6 +10,7 @@
  * - Meeting minutes, etc.
  */
 
+import Image from "next/image"
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Download, Send, Printer, Check, X, Pencil } from "lucide-react"
@@ -88,8 +89,7 @@ export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(
                             {/* Left: Company info */}
                             <div>
                                 {companyInfo?.logo ? (
-                                    /* eslint-disable-next-line @next/next/no-img-element */
-                                    <img src={companyInfo.logo} alt="" className="h-10 mb-2" />
+                                    <Image src={companyInfo.logo} alt="" width={120} height={40} className="h-10 w-auto mb-2" unoptimized />
                                 ) : companyInfo?.name && (
                                     <h2 className="text-xl font-bold">{companyInfo.name}</h2>
                                 )}

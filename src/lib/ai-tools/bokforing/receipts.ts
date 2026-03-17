@@ -219,8 +219,7 @@ export const getUnmatchedReceiptsTool = defineTool<GetUnmatchedReceiptsParams, R
         })
 
         // Filter to those without linked transaction
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const unmatched = receipts.filter((r: any) => !r.linkedTransaction).slice(0, limit)
+        const unmatched = receipts.filter((r) => !r.linkedTransaction).slice(0, limit)
 
         const data: Receipt[] = unmatched.map(r => ({
             id: r.id,

@@ -22,11 +22,11 @@ import { taxService } from '@/services/tax-service'
 async function fetchAccountBalances(startDate: string, endDate: string): Promise<AccountBalance[]> {
     const supabase = await createServerClient()
     const { data, error } = await supabase.rpc('get_account_balances', {
-        p_start_date: startDate,
-        p_end_date: endDate,
+        p_date_from: startDate,
+        p_date_to: endDate,
     })
     if (error) throw error
-    return (data || []).map((row: { account_number: number; balance: number }) => ({
+    return (data || []).map((row) => ({
         account: String(row.account_number),
         balance: row.balance,
     }))
@@ -164,8 +164,18 @@ export interface FinancialReportParams {
     comparisonPeriod?: string
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const generateFinancialReportTool = defineTool<FinancialReportParams, any>({
+interface FinancialReportResult {
+    year: number
+    incomeStatement: ProcessedFinancialItem[]
+    balanceSheet: ProcessedFinancialItem[]
+    comparison: {
+        year: number
+        incomeStatement: ProcessedFinancialItem[]
+        balanceSheet: ProcessedFinancialItem[]
+    } | null
+}
+
+export const generateFinancialReportTool = defineTool<FinancialReportParams, FinancialReportResult>({
     name: 'generate_financial_report',
     description: 'Skapa en samlad finansiell rapport med resultat- och balansräkning för en period. Kan jämföra mot tidigare år.',
     category: 'read',
@@ -189,7 +199,7 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, any
         if (!plBalances.length && !bsBalances.length) {
             return {
                 success: false,
-                data: {},
+                data: { year, incomeStatement: [], balanceSheet: [], comparison: null },
                 message: `Ingen finansiell rapport tillgänglig för ${year}. Bokför transaktioner först.`,
             }
         }
@@ -230,8 +240,26 @@ export interface AnnualReportParams {
     year: number
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
+interface AnnualReportResult {
+    companyName: string
+    orgNumber: string
+    period: string
+    fiscalYearStart: string
+    fiscalYearEnd: string
+    sections: {
+        managementReport: boolean
+        incomeStatement: boolean
+        balanceSheet: boolean
+        notes: boolean
+        signatures: boolean
+    }
+    keyFigures: Array<{ label: string; value: number }>
+    incomeStatement: ReturnType<typeof FinancialReportCalculator.calculateIncomeStatementSections>
+    balanceSheet: ReturnType<typeof FinancialReportCalculator.calculateBalanceSheetSections>
+    status: string
+}
+
+export const draftAnnualReportTool = defineTool<AnnualReportParams, AnnualReportResult>({
     name: 'draft_annual_report',
     description: 'Skapa utkast för årsredovisning (K2). Innehåller förvaltningsberättelse, resultaträkning, balansräkning och noter. Använd när användaren vill göra sin årsredovisning eller frågar om bokslut.',
     category: 'write',
@@ -263,7 +291,12 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
         if (!companyName) {
             return {
                 success: false,
-                data: {},
+                data: {
+                    companyName: '', orgNumber: '', period: String(params.year),
+                    fiscalYearStart: '', fiscalYearEnd: '',
+                    sections: { managementReport: false, incomeStatement: false, balanceSheet: false, notes: false, signatures: false },
+                    keyFigures: [], incomeStatement: [], balanceSheet: [], status: 'draft',
+                },
                 message: 'Företagsinformation saknas. Gå till Inställningar > Företag för att fylla i uppgifter.',
             }
         }

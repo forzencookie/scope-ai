@@ -84,12 +84,15 @@ export function useAsync<T>(
   // Store asyncFn in ref to create a stable reference while respecting deps
   const asyncFnRef = useRef(asyncFn)
   
+  // Serialize deps to a stable string for use as an effect dependency.
+  // This avoids spreading a dynamic array into the deps list (which the linter can't analyze).
+  const depsKey = JSON.stringify(deps)
+
   // Update asyncFnRef when deps change
   // This ensures the async function has access to current closure values
   useEffect(() => {
     asyncFnRef.current = asyncFn
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [asyncFn, ...deps]) // Include asyncFn and spread deps for proper tracking
+  }, [asyncFn, depsKey])
 
   const execute = useCallback(async () => {
     const currentRequestId = ++requestIdRef.current
@@ -130,10 +133,7 @@ export function useAsync<T>(
     if (!optionsRef.current.skip) {
       execute()
     }
-    // We intentionally depend on `deps` array items, not `deps` itself
-    // This is a deliberate pattern to allow dynamic dependency arrays
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [execute, ...deps])
+  }, [execute, depsKey])
 
   const clearError = useCallback(() => setError(null), [])
 

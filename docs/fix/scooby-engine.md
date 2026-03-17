@@ -15,6 +15,7 @@ The flow describes: the Doctor Model (layered context loading), memory architect
 - Conversation save/load — partially works
 
 ### What's missing
+- 🔵 **Company-type awareness in system prompt** — Scooby must know the user's company type (AB/EF/HB/KB/Förening) and tailor behavior accordingly. An EF user should never be offered AB features like aktiebok, utdelning, or bolagsstämma. The system prompt must inject company type and restrict Scooby's suggestions to relevant features. See `fix/database-schema.md` section 5 for the full enforcement model across all layers.
 - 🔵 **Memory relevance filtering** — replace blind top-20 injection with keyword/embedding-based relevance matching per query
 - 🔵 **Memory categories** — task, goal, decision, preference, note. Schema needs updating.
 - 🔵 **Memory AI tools** — `recall_memory`, `save_memory`, `list_memories` for Scooby to read/write memory

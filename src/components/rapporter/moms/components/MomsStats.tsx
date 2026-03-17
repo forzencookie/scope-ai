@@ -6,6 +6,16 @@ import { formatCurrencyCompact } from "@/lib/formatters"
 import { termExplanations } from "@/components/rapporter/constants"
 import { Skeleton } from "@/components/ui/skeleton"
 
+interface MomsTextContent {
+    reports: {
+        nextDeclaration: string
+        vatToPay: string
+        salesVat: string
+        inputVat: string
+        deductible: string
+    }
+}
+
 interface MomsStatsProps {
     stats: {
         nextPeriod: string
@@ -14,8 +24,7 @@ interface MomsStatsProps {
         inputVat: number
         netVat: number
     }
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    text: any
+    text: MomsTextContent
     isLoading?: boolean
 }
 

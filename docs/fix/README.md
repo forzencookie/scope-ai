@@ -6,6 +6,7 @@
 
 | Fix | Flow | Thinking | Status |
 |-----|------|----------|--------|
+| [database-schema.md](database-schema.md) | Cross-cutting (all pages/tools) | 🟢 Medium | ⬜ Not started |
 | [ai-interface.md](ai-interface.md) | [AI Interface](../flows/ai-interface.md) | 🔵 Ultrathink | ⬜ Not started |
 | [scooby-engine.md](scooby-engine.md) | [Scooby Engine](../flows/scooby-engine.md) | 🔵 Ultrathink | ⬜ Not started |
 | [tools.md](tools.md) | [Tools](../flows/tools.md) | 🔵 Ultrathink | ⬜ Not started |

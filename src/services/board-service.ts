@@ -154,14 +154,14 @@ export const boardService = {
         const supabase = createBrowserClient()
 
         let query = supabase
-            .from('corporate_documents' as any)
+            .from('meetings')
             .select('*', { count: 'exact' })
             .eq('type', 'board_meeting_minutes')
             .order('date', { ascending: false })
             .range(offset, offset + limit - 1)
 
         if (status) {
-            // Map our status to corporate_documents status values
+            // Map our status to meetings status values
             const statusMap: Record<string, string> = {
                 'draft': 'draft',
                 'approved': 'signed',
@@ -178,27 +178,32 @@ export const boardService = {
             return { minutes: [], totalCount: 0 }
         }
 
-        const minutes: BoardMeetingMinutes[] = data.map((row: any) => {
-            let content: Record<string, any> = {}
-            try {
-                content = JSON.parse(row.content || '{}')
-            } catch { /* ignore */ }
+        type MeetingsRow = typeof data[number]
 
-            // Map corporate_documents status to BoardMeetingMinutes status
-            const docStatus = row.status as string
+        const minutes: BoardMeetingMinutes[] = data.map((row: MeetingsRow) => {
+            let agendaItems: Array<{ decision?: string }> = []
+            const rawAgenda = row.agenda_items
+            if (Array.isArray(rawAgenda)) {
+                agendaItems = rawAgenda as Array<{ decision?: string }>
+            }
+
+            // Map meetings status to BoardMeetingMinutes status
+            const docStatus = row.status
             const mappedStatus: 'draft' | 'approved' | 'archived' =
                 docStatus === 'signed' ? 'approved' :
                 docStatus === 'archived' ? 'archived' : 'draft'
+
+            const attendeesList = Array.isArray(row.attendees) ? row.attendees as string[] : []
 
             return {
                 id: row.id,
                 title: row.title || 'Styrelseprotokoll',
                 meetingDate: row.date || row.created_at || '',
                 status: mappedStatus,
-                attendees: Array.isArray(content.attendees) ? content.attendees : [],
-                decisions: Array.isArray(content.agendaItems)
-                    ? content.agendaItems.filter((item: any) => item.decision).map((item: any) => item.decision)
-                    : [],
+                attendees: attendeesList,
+                decisions: agendaItems
+                    .filter((item) => item.decision)
+                    .map((item) => item.decision as string),
                 documentUrl: null,
             }
         })
@@ -230,7 +235,7 @@ export const boardService = {
         }
 
         let query = supabase
-            .from('corporate_documents' as any)
+            .from('meetings')
             .select('*', { count: 'exact' })
             .order('date', { ascending: false })
             .range(offset, offset + limit - 1)
@@ -250,44 +255,50 @@ export const boardService = {
             return { meetings: [], totalCount: 0 }
         }
 
-        const meetings: CompanyMeeting[] = data.map((row: any) => {
-            let content: Record<string, any> = {}
-            try {
-                content = JSON.parse(row.content || '{}')
-            } catch { /* ignore */ }
+        type MeetingsRow = typeof data[number]
 
+        const meetings = data.map((row: MeetingsRow) => {
             const isBoard = row.type === 'board_meeting_minutes'
+
+            // Parse agenda_items and decisions from JSONB columns
+            const agendaItems = row.agenda_items as Array<{ type?: string; location?: string; decision?: string }> | null
+            const decisionsJson = row.decisions as Array<{ decision?: string; title?: string }> | null
+            const attendeesList = Array.isArray(row.attendees) ? row.attendees as string[] : []
+
+            // Determine meeting subtype from agenda_items metadata
+            const meetingMeta = agendaItems?.[0]
 
             // Determine meeting type
             let meetingType: 'annual' | 'extraordinary' | 'board' = 'board'
             if (!isBoard) {
-                meetingType = content.type === 'extra' ? 'extraordinary' : 'annual'
+                meetingType = meetingMeta?.type === 'extra' ? 'extraordinary' : 'annual'
             }
 
             // Filter by subtype if needed (annual vs extraordinary within general_meeting_minutes)
-            if (type === 'annual' && content.type === 'extra') return null
-            if (type === 'extraordinary' && content.type !== 'extra') return null
+            if (type === 'annual' && meetingMeta?.type === 'extra') return null
+            if (type === 'extraordinary' && meetingMeta?.type !== 'extra') return null
 
-            // Map corporate_documents status to CompanyMeeting status
-            const docStatus = row.status as string
+            // Map meetings status to CompanyMeeting status
+            const docStatus = row.status
             const mappedStatus: 'scheduled' | 'held' | 'cancelled' =
                 docStatus === 'signed' || docStatus === 'archived' ? 'held' : 'scheduled'
 
-            return {
+            const meeting: CompanyMeeting = {
                 id: row.id,
                 title: row.title || 'Möte',
                 type: meetingType,
-                meetingDate: row.date,
-                scheduledDate: row.date,
+                meetingDate: row.date || null,
+                scheduledDate: row.date || null,
                 status: mappedStatus,
-                location: content.location || null,
-                agenda: Array.isArray(content.agenda) ? content.agenda.join(', ') : null,
-                attendees: Array.isArray(content.attendees) ? content.attendees : [],
-                decisions: Array.isArray(content.decisions)
-                    ? content.decisions.map((d: any) => d.decision || d.title || '')
+                location: row.location || null,
+                agenda: Array.isArray(agendaItems) ? agendaItems.map((a) => a.decision || '').filter(Boolean).join(', ') : null,
+                attendees: attendeesList,
+                decisions: Array.isArray(decisionsJson)
+                    ? decisionsJson.map((d) => d.decision || d.title || '')
                     : [],
             }
-        }).filter(Boolean) as CompanyMeeting[]
+            return meeting
+        }).filter((m): m is CompanyMeeting => m !== null)
 
         return { meetings, totalCount: type ? meetings.length : (count || 0) }
     },
@@ -296,6 +307,88 @@ export const boardService = {
      * Get next annual meeting deadline
      * Swedish AB must hold årsstämma within 6 months of fiscal year end
      */
+    /**
+     * Create a new meeting record
+     */
+    async createMeeting(params: {
+        title: string
+        type: 'board_meeting_minutes' | 'general_meeting_minutes'
+        date: string
+        location?: string
+        agenda?: Array<{ title?: string; decision?: string }>
+        attendees?: string[]
+        status?: string
+    }): Promise<CompanyMeeting> {
+        const supabase = createBrowserClient()
+
+        // Get user and company context
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single()
+        ])
+
+        if (!user || !company) throw new Error('Ej inloggad eller företag saknas.')
+
+        const { data, error } = await supabase
+            .from('meetings')
+            .insert({
+                user_id: user.id,
+                company_id: company.id,
+                title: params.title,
+                type: params.type,
+                date: params.date,
+                location: params.location || null,
+                agenda_items: params.agenda || null,
+                attendees: params.attendees || [],
+                status: params.status || 'draft',
+            })
+            .select()
+            .single()
+
+        if (error) throw error
+
+        // Map back to our domain model
+        return {
+            id: data.id,
+            title: data.title || 'Möte',
+            type: data.type === 'board_meeting_minutes' ? 'board' : 'annual', // Simple mapping
+            meetingDate: data.date,
+            scheduledDate: data.date,
+            status: 'scheduled',
+            location: data.location,
+            agenda: params.agenda?.map(a => a.title || a.decision).filter(Boolean).join(', ') || null,
+            attendees: data.attendees as string[] || [],
+            decisions: [],
+        }
+    },
+
+    /**
+     * Update an existing meeting
+     */
+    async updateMeeting(id: string, updates: Partial<CompanyMeeting>): Promise<void> {
+        const supabase = createBrowserClient()
+
+        // Get company context for explicit filtering
+        const { data: company } = await supabase.from('companies').select('id').single()
+        if (!company) throw new Error('Företag saknas.')
+
+        const dbUpdates: any = {}
+        if (updates.title) dbUpdates.title = updates.title
+        if (updates.status) {
+            dbUpdates.status = updates.status === 'held' ? 'signed' : 'draft'
+        }
+        if (updates.location) dbUpdates.location = updates.location
+        if (updates.attendees) dbUpdates.attendees = updates.attendees
+
+        const { error } = await supabase
+            .from('meetings')
+            .update(dbUpdates)
+            .eq('id', id)
+            .eq('company_id', company.id)
+
+        if (error) throw error
+    },
+
     async getAnnualMeetingDeadline(fiscalYearEnd: string = '12-31'): Promise<{
         deadline: string
         daysRemaining: number

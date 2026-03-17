@@ -19,7 +19,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { type AnnualMeeting, Motion } from "@/types/meeting"
+import { type AnnualMeeting, type Motion, type Decision } from "@/types/meeting"
 
 interface MeetingDetailsProps {
   meeting: AnnualMeeting
@@ -89,8 +89,7 @@ export function MeetingDetails({ meeting, onClose }: MeetingDetailsProps) {
               <div className="flex items-center gap-2">
                 <UserCheck className="h-4 w-4 text-muted-foreground" />
                 <span className="text-muted-foreground">Röstande:</span>
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <span className="font-medium">{(meeting as any).votingMembersCount || meeting.attendeesCount || 0} st</span>
+                <span className="font-medium">{meeting.votingMembersCount || meeting.attendeesCount || 0} st</span>
               </div>
             </div>
           )}
@@ -138,8 +137,7 @@ export function MeetingDetails({ meeting, onClose }: MeetingDetailsProps) {
                 Beslut ({meeting.decisions?.length} st)
               </h4>
               <div className="space-y-2">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                {(meeting.decisions || []).map((decision: any, index: number) => (
+                {(meeting.decisions || []).map((decision: Decision, index: number) => (
                   <div
                     key={decision.id}
                     className="flex items-start gap-3 p-3 bg-muted/50 rounded-lg"

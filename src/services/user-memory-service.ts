@@ -1,22 +1,24 @@
-// @ts-nocheck
-// TODO: Create user_memory table migration before enabling type checking
 /**
  * User Memory Service
  *
  * Manages user/company-specific memories for AI personalization.
  * Part of AI Architecture v2.
- * 
+ *
  * Memory categories:
  * - decision: Past actions taken (e.g., "Took 120k dividend Dec 2025")
  * - preference: User preferences (e.g., "Prefers simple explanations")
- * - pending: Things being considered (e.g., "Considering hiring", expires after 30 days)
+ * - pending: Things being considered (e.g., "Considering hiring")
  */
 
 import { createBrowserClient } from '@/lib/database/client'
+import type { Database } from '@/types/database'
 
 // =============================================================================
 // Types
 // =============================================================================
+
+type UserMemoryRow = Database['public']['Tables']['user_memory']['Row']
+type UserMemoryInsert = Database['public']['Tables']['user_memory']['Insert']
 
 export type MemoryCategory = 'decision' | 'preference' | 'pending'
 
@@ -25,12 +27,11 @@ export interface UserMemory {
     companyId: string
     content: string
     category: MemoryCategory
-    confidence: number
-    expiresAt: string | null
+    confidence: number | null
     supersededBy: string | null
-    sourceConversationId: string | null
-    createdAt: string
-    updatedAt: string
+    sourceMessageId: string | null
+    createdAt: string | null
+    updatedAt: string | null
 }
 
 export interface CreateMemoryParams {
@@ -38,15 +39,13 @@ export interface CreateMemoryParams {
     content: string
     category: MemoryCategory
     confidence?: number
-    expiresInDays?: number
-    sourceConversationId?: string
+    sourceMessageId?: string
 }
 
 export interface UpdateMemoryParams {
     content?: string
     category?: MemoryCategory
     confidence?: number
-    expiresAt?: string | null
 }
 
 // =============================================================================
@@ -56,7 +55,7 @@ export interface UpdateMemoryParams {
 class UserMemoryService {
     /**
      * Get all active memories for a company.
-     * Active = not superseded and not expired.
+     * Active = not superseded.
      */
     async getMemoriesForCompany(companyId: string): Promise<UserMemory[]> {
         const supabase = createBrowserClient()
@@ -66,7 +65,6 @@ class UserMemoryService {
             .select('*')
             .eq('company_id', companyId)
             .is('superseded_by', null)
-            .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -89,7 +87,6 @@ class UserMemoryService {
             .eq('company_id', companyId)
             .eq('category', category)
             .is('superseded_by', null)
-            .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
             .order('created_at', { ascending: false })
 
         if (error) {
@@ -102,7 +99,6 @@ class UserMemoryService {
 
     /**
      * Search memories by content (simple text search).
-     * For semantic search, use queryRelevantMemories.
      */
     async searchMemories(companyId: string, query: string): Promise<UserMemory[]> {
         const supabase = createBrowserClient()
@@ -112,7 +108,6 @@ class UserMemoryService {
             .select('*')
             .eq('company_id', companyId)
             .is('superseded_by', null)
-            .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`)
             .ilike('content', `%${query}%`)
             .order('confidence', { ascending: false })
             .limit(10)
@@ -127,29 +122,21 @@ class UserMemoryService {
 
     /**
      * Add a new memory.
-     * Checks for similar existing memories and supersedes if appropriate.
      */
     async addMemory(params: CreateMemoryParams): Promise<UserMemory | null> {
         const supabase = createBrowserClient()
 
-        // Calculate expiry if specified
-        let expiresAt: string | null = null
-        if (params.expiresInDays) {
-            const expiry = new Date()
-            expiry.setDate(expiry.getDate() + params.expiresInDays)
-            expiresAt = expiry.toISOString()
+        const payload: UserMemoryInsert = {
+            company_id: params.companyId,
+            content: params.content,
+            category: params.category,
+            confidence: params.confidence ?? 1.0,
+            source_message_id: params.sourceMessageId,
         }
 
         const { data, error } = await supabase
             .from('user_memory')
-            .insert({
-                company_id: params.companyId,
-                content: params.content,
-                category: params.category,
-                confidence: params.confidence ?? 1.0,
-                expires_at: expiresAt,
-                source_conversation_id: params.sourceConversationId,
-            })
+            .insert(payload)
             .select()
             .single()
 
@@ -172,7 +159,6 @@ class UserMemoryService {
     ): Promise<UserMemory | null> {
         const supabase = createBrowserClient()
 
-        // Get the old memory
         const { data: oldMemory, error: fetchError } = await supabase
             .from('user_memory')
             .select('*')
@@ -184,17 +170,17 @@ class UserMemoryService {
             return null
         }
 
-        // Create new memory
+        const payload: UserMemoryInsert = {
+            company_id: oldMemory.company_id,
+            content: newContent,
+            category: params?.category ?? oldMemory.category,
+            confidence: params?.confidence ?? oldMemory.confidence,
+            source_message_id: oldMemory.source_message_id,
+        }
+
         const { data: newMemory, error: insertError } = await supabase
             .from('user_memory')
-            .insert({
-                company_id: oldMemory.company_id,
-                content: newContent,
-                category: params?.category ?? oldMemory.category,
-                confidence: params?.confidence ?? oldMemory.confidence,
-                expires_at: oldMemory.expires_at,
-                source_conversation_id: oldMemory.source_conversation_id,
-            })
+            .insert(payload)
             .select()
             .single()
 
@@ -203,7 +189,6 @@ class UserMemoryService {
             return null
         }
 
-        // Mark old memory as superseded
         const { error: updateError } = await supabase
             .from('user_memory')
             .update({ superseded_by: newMemory.id })
@@ -211,7 +196,6 @@ class UserMemoryService {
 
         if (updateError) {
             console.error('[UserMemory] Error marking memory as superseded:', updateError)
-            // Still return the new memory, it was created successfully
         }
 
         return this.mapFromDb(newMemory)
@@ -219,7 +203,6 @@ class UserMemoryService {
 
     /**
      * Supersede a memory (soft delete).
-     * The memory is marked as replaced but not physically deleted.
      */
     async supersedeMemory(memoryId: string, replacementId: string): Promise<boolean> {
         const supabase = createBrowserClient()
@@ -238,13 +221,11 @@ class UserMemoryService {
     }
 
     /**
-     * Delete a memory by superseding it with null content.
-     * Actually creates a "deletion" record for audit trail.
+     * Delete a memory by superseding it with a deletion marker.
      */
     async deleteMemory(memoryId: string): Promise<boolean> {
         const supabase = createBrowserClient()
 
-        // Get the old memory
         const { data: oldMemory, error: fetchError } = await supabase
             .from('user_memory')
             .select('*')
@@ -256,16 +237,16 @@ class UserMemoryService {
             return false
         }
 
-        // Create deletion marker
+        const payload: UserMemoryInsert = {
+            company_id: oldMemory.company_id,
+            content: '[DELETED]',
+            category: oldMemory.category,
+            confidence: 0,
+        }
+
         const { data: deletionMarker, error: insertError } = await supabase
             .from('user_memory')
-            .insert({
-                company_id: oldMemory.company_id,
-                content: '[DELETED]',
-                category: oldMemory.category,
-                confidence: 0,
-                expires_at: new Date().toISOString(), // Immediately expired
-            })
+            .insert(payload)
             .select()
             .single()
 
@@ -274,7 +255,6 @@ class UserMemoryService {
             return false
         }
 
-        // Mark old memory as superseded by deletion marker
         const { error: updateError } = await supabase
             .from('user_memory')
             .update({ superseded_by: deletionMarker.id })
@@ -293,8 +273,7 @@ class UserMemoryService {
         let currentId: string | null = memoryId
 
         while (currentId) {
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            const { data, error }: { data: any; error: any } = await supabase
+            const { data, error }: { data: Database['public']['Tables']['user_memory']['Row'] | null; error: unknown } = await supabase
                 .from('user_memory')
                 .select('*')
                 .eq('id', currentId)
@@ -309,20 +288,15 @@ class UserMemoryService {
         return history
     }
 
-    /**
-     * Map database row to TypeScript type.
-     */
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    private mapFromDb(row: any): UserMemory {
+    private mapFromDb(row: UserMemoryRow): UserMemory {
         return {
             id: row.id,
             companyId: row.company_id,
             content: row.content,
-            category: row.category,
+            category: row.category as MemoryCategory,
             confidence: row.confidence,
-            expiresAt: row.expires_at,
             supersededBy: row.superseded_by,
-            sourceConversationId: row.source_conversation_id,
+            sourceMessageId: row.source_message_id,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
         }

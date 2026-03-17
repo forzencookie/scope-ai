@@ -5,7 +5,6 @@
  * Tiers: free (no subscription), pro, enterprise
  */
 
-// TODO: Run migration to add stripe_customer_id, then regenerate types
 
 import Stripe from 'stripe'
 
@@ -70,17 +69,18 @@ export async function getOrCreateCustomer(
     const { createAdminClient } = await import('./database/client')
     const supabase = createAdminClient()
 
-    // Check if user already has a Stripe customer ID
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile } = await supabase
-        .from('profiles' as any)
-        .select('stripe_customer_id')
-        .eq('id', userId)
-        .single()
+    // Look up existing Stripe customer by metadata (supabase_user_id)
+    const existing = await stripe.customers.list({
+        limit: 1,
+        email,
+    })
 
-    const profileData = profile as { stripe_customer_id?: string } | null
-    if (profileData?.stripe_customer_id) {
-        return profileData.stripe_customer_id
+    const existingCustomer = existing.data.find(
+        c => c.metadata?.supabase_user_id === userId
+    )
+
+    if (existingCustomer) {
+        return existingCustomer.id
     }
 
     // Create new customer
@@ -91,13 +91,6 @@ export async function getOrCreateCustomer(
             supabase_user_id: userId,
         },
     })
-
-    // Store customer ID in profile
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    await supabase
-        .from('profiles' as any)
-        .update({ stripe_customer_id: customer.id })
-        .eq('id', userId)
 
     return customer.id
 }
@@ -199,9 +192,8 @@ export async function updateUserTier(
     const { createAdminClient } = await import('./database/client')
     const supabase = createAdminClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     await supabase
-        .from('profiles' as any)
+        .from('profiles')
         .update({ subscription_tier: tier })
         .eq('id', userId)
 
@@ -212,17 +204,10 @@ export async function updateUserTier(
  * Get user ID from Stripe customer ID
  */
 export async function getUserIdFromCustomer(customerId: string): Promise<string | null> {
-    const { createAdminClient } = await import('./database/client')
-    const supabase = createAdminClient()
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data } = await supabase
-        .from('profiles' as any)
-        .select('id')
-        .eq('stripe_customer_id', customerId)
-        .single()
-
-    return (data as { id?: string } | null)?.id || null
+    // Look up the Supabase user ID from Stripe customer metadata
+    const customer = await stripe.customers.retrieve(customerId)
+    if (customer.deleted) return null
+    return (customer.metadata?.supabase_user_id) || null
 }
 
 // ============================================================================
@@ -241,13 +226,10 @@ export async function addUserCredits(
     const { createAdminClient } = await import('./database/client')
     const supabase = createAdminClient()
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await supabase.rpc('add_user_credits' as any, {
+    const { error } = await supabase.rpc('add_user_credits', {
         p_user_id: userId,
-        p_credits: credits,
-        p_stripe_payment_id: stripePaymentId ?? null,
-        p_price_paid_cents: pricePaidCents ?? null,
-    } as any)
+        p_amount: credits,
+    })
 
     if (error) {
         console.error('[Stripe] Failed to add credits:', error)

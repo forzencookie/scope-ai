@@ -68,23 +68,20 @@ export const vatService = {
 
         return (data || [])
             .filter((d) => !year || d.period?.includes(year.toString()))
-            .map((d) => {
-                const details = (d.data || {}) as VatDeclarationData
-                return {
-                    id: d.id,
-                    period: d.period || '',
-                    periodType: (details.periodType || 'monthly') as 'monthly' | 'quarterly' | 'yearly',
-                    year: d.year || year || new Date().getFullYear(),
-                    startDate: d.start_date || details.startDate || '',
-                    endDate: d.end_date || details.endDate || '',
-                    dueDate: d.due_date || details.dueDate || '',
-                    outputVat: d.output_vat ?? Number(details.outputVat) ?? 0,
-                    inputVat: d.input_vat ?? Number(details.inputVat) ?? 0,
-                    netVat: d.net_vat ?? Number(details.netVat) ?? 0,
-                    status: (d.status || 'upcoming') as 'upcoming' | 'pending' | 'submitted',
-                    submittedAt: d.submitted_at || details.submittedAt,
-                }
-            })
+            .map((d) => ({
+                id: d.id,
+                period: d.period || '',
+                periodType: (d.period_type || 'monthly') as 'monthly' | 'quarterly' | 'yearly',
+                year: d.year || year || new Date().getFullYear(),
+                startDate: d.start_date || '',
+                endDate: d.end_date || '',
+                dueDate: d.due_date || '',
+                outputVat: d.output_vat ?? 0,
+                inputVat: d.input_vat ?? 0,
+                netVat: d.net_vat ?? 0,
+                status: (d.status || 'upcoming') as 'upcoming' | 'pending' | 'submitted',
+                submittedAt: d.submitted_at ?? undefined,
+            }))
     },
 
     /**
@@ -116,13 +113,12 @@ export const vatService = {
         }
 
         const row = data as VatDeclarationRow
-        const details = (row.data || {}) as VatDeclarationData
         return {
             currentPeriod: row.period || '',
-            dueDate: row.due_date || details.dueDate || '',
-            outputVat: row.output_vat ?? Number(details.outputVat) ?? 0,
-            inputVat: row.input_vat ?? Number(details.inputVat) ?? 0,
-            netVat: row.net_vat ?? Number(details.netVat) ?? 0,
+            dueDate: row.due_date || '',
+            outputVat: row.output_vat ?? 0,
+            inputVat: row.input_vat ?? 0,
+            netVat: row.net_vat ?? 0,
         }
     },
 

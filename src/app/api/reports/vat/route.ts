@@ -17,9 +17,8 @@ export async function GET() {
 
         const { supabase, userId, companyId } = ctx;
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: reports, error } = await supabase
-            .from('tax_reports' as any)
+            .from('tax_reports')
             .select('*')
             .eq('type', 'vat')
             .order('created_at', { ascending: false });
@@ -52,9 +51,8 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: "Missing period_id" }, { status: 400 });
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data: savedReport, error } = await supabase
-            .from('tax_reports' as any)
+            .from('tax_reports')
             .upsert({
                 ...report,
                 company_id: companyId,

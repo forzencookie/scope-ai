@@ -47,6 +47,7 @@ interface StreamData {
         title: string
         summary: string
         date?: string
+        aiComment?: string
         sections: Array<{
             heading: string
             status: "pass" | "warning" | "fail"
@@ -111,8 +112,8 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                             walkthroughBlocks: walkthroughData,
                         } as StreamData
                     } else if (line.startsWith('D:')) {
-                        const data = JSON.parse(line.slice(2)) as any
-                        
+                        const data = JSON.parse(line.slice(2)) as StreamData & { type?: string; cardType?: string; data?: unknown }
+
                         // Transform simplified inline_card type to the display format expected by MessageBubble
                         let transformedData = { ...data } as StreamData
                         if (data.type === 'inline_card') {
@@ -198,7 +199,8 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
         ])
 
         // Check all data chunks for inline-only display components
-        const displayComponent = (lastData?.display as any)?.component || (lastData?.display as any)?.type || ''
+        const displayObj = lastData?.display as { component?: string; type?: string } | undefined
+        const displayComponent = displayObj?.component || displayObj?.type || ''
         const isInlineOnly = inlineOnlyComponents.has(displayComponent)
 
         const hasStructuredOutput = lastData && !isInlineOnly && (
@@ -217,7 +219,8 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
         }
 
         // Check for walkthrough content (e.g. balanskontroll) — legacy
-        const walkthroughData = lastData?.walkthrough || (lastData?.toolResults as any)?.[0]?.result?.walkthrough
+        const firstToolResult = lastData?.toolResults?.[0] as { result?: { walkthrough?: StreamData['walkthrough']; id?: string } } | undefined
+        const walkthroughData = lastData?.walkthrough || firstToolResult?.result?.walkthrough
         console.log('[walkthrough debug]', { walkthroughData, fullContentLength: fullContent.length, fullContentPreview: fullContent.slice(0, 200), lastDataKeys: lastData ? Object.keys(lastData) : null })
         if (walkthroughData) {
             window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough', {
@@ -245,7 +248,7 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                     display: lastData?.display,
                     navigation: lastData?.navigation,
                     confirmationRequired: lastData?.confirmationRequired,
-                    highlightId: (lastData?.toolResults?.[0] as { result?: { id?: string } })?.result?.id
+                    highlightId: firstToolResult?.result?.id
                 }
             }))
         } else {

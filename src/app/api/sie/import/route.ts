@@ -2,6 +2,10 @@ import { NextRequest, NextResponse } from "next/server"
 import { parseSIE } from '@/lib/parsers/sie-parser'
 import { getAuthContext } from '@/lib/database/auth'
 import { randomUUID } from "crypto"
+import type { Database } from '@/types/database'
+
+type TransactionInsert = Database['public']['Tables']['transactions']['Insert']
+type AccountBalanceInsert = Database['public']['Tables']['account_balances']['Insert']
 
 export async function POST(req: NextRequest) {
     try {
@@ -43,26 +47,25 @@ export async function POST(req: NextRequest) {
                 const account = data.accounts.find(a => a.number === row.account)
                 const accountName = account?.name || `Konto ${row.account}`
                 
+                const txPayload: TransactionInsert = {
+                    id: transactionId,
+                    name: ver.description || `${ver.series}${ver.verNumber}`,
+                    date: formatSIEDate(ver.date),
+                    amount: formatAmount(row.amount),
+                    amount_value: row.amount,
+                    currency: 'SEK',
+                    status: 'Bokförd',
+                    category: accountName,
+                    account: row.account,
+                    description: `Importerad från SIE: ${ver.series}${ver.verNumber}`,
+                    source: 'sie_import',
+                    external_id: `${ver.series}${ver.verNumber}-${row.account}`,
+                    voucher_id: `${ver.series}${ver.verNumber}`,
+                    user_id: userId,
+                }
                 const { error } = await supabase
                     .from('transactions')
-                    .insert({
-                        id: transactionId,
-                        name: ver.description || `${ver.series}${ver.verNumber}`,
-                        date: formatSIEDate(ver.date),
-                        timestamp: formatSIEDate(ver.date),
-                        amount: formatAmount(row.amount),
-                        amount_value: row.amount,
-                        currency: 'SEK',
-                        status: 'Bokförd',
-                        category: accountName,
-                        account: row.account,
-                        description: `Importerad från SIE: ${ver.series}${ver.verNumber}`,
-                        source: 'sie_import',
-                        external_id: `${ver.series}${ver.verNumber}-${row.account}`,
-                        voucher_id: `${ver.series}${ver.verNumber}`,
-                        booked_at: new Date().toISOString(),
-                        user_id: userId,
-                    } as never)
+                    .insert(txPayload)
 
                 if (error) {
                     // Skip duplicates (same external_id)
@@ -82,15 +85,19 @@ export async function POST(req: NextRequest) {
                 data.fiskalYear[0]?.start?.slice(0, 7) || new Date().toISOString().slice(0, 7) :
                 data.fiskalYear[0]?.end?.slice(0, 7) || new Date().toISOString().slice(0, 7)
 
+            const balanceAccount = data.accounts.find(a => a.number === balance.account)
+            const balancePayload: AccountBalanceInsert = {
+                user_id: userId,
+                account_number: balance.account,
+                account_name: balanceAccount?.name || `Konto ${balance.account}`,
+                company_id: '', // RLS will enforce the correct company
+                period,
+                balance: balance.amount,
+                updated_at: new Date().toISOString(),
+            }
             const { error } = await supabase
                 .from('account_balances')
-                .upsert({
-                    user_id: userId,
-                    account_number: balance.account,
-                    period,
-                    balance: balance.amount,
-                    updated_at: new Date().toISOString(),
-                } as never, {
+                .upsert(balancePayload, {
                     onConflict: 'user_id,account_number,period'
                 })
 

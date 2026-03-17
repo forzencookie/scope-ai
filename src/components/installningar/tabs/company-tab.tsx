@@ -1,6 +1,7 @@
 "use client"
 
 import * as React from "react"
+import Image from "next/image"
 import { Download, Upload, Building2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
@@ -125,13 +126,14 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                 description="Visas på fakturor och lönebesked"
             >
                 <div className="flex items-center gap-4">
-                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted/30">
+                    <div className="h-16 w-16 rounded-lg border-2 border-dashed border-muted-foreground/25 flex items-center justify-center overflow-hidden bg-muted/30 relative">
                         {company?.logoUrl ? (
-                            // eslint-disable-next-line @next/next/no-img-element
-                            <img
+                            <Image
                                 src={company.logoUrl}
                                 alt="Företagslogotyp"
-                                className="h-full w-full object-contain"
+                                fill
+                                className="object-contain"
+                                unoptimized
                             />
                         ) : (
                             <Building2 className="h-6 w-6 text-muted-foreground/50" />

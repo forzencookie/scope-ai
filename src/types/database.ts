@@ -25,7 +25,7 @@ export type Database = {
           period: string | null
           updated_at: string | null
           user_id: string
-          year: number
+          year: number | null
         }
         Insert: {
           account_name: string
@@ -37,7 +37,7 @@ export type Database = {
           period?: string | null
           updated_at?: string | null
           user_id: string
-          year?: number
+          year?: number | null
         }
         Update: {
           account_name?: string
@@ -49,7 +49,7 @@ export type Database = {
           period?: string | null
           updated_at?: string | null
           user_id?: string
-          year?: number
+          year?: number | null
         }
         Relationships: [
           {
@@ -119,7 +119,7 @@ export type Database = {
           classification_time_ms: number | null
           company_id: string | null
           conversation_id: string | null
-          created_at: string
+          created_at: string | null
           error: string | null
           error_agent: string | null
           execution_time_ms: number | null
@@ -128,25 +128,25 @@ export type Database = {
           has_display: boolean | null
           has_navigation: boolean | null
           id: string
-          intent: string
-          intent_confidence: number
+          intent: string | null
+          intent_confidence: number | null
           is_multi_agent: boolean | null
           model_id: string | null
           response_length: number | null
           response_success: boolean | null
-          selected_agent: string
+          selected_agent: string | null
           tokens_estimate: number | null
           tools_called: string[] | null
           tools_failed: number | null
           tools_succeeded: number | null
           total_time_ms: number | null
-          user_id: string
+          user_id: string | null
         }
         Insert: {
           classification_time_ms?: number | null
           company_id?: string | null
           conversation_id?: string | null
-          created_at?: string
+          created_at?: string | null
           error?: string | null
           error_agent?: string | null
           execution_time_ms?: number | null
@@ -155,25 +155,25 @@ export type Database = {
           has_display?: boolean | null
           has_navigation?: boolean | null
           id?: string
-          intent: string
-          intent_confidence?: number
+          intent?: string | null
+          intent_confidence?: number | null
           is_multi_agent?: boolean | null
           model_id?: string | null
           response_length?: number | null
           response_success?: boolean | null
-          selected_agent: string
+          selected_agent?: string | null
           tokens_estimate?: number | null
           tools_called?: string[] | null
           tools_failed?: number | null
           tools_succeeded?: number | null
           total_time_ms?: number | null
-          user_id: string
+          user_id?: string | null
         }
         Update: {
           classification_time_ms?: number | null
           company_id?: string | null
           conversation_id?: string | null
-          created_at?: string
+          created_at?: string | null
           error?: string | null
           error_agent?: string | null
           execution_time_ms?: number | null
@@ -182,28 +182,21 @@ export type Database = {
           has_display?: boolean | null
           has_navigation?: boolean | null
           id?: string
-          intent?: string
-          intent_confidence?: number
+          intent?: string | null
+          intent_confidence?: number | null
           is_multi_agent?: boolean | null
           model_id?: string | null
           response_length?: number | null
           response_success?: boolean | null
-          selected_agent?: string
+          selected_agent?: string | null
           tokens_estimate?: number | null
           tools_called?: string[] | null
           tools_failed?: number | null
           tools_succeeded?: number | null
           total_time_ms?: number | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "agent_metrics_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "agent_metrics_conversation_id_fkey"
             columns: ["conversation_id"]
@@ -217,40 +210,19 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
-          data: Json | null
-          employer_contributions: number | null
           id: string
-          period: string | null
-          status: string | null
-          total_salary: number | null
-          total_tax: number | null
-          updated_at: string | null
           user_id: string | null
         }
         Insert: {
           company_id?: string | null
           created_at?: string | null
-          data?: Json | null
-          employer_contributions?: number | null
           id?: string
-          period?: string | null
-          status?: string | null
-          total_salary?: number | null
-          total_tax?: number | null
-          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           company_id?: string | null
           created_at?: string | null
-          data?: Json | null
-          employer_contributions?: number | null
           id?: string
-          period?: string | null
-          status?: string | null
-          total_salary?: number | null
-          total_tax?: number | null
-          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: []
@@ -261,10 +233,10 @@ export type Database = {
           error_message: string | null
           execution_time_ms: number | null
           id: string
-          parameters: Json
+          parameters: Json | null
           result: Json | null
-          status: string
-          tool_name: string
+          status: string | null
+          tool_name: string | null
           user_id: string | null
         }
         Insert: {
@@ -272,10 +244,10 @@ export type Database = {
           error_message?: string | null
           execution_time_ms?: number | null
           id?: string
-          parameters: Json
+          parameters?: Json | null
           result?: Json | null
-          status: string
-          tool_name: string
+          status?: string | null
+          tool_name?: string | null
           user_id?: string | null
         }
         Update: {
@@ -283,183 +255,84 @@ export type Database = {
           error_message?: string | null
           execution_time_ms?: number | null
           id?: string
-          parameters?: Json
+          parameters?: Json | null
           result?: Json | null
-          status?: string
-          tool_name?: string
+          status?: string | null
+          tool_name?: string | null
           user_id?: string | null
         }
         Relationships: []
       }
       ai_usage: {
         Row: {
-          created_at: string
+          created_at: string | null
           id: string
-          model_id: string
-          period_end: string
-          period_start: string
-          provider: string
-          requests_count: number
-          tokens_used: number
-          updated_at: string
-          user_id: string
+          model_id: string | null
+          period_end: string | null
+          period_start: string | null
+          provider: string | null
+          requests_count: number | null
+          tokens_used: number | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          model_id: string
-          period_end: string
-          period_start: string
-          provider: string
-          requests_count?: number
-          tokens_used?: number
-          updated_at?: string
-          user_id: string
+          model_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider?: string | null
+          requests_count?: number | null
+          tokens_used?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           id?: string
-          model_id?: string
-          period_end?: string
-          period_start?: string
-          provider?: string
-          requests_count?: number
-          tokens_used?: number
-          updated_at?: string
-          user_id?: string
+          model_id?: string | null
+          period_end?: string | null
+          period_start?: string | null
+          provider?: string | null
+          requests_count?: number | null
+          tokens_used?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       annual_closings: {
         Row: {
-          closed_at: string | null
-          closed_by: string | null
-          closing_entries: Json | null
           company_id: string | null
           created_at: string | null
-          end_date: string | null
-          fiscal_year: number | null
           id: string
-          result: number | null
-          start_date: string | null
           status: string | null
           updated_at: string | null
           user_id: string | null
           year: number | null
         }
         Insert: {
-          closed_at?: string | null
-          closed_by?: string | null
-          closing_entries?: Json | null
           company_id?: string | null
           created_at?: string | null
-          end_date?: string | null
-          fiscal_year?: number | null
           id?: string
-          result?: number | null
-          start_date?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
           year?: number | null
         }
         Update: {
-          closed_at?: string | null
-          closed_by?: string | null
-          closing_entries?: Json | null
           company_id?: string | null
           created_at?: string | null
-          end_date?: string | null
-          fiscal_year?: number | null
           id?: string
-          result?: number | null
-          start_date?: string | null
           status?: string | null
           updated_at?: string | null
           user_id?: string | null
           year?: number | null
-        }
-        Relationships: []
-      }
-      annual_reports: {
-        Row: {
-          company_id: string | null
-          id: string
-          status: string | null
-          user_id: string | null
-        }
-        Insert: {
-          company_id?: string | null
-          id?: string
-          status?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          company_id?: string | null
-          id?: string
-          status?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      bank_connections: {
-        Row: {
-          access_token_encrypted: string | null
-          account_id: string | null
-          account_type: string | null
-          bank_name: string
-          company_id: string
-          created_at: string | null
-          error_message: string | null
-          id: string
-          last_sync_at: string | null
-          metadata: Json | null
-          provider: string
-          refresh_token_encrypted: string | null
-          status: string | null
-          token_expires_at: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          access_token_encrypted?: string | null
-          account_id?: string | null
-          account_type?: string | null
-          bank_name: string
-          company_id: string
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          last_sync_at?: string | null
-          metadata?: Json | null
-          provider: string
-          refresh_token_encrypted?: string | null
-          status?: string | null
-          token_expires_at?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          access_token_encrypted?: string | null
-          account_id?: string | null
-          account_type?: string | null
-          bank_name?: string
-          company_id?: string
-          created_at?: string | null
-          error_message?: string | null
-          id?: string
-          last_sync_at?: string | null
-          metadata?: Json | null
-          provider?: string
-          refresh_token_encrypted?: string | null
-          status?: string | null
-          token_expires_at?: string | null
-          updated_at?: string | null
-          user_id?: string
         }
         Relationships: [
           {
-            foreignKeyName: "bank_connections_company_id_fkey"
+            foreignKeyName: "annual_closings_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -467,50 +340,67 @@ export type Database = {
           },
         ]
       }
+      annual_reports: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       benefits: {
         Row: {
           company_id: string | null
-          cost_to_company: number | null
           created_at: string | null
-          description: string | null
           id: string
-          is_active: boolean | null
-          name: string
+          name: string | null
           taxable_amount: number | null
-          taxable_value: number | null
           type: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
           company_id?: string | null
-          cost_to_company?: number | null
           created_at?: string | null
-          description?: string | null
           id?: string
-          is_active?: boolean | null
-          name: string
+          name?: string | null
           taxable_amount?: number | null
-          taxable_value?: number | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
           company_id?: string | null
-          cost_to_company?: number | null
           created_at?: string | null
-          description?: string | null
           id?: string
-          is_active?: boolean | null
-          name?: string
+          name?: string | null
           taxable_amount?: number | null
-          taxable_value?: number | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "benefits_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       companies: {
         Row: {
@@ -529,6 +419,7 @@ export type Database = {
           is_closely_held: boolean | null
           logo_url: string | null
           name: string
+          openai_thread_id: string | null
           org_number: string | null
           phone: string | null
           registration_date: string | null
@@ -562,6 +453,7 @@ export type Database = {
           is_closely_held?: boolean | null
           logo_url?: string | null
           name: string
+          openai_thread_id?: string | null
           org_number?: string | null
           phone?: string | null
           registration_date?: string | null
@@ -595,6 +487,7 @@ export type Database = {
           is_closely_held?: boolean | null
           logo_url?: string | null
           name?: string
+          openai_thread_id?: string | null
           org_number?: string | null
           phone?: string | null
           registration_date?: string | null
@@ -616,35 +509,35 @@ export type Database = {
       }
       company_members: {
         Row: {
-          company_id: string
-          created_at: string
+          company_id: string | null
+          created_at: string | null
           id: string
-          role: string
-          updated_at: string
-          user_id: string
+          role: string | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
-          company_id: string
-          created_at?: string
+          company_id?: string | null
+          created_at?: string | null
           id?: string
-          role?: string
-          updated_at?: string
-          user_id: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
-          company_id?: string
-          created_at?: string
+          company_id?: string | null
+          created_at?: string | null
           id?: string
-          role?: string
-          updated_at?: string
-          user_id?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "company_members_user_id_fkey"
-            columns: ["user_id"]
+            foreignKeyName: "company_members_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "profiles"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -654,6 +547,7 @@ export type Database = {
           created_at: string | null
           id: string
           metadata: Json | null
+          openai_thread_id: string | null
           title: string | null
           updated_at: string | null
           user_id: string | null
@@ -662,6 +556,7 @@ export type Database = {
           created_at?: string | null
           id?: string
           metadata?: Json | null
+          openai_thread_id?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
@@ -670,74 +565,25 @@ export type Database = {
           created_at?: string | null
           id?: string
           metadata?: Json | null
+          openai_thread_id?: string | null
           title?: string | null
           updated_at?: string | null
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      corporate_documents: {
-        Row: {
-          content: string | null
-          created_at: string | null
-          created_by: string | null
-          date: string
-          id: string
-          metadata: Json | null
-          source: string | null
-          status: string | null
-          title: string
-          type: string
-          updated_at: string | null
-          user_id: string | null
-          version: number | null
-        }
-        Insert: {
-          content?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          date: string
-          id?: string
-          metadata?: Json | null
-          source?: string | null
-          status?: string | null
-          title: string
-          type: string
-          updated_at?: string | null
-          user_id?: string | null
-          version?: number | null
-        }
-        Update: {
-          content?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          date?: string
-          id?: string
-          metadata?: Json | null
-          source?: string | null
-          status?: string | null
-          title?: string
-          type?: string
-          updated_at?: string | null
-          user_id?: string | null
-          version?: number | null
         }
         Relationships: []
       }
       customer_invoices: {
         Row: {
-          company_id: string
+          company_id: string | null
           created_at: string | null
-          currency: string | null
           customer_address: string | null
           customer_email: string | null
-          customer_id: string | null
-          customer_name: string
+          customer_name: string | null
           customer_org_number: string | null
-          due_date: string
+          due_date: string | null
           id: string
-          invoice_date: string
-          invoice_number: string
+          invoice_date: string | null
+          invoice_number: string | null
           items: Json | null
           last_reminder_at: string | null
           ocr_reference: string | null
@@ -746,26 +592,24 @@ export type Database = {
           payment_reference: string | null
           reminder_count: number | null
           status: string | null
-          subtotal: number
-          total_amount: number
+          subtotal: number | null
+          total_amount: number | null
           updated_at: string | null
-          user_id: string
+          user_id: string | null
           vat_amount: number | null
           vat_rate: number | null
         }
         Insert: {
-          company_id: string
+          company_id?: string | null
           created_at?: string | null
-          currency?: string | null
           customer_address?: string | null
           customer_email?: string | null
-          customer_id?: string | null
-          customer_name: string
+          customer_name?: string | null
           customer_org_number?: string | null
-          due_date: string
+          due_date?: string | null
           id?: string
-          invoice_date: string
-          invoice_number: string
+          invoice_date?: string | null
+          invoice_number?: string | null
           items?: Json | null
           last_reminder_at?: string | null
           ocr_reference?: string | null
@@ -774,26 +618,24 @@ export type Database = {
           payment_reference?: string | null
           reminder_count?: number | null
           status?: string | null
-          subtotal: number
-          total_amount?: number
+          subtotal?: number | null
+          total_amount?: number | null
           updated_at?: string | null
-          user_id: string
+          user_id?: string | null
           vat_amount?: number | null
           vat_rate?: number | null
         }
         Update: {
-          company_id?: string
+          company_id?: string | null
           created_at?: string | null
-          currency?: string | null
           customer_address?: string | null
           customer_email?: string | null
-          customer_id?: string | null
-          customer_name?: string
+          customer_name?: string | null
           customer_org_number?: string | null
-          due_date?: string
+          due_date?: string | null
           id?: string
-          invoice_date?: string
-          invoice_number?: string
+          invoice_date?: string | null
+          invoice_number?: string | null
           items?: Json | null
           last_reminder_at?: string | null
           ocr_reference?: string | null
@@ -802,10 +644,10 @@ export type Database = {
           payment_reference?: string | null
           reminder_count?: number | null
           status?: string | null
-          subtotal?: number
-          total_amount?: number
+          subtotal?: number | null
+          total_amount?: number | null
           updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
           vat_amount?: number | null
           vat_rate?: number | null
         }
@@ -817,11 +659,64 @@ export type Database = {
             referencedRelation: "companies"
             referencedColumns: ["id"]
           },
+        ]
+      }
+      dividends: {
+        Row: {
+          amount: number
+          company_id: string | null
+          created_at: string
+          date: string
+          id: string
+          net_payout: number
+          recipient_name: string | null
+          status: string
+          user_id: string
+          verification_id: string | null
+          withholding_tax: number
+          year: number
+        }
+        Insert: {
+          amount: number
+          company_id?: string | null
+          created_at?: string
+          date: string
+          id?: string
+          net_payout: number
+          recipient_name?: string | null
+          status?: string
+          user_id: string
+          verification_id?: string | null
+          withholding_tax: number
+          year: number
+        }
+        Update: {
+          amount?: number
+          company_id?: string | null
+          created_at?: string
+          date?: string
+          id?: string
+          net_payout?: number
+          recipient_name?: string | null
+          status?: string
+          user_id?: string
+          verification_id?: string | null
+          withholding_tax?: number
+          year?: number
+        }
+        Relationships: [
           {
-            foreignKeyName: "customer_invoices_customer_id_fkey"
-            columns: ["customer_id"]
+            foreignKeyName: "dividends_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "customers"
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "dividends_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "verifications"
             referencedColumns: ["id"]
           },
         ]
@@ -837,16 +732,16 @@ export type Database = {
           hourly_rate: number | null
           id: string
           kommun: string | null
-          monthly_salary: number
+          monthly_salary: number | null
           name: string
           personal_number: string | null
           phone: string | null
           role: string | null
           start_date: string | null
-          status: string
+          status: string | null
           tax_column: number | null
-          tax_rate: number
-          tax_table: number | null
+          tax_rate: number | null
+          tax_table_number: number | null
           updated_at: string | null
           user_id: string | null
         }
@@ -860,16 +755,16 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           kommun?: string | null
-          monthly_salary?: number
+          monthly_salary?: number | null
           name: string
           personal_number?: string | null
           phone?: string | null
           role?: string | null
           start_date?: string | null
-          status?: string
+          status?: string | null
           tax_column?: number | null
-          tax_rate?: number
-          tax_table?: number | null
+          tax_rate?: number | null
+          tax_table_number?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -883,31 +778,39 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           kommun?: string | null
-          monthly_salary?: number
+          monthly_salary?: number | null
           name?: string
           personal_number?: string | null
           phone?: string | null
           role?: string | null
           start_date?: string | null
-          status?: string
+          status?: string | null
           tax_column?: number | null
-          tax_rate?: number
-          tax_table?: number | null
+          tax_rate?: number | null
+          tax_table_number?: number | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "employees_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       events: {
         Row: {
-          action: string
+          action: string | null
           actor_id: string | null
           actor_name: string | null
-          actor_type: string
-          category: Database["public"]["Enums"]["event_category"]
+          actor_type: string | null
+          category: Database["public"]["Enums"]["event_category"] | null
           company_id: string | null
           corporate_action_type: string | null
-          created_at: string
+          created_at: string | null
           description: string | null
           hash: string | null
           id: string
@@ -915,21 +818,21 @@ export type Database = {
           previous_hash: string | null
           proof: Json | null
           related_to: Json | null
-          source: Database["public"]["Enums"]["event_source"]
+          source: Database["public"]["Enums"]["event_source"] | null
           status: Database["public"]["Enums"]["event_status"] | null
-          timestamp: string
-          title: string
+          timestamp: string | null
+          title: string | null
           user_id: string | null
         }
         Insert: {
-          action: string
+          action?: string | null
           actor_id?: string | null
           actor_name?: string | null
-          actor_type: string
-          category: Database["public"]["Enums"]["event_category"]
+          actor_type?: string | null
+          category?: Database["public"]["Enums"]["event_category"] | null
           company_id?: string | null
           corporate_action_type?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           hash?: string | null
           id?: string
@@ -937,21 +840,21 @@ export type Database = {
           previous_hash?: string | null
           proof?: Json | null
           related_to?: Json | null
-          source: Database["public"]["Enums"]["event_source"]
+          source?: Database["public"]["Enums"]["event_source"] | null
           status?: Database["public"]["Enums"]["event_status"] | null
-          timestamp?: string
-          title: string
+          timestamp?: string | null
+          title?: string | null
           user_id?: string | null
         }
         Update: {
-          action?: string
+          action?: string | null
           actor_id?: string | null
           actor_name?: string | null
-          actor_type?: string
-          category?: Database["public"]["Enums"]["event_category"]
+          actor_type?: string | null
+          category?: Database["public"]["Enums"]["event_category"] | null
           company_id?: string | null
           corporate_action_type?: string | null
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           hash?: string | null
           id?: string
@@ -959,25 +862,33 @@ export type Database = {
           previous_hash?: string | null
           proof?: Json | null
           related_to?: Json | null
-          source?: Database["public"]["Enums"]["event_source"]
+          source?: Database["public"]["Enums"]["event_source"] | null
           status?: Database["public"]["Enums"]["event_status"] | null
-          timestamp?: string
-          title?: string
+          timestamp?: string | null
+          title?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "events_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       financial_periods: {
         Row: {
           company_id: string | null
           created_at: string | null
-          end_date: string
+          end_date: string | null
           id: string
           locked_at: string | null
           locked_by: string | null
-          name: string
+          name: string | null
           reconciliation_checks: Json | null
-          start_date: string
+          start_date: string | null
           status: string | null
           type: string | null
           updated_at: string | null
@@ -986,13 +897,13 @@ export type Database = {
         Insert: {
           company_id?: string | null
           created_at?: string | null
-          end_date: string
+          end_date?: string | null
           id: string
           locked_at?: string | null
           locked_by?: string | null
-          name: string
+          name?: string | null
           reconciliation_checks?: Json | null
-          start_date: string
+          start_date?: string | null
           status?: string | null
           type?: string | null
           updated_at?: string | null
@@ -1001,51 +912,89 @@ export type Database = {
         Update: {
           company_id?: string | null
           created_at?: string | null
-          end_date?: string
+          end_date?: string | null
           id?: string
           locked_at?: string | null
           locked_by?: string | null
-          name?: string
+          name?: string | null
           reconciliation_checks?: Json | null
-          start_date?: string
+          start_date?: string | null
           status?: string | null
           type?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "financial_periods_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
-      inbox_items: {
+      formaner_catalog: {
         Row: {
-          company_id: string | null
+          bas_account: string | null
+          category: string
+          created_at: string | null
+          description: string | null
+          formansvarde_calculation: string | null
           id: string
-          user_id: string | null
+          is_active: boolean
+          max_amount: number | null
+          name: string
+          rules: Json | null
+          tax_free: boolean
+          updated_at: string | null
         }
         Insert: {
-          company_id?: string | null
-          id?: string
-          user_id?: string | null
+          bas_account?: string | null
+          category: string
+          created_at?: string | null
+          description?: string | null
+          formansvarde_calculation?: string | null
+          id: string
+          is_active?: boolean
+          max_amount?: number | null
+          name: string
+          rules?: Json | null
+          tax_free?: boolean
+          updated_at?: string | null
         }
         Update: {
-          company_id?: string | null
+          bas_account?: string | null
+          category?: string
+          created_at?: string | null
+          description?: string | null
+          formansvarde_calculation?: string | null
           id?: string
-          user_id?: string | null
+          is_active?: boolean
+          max_amount?: number | null
+          name?: string
+          rules?: Json | null
+          tax_free?: boolean
+          updated_at?: string | null
         }
         Relationships: []
       }
       income_declarations: {
         Row: {
           company_id: string | null
+          created_at: string | null
           id: string
           user_id: string | null
         }
         Insert: {
           company_id?: string | null
+          created_at?: string | null
           id?: string
           user_id?: string | null
         }
         Update: {
           company_id?: string | null
+          created_at?: string | null
           id?: string
           user_id?: string | null
         }
@@ -1054,12 +1003,12 @@ export type Database = {
       integrations: {
         Row: {
           company_id: string | null
-          connected: boolean
+          connected: boolean | null
           connected_at: string | null
-          created_at: string
+          created_at: string | null
           credentials: Json | null
           id: string
-          integration_id: string
+          integration_id: string | null
           last_sync_at: string | null
           metadata: Json | null
           name: string | null
@@ -1069,17 +1018,17 @@ export type Database = {
           status: string | null
           sync_error: string | null
           type: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           company_id?: string | null
-          connected?: boolean
+          connected?: boolean | null
           connected_at?: string | null
-          created_at?: string
+          created_at?: string | null
           credentials?: Json | null
           id?: string
-          integration_id: string
+          integration_id?: string | null
           last_sync_at?: string | null
           metadata?: Json | null
           name?: string | null
@@ -1089,17 +1038,17 @@ export type Database = {
           status?: string | null
           sync_error?: string | null
           type?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           company_id?: string | null
-          connected?: boolean
+          connected?: boolean | null
           connected_at?: string | null
-          created_at?: string
+          created_at?: string | null
           credentials?: Json | null
           id?: string
-          integration_id?: string
+          integration_id?: string | null
           last_sync_at?: string | null
           metadata?: Json | null
           name?: string | null
@@ -1109,7 +1058,7 @@ export type Database = {
           status?: string | null
           sync_error?: string | null
           type?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1119,78 +1068,139 @@ export type Database = {
           anteckningar: string | null
           avskrivningsmetod: string | null
           beskrivning: string | null
-          bokfort_varde: number | null
           company_id: string | null
-          created_at: string
+          created_at: string | null
           fakturanummer: string | null
           forsaljningsdatum: string | null
           forsaljningspris: number | null
           id: string
-          inkopsdatum: string
-          inkopspris: number
-          kategori: string
+          inkopsdatum: string | null
+          inkopspris: number | null
+          kategori: string | null
           leverantor: string | null
-          livslangd_ar: number
-          namn: string
+          livslangd_ar: number | null
+          namn: string | null
           placering: string | null
-          plats: string | null
           restvarde: number | null
           serienummer: string | null
           status: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           anteckningar?: string | null
           avskrivningsmetod?: string | null
           beskrivning?: string | null
-          bokfort_varde?: number | null
           company_id?: string | null
-          created_at?: string
+          created_at?: string | null
           fakturanummer?: string | null
           forsaljningsdatum?: string | null
           forsaljningspris?: number | null
           id?: string
-          inkopsdatum: string
-          inkopspris: number
-          kategori?: string
+          inkopsdatum?: string | null
+          inkopspris?: number | null
+          kategori?: string | null
           leverantor?: string | null
-          livslangd_ar?: number
-          namn: string
+          livslangd_ar?: number | null
+          namn?: string | null
           placering?: string | null
-          plats?: string | null
           restvarde?: number | null
           serienummer?: string | null
           status?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           anteckningar?: string | null
           avskrivningsmetod?: string | null
           beskrivning?: string | null
-          bokfort_varde?: number | null
           company_id?: string | null
-          created_at?: string
+          created_at?: string | null
           fakturanummer?: string | null
           forsaljningsdatum?: string | null
           forsaljningspris?: number | null
           id?: string
-          inkopsdatum?: string
-          inkopspris?: number
-          kategori?: string
+          inkopsdatum?: string | null
+          inkopspris?: number | null
+          kategori?: string | null
           leverantor?: string | null
-          livslangd_ar?: number
-          namn?: string
+          livslangd_ar?: number | null
+          namn?: string | null
           placering?: string | null
-          plats?: string | null
           restvarde?: number | null
           serienummer?: string | null
           status?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "inventarier_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meetings: {
+        Row: {
+          agenda_items: Json | null
+          attendees: Json | null
+          company_id: string | null
+          created_at: string
+          date: string
+          decisions: Json | null
+          id: string
+          location: string | null
+          signatures: Json | null
+          status: string
+          title: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          agenda_items?: Json | null
+          attendees?: Json | null
+          company_id?: string | null
+          created_at?: string
+          date: string
+          decisions?: Json | null
+          id?: string
+          location?: string | null
+          signatures?: Json | null
+          status?: string
+          title: string
+          type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          agenda_items?: Json | null
+          attendees?: Json | null
+          company_id?: string | null
+          created_at?: string
+          date?: string
+          decisions?: Json | null
+          id?: string
+          location?: string | null
+          signatures?: Json | null
+          status?: string
+          title?: string
+          type?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "meetings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       members: {
         Row: {
@@ -1201,12 +1211,12 @@ export type Database = {
           join_date: string
           last_paid_year: number | null
           member_number: string | null
-          membership_type: string
+          membership_type: string | null
           metadata: Json | null
           name: string
           phone: string | null
           roles: string[] | null
-          status: string
+          status: string | null
           user_id: string | null
         }
         Insert: {
@@ -1217,12 +1227,12 @@ export type Database = {
           join_date: string
           last_paid_year?: number | null
           member_number?: string | null
-          membership_type?: string
+          membership_type?: string | null
           metadata?: Json | null
           name: string
           phone?: string | null
           roles?: string[] | null
-          status?: string
+          status?: string | null
           user_id?: string | null
         }
         Update: {
@@ -1233,57 +1243,49 @@ export type Database = {
           join_date?: string
           last_paid_year?: number | null
           member_number?: string | null
-          membership_type?: string
+          membership_type?: string | null
           metadata?: Json | null
           name?: string
           phone?: string | null
           roles?: string[] | null
-          status?: string
+          status?: string | null
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "members_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       messages: {
         Row: {
-          content: string
-          conversation_id: string
-          created_at: string
+          content: string | null
+          conversation_id: string | null
+          created_at: string | null
           id: string
           metadata: Json | null
           role: string
-          tool_calls: string | null
-          tool_results: string | null
-          user_id: string
+          tool_calls: Json | null
+          tool_results: Json | null
+          user_id: string | null
         }
         Insert: {
-          content: string
-          conversation_id: string
-          created_at?: string
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
           id?: string
           metadata?: Json | null
           role: string
-          tool_calls?: string | null
-          tool_results?: string | null
-          user_id: string
+          tool_calls?: Json | null
+          tool_results?: Json | null
+          user_id?: string | null
         }
         Update: {
-          content?: string
-          conversation_id?: string
-          created_at?: string
+          content?: string | null
+          conversation_id?: string | null
+          created_at?: string | null
           id?: string
           metadata?: Json | null
           role?: string
-          tool_calls?: string | null
-          tool_results?: string | null
-          user_id?: string
+          tool_calls?: Json | null
+          tool_results?: Json | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1298,16 +1300,19 @@ export type Database = {
       ne_appendices: {
         Row: {
           company_id: string | null
+          created_at: string | null
           id: string
           user_id: string | null
         }
         Insert: {
           company_id?: string | null
+          created_at?: string | null
           id?: string
           user_id?: string | null
         }
         Update: {
           company_id?: string | null
+          created_at?: string | null
           id?: string
           user_id?: string | null
         }
@@ -1315,10 +1320,12 @@ export type Database = {
       }
       partners: {
         Row: {
+          board_role: string | null
           capital_contribution: number | null
           company_id: string | null
           created_at: string | null
           current_capital_balance: number | null
+          email: string | null
           id: string
           is_demo_data: boolean | null
           is_limited_liability: boolean | null
@@ -1327,15 +1334,18 @@ export type Database = {
           name: string
           ownership_percentage: number | null
           personal_number: string | null
+          phone: string | null
           profit_share_percentage: number | null
           type: string
           user_id: string | null
         }
         Insert: {
+          board_role?: string | null
           capital_contribution?: number | null
           company_id?: string | null
           created_at?: string | null
           current_capital_balance?: number | null
+          email?: string | null
           id?: string
           is_demo_data?: boolean | null
           is_limited_liability?: boolean | null
@@ -1344,15 +1354,18 @@ export type Database = {
           name: string
           ownership_percentage?: number | null
           personal_number?: string | null
+          phone?: string | null
           profit_share_percentage?: number | null
           type: string
           user_id?: string | null
         }
         Update: {
+          board_role?: string | null
           capital_contribution?: number | null
           company_id?: string | null
           created_at?: string | null
           current_capital_balance?: number | null
+          email?: string | null
           id?: string
           is_demo_data?: boolean | null
           is_limited_liability?: boolean | null
@@ -1361,19 +1374,12 @@ export type Database = {
           name?: string
           ownership_percentage?: number | null
           personal_number?: string | null
+          phone?: string | null
           profit_share_percentage?: number | null
           type?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "partners_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       payslips: {
         Row: {
@@ -1384,20 +1390,16 @@ export type Database = {
           deductions: number | null
           employee_id: string | null
           employer_contributions: number | null
-          gross_salary: number
+          gross_salary: number | null
           id: string
-          month: number | null
-          net_salary: number
-          paid_at: string | null
+          net_salary: number | null
           payment_date: string | null
-          period: string
-          sick_days: number | null
-          status: string
-          tax_deduction: number
+          period: string | null
+          status: string | null
+          tax_deduction: number | null
           updated_at: string | null
           user_id: string | null
-          vacation_days_used: number | null
-          year: number | null
+          vacation_pay: number | null
         }
         Insert: {
           benefits?: Json | null
@@ -1407,20 +1409,16 @@ export type Database = {
           deductions?: number | null
           employee_id?: string | null
           employer_contributions?: number | null
-          gross_salary?: number
-          id: string
-          month?: number | null
-          net_salary?: number
-          paid_at?: string | null
+          gross_salary?: number | null
+          id?: string
+          net_salary?: number | null
           payment_date?: string | null
-          period: string
-          sick_days?: number | null
-          status?: string
-          tax_deduction: number
+          period?: string | null
+          status?: string | null
+          tax_deduction?: number | null
           updated_at?: string | null
           user_id?: string | null
-          vacation_days_used?: number | null
-          year?: number | null
+          vacation_pay?: number | null
         }
         Update: {
           benefits?: Json | null
@@ -1430,22 +1428,25 @@ export type Database = {
           deductions?: number | null
           employee_id?: string | null
           employer_contributions?: number | null
-          gross_salary?: number
+          gross_salary?: number | null
           id?: string
-          month?: number | null
-          net_salary?: number
-          paid_at?: string | null
+          net_salary?: number | null
           payment_date?: string | null
-          period?: string
-          sick_days?: number | null
-          status?: string
-          tax_deduction?: number
+          period?: string | null
+          status?: string | null
+          tax_deduction?: number | null
           updated_at?: string | null
           user_id?: string | null
-          vacation_days_used?: number | null
-          year?: number | null
+          vacation_pay?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "payslips_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "payslips_employee_id_fkey"
             columns: ["employee_id"]
@@ -1457,62 +1458,72 @@ export type Database = {
       }
       pending_bookings: {
         Row: {
-          booked_at: string | null
+          account_credit: string | null
+          account_debit: string | null
+          amount: number | null
           company_id: string | null
           created_at: string | null
-          description: string
+          description: string | null
           id: string
+          item_id: string | null
+          item_type: string | null
           metadata: Json | null
-          proposed_date: string
-          proposed_entries: Json
-          proposed_series: string | null
-          source_id: string
-          source_type: string
+          source_id: string | null
+          source_type: string | null
           status: string | null
-          user_id: string | null
-          verification_id: string | null
+          user_id: string
         }
         Insert: {
-          booked_at?: string | null
+          account_credit?: string | null
+          account_debit?: string | null
+          amount?: number | null
           company_id?: string | null
           created_at?: string | null
-          description: string
+          description?: string | null
           id?: string
+          item_id?: string | null
+          item_type?: string | null
           metadata?: Json | null
-          proposed_date: string
-          proposed_entries: Json
-          proposed_series?: string | null
-          source_id: string
-          source_type: string
+          source_id?: string | null
+          source_type?: string | null
           status?: string | null
-          user_id?: string | null
-          verification_id?: string | null
+          user_id: string
         }
         Update: {
-          booked_at?: string | null
+          account_credit?: string | null
+          account_debit?: string | null
+          amount?: number | null
           company_id?: string | null
           created_at?: string | null
-          description?: string
+          description?: string | null
           id?: string
+          item_id?: string | null
+          item_type?: string | null
           metadata?: Json | null
-          proposed_date?: string
-          proposed_entries?: Json
-          proposed_series?: string | null
-          source_id?: string
-          source_type?: string
+          source_id?: string | null
+          source_type?: string | null
           status?: string | null
-          user_id?: string | null
-          verification_id?: string | null
+          user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "pending_bookings_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       periodiseringsfonder: {
         Row: {
           amount: number
           company_id: string | null
           created_at: string | null
+          dissolved_amount: number | null
           expires_at: string | null
           id: string
+          notes: string | null
           remaining_amount: number | null
           status: string | null
           updated_at: string | null
@@ -1524,8 +1535,10 @@ export type Database = {
           amount: number
           company_id?: string | null
           created_at?: string | null
+          dissolved_amount?: number | null
           expires_at?: string | null
           id?: string
+          notes?: string | null
           remaining_amount?: number | null
           status?: string | null
           updated_at?: string | null
@@ -1537,8 +1550,10 @@ export type Database = {
           amount?: number
           company_id?: string | null
           created_at?: string | null
+          dissolved_amount?: number | null
           expires_at?: string | null
           id?: string
+          notes?: string | null
           remaining_amount?: number | null
           status?: string | null
           updated_at?: string | null
@@ -1560,151 +1575,192 @@ export type Database = {
         Row: {
           avatar_emoji: string | null
           avatar_url: string | null
-          created_at: string
+          created_at: string | null
           email: string | null
           full_name: string | null
           id: string
-          onboarding_completed_at: string | null
-          onboarding_skipped: boolean | null
-          role: Database["public"]["Enums"]["user_role"]
+          role: string | null
           subscription_tier: string | null
-          updated_at: string
+          updated_at: string | null
         }
         Insert: {
           avatar_emoji?: string | null
           avatar_url?: string | null
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           full_name?: string | null
           id: string
-          onboarding_completed_at?: string | null
-          onboarding_skipped?: boolean | null
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: string | null
           subscription_tier?: string | null
-          updated_at?: string
+          updated_at?: string | null
         }
         Update: {
           avatar_emoji?: string | null
           avatar_url?: string | null
-          created_at?: string
+          created_at?: string | null
           email?: string | null
           full_name?: string | null
           id?: string
-          onboarding_completed_at?: string | null
-          onboarding_skipped?: boolean | null
-          role?: Database["public"]["Enums"]["user_role"]
+          role?: string | null
           subscription_tier?: string | null
-          updated_at?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits: {
+        Row: {
+          count: number | null
+          created_at: string | null
+          identifier: string
+          reset_time: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          count?: number | null
+          created_at?: string | null
+          identifier: string
+          reset_time?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          count?: number | null
+          created_at?: string | null
+          identifier?: string
+          reset_time?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      rate_limits_sliding: {
+        Row: {
+          created_at: string | null
+          identifier: string
+          last_access: string | null
+          updated_at: string | null
+          window_data: Json | null
+        }
+        Insert: {
+          created_at?: string | null
+          identifier: string
+          last_access?: string | null
+          updated_at?: string | null
+          window_data?: Json | null
+        }
+        Update: {
+          created_at?: string | null
+          identifier?: string
+          last_access?: string | null
+          updated_at?: string | null
+          window_data?: Json | null
         }
         Relationships: []
       }
       receipts: {
         Row: {
-          amount: number
+          amount: number | null
           captured_at: string | null
           category: string | null
           company_id: string | null
           created_at: string | null
           created_by: string | null
-          currency: string | null
-          date: string
+          date: string | null
           file_url: string | null
           id: string
           image_url: string | null
-          is_demo_data: boolean | null
           metadata: Json | null
           source: string | null
           status: string | null
           supplier: string | null
           total_amount: number | null
-          transaction_count: number | null
           updated_at: string | null
           user_id: string | null
-          vendor: string | null
+          vat_amount: number | null
         }
         Insert: {
-          amount: number
+          amount?: number | null
           captured_at?: string | null
           category?: string | null
           company_id?: string | null
           created_at?: string | null
           created_by?: string | null
-          currency?: string | null
-          date: string
-          file_url?: string | null
-          id: string
-          image_url?: string | null
-          is_demo_data?: boolean | null
-          metadata?: Json | null
-          source?: string | null
-          status?: string | null
-          supplier?: string | null
-          total_amount?: number | null
-          transaction_count?: number | null
-          updated_at?: string | null
-          user_id?: string | null
-          vendor?: string | null
-        }
-        Update: {
-          amount?: number
-          captured_at?: string | null
-          category?: string | null
-          company_id?: string | null
-          created_at?: string | null
-          created_by?: string | null
-          currency?: string | null
-          date?: string
+          date?: string | null
           file_url?: string | null
           id?: string
           image_url?: string | null
-          is_demo_data?: boolean | null
           metadata?: Json | null
           source?: string | null
           status?: string | null
           supplier?: string | null
           total_amount?: number | null
-          transaction_count?: number | null
           updated_at?: string | null
           user_id?: string | null
-          vendor?: string | null
+          vat_amount?: number | null
         }
-        Relationships: []
+        Update: {
+          amount?: number | null
+          captured_at?: string | null
+          category?: string | null
+          company_id?: string | null
+          created_at?: string | null
+          created_by?: string | null
+          date?: string | null
+          file_url?: string | null
+          id?: string
+          image_url?: string | null
+          metadata?: Json | null
+          source?: string | null
+          status?: string | null
+          supplier?: string | null
+          total_amount?: number | null
+          updated_at?: string | null
+          user_id?: string | null
+          vat_amount?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "receipts_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       roadmap_steps: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
           id: string
           metadata: Json | null
-          order_index: number
+          order_index: number | null
           roadmap_id: string
-          status: string
-          title: string
-          updated_at: string
+          status: string | null
+          title: string | null
+          updated_at: string | null
           user_id: string | null
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
           metadata?: Json | null
-          order_index: number
+          order_index?: number | null
           roadmap_id: string
-          status?: string
-          title: string
-          updated_at?: string
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
           metadata?: Json | null
-          order_index?: number
+          order_index?: number | null
           roadmap_id?: string
-          status?: string
-          title?: string
-          updated_at?: string
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
           user_id?: string | null
         }
         Relationships: [
@@ -1719,30 +1775,30 @@ export type Database = {
       }
       roadmaps: {
         Row: {
-          created_at: string
+          created_at: string | null
           description: string | null
           id: string
-          status: string
-          title: string
-          updated_at: string
+          status: string | null
+          title: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
-          status?: string
-          title: string
-          updated_at?: string
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          created_at?: string
+          created_at?: string | null
           description?: string | null
           id?: string
-          status?: string
-          title?: string
-          updated_at?: string
+          status?: string | null
+          title?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: []
@@ -1755,8 +1811,8 @@ export type Database = {
           key: string
           scope: string | null
           updated_at: string | null
-          user_id: string
-          value: Json
+          user_id: string | null
+          value: string | null
         }
         Insert: {
           company_id?: string | null
@@ -1765,8 +1821,8 @@ export type Database = {
           key: string
           scope?: string | null
           updated_at?: string | null
-          user_id: string
-          value: Json
+          user_id?: string | null
+          value?: string | null
         }
         Update: {
           company_id?: string | null
@@ -1775,12 +1831,87 @@ export type Database = {
           key?: string
           scope?: string | null
           updated_at?: string | null
+          user_id?: string | null
+          value?: string | null
+        }
+        Relationships: []
+      }
+      share_transactions: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          document_reference: string | null
+          document_url: string | null
+          from_name: string | null
+          from_shareholder_id: string | null
+          id: string
+          notes: string | null
+          price_per_share: number | null
+          registration_date: string | null
+          share_class: string | null
+          share_count: number | null
+          shares: number | null
+          to_name: string | null
+          to_shareholder_id: string | null
+          total_amount: number | null
+          total_price: number | null
+          transaction_date: string | null
+          transaction_type: string | null
+          updated_at: string | null
+          user_id: string
+          verification_id: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          document_reference?: string | null
+          document_url?: string | null
+          from_name?: string | null
+          from_shareholder_id?: string | null
+          id?: string
+          notes?: string | null
+          price_per_share?: number | null
+          registration_date?: string | null
+          share_class?: string | null
+          share_count?: number | null
+          shares?: number | null
+          to_name?: string | null
+          to_shareholder_id?: string | null
+          total_amount?: number | null
+          total_price?: number | null
+          transaction_date?: string | null
+          transaction_type?: string | null
+          updated_at?: string | null
+          user_id: string
+          verification_id?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          document_reference?: string | null
+          document_url?: string | null
+          from_name?: string | null
+          from_shareholder_id?: string | null
+          id?: string
+          notes?: string | null
+          price_per_share?: number | null
+          registration_date?: string | null
+          share_class?: string | null
+          share_count?: number | null
+          shares?: number | null
+          to_name?: string | null
+          to_shareholder_id?: string | null
+          total_amount?: number | null
+          total_price?: number | null
+          transaction_date?: string | null
+          transaction_type?: string | null
+          updated_at?: string | null
           user_id?: string
-          value?: Json
+          verification_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "settings_company_id_fkey"
+            foreignKeyName: "share_transactions_company_id_fkey"
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
@@ -1794,11 +1925,12 @@ export type Database = {
           acquisition_price: number | null
           address: string | null
           board_role: string | null
-          company_id: string | null
+          company_id: string
           created_at: string | null
           email: string | null
           id: string
           is_board_member: boolean | null
+          is_demo_data: boolean | null
           metadata: Json | null
           name: string
           ownership_percentage: number | null
@@ -1808,24 +1940,25 @@ export type Database = {
           share_number_from: number | null
           share_number_to: number | null
           share_percentage: number | null
-          shares: number
-          shares_count: number | null
+          shares: number | null
           ssn_org_nr: string | null
+          status: string | null
           updated_at: string | null
-          user_id: string | null
+          user_id: string
           voting_percentage: number | null
-          voting_power: number | null
+          voting_rights: number | null
         }
         Insert: {
           acquisition_date?: string | null
           acquisition_price?: number | null
           address?: string | null
           board_role?: string | null
-          company_id?: string | null
+          company_id: string
           created_at?: string | null
           email?: string | null
           id?: string
           is_board_member?: boolean | null
+          is_demo_data?: boolean | null
           metadata?: Json | null
           name: string
           ownership_percentage?: number | null
@@ -1835,24 +1968,25 @@ export type Database = {
           share_number_from?: number | null
           share_number_to?: number | null
           share_percentage?: number | null
-          shares?: number
-          shares_count?: number | null
+          shares?: number | null
           ssn_org_nr?: string | null
+          status?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id: string
           voting_percentage?: number | null
-          voting_power?: number | null
+          voting_rights?: number | null
         }
         Update: {
           acquisition_date?: string | null
           acquisition_price?: number | null
           address?: string | null
           board_role?: string | null
-          company_id?: string | null
+          company_id?: string
           created_at?: string | null
           email?: string | null
           id?: string
           is_board_member?: boolean | null
+          is_demo_data?: boolean | null
           metadata?: Json | null
           name?: string
           ownership_percentage?: number | null
@@ -1862,13 +1996,13 @@ export type Database = {
           share_number_from?: number | null
           share_number_to?: number | null
           share_percentage?: number | null
-          shares?: number
-          shares_count?: number | null
+          shares?: number | null
           ssn_org_nr?: string | null
+          status?: string | null
           updated_at?: string | null
-          user_id?: string | null
+          user_id?: string
           voting_percentage?: number | null
-          voting_power?: number | null
+          voting_rights?: number | null
         }
         Relationships: [
           {
@@ -1883,9 +2017,9 @@ export type Database = {
       shareholdings: {
         Row: {
           bas_account: string | null
-          company_id: string
-          company_name: string
-          created_at: string
+          company_id: string | null
+          company_name: string | null
+          created_at: string | null
           current_value: number | null
           dividend_received: number | null
           holding_type: string | null
@@ -1894,14 +2028,15 @@ export type Database = {
           org_number: string | null
           purchase_date: string | null
           purchase_price: number | null
-          shares_count: number
-          updated_at: string
+          shares_count: number | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           bas_account?: string | null
-          company_id?: string
-          company_name: string
-          created_at?: string
+          company_id?: string | null
+          company_name?: string | null
+          created_at?: string | null
           current_value?: number | null
           dividend_received?: number | null
           holding_type?: string | null
@@ -1910,14 +2045,15 @@ export type Database = {
           org_number?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
-          shares_count: number
-          updated_at?: string
+          shares_count?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           bas_account?: string | null
-          company_id?: string
-          company_name?: string
-          created_at?: string
+          company_id?: string | null
+          company_name?: string | null
+          created_at?: string | null
           current_value?: number | null
           dividend_received?: number | null
           holding_type?: string | null
@@ -1926,8 +2062,9 @@ export type Database = {
           org_number?: string | null
           purchase_date?: string | null
           purchase_price?: number | null
-          shares_count?: number
-          updated_at?: string
+          shares_count?: number | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -1935,79 +2072,6 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      share_transactions: {
-        Row: {
-          company_id: string
-          created_at: string | null
-          document_reference: string | null
-          from_shareholder_id: string | null
-          id: string
-          notes: string | null
-          price_per_share: number | null
-          registration_date: string | null
-          share_count: number
-          to_shareholder_id: string | null
-          total_amount: number | null
-          transaction_date: string
-          transaction_type: string
-          user_id: string
-        }
-        Insert: {
-          company_id: string
-          created_at?: string | null
-          document_reference?: string | null
-          from_shareholder_id?: string | null
-          id?: string
-          notes?: string | null
-          price_per_share?: number | null
-          registration_date?: string | null
-          share_count: number
-          to_shareholder_id?: string | null
-          total_amount?: number | null
-          transaction_date: string
-          transaction_type: string
-          user_id: string
-        }
-        Update: {
-          company_id?: string
-          created_at?: string | null
-          document_reference?: string | null
-          from_shareholder_id?: string | null
-          id?: string
-          notes?: string | null
-          price_per_share?: number | null
-          registration_date?: string | null
-          share_count?: number
-          to_shareholder_id?: string | null
-          total_amount?: number | null
-          transaction_date?: string
-          transaction_type?: string
-          user_id?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "share_transactions_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "share_transactions_from_shareholder_id_fkey"
-            columns: ["from_shareholder_id"]
-            isOneToOne: false
-            referencedRelation: "shareholders"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "share_transactions_to_shareholder_id_fkey"
-            columns: ["to_shareholder_id"]
-            isOneToOne: false
-            referencedRelation: "shareholders"
             referencedColumns: ["id"]
           },
         ]
@@ -2055,7 +2119,6 @@ export type Database = {
           issue_date: string | null
           ocr: string | null
           status: string | null
-          supplier_id: string | null
           supplier_name: string | null
           total_amount: number | null
           updated_at: string | null
@@ -2074,7 +2137,6 @@ export type Database = {
           issue_date?: string | null
           ocr?: string | null
           status?: string | null
-          supplier_id?: string | null
           supplier_name?: string | null
           total_amount?: number | null
           updated_at?: string | null
@@ -2093,7 +2155,6 @@ export type Database = {
           issue_date?: string | null
           ocr?: string | null
           status?: string | null
-          supplier_id?: string | null
           supplier_name?: string | null
           total_amount?: number | null
           updated_at?: string | null
@@ -2102,10 +2163,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "supplier_invoices_supplier_id_fkey"
-            columns: ["supplier_id"]
+            foreignKeyName: "supplier_invoices_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "suppliers"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
@@ -2139,54 +2200,57 @@ export type Database = {
       }
       tax_calendar: {
         Row: {
-          company_id: string
+          company_id: string | null
           completed_at: string | null
           created_at: string | null
-          deadline_type: string
+          deadline_type: string | null
           description: string | null
-          due_date: string
+          due_date: string | null
           id: string
           is_recurring: boolean | null
           period: string | null
           recurrence_pattern: string | null
           reminder_date: string | null
           status: string | null
-          title: string
-          user_id: string
+          title: string | null
+          updated_at: string | null
+          user_id: string | null
           year: number | null
         }
         Insert: {
-          company_id: string
+          company_id?: string | null
           completed_at?: string | null
           created_at?: string | null
-          deadline_type: string
+          deadline_type?: string | null
           description?: string | null
-          due_date: string
+          due_date?: string | null
           id?: string
           is_recurring?: boolean | null
           period?: string | null
           recurrence_pattern?: string | null
           reminder_date?: string | null
           status?: string | null
-          title: string
-          user_id: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           year?: number | null
         }
         Update: {
-          company_id?: string
+          company_id?: string | null
           completed_at?: string | null
           created_at?: string | null
-          deadline_type?: string
+          deadline_type?: string | null
           description?: string | null
-          due_date?: string
+          due_date?: string | null
           id?: string
           is_recurring?: boolean | null
           period?: string | null
           recurrence_pattern?: string | null
           reminder_date?: string | null
           status?: string | null
-          title?: string
-          user_id?: string
+          title?: string | null
+          updated_at?: string | null
+          user_id?: string | null
           year?: number | null
         }
         Relationships: [
@@ -2204,39 +2268,70 @@ export type Database = {
           company_id: string | null
           created_at: string | null
           data: Json | null
-          generated_at: string | null
+          due_date: string | null
+          end_date: string | null
           id: string
+          input_vat: number | null
+          net_vat: number | null
+          output_vat: number | null
+          period: string | null
           period_id: string | null
+          report_type: string | null
+          start_date: string | null
           status: string | null
-          type: string
+          submitted_at: string | null
           updated_at: string | null
           user_id: string | null
+          year: number | null
         }
         Insert: {
           company_id?: string | null
           created_at?: string | null
           data?: Json | null
-          generated_at?: string | null
+          due_date?: string | null
+          end_date?: string | null
           id?: string
+          input_vat?: number | null
+          net_vat?: number | null
+          output_vat?: number | null
+          period?: string | null
           period_id?: string | null
+          report_type?: string | null
+          start_date?: string | null
           status?: string | null
-          type: string
+          submitted_at?: string | null
           updated_at?: string | null
           user_id?: string | null
+          year?: number | null
         }
         Update: {
           company_id?: string | null
           created_at?: string | null
           data?: Json | null
-          generated_at?: string | null
+          due_date?: string | null
+          end_date?: string | null
           id?: string
+          input_vat?: number | null
+          net_vat?: number | null
+          output_vat?: number | null
+          period?: string | null
           period_id?: string | null
+          report_type?: string | null
+          start_date?: string | null
           status?: string | null
-          type?: string
+          submitted_at?: string | null
           updated_at?: string | null
           user_id?: string | null
+          year?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "tax_reports_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "tax_reports_period_id_fkey"
             columns: ["period_id"]
@@ -2256,8 +2351,6 @@ export type Database = {
           amount: string
           amount_value: number
           attachments: string[] | null
-          booked_at: string | null
-          booked_by: string | null
           category: string | null
           category_id: string | null
           company_id: string | null
@@ -2275,11 +2368,9 @@ export type Database = {
           merchant: string | null
           metadata: Json | null
           name: string
-          occurred_at: string | null
           receipt_id: string | null
           source: string | null
-          status: string
-          timestamp: string
+          status: string | null
           updated_at: string | null
           user_id: string | null
           vat_amount: number | null
@@ -2294,8 +2385,6 @@ export type Database = {
           amount: string
           amount_value: number
           attachments?: string[] | null
-          booked_at?: string | null
-          booked_by?: string | null
           category?: string | null
           category_id?: string | null
           company_id?: string | null
@@ -2308,16 +2397,14 @@ export type Database = {
           external_reference?: string | null
           icon_color?: string | null
           icon_name?: string | null
-          id: string
+          id?: string
           is_demo_data?: boolean | null
           merchant?: string | null
           metadata?: Json | null
           name: string
-          occurred_at?: string | null
           receipt_id?: string | null
           source?: string | null
-          status?: string
-          timestamp?: string
+          status?: string | null
           updated_at?: string | null
           user_id?: string | null
           vat_amount?: number | null
@@ -2332,8 +2419,6 @@ export type Database = {
           amount?: string
           amount_value?: number
           attachments?: string[] | null
-          booked_at?: string | null
-          booked_by?: string | null
           category?: string | null
           category_id?: string | null
           company_id?: string | null
@@ -2351,11 +2436,9 @@ export type Database = {
           merchant?: string | null
           metadata?: Json | null
           name?: string
-          occurred_at?: string | null
           receipt_id?: string | null
           source?: string | null
-          status?: string
-          timestamp?: string
+          status?: string | null
           updated_at?: string | null
           user_id?: string | null
           vat_amount?: number | null
@@ -2363,13 +2446,64 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transactions_category_id_fkey"
-            columns: ["category_id"]
+            foreignKeyName: "transactions_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: "categories"
+            referencedRelation: "companies"
             referencedColumns: ["id"]
           },
         ]
+      }
+      user_credits: {
+        Row: {
+          created_at: string | null
+          credits_purchased: number | null
+          credits_remaining: number | null
+          currency: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean | null
+          last_refill_at: string | null
+          lifetime_credits_purchased: number | null
+          price_paid_cents: number | null
+          purchased_at: string | null
+          stripe_payment_id: string | null
+          updated_at: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credits_purchased?: number | null
+          credits_remaining?: number | null
+          currency?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_refill_at?: string | null
+          lifetime_credits_purchased?: number | null
+          price_paid_cents?: number | null
+          purchased_at?: string | null
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credits_purchased?: number | null
+          credits_remaining?: number | null
+          currency?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_refill_at?: string | null
+          lifetime_credits_purchased?: number | null
+          price_paid_cents?: number | null
+          purchased_at?: string | null
+          stripe_payment_id?: string | null
+          updated_at?: string | null
+          user_id?: string | null
+        }
+        Relationships: []
       }
       user_memory: {
         Row: {
@@ -2378,11 +2512,15 @@ export type Database = {
           confidence: number | null
           content: string
           created_at: string | null
-          expires_at: string | null
           id: string
-          source_conversation_id: string | null
+          importance: string | null
+          is_superseded: boolean | null
+          metadata: Json | null
+          source: string | null
+          source_message_id: string | null
           superseded_by: string | null
           updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           category: string
@@ -2390,11 +2528,15 @@ export type Database = {
           confidence?: number | null
           content: string
           created_at?: string | null
-          expires_at?: string | null
           id?: string
-          source_conversation_id?: string | null
+          importance?: string | null
+          is_superseded?: boolean | null
+          metadata?: Json | null
+          source?: string | null
+          source_message_id?: string | null
           superseded_by?: string | null
           updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           category?: string
@@ -2402,129 +2544,58 @@ export type Database = {
           confidence?: number | null
           content?: string
           created_at?: string | null
-          expires_at?: string | null
           id?: string
-          source_conversation_id?: string | null
+          importance?: string | null
+          is_superseded?: boolean | null
+          metadata?: Json | null
+          source?: string | null
+          source_message_id?: string | null
           superseded_by?: string | null
           updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "user_memory_company_id_fkey"
-            columns: ["company_id"]
-            isOneToOne: false
-            referencedRelation: "companies"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "user_memory_superseded_by_fkey"
-            columns: ["superseded_by"]
-            isOneToOne: false
-            referencedRelation: "user_memory"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      user_preferences: {
-        Row: {
-          compact_sidebar: boolean | null
-          created_at: string | null
-          currency: string | null
-          daily_summary: boolean | null
-          date_format: string | null
-          density: string | null
-          first_day_of_week: number | null
-          high_contrast: boolean | null
-          id: string
-          language: string | null
-          larger_text: boolean | null
-          marketing_emails: boolean | null
-          notify_important_dates: boolean | null
-          notify_mobile: boolean | null
-          notify_monthly_reports: boolean | null
-          notify_new_invoices: boolean | null
-          notify_payment_reminders: boolean | null
-          reduce_motion: boolean | null
-          text_mode: string | null
-          theme: string | null
-          updated_at: string | null
-          user_id: string
-        }
-        Insert: {
-          compact_sidebar?: boolean | null
-          created_at?: string | null
-          currency?: string | null
-          daily_summary?: boolean | null
-          date_format?: string | null
-          density?: string | null
-          first_day_of_week?: number | null
-          high_contrast?: boolean | null
-          id?: string
-          language?: string | null
-          larger_text?: boolean | null
-          marketing_emails?: boolean | null
-          notify_important_dates?: boolean | null
-          notify_mobile?: boolean | null
-          notify_monthly_reports?: boolean | null
-          notify_new_invoices?: boolean | null
-          notify_payment_reminders?: boolean | null
-          reduce_motion?: boolean | null
-          text_mode?: string | null
-          theme?: string | null
-          updated_at?: string | null
-          user_id: string
-        }
-        Update: {
-          compact_sidebar?: boolean | null
-          created_at?: string | null
-          currency?: string | null
-          daily_summary?: boolean | null
-          date_format?: string | null
-          density?: string | null
-          first_day_of_week?: number | null
-          high_contrast?: boolean | null
-          id?: string
-          language?: string | null
-          larger_text?: boolean | null
-          marketing_emails?: boolean | null
-          notify_important_dates?: boolean | null
-          notify_mobile?: boolean | null
-          notify_monthly_reports?: boolean | null
-          notify_new_invoices?: boolean | null
-          notify_payment_reminders?: boolean | null
-          reduce_motion?: boolean | null
-          text_mode?: string | null
-          theme?: string | null
-          updated_at?: string | null
-          user_id?: string
+          user_id?: string | null
         }
         Relationships: []
       }
-      user_credits: {
+      user_preferences: {
         Row: {
+          company_id: string | null
           created_at: string | null
-          credits_remaining: number | null
+          currency: string | null
+          date_format: string | null
           id: string
-          last_refill_at: string | null
-          lifetime_credits_purchased: number | null
+          language: string | null
+          notification_email: boolean | null
+          notification_push: boolean | null
+          preferences: Json | null
+          theme: string | null
           updated_at: string | null
           user_id: string | null
         }
         Insert: {
+          company_id?: string | null
           created_at?: string | null
-          credits_remaining?: number | null
+          currency?: string | null
+          date_format?: string | null
           id?: string
-          last_refill_at?: string | null
-          lifetime_credits_purchased?: number | null
+          language?: string | null
+          notification_email?: boolean | null
+          notification_push?: boolean | null
+          preferences?: Json | null
+          theme?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
         Update: {
+          company_id?: string | null
           created_at?: string | null
-          credits_remaining?: number | null
+          currency?: string | null
+          date_format?: string | null
           id?: string
-          last_refill_at?: string | null
-          lifetime_credits_purchased?: number | null
+          language?: string | null
+          notification_email?: boolean | null
+          notification_push?: boolean | null
+          preferences?: Json | null
+          theme?: string | null
           updated_at?: string | null
           user_id?: string | null
         }
@@ -2534,58 +2605,66 @@ export type Database = {
         Row: {
           company_id: string | null
           created_at: string | null
-          data: Json | null
           due_date: string | null
           end_date: string | null
           id: string
           input_vat: number | null
           net_vat: number | null
           output_vat: number | null
-          period: string | null
+          period: string
+          period_type: string | null
           start_date: string | null
           status: string | null
           submitted_at: string | null
           updated_at: string | null
           user_id: string | null
-          year: number | null
+          year: number
         }
         Insert: {
           company_id?: string | null
           created_at?: string | null
-          data?: Json | null
           due_date?: string | null
           end_date?: string | null
           id?: string
           input_vat?: number | null
           net_vat?: number | null
           output_vat?: number | null
-          period?: string | null
+          period: string
+          period_type?: string | null
           start_date?: string | null
           status?: string | null
           submitted_at?: string | null
           updated_at?: string | null
           user_id?: string | null
-          year?: number | null
+          year: number
         }
         Update: {
           company_id?: string | null
           created_at?: string | null
-          data?: Json | null
           due_date?: string | null
           end_date?: string | null
           id?: string
           input_vat?: number | null
           net_vat?: number | null
           output_vat?: number | null
-          period?: string | null
+          period?: string
+          period_type?: string | null
           start_date?: string | null
           status?: string | null
           submitted_at?: string | null
           updated_at?: string | null
           user_id?: string | null
-          year?: number | null
+          year?: number
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "vat_declarations_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       verification_lines: {
         Row: {
@@ -2593,8 +2672,8 @@ export type Database = {
           account_number: number
           company_id: string | null
           created_at: string | null
-          credit: number
-          debit: number
+          credit: number | null
+          debit: number | null
           description: string | null
           id: string
           user_id: string
@@ -2605,8 +2684,8 @@ export type Database = {
           account_number: number
           company_id?: string | null
           created_at?: string | null
-          credit?: number
-          debit?: number
+          credit?: number | null
+          debit?: number | null
           description?: string | null
           id?: string
           user_id: string
@@ -2617,8 +2696,8 @@ export type Database = {
           account_number?: number
           company_id?: string | null
           created_at?: string | null
-          credit?: number
-          debit?: number
+          credit?: number | null
+          debit?: number | null
           description?: string | null
           id?: string
           user_id?: string
@@ -2683,7 +2762,15 @@ export type Database = {
           total_amount?: number | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "verifications_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
@@ -2709,81 +2796,39 @@ export type Database = {
         Args: { p_amount: number; p_user_id: string }
         Returns: boolean
       }
-      get_account_balances:
-        | {
-            Args: { date_from: string; date_to: string }
-            Returns: {
-              account: string
-              balance: number
-            }[]
-          }
-        | {
-            Args: {
-              p_end_date?: string
-              p_start_date?: string
-              p_user_id?: string
-            }
-            Returns: {
-              account_name: string
-              account_number: number
-              balance: number
-              total_credit: number
-              total_debit: number
-            }[]
-          }
+      get_account_balances: {
+        Args: { p_date_from: string; p_date_to: string }
+        Returns: {
+          account_name: string
+          account_number: string
+          balance: number
+          credit: number
+          debit: number
+        }[]
+      }
       get_agi_stats: { Args: { p_year?: number }; Returns: Json }
       get_benefit_stats: { Args: { target_year?: number }; Returns: Json }
       get_dashboard_counts: { Args: never; Returns: Json }
       get_employee_balances: {
         Args: never
         Returns: {
-          balance: number
           email: string
           id: string
-          mileage: number
           name: string
           role: string
           salary: number
           status: string
         }[]
       }
-      get_inventory_stats: {
-        Args: never
-        Returns: {
-          active_items: number
-          total_items: number
-          total_value: number
-        }[]
+      get_inventory_stats: { Args: { p_status?: string }; Returns: Json }
+      get_invoice_stats: {
+        Args: { p_status?: string; p_year?: number }
+        Returns: Json
       }
-      get_invoice_stats:
-        | {
-            Args: never
-            Returns: {
-              overdue_count: number
-              paid_amount: number
-              total_amount: number
-              total_invoices: number
-            }[]
-          }
-        | {
-            Args: { p_user_id?: string }
-            Returns: {
-              draft_invoices: number
-              outstanding_amount: number
-              overdue_invoices: number
-              paid_amount: number
-              paid_invoices: number
-              sent_invoices: number
-              total_amount: number
-              total_invoices: number
-            }[]
-          }
-      get_invoice_stats_v1: { Args: never; Returns: Json }
       get_meeting_stats_v1: { Args: { p_meeting_type?: string }; Returns: Json }
-      get_meeting_stats_v2: { Args: { p_meeting_type?: string }; Returns: Json }
       get_member_stats: { Args: never; Returns: Json }
       get_monthly_cashflow: {
-        Args: { p_year?: number }
+        Args: { p_year: number }
         Returns: {
           expenses: number
           month: string
@@ -2792,49 +2837,24 @@ export type Database = {
         }[]
       }
       get_next_verification_number: {
-        Args: { p_fiscal_year?: number; p_series?: string; p_user_id?: string }
+        Args: { p_series?: string; p_user_id: string }
         Returns: number
       }
       get_partner_stats: { Args: never; Returns: Json }
       get_payroll_stats: { Args: never; Returns: Json }
-      get_receipt_stats: {
-        Args: never
-        Returns: {
-          pending_receipts: number
-          processed_receipts: number
-          total_receipts: number
-        }[]
-      }
-      get_shareholder_stats:
-        | {
-            Args: { p_company_id?: string }
-            Returns: {
-              total_shareholders: number
-              total_shares: number
-              unique_shareholders: number
-            }[]
-          }
-        | {
-            Args: { p_user_id?: string }
-            Returns: {
-              avg_ownership: number
-              total_companies: number
-              total_shareholders: number
-              total_shares: number
-            }[]
-          }
+      get_receipt_stats: { Args: { p_year?: number }; Returns: Json }
+      get_shareholder_stats: { Args: { p_company_id?: string }; Returns: Json }
       get_user_credits: { Args: { p_user_id: string }; Returns: number }
       get_vat_stats: { Args: { p_year?: number }; Returns: Json }
       increment_ai_usage: {
         Args: {
           p_model_id: string
           p_provider: string
-          p_tokens?: number
+          p_tokens: number
           p_user_id: string
         }
         Returns: undefined
       }
-      is_admin: { Args: never; Returns: boolean }
     }
     Enums: {
       event_category:
@@ -2853,7 +2873,6 @@ export type Database = {
         | "ready_to_send"
         | "submitted"
         | "registered"
-      user_role: "user" | "admin" | "owner"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2999,7 +3018,6 @@ export const Constants = {
         "submitted",
         "registered",
       ],
-      user_role: ["user", "admin", "owner"],
     },
   },
 } as const

@@ -91,8 +91,25 @@ export interface VerificationStats {
 
 export const verificationService = {
     /**
-     * Get paginated verifications with optional filters
+     * Check if a financial period is locked (closed)
      */
+    async getPeriodStatus(date: string): Promise<'open' | 'closed'> {
+        const supabase = createBrowserClient()
+        const d = new Date(date)
+        const periodId = `${d.getFullYear()}-M${String(d.getMonth() + 1).padStart(2, '0')}`
+
+        const { data: company } = await supabase.from('companies').select('id').single()
+        if (!company) throw new Error('Företag saknas.')
+
+        const { data: period } = await supabase
+            .from('financial_periods')
+            .select('status')
+            .eq('id', periodId)
+            .eq('company_id', company.id)
+            .single()
+
+        return (period?.status as 'open' | 'closed') || 'open'
+    },
     async getVerifications({
         limit = 50,
         offset = 0,

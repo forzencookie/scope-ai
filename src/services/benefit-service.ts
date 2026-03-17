@@ -79,14 +79,14 @@ export const benefitService = {
 
         return (data || []).map((b): Benefit => ({
             id: b.id,
-            name: b.name,
-            description: b.description ?? undefined,
+            name: b.name ?? 'Okänd förmån',
+            description: undefined,
             category: (b.type || 'other') as Benefit['category'],
-            valuePerMonth: Number(b.cost_to_company) || 0,
+            valuePerMonth: Number(b.taxable_amount) || 0,
             isTaxable: (b.taxable_amount || 0) > 0,
-            taxValue: Number(b.taxable_value) || 0,
+            taxValue: Number(b.taxable_amount) || 0,
             provider: undefined,
-            isActive: b.is_active !== false,
+            isActive: true,
         }))
     },
 
@@ -96,24 +96,22 @@ export const benefitService = {
     async getEmployeeBenefits(employeeId: string): Promise<EmployeeBenefit[]> {
         const supabase = createBrowserClient()
         const { data, error } = await supabase
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            .from('employee_benefits' as any)
-            .select('*, benefits(name)')
-            .eq('employee_id', employeeId)
+            .from('benefits')
+            .select('*')
+            .eq('user_id', employeeId)
 
         if (error) {
             console.error('Failed to fetch employee benefits:', error)
             return []
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return (data || []).map((eb: any) => ({
+        return (data || []).map((eb): EmployeeBenefit => ({
             id: eb.id,
-            employeeId: eb.employee_id,
-            benefitId: eb.benefit_id,
-            benefitName: eb.benefits?.name || 'Okänd förmån',
-            startDate: eb.start_date,
-            endDate: eb.end_date,
+            employeeId: eb.user_id || employeeId,
+            benefitId: eb.id,
+            benefitName: eb.name ?? 'Okänd förmån',
+            startDate: eb.created_at ?? undefined,
+            endDate: eb.updated_at ?? undefined,
         }))
     },
 }

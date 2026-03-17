@@ -67,9 +67,16 @@ export type MessageDisplay =
         } & Record<string, unknown>
     }
     | {
-        type: 'BalanceAuditCard'
+        type: 'BenefitsTable'
         data: {
-            audit: unknown // Define stricter type if exported
+            benefits?: Array<{ id?: string; name?: string; category?: string }>
+        } & Record<string, unknown>
+    }
+    | {
+        type: 'BalanceAuditCard'
+        component?: string
+        data: {
+            audit?: unknown
         } & Record<string, unknown>
     }
     | {

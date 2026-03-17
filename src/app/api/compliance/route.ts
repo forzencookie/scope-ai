@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
         }
 
         const { data: documents, error } = await supabase
-            .from('corporate_documents' as any)
+            .from('meetings')
             .select('*')
         
         if (error) throw error;
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
             const insertData = { ...data, user_id: userId }
             console.log('[Compliance API] Inserting document:', insertData)
             const { data: newDoc, error } = await supabase
-                .from('corporate_documents' as any)
+                .from('meetings')
                 .insert(insertData)
                 .select()
                 .single();
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
             const { id, ...updates } = data
             console.log('[Compliance API] Updating document:', { id, updates })
             const { data: updated, error } = await supabase
-                .from('corporate_documents' as any)
+                .from('meetings')
                 .update(updates)
                 .eq('id', id)
                 .eq('user_id', userId) // Ensure user owns this document

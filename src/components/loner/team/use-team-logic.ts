@@ -52,10 +52,8 @@ export function useTeamLogic() {
             .then(res => res.json())
             .then(data => {
                 if (data.payslips) {
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    const empSlips = data.payslips.filter((p: any) => p.employee_id === dossierEmployeeId)
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    setPayslipsCache(empSlips.map((p: any) => ({
+                    const empSlips = data.payslips.filter((p: { employee_id?: string }) => p.employee_id === dossierEmployeeId)
+                    setPayslipsCache(empSlips.map((p: { period: string; gross_salary: number; net_salary: number; tax_deduction: number; status: string }) => ({
                         period: p.period,
                         grossSalary: Number(p.gross_salary),
                         netSalary: Number(p.net_salary),

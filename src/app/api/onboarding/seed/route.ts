@@ -54,6 +54,10 @@ export async function POST(request: NextRequest) {
     }
     const { supabase, userId, companyId } = ctx
 
+    if (!companyId) {
+        return NextResponse.json({ success: false, error: 'No company selected' }, { status: 400 })
+    }
+
     try {
         const body: OnboardingSeedRequest = await request.json()
         const results: Record<string, number> = {}

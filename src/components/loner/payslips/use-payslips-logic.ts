@@ -48,8 +48,7 @@ export function usePayslipsLogic() {
             const data = await res.json()
             if (data.payslips) {
                 // Map DB format to UI format
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                setAllPayslips(data.payslips.map((p: any) => ({
+                setAllPayslips(data.payslips.map((p: { id: string | number; employees?: { name?: string }; period: string; gross_salary: number; net_salary: number; tax_deduction: number; status: string; payment_date?: string }) => ({
                     id: p.id,
                     employee: p.employees?.name || 'Okänd anställd',
                     period: p.period,

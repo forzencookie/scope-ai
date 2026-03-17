@@ -27,59 +27,13 @@ import { useState, useEffect, useCallback } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { createBrowserClient } from "@/lib/database/client"
+import { activityService, type ActivityLogEntry, type ActivityAction, type EntityType } from "@/services/activity-service"
+
+export type { ActivityLogEntry, ActivityAction, EntityType }
 
 // ============================================================================
 // Types
 // ============================================================================
-
-export interface ActivityLogEntry {
-  id: string
-  userId: string | null
-  userName: string | null
-  userEmail: string | null
-  companyId: string | null
-  action: ActivityAction
-  entityType: EntityType
-  entityId: string | null
-  entityName: string | null
-  changes: Record<string, { from: unknown; to: unknown }> | null
-  createdAt: Date
-}
-
-export type ActivityAction =
-  | "created"
-  | "updated"
-  | "deleted"
-  | "booked"
-  | "sent"
-  | "approved"
-  | "rejected"
-  | "paid"
-  | "archived"
-  | "restored"
-  | "exported"
-  | "imported"
-  | "invited"
-  | "removed"
-  | "login"
-  | "logout"
-
-export type EntityType =
-  | "transactions"
-  | "customer_invoices"
-  | "supplier_invoices"
-  | "receipts"
-  | "verifications"
-  | "payslips"
-  | "employees"
-  | "shareholders"
-  | "companies"
-  | "profiles"
-  | "roadmaps"
-  | "tax_reports"
-  | "financial_periods"
-  | "benefits"
-  | "inventarier"
 
 interface UseActivityLogOptions {
   /** Filter by entity type */
@@ -155,27 +109,6 @@ export const activityLogQueryKeys = {
 }
 
 // ============================================================================
-// Row mapper
-// ============================================================================
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapRow(row: any): ActivityLogEntry {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    userName: row.user_name,
-    userEmail: row.user_email,
-    companyId: row.company_id,
-    action: row.action as ActivityAction,
-    entityType: row.entity_type as EntityType,
-    entityId: row.entity_id,
-    entityName: row.entity_name,
-    changes: row.changes as Record<string, { from: unknown; to: unknown }> | null,
-    createdAt: new Date(row.created_at),
-  }
-}
-
-// ============================================================================
 // Main Hook
 // ============================================================================
 
@@ -202,36 +135,23 @@ export function useActivityLog({
   } = useQuery({
     queryKey: activityLogQueryKeys.list(entityType, entityId, dateFilter?.toISOString()?.split('T')[0]),
     queryFn: async () => {
-      let query = supabase
-        .from("activity_log")
-        .select("*")
-        .order("created_at", { ascending: false })
-        .range(0, limit - 1)
+      // Get company info first for explicit filtering
+      const { data: company } = await supabase.from('companies').select('id').single()
+      if (!company) return []
 
-      if (entityType) {
-        query = query.eq("entity_type", entityType)
-      }
+      const result = await activityService.getActivities({
+        companyId: company.id,
+        entityType,
+        entityId,
+        dateFilter,
+        limit,
+        offset: 0
+      })
 
-      if (entityId) {
-        query = query.eq("entity_id", entityId)
-      }
-
-      if (dateFilter) {
-        const dayStart = new Date(dateFilter)
-        dayStart.setHours(0, 0, 0, 0)
-        const dayEnd = new Date(dateFilter)
-        dayEnd.setHours(23, 59, 59, 999)
-        query = query.gte("created_at", dayStart.toISOString()).lte("created_at", dayEnd.toISOString())
-      }
-
-      const { data, error: fetchError } = await query
-      if (fetchError) throw fetchError
-
-      const mapped = (data || []).map(mapRow)
-      setHasMore(mapped.length === limit)
+      setHasMore(result.hasMore)
       setLoadMoreOffset(limit)
       setExtraActivities([])
-      return mapped
+      return result.activities
     },
     enabled: !!user,
     staleTime: 2 * 60 * 1000,
@@ -246,28 +166,23 @@ export function useActivityLog({
   const loadMore = useCallback(async () => {
     if (!user) return
 
-    let query = supabase
-      .from("activity_log")
-      .select("*")
-      .order("created_at", { ascending: false })
-      .range(loadMoreOffset, loadMoreOffset + limit - 1)
+    // Get company info first for explicit filtering
+    const { data: company } = await supabase.from('companies').select('id').single()
+    if (!company) return
 
-    if (entityType) {
-      query = query.eq("entity_type", entityType)
-    }
+    const result = await activityService.getActivities({
+      companyId: company.id,
+      entityType,
+      entityId,
+      dateFilter,
+      limit,
+      offset: loadMoreOffset
+    })
 
-    if (entityId) {
-      query = query.eq("entity_id", entityId)
-    }
-
-    const { data, error: fetchError } = await query
-    if (fetchError) return
-
-    const mapped = (data || []).map(mapRow)
-    setExtraActivities(prev => [...prev, ...mapped])
+    setExtraActivities(prev => [...prev, ...result.activities])
     setLoadMoreOffset(prev => prev + limit)
-    setHasMore(mapped.length === limit)
-  }, [user, supabase, entityType, entityId, limit, loadMoreOffset])
+    setHasMore(result.hasMore)
+  }, [user, supabase, entityType, entityId, limit, loadMoreOffset, dateFilter])
 
   // Real-time subscription
   useEffect(() => {
@@ -283,17 +198,15 @@ export function useActivityLog({
           table: "activity_log",
         },
         (payload) => {
-          const newActivity = mapRow(payload.new)
+          // In a real app we'd map this using the service
+          // For simplicity in the subscription:
+          const newRow = payload.new as any
+          
+          // Only add if it matches our filters (basic check)
+          if (entityType && newRow.entity_type !== entityType) return
+          if (entityId && newRow.entity_id !== entityId) return
 
-          // Only add if it matches our filters
-          if (entityType && newActivity.entityType !== entityType) return
-          if (entityId && newActivity.entityId !== entityId) return
-
-          // Prepend to the query cache
-          queryClient.setQueryData<ActivityLogEntry[]>(
-            activityLogQueryKeys.list(entityType, entityId),
-            (old) => old ? [newActivity, ...old] : [newActivity]
-          )
+          refetch() // Easiest way to maintain consistency with mapping
         }
       )
       .subscribe()
@@ -301,7 +214,7 @@ export function useActivityLog({
     return () => {
       channel.unsubscribe()
     }
-  }, [realtime, user, entityType, entityId, supabase, queryClient])
+  }, [realtime, user, entityType, entityId, supabase, refetch])
 
   const refresh = useCallback(async () => {
     await refetch()
@@ -331,17 +244,18 @@ export async function logActivity(params: {
 }) {
   const supabase = createBrowserClient()
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
-  if (!user) return
+  const [{ data: { user } }, { data: company }] = await Promise.all([
+    supabase.auth.getUser(),
+    supabase.from('companies').select('id').single()
+  ])
 
-  // Type assertion needed because Supabase types may be out of sync with actual schema
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase.from("activity_log") as any).insert({
-    user_id: user.id,
-    user_name: user.user_metadata?.full_name || user.email?.split("@")[0],
-    user_email: user.email,
+  if (!user || !company) return
+
+  return activityService.logActivity({
+    userId: user.id,
+    companyId: company.id,
+    userName: (user.user_metadata?.full_name || user.email?.split("@")[0]) as string,
+    userEmail: user.email ?? null,
     action: params.action,
     entity_type: params.entityType,
     entity_id: params.entityId,

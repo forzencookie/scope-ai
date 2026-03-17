@@ -108,7 +108,7 @@ export const companyStatisticsService = {
             // Asset statistics (inventarier uses Swedish column names)
             supabase
                 .from('inventarier')
-                .select('id, inkopspris, bokfort_varde, status')
+                .select('id, inkopspris, restvarde, status')
                 .eq('status', 'aktiv'),
 
             // Account balances for revenue/expenses
@@ -159,11 +159,11 @@ export const companyStatisticsService = {
             totalPayroll += (emp.monthly_salary || 0) * 12 // Annual cost
         }
 
-        // Calculate asset value (Swedish column names: inkopspris, bokfort_varde)
+        // Calculate asset value (Swedish column names: restvarde = book value, inkopspris = purchase price)
         let assetValue = 0
         const assets = assetStats.data || []
         for (const a of assets) {
-            assetValue += a.bokfort_varde || a.inkopspris || 0
+            assetValue += a.restvarde || a.inkopspris || 0
         }
 
         // Calculate revenue and expenses from account balances
@@ -364,7 +364,7 @@ export const companyStatisticsService = {
         ])
 
         const pendingTx = (transactions.data || []).filter(t => t.status === 'pending').length
-        const overdueInv = (invoices.data || []).filter(i => i.status !== 'paid' && i.due_date < today).length
+        const overdueInv = (invoices.data || []).filter(i => i.status !== 'paid' && i.due_date != null && i.due_date < today).length
         const unmatchedRec = (receipts.data || []).filter(r => r.status === 'pending' || r.status === 'processing').length
 
         return {

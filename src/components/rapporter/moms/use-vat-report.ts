@@ -13,10 +13,9 @@ export function useVatReport() {
     const toast = useToast()
 
     // Data State
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [periods, setPeriods] = useState<any[]>([])
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const [savedReports, setSavedReports] = useState<any[]>([])
+    const [periods, setPeriods] = useState<Array<{ id: string; name: string; status: string }>>([])
+    const [savedReports, setSavedReports] = useState<Array<{ period_id: string; status: string; data: unknown }>>([])
+
     const [isLoading, setIsLoading] = useState(true)
 
     // UI State

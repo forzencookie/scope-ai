@@ -29,7 +29,10 @@ import { AktiebokPreviewDialog } from "../dialogs/aktiebok-preview"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
+
 export function Aktiebok() {
+    const { navigateToAI } = useChatNavigation()
     const [showExportDialog, setShowExportDialog] = useState(false)
     const {
         stats,
@@ -37,19 +40,6 @@ export function Aktiebok() {
         shareholders,
         filteredTransactions,
         searchQuery, setSearchQuery,
-        showAddDialog, setShowAddDialog,
-        isSubmitting,
-
-        txType, setTxType,
-        txDate, setTxDate,
-        txShares, setTxShares,
-        txPrice, setTxPrice,
-        txTo, setTxTo,
-        txToSsn, setTxToSsn,
-        txFrom, setTxFrom,
-        txShareClass, setTxShareClass,
-
-        handleSaveTransaction
     } = useAktiebokLogic()
 
     return (
@@ -71,16 +61,16 @@ export function Aktiebok() {
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
-                                <DropdownMenuItem onClick={() => { setTxType('Nyemission'); setShowAddDialog(true); }}>
+                                <DropdownMenuItem onClick={() => navigateToAI({ prompt: "Jag vill göra en nyemission" })}>
                                     <Plus className="h-4 w-4 mr-2" />
                                     Nyemission
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => { setTxType('Köp'); setShowAddDialog(true); }}>
+                                <DropdownMenuItem onClick={() => navigateToAI({ prompt: "Jag vill registrera en aktieöverlåtelse" })}>
                                     <ArrowRightLeft className="h-4 w-4 mr-2" />
                                     Registrera överlåtelse
                                 </DropdownMenuItem>
                                 <DropdownMenuSeparator />
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => navigateToAI({ prompt: "Jag vill ändra styrelsen" })}>
                                     <Users className="h-4 w-4 mr-2" />
                                     Ändra styrelse
                                 </DropdownMenuItem>
@@ -187,30 +177,6 @@ export function Aktiebok() {
                     />
                 </div>
             </div>
-
-            <TransactionDialog
-                open={showAddDialog}
-                onOpenChange={setShowAddDialog}
-                txType={txType}
-                setTxType={setTxType}
-                txDate={txDate}
-                setTxDate={setTxDate}
-                txFrom={txFrom}
-                setTxFrom={setTxFrom}
-                txTo={txTo}
-                setTxTo={setTxTo}
-                txToSsn={txToSsn}
-                setTxToSsn={setTxToSsn}
-                txShares={txShares}
-                setTxShares={setTxShares}
-                txShareClass={txShareClass}
-                setTxShareClass={setTxShareClass}
-                txPrice={txPrice}
-                setTxPrice={setTxPrice}
-                shareholders={shareholders}
-                onSave={handleSaveTransaction}
-                isSubmitting={isSubmitting}
-            />
 
             <AktiebokPreviewDialog
                 open={showExportDialog}

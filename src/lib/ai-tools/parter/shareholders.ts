@@ -140,38 +140,60 @@ export const addShareholderTool = defineTool<AddShareholderParams, Shareholder>(
         },
         required: ['name', 'ssnOrgNr', 'sharesCount', 'shareClass'],
     },
-    execute: async (params) => {
-        try {
-            const shareholder = await shareholderService.addShareholder({
+    execute: async (params, context) => {
+        if (context?.isConfirmed) {
+            try {
+                const shareholder = await shareholderService.addShareholder({
+                    name: params.name,
+                    personalOrOrgNumber: params.ssnOrgNr,
+                    sharesCount: params.sharesCount,
+                    shareClass: params.shareClass,
+                    email: params.email,
+                    phone: params.phone,
+                    isBoardMember: params.isBoardMember,
+                    boardRole: params.boardRole
+                })
+
+                return {
+                    success: true,
+                    data: shareholder,
+                    message: `Lade till ${params.name} med ${params.sharesCount} ${params.shareClass}-aktier i aktieboken.`,
+                }
+            } catch (error) {
+                console.error('Failed to add shareholder:', error)
+                return { success: false, error: 'Kunde inte lägga till aktieägare.' }
+            }
+        }
+
+        return {
+            success: true,
+            data: {
+                id: '',
                 name: params.name,
                 personalOrOrgNumber: params.ssnOrgNr,
                 sharesCount: params.sharesCount,
                 shareClass: params.shareClass,
-                email: params.email,
-                phone: params.phone,
-                isBoardMember: params.isBoardMember,
-                boardRole: params.boardRole
-            })
-
-            return {
-                success: true,
-                data: shareholder,
-                message: `Lade till ${params.name} med ${params.sharesCount} ${params.shareClass}-aktier i aktieboken.`,
-                confirmationRequired: {
-                    title: 'Lägg till aktieägare',
-                    description: `Lägg till ${params.name} i aktieboken.`,
-                    summary: [
-                        { label: 'Namn', value: params.name },
-                        { label: 'Person-/Orgnr', value: params.ssnOrgNr },
-                        { label: 'Antal aktier', value: `${params.sharesCount} st` },
-                        { label: 'Aktieslag', value: params.shareClass },
-                    ],
-                    action: { toolName: 'add_shareholder', params },
-                },
-            }
-        } catch (error) {
-            console.error('Failed to add shareholder:', error)
-            return { success: false, error: 'Kunde inte lägga till aktieägare.' }
+                ownershipPercentage: 0,
+                votingPercentage: 0,
+                isBoardMember: params.isBoardMember ?? false,
+                boardRole: params.boardRole ?? null,
+                email: params.email ?? null,
+                phone: params.phone ?? null,
+                acquisitionDate: null,
+                acquisitionPrice: null,
+            } as Shareholder,
+            message: `Förbereder att lägga till ${params.name} i aktieboken.`,
+            confirmationRequired: {
+                title: 'Lägg till aktieägare',
+                description: `Lägg till ${params.name} i aktieboken med ${params.sharesCount} ${params.shareClass}-aktier.`,
+                summary: [
+                    { label: 'Namn', value: params.name },
+                    { label: 'Person-/Orgnr', value: params.ssnOrgNr },
+                    { label: 'Antal aktier', value: `${params.sharesCount} st` },
+                    { label: 'Aktieslag', value: params.shareClass },
+                ],
+                action: { toolName: 'add_shareholder', params },
+            },
         }
     },
 })

@@ -9,25 +9,40 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Conversation } from '@/lib/chat-types'
+import type { Conversation, Message } from '@/lib/chat-types'
 
 // Query key for conversations - shared across all useConversations calls
 export const conversationsQueryKey = ["chat", "conversations"] as const
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapConversation(conv: any): Conversation {
+interface RawConversation {
+    id: string
+    title?: string
+    messages?: RawMessage[]
+    created_at: string
+    updated_at?: string
+}
+
+interface RawMessage {
+    id?: string
+    role: string
+    content?: string
+    metadata?: { mentions?: unknown[]; attachments?: unknown[] }
+    tool_calls?: string | unknown[]
+    tool_results?: string | unknown[]
+}
+
+function mapConversation(conv: RawConversation): Conversation {
     return {
         id: conv.id,
         title: conv.title || 'Ny konversation',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        messages: (conv.messages || []).map((m: any) => ({
+        messages: (conv.messages || []).map((m: RawMessage) => ({
             id: m.id || crypto.randomUUID(),
             role: m.role as 'user' | 'assistant',
             content: m.content || '',
-            mentions: m.metadata?.mentions || [],
-            attachments: m.metadata?.attachments || [],
-            toolCalls: m.tool_calls ? (typeof m.tool_calls === 'string' ? JSON.parse(m.tool_calls) : m.tool_calls) : undefined,
-            toolResults: m.tool_results ? (typeof m.tool_results === 'string' ? JSON.parse(m.tool_results) : m.tool_results) : undefined,
+            mentions: (m.metadata?.mentions ?? []) as Message['mentions'],
+            attachments: (m.metadata?.attachments ?? []) as Message['attachments'],
+            toolCalls: m.tool_calls ? (typeof m.tool_calls === 'string' ? JSON.parse(m.tool_calls) : m.tool_calls) as Message['toolCalls'] : undefined,
+            toolResults: m.tool_results ? (typeof m.tool_results === 'string' ? JSON.parse(m.tool_results) : m.tool_results) as Message['toolResults'] : undefined,
         })),
         createdAt: new Date(conv.created_at).getTime(),
         updatedAt: new Date(conv.updated_at || conv.created_at).getTime()

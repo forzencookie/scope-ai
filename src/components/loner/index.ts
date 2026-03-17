@@ -20,7 +20,3 @@ export { BenefitsTab } from "./benefits"
 export { default as TeamTab } from "./team"
 export { EgenavgifterCalculator as Egenavgifter } from "./egenavgifter"
 export { DelagaruttagManager as Delagaruttag } from "./delagaruttag"
-
-// Dialog components
-export { PayslipDetailsDialog } from "./dialogs/spec"
-export { getBenefitIcon } from "./dialogs/forman/constants"

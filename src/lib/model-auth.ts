@@ -204,9 +204,8 @@ export async function getMonthlyUsage(userId: string): Promise<UsageStats | null
         periodStart.setDate(1)
         periodStart.setHours(0, 0, 0, 0)
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         const { data, error } = await supabase
-            .from('ai_usage' as any)
+            .from('ai_usage')
             .select('tokens_used, requests_count, period_start, period_end')
             .eq('user_id', userId)
             .gte('period_start', periodStart.toISOString())

@@ -1,10 +1,11 @@
 import { createBrowserClient } from '@/lib/database/client'
 import { verificationService, type VerificationEntry } from './verification-service'
 import { logAuditEntry } from '@/lib/audit'
+import type { Database, Json } from '@/types/database'
 
-// pending_bookings generated types don't match PendingBookingRow — needs migration to align columns
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function db() { return createBrowserClient() as any }
+type PendingBookingsRow = Database['public']['Tables']['pending_bookings']['Row']
+
+function db() { return createBrowserClient() }
 
 // =============================================================================
 // Types
@@ -76,20 +77,23 @@ export interface GetPendingBookingsFilters {
 // Row mapper
 // =============================================================================
 
-function mapRowToPendingBooking(row: PendingBookingRow): PendingBooking {
+function mapDbRowToPendingBooking(row: PendingBookingsRow): PendingBooking {
+  const meta = (row.metadata && typeof row.metadata === 'object' && !Array.isArray(row.metadata))
+    ? row.metadata as Record<string, unknown>
+    : null
   return {
     id: row.id,
-    sourceType: row.source_type as PendingBookingSourceType,
-    sourceId: row.source_id,
-    description: row.description,
-    proposedEntries: row.proposed_entries || [],
-    proposedSeries: row.proposed_series || 'A',
-    proposedDate: row.proposed_date,
-    status: row.status as PendingBookingStatus,
-    createdAt: row.created_at,
-    bookedAt: row.booked_at,
-    verificationId: row.verification_id,
-    metadata: row.metadata,
+    sourceType: (row.source_type ?? 'ai_entry') as PendingBookingSourceType,
+    sourceId: row.source_id ?? row.item_id ?? '',
+    description: row.description ?? '',
+    proposedEntries: (meta?.entries ?? []) as VerificationEntry[],
+    proposedSeries: ((meta?.series as string) ?? 'A'),
+    proposedDate: ((meta?.date as string) ?? row.created_at ?? new Date().toISOString()),
+    status: (row.status ?? 'pending') as PendingBookingStatus,
+    createdAt: row.created_at ?? new Date().toISOString(),
+    bookedAt: null,
+    verificationId: null,
+    metadata: meta,
   }
 }
 
@@ -97,7 +101,9 @@ function mapRowToPendingBooking(row: PendingBookingRow): PendingBooking {
 // Source entity status update table
 // =============================================================================
 
-const SOURCE_TABLE_MAP: Record<string, { table: string; statusValue: string }> = {
+type SupabaseTableName = keyof Database['public']['Tables']
+
+const SOURCE_TABLE_MAP: Record<string, { table: SupabaseTableName; statusValue: string }> = {
   payslip: { table: 'payslips', statusValue: 'booked' },
   customer_invoice: { table: 'customer_invoices', statusValue: 'Bokförd' },
   supplier_invoice: { table: 'supplier_invoices', statusValue: 'Bokförd' },
@@ -128,18 +134,30 @@ export const pendingBookingService = {
       .eq('user_id', user.id)
       .single()
 
+    // The DB schema stores simplified pending booking info.
+    // Complex multi-line entries are stored in metadata.
+    const firstEntry = params.entries[0]
+    const totalAmount = params.entries.reduce((sum, e) => sum + (e.debit || 0), 0)
+
     const { data, error } = await supabase
       .from('pending_bookings')
       .insert({
         source_type: params.sourceType,
         source_id: params.sourceId,
         description: params.description,
-        proposed_entries: params.entries as unknown as Record<string, unknown>,
-        proposed_series: params.series || 'A',
-        proposed_date: params.date,
+        account_debit: firstEntry?.account?.toString() ?? null,
+        account_credit: params.entries.find(e => (e.credit || 0) > 0)?.account?.toString() ?? null,
+        amount: totalAmount,
+        item_type: params.sourceType,
+        item_id: params.sourceId,
         user_id: user.id,
-        company_id: membership?.company_id || null,
-        metadata: params.metadata as unknown as Record<string, unknown> || null,
+        company_id: membership?.company_id ?? null,
+        metadata: {
+          entries: params.entries,
+          series: params.series ?? 'A',
+          date: params.date,
+          ...(params.metadata ?? {}),
+        } as unknown as Json,
       })
       .select()
       .single()
@@ -149,7 +167,7 @@ export const pendingBookingService = {
       throw error
     }
 
-    return mapRowToPendingBooking(data as unknown as PendingBookingRow)
+    return mapDbRowToPendingBooking(data)
   },
 
   /**
@@ -177,7 +195,7 @@ export const pendingBookingService = {
       return []
     }
 
-    return (data || []).map((row: PendingBookingRow) => mapRowToPendingBooking(row))
+    return (data || []).map(mapDbRowToPendingBooking)
   },
 
   /**
@@ -204,7 +222,7 @@ export const pendingBookingService = {
       throw new Error('Pending booking hittades inte')
     }
 
-    const pending = mapRowToPendingBooking(row as unknown as PendingBookingRow)
+    const pending = mapDbRowToPendingBooking(row)
 
     if (pending.status !== 'pending') {
       throw new Error(`Kan inte bokföra — status är redan "${pending.status}"`)
@@ -239,7 +257,7 @@ export const pendingBookingService = {
     const { error: rpcError } = await supabase.rpc('book_pending_item_status', {
       p_pending_id: id,
       p_verification_id: verification.id,
-      p_entries: entries as unknown as Record<string, unknown>,
+      p_entries: entries as unknown as Json,
       p_source_type: pending.sourceType,
       p_source_id: pending.sourceId,
     })
@@ -361,10 +379,26 @@ export const pendingBookingService = {
 
     const supabase = db()
 
-    const { error } = await supabase
-      .from(mapping.table)
-      .update({ status: mapping.statusValue })
-      .eq('id', sourceId)
+    // Each source table has its own Supabase type signature, so we update
+    // them individually to keep the compiler happy.
+    async function updateStatus(table: SupabaseTableName, status: string, id: string) {
+      switch (table) {
+        case 'payslips':
+          return supabase.from('payslips').update({ status }).eq('id', id)
+        case 'customer_invoices':
+          return supabase.from('customer_invoices').update({ status }).eq('id', id)
+        case 'supplier_invoices':
+          return supabase.from('supplier_invoices').update({ status }).eq('id', id)
+        case 'transactions':
+          return supabase.from('transactions').update({ status }).eq('id', id)
+        case 'dividends':
+          return supabase.from('dividends').update({ status }).eq('id', id)
+        default:
+          return { error: { message: `Okänd tabell: ${table}` } }
+      }
+    }
+
+    const { error } = await updateStatus(mapping.table, mapping.statusValue, sourceId)
 
     if (error) {
       throw new Error(

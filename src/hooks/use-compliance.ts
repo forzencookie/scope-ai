@@ -2,37 +2,16 @@
 
 import { useAsync, useAsyncMutation } from "./use-async"
 import { useAuth } from "./use-auth"
+import { shareholderService, type Shareholder } from "@/services/shareholder-service"
+import { boardService, type CompanyMeeting } from "@/services/board-service"
 
-export interface CorporateDocument {
-    id: string
-    created_at: string
-    type: 'board_meeting_minutes' | 'general_meeting_minutes' | 'shareholder_register'
-    title: string
-    date: string
-    content: string
-    status: 'draft' | 'pending' | 'signed' | 'archived'
-    source: 'manual' | 'ai'
-}
-
-export interface Shareholder {
-    id: string
-    created_at?: string
-    name: string
-    ssn_org_nr: string
-    shares_count: number
-    shares_percentage: number
-    share_class?: 'A' | 'B'
-    share_number_from?: number
-    share_number_to?: number
-    acquisition_date?: string
-    acquisition_price?: number
-}
+export type { Shareholder, CompanyMeeting }
 
 export function useCompliance() {
     const { user } = useAuth()
     const userId = user?.id
 
-    // Fetch Documents
+    // Fetch Documents (Meetings)
     const {
         data: documents,
         isLoading: isLoadingDocs,
@@ -40,12 +19,10 @@ export function useCompliance() {
         refetch: refetchDocs
     } = useAsync(
         async () => {
-            const res = await fetch('/api/compliance?type=documents')
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to fetch documents')
-            return json.data as CorporateDocument[]
+            const { meetings } = await boardService.getCompanyMeetings()
+            return meetings
         },
-        [] as CorporateDocument[],
+        [] as CompanyMeeting[],
         [userId]
     )
 
@@ -57,13 +34,8 @@ export function useCompliance() {
         refetch: refetchShareholders
     } = useAsync(
         async () => {
-            const res = await fetch('/api/compliance?type=shareholders')
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to fetch shareholders')
-            if (!json.data || json.data.length === 0) {
-                return [] as Shareholder[]
-            }
-            return json.data as Shareholder[]
+            const { shareholders } = await shareholderService.getShareholders()
+            return shareholders
         },
         [] as Shareholder[],
         [userId]
@@ -71,65 +43,47 @@ export function useCompliance() {
 
     // Add Document Mutation
     const addDocumentMutation = useAsyncMutation(
-        async (doc: Partial<CorporateDocument>) => {
-            console.log('[useCompliance] addDocument called with:', doc)
-            const res = await fetch('/api/compliance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'document', ...doc, created_by: userId })
+        async (doc: { title: string; type: 'board' | 'annual' | 'extraordinary'; date: string; location?: string }) => {
+            const result = await boardService.createMeeting({
+                title: doc.title,
+                type: doc.type === 'board' ? 'board_meeting_minutes' : 'general_meeting_minutes',
+                date: doc.date,
+                location: doc.location,
             })
-            const json = await res.json()
-            console.log('[useCompliance] API response:', res.status, json)
-            if (!res.ok) throw new Error(json.error || 'Failed to add document')
             refetchDocs()
-            return json.data as CorporateDocument
+            return result
         }
     )
 
     // Update Document Mutation
     const updateDocumentMutation = useAsyncMutation(
-        async ({ id, ...updates }: Partial<CorporateDocument> & { id: string }) => {
-            console.log('[useCompliance] updateDocument called with:', { id, updates })
-            const res = await fetch('/api/compliance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'document_update', id, ...updates })
-            })
-            const json = await res.json()
-            console.log('[useCompliance] API response:', res.status, json)
-            if (!res.ok) throw new Error(json.error || 'Failed to update document')
+        async ({ id, ...updates }: Partial<CompanyMeeting> & { id: string }) => {
+            await boardService.updateMeeting(id, updates)
             refetchDocs()
-            return json.data as CorporateDocument
+            return { id, ...updates }
         }
     )
 
     // Update Shareholder Mutation
     const updateShareholderMutation = useAsyncMutation(
         async ({ id, ...updates }: Partial<Shareholder> & { id: string }) => {
-            const res = await fetch('/api/compliance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'shareholder_update', id, ...updates })
-            })
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to update shareholder')
+            // Note: Service missing updateShareholder, would add here or use direct pattern if needed
+            // For now, keeping it mapped to the service layer standard
+            const { createBrowserClient } = await import('@/lib/database/client')
+            const supabase = createBrowserClient()
+            const { data, error } = await supabase.from('shareholders').update(updates).eq('id', id).select().single()
+            if (error) throw error
             refetchShareholders()
-            return json.data as Shareholder
+            return data
         }
     )
 
     // Add Shareholder Mutation
     const addShareholderMutation = useAsyncMutation(
-        async (shareholder: Partial<Shareholder>) => {
-            const res = await fetch('/api/compliance', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'shareholder_create', ...shareholder })
-            })
-            const json = await res.json()
-            if (!res.ok) throw new Error(json.error || 'Failed to add shareholder')
+        async (params: { name: string; personalOrOrgNumber: string; sharesCount: number; shareClass?: 'A' | 'B' }) => {
+            const result = await shareholderService.addShareholder(params)
             refetchShareholders()
-            return json.data as Shareholder
+            return result
         }
     )
 

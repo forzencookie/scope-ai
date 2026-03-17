@@ -5,7 +5,6 @@
  */
 
 import { defineTool } from '../registry'
-import type { AITool } from '../types'
 import {
     listPeriodiseringsfonder,
     // createPeriodiseringsfond,
@@ -121,8 +120,7 @@ const getExpiringFonderTool = defineTool({
     },
 })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const periodiseringsfonderTools: AITool<any, any>[] = [
+export const periodiseringsfonderTools = [
     listPeriodiseringsfondsTools,
     createPeriodiseringsfondTool,
     dissolvePeriodiseringsfondTool,

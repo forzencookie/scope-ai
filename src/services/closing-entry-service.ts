@@ -70,13 +70,13 @@ export const closingEntryService = {
 
         // Fetch all account balances for the fiscal year using RPC
         const { data: balances, error } = await supabase.rpc('get_account_balances', {
-            p_start_date: `${year}-01-01`,
-            p_end_date: `${year}-12-31`
+            p_date_from: `${year}-01-01`,
+            p_date_to: `${year}-12-31`
         })
 
         if (error) throw error
 
-        const accountBalances = (balances || []).map((row: { account_number: number; balance: number; account_name: string | null }) => ({
+        const accountBalances = (balances || []).map((row) => ({
             account: String(row.account_number),
             balance: row.balance,
             name: row.account_name || '',

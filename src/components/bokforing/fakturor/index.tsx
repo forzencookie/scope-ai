@@ -104,8 +104,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     }, [company])
 
     // Render Helpers
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const renderCard = (invoice: any) => (
+    const renderCard = (invoice: UnifiedInvoice) => (
         <InvoiceCard
             key={invoice.id}
             invoice={invoice}

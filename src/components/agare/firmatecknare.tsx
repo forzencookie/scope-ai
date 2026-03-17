@@ -54,11 +54,10 @@ export function Firmatecknare() {
         return documents
             .filter(d => d.type === 'board_meeting_minutes')
             .map(d => {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                let content: any = {};
+                let content: Record<string, unknown> = {};
                 try {
-                    const parsed = JSON.parse(d.content);
-                    if (parsed && typeof parsed === 'object') content = parsed;
+                    const parsed: unknown = JSON.parse(d.content);
+                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) content = parsed as Record<string, unknown>;
                 } catch {
                     // ignore
                 }
@@ -67,14 +66,14 @@ export function Firmatecknare() {
                     id: d.id,
                     date: d.date,
                     status: (d.status === 'signed' ? 'protokoll signerat' : 'planerad'),
-                    chairperson: content.chairperson || '',
-                    attendees: Array.isArray(content.attendees) ? content.attendees : [],
-                    secretary: content.secretary || '',
-                    location: content.location || '',
-                    type: content.type || 'ordinarie',
-                    agendaItems: content.agendaItems || [],
-                    absentees: content.absentees || [],
-                    meetingNumber: content.meetingNumber || 0
+                    chairperson: (content.chairperson as string) || '',
+                    attendees: Array.isArray(content.attendees) ? content.attendees as string[] : [],
+                    secretary: (content.secretary as string) || '',
+                    location: (content.location as string) || '',
+                    type: (content.type as string) || 'ordinarie',
+                    agendaItems: (content.agendaItems as unknown[]) || [],
+                    absentees: (content.absentees as string[]) || [],
+                    meetingNumber: (content.meetingNumber as number) || 0
                 }
             });
     }, [documents]);

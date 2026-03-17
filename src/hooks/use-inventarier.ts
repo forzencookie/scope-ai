@@ -4,6 +4,8 @@ import { useState, useCallback, useMemo, useEffect } from "react"
 import { inventarieService, type Inventarie } from '@/services/inventarie-service'
 import { Monitor, Armchair, Car, Wrench, Package } from "lucide-react"
 
+export type { Inventarie }
+
 export function useInventarier() {
     const [inventarier, setInventarier] = useState<Inventarie[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -43,6 +45,28 @@ export function useInventarier() {
             return true
         } catch (err) {
             console.error('Failed to add inventarie:', err)
+            throw err
+        }
+    }, [fetchInventarier])
+
+    const updateStatus = useCallback(async (id: string, status: 'aktiv' | 'såld' | 'avskriven') => {
+        try {
+            await inventarieService.updateStatus(id, status)
+            await fetchInventarier()
+            return true
+        } catch (err) {
+            console.error('Failed to update inventarie status:', err)
+            throw err
+        }
+    }, [fetchInventarier])
+
+    const deleteInventarie = useCallback(async (id: string) => {
+        try {
+            await inventarieService.deleteInventarie(id)
+            await fetchInventarier()
+            return true
+        } catch (err) {
+            console.error('Failed to delete inventarie:', err)
             throw err
         }
     }, [fetchInventarier])
@@ -89,6 +113,8 @@ export function useInventarier() {
         error,
         stats,
         fetchInventarier,
-        addInventarie
+        addInventarie,
+        updateStatus,
+        deleteInventarie
     }
 }

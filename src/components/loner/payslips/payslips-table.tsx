@@ -11,6 +11,7 @@ import {
     GridTableRow,
 } from "@/components/ui/grid-table"
 import type { Payslip } from "./use-payslips-logic"
+import type { AppStatus } from "@/lib/status-types"
 import { Calendar, User, Wallet, Banknote, CheckCircle2, FileText, Plus } from "lucide-react"
 import { ActionEmptyState } from "@/components/shared"
 import { useHighlight } from "@/hooks"
@@ -114,8 +115,7 @@ function PayslipRow({
                 {formatCurrency(slip.netSalary)}
             </div>
             <div className="col-span-2">
-                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-                <AppStatusBadge status={slip.status as any} size="sm" />
+                <AppStatusBadge status={slip.status as AppStatus} size="sm" />
             </div>
             <div
                 className={cn(

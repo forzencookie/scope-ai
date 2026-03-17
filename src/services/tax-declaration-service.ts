@@ -26,6 +26,7 @@ type NEAppendixRow = Database['public']['Tables']['ne_appendices']['Row'] & {
 }
 
 type AnnualClosingRow = Database['public']['Tables']['annual_closings']['Row'] & {
+    fiscal_year?: number | null
     fiscal_year_start?: string | null
     fiscal_year_end?: string | null
     total_revenue?: number | null
@@ -34,6 +35,7 @@ type AnnualClosingRow = Database['public']['Tables']['annual_closings']['Row'] &
     total_assets?: number | null
     total_liabilities?: number | null
     total_equity?: number | null
+    status?: string | null
     completed_at?: string | null
 }
 
@@ -44,6 +46,7 @@ type AnnualReportRow = Database['public']['Tables']['annual_reports']['Row'] & {
     report_sections?: Record<string, unknown> | null
     directors_report?: string | null
     auditor_report?: string | null
+    status?: string | null
     approved_at?: string | null
     submitted_at?: string | null
     bolagsverket_reference?: string | null

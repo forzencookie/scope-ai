@@ -1,6 +1,7 @@
 "use client"
 
 import { useMemo, useState } from "react"
+import Image from "next/image"
 import { useChatContext } from "@/providers/chat-provider"
 import { useAuth } from "@/hooks/use-auth"
 import { Button } from "@/components/ui/button"
@@ -108,8 +109,7 @@ export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings
                                     onClick={onToggleCollapse}
                                     className="flex items-center justify-center w-9 h-9 rounded-lg hover:bg-accent transition-colors"
                                 >
-                                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                                    <img src="/scope-ai-logo.svg" alt="Scope" className="h-6 w-6" />
+                                    <Image src="/scope-ai-logo.svg" alt="Scope" width={24} height={24} />
                                 </button>
                             </TooltipTrigger>
                             <TooltipContent side="right">Expandera</TooltipContent>
@@ -121,8 +121,7 @@ export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings
                                 onClick={() => window.location.href = '/dashboard'}
                                 className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-accent transition-colors"
                             >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src="/scope-ai-logo.svg" alt="Scope" className="h-6 w-6" />
+                                <Image src="/scope-ai-logo.svg" alt="Scope" width={24} height={24} />
                             </button>
                             <Tooltip>
                                 <TooltipTrigger asChild>

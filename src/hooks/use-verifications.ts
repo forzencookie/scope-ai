@@ -53,20 +53,10 @@ export function useVerifications() {
     const addVerification = useCallback(async (verification: Omit<Verification, "id">) => {
         setLockError(null)
         try {
-            // Check if the verification's date falls in a locked period
-            const verDate = new Date(verification.date)
-            const year = verDate.getFullYear()
-            const month = verDate.getMonth() + 1
-            const periodId = `${year}-M${String(month).padStart(2, '0')}`
+            const { verificationService } = await import('@/services/verification-service')
+            const status = await verificationService.getPeriodStatus(verification.date)
 
-            const supabase = createBrowserClient()
-            const { data: period } = await supabase
-                .from('financial_periods')
-                .select('status')
-                .eq('id', periodId)
-                .single()
-
-            if (period?.status === 'closed') {
+            if (status === 'closed') {
                 const msg = 'Perioden är låst. Lås upp månaden först.'
                 setLockError(msg)
                 console.warn(msg)

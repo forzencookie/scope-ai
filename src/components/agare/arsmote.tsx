@@ -30,7 +30,7 @@ import { MeetingDetails } from "./arsmote/meeting-details"
 import { useArsmoteStats } from "./arsmote/use-arsmote-stats"
 
 // Types
-import { type AnnualMeeting } from "@/types/meeting"
+import { type AnnualMeeting, type Decision, type Motion } from "@/types/meeting"
 
 export const Arsmote = memo(function Arsmote() {
   const {
@@ -52,13 +52,11 @@ export const Arsmote = memo(function Arsmote() {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       result = result.filter(m =>
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (m.decisions || []).some((d: any) =>
+        (m.decisions || []).some((d: Decision) =>
           d.title?.toLowerCase().includes(query) ||
           d.decision?.toLowerCase().includes(query)
         ) ||
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (m.motions || []).some((mo: any) =>
+        (m.motions || []).some((mo: Motion) =>
           mo.title?.toLowerCase().includes(query) ||
           mo.description?.toLowerCase().includes(query)
         ) ||

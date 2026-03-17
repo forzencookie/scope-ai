@@ -184,8 +184,8 @@ export async function GET(request: NextRequest) {
 
             // 7: Financial balances
             supabase.rpc('get_account_balances', {
-                p_start_date: startDate,
-                p_end_date: endDate,
+                p_date_from: startDate,
+                p_date_to: endDate,
             }),
 
             // 8: AI conversations in this month
@@ -206,11 +206,15 @@ export async function GET(request: NextRequest) {
                 .order('updated_at', { ascending: false }),
         ])
 
-        // Extract results safely — cast to any to avoid union type issues from allSettled
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const extract = (idx: number): { data: any[] | null; count: number | null; error: unknown } => {
+        // Extract results safely from allSettled
+        interface QueryResult {
+            data: Record<string, unknown>[] | null
+            count: number | null
+            error: unknown
+        }
+        const extract = (idx: number): QueryResult => {
             const r = results[idx]
-            if (r.status === 'fulfilled') return r.value as { data: any[] | null; count: number | null; error: unknown }
+            if (r.status === 'fulfilled') return r.value as QueryResult
             console.error(`monthly-review query ${idx} failed:`, r.reason)
             return { data: null, count: null, error: r.reason }
         }

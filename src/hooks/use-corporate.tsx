@@ -1,89 +1,77 @@
 "use client"
 
-import * as React from "react"
-import { GeneralMeeting, GeneralMeetingDecision } from "@/types/ownership"
-
-interface CorporateContextType {
-    meetings: GeneralMeeting[]
-    addMeeting: (meeting: Omit<GeneralMeeting, "id">) => void
-    updateMeetingStatus: (id: string, status: GeneralMeeting["status"]) => void
-    addDecision: (meetingId: string, decision: Omit<GeneralMeetingDecision, "id">) => void
-    updateDecision: (meetingId: string, decisionId: string, updates: Partial<GeneralMeetingDecision>) => void
-}
-
-const CorporateContext = React.createContext<CorporateContextType | undefined>(undefined)
-
-export function CorporateProvider({ children }: { children: React.ReactNode }) {
-    const [meetings, setMeetings] = React.useState<GeneralMeeting[]>([])
-
-    const addMeeting = React.useCallback((meeting: Omit<GeneralMeeting, "id">) => {
-        const newMeeting: GeneralMeeting = {
-            ...meeting,
-            id: `gm-${Math.random().toString(36).substr(2, 9)}`,
-            status: 'kallad', // Always start as planned/called
-            decisions: [],
-            attendeesCount: 0,
-        }
-        setMeetings(prev => [newMeeting, ...prev])
-    }, [])
-
-    const updateMeetingStatus = React.useCallback((id: string, status: GeneralMeeting["status"]) => {
-        setMeetings(prev => prev.map(m =>
-            m.id === id ? { ...m, status } : m
-        ))
-    }, [])
-
-    const addDecision = React.useCallback((meetingId: string, decision: Omit<GeneralMeetingDecision, "id">) => {
-        const newDecision: GeneralMeetingDecision = {
-            ...decision,
-            id: `gmd-${Math.random().toString(36).substr(2, 9)}`
-        }
-
-        setMeetings(prev => prev.map(m => {
-            if (m.id === meetingId) {
-                return {
-                    ...m,
-                    decisions: [...m.decisions, newDecision]
-                }
-            }
-            return m
-        }))
-    }, [])
-
-    const updateDecision = React.useCallback((meetingId: string, decisionId: string, updates: Partial<GeneralMeetingDecision>) => {
-        setMeetings(prev => prev.map(m => {
-            if (m.id === meetingId) {
-                return {
-                    ...m,
-                    decisions: m.decisions.map(d =>
-                        d.id === decisionId ? { ...d, ...updates } : d
-                    )
-                }
-            }
-            return m
-        }))
-    }, [])
-
-    const value = React.useMemo(() => ({
-        meetings,
-        addMeeting,
-        updateMeetingStatus,
-        addDecision,
-        updateDecision,
-    }), [meetings, addMeeting, updateMeetingStatus, addDecision, updateDecision])
-
-    return (
-        <CorporateContext.Provider value={value}>
-            {children}
-        </CorporateContext.Provider>
-    )
-
-}
+import { useCallback } from "react"
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { boardService, CompanyMeeting } from "@/services/board-service"
 
 export function useCorporate() {
-    const context = React.useContext(CorporateContext)
-    if (context === undefined) {
-        throw new Error("useCorporate must be used within a CorporateProvider")
+    const queryClient = useQueryClient()
+
+    // Fetch all meetings from the database
+    const {
+        data: meetings = [],
+        isLoading,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: ['corporate-meetings'],
+        queryFn: async () => {
+            const result = await boardService.getCompanyMeetings()
+            return result.meetings
+        },
+        staleTime: 5 * 60 * 1000,
+    })
+
+    // Mutation to add a meeting
+    const addMeetingMutation = useMutation({
+        mutationFn: async (meeting: { 
+            title: string; 
+            type: 'board' | 'annual' | 'extraordinary'; 
+            date: string;
+            location?: string;
+        }) => {
+            return await boardService.createMeeting({
+                title: meeting.title,
+                type: meeting.type === 'board' ? 'board_meeting_minutes' : 'general_meeting_minutes',
+                date: meeting.date,
+                location: meeting.location,
+                status: 'draft'
+            })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['corporate-meetings'] })
+        }
+    })
+
+    // Mutation to update meeting status
+    const updateStatusMutation = useMutation({
+        mutationFn: async ({ id, status }: { id: string; status: CompanyMeeting["status"] }) => {
+            return await boardService.updateMeeting(id, { status })
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['corporate-meetings'] })
+        }
+    })
+
+    const addMeeting = useCallback(async (meeting: { 
+        title: string; 
+        type: 'board' | 'annual' | 'extraordinary'; 
+        date: string;
+        location?: string;
+    }) => {
+        return await addMeetingMutation.mutateAsync(meeting)
+    }, [addMeetingMutation])
+
+    const updateMeetingStatus = useCallback(async (id: string, status: CompanyMeeting["status"]) => {
+        return await updateStatusMutation.mutateAsync({ id, status })
+    }, [updateStatusMutation])
+
+    return {
+        meetings,
+        isLoading,
+        error,
+        addMeeting,
+        updateMeetingStatus,
+        refresh: refetch,
     }
-    return context
 }

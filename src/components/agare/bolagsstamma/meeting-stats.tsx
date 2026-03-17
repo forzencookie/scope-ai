@@ -2,14 +2,17 @@ import { Calendar, CheckCircle, Gavel, Clock } from "lucide-react"
 import { StatCard, StatCardGrid } from "@/components/ui/stat-card"
 import { formatDateLong } from "@/lib/utils"
 
+interface NextMeetingInfo {
+    date?: string
+}
+
 interface MeetingStatsProps {
     stats: {
         planerade?: number
         upcoming: number
         completed: number
         totalDecisions: number
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        nextMeeting: any | null // Using any loosely here to match the flexible structure passed
+        nextMeeting: NextMeetingInfo | null
         daysUntilNext: number | null
     }
 }

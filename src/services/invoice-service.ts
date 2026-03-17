@@ -43,14 +43,14 @@ export type InvoiceStats = {
 function mapRowToCustomerInvoice(row: CustomerInvoiceRow): CustomerInvoice {
     return {
         id: row.id,
-        invoiceNumber: row.invoice_number || row.id,
-        customer: row.customer_name,
+        invoiceNumber: row.invoice_number ?? row.id,
+        customer: row.customer_name ?? '',
         email: row.customer_email ?? undefined,
-        amount: Number(row.subtotal),
-        vatAmount: row.vat_amount ? Number(row.vat_amount) : undefined,
-        totalAmount: Number(row.total_amount),
-        issueDate: row.invoice_date,
-        dueDate: row.due_date,
+        amount: Number(row.subtotal ?? 0),
+        vatAmount: row.vat_amount != null ? Number(row.vat_amount) : undefined,
+        totalAmount: Number(row.total_amount ?? 0),
+        issueDate: row.invoice_date ?? '',
+        dueDate: row.due_date ?? '',
         status: row.status || 'draft',
     }
 }
@@ -182,10 +182,11 @@ export const invoiceService = {
             }
         }
 
-        // Handle array return (RETURNS TABLE)
-        const stats = Array.isArray(data) ? data[0] : data
+        // Handle array return — RPC returns Json, cast for property access
+        const raw = Array.isArray(data) ? data[0] : data
+        const stats = (raw ?? {}) as Record<string, unknown>
 
-        if (!stats) {
+        if (!raw) {
             return {
                 incomingTotal: 0,
                 outgoingTotal: 0,
@@ -196,10 +197,10 @@ export const invoiceService = {
         }
 
         return {
-            incomingTotal: 0, // Not currently returned by RPC (would be supplier invoices)
+            incomingTotal: 0,
             outgoingTotal: Number(stats.total_amount || 0),
             overdueCount: Number(stats.overdue_count || 0),
-            overdueAmount: 0, // Not returned by RPC
+            overdueAmount: 0,
             paidAmount: Number(stats.paid_amount || 0)
         }
     },

@@ -14,6 +14,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/database/auth'
 import { createCreditNoteEntry } from '@/lib/bookkeeping/entries/sales'
+import type { Database } from '@/types/database'
+
+type CustomerInvoiceInsert = Database['public']['Tables']['customer_invoices']['Insert']
 
 export async function POST(
     request: NextRequest,
@@ -57,7 +60,8 @@ export async function POST(
 
         let nextNum = 1
         if (existingCreditNotes && existingCreditNotes.length > 0) {
-            const lastNum = parseInt(existingCreditNotes[0].invoice_number.split('-')[2]) || 0
+            const lastNumber = existingCreditNotes[0].invoice_number ?? ''
+            const lastNum = parseInt(lastNumber.split('-')[2]) || 0
             nextNum = lastNum + 1
         }
         const creditNoteNumber = `KF-${year}-${String(nextNum).padStart(4, '0')}`
@@ -78,8 +82,7 @@ export async function POST(
         })
 
         // Create the credit note as a new invoice record
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const creditNoteData: any = {
+        const creditNoteData: CustomerInvoiceInsert = {
             invoice_number: creditNoteNumber,
             customer_name: invoice.customer_name,
             customer_email: invoice.customer_email,
@@ -91,17 +94,16 @@ export async function POST(
             vat_amount: -vatAmount,
             total_amount: -totalAmount,
             status: 'Krediterad',
-            currency: invoice.currency || 'SEK',
             items: {
                 type: 'credit_note',
                 originalInvoiceId: invoice.id,
-                originalInvoiceNumber: invoice.invoice_number,
+                originalInvoiceNumber: invoice.invoice_number ?? '',
                 reason,
                 journalEntry: {
                     description: journalEntry.description,
-                    rows: journalEntry.rows,
+                    rows: journalEntry.rows as unknown as Array<Record<string, unknown>>,
                 },
-            },
+            } as unknown as Database['public']['Tables']['customer_invoices']['Insert']['items'],
             user_id: userId,
             company_id: companyId || '',
         }

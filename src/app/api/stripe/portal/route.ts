@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
             .eq('id', auth.userId)
             .single()
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const customerId = (profile as any)?.stripe_customer_id
+        const customerId = (profile as { stripe_customer_id?: string } | null)?.stripe_customer_id
 
         if (!customerId) {
             return ApiResponse.badRequest('No active subscription found')

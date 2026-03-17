@@ -10,8 +10,12 @@ import { defineTool } from '../registry'
 // Partner Tools
 // =============================================================================
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getPartnersTool = defineTool<Record<string, never>, any>({
+interface PartnerStats {
+    partnerCount?: number
+    [key: string]: unknown
+}
+
+export const getPartnersTool = defineTool<Record<string, never>, PartnerStats>({
     name: 'get_partners',
     description: 'Hämta alla delägare i handelsbolag eller kommanditbolag.',
     category: 'read',
@@ -25,11 +29,11 @@ export const getPartnersTool = defineTool<Record<string, never>, any>({
             const { data, error } = await supabase.rpc('get_partner_stats')
 
             if (!error && data) {
+                const stats = data as unknown as PartnerStats
                 return {
                     success: true,
-                    data: data,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    message: `Hittade ${(data as any).partnerCount || 0} delägare.`,
+                    data: stats,
+                    message: `Hittade ${stats.partnerCount || 0} delägare.`,
                 }
             }
         } catch (error) {
@@ -40,8 +44,13 @@ export const getPartnersTool = defineTool<Record<string, never>, any>({
     },
 })
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const getMembersTool = defineTool<Record<string, never>, any>({
+interface MemberStats {
+    totalMembers?: number
+    activeMembers?: number
+    [key: string]: unknown
+}
+
+export const getMembersTool = defineTool<Record<string, never>, MemberStats>({
     name: 'get_members',
     description: 'Hämta alla medlemmar i ekonomisk förening.',
     category: 'read',
@@ -55,11 +64,11 @@ export const getMembersTool = defineTool<Record<string, never>, any>({
             const { data, error } = await supabase.rpc('get_member_stats')
 
             if (!error && data) {
+                const stats = data as unknown as MemberStats
                 return {
                     success: true,
-                    data: data,
-                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                    message: `Föreningen har ${(data as any).totalMembers || 0} medlemmar, varav ${(data as any).activeMembers || 0} aktiva.`,
+                    data: stats,
+                    message: `Föreningen har ${stats.totalMembers || 0} medlemmar, varav ${stats.activeMembers || 0} aktiva.`,
                 }
             }
         } catch (error) {

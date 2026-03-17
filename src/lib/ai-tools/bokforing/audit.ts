@@ -59,8 +59,8 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
             taxReports,
         ] = await Promise.all([
             supabase.rpc('get_account_balances', {
-                p_start_date: '2000-01-01',
-                p_end_date: dateTo,
+                p_date_from: '2000-01-01',
+                p_date_to: dateTo,
             }),
             supabase.from('customer_invoices').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
             supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }).limit(500).then(r => r.data || []),
@@ -69,7 +69,7 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
             supabase.from('tax_reports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
         ])
 
-        const balances: Array<{ account: string; balance: number }> = (balancesResult.data || []).map((row: { account_number: number; balance: number }) => ({
+        const balances: Array<{ account: string; balance: number }> = (balancesResult.data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
             account: String(row.account_number),
             balance: row.balance,
         }))

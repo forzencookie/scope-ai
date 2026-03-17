@@ -166,12 +166,13 @@ export async function getNotificationPreferences(userId: string): Promise<Notifi
 
     const prefs = { ...DEFAULT_NOTIFICATIONS }
 
-    for (const row of (data as unknown) as { key: string; value: unknown }[]) {
-        if (row.key === 'notification_email' && typeof row.value === 'object') {
-            prefs.email = { ...prefs.email, ...(row.value as Record<string, boolean>) }
+    for (const row of data) {
+        const parsed: unknown = row.value ? JSON.parse(row.value) : null
+        if (row.key === 'notification_email' && typeof parsed === 'object' && parsed !== null) {
+            prefs.email = { ...prefs.email, ...(parsed as Record<string, boolean>) }
         }
-        if (row.key === 'notification_push' && typeof row.value === 'object') {
-            prefs.push = { ...prefs.push, ...(row.value as Record<string, boolean>) }
+        if (row.key === 'notification_push' && typeof parsed === 'object' && parsed !== null) {
+            prefs.push = { ...prefs.push, ...(parsed as Record<string, boolean>) }
         }
     }
 
@@ -208,9 +209,9 @@ export async function updateNotificationPreference(
         .upsert({
             user_id: userId,
             key,
-            value,
+            value: JSON.stringify(value),
             updated_at: new Date().toISOString(),
-        } as never, {
+        }, {
             onConflict: 'user_id,key'
         })
 
@@ -245,11 +246,11 @@ export async function getIntegrations(): Promise<Integration[]> {
 
     return (data || []).map((row): Integration => ({
         id: row.id,
-        name: row.name || row.integration_id,
+        name: row.name || row.integration_id || '',
         type: (row.type || INTEGRATION_TYPE_MAP[row.integration_id || ''] || 'other') as Integration['type'],
         status: row.connected ? 'connected' : (row.status || 'disconnected') as Integration['status'],
-        connectedAt: row.connected_at,
-        lastSync: row.last_sync_at,
+        connectedAt: row.connected_at || null,
+        lastSync: row.last_sync_at || null,
         provider: row.provider ?? undefined,
     }))
 }

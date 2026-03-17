@@ -9,34 +9,48 @@ import type {
     EventFilters,
     EventSource,
     EventCategory,
+    EventActor,
+    EventStatus,
+    EventProof,
+    CorporateActionType,
+    RelatedEntity,
 } from '@/types/events'
 import { createBrowserClient } from '@/lib/database/client'
+import type { Database } from '@/types/database'
+
+type EventsRow = Database['public']['Tables']['events']['Row']
+type EventsInsert = Database['public']['Tables']['events']['Insert']
 
 /**
  * Map DB result to HändelseEvent
  */
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function mapDtoToEvent(dto: any): HändelseEvent {
+function mapDtoToEvent(dto: EventsRow): HändelseEvent {
     return {
         id: dto.id,
-        timestamp: new Date(dto.timestamp),
-        source: dto.source,
-        category: dto.category,
-        action: dto.action,
-        title: dto.title,
+        timestamp: new Date(dto.timestamp ?? dto.created_at ?? Date.now()),
+        source: (dto.source ?? 'system') as EventSource,
+        category: (dto.category ?? 'system') as EventCategory,
+        action: dto.action ?? '',
+        title: dto.title ?? '',
         actor: {
-            type: dto.actor_type,
-            id: dto.actor_id,
-            name: dto.actor_name,
+            type: (dto.actor_type ?? 'system') as EventActor['type'],
+            id: dto.actor_id ?? undefined,
+            name: dto.actor_name ?? undefined,
         },
-        description: dto.description || undefined,
-        metadata: dto.metadata || undefined,
-        relatedTo: dto.related_to || undefined,
-        status: dto.status || undefined,
-        corporateActionType: dto.corporate_action_type || undefined,
-        proof: dto.proof || undefined,
-        hash: dto.hash || undefined,
-        previousHash: dto.previous_hash || undefined,
+        description: dto.description ?? undefined,
+        metadata: (dto.metadata && typeof dto.metadata === 'object' && !Array.isArray(dto.metadata))
+            ? dto.metadata as Record<string, unknown>
+            : undefined,
+        relatedTo: Array.isArray(dto.related_to)
+            ? dto.related_to as unknown as RelatedEntity[]
+            : undefined,
+        status: (dto.status ?? undefined) as EventStatus | undefined,
+        corporateActionType: (dto.corporate_action_type ?? undefined) as CorporateActionType | undefined,
+        proof: (dto.proof && typeof dto.proof === 'object' && !Array.isArray(dto.proof))
+            ? dto.proof as unknown as EventProof
+            : undefined,
+        hash: dto.hash ?? undefined,
+        previousHash: dto.previous_hash ?? undefined,
     }
 }
 
@@ -46,9 +60,14 @@ function mapDtoToEvent(dto: any): HändelseEvent {
 export async function getEvents(filters?: EventFilters & { limit?: number; offset?: number }): Promise<{ events: HändelseEvent[]; totalCount: number }> {
     const supabase = createBrowserClient()
 
+    // Get company context for explicit filtering
+    const { data: company } = await supabase.from('companies').select('id').single()
+    if (!company) return { events: [], totalCount: 0 }
+
     let query = supabase
         .from('events')
         .select('*', { count: 'exact' })
+        .eq('company_id', company.id)
         .order('timestamp', { ascending: false })
 
     if (filters) {
@@ -101,11 +120,9 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
         ai: 0, user: 0, system: 0, document: 0, authority: 0,
     }
 
-    // We can't easily do a single group-by count with the JS client without RPC or raw sql,
-    // so for now we might just fetch counts or all metadata. 
-    // For scalability, we should use an RPC function or distinct count queries.
-    // Let's do a simple grouping if the dataset isn't huge, or separate count queries.
-    // A simple approach for now:
+    // Get company context for explicit filtering
+    const { data: company } = await supabase.from('companies').select('id').single()
+    if (!company) return counts
 
     // Parallelize count queries for known sources
     const sources: EventSource[] = ['ai', 'user', 'system', 'document', 'authority']
@@ -114,6 +131,7 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
         const { count } = await supabase
             .from('events')
             .select('*', { count: 'exact', head: true })
+            .eq('company_id', company.id)
             .eq('source', source)
 
         counts[source] = count || 0
@@ -128,18 +146,23 @@ export async function getEventCountsBySource(): Promise<Record<EventSource, numb
 export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent | null> {
     const supabase = createBrowserClient()
 
-    // Get current user for RLS security
-    const { data: { user } } = await supabase.auth.getUser()
-    if (!user) {
-        console.error('Cannot emit event: no authenticated user')
+    // Get current user and company context for security
+    const [{ data: { user } }, { data: company }] = await Promise.all([
+        supabase.auth.getUser(),
+        supabase.from('companies').select('id').single()
+    ])
+
+    if (!user || !company) {
+        console.error('Cannot emit event: no authenticated context')
         return null
     }
 
     // For hash linking, we'd ideally fetch the last event server-side or via a function.
     // For now, let's omit the hash chaining in the client-side code or implement a basic version.
 
-    const dbPayload = {
+    const dbPayload: EventsInsert = {
         user_id: user.id,
+        company_id: company.id,
         timestamp: new Date().toISOString(),
         source: input.source,
         category: input.category,
@@ -149,16 +172,16 @@ export async function emitEvent(input: CreateEventInput): Promise<HändelseEvent
         actor_id: input.actor.id,
         actor_name: input.actor.name,
         description: input.description,
-        metadata: input.metadata,
-        related_to: input.relatedTo,
+        metadata: input.metadata as EventsInsert['metadata'],
+        related_to: input.relatedTo as EventsInsert['related_to'],
         status: input.status,
         corporate_action_type: input.corporateActionType,
-        proof: input.proof,
+        proof: input.proof as EventsInsert['proof'],
     }
 
     const { data, error } = await supabase
         .from('events')
-        .insert(dbPayload as never)
+        .insert(dbPayload)
         .select()
         .single()
 

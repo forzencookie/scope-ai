@@ -8,6 +8,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getAuthContext } from '@/lib/database/auth'
 import { randomUUID } from 'crypto'
 import OpenAI from 'openai'
+import type { Database } from '@/types/database'
+
+type TransactionInsert = Database['public']['Tables']['transactions']['Insert']
+type TransactionRow = Database['public']['Tables']['transactions']['Row']
 
 function getOpenAIClient() {
     return new OpenAI({
@@ -198,8 +202,7 @@ export async function POST(request: NextRequest) {
             return NextResponse.json({ error: 'No file provided' }, { status: 400 })
         }
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const createdTransactions: any[] = []
+        const createdTransactions: TransactionRow[] = []
 
         if (type === 'z-rapport') {
             // For Z-rapport: Parse image/PDF via GPT
@@ -216,40 +219,42 @@ export async function POST(request: NextRequest) {
             const baseId = `zr-${Date.now()}`
 
             if (data.cashAmount > 0) {
+                const txPayload: TransactionInsert = {
+                    id: `${baseId}-cash`,
+                    description: 'Kontantförsäljning (Z-rapport)',
+                    name: 'Kontantförsäljning (Z-rapport)',
+                    amount: String(data.cashAmount),
+                    amount_value: data.cashAmount,
+                    date: data.date,
+                    status: 'pending',
+                    source: 'z-rapport',
+                    user_id: userId,
+                    company_id: companyId,
+                }
                 const { data: cashTx } = await supabase
                     .from('transactions')
-                    .insert({
-                        id: `${baseId}-cash`,
-                        description: 'Kontantförsäljning (Z-rapport)',
-                        name: 'Kontantförsäljning (Z-rapport)',
-                        amount: String(data.cashAmount),
-                        amount_value: data.cashAmount,
-                        date: data.date,
-                        status: 'pending',
-                        source: 'z-rapport',
-                        user_id: userId,
-                        company_id: companyId,
-                    } as never)
+                    .insert(txPayload)
                     .select()
                     .single()
                 if (cashTx) createdTransactions.push(cashTx)
             }
 
             if (data.cardAmount > 0) {
+                const cardPayload: TransactionInsert = {
+                    id: `${baseId}-card`,
+                    description: 'Kortförsäljning (Z-rapport)',
+                    name: 'Kortförsäljning (Z-rapport)',
+                    amount: String(data.cardAmount),
+                    amount_value: data.cardAmount,
+                    date: data.date,
+                    status: 'pending',
+                    source: 'z-rapport',
+                    user_id: userId,
+                    company_id: companyId,
+                }
                 const { data: cardTx } = await supabase
                     .from('transactions')
-                    .insert({
-                        id: `${baseId}-card`,
-                        description: 'Kortförsäljning (Z-rapport)',
-                        name: 'Kortförsäljning (Z-rapport)',
-                        amount: String(data.cardAmount),
-                        amount_value: data.cardAmount,
-                        date: data.date,
-                        status: 'pending',
-                        source: 'z-rapport',
-                        user_id: userId,
-                        company_id: companyId,
-                    } as never)
+                    .insert(cardPayload)
                     .select()
                     .single()
                 if (cardTx) createdTransactions.push(cardTx)
@@ -274,7 +279,7 @@ export async function POST(request: NextRequest) {
                         source: 'csv-import',
                         user_id: userId,
                         company_id: companyId,
-                    } as never)
+                    })
                     .select()
                     .single()
                 if (tx) createdTransactions.push(tx)
@@ -302,7 +307,7 @@ export async function POST(request: NextRequest) {
                             source: 'ocr-import',
                             user_id: userId,
                             company_id: companyId,
-                        } as never)
+                        })
                         .select()
                         .single()
                     if (tx) createdTransactions.push(tx)
@@ -333,7 +338,7 @@ export async function POST(request: NextRequest) {
                             source: 'ocr-import',
                             user_id: userId,
                             company_id: companyId,
-                        } as never)
+                        })
                         .select()
                         .single()
                     if (tx) createdTransactions.push(tx)

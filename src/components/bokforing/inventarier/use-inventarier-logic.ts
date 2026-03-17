@@ -1,101 +1,71 @@
-import { useState, useCallback, useEffect, useMemo } from "react"
+"use client"
+
+import { useState, useMemo } from "react"
 import { useInventarier } from "@/hooks/use-inventarier"
-import { useVerifications } from "@/hooks/use-verifications"
-import { useToast } from "@/components/ui/toast"
-import { useTextMode } from "@/providers/text-mode-provider"
-import { useBulkSelection } from "@/components/shared/bulk-action-toolbar"
-import { type Inventarie } from '@/services/inventarie-service'
 
+/**
+ * useInventarierLogic - Read-only logic for the Inventarier (Assets) dashboard.
+ * 
+ * ALL MUTATIONS (Adding assets, booking depreciation) are handled by Scooby via AI Tools.
+ * This hook purely maps database state to the UI.
+ */
 export function useInventarierLogic() {
-    const { text } = useTextMode()
-    const { inventarier, isLoading, stats, fetchInventarier, addInventarie } = useInventarier()
-    const { addVerification } = useVerifications()
-    const toast = useToast()
-    
-    const [isDialogOpen, setIsDialogOpen] = useState(false)
-    const [searchQuery, setSearchQuery] = useState("")
-    const [newAsset, setNewAsset] = useState<Partial<Inventarie>>({
-        livslangdAr: 5
-    })
+    const { 
+        inventarier, 
+        isLoading, 
+        error, 
+        stats, 
+        fetchInventarier 
+    } = useInventarier()
 
+    // Search/Filter state
+    const [searchQuery, setSearchQuery] = useState("")
+
+    // 1. Filtering
     const filteredInventarier = useMemo(() => {
         if (!searchQuery) return inventarier
-        const q = searchQuery.toLowerCase()
-        return inventarier.filter(i =>
-            i.namn.toLowerCase().includes(q) ||
-            i.kategori?.toLowerCase().includes(q)
+        const query = searchQuery.toLowerCase()
+        return inventarier.filter(item =>
+            item.namn.toLowerCase().includes(query) ||
+            item.kategori.toLowerCase().includes(query)
         )
     }, [inventarier, searchQuery])
 
-    // Initial fetch
-    useEffect(() => {
-        fetchInventarier()
-    }, [fetchInventarier])
+    // 2. Selection logic (for read-only bulk actions like Export)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
 
-    const handleDepreciate = useCallback(async () => {
-        // Simple straight-line depreciation (monthly)
-        const totalMonthly = inventarier.reduce((acc, curr) => {
-            if (!curr.livslangdAr || curr.status === 'såld' || curr.status === 'avskriven') return acc;
-            const monthly = curr.inkopspris / (curr.livslangdAr * 12);
-            return acc + monthly;
-        }, 0);
-
-        if (totalMonthly <= 0) {
-            toast.error("Inget att skriva av", "Inga aktiva inventarier hittades.");
-            return;
-        }
-
-        const amount = Math.round(totalMonthly);
-
-        await addVerification({
-            date: new Date().toISOString().split('T')[0],
-            description: `Månatlig avskrivning inventarier`,
-            sourceType: 'generated',
-            rows: [
-                { account: '7832', debit: amount, credit: 0, description: 'Avskrivning inventarier' },
-                { account: '1229', debit: 0, credit: amount, description: 'Ack. avskrivning inv.' }
-            ]
-        });
-
-        toast.success("Bokfört", `Avskrivning på ${amount} kr har bokförts.`);
-    }, [inventarier, addVerification, toast])
-
-    const handleAddAsset = useCallback(async () => {
-        if (!newAsset.namn || !newAsset.inkopspris) return
-
-        try {
-            await addInventarie({
-                namn: newAsset.namn,
-                kategori: newAsset.kategori || 'Inventarier',
-                inkopsdatum: newAsset.inkopsdatum || new Date().toISOString().split('T')[0],
-                inkopspris: Number(newAsset.inkopspris),
-                livslangdAr: Number(newAsset.livslangdAr) || 5,
-            })
-            setIsDialogOpen(false)
-            setNewAsset({ livslangdAr: 5 })
-        } catch {
-            // Error handled in hook (logged)
-        }
-    }, [newAsset, addInventarie])
-
-    const selection = useBulkSelection(inventarier)
+    const selection = useMemo(() => ({
+        selectedIds,
+        isSelected: (id: string) => selectedIds.has(id),
+        toggleItem: (id: string) => {
+            const next = new Set(selectedIds)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            setSelectedIds(next)
+        },
+        toggleAll: () => {
+            if (selectedIds.size === filteredInventarier.length) {
+                setSelectedIds(new Set())
+            } else {
+                setSelectedIds(new Set(filteredInventarier.map(i => i.id)))
+            }
+        },
+        selectedCount: selectedIds.size
+    }), [selectedIds, filteredInventarier])
 
     return {
         // State
-        isDialogOpen, setIsDialogOpen,
-        searchQuery, setSearchQuery,
-        newAsset, setNewAsset,
+        searchQuery,
+        setSearchQuery,
         isLoading,
-        text,
+        error,
 
         // Data
-        inventarier,
         filteredInventarier,
         stats,
         selection,
         
         // Handlers
-        handleDepreciate,
-        handleAddAsset
+        refresh: fetchInventarier
     }
 }

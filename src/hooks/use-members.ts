@@ -29,8 +29,7 @@ export function useMembers() {
                 if (!res.ok) return [];
                 const json = await res.json();
                 const currentYear = new Date().getFullYear();
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                return (json.members || []).map((m: any) => ({
+                return (json.members || []).map((m: Omit<Member, 'currentYearFeePaid'>) => ({
                     ...m,
                     currentYearFeePaid: m.lastPaidYear === currentYear
                 })) as Member[];

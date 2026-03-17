@@ -69,8 +69,8 @@ function useNECalculation() {
                 // Fetch balances, tax rates, and periodiseringsfonder in parallel
                 const [balanceResult, taxRates, fonder] = await Promise.all([
                     supabase.rpc('get_account_balances', {
-                        p_start_date: `${taxYear}-01-01`,
-                        p_end_date: `${taxYear}-12-31`
+                        p_date_from: `${taxYear}-01-01`,
+                        p_date_to: `${taxYear}-12-31`
                     }),
                     taxService.getAllTaxRates(taxYear),
                     listPeriodiseringsfonder(),

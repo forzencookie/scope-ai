@@ -98,7 +98,7 @@ export function MonthReviewDialog({
     useEffect(() => {
         userEditingRef.current = false
         setNotesValue(savedNotes || "")
-    }, [year, month]) // eslint-disable-line react-hooks/exhaustive-deps
+    }, [year, month, savedNotes])
 
     // Fetch data when dialog opens or month changes
     const fetchData = useCallback(async () => {

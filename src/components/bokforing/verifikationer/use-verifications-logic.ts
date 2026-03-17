@@ -35,13 +35,31 @@ export function useVerificationsLogic() {
     const verifikationer = useMemo(() => {
         if (!rawVerifications || rawVerifications.length === 0) return []
 
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        return rawVerifications.map((v: any) => {
+        interface RawVerificationEntry {
+            account?: string
+            account_number?: number
+            account_name?: string
+            debit?: number
+            credit?: number
+            description?: string
+        }
+        interface RawVerification {
+            id: string
+            rows?: RawVerificationEntry[]
+            lines?: RawVerificationEntry[]
+            series?: string
+            number?: number
+            date?: string
+            description?: string
+            source_id?: string
+        }
+
+        return rawVerifications.map((v: RawVerification) => {
             const entries = v.rows || v.lines || []
-            const totalDebit = entries.reduce((sum: number, e: { debit?: number }) => sum + (e.debit || 0), 0)
+            const totalDebit = entries.reduce((sum: number, e: RawVerificationEntry) => sum + (e.debit || 0), 0)
 
             // Primary account is the first debit entry's account
-            const primaryEntry = entries.find((e: { debit?: number }) => (e.debit || 0) > 0) || entries[0]
+            const primaryEntry = entries.find((e: RawVerificationEntry) => (e.debit || 0) > 0) || entries[0]
             const konto = primaryEntry?.account || primaryEntry?.account_number?.toString() || '1930'
 
             const series = v.series || 'A'
@@ -57,7 +75,7 @@ export function useVerificationsLogic() {
                 kontoName: primaryEntry?.account_name || primaryEntry?.description || '',
                 hasTransaction: !!v.source_id,
                 hasUnderlag: true,
-                entries: entries.map((e: { account?: string; account_number?: number; debit?: number; credit?: number; description?: string }) => ({
+                entries: entries.map((e: RawVerificationEntry) => ({
                     account: e.account || e.account_number?.toString() || '',
                     debit: e.debit || 0,
                     credit: e.credit || 0,

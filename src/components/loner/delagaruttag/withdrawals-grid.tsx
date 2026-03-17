@@ -56,9 +56,8 @@ export function WithdrawalsGrid({ withdrawals }: WithdrawalsGridProps) {
                   {withdrawal.description}
                 </div>
                 <div className="col-span-2">
-                  <AppStatusBadge 
-                     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                     status={config.label as any} 
+                  <AppStatusBadge
+                     status={config.label}
                      className={config.color}
                   />
                 </div>

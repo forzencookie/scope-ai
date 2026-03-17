@@ -1,5 +1,6 @@
 import { createBrowserClient } from '@/lib/database/client'
-import type { Roadmap, CreateRoadmapInput, UpdateRoadmapStepInput, RoadmapStatus } from '@/types/roadmap'
+import type { Json } from '@/types/database'
+import type { Roadmap, RoadmapStep, CreateRoadmapInput, UpdateRoadmapStepInput, RoadmapStatus } from '@/types/roadmap'
 
 // Local storage key for fallback/dev
 const STORAGE_KEY = 'scope_roadmaps'
@@ -110,11 +111,10 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
         const stepsData = input.steps.map((step, index) => ({
             roadmap_id: roadmap.id,
             title: step.title,
-            description: step.description,
+            description: step.description ?? null,
             status: 'pending',
-            due_date: step.due_date,
             order_index: index,
-            metadata: step.metadata
+            metadata: (step.metadata ?? null) as Json,
         }))
 
         const { data: steps, error: stepsError } = await supabase
@@ -126,17 +126,18 @@ export async function createRoadmap(input: CreateRoadmapInput): Promise<Roadmap>
 
         return {
             ...roadmap,
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            steps: (steps || []).map((s: any) => ({
-                ...s,
-                // Ensure mapping if needed, e.g. dates 
-                // DB usually returns strings, Type might expect Date or string.
-                // Assuming Type expects string for simplified usage here or exact match.
-                // If RoadmapStep equals DB Row, fine. If not, map.
-                // Safest to cast for now if structures are close.
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-            })) as any
-        } as unknown as Roadmap
+            steps: (steps || []).map((s) => ({
+                id: s.id,
+                roadmap_id: s.roadmap_id,
+                title: s.title ?? '',
+                description: s.description,
+                status: (s.status ?? 'pending') as RoadmapStep['status'],
+                order_index: s.order_index ?? 0,
+                metadata: s.metadata as RoadmapStep['metadata'],
+                created_at: s.created_at ?? '',
+                updated_at: s.updated_at ?? '',
+            })),
+        } as Roadmap
     } catch (error) {
         console.error('Error creating roadmap:', error)
         throw error
@@ -167,9 +168,13 @@ export async function updateRoadmapStatus(id: string, status: RoadmapStatus): Pr
 export async function updateStep(stepId: string, updates: UpdateRoadmapStepInput): Promise<void> {
     try {
         const supabase = createBrowserClient()
+        const dbUpdate: Record<string, unknown> = {}
+        if (updates.status !== undefined) dbUpdate.status = updates.status
+        if (updates.metadata !== undefined) dbUpdate.metadata = updates.metadata as Json
+
         const { error } = await supabase
             .from('roadmap_steps')
-            .update(updates)
+            .update(dbUpdate as { status?: string | null; metadata?: Json })
             .eq('id', stepId)
 
         if (error) throw error

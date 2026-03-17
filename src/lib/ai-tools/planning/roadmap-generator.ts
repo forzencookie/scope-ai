@@ -27,8 +27,7 @@ export const generateRoadmapTool = {
         },
         required: ['goal', 'steps']
     },
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    execute: async (args: { goal: string; context?: string; steps: any[] }) => {
+    execute: async (args: { goal: string; context?: string; steps: Array<{ title: string; description: string; metadata?: Record<string, unknown> }> }) => {
         try {
             const roadmap = await createRoadmap({
                 title: args.goal,

@@ -44,8 +44,7 @@ export function PageTabsLayout({
     // Helper to render a single tab button
     const renderTabButton = (tab: TabConfig) => {
         const isActive = currentTab === tab.id
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const Icon = tab.icon as any
+        const Icon = tab.icon as React.ComponentType<{ className?: string }> | undefined
 
         return (
             <Tooltip key={tab.id}>

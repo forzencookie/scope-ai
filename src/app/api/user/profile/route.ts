@@ -10,6 +10,7 @@ import { NextRequest } from 'next/server'
 import { verifyAuth, ApiResponse } from '@/lib/database/auth'
 import { createServerClient } from '@/lib/database/client'
 import { isPaidTier, type SubscriptionTier } from '@/lib/subscription'
+import type { Database } from '@/types/database'
 
 const ALLOWED_UPDATES = ['full_name', 'avatar_emoji'] as const
 
@@ -32,10 +33,9 @@ export async function PATCH(request: NextRequest) {
     }
 
     const supabase = await createServerClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { error } = await (supabase as any)
+    const { error } = await supabase
       .from('profiles')
-      .update(updates)
+      .update(updates as Database['public']['Tables']['profiles']['Update'])
       .eq('id', auth.userId)
 
     if (error) {
@@ -60,8 +60,7 @@ export async function GET(request: NextRequest) {
 
     // Query profile from Supabase using admin client
     const supabase = await createServerClient()
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const { data: profile, error } = await (supabase as any)
+    const { data: profile, error } = await supabase
       .from('profiles')
       .select('id, full_name, email, avatar_url, avatar_emoji, role, subscription_tier, created_at, updated_at')
       .eq('id', auth.userId)
@@ -73,7 +72,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Normalize tier and add convenience flags
-    const rawTier = profile.subscription_tier
+    const rawTier = profile.subscription_tier ?? 'pro'
     const tier = (rawTier === 'enterprise' ? 'max' : (['pro', 'max'].includes(rawTier) ? rawTier : 'pro')) as SubscriptionTier
 
     const normalizedProfile = {

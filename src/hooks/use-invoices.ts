@@ -20,23 +20,8 @@ export function useInvoices() {
     } = useQuery<Invoice[]>({
         queryKey: invoiceQueryKeys.list(),
         queryFn: async () => {
-            const response = await fetch('/api/invoices')
-            const data = await response.json()
-
-            if (data.invoices && Array.isArray(data.invoices)) {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                return data.invoices.map((inv: any) => ({
-                    id: inv.id || inv.invoiceNumber,
-                    customer: inv.customer,
-                    email: inv.email,
-                    issueDate: inv.issueDate || inv.date,
-                    dueDate: inv.dueDate,
-                    amount: typeof inv.amount === 'string' ? parseFloat(inv.amount) : inv.amount,
-                    vatAmount: typeof inv.vatAmount === 'string' ? parseFloat(inv.vatAmount) : inv.vatAmount,
-                    status: inv.status,
-                })) as Invoice[]
-            }
-            return []
+            const result = await invoiceService.getCustomerInvoices({ limit: 100 })
+            return result.invoices
         },
         staleTime: 5 * 60 * 1000,
     })

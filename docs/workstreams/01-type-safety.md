@@ -20,17 +20,22 @@
 
 Type safety is the foundation. Every `as any` is a place where bugs hide and refactors break silently. The Supabase codegen alone fixes ~17 casts for free.
 
+## Blocked By
+
+**`docs/fix/database-schema.md`** — Schema must be cleaned before regenerating types. Dead tables need dropping, `corporate_documents` needs replacing with `meetings`, `dividends` needs recreation, and `partners`/`members` need extending. No point generating types for a wrong schema.
+
 ## What to Do
 
-1. 🟢 **Run Supabase type generation:**
+1. 🟢 **Complete `fix/database-schema.md` first** — migration must be applied before type generation.
+2. 🟢 **Run Supabase type generation:**
    ```bash
    npx supabase gen types typescript --project-id <project-id> > src/types/supabase.ts
    ```
-2. 🟢 **Remove `as any` casts** from all `.from('table_name' as any)` calls — the generated types should make them unnecessary.
-3. 🟢 **Fix `user-memory-service.ts`:** Remove `@ts-nocheck`, add proper types, fix all resulting errors.
-4. 🟢 **Audit remaining `as any` casts:** For each one, either fix with proper typing or document why it's truly unavoidable with an inline comment.
-5. 🟢 **Remove unnecessary `eslint-disable` comments** — fix the underlying issue instead.
-6. 🟢 **Run `tsc --noEmit`** to verify zero type errors.
+3. 🟢 **Remove `as any` casts** from all `.from('table_name' as any)` calls — the generated types should make them unnecessary.
+4. 🟢 **Fix `user-memory-service.ts`:** Remove `@ts-nocheck`, add proper types, fix all resulting errors.
+5. 🟢 **Audit remaining `as any` casts:** For each one, either fix with proper typing or document why it's truly unavoidable with an inline comment.
+6. 🟢 **Remove unnecessary `eslint-disable` comments** — fix the underlying issue instead.
+7. 🟢 **Run `tsc --noEmit`** to verify zero type errors.
 
 ## Files to Touch
 

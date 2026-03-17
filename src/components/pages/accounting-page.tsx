@@ -17,6 +17,7 @@ import { useFeature } from "@/providers/company-provider"
 import {
     LazyTransactionsTable,
     LazyUnifiedInvoicesView,
+    LazyInventarierTable,
 } from "@/components/shared"
 import { VerifikationerTable } from "@/components/bokforing/verifikationer"
 import { useTextMode } from "@/providers/text-mode-provider"
@@ -45,6 +46,13 @@ const allTabs = [
         labelAvancerad: "Huvudbok",
         color: "bg-emerald-500",
         feature: 'verifikationer' as const,
+    },
+    {
+        id: "inventarier",
+        labelEnkel: "Tillgångar",
+        labelAvancerad: "Inventarier",
+        color: "bg-orange-500",
+        feature: 'inventarier' as const,
     },
 ]
 
@@ -180,6 +188,9 @@ function AccountingPageContent() {
                         )}
                         {currentTab === "verifikationer" && (
                             <VerifikationerTable />
+                        )}
+                        {currentTab === "inventarier" && (
+                            <LazyInventarierTable />
                         )}
                     </div>
                 </main>

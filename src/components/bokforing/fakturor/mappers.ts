@@ -1,9 +1,33 @@
-import { type Invoice } from "@/data/invoices"
+import { type Invoice, type InvoiceStatus } from "@/data/invoices"
 import { type SupplierInvoice } from "@/types/ownership"
 import { type UnifiedInvoice } from "./types"
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const mapCustomerInvoices = (apiInvoices: any[]): Invoice[] => {
+interface RawCustomerInvoice {
+    id: string
+    customer: string
+    email?: string
+    issueDate: string
+    dueDate: string
+    amount: number
+    vatAmount?: number
+    totalAmount?: number
+    status: string
+}
+
+interface RawSupplierInvoice {
+    id: string
+    invoiceNumber?: string
+    supplierName: string
+    amount: number
+    vatAmount?: number
+    totalAmount: number
+    dueDate: string
+    invoiceDate?: string
+    status: string
+    currency?: string
+}
+
+export const mapCustomerInvoices = (apiInvoices: RawCustomerInvoice[]): Invoice[] => {
     return apiInvoices.map(inv => ({
         id: inv.id,
         customer: inv.customer,
@@ -13,23 +37,21 @@ export const mapCustomerInvoices = (apiInvoices: any[]): Invoice[] => {
         amount: inv.amount,
         vatAmount: inv.vatAmount,
         totalAmount: inv.totalAmount,
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        status: inv.status as any,
+        status: inv.status as InvoiceStatus,
     }))
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export const mapSupplierInvoices = (apiInvoices: any[]): SupplierInvoice[] => {
+export const mapSupplierInvoices = (apiInvoices: RawSupplierInvoice[]): SupplierInvoice[] => {
     return apiInvoices.map(inv => ({
         id: inv.id,
-        invoiceNumber: inv.invoiceNumber,
+        invoiceNumber: inv.invoiceNumber ?? inv.id,
         supplierName: inv.supplierName,
         amount: inv.amount,
         vatAmount: inv.vatAmount ?? 0,
         totalAmount: inv.totalAmount,
         dueDate: inv.dueDate,
-        invoiceDate: inv.invoiceDate,
-        status: inv.status,
+        invoiceDate: inv.invoiceDate ?? inv.dueDate,
+        status: inv.status as SupplierInvoice['status'],
         currency: (inv.currency || 'SEK') as 'SEK' | 'EUR' | 'USD',
     }))
 }
