@@ -191,31 +191,35 @@ export function useActivityLog({
   useEffect(() => {
     if (!realtime || !user) return
 
-    const channel = supabase
-      .channel("activity_log_changes")
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "activity_log",
-        },
-          (payload) => {
-            // In a real app we'd map this using the service
-            // For simplicity in the subscription:
-            const newRow = payload.new as ActivityLogRow
-            
-            // Only add if it matches our filters (basic check)
-            if (entityType && newRow.entity_type !== entityType) return
-            if (entityId && newRow.entity_id !== entityId) return
+    let channel: any;
 
-            refetch() // Easiest way to maintain consistency with mapping
+    const setupSubscription = async () => {
+      // Get company info for filtering
+      const { data: company } = await supabase.from('companies').select('id').single()
+      if (!company) return
+
+      channel = supabase
+        .channel(`activity_log_changes_${company.id}`)
+        .on(
+          "postgres_changes",
+          {
+            event: "INSERT",
+            schema: "public",
+            table: "activity_log",
+            filter: `company_id=eq.${company.id}`
+          },
+          (payload) => {
+            // New entry matches company, refetch to get full mapped data
+            refetch()
           }
-      )
-      .subscribe()
+        )
+        .subscribe()
+    }
+
+    setupSubscription()
 
     return () => {
-      channel.unsubscribe()
+      if (channel) channel.unsubscribe()
     }
   }, [realtime, user, entityType, entityId, supabase, refetch])
 

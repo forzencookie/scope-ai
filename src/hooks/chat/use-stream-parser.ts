@@ -6,7 +6,9 @@
 
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import type { Message, Conversation } from '@/lib/chat-types'
+import { Message, Conversation } from '@/lib/chat-types'
+import { normalizeAIDisplay } from '@/lib/ai-schema'
+
 
 /** Extract the AI's prose comment, stripping markdown/emoji formatting from tool output */
 function cleanAIComment(text: string): string {
@@ -106,41 +108,50 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                             console.debug('[AI Thinking]', thinking)
                         }
                     } else if (line.startsWith('W:')) {
-                        const walkthroughData = JSON.parse(line.slice(2)) as WalkthroughBlockResponse
+                        const walkthroughData = JSON.parse(line.slice(2))
+                        // walkthroughBlocks is a specialized display type
+                        const normalizedWalkthrough = normalizeAIDisplay('DiscoveredTools', walkthroughData) // Using this as proxy for now or add WalkthroughSchema
                         lastData = {
                             ...(lastData || {}),
-                            walkthroughBlocks: walkthroughData,
-                        } as StreamData
+                            walkthroughBlocks: normalizedWalkthrough,
+                        }
                     } else if (line.startsWith('D:')) {
-                        const data = JSON.parse(line.slice(2)) as StreamData & { type?: string; cardType?: string; data?: unknown }
+                        const data = JSON.parse(line.slice(2))
 
-                        // Transform simplified inline_card type to the display format expected by MessageBubble
-                        let transformedData = { ...data } as StreamData
+                        // Transform and normalize display data
+                        let displayData = data.display
                         if (data.type === 'inline_card') {
-                            transformedData = {
-                                ...transformedData,
-                                display: {
-                                    type: 'InlineCard',
-                                    data: {
-                                        cardType: data.cardType,
-                                        data: data.data
-                                    }
+                            displayData = {
+                                type: 'InlineCard',
+                                data: {
+                                    cardType: data.cardType,
+                                    data: data.data
                                 }
+                            }
+                        }
+
+                        if (displayData && displayData.type) {
+                            try {
+                                displayData = normalizeAIDisplay(displayData.type, displayData.data || displayData)
+                            } catch (e) {
+                                console.error('[StreamParser] Normalization failed:', e)
+                                // Keep going but without the broken display part
+                                displayData = null
                             }
                         }
 
                         // Merge data chunks instead of overwriting
                         lastData = {
                             ...(lastData || {}),
-                            ...transformedData,
-                            display: transformedData.display || lastData?.display,
-                            toolResults: transformedData.toolResults || lastData?.toolResults,
-                            confirmationRequired: transformedData.confirmationRequired || lastData?.confirmationRequired,
-                        } as StreamData
+                            ...data,
+                            display: displayData || lastData?.display,
+                            toolResults: data.toolResults || lastData?.toolResults,
+                            confirmationRequired: data.confirmationRequired || lastData?.confirmationRequired,
+                        }
 
                         // Handle immediate navigation
-                        if (transformedData.navigation) {
-                            router.push(transformedData.navigation.route)
+                        if (data.navigation) {
+                            router.push(data.navigation.route)
                         }
 
                         setConversations(prev => prev.map(c =>
@@ -151,10 +162,10 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                                         msg.id === assistantMessageId
                                             ? {
                                                 ...msg,
-                                                display: transformedData.display || msg.display,
-                                                confirmationRequired: transformedData.confirmationRequired || msg.confirmationRequired,
-                                                toolResults: transformedData.toolResults || msg.toolResults
-                                            } as typeof msg
+                                                display: lastData?.display || msg.display,
+                                                confirmationRequired: lastData?.confirmationRequired || msg.confirmationRequired,
+                                                toolResults: lastData?.toolResults || msg.toolResults
+                                            }
                                             : msg
                                     )
                                 }

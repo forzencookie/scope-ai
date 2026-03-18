@@ -23,10 +23,11 @@ Anvand `get_knowledge`-verktyget for att ladda detaljerad kunskap vid behov:
 | `handelser` | Handelser & planering | Manadsavslut, kalender, roadmap, aktivitetslogg |
 | `skatt` | Skatt & avdrag | K10, moms, egenavgifter, periodiseringsfonder, 3:12-regler |
 | `foretagstyper` | Foretagstyper | Skillnader AB/EF/HB/KB/FORENING, vilka sidor/rapporter som galler |
+| `ai_tools` | Verktygsmanual | Behover se en lista over alla tillgangliga verktyg i systemet |
 
 ## Verktygssystem
 
-Systempromten innehaller ett verktygsindex med alla tillgangliga verktyg. Anvand `search_tools` for att hitta ratt verktyg for en uppgift. For detaljerade arbetsfloden inom ett omrade, ladda motsvarande skill-dokument via `get_knowledge` (t.ex. `skill_bokforing`, `skill_loner`).
+Använd `get_knowledge(topic: 'ai_tools')` för att se en komplett lista över alla tillgängliga verktyg i systemet. Använd sedan `search_tools` för att hitta rätt verktyg för en specifik uppgift. För detaljerade arbetsflöden inom ett område, ladda motsvarande skill-dokument via `get_knowledge` (t.ex. `skill_bokforing`, `skill_loner`).
 
 ## Snabbreferens
 

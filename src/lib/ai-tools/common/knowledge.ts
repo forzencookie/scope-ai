@@ -18,6 +18,7 @@ const VALID_TOPICS = [
     'handelser',
     'skatt',
     'foretagstyper',
+    'ai_tools',
     'skill_bokforing',
     'skill_loner',
     'skill_skatt',
@@ -34,6 +35,7 @@ const knowledgeCache = new Map<string, string>()
  * Skill topics (skill_*) resolve to skills/<domain>/SKILL.md.
  */
 function resolveTopicPath(topic: string): string {
+    if (topic === 'ai_tools') return 'ai_tools.md'
     if (topic.startsWith('skill_')) {
         const domain = topic.replace('skill_', '')
         return path.join('skills', domain, 'SKILL.md')
@@ -70,7 +72,7 @@ export interface GetKnowledgeParams {
 
 export const getKnowledgeTool = defineTool<GetKnowledgeParams, string>({
     name: 'get_knowledge',
-    description: 'Ladda detaljerad kunskap om ett amne. Anvand nar du behover specifika regler om bokforing, skatt, loner, bolagsratt, foretagstyper, eller arbetsfloden (skill_*). Tillgangliga amnen: bokforing, rapporter, loner, agare, handelser, skatt, foretagstyper, skill_bokforing, skill_loner, skill_skatt, skill_agare.',
+    description: 'Ladda detaljerad kunskap om ett amne. Anvand nar du behover specifika regler om bokforing, skatt, loner, bolagsratt, foretagstyper, eller arbetsfloden (skill_*). Tillgangliga amnen: bokforing, rapporter, loner, agare, handelser, skatt, foretagstyper, ai_tools, skill_bokforing, skill_loner, skill_skatt, skill_agare.',
     category: 'read',
     requiresConfirmation: false,
   allowedCompanyTypes: [],

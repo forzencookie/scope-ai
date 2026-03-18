@@ -114,8 +114,8 @@ export function Aktiebok() {
                                         </CardDescription>
                                     </div>
                                 </div>
-                                {/* Firmatecknare Badge (Mock logic: top 2 owners or specifically marked) */}
-                                {(s.ownershipPercentage > 40 || s.name.includes("Johan")) && (
+                                {/* Firmatecknare Badge (Based on ownership > 40%) */}
+                                {s.ownershipPercentage > 40 && (
                                     <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-5 bg-emerald-500/10 text-emerald-600 border-emerald-500/20 gap-1 shrink-0">
                                         <div className="h-1 w-1 rounded-full bg-emerald-500 animate-pulse" />
                                         Tecknar firman

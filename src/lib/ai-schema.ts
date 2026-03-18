@@ -226,15 +226,33 @@ export const UserMemorySchema = z.object({
 export type UserMemory = z.infer<typeof UserMemorySchema>
 
 // =============================================================================
+// 10. Tool Discovery Normalization
+// =============================================================================
+
+export const DiscoveredToolSchema = z.object({
+    name: z.string(),
+    description: z.string(),
+    domain: z.string().optional(),
+})
+
+export const DiscoveredToolsSchema = z.array(DiscoveredToolSchema)
+
+export type DiscoveredTool = z.infer<typeof DiscoveredToolSchema>
+
+// =============================================================================
 // Global Normalizer
 // =============================================================================
 
 /**
  * Normalizes any incoming "display" data from AI into a strictly typed structure.
  * This is the ONLY place where "guessing" or "defaulting" happens.
+ * 
+ * STRICT MANDATE: Never return raw data as a fallback.
  */
 export function normalizeAIDisplay(type: string, data: any): any {
-    if (!data) return null;
+    if (!data) {
+        throw new Error(`[Normalization] Missing data for type: ${type}`);
+    }
 
     // Handle AI sometimes wrapping data in a key (e.g., { receipt: {...} } vs {...})
     const unwrapped = (typeof data === 'object' && !Array.isArray(data))
@@ -255,11 +273,14 @@ export function normalizeAIDisplay(type: string, data: any): any {
                 return ActivityCardSchema.parse(unwrapped);
             case 'ComparisonTable':
                 return ComparisonTableSchema.parse(unwrapped);
+            case 'DiscoveredTools':
+                return DiscoveredToolsSchema.parse(unwrapped);
             default:
-                return unwrapped;
+                throw new Error(`[Normalization] Unknown display type: ${type}`);
         }
     } catch (e) {
-        console.warn(`[Normalization] Failed to parse ${type}:`, e);
-        return unwrapped; // Fallback to raw data
+        console.error(`[Normalization] Validation failed for ${type}:`, e);
+        // We throw so the UI can handle it via ErrorBoundary
+        throw e;
     }
 }

@@ -15,6 +15,7 @@ import type {
 import { aiToolRegistry } from '../../ai-tools/registry'
 import { selectModel, getModelId, type ModelConfig } from './model-selector'
 import { buildSystemPrompt } from './system-prompt'
+import { DiscoveredToolsSchema } from '@/lib/ai-schema'
 import type OpenAI from 'openai'
 
 // =============================================================================
@@ -370,16 +371,16 @@ export class ScopeBrain {
     private activateDiscoveredTools(toolResult: AgentToolResult): void {
         if (!toolResult.success || !toolResult.result) return
 
-        // search_tools returns { data: Array<{ name, description, domain }> }
-        // But through executeTool, result is the data field directly
-        const results = toolResult.result as unknown
-
-        if (Array.isArray(results)) {
-            for (const item of results) {
-                if (item && typeof item === 'object' && 'name' in item && typeof item.name === 'string') {
-                    this.activeToolNames.add(item.name)
-                }
+        try {
+            // Validate and normalize the discovered tools using Zod
+            const tools = DiscoveredToolsSchema.parse(toolResult.result)
+            
+            for (const tool of tools) {
+                this.activeToolNames.add(tool.name)
             }
+        } catch (error) {
+            console.error('[ScopeBrain] Failed to parse discovered tools:', error)
+            // Mandate: Never allow unvalidated data to bypass the normalization layer
         }
     }
 

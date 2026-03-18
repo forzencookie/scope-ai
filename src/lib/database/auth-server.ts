@@ -134,17 +134,6 @@ export const ApiResponse = {
 
 export async function verifyAuth(request: NextRequest): Promise<AuthResult | null> {
     try {
-        const userIdHeader = request.headers.get('x-user-id')
-        const userEmailHeader = request.headers.get('x-user-email')
-
-        if (userIdHeader) {
-            return {
-                user: { id: userIdHeader, email: userEmailHeader } as User,
-                userId: userIdHeader,
-                email: userEmailHeader || '',
-            }
-        }
-
         const supabase = await createServerClient()
         const { data: { user }, error } = await supabase.auth.getUser()
 
