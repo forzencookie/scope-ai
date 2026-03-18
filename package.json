@@ -23,6 +23,7 @@
     "functions:new": "supabase functions new",
     "db:types": "supabase gen types typescript --project-id $SUPABASE_PROJECT_ID > src/types/database.ts",
     "db:types:local": "supabase gen types typescript --local > src/types/database.ts",
+    "manifest:generate": "npx tsx scripts/generate-tool-manifest.ts",
     "prepare": "husky && husky install"
   },
   "dependencies": {

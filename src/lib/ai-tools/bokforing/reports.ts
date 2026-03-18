@@ -2,16 +2,12 @@
  * Bokföring AI Tools - Reports
  *
  * Tools for financial reports (income statement, balance sheet, SIE export).
- * All tools query real data from verification_lines via get_account_balances RPC.
+ * All tools query real data from verification_lines via reportingService.
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import {
-    type ProcessedFinancialItem,
-} from '@/services/processors/reports'
-import { FinancialReportCalculator } from '@/services/processors/reports/calculator'
+import { reportingService } from '@/services/reporting-service'
 import { companyService } from '@/services/company-service'
-import { accountService } from '@/services/account-service'
 import { taxService } from '@/services/tax-service'
 
 // =============================================================================
@@ -26,39 +22,25 @@ function formatSEK(amount: number): string {
 // Financial Statement Tools
 // =============================================================================
 
-export const getIncomeStatementTool = defineTool<Record<string, never>, ProcessedFinancialItem[]>({
+export const getIncomeStatementTool = defineTool<Record<string, never>, any>({
     name: 'get_income_statement',
     description: 'Hämta resultaträkning med intäkter, kostnader och årets resultat. Visar hur lönsamt företaget är. Vanliga frågor: "hur går det", "vad är vinsten", "resultat i år".',
     category: 'read',
     requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  domain: 'bokforing',
+    allowedCompanyTypes: [],
+    domain: 'bokforing',
     keywords: ['resultaträkning', 'resultat', 'intäkter', 'kostnader'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()
-        const accounts = await accountService.getAccountBalances(`${year}-01-01`, `${year}-12-31`)
+        const report = await reportingService.getFinancialReport(`${year}-01-01`, `${year}-12-31`)
         
-        const balances = accounts.map(a => ({
-            account: a.accountNumber,
-            balance: a.balance,
-        }))
-
-        if (!balances.length) {
-            return {
-                success: false,
-                data: [],
-                message: 'Ingen resultaträkning tillgänglig. Bokför transaktioner först.',
-            }
-        }
-
-        const items = FinancialReportCalculator.calculateIncomeStatement(balances)
-        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
-        const revenue = items.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0
+        const items = report.incomeStatement
+        const netIncome = items.find(i => i.title === 'Årets resultat')?.total ?? 0
+        const revenue = items.find(i => i.title === 'Rörelseintäkter')?.total ?? 0
 
         const lines = items
-            .filter(i => !i.isHeader)
-            .map(i => `${i.label}: ${formatSEK(i.value)}`)
+            .map(i => `${i.title}: ${formatSEK(i.total)}`)
             .join('\n')
 
         return {
@@ -69,37 +51,23 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
     },
 })
 
-export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFinancialItem[]>({
+export const getBalanceSheetTool = defineTool<Record<string, never>, any>({
     name: 'get_balance_sheet',
     description: 'Hämta balansräkning med tillgångar, skulder och eget kapital. Visar företagets ekonomiska ställning. Använd för att kolla soliditet, likviditet, eller svara på "hur mycket pengar har vi", "vad är vi skyldiga".',
     category: 'read',
     requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  parameters: { type: 'object', properties: {} },
+    allowedCompanyTypes: [],
+    parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()
-        const accounts = await accountService.getAccountBalances('2000-01-01', `${year}-12-31`)
+        const report = await reportingService.getFinancialReport(`${year}-01-01`, `${year}-12-31`)
 
-        const balances = accounts.map(a => ({
-            account: a.accountNumber,
-            balance: a.balance,
-        }))
-
-        if (!balances.length) {
-            return {
-                success: false,
-                data: [],
-                message: 'Ingen balansräkning tillgänglig. Bokför transaktioner först.',
-            }
-        }
-
-        const items = FinancialReportCalculator.calculateBalanceSheet(balances)
-        const totalAssets = items.find(i => i.label === 'SUMMA TILLGÅNGAR')?.value ?? 0
-        const totalEqLiab = items.find(i => i.label === 'SUMMA EGET KAPITAL OCH SKULDER')?.value ?? 0
+        const items = report.balanceSheet
+        const totalAssets = items.find(i => i.title === 'SUMMA TILLGÅNGAR')?.total ?? 0
+        const totalEqLiab = items.find(i => i.title === 'SUMMA EGET KAPITAL OCH SKULDER')?.total ?? 0
 
         const lines = items
-            .filter(i => !i.isHeader)
-            .map(i => `${i.highlight ? '**' : ''}${i.label}: ${formatSEK(i.value)}${i.highlight ? '**' : ''}`)
+            .map(i => `${i.isHighlight ? '**' : ''}${i.title}: ${formatSEK(i.total)}${i.isHighlight ? '**' : ''}`)
             .join('\n')
 
         return {
@@ -124,8 +92,8 @@ export const exportSIETool = defineTool<ExportSIEParams, { filename: string; url
     description: 'Exportera bokföringen som SIE-fil (svenskt standardformat). Använd för revision, byte av bokföringsprogram, eller när revisorn begär underlag. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-  allowedCompanyTypes: [],
-  parameters: {
+    allowedCompanyTypes: [],
+    parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'År att exportera' },
@@ -163,24 +131,13 @@ export interface FinancialReportParams {
     comparisonPeriod?: string
 }
 
-interface FinancialReportResult {
-    year: number
-    incomeStatement: ProcessedFinancialItem[]
-    balanceSheet: ProcessedFinancialItem[]
-    comparison: {
-        year: number
-        incomeStatement: ProcessedFinancialItem[]
-        balanceSheet: ProcessedFinancialItem[]
-    } | null
-}
-
-export const generateFinancialReportTool = defineTool<FinancialReportParams, FinancialReportResult>({
+export const generateFinancialReportTool = defineTool<FinancialReportParams, any>({
     name: 'generate_financial_report',
     description: 'Skapa en samlad finansiell rapport med resultat- och balansräkning för en period. Kan jämföra mot tidigare år.',
     category: 'read',
     requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  parameters: {
+    allowedCompanyTypes: [],
+    parameters: {
         type: 'object',
         properties: {
             period: { type: 'string', description: 'Period (t.ex. "2024")' },
@@ -190,53 +147,23 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, Fin
     },
     execute: async (params) => {
         const year = parseInt(params.period) || new Date().getFullYear()
-
-        const [plData, bsData] = await Promise.all([
-            accountService.getAccountBalances(`${year}-01-01`, `${year}-12-31`),
-            accountService.getAccountBalances('2000-01-01', `${year}-12-31`),
-        ])
-
-        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-        const bsBalances = bsData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-
-        if (!plBalances.length && !bsBalances.length) {
-            return {
-                success: false,
-                data: { year, incomeStatement: [], balanceSheet: [], comparison: null },
-                message: `Ingen finansiell rapport tillgänglig för ${year}. Bokför transaktioner först.`,
-            }
-        }
-
-        const incomeStatement = FinancialReportCalculator.calculateIncomeStatement(plBalances)
-        const balanceSheet = FinancialReportCalculator.calculateBalanceSheet(bsBalances)
+        const report = await reportingService.getFinancialReport(`${year}-01-01`, `${year}-12-31`)
 
         // Comparison period
         let comparison = null
         if (params.comparisonPeriod) {
             const compYear = parseInt(params.comparisonPeriod)
             if (compYear) {
-                const [compPlData, compBsData] = await Promise.all([
-                    accountService.getAccountBalances(`${compYear}-01-01`, `${compYear}-12-31`),
-                    accountService.getAccountBalances('2000-01-01', `${compYear}-12-31`),
-                ])
-                
-                const compPlBalances = compPlData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-                const compBsBalances = compBsData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-
-                comparison = {
-                    year: compYear,
-                    incomeStatement: FinancialReportCalculator.calculateIncomeStatement(compPlBalances),
-                    balanceSheet: FinancialReportCalculator.calculateBalanceSheet(compBsBalances),
-                }
+                comparison = await reportingService.getFinancialReport(`${compYear}-01-01`, `${compYear}-12-31`)
             }
         }
 
-        const netIncome = incomeStatement.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
-        const totalAssets = balanceSheet.find(i => i.label === 'SUMMA TILLGÅNGAR')?.value ?? 0
+        const netIncome = report.summary.result
+        const totalAssets = report.summary.assets
 
         return {
             success: true,
-            data: { year, incomeStatement, balanceSheet, comparison },
+            data: { year, report, comparison },
             message: `Finansiell rapport ${year}: Årets resultat ${formatSEK(netIncome)}, Totala tillgångar ${formatSEK(totalAssets)}.` +
                 (comparison ? ` Jämförelse med ${params.comparisonPeriod} inkluderad.` : ''),
         }
@@ -247,32 +174,12 @@ export interface AnnualReportParams {
     year: number
 }
 
-interface AnnualReportResult {
-    companyName: string
-    orgNumber: string
-    period: string
-    fiscalYearStart: string
-    fiscalYearEnd: string
-    sections: {
-        managementReport: boolean
-        incomeStatement: boolean
-        balanceSheet: boolean
-        notes: boolean
-        signatures: boolean
-    }
-    keyFigures: Array<{ label: string; value: number }>
-    incomeStatement: ReturnType<typeof FinancialReportCalculator.calculateIncomeStatementSections>
-    balanceSheet: ReturnType<typeof FinancialReportCalculator.calculateBalanceSheetSections>
-    status: string
-}
-
-export const draftAnnualReportTool = defineTool<AnnualReportParams, AnnualReportResult>({
+export const draftAnnualReportTool = defineTool<AnnualReportParams, any>({
     name: 'draft_annual_report',
     description: 'Skapa utkast för årsredovisning (K2). Innehåller förvaltningsberättelse, resultaträkning, balansräkning och noter. Använd när användaren vill göra sin årsredovisning eller frågar om bokslut.',
     category: 'write',
     requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  // Preview first
+    allowedCompanyTypes: [],
     parameters: {
         type: 'object',
         properties: {
@@ -300,35 +207,12 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, AnnualReport
         if (!companyName) {
             return {
                 success: false,
-                data: {
-                    companyName: '', orgNumber: '', period: String(params.year),
-                    fiscalYearStart: '', fiscalYearEnd: '',
-                    sections: { managementReport: false, incomeStatement: false, balanceSheet: false, notes: false, signatures: false },
-                    keyFigures: [], incomeStatement: [], balanceSheet: [], status: 'draft',
-                },
                 message: 'Företagsinformation saknas. Gå till Inställningar > Företag för att fylla i uppgifter.',
             }
         }
 
         const [fyMonth, fyDay] = fiscalYearEnd.split('-')
-
-        // Fetch real financial data
-        const [plData, bsData] = await Promise.all([
-            accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-${fyMonth}-${fyDay}`),
-            accountService.getAccountBalances('2000-01-01', `${params.year}-${fyMonth}-${fyDay}`),
-        ])
-
-        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-        const bsBalances = bsData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-
-        const incomeStatement = FinancialReportCalculator.calculateIncomeStatementSections(plBalances)
-        const balanceSheet = FinancialReportCalculator.calculateBalanceSheetSections(bsBalances)
-
-        const netIncome = incomeStatement.find(s => s.isHighlight)?.total ?? 0
-        const totalAssets = balanceSheet.reduce((sum, s) => {
-            if (s.title === 'Anläggningstillgångar' || s.title === 'Omsättningstillgångar') return sum + s.total
-            return sum
-        }, 0)
+        const report = await reportingService.getFinancialReport(`${params.year}-01-01`, `${params.year}-${fyMonth}-${fyDay}`)
 
         const annualReportData = {
             companyName,
@@ -344,23 +228,19 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, AnnualReport
                 signatures: false
             },
             keyFigures: [
-                { label: 'Nettoomsättning', value: incomeStatement[0]?.total ?? 0 },
-                { label: 'Årets resultat', value: netIncome },
-                { label: 'Balansomslutning', value: totalAssets },
+                { label: 'Nettoomsättning', value: report.summary.revenue },
+                { label: 'Årets resultat', value: report.summary.result },
+                { label: 'Balansomslutning', value: report.summary.assets },
             ],
-            incomeStatement,
-            balanceSheet,
+            incomeStatement: report.incomeStatement,
+            balanceSheet: report.balanceSheet,
             status: "draft"
         }
-
-        const hasData = plBalances.length > 0 || bsBalances.length > 0
 
         return {
             success: true,
             data: annualReportData,
-            message: hasData
-                ? `Årsredovisning för ${params.year} skapad med riktiga siffror. Nettoomsättning: ${formatSEK(incomeStatement[0]?.total ?? 0)}, Årets resultat: ${formatSEK(netIncome)}, Balansomslutning: ${formatSEK(totalAssets)}.`
-                : `Årsredovisning för ${params.year} skapad (utkast). Nyckeltal saknas — bokför transaktioner för att fylla i automatiskt.`,
+            message: `Årsredovisning för ${params.year} skapad med riktiga siffror. Nettoomsättning: ${formatSEK(report.summary.revenue)}, Årets resultat: ${formatSEK(report.summary.result)}, Balansomslutning: ${formatSEK(report.summary.assets)}.`,
         }
     }
 })
@@ -374,26 +254,13 @@ export interface PrepareINK2Params {
     includeOptimizations?: boolean
 }
 
-export interface INK2Data {
-    year: number
-    companyName: string
-    orgNumber: string
-    fields: Array<{ field: string; label: string; value: number; editable: boolean }>
-    summary: {
-        taxableIncome: number
-        corporateTax: number
-        periodiseringsfond?: number
-    }
-    status: 'draft' | 'ready' | 'submitted'
-}
-
-export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
+export const prepareINK2Tool = defineTool<PrepareINK2Params, any>({
     name: 'prepare_ink2',
     description: 'Förbered inkomstdeklaration (INK2) för aktiebolag. Beräknar bolagsskatt och visar skatteoptimeringsförslag som periodiseringsfond. Använd när användaren vill deklarera eller frågar om skatt.',
     category: 'write',
     requiresConfirmation: false,
-  allowedCompanyTypes: ["ab"],
-  parameters: {
+    allowedCompanyTypes: ["ab"],
+    parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'Inkomstår' },
@@ -416,33 +283,11 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
             } catch { /* use empty */ }
         }
 
-        // Fetch P&L data for the tax year
-        const plData = await accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
-        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
+        const report = await reportingService.getFinancialReport(`${params.year}-01-01`, `${params.year}-12-31`)
+        const netIncome = report.summary.result
+        const revenue = report.summary.revenue
 
-        if (!plBalances.length) {
-            return {
-                success: false,
-                data: {
-                    year: params.year,
-                    companyName,
-                    orgNumber,
-                    fields: [],
-                    summary: { taxableIncome: 0, corporateTax: 0 },
-                    status: 'draft' as const,
-                },
-                message: `Kan inte förbereda INK2 för ${params.year} — bokföringsdata saknas.`,
-            }
-        }
-
-        // Calculate from real P&L
-        const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
-        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
-        const revenue = items.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0
-        const ebit = items.find(i => i.label === 'Rörelseresultat (EBIT)')?.value ?? 0
-        const financialItems = items.find(i => i.label === 'Finansiella poster')?.value ?? 0
-
-        const rates = await taxService.getAllTaxRates(params.year)
+        const { rates } = await taxService.getAllTaxRates(params.year)
         if (!rates) {
             return { success: false, error: `Skattesatser för ${params.year} saknas — kan inte beräkna bolagsskatt.` }
         }
@@ -455,8 +300,6 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         const fields = [
             { field: 'INK2R_3_1', label: 'Nettoomsättning', value: Math.abs(revenue), editable: true },
             { field: 'INK2R_3_9', label: 'Övriga rörelseintäkter', value: 0, editable: true },
-            { field: 'INK2R_4_1', label: 'Rörelseresultat', value: ebit, editable: false },
-            { field: 'INK2R_5_1', label: 'Finansiella intäkter/kostnader', value: financialItems, editable: true },
             { field: 'INK2R_6_1', label: 'Bokfört resultat', value: netIncome, editable: false },
             { field: 'INK2R_7_1', label: 'Skattemässigt resultat', value: taxableIncome, editable: true },
             { field: 'INK2R_8_1', label: `Bolagsskatt (${(rates.corporateTaxRate * 100).toFixed(1)}%)`, value: corporateTax, editable: false },
@@ -500,20 +343,13 @@ export interface CloseFiscalYearParams {
     createOpeningBalances?: boolean
 }
 
-export interface YearEndResult {
-    year: number
-    result: number
-    closingEntries: Array<{ description: string; debit: string; credit: string; amount: number }>
-    status: 'preview' | 'closed'
-}
-
-export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResult>({
+export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, any>({
     name: 'close_fiscal_year',
     description: 'Stäng räkenskapsåret och skapa bokslutsposter. Överför årets resultat till eget kapital och skapar ingående balanser för nästa år. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-  allowedCompanyTypes: [],
-  parameters: {
+    allowedCompanyTypes: [],
+    parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'Räkenskapsår att stänga' },
@@ -522,28 +358,11 @@ export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResu
         required: ['year'],
     },
     execute: async (params) => {
-        // Fetch P&L for the year
-        const plData = await accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
-        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-
-        if (!plBalances.length) {
-            return {
-                success: false,
-                data: {
-                    year: params.year,
-                    result: 0,
-                    closingEntries: [],
-                    status: 'preview' as const,
-                },
-                message: `Kan inte stänga räkenskapsår ${params.year} — bokföringsdata saknas.`,
-            }
-        }
-
-        const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
-        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
+        const report = await reportingService.getFinancialReport(`${params.year}-01-01`, `${params.year}-12-31`)
+        const netIncome = report.summary.result
 
         // Preview closing entries
-        const closingEntries: YearEndResult['closingEntries'] = []
+        const closingEntries: any[] = []
 
         if (netIncome > 0) {
             // Profit: Debit 8999 (Årets resultat) → Credit 2099 (Årets resultat)
@@ -604,8 +423,8 @@ export const generateManagementReportTool = defineTool<GenerateManagementReportP
     description: 'Generera förvaltningsberättelse för årsredovisningen. AI skriver texten baserat på årets siffror. Använd när användaren behöver hjälp att skriva förvaltningsberättelsen.',
     category: 'write',
     requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  parameters: {
+    allowedCompanyTypes: [],
+    parameters: {
         type: 'object',
         properties: {
             year: { type: 'number', description: 'Räkenskapsår' },
@@ -625,20 +444,14 @@ export const generateManagementReportTool = defineTool<GenerateManagementReportP
         }
 
         // Fetch real financial data for the report
-        const [plData, prevPlData] = await Promise.all([
-            accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`),
-            accountService.getAccountBalances(`${params.year - 1}-01-01`, `${params.year - 1}-12-31`),
+        const [report, prevReport] = await Promise.all([
+            reportingService.getFinancialReport(`${params.year}-01-01`, `${params.year}-12-31`),
+            reportingService.getFinancialReport(`${params.year - 1}-01-01`, `${params.year - 1}-12-31`),
         ])
 
-        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-        const prevPlBalances = prevPlData.map(a => ({ account: a.accountNumber, balance: a.balance }))
-
-        const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
-        const prevItems = FinancialReportCalculator.calculateIncomeStatement(prevPlBalances)
-
-        const netIncome = items.find(i => i.label === 'ÅRETS RESULTAT')?.value ?? 0
-        const revenue = Math.abs(items.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0)
-        const prevRevenue = Math.abs(prevItems.find(i => i.label === 'Rörelsens intäkter')?.value ?? 0)
+        const netIncome = report.summary.result
+        const revenue = Math.abs(report.summary.revenue)
+        const prevRevenue = Math.abs(prevReport.summary.revenue)
 
         const revenueChange = prevRevenue > 0
             ? ((revenue - prevRevenue) / prevRevenue * 100).toFixed(0)

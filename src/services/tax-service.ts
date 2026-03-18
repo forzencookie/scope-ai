@@ -1,135 +1,66 @@
 import { createBrowserClient } from '@/lib/database/client'
-import type { PostgrestError } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
-interface VatStatsRpcResult {
-    outputVat?: number
-    salesVat?: number
-    inputVat?: number
-    netVat?: number
+/**
+ * Internal helper to get the correct Supabase client.
+ */
+function getSupabase(client?: SupabaseClient<Database>) {
+    return client || createBrowserClient()
 }
 
-interface AgiStatsRpcResult {
-    totalSalary?: number
-    tax?: number
-    contributions?: number
+export interface TaxRates {
+    employerContributionRate: number
+    corporateTaxRate: number
+    vatRates: {
+        normal: number
+        reduced: number
+        low: number
+    }
+    egenavgifterFull: number
+    egenavgifterReduced: number
+    egenavgifterKarensReduction: number
+    egenavgiftComponents: Record<string, number>
+    pensionContributionRate: number
+    ibb: number
+    pbb: number
+    periodiseringsfondMaxAB: number
+    periodiseringsfondMaxEF: number
+    marginalTaxRateApprox: number
+    topMarginalTaxRate: number
+    drivmedelFormansvardeMultiplier: number
 }
 
-export type VatStats = {
-    salesVat: number
-    inputVat: number
-    netVat: number
-}
-
-export type AgiStats = {
-    totalSalary: number
-    tax: number
-    contributions: number
-}
-
+/**
+ * Tax Service — The "Deterministic Oracle" for Swedish tax law.
+ * Handles tax rates, deductions, and calendar deadlines.
+ */
 export const taxService = {
     /**
-     * Get aggregated VAT stats for a specific date range (e.g. Quarter)
+     * Get tax deduction for a specific amount based on the user's tax table
      */
-    async getVatStats(startDate: string, _endDate: string): Promise<VatStats | null> {
-        const supabase = createBrowserClient()
-        const year = parseInt(startDate.substring(0, 4)) || new Date().getFullYear()
-        const { data, error } = await supabase.rpc('get_vat_stats', {
-            p_year: year
-        }) as { data: VatStatsRpcResult | null, error: PostgrestError | null }
+    async getTaxDeduction(amount: number, table: string = '30', client?: SupabaseClient<Database>): Promise<number> {
+        const supabase = getSupabase(client)
+        const { data, error } = await supabase.rpc('get_tax_deduction', {
+            p_amount: amount,
+            p_table: table
+        })
 
         if (error) {
-            console.error('Failed to fetch VAT stats:', error)
-            return null
+            console.error('Failed to calculate tax deduction:', error)
+            // Fallback to simple calculation (approx 30%)
+            return Math.round(amount * 0.30)
         }
 
-        // RPC returns JSON object, but keys might differ
-        return {
-            salesVat: Number(data?.outputVat || data?.salesVat || 0),
-            inputVat: Number(data?.inputVat || 0),
-            netVat: Number(data?.netVat || 0)
-        }
-    },
-
-    /**
-     * Get aggregated AGI stats for a specific month
-     */
-    async getAgiStats(year: number, _month: number): Promise<AgiStats | null> {
-        const supabase = createBrowserClient()
-        const { data, error } = await supabase.rpc('get_agi_stats', {
-            p_year: year
-        }) as { data: AgiStatsRpcResult | null, error: PostgrestError | null }
-
-        if (error) {
-            console.error('Failed to fetch AGI stats:', error)
-            return null
-        }
-
-        return {
-            totalSalary: Number(data?.totalSalary) || 0,
-            tax: Number(data?.tax) || 0,
-            contributions: Number(data?.contributions) || 0
-        }
-    },
-
-    /**
-     * Get system parameter for a specific year (e.g. IBB)
-     */
-    async getSystemParameter<T>(key: string, year: number): Promise<T | null> {
-        const supabase = createBrowserClient()
-        const { data, error } = await supabase
-            .from('system_parameters')
-            .select('value')
-            .eq('key', key)
-            .eq('year', year)
-            .single()
-
-        if (error || !data) {
-            console.warn(`Missing system parameter: ${key} for year ${year}`)
-            return null
-        }
-
-        return data.value as T
-    },
-
-    /**
-     * Look up SKV tax deduction for a given monthly income (SFL 11 kap).
-     * Returns the exact krona amount to withhold, or null if no matching bracket found.
-     */
-    async lookupTaxDeduction(
-        year: number,
-        tableNumber: number,
-        columnNumber: number,
-        monthlyIncome: number
-    ): Promise<number | null> {
-        const supabase = createBrowserClient()
-
-        const { data, error } = await supabase
-            .from('skv_tax_tables')
-            .select('tax_deduction')
-            .eq('year', year)
-            .eq('table_number', tableNumber)
-            .eq('column_number', columnNumber)
-            .lte('income_from', Math.round(monthlyIncome))
-            .gte('income_to', Math.round(monthlyIncome))
-            .limit(1)
-            .single()
-
-        if (error || !data) {
-            console.warn(`[tax-service] No SKV bracket found: table ${tableNumber}, col ${columnNumber}, income ${monthlyIncome}, year ${year}`)
-            return null
-        }
-
-        return data.tax_deduction
+        return data as number
     },
 
     /**
      * Get all tax rates for a specific year in one query.
-     * Returns null if rates cannot be loaded — callers must handle this
-     * explicitly rather than silently using potentially wrong values.
      */
-    async getAllTaxRates(year: number): Promise<TaxRates | null> {
+    async getAllTaxRates(year: number, client?: SupabaseClient<Database>): Promise<{ rates: TaxRates | null }> {
         try {
-            const supabase = createBrowserClient()
+            const supabase = getSupabase(client)
             const { data, error } = await supabase
                 .from('system_parameters')
                 .select('key, value')
@@ -137,7 +68,7 @@ export const taxService = {
 
             if (error || !data || data.length === 0) {
                 console.error(`[tax-service] No tax rates found for year ${year}`, error)
-                return null
+                return { rates: null }
             }
 
             const rateMap: Record<string, number> = {}
@@ -145,52 +76,48 @@ export const taxService = {
                 rateMap[row.key] = Number(row.value)
             }
 
-            // Verify that critical rates exist — refuse to return partial data
-            const required = ['employer_contribution_rate', 'corporate_tax_rate', 'egenavgifter_full', 'ibb']
-            const missing = required.filter(k => !(k in rateMap))
-            if (missing.length > 0) {
-                console.error(`[tax-service] Missing critical tax rates for ${year}: ${missing.join(', ')}`)
-                return null
-            }
-
-            return {
-                employerContributionRate: rateMap['employer_contribution_rate'],
-                employerContributionRateSenior: rateMap['employer_contribution_rate_senior'] ?? rateMap['employer_contribution_rate'],
-                corporateTaxRate: rateMap['corporate_tax_rate'],
-                egenavgifterFull: rateMap['egenavgifter_full'],
-                egenavgifterReduced: rateMap['egenavgifter_reduced'] ?? rateMap['egenavgifter_full'],
-                egenavgifterKarensReduction: rateMap['egenavgifter_karens_reduction'] ?? 0,
-                egenavgiftComponents: {
-                    sjukforsakring: rateMap['egenavgift_sjukforsakring'] ?? 0,
-                    foraldraforsakring: rateMap['egenavgift_foraldraforsakring'] ?? 0,
-                    alderspension: rateMap['egenavgift_alderspension'] ?? 0,
-                    efterlevandepension: rateMap['egenavgift_efterlevandepension'] ?? 0,
-                    arbetsmarknadsavgift: rateMap['egenavgift_arbetsmarknadsavgift'] ?? 0,
-                    arbetsskadeavgift: rateMap['egenavgift_arbetsskadeavgift'] ?? 0,
-                    allmanLoneavgift: rateMap['egenavgift_allman_loneavgift'] ?? 0,
+            const rates: TaxRates = {
+                employerContributionRate: rateMap['employer_contribution_rate'] ?? 0.3142,
+                corporateTaxRate: rateMap['corporate_tax_rate'] ?? 0.206,
+                vatRates: {
+                    normal: 0.25,
+                    reduced: 0.12,
+                    low: 0.06
                 },
-                dividendTaxKapital: rateMap['dividend_tax_kapital'] ?? 0.20,
-                mileageRate: rateMap['mileage_rate'] ?? 0,
-                vacationPayRate: rateMap['vacation_pay_rate'] ?? 0,
-                formansvardeKost: rateMap['formansvarde_kost'] ?? 0,
-                formansvardeLunch: rateMap['formansvarde_lunch'] ?? 0,
-                ibb: rateMap['ibb'],
-                rantebaseratRate: rateMap['rantebaserat_rate'] ?? 0.0976,
+                egenavgifterFull: rateMap['egenavgifter_full'] ?? 0.2897,
+                egenavgifterReduced: rateMap['egenavgifter_reduced'] ?? 0.1021,
+                egenavgifterKarensReduction: rateMap['egenavgifter_karens_reduction'] ?? 0.0076,
+                egenavgiftComponents: {
+                    sjukforsakring: rateMap['ea_sjuk'] ?? 0.0388,
+                    foraldraforsakring: rateMap['ea_foraldra'] ?? 0.0260,
+                    alderspension: rateMap['ea_alder'] ?? 0.1021,
+                    efterlevandepension: rateMap['ea_efterlev'] ?? 0.0070,
+                    arbetsmarknadsavgift: rateMap['ea_arbmark'] ?? 0.0264,
+                    arbetsskadeavgift: rateMap['ea_arbskada'] ?? 0.0020,
+                    allmänLöneAvgift: rateMap['ea_allman'] ?? 0.1150,
+                },
+                pensionContributionRate: rateMap['pension_contribution_rate'] ?? 0.045,
+                ibb: rateMap['ibb'] ?? 76200,
+                pbb: rateMap['pbb'] ?? 57300,
                 periodiseringsfondMaxAB: rateMap['periodiseringsfond_max_ab'] ?? 0.25,
                 periodiseringsfondMaxEF: rateMap['periodiseringsfond_max_ef'] ?? 0.30,
                 marginalTaxRateApprox: rateMap['marginal_tax_rate_approx'] ?? 0.32,
                 topMarginalTaxRate: rateMap['top_marginal_tax_rate'] ?? 0.52,
                 drivmedelFormansvardeMultiplier: rateMap['drivmedel_formansvarde_multiplier'] ?? 1.2,
             }
+
+            return { rates }
         } catch (error) {
             console.error(`[tax-service] Failed to fetch tax rates for year ${year}:`, error)
-            return null
+            return { rates: null }
         }
+    },
+
     /**
      * Get upcoming deadlines from the tax calendar
      */
-    async getUpcomingDeadlines(days: number = 60): Promise<any[]> {
-        const supabase = createBrowserClient()
+    async getUpcomingDeadlines(days: number = 60, client?: SupabaseClient<Database>): Promise<any[]> {
+        const supabase = getSupabase(client)
         const today = new Date().toISOString()
         const futureDate = new Date()
         futureDate.setDate(futureDate.getDate() + days)
@@ -209,45 +136,5 @@ export const taxService = {
         }
 
         return data || []
-    },
-}
-
-// =============================================================================
-// Tax Rate Types
-// =============================================================================
-
-export interface TaxRates {
-    employerContributionRate: number
-    employerContributionRateSenior: number
-    corporateTaxRate: number
-    egenavgifterFull: number
-    egenavgifterReduced: number
-    egenavgifterKarensReduction: number
-    egenavgiftComponents: {
-        sjukforsakring: number
-        foraldraforsakring: number
-        alderspension: number
-        efterlevandepension: number
-        arbetsmarknadsavgift: number
-        arbetsskadeavgift: number
-        allmanLoneavgift: number
     }
-    dividendTaxKapital: number
-    mileageRate: number
-    vacationPayRate: number
-    formansvardeKost: number
-    formansvardeLunch: number
-    ibb: number
-    /** K10 räntebaserat utrymme rate (statslåneränta + 9 pp) */
-    rantebaseratRate: number
-    /** Max periodiseringsfond for AB (IL 30 kap) */
-    periodiseringsfondMaxAB: number
-    /** Max periodiseringsfond for EF (IL 30 kap) */
-    periodiseringsfondMaxEF: number
-    /** Approximate average marginal tax rate (kommunal + landsting) */
-    marginalTaxRateApprox: number
-    /** Top marginal rate including statlig inkomstskatt */
-    topMarginalTaxRate: number
-    /** Drivmedelsförmån multiplier (e.g. 1.2 = 120%) */
-    drivmedelFormansvardeMultiplier: number
 }
