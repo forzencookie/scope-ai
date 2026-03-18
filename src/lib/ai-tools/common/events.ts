@@ -7,6 +7,9 @@
 
 import { defineTool } from '../registry'
 import { getEvents as getEventsFromDB, emitEvent } from '@/services/event-service'
+import { taxService } from '@/services/tax-service'
+import { activityService } from '@/services/activity-service'
+import type { ActivitySummary } from '@/lib/ai-schema'
 import type { EventSource, EventCategory } from '@/types/events'
 
 // =============================================================================
@@ -214,73 +217,34 @@ export const getUpcomingDeadlinesTool = defineTool<{ days?: number }, UpcomingDe
     },
     execute: async (params) => {
         const days = params.days || 60
+        const data = await taxService.getUpcomingDeadlines(days)
         const today = new Date()
 
-        // Calculate dates
-        const deadlines: UpcomingDeadline[] = [
-            {
-                id: 'dl-1',
-                title: 'Arbetsgivardeklaration',
-                description: 'AGI för januari 2026',
-                deadline: '2026-02-12',
-                daysUntil: 16,
-                category: 'tax',
-                priority: 'high',
-                actionUrl: '/dashboard/loner?tab=agi',
-            },
-            {
-                id: 'dl-2',
-                title: 'Momsdeklaration Q1',
-                description: 'Moms för jan-mar 2026',
-                deadline: '2026-05-12',
-                daysUntil: 105,
-                category: 'tax',
-                priority: 'medium',
-                actionUrl: '/dashboard/rapporter?tab=momsdeklaration',
-            },
-            {
-                id: 'dl-3',
-                title: 'Bokslut',
-                description: 'Årsbokslut för räkenskapsår 2025',
-                deadline: '2026-03-31',
-                daysUntil: 63,
-                category: 'accounting',
-                priority: 'high',
-                actionUrl: '/dashboard/rapporter',
-            },
-            {
-                id: 'dl-4',
-                title: 'Årsstämma',
-                description: 'Ska hållas senast 6 månader efter räkenskapsårets slut',
-                deadline: '2026-06-30',
-                daysUntil: 154,
-                category: 'compliance',
-                priority: 'medium',
-                actionUrl: '/dashboard/agare?tab=bolagsstamma',
-            },
-            {
-                id: 'dl-5',
-                title: 'Årsredovisning till Bolagsverket',
-                description: 'Ska lämnas in inom 7 månader',
-                deadline: '2026-07-31',
-                daysUntil: 185,
-                category: 'compliance',
-                priority: 'medium',
-                actionUrl: '/dashboard/rapporter?tab=arsredovisning',
-            },
-        ]
+        const deadlines: UpcomingDeadline[] = data.map(item => {
+            const deadlineDate = new Date(item.due_date)
+            const diffTime = deadlineDate.getTime() - today.getTime()
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
 
-        // Filter by days
-        const filtered = deadlines
-            .filter(d => d.daysUntil <= days && d.daysUntil >= 0)
-            .sort((a, b) => a.daysUntil - b.daysUntil)
+            return {
+                id: item.id,
+                title: item.title || 'Deadline',
+                description: item.description || '',
+                deadline: item.due_date,
+                daysUntil: diffDays,
+                category: (item.deadline_type || 'tax') as UpcomingDeadline['category'],
+                priority: (diffDays < 14 ? 'high' : diffDays < 30 ? 'medium' : 'low'),
+                actionUrl: (item.metadata && typeof item.metadata === 'object' && 'action_url' in item.metadata) 
+                    ? String(item.metadata.action_url) 
+                    : undefined,
+            }
+        })
 
-        const urgentCount = filtered.filter(d => d.priority === 'high').length
+        const urgentCount = deadlines.filter(d => d.priority === 'high').length
 
         return {
             success: true,
-            data: filtered,
-            message: `${filtered.length} deadlines inom ${days} dagar. ${urgentCount} är brådskande.`,
+            data: deadlines,
+            message: `${deadlines.length} deadlines inom ${days} dagar. ${urgentCount} är brådskande.`,
         }
     },
 })
@@ -311,46 +275,19 @@ export const getActivitySummaryTool = defineTool<{ period?: 'week' | 'month' | '
             period: { type: 'string', enum: ['week', 'month', 'quarter'], description: 'Period att sammanfatta (standard: month)' },
         },
     },
-    execute: async (params) => {
+    execute: async (params, context) => {
         const period = params.period || 'month'
+        const days = period === 'week' ? 7 : period === 'quarter' ? 90 : 30
+        
+        const companyId = context?.companyId
+        if (!companyId) return { success: false, error: 'Inget företag valt.' }
 
-        const periodLabels: Record<string, string> = {
-            week: 'senaste veckan',
-            month: 'senaste månaden',
-            quarter: 'senaste kvartalet',
-        }
-
-        // Mock summary
-        const summary: ActivitySummary = {
-            period: periodLabels[period],
-            totalEvents: 156,
-            bySource: {
-                system: 45,
-                user: 67,
-                ai: 23,
-                integration: 18,
-                tax: 3,
-            },
-            byType: {
-                action: 72,
-                info: 51,
-                milestone: 12,
-                deadline: 8,
-                warning: 13,
-            },
-            highlights: [
-                '67 manuella åtgärder utförda',
-                '23 AI-assisterade analyser',
-                '18 automatiska synkroniseringar',
-                '12 milstolpar uppnådda',
-                '3 skatteärenden hanterade',
-            ],
-        }
+        const summary = await activityService.getActivitySummary(companyId, days)
 
         return {
             success: true,
             data: summary,
-            message: `Under ${summary.period}: ${summary.totalEvents} händelser, varav ${summary.byType.milestone || 0} milstolpar.`,
+            message: summary.highlights.join(' '),
         }
     },
 })

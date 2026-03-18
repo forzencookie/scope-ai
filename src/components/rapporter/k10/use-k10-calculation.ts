@@ -89,9 +89,9 @@ export function useK10Calculation() {
         const omkostnadsbelopp = aktiekapital
 
         // Calculate ownership percentage for selected shareholder
-        const totalShares = shareholders.reduce((sum, s) => sum + (s.shares_count || 0), 0)
+        const totalShares = shareholders.reduce((sum, s) => sum + (s.sharesCount || 0), 0)
         const selectedShareholder = shareholders.length > 0 ? shareholders[selectedShareholderIdx] || shareholders[0] : null
-        const selectedShares = selectedShareholder?.shares_count || 0
+        const selectedShares = selectedShareholder?.sharesCount || 0
         const agarandel = totalShares > 0 ? Math.round((selectedShares / totalShares) * 100) : 100
 
         // Filter verifications for the tax year

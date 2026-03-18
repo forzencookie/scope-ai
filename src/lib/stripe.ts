@@ -2,7 +2,7 @@
  * Stripe Client and Helper Functions
  * 
  * Handles Stripe operations for subscription management.
- * Tiers: free (no subscription), pro, enterprise
+ * Tiers: pro, max
  */
 
 
@@ -48,10 +48,9 @@ export const PRICE_IDS = {
 }
 
 // Map Stripe price IDs to subscription tiers
-export function getTierFromPriceId(priceId: string): 'pro' | 'max' | 'free' {
-    if (priceId === PRICE_IDS.pro) return 'pro'
+export function getTierFromPriceId(priceId: string): 'pro' | 'max' {
     if (priceId === PRICE_IDS.max) return 'max'
-    return 'free'
+    return 'pro' // Default to pro if unknown or pro price
 }
 
 // ============================================================================
@@ -66,7 +65,7 @@ export async function getOrCreateCustomer(
     email: string,
     name?: string
 ): Promise<string> {
-    const { createAdminClient } = await import('./database/client')
+    const { createAdminClient } = await import('./database/server')
     const supabase = createAdminClient()
 
     // Look up existing Stripe customer by metadata (supabase_user_id)
@@ -187,9 +186,9 @@ export async function createPortalSession(
  */
 export async function updateUserTier(
     userId: string,
-    tier: 'pro' | 'max' | 'free'
+    tier: 'pro' | 'max'
 ): Promise<void> {
-    const { createAdminClient } = await import('./database/client')
+    const { createAdminClient } = await import('./database/server')
     const supabase = createAdminClient()
 
     await supabase
@@ -223,7 +222,7 @@ export async function addUserCredits(
     stripePaymentId?: string,
     pricePaidCents?: number
 ): Promise<void> {
-    const { createAdminClient } = await import('./database/client')
+    const { createAdminClient } = await import('./database/server')
     const supabase = createAdminClient()
 
     const { error } = await supabase.rpc('add_user_credits', {
@@ -243,7 +242,7 @@ export async function addUserCredits(
  * Get a user's current credit balance
  */
 export async function getUserCredits(userId: string): Promise<number> {
-    const { createAdminClient } = await import('./database/client')
+    const { createAdminClient } = await import('./database/server')
     const supabase = createAdminClient()
 
     const { data, error } = await supabase.rpc('get_user_credits', {

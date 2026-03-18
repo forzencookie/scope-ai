@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { getStripe } from '@/lib/stripe'
-import { createServerClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/server'
 
 /**
  * GET /api/stripe/billing-history

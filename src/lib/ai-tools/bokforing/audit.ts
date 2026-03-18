@@ -6,36 +6,14 @@
  */
 
 import { defineTool } from '../registry'
-import { createServerClient } from '../../database/client'
-
-// =============================================================================
-// Types
-// =============================================================================
-
-export interface AuditCheck {
-    name: string
-    status: 'pass' | 'warning' | 'fail'
-    description: string
-    details?: string
-}
-
-export interface AuditResult {
-    date: string
-    fiscalYear: number
-    checks: AuditCheck[]
-    summary: {
-        total: number
-        passed: number
-        warnings: number
-        failed: number
-    }
-}
+import { accountService } from '@/services/account-service'
+import type { BalanceAudit } from '@/lib/ai-schema'
 
 // =============================================================================
 // Balance Sheet Audit Tool
 // =============================================================================
 
-export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditResult>({
+export const runBalanceSheetAuditTool = defineTool<Record<string, never>, BalanceAudit>({
     name: 'run_balance_sheet_audit',
     description: 'Kör en komplett balanskontroll som kontrollerar balansräkningsprov, momsavstämning, kundfordringar, leverantörsskulder, löneavstämning, avskrivningar, eget kapital och periodiseringar. Samlar data från hela bokföringen och korsrefererar som en revisor.',
     category: 'read',
@@ -46,33 +24,21 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()
-        const dateFrom = `${year}-01-01`
         const dateTo = `${year}-12-31`
-        const supabase = await createServerClient()
 
-        // Gather all data in parallel
+        // Gather all data using service layer
         const [
-            balancesResult,
+            rawBalances,
             customerInvoices,
             supplierInvoices,
             payslips,
             shareholders,
-            taxReports,
-        ] = await Promise.all([
-            supabase.rpc('get_account_balances', {
-                p_date_from: '2000-01-01',
-                p_date_to: dateTo,
-            }),
-            supabase.from('customer_invoices').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
-            supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }).limit(500).then(r => r.data || []),
-            supabase.from('payslips').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
-            supabase.from('shareholders').select('*').order('shares_count', { ascending: false }).then(r => r.data || []),
-            supabase.from('tax_reports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
-        ])
+            _taxReports,
+        ] = await accountService.getAuditData('2000-01-01', dateTo)
 
-        const balances: Array<{ account: string; balance: number }> = (balancesResult.data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
-            account: String(row.account_number),
-            balance: row.balance,
+        const balances = rawBalances.map(b => ({
+            account: b.accountNumber,
+            balance: b.balance,
         }))
 
         // Build account balance lookup
@@ -92,27 +58,30 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
             })
         }
 
-        const checks: AuditCheck[] = []
+        const issues: Array<{ id: string; type: 'info' | 'warning' | 'error'; title: string; description: string; details?: string; isPass?: boolean }> = []
 
         // =====================================================================
         // 1. Balansräkningsprov — Assets = Equity + Liabilities
         // =====================================================================
         {
-            const assets = -(accountBalance(1000, 1999)) // Assets have negative balance in Swedish accounting
+            const assets = -(accountBalance(1000, 1999)) // Assets have negative balance
             const equityAndLiabilities = accountBalance(2000, 2999)
             const diff = Math.abs(assets - equityAndLiabilities)
 
             if (diff < 1) {
-                checks.push({
-                    name: 'Balansräkningsprov',
-                    status: 'pass',
+                issues.push({
+                    id: 'balansprov',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Balansräkningsprov',
                     description: 'Tillgångar = Eget kapital + Skulder',
                     details: `Tillgångar: ${assets.toLocaleString('sv-SE')} kr, EK+Skulder: ${equityAndLiabilities.toLocaleString('sv-SE')} kr`,
                 })
             } else {
-                checks.push({
-                    name: 'Balansräkningsprov',
-                    status: 'fail',
+                issues.push({
+                    id: 'balansprov',
+                    type: 'error',
+                    title: 'Balansräkningsprov',
                     description: 'Tillgångar stämmer inte med Eget kapital + Skulder',
                     details: `Differens: ${diff.toLocaleString('sv-SE')} kr (Tillgångar: ${assets.toLocaleString('sv-SE')} kr, EK+Skulder: ${equityAndLiabilities.toLocaleString('sv-SE')} kr)`,
                 })
@@ -120,26 +89,28 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
         }
 
         // =====================================================================
-        // 2. Momsavstämning — Booked VAT matches declarations
+        // 2. Momsavstämning
         // =====================================================================
         {
-            const outputVat = accountBalance(2610, 2619) // Utgående moms
-            const inputVat = accountBalance(2640, 2649)   // Ingående moms
-            const vatDebt = accountBalance(2650, 2659)    // Momsredovisning
-
+            const outputVat = accountBalance(2610, 2619)
+            const inputVat = accountBalance(2640, 2649)
+            const vatDebt = accountBalance(2650, 2659)
             const bookedVatNet = outputVat + inputVat + vatDebt
 
             if (Math.abs(bookedVatNet) < 100) {
-                checks.push({
-                    name: 'Momsavstämning',
-                    status: 'pass',
+                issues.push({
+                    id: 'moms',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Momsavstämning',
                     description: 'Momskonton stämmer',
                     details: `Utgående: ${outputVat.toLocaleString('sv-SE')} kr, Ingående: ${inputVat.toLocaleString('sv-SE')} kr`,
                 })
             } else {
-                checks.push({
-                    name: 'Momsavstämning',
-                    status: 'warning',
+                issues.push({
+                    id: 'moms',
+                    type: 'warning',
+                    title: 'Momsavstämning',
                     description: 'Momskonton har oavstämd differens',
                     details: `Oavstämt saldo: ${bookedVatNet.toLocaleString('sv-SE')} kr. Kontrollera att momsdeklaration är bokförd.`,
                 })
@@ -147,38 +118,28 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
         }
 
         // =====================================================================
-        // 3. Kundfordringar — Open invoices match account 1510
+        // 3. Kundfordringar
         // =====================================================================
         {
             const accountBal = -(accountBalance(1510, 1519))
             const openInvoices = (customerInvoices || [])
                 .filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-            const invoiceTotal = openInvoices.reduce((sum: number, i: any) => sum + (i.total_amount || i.totalAmount || 0), 0)
+            const invoiceTotal = openInvoices.reduce((sum: number, i: any) => sum + (i.total_amount || 0), 0)
 
-            const overdueInvoices = openInvoices.filter((i: any) => {
-                const due = new Date(i.due_date || i.dueDate)
-                const daysOverdue = (Date.now() - due.getTime()) / (1000 * 60 * 60 * 24)
-                return daysOverdue > 90
-            })
-
-            if (overdueInvoices.length > 0) {
-                checks.push({
-                    name: 'Kundfordringar',
-                    status: 'warning',
-                    description: `${overdueInvoices.length} fakturor förfallna >90 dagar`,
-                    details: `Konto 1510: ${accountBal.toLocaleString('sv-SE')} kr, Öppna fakturor: ${invoiceTotal.toLocaleString('sv-SE')} kr`,
-                })
-            } else if (Math.abs(accountBal - invoiceTotal) > 100 && (accountBal > 0 || invoiceTotal > 0)) {
-                checks.push({
-                    name: 'Kundfordringar',
-                    status: 'warning',
+            if (Math.abs(accountBal - invoiceTotal) > 100 && (accountBal > 0 || invoiceTotal > 0)) {
+                issues.push({
+                    id: 'kundfordringar',
+                    type: 'warning',
+                    title: 'Kundfordringar',
                     description: 'Konto 1510 matchar inte öppna fakturor',
                     details: `Konto 1510: ${accountBal.toLocaleString('sv-SE')} kr, Öppna fakturor: ${invoiceTotal.toLocaleString('sv-SE')} kr`,
                 })
             } else {
-                checks.push({
-                    name: 'Kundfordringar',
-                    status: 'pass',
+                issues.push({
+                    id: 'kundfordringar',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Kundfordringar',
                     description: 'Kundfordringar stämmer',
                     details: `Konto 1510: ${accountBal.toLocaleString('sv-SE')} kr`,
                 })
@@ -186,25 +147,28 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
         }
 
         // =====================================================================
-        // 4. Leverantörsskulder — Open bills match account 2440
+        // 4. Leverantörsskulder
         // =====================================================================
         {
             const accountBal = accountBalance(2440, 2449)
             const openBills = (supplierInvoices || [])
                 .filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-            const billsTotal = openBills.reduce((sum: number, i: any) => sum + (i.total_amount || i.totalAmount || 0), 0)
+            const billsTotal = openBills.reduce((sum: number, i: any) => sum + (i.total_amount || 0), 0)
 
             if (Math.abs(accountBal - billsTotal) > 100 && (Math.abs(accountBal) > 0 || billsTotal > 0)) {
-                checks.push({
-                    name: 'Leverantörsskulder',
-                    status: 'warning',
+                issues.push({
+                    id: 'leverantorer',
+                    type: 'warning',
+                    title: 'Leverantörsskulder',
                     description: 'Konto 2440 matchar inte öppna leverantörsfakturor',
                     details: `Konto 2440: ${accountBal.toLocaleString('sv-SE')} kr, Öppna fakturor: ${billsTotal.toLocaleString('sv-SE')} kr`,
                 })
             } else {
-                checks.push({
-                    name: 'Leverantörsskulder',
-                    status: 'pass',
+                issues.push({
+                    id: 'leverantorer',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Leverantörsskulder',
                     description: 'Leverantörsskulder stämmer',
                     details: `Konto 2440: ${accountBal.toLocaleString('sv-SE')} kr`,
                 })
@@ -212,178 +176,119 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, AuditR
         }
 
         // =====================================================================
-        // 5. Löneavstämning — Payroll liabilities match payslips
+        // 5. Löneavstämning
         // =====================================================================
         {
-            const skatteSkuld = accountBalance(2710, 2719)     // Personalskatt
-            const agAvgifter = accountBalance(2730, 2739)      // Arbetsgivaravgifter
-            const nettoLon = accountBalance(2790, 2799)        // Löneskulder
-
+            const skatteSkuld = accountBalance(2710, 2719)
+            const agAvgifter = accountBalance(2730, 2739)
+            const nettoLon = accountBalance(2790, 2799)
             const totalLiabilities = skatteSkuld + agAvgifter + nettoLon
-            const payslipList = payslips || []
 
-            if (payslipList.length === 0 && Math.abs(totalLiabilities) < 1) {
-                checks.push({
-                    name: 'Löneavstämning',
-                    status: 'pass',
-                    description: 'Inga löner bokförda',
-                })
-            } else if (Math.abs(totalLiabilities) > 100) {
-                checks.push({
-                    name: 'Löneavstämning',
-                    status: 'warning',
+            if (Math.abs(totalLiabilities) > 100) {
+                issues.push({
+                    id: 'loner',
+                    type: 'warning',
+                    title: 'Löneavstämning',
                     description: 'Utestående löneskulder',
                     details: `Personalskatt: ${skatteSkuld.toLocaleString('sv-SE')} kr, AG-avgifter: ${agAvgifter.toLocaleString('sv-SE')} kr, Löneskuld: ${nettoLon.toLocaleString('sv-SE')} kr`,
                 })
             } else {
-                checks.push({
-                    name: 'Löneavstämning',
-                    status: 'pass',
+                issues.push({
+                    id: 'loner',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Löneavstämning',
                     description: 'Lönekonton avstämda',
-                    details: `${payslipList.length} lönebesked bokförda`,
+                    details: `${(payslips || []).length} lönebesked bokförda`,
                 })
             }
         }
 
         // =====================================================================
-        // 6. Avskrivningar — Depreciation booked for fixed assets
+        // 6. Avskrivningar
         // =====================================================================
         {
             const hasFixedAssets = hasAccountsInRange(1200, 1299)
             const hasDepreciation = hasAccountsInRange(7800, 7899)
 
             if (hasFixedAssets && !hasDepreciation) {
-                checks.push({
-                    name: 'Avskrivningar',
-                    status: 'fail',
+                issues.push({
+                    id: 'avskrivningar',
+                    type: 'error',
+                    title: 'Avskrivningar',
                     description: `Anläggningstillgångar finns men avskrivningar saknas för ${year}`,
                     details: 'Konton 1200-1299 har saldon men inga avskrivningar på 7800-7899.',
                 })
-            } else if (hasFixedAssets && hasDepreciation) {
-                checks.push({
-                    name: 'Avskrivningar',
-                    status: 'pass',
-                    description: 'Avskrivningar bokförda',
-                })
             } else {
-                checks.push({
-                    name: 'Avskrivningar',
-                    status: 'pass',
-                    description: 'Inga anläggningstillgångar att skriva av',
+                issues.push({
+                    id: 'avskrivningar',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Avskrivningar',
+                    description: hasFixedAssets ? 'Avskrivningar bokförda' : 'Inga anläggningstillgångar att skriva av',
                 })
             }
         }
 
         // =====================================================================
-        // 7. Eget kapital — Matches shareholder register
+        // 7. Eget kapital
         // =====================================================================
         {
-            const aktiekapital = accountBalance(2081, 2081) // Aktiekapital
+            const aktiekapital = accountBalance(2081, 2081)
             const shareholderList = shareholders || []
 
-            if (shareholderList.length === 0) {
-                if (Math.abs(aktiekapital) > 0) {
-                    checks.push({
-                        name: 'Eget kapital',
-                        status: 'warning',
-                        description: 'Aktiekapital bokfört men inget ägarregister registrerat',
-                        details: `Konto 2081: ${aktiekapital.toLocaleString('sv-SE')} kr`,
-                    })
-                } else {
-                    checks.push({
-                        name: 'Eget kapital',
-                        status: 'pass',
-                        description: 'Inget eget kapital att kontrollera',
-                    })
-                }
+            if (shareholderList.length === 0 && Math.abs(aktiekapital) > 0) {
+                issues.push({
+                    id: 'ek',
+                    type: 'warning',
+                    title: 'Eget kapital',
+                    description: 'Aktiekapital bokfört men inget ägarregister registrerat',
+                    details: `Konto 2081: ${aktiekapital.toLocaleString('sv-SE')} kr`,
+                })
             } else {
-                checks.push({
-                    name: 'Eget kapital',
-                    status: 'pass',
-                    description: 'Ägarregister registrerat',
-                    details: `${shareholderList.length} ägare, Aktiekapital konto 2081: ${aktiekapital.toLocaleString('sv-SE')} kr`,
+                issues.push({
+                    id: 'ek',
+                    type: 'info',
+                    isPass: true,
+                    title: 'Eget kapital',
+                    description: shareholderList.length > 0 ? 'Ägarregister registrerat' : 'Inget eget kapital att kontrollera',
                 })
             }
         }
 
-        // =====================================================================
-        // 8. Periodiseringar — Accruals/prepayments at period end
-        // =====================================================================
-        {
-            const forutbetald = hasAccountsInRange(1700, 1799) // Förutbetalda kostnader
-            const upplupen = hasAccountsInRange(2900, 2999)     // Upplupna kostnader
-
-            const now = new Date()
-            const isYearEnd = now.getMonth() >= 10 // Nov-Dec
-
-            if (isYearEnd && !forutbetald && !upplupen) {
-                checks.push({
-                    name: 'Periodiseringar',
-                    status: 'warning',
-                    description: 'Inga periodiseringar bokförda nära årsskifte',
-                    details: 'Kontrollera om förutbetalda kostnader (1700) eller upplupna kostnader (2900) behöver bokföras.',
-                })
-            } else {
-                checks.push({
-                    name: 'Periodiseringar',
-                    status: 'pass',
-                    description: forutbetald || upplupen
-                        ? 'Periodiseringar finns bokförda'
-                        : 'Inga periodiseringar krävs för perioden',
-                })
-            }
+        const summaryCount = {
+            total: issues.length,
+            passed: issues.filter(i => i.isPass).length,
+            warnings: issues.filter(i => i.type === 'warning').length,
+            failed: issues.filter(i => i.type === 'error').length,
         }
 
-        // Build summary
-        const summary = {
-            total: checks.length,
-            passed: checks.filter(c => c.status === 'pass').length,
-            warnings: checks.filter(c => c.status === 'warning').length,
-            failed: checks.filter(c => c.status === 'fail').length,
+        // Filter out "pass" items for the final issues list
+        const finalIssues = issues
+            .filter(i => !i.isPass)
+            .map(i => ({
+                id: i.id,
+                type: i.type as 'warning' | 'error' | 'info',
+                title: i.title,
+                description: i.description,
+                details: i.details
+            }))
+
+        const result: BalanceAudit = {
+            timestamp: new Date().toISOString(),
+            accountCount: balances.length,
+            issues: finalIssues,
+            summary: `Balanskontroll klar: ${summaryCount.passed}/${summaryCount.total} godkända` +
+                (summaryCount.warnings > 0 ? `, ${summaryCount.warnings} varningar` : '') +
+                (summaryCount.failed > 0 ? `, ${summaryCount.failed} fel` : '') + '.',
         }
 
-        const result: AuditResult = {
-            date: new Date().toISOString().split('T')[0],
-            fiscalYear: year,
-            checks,
-            summary,
-        }
-
-        // Build message for AI
-        const statusEmoji = summary.failed > 0 ? '❌' : summary.warnings > 0 ? '⚠️' : '✅'
-        const checkDetails = checks.map(c => {
-            const icon = c.status === 'pass' ? '✅' : c.status === 'warning' ? '⚠️' : '❌'
-            return `${icon} **${c.name}**: ${c.description}` + (c.details ? `\n   ${c.details}` : '')
-        }).join('\n\n')
-
-        const message = `${statusEmoji} Balanskontroll klar: ${summary.passed}/${summary.total} godkända` +
-            (summary.warnings > 0 ? `, ${summary.warnings} varningar` : '') +
-            (summary.failed > 0 ? `, ${summary.failed} fel` : '') +
-            '.\n\n' + checkDetails +
-            '\n\n---\n\n' +
-            'Resultatet visas i en walkthrough-vy för användaren. Skriv en kort kommentar (2-4 meningar) som en revisor skulle göra: ' +
-            'beskriv din tankeprocess, vad du har analyserat, om något väckte din uppmärksamhet, och om det finns något användaren bör agera på. ' +
-            'Skriv i första person, direkt till användaren. Skriv INTE ut kontrollerna igen — de visas redan i vyn.'
-
+        const statusEmoji = summaryCount.failed > 0 ? '❌' : summaryCount.warnings > 0 ? '⚠️' : '✅'
+        
         return {
             success: true,
-            data: {
-                ...result,
-                walkthrough: {
-                    title: 'Balanskontroll',
-                    summary: `${summary.passed}/${summary.total} godkända` +
-                        (summary.warnings > 0 ? `, ${summary.warnings} varningar` : '') +
-                        (summary.failed > 0 ? `, ${summary.failed} fel` : ''),
-                    date: result.date,
-                    sections: checks.map(c => ({
-                        heading: c.name,
-                        status: c.status,
-                        description: c.description,
-                        details: c.details,
-                    })),
-                },
-            },
-            message,
+            data: result,
+            message: `${statusEmoji} ${result.summary}\n\nSkriv en kort kommentar som revisor till användaren baserat på resultatet.`,
         }
     },
 })

@@ -47,6 +47,7 @@ export function TaxDeclarationCard(props: TaxDeclarationProps) {
                         taxData: {},
                         contact: {
                             name: company?.contactPerson || "",
+                            orgnr: company?.orgNumber || "",
                             phone: company?.phone || "",
                             email: company?.email || "",
                         }

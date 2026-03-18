@@ -1,5 +1,6 @@
 import { createBrowserClient } from '@/lib/database/client'
-import type { Database } from '@/types/database'
+import type { Database, Json } from '@/types/database'
+import type { ActivitySummary } from '@/lib/ai-schema'
 
 type ActivityLogRow = Database['public']['Tables']['activity_log']['Row']
 
@@ -98,7 +99,7 @@ export const activityService = {
     }
 
     if (entityId) {
-      query = query.eq("entity_id", entityId)
+      query = query.eq("id", entityId)
     }
 
     if (dateFilter) {
@@ -153,11 +154,57 @@ export const activityService = {
       entity_type: entityType,
       entity_id: entityId,
       entity_name: entityName,
-      changes: changes ?? null,
-      metadata: metadata ?? null,
+      changes: (changes as unknown as Json) ?? null,
+      metadata: (metadata as unknown as Json) ?? null,
     }).select().single()
 
     if (error) throw error
     return mapRow(data)
+  },
+
+  /**
+   * Get activity summary statistics
+   */
+  async getActivitySummary(companyId: string, days: number = 30): Promise<ActivitySummary> {
+    const supabase = createBrowserClient()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    const { data, error } = await supabase
+      .from("activity_log")
+      .select("action, entity_type, metadata")
+      .eq("company_id", companyId)
+      .gte("created_at", startDate.toISOString())
+
+    if (error) throw error
+
+    const totalEvents = data.length
+    const bySource: Record<string, number> = {}
+    const byType: Record<string, number> = {}
+
+    data.forEach(row => {
+      // Safely extract source from metadata JSON
+      const metadata = row.metadata as Record<string, unknown> | null
+      const source = (metadata && typeof metadata.source === 'string') 
+        ? metadata.source 
+        : 'system'
+        
+      const type = row.entity_type || 'other'
+      bySource[source] = (bySource[source] || 0) + 1
+      byType[type] = (byType[type] || 0) + 1
+    })
+
+    const topType = Object.entries(byType).sort((a, b) => b[1] - a[1])[0]?.[0]
+
+    return {
+      period: `senaste ${days} dagarna`,
+      totalEvents,
+      bySource,
+      byType,
+      highlights: [
+        `${totalEvents} händelser loggade senaste perioden.`,
+        topType ? `Mest aktiva kategori: ${topType}.` : 'Ingen aktivitet loggad.'
+      ]
+    }
   }
 }

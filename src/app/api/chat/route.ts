@@ -7,7 +7,7 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateChatMessages, validateJsonBody } from '@/lib/validation'
-import { getAuthContext, verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import {
     checkUsageLimits,
     consumeTokens,
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         const incognitoInput = (body as { incognito?: boolean }).incognito || false
 
         const messages = messagesInput
-        const conversationId = conversationIdInput
+        let conversationId = conversationIdInput
         const attachments = attachmentsInput
         const mentions = mentionsInput
         const requestedModel = requestedModelInput
@@ -116,7 +116,6 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        let conversationId = reqConversationId
         if (!incognito) {
             if (!conversationId) {
                 const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
@@ -261,6 +260,7 @@ export async function POST(request: NextRequest) {
         const deferredConfig = createDeferredToolConfig({
             userId: context.userId,
             companyId: context.companyId,
+            isConfirmed: false,
         })
 
         // Model Selection

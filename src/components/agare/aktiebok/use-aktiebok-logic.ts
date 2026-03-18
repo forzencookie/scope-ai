@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useCompliance } from "@/hooks/use-compliance"
 import { ShareholderDisplay, TransactionDisplay, StockTransactionType } from "./types"
+import { type Shareholder } from "@/services/shareholder-service"
 
 const SHARE_REGEX = /(\d+)\s*aktier/i
 const NAME_REGEX_TO = /till\s+(.+?)(?:\s*$|\s*från)/i
@@ -27,7 +28,7 @@ function isCompany(ssnOrgNr: string): boolean {
  * This hook purely maps database state (Shareholders & Verifications) to the UI.
  */
 export function useAktiebokLogic() {
-  const { realShareholders } = useCompliance()
+  const { shareholders: realShareholders } = useCompliance()
   const { verifications } = useVerifications()
 
   // Search/Filter state
@@ -37,8 +38,8 @@ export function useAktiebokLogic() {
   // 1. Derived stats
   const stats = useMemo(() => {
     const s = realShareholders || []
-    const totalShares = s.reduce((sum, sh) => sum + (sh.shares_count || 0), 0)
-    const totalVotes = s.reduce((sum, sh) => sum + ((sh.shares_count || 0) * (sh.share_class === 'A' ? 10 : 1)), 0)
+    const totalShares = s.reduce((sum: number, sh: Shareholder) => sum + (sh.sharesCount || 0), 0)
+    const totalVotes = s.reduce((sum: number, sh: Shareholder) => sum + ((sh.sharesCount || 0) * (sh.shareClass === 'A' ? 10 : 1)), 0)
     return {
       totalShares,
       totalVotes,
@@ -52,22 +53,22 @@ export function useAktiebokLogic() {
     const totalShares = stats.totalShares || 1
     const totalVotes = stats.totalVotes || 1
 
-    return (realShareholders || []).map(s => {
-      const votes = (s.shares_count || 0) * (s.share_class === 'A' ? 10 : 1)
+    return (realShareholders || []).map((s: Shareholder) => {
+      const votes = (s.sharesCount || 0) * (s.shareClass === 'A' ? 10 : 1)
       return {
         id: s.id,
         name: s.name,
-        personalNumber: s.ssn_org_nr || '',
-        type: isCompany(s.ssn_org_nr || '') ? 'company' : 'person',
-        shares: s.shares_count || 0,
-        shareClass: (s.share_class || 'B') as 'A' | 'B',
-        ownershipPercentage: Math.round(((s.shares_count || 0) / totalShares) * 100),
-        acquisitionDate: s.acquisition_date || s.created_at?.split('T')[0] || '',
-        acquisitionPrice: s.acquisition_price ?? 0,
+        personalNumber: s.personalOrOrgNumber || '',
+        type: isCompany(s.personalOrOrgNumber || '') ? 'company' : 'person',
+        shares: s.sharesCount || 0,
+        shareClass: (s.shareClass || 'B') as 'A' | 'B',
+        ownershipPercentage: Math.round(((s.sharesCount || 0) / totalShares) * 100),
+        acquisitionDate: s.acquisitionDate || '',
+        acquisitionPrice: s.acquisitionPrice ?? 0,
         votes,
         votesPercentage: Math.round((votes / totalVotes) * 100),
-        shareNumberFrom: s.share_number_from,
-        shareNumberTo: s.share_number_to,
+        shareNumberFrom: 0,
+        shareNumberTo: 0,
       }
     })
   }, [realShareholders, stats.totalShares, stats.totalVotes])

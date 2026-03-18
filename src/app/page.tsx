@@ -120,17 +120,18 @@ export default function LandingPage() {
 
     return (
         <TextModeProvider>
-            <div
-                className="relative min-h-screen text-white font-sans selection:bg-white/30 overscroll-y-none"
-                style={{
-                    backgroundColor: '#050505',
-                    backgroundImage: "url('/premiumbg-clean.png')",
-                    backgroundSize: 'cover',
-                    backgroundPosition: '85% center',
-                    backgroundAttachment: 'fixed',
-                    backgroundRepeat: 'no-repeat',
-                }}
-            >
+            <div className="relative min-h-screen text-white font-sans selection:bg-white/30">
+                {/* Fixed Background Layer - Ensures consistent look across all pages and devices */}
+                <div 
+                    className="fixed inset-0 z-0"
+                    style={{
+                        backgroundColor: '#050505',
+                        backgroundImage: "url('/premiumbg-clean.png')",
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                    }}
+                />
+
                 {/* Main scrollable container */}
                 <div className="relative z-10 flex flex-col items-center w-full">
 
@@ -138,9 +139,9 @@ export default function LandingPage() {
                     <Navbar />
 
                     {/* Section 1: Hero */}
-                    <section className="flex flex-col items-center justify-center min-h-[90vh] text-center px-4 w-full pt-24 md:pt-0">
-                        <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto flex flex-col items-center md:mt-32">
-                            <div className="px-3 py-1 rounded text-[10px] font-bold text-white/70 bg-white/10 mb-8 tracking-widest uppercase border border-white/10">
+                    <section className="flex flex-col items-center justify-center min-h-[85vh] text-center px-4 w-full pt-20 md:pt-0">
+                        <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto flex flex-col items-center md:mt-24">
+                            <div className="px-3 py-1 rounded text-[10px] font-bold text-white/70 bg-white/10 mb-6 tracking-widest uppercase border border-white/10">
                                 Beta
                             </div>
 
@@ -153,28 +154,28 @@ export default function LandingPage() {
                     </section>
 
                     {/* Section 2: App Demo */}
-                    <div className="w-full flex flex-col items-center z-20">
+                    <div className="w-full flex flex-col items-center z-20 mt-12 md:mt-0">
                         <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto px-5">
-                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mt-32 mb-0 leading-tight pb-0">
+                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-0 leading-tight pb-0">
                                 Din AI-assistent som jobbar dygnet runt.
                             </h2>
                         </div>
-                        <div className="-mt-[40px] w-full">
+                        <div className="-mt-[20px] md:-mt-[40px] w-full">
                             <AppDemoShowcase />
                         </div>
                     </div>
 
                     {/* Section 3: Vision */}
-                    <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
-                        <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white gap-2 text-center mb-16 leading-tight">
+                    <section className="flex flex-col items-center justify-center min-h-[80vh] px-4 w-full py-20">
+                        <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white gap-2 text-center mb-12 leading-tight">
                             Vision
                         </h2>
-                        <div className="max-w-[440px] md:max-w-[640px] w-full p-10 md:p-12 rounded-[2rem] bg-black/30 backdrop-blur-2xl">
-                            <p className="text-xl md:text-2xl font-medium leading-normal mb-20 text-white/95 tracking-tight">
+                        <div className="max-w-[440px] md:max-w-[640px] w-full p-8 md:p-12 rounded-[2rem] bg-black/30 backdrop-blur-2xl">
+                            <p className="text-xl md:text-2xl font-medium leading-normal mb-16 text-white/95 tracking-tight">
                                 scope ai har som uppdrag att förenkla företagande genom en autonom AI-plattform som underlättar och planerar din bokföring, så att du kan ägna mer tid till att fokusera på det du gör bäst.
                             </p>
                             <p className="text-white/60 text-lg">
-                                <Link href="/logga-in" className="text-white border-b border-white/30 hover:border-white transition-colors pb-1 border-dotted">gå med nu</Link> för att skapa ditt fria konto
+                                <Link href="/logga-in" className="text-white border-b border-white/30 hover:border-white transition-colors pb-1 border-dotted">kom igång nu</Link> för att framtidssäkra din bokföring
                             </p>
                         </div>
                     </section>

@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import type { GeneralMeeting } from '@/types/ownership'
 
 /**
  * Board member from shareholders table
@@ -39,21 +40,7 @@ export interface BoardMeetingMinutes {
     documentUrl: string | null
 }
 
-/**
- * Company meeting (stämma)
- */
-export interface CompanyMeeting {
-    id: string
-    title: string
-    type: 'annual' | 'extraordinary' | 'board'
-    meetingDate: string | null
-    scheduledDate: string | null
-    status: 'scheduled' | 'held' | 'cancelled'
-    location: string | null
-    agenda: string | null
-    attendees: string[]
-    decisions: string[]
-}
+export type CompanyMeeting = GeneralMeeting
 
 export const boardService = {
     /**
@@ -269,56 +256,62 @@ export const boardService = {
             const meetingMeta = agendaItems?.[0]
 
             // Determine meeting type
-            let meetingType: 'annual' | 'extraordinary' | 'board' = 'board'
+            let meetingType: 'bolagsstamma' | 'arsmote' = 'bolagsstamma'
             if (!isBoard) {
-                meetingType = meetingMeta?.type === 'extra' ? 'extraordinary' : 'annual'
+                meetingType = meetingMeta?.type === 'extra' ? 'bolagsstamma' : 'arsmote'
             }
 
-            // Filter by subtype if needed (annual vs extraordinary within general_meeting_minutes)
+            // Filter by subtype if needed
             if (type === 'annual' && meetingMeta?.type === 'extra') return null
             if (type === 'extraordinary' && meetingMeta?.type !== 'extra') return null
 
-            // Map meetings status to CompanyMeeting status
+            // Map meetings status to GeneralMeeting status
             const docStatus = row.status
-            const mappedStatus: 'scheduled' | 'held' | 'cancelled' =
-                docStatus === 'signed' || docStatus === 'archived' ? 'held' : 'scheduled'
+            const mappedStatus: GeneralMeeting['status'] =
+                docStatus === 'signed' ? 'protokoll signerat' :
+                docStatus === 'archived' ? 'genomförd' : 'planerad'
 
-            const meeting: CompanyMeeting = {
+            const meeting: GeneralMeeting = {
                 id: row.id,
                 title: row.title || 'Möte',
-                type: meetingType,
-                meetingDate: row.date || null,
-                scheduledDate: row.date || null,
+                date: row.date || new Date().toISOString().split('T')[0],
+                year: row.date ? new Date(row.date).getFullYear() : new Date().getFullYear(),
+                type: (meetingMeta?.type === 'extra' ? 'extra' : 'ordinarie'),
+                meetingType,
+                meetingCategory: isBoard ? 'styrelsemote' : 'bolagsstamma',
                 status: mappedStatus,
-                location: row.location || null,
-                agenda: Array.isArray(agendaItems) ? agendaItems.map((a) => a.decision || '').filter(Boolean).join(', ') : null,
+                location: row.location || 'Ej angivet',
+                chairperson: '',
+                secretary: '',
+                attendeesCount: attendeesList.length,
                 attendees: attendeesList,
                 decisions: Array.isArray(decisionsJson)
-                    ? decisionsJson.map((d) => d.decision || d.title || '')
+                    ? decisionsJson.map((d, i) => ({
+                        id: String(i),
+                        title: d.title || d.decision || 'Beslut',
+                        decision: d.decision || d.title || '',
+                    }))
                     : [],
             }
             return meeting
-        }).filter((m): m is CompanyMeeting => m !== null)
+        }).filter((m): m is GeneralMeeting => m !== null)
 
         return { meetings, totalCount: type ? meetings.length : (count || 0) }
     },
 
-    /**
-     * Get next annual meeting deadline
-     * Swedish AB must hold årsstämma within 6 months of fiscal year end
-     */
     /**
      * Create a new meeting record
      */
     async createMeeting(params: {
         title: string
         type: 'board_meeting_minutes' | 'general_meeting_minutes'
+        meetingCategory?: 'bolagsstamma' | 'styrelsemote'
         date: string
         location?: string
         agenda?: Array<{ title?: string; decision?: string }>
         attendees?: string[]
         status?: string
-    }): Promise<CompanyMeeting> {
+    }): Promise<GeneralMeeting> {
         const supabase = createBrowserClient()
 
         // Get user and company context
@@ -347,16 +340,23 @@ export const boardService = {
 
         if (error) throw error
 
+        const isBoard = data.type === 'board_meeting_minutes'
+        const meetingCategory = params.meetingCategory || (isBoard ? 'styrelsemote' : 'bolagsstamma')
+
         // Map back to our domain model
         return {
             id: data.id,
             title: data.title || 'Möte',
-            type: data.type === 'board_meeting_minutes' ? 'board' : 'annual', // Simple mapping
-            meetingDate: data.date,
-            scheduledDate: data.date,
-            status: 'scheduled',
-            location: data.location,
-            agenda: params.agenda?.map(a => a.title || a.decision).filter(Boolean).join(', ') || null,
+            date: data.date,
+            year: new Date(data.date).getFullYear(),
+            type: 'ordinarie',
+            meetingType: 'bolagsstamma',
+            meetingCategory,
+            status: 'planerad',
+            location: data.location || 'Ej angivet',
+            chairperson: '',
+            secretary: '',
+            attendeesCount: (data.attendees as string[])?.length || 0,
             attendees: data.attendees as string[] || [],
             decisions: [],
         }
@@ -375,7 +375,13 @@ export const boardService = {
         const dbUpdates: any = {}
         if (updates.title) dbUpdates.title = updates.title
         if (updates.status) {
-            dbUpdates.status = updates.status === 'held' ? 'signed' : 'draft'
+            const statusMap: Record<string, string> = {
+                'planerad': 'draft',
+                'kallad': 'pending',
+                'genomförd': 'archived',
+                'protokoll signerat': 'signed'
+            }
+            dbUpdates.status = statusMap[updates.status] || 'draft'
         }
         if (updates.location) dbUpdates.location = updates.location
         if (updates.attendees) dbUpdates.attendees = updates.attendees
@@ -417,5 +423,19 @@ export const boardService = {
             daysRemaining,
             isOverdue: daysRemaining < 0
         }
+    },
+
+    /**
+     * Get all compliance-related documents
+     */
+    async getComplianceDocuments() {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase
+            .from('meetings')
+            .select('*')
+            .order('date', { ascending: false })
+        
+        if (error) throw error
+        return data || []
     }
 }

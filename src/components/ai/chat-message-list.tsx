@@ -15,9 +15,18 @@ import { ActivityCard } from "@/components/ai/activity-card"
 import { ComparisonTable } from "@/components/ai/comparison-table"
 import { ActionTriggerChip } from "@/components/ai/action-trigger-chip"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
-import { BalanceAuditCard } from "@/components/ai/previews/bokforing/balance-audit-card"
+import { BalanceAuditCard, type BalanceAuditCardProps } from "@/components/ai/previews/bokforing/balance-audit-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 import { MentionBadge } from "@/components/ai/mention-popover"
+import { normalizeAIDisplay } from "@/lib/ai-schema"
+import type { 
+    Receipt, 
+    Transaction, 
+    TaskChecklist as TaskChecklistData, 
+    BenefitsTable as BenefitsTableData,
+    ActivityCard as ActivityCardData,
+    ComparisonTable as ComparisonTableData
+} from "@/lib/ai-schema"
 import type { Message, MessageDisplay } from "@/lib/chat-types"
 import type { InlineCardData } from "@/components/ai/cards/inline"
 import { useState } from "react"
@@ -153,58 +162,69 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {/* Display Cards - Only show on mobile, desktop uses dialog overlay */}
                 {message.display && (
                     <div className="my-2 md:hidden">
-                        {message.display.type === 'ReceiptCard' && (
-                            <ReceiptCard receipt={(message.display.data.receipt || message.display.data) as Parameters<typeof ReceiptCard>[0]['receipt']} />
-                        )}
-                        {message.display.type === 'TransactionCard' && (
-                            <TransactionCard transaction={(message.display.data.transaction || message.display.data) as Parameters<typeof TransactionCard>[0]['transaction']} />
-                        )}
-                        {message.display.type === 'TaskChecklist' && (
-                            <TaskChecklist
-                                title={message.display.data.title || "Uppgifter"}
-                                tasks={message.display.data.tasks || []}
-                            />
-                        )}
-                        {message.display.type === 'BenefitsTable' && (
-                            <div className="rounded-lg border border-border p-4 bg-muted/30">
-                                <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
-                                <ul className="space-y-2">
-                                    { }
-                                    {(message.display.data.benefits || []).map((b) => (
-                                        <li key={b.id || Math.random()} className="text-xs flex justify-between items-center">
-                                            <span>{b.name}</span>
-                                            <span className="text-muted-foreground">{b.category}</span>
-                                        </li>
-                                    ))}
-                                </ul>
-                            </div>
-                        )}
-                        {message.display.type === 'ActivityCard' && (
-                            <ActivityCard
-                                action={message.display.data.action || 'created'}
-                                entityType={message.display.data.entityType || 'transaction'}
-                                title={message.display.data.title || 'Åtgärd utförd'}
-                                subtitle={message.display.data.subtitle}
-                                changes={message.display.data.changes || []}
-                                link={message.display.data.link}
-                                linkLabel={message.display.data.linkLabel}
-                            />
-                        )}
-                        {message.display.type === 'ComparisonTable' && (
-                            <ComparisonTable
-                                title={message.display.data.title}
-                                rows={message.display.data.rows || []}
-                            />
-                        )}
+                        {(() => {
+                            const normalized = normalizeAIDisplay(message.display.type, message.display.data)
+                            if (!normalized) return null
+
+                            switch (message.display.type) {
+                                case 'ReceiptCard':
+                                    const r = normalized as Receipt
+                                    return <ReceiptCard receipt={r} />
+                                case 'TransactionCard':
+                                    const txd = normalized as Transaction
+                                    return <TransactionCard transaction={txd} />
+                                case 'TaskChecklist':
+                                    const t = normalized as TaskChecklistData
+                                    return <TaskChecklist title={t.title} tasks={t.tasks} />
+                                case 'BenefitsTable':
+                                    const b = normalized as BenefitsTableData
+                                    return (
+                                        <div className="rounded-lg border border-border p-4 bg-muted/30">
+                                            <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
+                                            <ul className="space-y-2">
+                                                {b.benefits.map((bi) => (
+                                                    <li key={bi.id || Math.random()} className="text-xs flex justify-between items-center">
+                                                        <span>{bi.name}</span>
+                                                        <span className="text-muted-foreground">{bi.category}</span>
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )
+                                case 'ActivityCard':
+                                    const a = normalized as ActivityCardData
+                                    return (
+                                        <ActivityCard
+                                            action={a.action}
+                                            entityType={a.entityType}
+                                            title={a.title}
+                                            subtitle={a.subtitle}
+                                            changes={a.changes}
+                                            link={a.link}
+                                            linkLabel={a.linkLabel}
+                                        />
+                                    )
+                                case 'ComparisonTable':
+                                    const c = normalized as ComparisonTableData
+                                    return (
+                                        <ComparisonTable
+                                            title={c.title}
+                                            rows={c.rows}
+                                        />
+                                    )
+                                default:
+                                    return null
+                            }
+                        })()}
                     </div>
                 )}
 
                 {/* Inline-only cards (always visible, no overlay) */}
-                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as MessageDisplay & { component?: string }).component === 'BalanceAuditCard') && (
+                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any).component === 'BalanceAuditCard') && (
                     <div className="my-2">
                         <BalanceAuditCard
-                            audit={(message.display.data as Record<string, unknown>).audit as Parameters<typeof BalanceAuditCard>[0]['audit']}
-                            data={((message.display.data as Record<string, unknown>).audit || message.display.data) as Parameters<typeof BalanceAuditCard>[0]['data']}
+                            audit={message.display.type === 'BalanceAuditCard' ? message.display.data.audit : undefined}
+                            data={message.display.type === 'BalanceAuditCard' ? (message.display.data.audit || message.display.data) : {}}
                         />
                     </div>
                 )}
@@ -212,12 +232,12 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {/* Inline result cards — compact cards for AI action results */}
                 {message.display?.type === 'InlineCard' && (
                     <div className="my-2">
-                        <InlineCardRenderer card={message.display.data as InlineCardData} />
+                        <InlineCardRenderer card={message.display.data} />
                     </div>
                 )}
                 {message.display?.type === 'InlineCards' && (
                     <div className="my-2 space-y-1.5">
-                        {((message.display.data as Record<string, unknown>).cards as InlineCardData[] || []).map((card: InlineCardData, i: number) => (
+                        {(message.display.data.cards || []).map((card, i) => (
                             <InlineCardRenderer key={i} card={card} />
                         ))}
                     </div>

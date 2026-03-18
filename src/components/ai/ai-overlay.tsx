@@ -185,28 +185,17 @@ function ThinkingState({ sceneType }: { sceneType: SceneType }) {
     )
 }
 
-function CompleteState({ output, onAccept, onEdit, onCancel, returnTo }: any) {
-    const hasConfirmation = !!output.confirmationRequired
+import type { AIDialogOutput } from "@/providers/ai-overlay-provider"
 
-    if (hasConfirmation) {
-        return (
-            <div className="flex-1 flex items-center justify-center p-6">
-                <div className="max-w-md w-full">
-                    <ConfirmationCard
-                        confirmation={{
-                            title: output.confirmationRequired!.title,
-                            description: output.confirmationRequired!.description || '',
-                            summary: output.confirmationRequired!.summary,
-                            action: (output.confirmationRequired!.action ?? { toolName: '', params: {} }) as { toolName: string; params: unknown },
-                        }}
-                        isLoading={false}
-                        onConfirm={onAccept}
-                        onCancel={onCancel}
-                    />
-                </div>
-            </div>
-        )
-    }
+function CompleteState({ output, onAccept, onEdit, onCancel, returnTo }: { 
+    output: AIDialogOutput, 
+    onAccept: () => void, 
+    onEdit: () => void, 
+    onCancel: () => void, 
+    returnTo?: string | null 
+}) {
+    const hasConfirmation = !!output.confirmationRequired
+    const hasDisplay = !!output.display
 
     let returnLabel = "Tillbaka"
     if (returnTo) {
@@ -233,7 +222,7 @@ function CompleteState({ output, onAccept, onEdit, onCancel, returnTo }: any) {
             </header>
 
             <div className="prose dark:prose-invert max-w-none mb-12">
-                {output.display ? (
+                {hasDisplay ? (
                     <CardRenderer display={output.display!} />
                 ) : (
                     <div className="text-lg text-muted-foreground leading-relaxed">
@@ -249,39 +238,63 @@ function CompleteState({ output, onAccept, onEdit, onCancel, returnTo }: any) {
                 </div>
             )}
 
-            <footer className="flex flex-wrap items-center gap-4 pt-8 border-t">
-                <Button
-                    size="lg"
-                    onClick={onAccept}
-                    className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
-                >
-                    <Check className="h-4 w-4" />
-                    Acceptera
-                </Button>
-                <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onEdit}
-                    className="gap-2 min-w-[140px]"
-                >
-                    <Pencil className="h-4 w-4" />
-                    Redigera
-                </Button>
-                <Button
-                    variant="ghost"
-                    size="lg"
-                    onClick={onCancel}
-                    className="ml-auto gap-2"
-                >
-                    {returnTo && <ArrowLeft className="h-4 w-4" />}
-                    {returnTo ? returnLabel : "Stäng"}
-                </Button>
-            </footer>
+            {hasConfirmation ? (
+                <div className="pt-8 border-t">
+                    <div className="max-w-2xl">
+                        <ConfirmationCard
+                            confirmation={{
+                                title: output.confirmationRequired!.title,
+                                description: output.confirmationRequired!.description || '',
+                                summary: output.confirmationRequired!.summary,
+                                action: (output.confirmationRequired!.action ?? { toolName: '', params: {} }) as { toolName: string; params: unknown },
+                            }}
+                            isLoading={false}
+                            onConfirm={onAccept}
+                            onCancel={onCancel}
+                            onSuggestChange={onEdit}
+                        />
+                    </div>
+                </div>
+            ) : (
+                <footer className="flex flex-wrap items-center gap-4 pt-8 border-t">
+                    <Button
+                        size="lg"
+                        onClick={onAccept}
+                        className="gap-2 bg-emerald-600 hover:bg-emerald-700 text-white min-w-[140px]"
+                    >
+                        <Check className="h-4 w-4" />
+                        Acceptera
+                    </Button>
+                    <Button
+                        variant="outline"
+                        size="lg"
+                        onClick={onEdit}
+                        className="gap-2 min-w-[140px]"
+                    >
+                        <Pencil className="h-4 w-4" />
+                        Redigera
+                    </Button>
+                    <Button
+                        variant="ghost"
+                        size="lg"
+                        onClick={onCancel}
+                        className="ml-auto gap-2"
+                    >
+                        {returnTo && <ArrowLeft className="h-4 w-4" />}
+                        {returnTo ? returnLabel : "Stäng"}
+                    </Button>
+                </footer>
+            )}
         </motion.article>
     )
 }
 
-function ErrorState({ errorMessage, onRetry, onExit }: any) {
+
+function ErrorState({ errorMessage, onRetry, onExit }: { 
+    errorMessage: string, 
+    onRetry: () => void, 
+    onExit: () => void 
+}) {
     return (
         <div className="flex-1 flex flex-col items-center justify-center p-12">
             <div className="max-w-sm w-full flex flex-col items-center text-center gap-6">
@@ -301,7 +314,7 @@ function ErrorState({ errorMessage, onRetry, onExit }: any) {
     )
 }
 
-function Sparkles(props: any) {
+function Sparkles(props: React.SVGProps<SVGSVGElement>) {
     return (
         <svg
             {...props}
@@ -323,3 +336,4 @@ function Sparkles(props: any) {
         </svg>
     )
 }
+

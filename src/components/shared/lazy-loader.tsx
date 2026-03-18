@@ -80,17 +80,17 @@ export const LazyTeamTab = createLazyComponent(
 )
 
 export const LazyFormaner = createLazyComponent(
-    () => import("@/components/loner/benefits").then(m => ({ default: m.BenefitsView })),
+    () => import("@/components/loner/benefits").then(m => ({ default: m.BenefitsTab })),
     "Laddar förmåner..."
 )
 
 export const LazyEgenavgifter = createLazyComponent(
-    () => import("@/components/loner/egenavgifter").then(m => ({ default: m.EgenavgifterView })),
+    () => import("@/components/loner/egenavgifter").then(m => ({ default: m.EgenavgifterCalculator })),
     "Laddar egenavgifter..."
 )
 
 export const LazyDelagaruttag = createLazyComponent(
-    () => import("@/components/loner/delagaruttag").then(m => ({ default: m.WithdrawalsView })),
+    () => import("@/components/loner/delagaruttag").then(m => ({ default: m.DelagaruttagManager })),
     "Laddar delägaruttag..."
 )
 

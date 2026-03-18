@@ -331,10 +331,6 @@ export const shareholderService = {
         const supabase = createBrowserClient()
         const date = transferDate || new Date().toISOString().split('T')[0]
 
-        // Get user context
-        const { data: { user } } = await supabase.auth.getUser()
-        if (!user) throw new Error('Ej inloggad.')
-
         // 1. Fetch seller and validate
         const { data: seller, error: sellerErr } = await supabase
             .from('shareholders')
@@ -373,7 +369,6 @@ export const shareholderService = {
                 .from('shareholders')
                 .insert({
                     company_id: companyId,
-                    user_id: user.id,
                     name: toShareholderName,
                     ssn_org_nr: toShareholderSsnOrgNr ?? null,
                     shares: sharesCount,
@@ -438,7 +433,6 @@ export const shareholderService = {
                 transaction_type: 'transfer',
                 notes: `Överlåtelse av ${sharesCount} ${shareClass}-aktier`,
                 company_id: companyId,
-                user_id: user.id,
             })
             .select()
             .single()
@@ -455,4 +449,38 @@ export const shareholderService = {
             totalValue: totalAmount ?? undefined,
         }
     },
+
+    /**
+     * Get statistics for partners (HB/KB)
+     */
+    async getPartnerStats() {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase.rpc('get_partner_stats')
+        if (error) throw error
+        return data || []
+    },
+
+    /**
+     * Get statistics for members (Ekonomisk förening)
+     */
+    async getMemberStats() {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase.rpc('get_member_stats')
+        if (error) throw error
+        return data || []
+    },
+
+    /**
+     * Get all partners (HB/KB)
+     */
+    async getPartners() {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase
+            .from('partners')
+            .select('*')
+            .order('created_at', { ascending: false })
+        
+        if (error) throw error
+        return data || []
+    }
 }

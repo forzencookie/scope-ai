@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 import { randomUUID } from 'crypto'
 import OpenAI from 'openai'
 import type { Database } from '@/types/database'

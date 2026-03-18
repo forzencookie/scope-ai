@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuth } from '@/lib/database/auth'
+import { verifyAuth } from "@/lib/database/auth-server"
 import OpenAI from 'openai'
 
 function getOpenAIClient() {

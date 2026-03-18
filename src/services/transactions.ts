@@ -14,13 +14,26 @@ import type {
 import type { TransactionStatus } from "@/lib/status-types"
 import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
 import { createBrowserClient } from "@/lib/database/client"
-import type { Tables } from "@/types/database"
+import type { Database, Tables } from "@/types/database"
+import type { SupabaseClient } from "@supabase/supabase-js"
+import { pendingBookingService } from "./pending-booking-service"
+import { verificationService } from "./verification-service"
+import { createSimpleEntry, type SwedishVatRate } from "@/lib/bookkeeping"
+import type { VerificationEntry } from "@/types"
 
 type DbTransaction = Tables<"transactions">
 
 // ============================================
 // Type Mappings & Helpers
 // ============================================
+
+/**
+ * Internal helper to get the correct Supabase client (passed in or default browser).
+ * This makes the service "Universal" (safe for both Client and Server/AI).
+ */
+function getSupabase(client?: SupabaseClient<Database>) {
+  return client || createBrowserClient()
+}
 
 function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
   const isNegative = db.amount_value < 0
@@ -87,15 +100,15 @@ function errorResponse<T>(error: string, data: T): ApiResponse<T> {
 // Service Methods
 // ============================================
 
-export async function getTransactions(userId: string): Promise<ApiResponse<Transaction[]>> {
-  const supabase = createBrowserClient()
+export async function getTransactions(userId: string, client?: SupabaseClient<Database>): Promise<ApiResponse<Transaction[]>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false })
   if (error) return errorResponse('Failed to fetch transactions', [])
   return successResponse(data.map(t => mapDbToTransaction(t)))
 }
 
-export async function getTransactionsWithAI(userId: string): Promise<ApiResponse<TransactionWithAI[]>> {
-  const supabase = createBrowserClient()
+export async function getTransactionsWithAI(userId: string, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionWithAI[]>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).order('date', { ascending: false })
   if (error) return errorResponse('Failed to fetch transactions', [])
 
@@ -112,9 +125,10 @@ export async function getTransactionsPaginated(
   page: number = 1,
   pageSize: number = 20,
   filters?: TransactionFilters,
-  sort?: SortConfig<Transaction>
+  sort?: SortConfig<Transaction>,
+  client?: SupabaseClient<Database>
 ): Promise<PaginatedResponse<TransactionWithAI>> {
-  const supabase = createBrowserClient()
+  const supabase = getSupabase(client)
   let query = supabase.from('transactions').select('*', { count: 'exact' }).eq('user_id', userId)
 
   if (filters) {
@@ -151,29 +165,29 @@ export async function getTransactionsPaginated(
   return { data: transactions, total, page, pageSize, hasMore: start + pageSize < total }
 }
 
-export async function getTransaction(id: string, userId: string): Promise<ApiResponse<TransactionWithAI | null>> {
-  const supabase = createBrowserClient()
+export async function getTransaction(id: string, userId: string, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionWithAI | null>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').select('*').eq('id', id).eq('user_id', userId).single()
   if (error) return errorResponseNull('Transaction not found')
   return successResponse({ ...mapDbToTransaction(data), aiSuggestion: undefined, isAIApproved: false })
 }
 
-export async function getTransactionsByStatus(userId: string, status: TransactionStatus): Promise<ApiResponse<TransactionWithAI[]>> {
-  const supabase = createBrowserClient()
+export async function getTransactionsByStatus(userId: string, status: TransactionStatus, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionWithAI[]>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').select('*').eq('user_id', userId).eq('status', status).order('date', { ascending: false })
   if (error) return errorResponse('Failed to fetch transactions', [])
   return successResponse(data.map(t => ({ ...mapDbToTransaction(t), aiSuggestion: undefined, isAIApproved: false })))
 }
 
-export async function updateTransactionStatus(id: string, userId: string, status: TransactionStatus): Promise<ApiResponse<TransactionWithAI | null>> {
-  const supabase = createBrowserClient()
+export async function updateTransactionStatus(id: string, userId: string, status: TransactionStatus, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionWithAI | null>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').update({ status }).eq('id', id).eq('user_id', userId).select('*').single()
   if (error) return errorResponseNull('Failed to update status')
   return successResponse({ ...mapDbToTransaction(data), aiSuggestion: undefined, isAIApproved: false })
 }
 
-export async function updateTransaction(id: string, userId: string, updates: Partial<Transaction>): Promise<ApiResponse<TransactionWithAI | null>> {
-  const supabase = createBrowserClient()
+export async function updateTransaction(id: string, userId: string, updates: Partial<Transaction>, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionWithAI | null>> {
+  const supabase = getSupabase(client)
   const dbUpdates: Record<string, unknown> = {}
   if (updates.name !== undefined) dbUpdates.name = updates.name
   if (updates.amountValue !== undefined) dbUpdates.amount_value = updates.amountValue
@@ -186,11 +200,118 @@ export async function updateTransaction(id: string, userId: string, updates: Par
   return successResponse({ ...mapDbToTransaction(data), aiSuggestion: undefined, isAIApproved: false })
 }
 
-export async function deleteTransaction(id: string, userId: string): Promise<ApiResponse<boolean>> {
-  const supabase = createBrowserClient()
+export async function deleteTransaction(id: string, userId: string, client?: SupabaseClient<Database>): Promise<ApiResponse<boolean>> {
+  const supabase = getSupabase(client)
   const { error } = await supabase.from('transactions').delete().eq('id', id).eq('user_id', userId)
   if (error) return errorResponse('Failed to delete transaction', false)
   return successResponse(true)
+}
+
+/**
+ * Get the deterministic status of a transaction.
+ * Essential for AI "State-Awareness".
+ */
+export async function getTransactionStatus(id: string, userId: string, client?: SupabaseClient<Database>): Promise<TransactionStatus> {
+  const supabase = getSupabase(client)
+  const { data } = await supabase
+    .from('transactions')
+    .select('status')
+    .eq('id', id)
+    .eq('user_id', userId)
+    .single()
+  
+  return (data?.status as TransactionStatus) || TRANSACTION_STATUS_LABELS.TO_RECORD
+}
+
+/**
+ * Prepares a transaction for booking by generating journal entries 
+ * and creating a pending booking record.
+ */
+export async function bookTransaction(
+  id: string,
+  userId: string,
+  params: {
+    category: string
+    debitAccount: string
+    creditAccount: string
+    description?: string
+    vatRate?: number
+  },
+  client?: SupabaseClient<Database>
+): Promise<ApiResponse<{ pendingBookingId: string } | null>> {
+  const supabase = getSupabase(client)
+
+  try {
+    // 1. Fetch the transaction to get details
+    const { data: transaction, error: fetchError } = await supabase
+      .from('transactions')
+      .select('*')
+      .eq('id', id)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError || !transaction) {
+      return errorResponseNull('Transaction not found')
+    }
+
+    // 1b. Check period lock
+    const txDate = transaction.date || new Date().toISOString().split('T')[0]
+    const locked = await verificationService.isPeriodLocked(txDate, client)
+    if (locked) {
+      return errorResponse('Perioden är låst. Kan inte bokföra i en stängd period.', null)
+    }
+
+    const amount = Math.abs(Number(transaction.amount_value))
+    const isIncome = Number(transaction.amount_value) > 0
+
+    // 2. Use the bookkeeping engine to generate proper journal entries
+    const journalEntry = createSimpleEntry({
+      date: transaction.date || new Date().toISOString().split('T')[0],
+      description: params.description || transaction.description || '',
+      amount,
+      debitAccount: params.debitAccount,
+      creditAccount: params.creditAccount,
+      vatRate: (params.vatRate || 0) as SwedishVatRate,
+      isIncome,
+      series: 'A',
+    })
+
+    // 3. Map engine output to verification entries
+    const entries: VerificationEntry[] = journalEntry.rows.map(row => ({
+      account: row.account,
+      debit: row.debit,
+      credit: row.credit,
+      description: row.description,
+    }))
+
+    // 4. Create pending booking instead of auto-verification
+    const pending = await pendingBookingService.createPendingBooking({
+      sourceType: 'transaction',
+      sourceId: id,
+      description: journalEntry.description,
+      entries,
+      series: 'A',
+      date: journalEntry.date,
+      metadata: {
+        category: params.category,
+        amount,
+        isIncome,
+        transactionDescription: transaction.description,
+      },
+    }, client)
+
+    // 5. Update Transaction category (but NOT status — that happens on booking confirmation)
+    await supabase
+      .from('transactions')
+      .update({ category: params.category })
+      .eq('id', id);
+
+    return successResponse({ pendingBookingId: pending.id })
+
+  } catch (error) {
+    console.error(`Failed to book transaction ${id}:`, error)
+    return errorResponse(error instanceof Error ? error.message : 'Failed to book transaction', null)
+  }
 }
 
 // ============================================
@@ -218,15 +339,15 @@ export async function bulkApproveAISuggestions(userId: string, ids: string[]): P
   return successResponse(results)
 }
 
-export async function bulkUpdateStatus(userId: string, ids: string[], status: TransactionStatus): Promise<ApiResponse<TransactionWithAI[]>> {
-  const supabase = createBrowserClient()
+export async function bulkUpdateStatus(userId: string, ids: string[], status: TransactionStatus, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionWithAI[]>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').update({ status }).in('id', ids).eq('user_id', userId).select('*')
   if (error) return errorResponse('Failed to bulk update status', [])
   return successResponse(data.map(t => ({ ...mapDbToTransaction(t), aiSuggestion: undefined, isAIApproved: false })))
 }
 
-export async function bulkDeleteTransactions(userId: string, ids: string[]): Promise<ApiResponse<boolean>> {
-  const supabase = createBrowserClient()
+export async function bulkDeleteTransactions(userId: string, ids: string[], client?: SupabaseClient<Database>): Promise<ApiResponse<boolean>> {
+  const supabase = getSupabase(client)
   const { error } = await supabase.from('transactions').delete().in('id', ids).eq('user_id', userId)
   if (error) return errorResponse('Failed to bulk delete transactions', false)
   return successResponse(true)
@@ -247,8 +368,8 @@ export interface TransactionStats {
   ignored: number
 }
 
-export async function getTransactionStats(userId: string): Promise<ApiResponse<TransactionStats>> {
-  const supabase = createBrowserClient()
+export async function getTransactionStats(userId: string, client?: SupabaseClient<Database>): Promise<ApiResponse<TransactionStats>> {
+  const supabase = getSupabase(client)
   const { data, error } = await supabase.from('transactions').select('status, amount_value').eq('user_id', userId)
 
   if (error) return errorResponse('Failed to fetch stats', { total: 0, totalCount: 0, income: 0, expenses: 0, pending: 0, booked: 0, missingDocs: 0, ignored: 0 })
@@ -268,4 +389,17 @@ export async function getTransactionStats(userId: string): Promise<ApiResponse<T
   }
 
   return successResponse(stats)
+}
+
+export async function getUnbookedTransactions(userId: string, client?: SupabaseClient<Database>): Promise<Transaction[]> {
+  const supabase = getSupabase(client)
+  const { data, error } = await supabase
+    .from('transactions')
+    .select('*')
+    .eq('user_id', userId)
+    .eq('status', TRANSACTION_STATUS_LABELS.TO_RECORD)
+    .order('date', { ascending: false })
+  
+  if (error) throw error
+  return (data || []).map(t => mapDbToTransaction(t))
 }

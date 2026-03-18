@@ -14,7 +14,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, getAuthContext, ApiResponse } from '@/lib/database/auth'
+import { verifyAuth, getAuthContext, ApiResponse } from "@/lib/database/auth-server"
 
 // =============================================================================
 // Types

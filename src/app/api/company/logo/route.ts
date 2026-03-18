@@ -5,7 +5,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { uploadCompanyLogo } from '@/services/upload-service'
 import { createBrowserClient } from '@/lib/database/client'
 

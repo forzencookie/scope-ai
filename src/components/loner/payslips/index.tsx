@@ -34,11 +34,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         setSearchQuery,
         statusFilter,
         setStatusFilter,
-        selectedPayslip,
-
-        // Dialog Control
-        viewDialogOpen,
-        setViewDialogOpen,
 
         // Derived Data
         stats,
@@ -47,7 +42,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         handleRowClick,
         toggleSelection,
         toggleAll,
-        handleDelete,
         clearSelection
     } = usePayslipsLogic()
 
@@ -87,8 +81,8 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
             icon: Trash2,
             variant: 'destructive' as const,
             onClick: (ids) => {
-                handleDelete(ids)
-                toast.success(`${ids.length} lönebesked borttagna`, "Åtgärden kan inte ångras")
+                navigateToAI({ prompt: `Jag vill ta bort lönebeskeden med följande ID: ${ids.join(', ')}.` })
+                clearSelection()
             },
         },
     ]

@@ -212,18 +212,48 @@ export type Database = {
           created_at: string | null
           id: string
           user_id: string | null
+          year: number | null
+          month: number | null
+          period: string | null
+          due_date: string | null
+          employee_count: number | null
+          total_salary: number | null
+          total_tax: number | null
+          employer_contributions: number | null
+          status: string | null
+          updated_at: string | null
         }
         Insert: {
           company_id?: string | null
           created_at?: string | null
           id?: string
           user_id?: string | null
+          year?: number | null
+          month?: number | null
+          period?: string | null
+          due_date?: string | null
+          employee_count?: number | null
+          total_salary?: number | null
+          total_tax?: number | null
+          employer_contributions?: number | null
+          status?: string | null
+          updated_at?: string | null
         }
         Update: {
           company_id?: string | null
           created_at?: string | null
           id?: string
           user_id?: string | null
+          year?: number | null
+          month?: number | null
+          period?: string | null
+          due_date?: string | null
+          employee_count?: number | null
+          total_salary?: number | null
+          total_tax?: number | null
+          employer_contributions?: number | null
+          status?: string | null
+          updated_at?: string | null
         }
         Relationships: []
       }

@@ -1,21 +1,15 @@
 import { CreditCard } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
+import type { Transaction } from "@/lib/ai-schema"
 
 export interface TransactionCardProps {
-    transaction: {
-        id?: string
-        description?: string
-        amount?: number
-        date?: string
-        account?: string
-        type?: "income" | "expense"
-    }
+    transaction: Transaction
 }
 
 export function TransactionCard({ transaction }: TransactionCardProps) {
-    const isIncome = transaction.type === "income" || (transaction.amount && transaction.amount > 0)
+    const isIncome = transaction.type === "income"
     return (
-        <div className="rounded-lg border bg-card p-4 space-y-3">
+        <div className="rounded-lg border bg-card p-4 space-y-3 shadow-sm">
             <div className="flex items-start justify-between">
                 <div className="flex items-center gap-3">
                     <div className={cn(
@@ -25,15 +19,15 @@ export function TransactionCard({ transaction }: TransactionCardProps) {
                         <CreditCard className={cn("h-5 w-5", isIncome ? "text-green-600" : "text-red-600")} />
                     </div>
                     <div>
-                        <h4 className="font-semibold">{transaction.description || "Ny transaktion"}</h4>
-                        <p className="text-sm text-muted-foreground">{transaction.date}</p>
+                        <h4 className="font-semibold text-sm leading-tight">{transaction.description}</h4>
+                        <p className="text-xs text-muted-foreground">{transaction.date}</p>
                     </div>
                 </div>
                 <div className="text-right">
-                    <p className={cn("font-bold text-lg", isIncome ? "text-green-600" : "text-red-600")}>
-                        {isIncome ? "+" : ""}{formatCurrency(transaction.amount || 0)}
+                    <p className={cn("font-bold text-sm", isIncome ? "text-green-600" : "text-red-600")}>
+                        {isIncome ? "+" : ""}{formatCurrency(transaction.amount)}
                     </p>
-                    <p className="text-xs text-muted-foreground">{transaction.account}</p>
+                    <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/70">{transaction.account}</p>
                 </div>
             </div>
         </div>

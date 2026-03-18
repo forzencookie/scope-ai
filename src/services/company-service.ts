@@ -5,7 +5,8 @@
  * This is the source of truth for company data - NOT localStorage.
  */
 
-import { createBrowserClient, createServerClient } from '@/lib/database/client'
+import { createBrowserClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/server'
 import type { CompanyType } from '@/lib/company-types'
 
 // Re-export for convenience

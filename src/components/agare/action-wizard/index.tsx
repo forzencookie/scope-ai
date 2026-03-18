@@ -82,7 +82,8 @@ export function ActionWizard({ open, onOpenChange, onComplete, allowedActions }:
                     || ('effectiveDate' in actionData ? actionData.effectiveDate : undefined)
                     || new Date().toISOString().split('T')[0]
                 await addDocument({
-                    type: 'board_meeting_minutes',
+                    type: 'board',
+                    meetingCategory: 'styrelsemote',
                     title: `${meta.label} - ${new Date().toLocaleDateString()}`,
                     date,
                     content: JSON.stringify(actionData),

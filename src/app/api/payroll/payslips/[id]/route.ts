@@ -6,7 +6,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthContext } from '@/lib/database/auth';
+import { getAuthContext } from "@/lib/database/auth-server";
 
 export async function PUT(
     req: NextRequest,

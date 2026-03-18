@@ -321,7 +321,18 @@ export function InlineDividendCard({ data }: { data: InlineDividendData }) {
 }
 
 // --- Card type map for dynamic rendering ---
-export type InlineCardType = "invoice" | "transaction" | "verification" | "payroll" | "report" | "receipt" | "vat" | "dividend"
+export type InlineCardType = 
+    | "invoice" 
+    | "transaction" 
+    | "verification" 
+    | "payroll" 
+    | "report" 
+    | "receipt" 
+    | "vat" 
+    | "dividend"
+    | "task_completed"
+    | "BuyCreditsPrompt"
+    | "budget_limit"
 
 export interface InlineCardData {
     cardType: InlineCardType

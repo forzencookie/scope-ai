@@ -102,7 +102,7 @@ export function Bolagsstamma() {
         open={showViewDialog}
         onOpenChange={setShowViewDialog}
         meeting={selectedMeeting}
-        onUpdate={handleUpdateMeeting}
+        onUpdate={(updates) => handleUpdateMeeting(selectedMeeting!, updates)}
         onSaveKallelse={handleSaveKallelse}
         onBookDecision={bookDividend}
         kallelseRecipients={getKallelseRecipients()}

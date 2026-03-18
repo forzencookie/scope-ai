@@ -12,6 +12,7 @@
 
 import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
+import { UserMemorySchema, type UserMemory, type MemoryCategory } from '@/lib/ai-schema'
 
 // =============================================================================
 // Types
@@ -20,19 +21,7 @@ import type { Database } from '@/types/database'
 type UserMemoryRow = Database['public']['Tables']['user_memory']['Row']
 type UserMemoryInsert = Database['public']['Tables']['user_memory']['Insert']
 
-export type MemoryCategory = 'decision' | 'preference' | 'pending'
-
-export interface UserMemory {
-    id: string
-    companyId: string
-    content: string
-    category: MemoryCategory
-    confidence: number | null
-    supersededBy: string | null
-    sourceMessageId: string | null
-    createdAt: string | null
-    updatedAt: string | null
-}
+export type { UserMemory, MemoryCategory }
 
 export interface CreateMemoryParams {
     companyId: string
@@ -289,17 +278,17 @@ class UserMemoryService {
     }
 
     private mapFromDb(row: UserMemoryRow): UserMemory {
-        return {
+        return UserMemorySchema.parse({
             id: row.id,
             companyId: row.company_id,
             content: row.content,
-            category: row.category as MemoryCategory,
+            category: row.category,
             confidence: row.confidence,
             supersededBy: row.superseded_by,
             sourceMessageId: row.source_message_id,
             createdAt: row.created_at,
             updatedAt: row.updated_at,
-        }
+        })
     }
 }
 

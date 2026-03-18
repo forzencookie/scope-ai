@@ -8,29 +8,15 @@
 import { defineTool, AIConfirmationRequest } from '../registry'
 import {
     type ProcessedFinancialItem,
-    type AccountBalance,
 } from '@/services/processors/reports'
 import { FinancialReportCalculator } from '@/services/processors/reports/calculator'
 import { companyService } from '@/services/company-service'
-import { createServerClient } from '../../database/client'
+import { accountService } from '@/services/account-service'
 import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Shared helpers
 // =============================================================================
-
-async function fetchAccountBalances(startDate: string, endDate: string): Promise<AccountBalance[]> {
-    const supabase = await createServerClient()
-    const { data, error } = await supabase.rpc('get_account_balances', {
-        p_date_from: startDate,
-        p_date_to: endDate,
-    })
-    if (error) throw error
-    return (data || []).map((row) => ({
-        account: String(row.account_number),
-        balance: row.balance,
-    }))
-}
 
 function formatSEK(amount: number): string {
     return Math.abs(amount).toLocaleString('sv-SE', { maximumFractionDigits: 0 }) + ' kr'
@@ -51,7 +37,12 @@ export const getIncomeStatementTool = defineTool<Record<string, never>, Processe
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()
-        const balances = await fetchAccountBalances(`${year}-01-01`, `${year}-12-31`)
+        const accounts = await accountService.getAccountBalances(`${year}-01-01`, `${year}-12-31`)
+        
+        const balances = accounts.map(a => ({
+            account: a.accountNumber,
+            balance: a.balance,
+        }))
 
         if (!balances.length) {
             return {
@@ -87,7 +78,12 @@ export const getBalanceSheetTool = defineTool<Record<string, never>, ProcessedFi
   parameters: { type: 'object', properties: {} },
     execute: async () => {
         const year = new Date().getFullYear()
-        const balances = await fetchAccountBalances('2000-01-01', `${year}-12-31`)
+        const accounts = await accountService.getAccountBalances('2000-01-01', `${year}-12-31`)
+
+        const balances = accounts.map(a => ({
+            account: a.accountNumber,
+            balance: a.balance,
+        }))
 
         if (!balances.length) {
             return {
@@ -195,10 +191,13 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, Fin
     execute: async (params) => {
         const year = parseInt(params.period) || new Date().getFullYear()
 
-        const [plBalances, bsBalances] = await Promise.all([
-            fetchAccountBalances(`${year}-01-01`, `${year}-12-31`),
-            fetchAccountBalances('2000-01-01', `${year}-12-31`),
+        const [plData, bsData] = await Promise.all([
+            accountService.getAccountBalances(`${year}-01-01`, `${year}-12-31`),
+            accountService.getAccountBalances('2000-01-01', `${year}-12-31`),
         ])
+
+        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
+        const bsBalances = bsData.map(a => ({ account: a.accountNumber, balance: a.balance }))
 
         if (!plBalances.length && !bsBalances.length) {
             return {
@@ -216,14 +215,18 @@ export const generateFinancialReportTool = defineTool<FinancialReportParams, Fin
         if (params.comparisonPeriod) {
             const compYear = parseInt(params.comparisonPeriod)
             if (compYear) {
-                const [compPl, compBs] = await Promise.all([
-                    fetchAccountBalances(`${compYear}-01-01`, `${compYear}-12-31`),
-                    fetchAccountBalances('2000-01-01', `${compYear}-12-31`),
+                const [compPlData, compBsData] = await Promise.all([
+                    accountService.getAccountBalances(`${compYear}-01-01`, `${compYear}-12-31`),
+                    accountService.getAccountBalances('2000-01-01', `${compYear}-12-31`),
                 ])
+                
+                const compPlBalances = compPlData.map(a => ({ account: a.accountNumber, balance: a.balance }))
+                const compBsBalances = compBsData.map(a => ({ account: a.accountNumber, balance: a.balance }))
+
                 comparison = {
                     year: compYear,
-                    incomeStatement: FinancialReportCalculator.calculateIncomeStatement(compPl),
-                    balanceSheet: FinancialReportCalculator.calculateBalanceSheet(compBs),
+                    incomeStatement: FinancialReportCalculator.calculateIncomeStatement(compPlBalances),
+                    balanceSheet: FinancialReportCalculator.calculateBalanceSheet(compBsBalances),
                 }
             }
         }
@@ -310,10 +313,13 @@ export const draftAnnualReportTool = defineTool<AnnualReportParams, AnnualReport
         const [fyMonth, fyDay] = fiscalYearEnd.split('-')
 
         // Fetch real financial data
-        const [plBalances, bsBalances] = await Promise.all([
-            fetchAccountBalances(`${params.year}-01-01`, `${params.year}-${fyMonth}-${fyDay}`),
-            fetchAccountBalances('2000-01-01', `${params.year}-${fyMonth}-${fyDay}`),
+        const [plData, bsData] = await Promise.all([
+            accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-${fyMonth}-${fyDay}`),
+            accountService.getAccountBalances('2000-01-01', `${params.year}-${fyMonth}-${fyDay}`),
         ])
+
+        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
+        const bsBalances = bsData.map(a => ({ account: a.accountNumber, balance: a.balance }))
 
         const incomeStatement = FinancialReportCalculator.calculateIncomeStatementSections(plBalances)
         const balanceSheet = FinancialReportCalculator.calculateBalanceSheetSections(bsBalances)
@@ -411,7 +417,8 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, INK2Data>({
         }
 
         // Fetch P&L data for the tax year
-        const plBalances = await fetchAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
+        const plData = await accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
+        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
 
         if (!plBalances.length) {
             return {
@@ -516,7 +523,8 @@ export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, YearEndResu
     },
     execute: async (params) => {
         // Fetch P&L for the year
-        const plBalances = await fetchAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
+        const plData = await accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`)
+        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
 
         if (!plBalances.length) {
             return {
@@ -617,10 +625,13 @@ export const generateManagementReportTool = defineTool<GenerateManagementReportP
         }
 
         // Fetch real financial data for the report
-        const [plBalances, prevPlBalances] = await Promise.all([
-            fetchAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`),
-            fetchAccountBalances(`${params.year - 1}-01-01`, `${params.year - 1}-12-31`),
+        const [plData, prevPlData] = await Promise.all([
+            accountService.getAccountBalances(`${params.year}-01-01`, `${params.year}-12-31`),
+            accountService.getAccountBalances(`${params.year - 1}-01-01`, `${params.year - 1}-12-31`),
         ])
+
+        const plBalances = plData.map(a => ({ account: a.accountNumber, balance: a.balance }))
+        const prevPlBalances = prevPlData.map(a => ({ account: a.accountNumber, balance: a.balance }))
 
         const items = FinancialReportCalculator.calculateIncomeStatement(plBalances)
         const prevItems = FinancialReportCalculator.calculateIncomeStatement(prevPlBalances)

@@ -9,8 +9,8 @@ import * as React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
-import { getMyCompany, updateCompany as updateCompanyInDb } from "@/services/company-service"
-import { createBrowserClient } from "@/lib/database/client"
+import { getMyCompany } from "@/services/company-service"
+import { updateCompanyAction } from "@/app/actions/company"
 
 // ============================================
 // Types
@@ -62,11 +62,13 @@ interface CompanyContextValue {
   company: CompanyInfo | null
   companyType: CompanyType
   isLoading: boolean
+  isSaving: boolean
 
   // Actions
   setCompanyType: (type: CompanyType) => void
   setCompany: (company: CompanyInfo) => void
   updateCompany: (updates: Partial<CompanyInfo>) => void
+  saveChanges: () => Promise<{ success: boolean; error?: string }>
 
   // Feature checks
   hasFeature: (feature: FeatureKey) => boolean
@@ -133,7 +135,6 @@ export function CompanyProvider({
   const [company, setCompanyState] = useState<CompanyInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const saveTimeoutRef = React.useRef<NodeJS.Timeout | null>(null)
 
   // Load company from database first, then localStorage fallback
   useEffect(() => {
@@ -190,61 +191,45 @@ export function CompanyProvider({
     loadCompany()
   }, [initialCompanyType])
 
-  // Save company to database with debounce
-  useEffect(() => {
-    if (company && !isLoading) {
-      // Debounce database save to avoid too many writes
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-
-      saveTimeoutRef.current = setTimeout(async () => {
-        if (!company.id) return // Skip if no company ID yet
-        setIsSaving(true)
-        try {
-          const supabase = createBrowserClient()
-          const { data: { user } } = await supabase.auth.getUser()
-          if (user) {
-            await updateCompanyInDb(company.id, user.id, {
-              name: company.name,
-              orgNumber: company.orgNumber,
-              companyType: company.companyType,
-              vatNumber: company.vatNumber || undefined,
-              address: company.address || undefined,
-              city: company.city || undefined,
-              zipCode: company.zipCode || undefined,
-              email: company.email || undefined,
-              phone: company.phone || undefined,
-              contactPerson: company.contactPerson || undefined,
-              registrationDate: company.registrationDate,
-              fiscalYearEnd: company.fiscalYearEnd,
-              accountingMethod: company.accountingMethod,
-              vatFrequency: company.vatFrequency,
-              isCloselyHeld: company.isCloselyHeld,
-              hasEmployees: company.hasEmployees,
-              hasMomsRegistration: company.hasMomsRegistration,
-              hasFskatt: company.hasFskatt,
-              shareCapital: company.shareCapital,
-              totalShares: company.totalShares,
-            })
-          }
-        } catch (error) {
-          console.error('[CompanyProvider] Failed to save to database:', error)
-        } finally {
-          setIsSaving(false)
-        }
-      }, 1000) // 1 second debounce
-    }
-
-    return () => {
-      if (saveTimeoutRef.current) {
-        clearTimeout(saveTimeoutRef.current)
-      }
-    }
-  }, [company, isLoading])
-
   // Get current company type (fallback to 'ab')
   const companyType = company?.companyType ?? "ab"
+
+  // Explicitly save company to database via Server Action
+  const saveChanges = useCallback(async () => {
+    if (!company || !company.id) return { success: false, error: "Ingen företag valt" }
+    
+    setIsSaving(true)
+    try {
+      const result = await updateCompanyAction(company.id, {
+        name: company.name,
+        orgNumber: company.orgNumber,
+        companyType: company.companyType,
+        vatNumber: company.vatNumber || undefined,
+        address: company.address || undefined,
+        city: company.city || undefined,
+        zipCode: company.zipCode || undefined,
+        email: company.email || undefined,
+        phone: company.phone || undefined,
+        contactPerson: company.contactPerson || undefined,
+        registrationDate: company.registrationDate,
+        fiscalYearEnd: company.fiscalYearEnd,
+        accountingMethod: company.accountingMethod,
+        vatFrequency: company.vatFrequency,
+        isCloselyHeld: company.isCloselyHeld,
+        hasEmployees: company.hasEmployees,
+        hasMomsRegistration: company.hasMomsRegistration,
+        hasFskatt: company.hasFskatt,
+        shareCapital: company.shareCapital,
+        totalShares: company.totalShares,
+      })
+      return result
+    } catch (error) {
+      console.error('[CompanyProvider] Failed to save:', error)
+      return { success: false, error: error instanceof Error ? error.message : "Ett fel uppstod" }
+    } finally {
+      setIsSaving(false)
+    }
+  }, [company])
 
   // Set just the company type with smart defaults
   const setCompanyType = useCallback((type: CompanyType) => {
@@ -273,7 +258,7 @@ export function CompanyProvider({
     setCompanyState(newCompany)
   }, [])
 
-  // Update partial company data
+  // Update partial company data (local state only)
   const updateCompany = useCallback((updates: Partial<CompanyInfo>) => {
     setCompanyState(prev => {
       if (!prev) {
@@ -306,13 +291,15 @@ export function CompanyProvider({
     company,
     companyType,
     isLoading,
+    isSaving,
     setCompanyType,
     setCompany,
     updateCompany,
+    saveChanges,
     hasFeature: checkFeature,
     companyTypeName,
     companyTypeFullName,
-  }), [company, companyType, isLoading, setCompanyType, setCompany, updateCompany, checkFeature, companyTypeName, companyTypeFullName])
+  }), [company, companyType, isLoading, isSaving, setCompanyType, setCompany, updateCompany, saveChanges, checkFeature, companyTypeName, companyTypeFullName])
 
   return (
     <CompanyContext.Provider value={value}>

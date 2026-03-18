@@ -13,7 +13,7 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import OpenAI from 'openai'
-import { verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 
 function getOpenAIClient() {
     return new OpenAI({

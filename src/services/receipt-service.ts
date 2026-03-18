@@ -134,6 +134,15 @@ export const receiptService = {
 
         if (error) throw error
         return { success: true }
-    },
+        },
 
-}
+        /**
+        * Get receipts that are pending or need review
+        */
+        async getUnbookedReceipts() {
+        const result = await this.getReceipts({ 
+            statuses: [RECEIPT_STATUSES.PENDING, RECEIPT_STATUSES.PROCESSING, 'needs_review'] 
+        })
+        return result.receipts
+        }
+        }

@@ -26,7 +26,7 @@ export interface ExpenseRecord {
 interface EmployeeDossierOverlayProps {
     open: boolean
     onOpenChange: (open: boolean) => void
-    employee: { id: string; name: string; role: string; kommun?: string; tax_rate?: number } | null
+    employee: { id: string; name: string; role?: string; kommun?: string; tax_rate?: number } | null
     salaryHistory: SalaryRecord[]
     expenses: ExpenseRecord[]
     benefits: string[]
@@ -59,7 +59,7 @@ export function EmployeeDossierOverlay({
             isOpen={open}
             onClose={() => onOpenChange(false)}
             title={employee.name}
-            subtitle={employee.role}
+            subtitle={employee.role || 'Anställd'}
             scoobyPrompt={scoobyPrompt}
             status={
                 employee.kommun ? (
@@ -208,7 +208,7 @@ export function EmployeeDossierOverlay({
                                     <User className="h-3.5 w-3.5" />
                                     Roll
                                 </div>
-                                <p className="text-sm font-semibold">{employee.role}</p>
+                                <p className="text-sm font-semibold">{employee.role || 'Anställd'}</p>
                             </div>
                             <div className="space-y-1">
                                 <div className="flex items-center gap-2 text-sm text-muted-foreground">

@@ -59,7 +59,7 @@ export interface AITool<TParams = unknown, TResult = unknown> {
      * Whether this tool requires user confirmation before execution.
      * Used for destructive/legally-binding actions.
      */
-    requiresConfirmation: boolean
+    requiresConfirmation?: boolean
 
     /**
      * Category for organizing tools
@@ -81,8 +81,8 @@ export interface AITool<TParams = unknown, TResult = unknown> {
      */
     execute: (params: TParams, context: InteractionContext) => Promise<AIToolResult<TResult>>
 
-    /** List of company types allowed to execute this tool. Empty array = allowed for all. */
-    allowedCompanyTypes: Array<'ab' | 'ef' | 'hb' | 'kb' | 'forening'>
+    /** List of company types allowed to execute this tool. If omitted or empty, allowed for all. */
+    allowedCompanyTypes?: Array<'ab' | 'ef' | 'hb' | 'kb' | 'forening'>
 }
 
 // =============================================================================

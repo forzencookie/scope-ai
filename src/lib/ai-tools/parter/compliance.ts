@@ -4,8 +4,10 @@
  * Tools for corporate compliance documents and dividends.
  */
 
-import { defineTool } from '../registry'
+import { defineTool, AIConfirmationRequest } from '../registry'
 import { boardService, Signatory as BoardSignatory } from '@/services/board-service'
+import { companyService } from '@/services/company-service'
+import { taxService } from '@/services/tax-service'
 
 // =============================================================================
 // Compliance Document Tools
@@ -17,7 +19,11 @@ export interface GetComplianceDocsParams {
 }
 
 interface ComplianceDoc {
+    id: string
     type: string
+    title: string
+    date: string
+    status: string
     [key: string]: unknown
 }
 
@@ -38,29 +44,32 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, Complia
     },
     execute: async (params) => {
         try {
-            const response = await fetch('/api/compliance', { cache: 'no-store' })
-            if (response.ok) {
-                const data = await response.json()
-                let docs = data.documents || []
+            const data = await boardService.getComplianceDocuments()
+            let docs = (data || []).map(d => ({
+                id: d.id,
+                type: d.type,
+                title: d.title,
+                date: d.date || d.created_at,
+                status: d.status,
+                ...d
+            }))
 
-                if (params.type) {
-                    docs = docs.filter((d: ComplianceDoc) => d.type === params.type)
-                }
+            if (params.type) {
+                docs = docs.filter((d: ComplianceDoc) => d.type === params.type)
+            }
 
-                const limit = params.limit || 5
-                const displayDocs = docs.slice(0, limit)
+            const limit = params.limit || 5
+            const displayDocs = docs.slice(0, limit)
 
-                return {
-                    success: true,
-                    data: displayDocs,
-                    message: `Hittade ${docs.length} dokument, visar de senaste ${displayDocs.length}.`,
-                }
+            return {
+                success: true,
+                data: displayDocs,
+                message: `Hittade ${docs.length} dokument, visar de senaste ${displayDocs.length}.`,
             }
         } catch (error) {
             console.error('Failed to fetch compliance docs:', error)
+            return { success: false, error: 'Kunde inte hämta bolagsdokument.' }
         }
-
-        return { success: false, error: 'Kunde inte hämta bolagsdokument.' }
     },
 })
 
@@ -356,20 +365,6 @@ export const getSignatoriesTool = defineTool<Record<string, never>, Signatory[]>
                 personalNumber: s.personalNumber || undefined,
             }))
 
-            const roleLabels: Record<string, string> = {
-                CEO: 'VD',
-                Chairman: 'Styrelseordförande',
-                BoardMember: 'Styrelseledamot',
-                Procurist: 'Prokurist',
-                Other: 'Övrig',
-            }
-
-            const rightsLabels: Record<string, string> = {
-                alone: 'Ensam firmatecknare',
-                jointly: 'Två i förening',
-                together_with_another: 'Tillsammans med annan',
-            }
-
             return {
                 success: true,
                 data: signatories,
@@ -410,8 +405,6 @@ function mapSigningAuthority(authority: string): Signatory['signingRights'] {
 // =============================================================================
 // Compliance Deadlines Tool
 // =============================================================================
-
-import { companyService } from '@/services/company-service'
 
 export interface ComplianceDeadline {
     id: string
@@ -628,13 +621,6 @@ export const getComplianceDeadlinesTool = defineTool<{ daysAhead?: number }, Com
             const deadlineDate = new Date(d.deadline)
             return deadlineDate <= cutoffDate && deadlineDate >= today
         })
-
-        const statusLabels: Record<string, string> = {
-            upcoming: '🟢 Kommande',
-            due_soon: '🟡 Snart',
-            overdue: '🔴 Försenad',
-            completed: '✅ Klar',
-        }
 
         return {
             success: true,

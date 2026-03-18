@@ -6,7 +6,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { companyService, CompanyUpdate } from '@/services/company-service'
 
 /**

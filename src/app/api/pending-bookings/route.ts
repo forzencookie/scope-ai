@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 import {
   pendingBookingService,
   type PendingBookingSourceType,

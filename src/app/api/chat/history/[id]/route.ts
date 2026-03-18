@@ -5,7 +5,7 @@
  */
 
 import { NextResponse } from "next/server";
-import { getAuthContext } from '@/lib/database/auth';
+import { getAuthContext } from "@/lib/database/auth-server";
 
 export async function GET(
     _request: Request,

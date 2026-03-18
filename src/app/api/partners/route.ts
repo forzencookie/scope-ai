@@ -4,7 +4,7 @@
  * SECURITY: Requires authentication via getAuthContext()
  */
 import { NextResponse } from 'next/server'
-import { getAuthContext, ApiResponse } from '@/lib/database/auth'
+import { getAuthContext, ApiResponse } from "@/lib/database/auth-server"
 
 export async function GET() {
   try {

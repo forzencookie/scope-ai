@@ -6,6 +6,7 @@ import { Download, FileText, Calendar, Landmark, CreditCard, Receipt } from "luc
 import { Verification } from "../types"
 import { PageOverlay } from "@/components/shared"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { cn } from "@/lib/utils"
 
 interface VerifikationDetailsOverlayProps {
     open: boolean

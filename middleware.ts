@@ -1,5 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server'
-import { createMiddlewareClient } from '@/lib/database/client'
+import { createMiddlewareClient } from '@/lib/database/server'
 
 /**
  * Protected routes that require authentication

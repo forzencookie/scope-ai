@@ -2,7 +2,8 @@
 
 import { useState } from "react"
 import { PageHeader } from "@/components/shared"
-import { useDividendLogic, type DividendDecision } from "./use-dividend-logic"
+import { useDividendLogic } from "./use-dividend-logic"
+import type { DividendDecision } from "./types"
 import { UtdelningStats } from "./utdelning-stats"
 import { RulesCard } from "./rules-card"
 import { DividendCalculator } from "./dividend-calculator"
@@ -34,7 +35,7 @@ export function UtdelningContent() {
                     <h2 className="font-medium mb-3">Utdelningshistorik</h2>
                     <UtdelningsTable
                         data={realDividendHistory}
-                        onBook={bookDividend}
+                        onBook={(div) => bookDividend(div.meetingId, div.decisionId)}
                         onDownloadReceipt={setPreviewDividend}
                     />
                 </div>

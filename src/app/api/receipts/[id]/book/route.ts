@@ -7,7 +7,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 import { pendingBookingService } from '@/services/pending-booking-service'
 import { createSimpleEntry } from '@/lib/bookkeeping'
 import type { SwedishVatRate } from '@/lib/bookkeeping'

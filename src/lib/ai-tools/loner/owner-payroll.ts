@@ -10,6 +10,7 @@
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { taxService } from '@/services/tax-service'
 import { companyService } from '@/services/company-service'
+import { shareholderService } from '@/services/shareholder-service'
 import { OWNER_ACCOUNTS, EQUITY_ACCOUNTS } from '@/data/account-constants'
 
 /**
@@ -27,19 +28,22 @@ async function getWithdrawalAccount(userId?: string, ownerName?: string): Promis
                         // Look up partner-specific account from DB
                         const { getPartnerAccounts } = await import('@/types/withdrawal')
                         try {
-                            const res = await fetch('/api/partners')
-                            if (res.ok) {
-                                const { partners } = await res.json()
+                            const partners = await shareholderService.getPartners()
+                            if (partners && partners.length > 0) {
                                 const partner = ownerName
-                                    ? partners?.find((p: { name: string }) => p.name.toLowerCase().includes(ownerName!.toLowerCase()))
-                                    : partners?.[0]
+                                    ? partners.find(p => p.name.toLowerCase().includes(ownerName.toLowerCase()))
+                                    : partners[0]
+                                
                                 if (partner) {
                                     const idx = partners.indexOf(partner)
-                                    const accounts = getPartnerAccounts(idx, partner.accountBase)
+                                    const accountBase = (partner as unknown as { account_base?: number }).account_base || 2070
+                                    const accounts = getPartnerAccounts(idx, accountBase)
                                     return { account: accounts.withdrawal, label: `${accounts.withdrawal} (Privata uttag ${partner.name})` }
                                 }
                             }
-                        } catch { /* fall through to default */ }
+                        } catch (err) { 
+                            console.warn('[AI Tool] Failed to fetch partners for withdrawal account:', err)
+                        }
                         // Fallback to first partner's default
                         const defaultAccounts = getPartnerAccounts(0)
                         return { account: defaultAccounts.withdrawal, label: `${defaultAccounts.withdrawal} (Privata uttag HB/KB)` }
@@ -179,7 +183,7 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
         }
 
         // Get company-type-aware withdrawal account (pass ownerName for HB/KB partner lookup)
-        const withdrawal = await getWithdrawalAccount(context?.userId as string | undefined, ownerName)
+        const withdrawal = await getWithdrawalAccount(context?.userId, ownerName)
 
         const accountMap = {
             'lön': { debit: OWNER_ACCOUNTS.OWNER_SALARY, credit: '1930' },
@@ -345,9 +349,6 @@ export const optimize312Tool = defineTool<Optimize312Params, Optimization312Resu
         const optimalDividend = Math.min(effectiveGransbelopp, companyProfit * afterCorpTax * (ownershipPercent / 100))
 
         // Tax calculations
-        // Note: These marginal tax rates are approximations for individual income tax.
-        // They vary by municipality (kommunalskatt) and income level (statlig skatt).
-        // A proper implementation would look up the user's specific kommun tax rate.
         const dividendTax = Math.round(optimalDividend * taxRates.dividendTaxKapital)
         const salaryTax = Math.round(optimalSalary * taxRates.marginalTaxRateApprox)
         const totalTax = dividendTax + salaryTax

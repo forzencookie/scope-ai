@@ -17,7 +17,7 @@ interface DividendFormProps {
 export function DividendForm({ shareholders, onBack, onSubmit }: DividendFormProps) {
     const [dividendTotal, setDividendTotal] = useState("")
 
-    const totalShares = shareholders.reduce((acc, s) => acc + s.shares_count, 0)
+    const totalShares = shareholders.reduce((acc, s) => acc + s.sharesCount, 0)
 
     const handleSubmit = () => {
         onSubmit({
@@ -58,10 +58,13 @@ export function DividendForm({ shareholders, onBack, onSubmit }: DividendFormPro
                             ) : (
                                 shareholders.map(s => (
                                     <div key={s.id} className="flex justify-between items-center text-sm p-2.5 bg-muted/30 rounded-lg border border-transparent hover:border-muted-foreground/10 transition-colors">
-                                        <span className="font-medium">{s.name} <span className="text-muted-foreground font-normal ml-1">({s.shares_percentage}%)</span></span>
+                                        <div className="flex flex-col">
+                                            <span className="font-medium">{s.name} <span className="text-muted-foreground font-normal ml-1">({s.ownershipPercentage}%)</span></span>
+                                            <span className="text-[10px] text-muted-foreground uppercase">{s.sharesCount.toLocaleString()} aktier</span>
+                                        </div>
                                         <span className="font-mono">
-                                            {dividendTotal
-                                                ? (parseFloat(dividendTotal) * s.shares_percentage / 100).toLocaleString('sv-SE', { style: 'currency', currency: 'SEK' })
+                                            {dividendTotal && !isNaN(parseFloat(dividendTotal))
+                                                ? (parseFloat(dividendTotal) * s.ownershipPercentage / 100).toLocaleString('sv-SE', { style: 'currency', currency: 'SEK' })
                                                 : '–'}
                                         </span>
                                     </div>

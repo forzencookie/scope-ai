@@ -14,7 +14,7 @@ import {
     StickyNote,
 } from "lucide-react"
 import { formatDateLong } from "@/lib/utils"
-import { type GeneralMeeting } from "@/types/ownership"
+import { type GeneralMeeting, type GeneralMeetingDecision } from "@/types/ownership"
 import { type MeetingStatus } from "@/lib/status-types"
 import { useCompany } from "@/providers/company-provider"
 import {
@@ -23,6 +23,7 @@ import {
     type PDFCompanyInfo,
 } from "@/lib/generators/pdf-generator"
 import { PageOverlay } from "@/components/shared"
+import { type KallelseRecipient } from "../bolagsstamma/use-general-meetings"
 
 // ============================================================================
 // Types & Helpers
@@ -38,13 +39,17 @@ const mapMeetingStatus = (status: GeneralMeeting['status']): MeetingStatus => {
     }
 }
 
-interface MeetingViewOverlayProps {
+export interface MeetingViewOverlayProps {
     open: boolean
     onOpenChange: (open: boolean) => void
     meeting: GeneralMeeting | null
+    onUpdate?: (updates: Partial<GeneralMeeting>) => Promise<void>
+    onSaveKallelse?: (meetingId: string, kallelseText: string) => Promise<void>
+    onBookDecision?: (meeting: GeneralMeeting, decision: GeneralMeetingDecision) => Promise<void>
+    kallelseRecipients?: KallelseRecipient[]
 }
 
-function InfoItem({ label, value, icon: Icon }: { label: string, value?: string | null, icon: any }) {
+function InfoItem({ label, value, icon: Icon }: { label: string, value?: string | null, icon: React.ElementType }) {
     if (!value) return null
     return (
         <div className="space-y-1">
@@ -90,7 +95,7 @@ export function MeetingViewDialog({
             date: meeting.date,
             location: meeting.location,
             type: meeting.type,
-            agenda: meeting.agenda,
+            agenda: typeof meeting.agenda === 'string' ? [meeting.agenda] : (meeting.agenda || []),
             time: meeting.time,
             kallelseText: meeting.kallelseText || '',
             chairperson: meeting.chairperson,
@@ -116,8 +121,8 @@ export function MeetingViewDialog({
                 amount: d.amount,
                 votingResult: d.votingResult,
             })),
-            protokollText: (meeting as any).protokollText || undefined,
-            agenda: meeting.agenda,
+            protokollText: meeting.protokollText,
+            agenda: typeof meeting.agenda === 'string' ? [meeting.agenda] : (meeting.agenda || []),
         }, companyInfo)
     }
 
@@ -247,7 +252,7 @@ export function MeetingViewDialog({
                     )}
 
                     {/* Internal Notes */}
-                    {(meeting as any).notes && (
+                    {meeting.notes && (
                         <Card className="bg-amber-500/5 border-amber-500/10">
                             <CardHeader>
                                 <CardTitle className="text-xs font-bold uppercase tracking-widest text-amber-600/70 flex items-center gap-2">
@@ -257,7 +262,7 @@ export function MeetingViewDialog({
                             </CardHeader>
                             <CardContent>
                                 <p className="text-xs text-amber-800/80 leading-relaxed italic">
-                                    {(meeting as any).notes}
+                                    {meeting.notes}
                                 </p>
                             </CardContent>
                         </Card>

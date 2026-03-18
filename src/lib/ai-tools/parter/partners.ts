@@ -5,6 +5,7 @@
  */
 
 import { defineTool } from '../registry'
+import { shareholderService } from '@/services/shareholder-service'
 
 // =============================================================================
 // Partner Tools
@@ -26,16 +27,12 @@ export const getPartnersTool = defineTool<Record<string, never>, PartnerStats>({
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
-            const { createBrowserClient } = await import('@/lib/database/client'); const supabase = createBrowserClient()
-            const { data, error } = await supabase.rpc('get_partner_stats')
-
-            if (!error && data) {
-                const stats = data as unknown as PartnerStats
-                return {
-                    success: true,
-                    data: stats,
-                    message: `Hittade ${stats.partnerCount || 0} delägare.`,
-                }
+            const data = await shareholderService.getPartnerStats()
+            const stats = data as unknown as PartnerStats
+            return {
+                success: true,
+                data: stats,
+                message: `Hittade ${stats.partnerCount || 0} delägare.`,
             }
         } catch (error) {
             console.error('Failed to fetch partners:', error)
@@ -62,16 +59,12 @@ export const getMembersTool = defineTool<Record<string, never>, MemberStats>({
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         try {
-            const { createBrowserClient } = await import('@/lib/database/client'); const supabase = createBrowserClient()
-            const { data, error } = await supabase.rpc('get_member_stats')
-
-            if (!error && data) {
-                const stats = data as unknown as MemberStats
-                return {
-                    success: true,
-                    data: stats,
-                    message: `Föreningen har ${stats.totalMembers || 0} medlemmar, varav ${stats.activeMembers || 0} aktiva.`,
-                }
+            const data = await shareholderService.getMemberStats()
+            const stats = data as unknown as MemberStats
+            return {
+                success: true,
+                data: stats,
+                message: `Föreningen har ${stats.totalMembers || 0} medlemmar, varav ${stats.activeMembers || 0} aktiva.`,
             }
         } catch (error) {
             console.error('Failed to fetch members:', error)

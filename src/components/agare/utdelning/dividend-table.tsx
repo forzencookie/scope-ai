@@ -8,7 +8,7 @@ import {
     DropdownMenuItem,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import type { DividendDecision } from "./use-dividend-logic"
+import type { DividendDecision } from "./types"
 
 interface UtdelningsTabellProps {
     data: DividendDecision[]

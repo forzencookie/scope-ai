@@ -50,33 +50,45 @@ export function Firmatecknare() {
     const { members } = useMembers();
     
     // Map documents to BoardMeetings for logic helper (adapter)
-    const boardMeetings = useMemo(() => {
+    const boardMeetings = useMemo((): BoardMeeting[] => {
         return documents
-            .filter(d => d.type === 'board_meeting_minutes')
+            .filter(d => d.meetingCategory === 'styrelsemote')
             .map(d => {
-                let content: Record<string, unknown> = {};
-                try {
-                    const parsed: unknown = JSON.parse(d.content);
-                    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) content = parsed as Record<string, unknown>;
-                } catch {
-                    // ignore
-                }
-                
                 return {
                     id: d.id,
                     date: d.date,
-                    status: (d.status === 'signed' ? 'protokoll signerat' : 'planerad'),
-                    chairperson: (content.chairperson as string) || '',
-                    attendees: Array.isArray(content.attendees) ? content.attendees as string[] : [],
-                    secretary: (content.secretary as string) || '',
-                    location: (content.location as string) || '',
-                    type: (content.type as string) || 'ordinarie',
-                    agendaItems: (content.agendaItems as unknown[]) || [],
-                    absentees: (content.absentees as string[]) || [],
-                    meetingNumber: (content.meetingNumber as number) || 0
+                    status: d.status === 'protokoll signerat' ? 'protokoll signerat' : (d.status === 'genomförd' ? 'genomförd' : 'planerad'),
+                    chairperson: d.chairperson || '',
+                    attendees: d.attendees || [],
+                    secretary: d.secretary || '',
+                    location: d.location || 'Ej angivet',
+                    type: (d.type === 'extra' ? 'extra' : (d.type === 'konstituerande' ? 'konstituerande' : 'ordinarie')),
+                    agendaItems: [], // No longer used in summary logic
+                    absentees: d.absentees || [],
+                    meetingNumber: d.meetingNumber || 0
                 }
             });
     }, [documents]);
+
+    // ... (ownerInfo unchanged)
+
+    // Map API shareholders to the format expected by deriveSignatories
+    const mappedShareholders = useMemo(() => {
+        const totalShares = shareholders.reduce((sum, s) => sum + (s.sharesCount || 0), 0) || 1
+        return shareholders.map(s => ({
+            id: s.id,
+            name: s.name,
+            personalNumber: s.personalOrOrgNumber,
+            type: 'person' as const,
+            shares: s.sharesCount,
+            shareClass: (s.shareClass || 'B') as 'A' | 'B',
+            ownershipPercentage: Math.round((s.sharesCount / totalShares) * 100),
+            acquisitionDate: '',
+            acquisitionPrice: 0,
+            votes: s.sharesCount * (s.shareClass === 'A' ? 10 : 1),
+            votesPercentage: 0,
+        }))
+    }, [shareholders])
 
     const ownerInfo = useMemo((): OwnerInfo => ({
         companyType: companyType as OwnerInfo['companyType'],
@@ -96,24 +108,6 @@ export function Firmatecknare() {
             momsRegistered: true,
         } : undefined,
     }), [companyType, partners, members, company]);
-
-    // Map API shareholders to the format expected by deriveSignatories
-    const mappedShareholders = useMemo(() => {
-        const totalShares = shareholders.reduce((sum, s) => sum + (s.shares_count || 0), 0) || 1
-        return shareholders.map(s => ({
-            id: s.id,
-            name: s.name,
-            personalNumber: s.ssn_org_nr,
-            type: 'person' as const,
-            shares: s.shares_count,
-            shareClass: (s.share_class || 'B') as 'A' | 'B',
-            ownershipPercentage: Math.round((s.shares_count / totalShares) * 100),
-            acquisitionDate: '',
-            acquisitionPrice: 0,
-            votes: s.shares_count * (s.share_class === 'A' ? 10 : 1),
-            votesPercentage: 0,
-        }))
-    }, [shareholders])
 
     // Derive signatories from real ownership data based on company type
     const signatories = useMemo<Signatory[]>(() => {

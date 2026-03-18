@@ -6,7 +6,11 @@
  */
 
 import { defineTool } from '../registry'
-import { createServerClient } from '../../database/client'
+import { invoiceService } from '@/services/invoice-service'
+import { receiptService } from '@/services/receipt-service'
+import { payrollService } from '@/services/payroll-service'
+import { pendingBookingService } from '@/services/pending-booking-service'
+import { getUnbookedTransactions } from '@/services/transactions'
 
 // =============================================================================
 // Types
@@ -40,66 +44,36 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
   domain: 'common',
     keywords: ['status', 'reconcile', 'uppdatera', 'kontrollera', 'granska', 'kolla', 'avstämning'],
     parameters: { type: 'object', properties: {} },
-    execute: async () => {
-        const supabase = await createServerClient()
+    execute: async (_params, context) => {
         const today = new Date().toISOString().split('T')[0]
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
+        const userId = context?.userId
 
-        // Run all 5 queries in parallel
+        if (!userId) {
+            return { success: false, error: 'Ingen inloggad användare.' }
+        }
+
+        // Run queries via service layer
         const [
             unbookedTx,
-            overdueInvoices,
+            overdueCustomerInv,
+            overdueSupplierInv,
             unmatchedReceipts,
-            draftPayslips,
-            stalePending,
+            unpaidPayslips,
+            allPendingBookings,
         ] = await Promise.all([
-            // 1. Unbooked transactions
-            supabase
-                .from('transactions')
-                .select('id, date, description, amount')
-                .eq('status', 'Att bokföra')
-                .order('date', { ascending: false })
-                .limit(50),
-
-            // 2. Overdue invoices
-            supabase
-                .from('customer_invoices')
-                .select('id, invoice_number, customer_name, total_amount, due_date, status')
-                .in('status', ['Skickad', 'sent'])
-                .lt('due_date', today)
-                .order('due_date', { ascending: true })
-                .limit(50),
-
-            // 3. Unmatched receipts (status = 'Väntar')
-            supabase
-                .from('receipts')
-                .select('id, supplier, amount, captured_at')
-                .eq('status', 'Väntar')
-                .order('captured_at', { ascending: false })
-                .limit(50),
-
-            // 4. Draft payslips
-            supabase
-                .from('payslips')
-                .select('id, created_at')
-                .eq('status', 'draft')
-                .order('created_at', { ascending: false })
-                .limit(50),
-
-            // 5. Stale pending bookings (>7 days old)
-            supabase
-                .from('pending_bookings')
-                .select('id, source_type, description, created_at')
-                .eq('status', 'pending')
-                .lt('created_at', sevenDaysAgo)
-                .order('created_at', { ascending: true })
-                .limit(50),
+            getUnbookedTransactions(userId),
+            invoiceService.getOverdueCustomerInvoices(),
+            invoiceService.getOverdueSupplierInvoices(),
+            receiptService.getUnbookedReceipts(),
+            payrollService.getUnpaidPayslips(),
+            pendingBookingService.getPendingBookings(),
         ])
 
         const items: ReconcileItem[] = []
 
         // 1. Unbooked transactions
-        const txCount = unbookedTx.data?.length ?? 0
+        const txCount = unbookedTx.length
         if (txCount > 0) {
             items.push({
                 area: 'transactions',
@@ -107,16 +81,16 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 count: txCount,
                 message: `${txCount} transaktion${txCount === 1 ? '' : 'er'} väntar på bokföring`,
                 suggestion: 'Vill du att jag hjälper dig bokföra dessa? Jag kan gå igenom dem en i taget.',
-                details: (unbookedTx.data ?? []).slice(0, 5).map(t => ({
+                details: unbookedTx.slice(0, 5).map(t => ({
                     id: t.id,
-                    description: `${t.description ?? 'Okänd'} — ${t.amount} kr`,
-                    date: t.date ,
+                    description: `${t.description || t.name} — ${t.amount}`,
+                    date: t.date,
                 })),
             })
         }
 
         // 2. Overdue invoices
-        const invCount = overdueInvoices.data?.length ?? 0
+        const invCount = overdueCustomerInv.length + overdueSupplierInv.length
         if (invCount > 0) {
             items.push({
                 area: 'invoices',
@@ -124,16 +98,23 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 count: invCount,
                 message: `${invCount} faktura${invCount === 1 ? '' : 'or'} har passerat förfallodatum`,
                 suggestion: 'Kontrollera om dessa har betalats. Jag kan markera dem som betalda eller skicka en påminnelse.',
-                details: (overdueInvoices.data ?? []).slice(0, 5).map(i => ({
-                    id: i.id,
-                    description: `${i.invoice_number ?? '—'} ${i.customer_name ?? ''} — ${i.total_amount} kr`,
-                    date: i.due_date ,
-                })),
+                details: [
+                    ...overdueCustomerInv.slice(0, 3).map(i => ({
+                        id: i.id,
+                        description: `Utgående: ${i.invoiceNumber} ${i.customer} — ${i.totalAmount} kr`,
+                        date: i.dueDate,
+                    })),
+                    ...overdueSupplierInv.slice(0, 2).map(i => ({
+                        id: i.id,
+                        description: `Inkommande: ${i.invoiceNumber} ${i.supplierName} — ${i.totalAmount} kr`,
+                        date: i.dueDate,
+                    }))
+                ],
             })
         }
 
         // 3. Unmatched receipts
-        const recCount = unmatchedReceipts.data?.length ?? 0
+        const recCount = unmatchedReceipts.length
         if (recCount > 0) {
             items.push({
                 area: 'receipts',
@@ -141,33 +122,37 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 count: recCount,
                 message: `${recCount} kvitto${recCount === 1 ? '' : 'n'} saknar koppling till transaktion`,
                 suggestion: 'Jag kan försöka matcha dessa mot dina banktransaktioner.',
-                details: (unmatchedReceipts.data ?? []).slice(0, 5).map(r => ({
+                details: unmatchedReceipts.slice(0, 5).map(r => ({
                     id: r.id,
-                    description: `${r.supplier ?? 'Okänd butik'} — ${r.amount ?? '?'} kr`,
-                    date: r.captured_at ,
+                    description: `${r.supplier} — ${r.amount} kr`,
+                    date: r.date,
                 })),
             })
         }
 
         // 4. Draft payslips
-        const payCount = draftPayslips.data?.length ?? 0
+        const draftPayslips = unpaidPayslips.filter(p => p.status === 'draft')
+        const payCount = draftPayslips.length
         if (payCount > 0) {
             items.push({
                 area: 'payroll',
                 severity: 'warning',
                 count: payCount,
-                message: `${payCount} lönebesked${payCount === 1 ? '' : ''} ligger som utkast`,
+                message: `${payCount} lönebesked ligger som utkast`,
                 suggestion: 'Dessa bör granskas och godkännas. Vill du att jag visar dem?',
-                details: (draftPayslips.data ?? []).slice(0, 5).map(p => ({
+                details: draftPayslips.slice(0, 5).map(p => ({
                     id: p.id,
-                    description: 'Utkast lönebesked',
-                    date: p.created_at ,
+                    description: `Utkast: ${p.employeeName} (${p.period})`,
+                    date: p.sentAt || undefined,
                 })),
             })
         }
 
-        // 5. Stale pending bookings
-        const bookCount = stalePending.data?.length ?? 0
+        // 5. Stale pending bookings (> 7 days)
+        const stalePending = allPendingBookings.filter(b => 
+            new Date(b.createdAt) < sevenDaysAgo
+        )
+        const bookCount = stalePending.length
         if (bookCount > 0) {
             items.push({
                 area: 'bookings',
@@ -175,10 +160,10 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 count: bookCount,
                 message: `${bookCount} väntande bokning${bookCount === 1 ? '' : 'ar'} äldre än 7 dagar`,
                 suggestion: 'Dessa kan behöva granskas eller tas bort om de inte längre är aktuella.',
-                details: (stalePending.data ?? []).slice(0, 5).map(b => ({
+                details: stalePending.slice(0, 5).map(b => ({
                     id: b.id,
-                    description: `${b.source_type ?? 'Okänd källa'}: ${b.description ?? '—'}`,
-                    date: b.created_at ,
+                    description: `${b.sourceType}: ${b.description}`,
+                    date: b.createdAt,
                 })),
             })
         }
@@ -196,7 +181,6 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
             summary,
         }
 
-        // Build walkthrough sections
         const severityIcon = (s: string) => s === 'critical' ? '🔴' : s === 'warning' ? '🟡' : '🔵'
 
         const walkthrough = {
@@ -216,7 +200,6 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 })),
         }
 
-        // Build message for AI
         const statusEmoji = summary.critical > 0 ? '🔴' : summary.warnings > 0 ? '🟡' : '✅'
         const message = items.length === 0
             ? '✅ Allt ser bra ut! Inga inkonsekvenser hittades.\n\nResultatet visas i en walkthrough-vy. Bekräfta för användaren att allt är uppdaterat.'
@@ -224,7 +207,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
               items.map(i => `${severityIcon(i.severity)} **${i.area}**: ${i.message}\n   → ${i.suggestion}`).join('\n\n') +
               '\n\n---\n\n' +
               'Resultatet visas i en walkthrough-vy för användaren. Skriv en kort sammanfattning (2-4 meningar) av vad du hittade. ' +
-              'Erbjud dig att hjälpa till med de mest kritiska punkterna först. Skriv INTE ut listan igen — den visas redan i vyn.'
+              'Erbjud dig att hjälpa till med de mest kritiska punkterna först. Skriv INTE ut listan igen — de visas redan i vyn.'
 
         return {
             success: true,

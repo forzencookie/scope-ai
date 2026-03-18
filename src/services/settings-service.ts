@@ -6,7 +6,7 @@
  */
 
 import { createBrowserClient } from '@/lib/database/client'
-import { createServerClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/server'
 import { getMonthlyUsage, checkUsageLimits } from '@/lib/model-auth'
 
 // =============================================================================

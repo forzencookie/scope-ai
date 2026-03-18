@@ -4,7 +4,6 @@
  * useSubscription - Hook for subscription tier management
  *
  * Provides access to the user's subscription tier and feature gates.
- * Handles demo mode detection and upgrade prompts.
  * 
  * PERFORMANCE: Uses React Query for automatic caching and deduplication.
  * Multiple components calling useSubscription() share the same cached data.
@@ -20,7 +19,6 @@ import {
   SubscriptionTier,
   GatedFeature,
   canUseFeature,
-  isFeatureSimulated,
   TIER_DISPLAY_NAMES,
   TIER_COLORS,
   getUpgradePrompt,
@@ -48,8 +46,6 @@ interface UseSubscriptionReturn {
   loading: boolean
   /** Check if a feature is available */
   canUse: (feature: GatedFeature) => boolean
-  /** Check if feature should be simulated */
-  isSimulated: (feature: GatedFeature) => boolean
   /** Get upgrade prompt for a feature */
   getUpgradeMessage: (feature: GatedFeature) => string
   /** Refresh subscription from server */
@@ -58,7 +54,7 @@ interface UseSubscriptionReturn {
 
 const DEFAULT_PROFILE: SubscriptionProfile = {
   tier: "pro",
-  isPaid: false,
+  isPaid: true, // All users are on paid tier now
 }
 
 export function useSubscription(): UseSubscriptionReturn {
@@ -66,8 +62,6 @@ export function useSubscription(): UseSubscriptionReturn {
   const queryClient = useQueryClient()
 
   // Use React Query for caching and deduplication
-  // Note: Use isPending instead of isLoading to correctly detect when we have real data
-  // isLoading is false when placeholderData is provided, even before fetch completes
   const { data: profile = DEFAULT_PROFILE, isPending, isFetching } = useQuery({
     queryKey: subscriptionQueryKey,
     queryFn: async (): Promise<SubscriptionProfile> => {
@@ -79,7 +73,7 @@ export function useSubscription(): UseSubscriptionReturn {
         return {
           // Use server-provided values - these are authoritative
           tier: data.subscription_tier as SubscriptionTier,
-          isPaid: data.is_paid ?? false,
+          isPaid: data.is_paid ?? true,
         }
       }
       return DEFAULT_PROFILE
@@ -100,11 +94,6 @@ export function useSubscription(): UseSubscriptionReturn {
     [profile.tier]
   )
 
-  const isSimulated = useCallback(
-    (feature: GatedFeature) => isFeatureSimulated(profile.tier, feature),
-    [profile.tier]
-  )
-
   const getUpgradeMessage = useCallback(
     (feature: GatedFeature) => getUpgradePrompt(feature),
     []
@@ -120,11 +109,10 @@ export function useSubscription(): UseSubscriptionReturn {
       // Use isPending OR isFetching to ensure we wait for real data
       loading: isPending || isFetching || authLoading,
       canUse,
-      isSimulated,
       getUpgradeMessage,
       refresh,
     }),
-    [profile, isPending, isFetching, authLoading, canUse, isSimulated, getUpgradeMessage, refresh]
+    [profile, isPending, isFetching, authLoading, canUse, getUpgradeMessage, refresh]
   )
 }
 

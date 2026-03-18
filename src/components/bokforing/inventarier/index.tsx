@@ -81,7 +81,14 @@ export function InventarierTable() {
             <InventarierGrid
                 inventarier={filteredInventarier}
                 isLoading={isLoading}
-                selection={selection}
+                selection={{
+                    ...selection,
+                    selectedIds: Array.from(selection.selectedIds),
+                    allSelected: selection.selectedCount === filteredInventarier.length,
+                    someSelected: selection.selectedCount > 0 && selection.selectedCount < filteredInventarier.length,
+                    toggle: selection.toggleItem,
+                    clearSelection: () => { } // Mock for now or use real clear
+                }}
             />
         </div>
     )

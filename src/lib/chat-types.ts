@@ -4,80 +4,34 @@
  */
 
 import type { MentionItem } from '@/components/ai/mention-popover'
+import type { 
+    Receipt, 
+    Transaction, 
+    TaskChecklist, 
+    BenefitsTable, 
+    ActivityCard, 
+    ComparisonTable 
+} from './ai-schema'
 
-// Import component prop types for type safety
-import type { ActivityChange, ComparisonRow } from '@/components/ai'
+// Import component prop types for compatibility where needed
+import type { BalanceAuditCardProps } from '@/components/ai/previews/bokforing/balance-audit-card'
+import type { InlineCardData } from '@/components/ai/cards/inline'
 
-// Display card data types - discriminated union for type safety
+// Display card data types - strictly typed discriminated union
 export type MessageDisplay =
-    | {
-        type: 'ReceiptCard'
-        data: {
-            receipt?: {
-                id?: string
-                vendor?: string
-                amount?: number
-                date?: string
-                category?: string
-                description?: string
-            }
-        } & Record<string, unknown>
-    }
-    | {
-        type: 'TransactionCard'
-        data: {
-            transaction?: {
-                id?: string
-                description?: string
-                amount?: number
-                date?: string
-                account?: string
-                type?: 'income' | 'expense'
-            }
-        } & Record<string, unknown>
-    }
-    | {
-        type: 'TaskChecklist'
-        data: {
-            title?: string
-            tasks?: Array<{ id?: string; label: string; completed?: boolean }>
-        } & Record<string, unknown>
-    }
-    | {
-        type: 'ReceiptsTable'
-        data: Record<string, unknown>
-    }
-    | {
-        type: 'ActivityCard'
-        data: {
-            action?: 'created' | 'updated' | 'deleted' | 'calculated' | 'prepared'
-            entityType?: 'receipt' | 'transaction' | 'invoice' | 'payslip' | 'report' | 'shareholder' | 'document'
-            title?: string
-            subtitle?: string
-            changes?: ActivityChange[]
-            link?: string
-            linkLabel?: string
-        } & Record<string, unknown>
-    }
-    | {
-        type: 'ComparisonTable'
-        data: {
-            title?: string
-            rows?: ComparisonRow[]
-        } & Record<string, unknown>
-    }
-    | {
-        type: 'BenefitsTable'
-        data: {
-            benefits?: Array<{ id?: string; name?: string; category?: string }>
-        } & Record<string, unknown>
-    }
+    | { type: 'ReceiptCard'; data: Receipt }
+    | { type: 'TransactionCard'; data: Transaction }
+    | { type: 'TaskChecklist'; data: TaskChecklist }
+    | { type: 'ReceiptsTable'; data: Record<string, unknown> }
+    | { type: 'ActivityCard'; data: ActivityCard }
+    | { type: 'ComparisonTable'; data: ComparisonTable }
+    | { type: 'BenefitsTable'; data: BenefitsTable }
     | {
         type: 'BalanceAuditCard'
         component?: string
         data: {
-            audit?: unknown
-        } & Record<string, unknown>
+            audit?: BalanceAuditCardProps['audit']
+        } & Record<string, any>
     }
     | {
         type: 'ActionTrigger'
@@ -88,22 +42,8 @@ export type MessageDisplay =
             meta?: string
         }
     }
-    | {
-        type: 'InlineCard'
-        data: {
-            cardType: string
-            data: Record<string, unknown>
-        }
-    }
-    | {
-        type: 'InlineCards'
-        data: {
-            cards: Array<{
-                cardType: string
-                data: Record<string, unknown>
-            }>
-        }
-    }
+    | { type: 'InlineCard'; data: InlineCardData }
+    | { type: 'InlineCards'; data: { cards: InlineCardData[] } }
 
 export interface Message {
     id: string

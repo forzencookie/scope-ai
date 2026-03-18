@@ -45,6 +45,7 @@ export function VATReportCard(props: VATReportProps) {
                         },
                         contact: {
                             name: company?.contactPerson || "",
+                            orgnr: company?.orgNumber || "",
                             phone: company?.phone || "",
                             email: company?.email || "",
                         }

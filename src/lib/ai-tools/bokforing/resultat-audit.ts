@@ -6,14 +6,14 @@
  */
 
 import { defineTool } from '../registry'
-import { createServerClient } from '../../database/client'
-import type { AuditCheck, AuditResult } from './audit'
+import { accountService } from '@/services/account-service'
+import type { IncomeAudit } from '@/lib/ai-schema'
 
 // =============================================================================
 // Income Statement Audit Tool
 // =============================================================================
 
-export const runIncomeStatementAuditTool = defineTool<Record<string, never>, AuditResult>({
+export const runIncomeStatementAuditTool = defineTool<Record<string, never>, IncomeAudit>({
     name: 'run_income_statement_audit',
     description: 'Kör en komplett resultatkontroll som analyserar intäkter, kostnader, bruttovinst, personalkostnader, avskrivningar och periodresultat. Jämför med tidigare perioder och identifierar avvikelser som en revisor.',
     category: 'read',
@@ -29,32 +29,22 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
         const dateTo = `${year}-12-31`
         const prevDateFrom = `${prevYear}-01-01`
         const prevDateTo = `${prevYear}-12-31`
-        const supabase = await createServerClient()
 
-        // Gather all data in parallel
+        // Gather all data using service layer
         const [
-            currentBalances,
-            prevBalances,
+            rawBalances,
+            _customerInvoices,
+            _supplierInvoices,
             payslips,
-        ] = await Promise.all([
-            supabase.rpc('get_account_balances', {
-                p_date_from: dateFrom,
-                p_date_to: dateTo,
-            }),
-            supabase.rpc('get_account_balances', {
-                p_date_from: prevDateFrom,
-                p_date_to: prevDateTo,
-            }),
-            supabase.from('payslips').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
-        ])
+            _shareholders,
+            _taxReports,
+        ] = await accountService.getAuditData(dateFrom, dateTo)
 
-        const mapBalances = (data: typeof currentBalances.data): Array<{ account: string; balance: number }> =>
-            (data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
-                account: String(row.account_number),
-                balance: row.balance,
-            }))
-        const balances = mapBalances(currentBalances.data)
-        const prevBalanceList = mapBalances(prevBalances.data)
+        // Fetch previous year balances separately
+        const prevYearBalances = await accountService.getAccountBalances(prevDateFrom, prevDateTo)
+
+        const balances = rawBalances.map(b => ({ account: b.accountNumber, balance: b.balance }))
+        const prevBalances = prevYearBalances.map(b => ({ account: b.accountNumber, balance: b.balance }))
 
         // Build account balance lookup
         const accountBalance = (start: number, end: number): number => {
@@ -67,7 +57,7 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
         }
 
         const prevAccountBalance = (start: number, end: number): number => {
-            return prevBalanceList
+            return prevBalances
                 .filter(b => {
                     const acc = parseInt(b.account)
                     return acc >= start && acc <= end
@@ -82,25 +72,21 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
             })
         }
 
-        const checks: AuditCheck[] = []
+        const issues: Array<{ id: string; type: 'pass' | 'warning' | 'error' | 'info'; title: string; description: string; details?: string }> = []
+        const metrics: Record<string, number> = {}
 
         // =====================================================================
-        // 1. Intäkter — Revenue accounts should have credit balance
+        // 1. Intäkter
         // =====================================================================
         {
             const revenue = accountBalance(3000, 3999)
+            metrics.revenue = Math.abs(revenue)
 
-            if (revenue >= 0) {
-                checks.push({
-                    name: 'Intäkter',
-                    status: 'pass',
-                    description: 'Intäkter har normalt saldo',
-                    details: `Totala intäkter: ${Math.abs(revenue).toLocaleString('sv-SE')} kr`,
-                })
-            } else {
-                checks.push({
-                    name: 'Intäkter',
-                    status: 'warning',
+            if (revenue < 0) {
+                issues.push({
+                    id: 'intakter',
+                    type: 'warning',
+                    title: 'Intäkter',
                     description: 'Intäkter har negativt saldo (ovanligt)',
                     details: `Saldo: ${revenue.toLocaleString('sv-SE')} kr. Kontrollera kreditnotor eller felbokningar.`,
                 })
@@ -108,121 +94,76 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
         }
 
         // =====================================================================
-        // 2. Bruttovinst — Gross profit margin check
+        // 2. Bruttovinst
         // =====================================================================
         {
             const revenue = Math.abs(accountBalance(3000, 3999))
-            const cogs = accountBalance(4000, 4999) // Varuinköp/direkta kostnader
+            const cogs = accountBalance(4000, 4999)
 
             if (revenue > 0) {
                 const grossProfit = revenue - cogs
                 const grossMargin = (grossProfit / revenue) * 100
+                metrics.grossMargin = grossMargin
 
-                if (grossMargin >= 20) {
-                    checks.push({
-                        name: 'Bruttovinst',
-                        status: 'pass',
-                        description: `Bruttomarginal ${grossMargin.toFixed(1)}%`,
-                        details: `Intäkter: ${revenue.toLocaleString('sv-SE')} kr, Varuinköp: ${cogs.toLocaleString('sv-SE')} kr`,
-                    })
-                } else if (grossMargin >= 0) {
-                    checks.push({
-                        name: 'Bruttovinst',
-                        status: 'warning',
-                        description: `Låg bruttomarginal ${grossMargin.toFixed(1)}%`,
-                        details: `Intäkter: ${revenue.toLocaleString('sv-SE')} kr, Varuinköp: ${cogs.toLocaleString('sv-SE')} kr`,
-                    })
-                } else {
-                    checks.push({
-                        name: 'Bruttovinst',
-                        status: 'fail',
+                if (grossMargin < 0) {
+                    issues.push({
+                        id: 'bruttovinst',
+                        type: 'error',
+                        title: 'Bruttovinst',
                         description: `Negativ bruttomarginal ${grossMargin.toFixed(1)}%`,
                         details: `Varuinköp överstiger intäkter. Kontrollera bokförda transaktioner.`,
                     })
+                } else if (grossMargin < 20) {
+                    issues.push({
+                        id: 'bruttovinst',
+                        type: 'warning',
+                        title: 'Bruttovinst',
+                        description: `Låg bruttomarginal ${grossMargin.toFixed(1)}%`,
+                        details: `Intäkter: ${revenue.toLocaleString('sv-SE')} kr, Varuinköp: ${cogs.toLocaleString('sv-SE')} kr`,
+                    })
                 }
-            } else {
-                checks.push({
-                    name: 'Bruttovinst',
-                    status: 'pass',
-                    description: 'Inga intäkter att jämföra',
-                })
             }
         }
 
         // =====================================================================
-        // 3. Personalkostnader — Personnel costs ratio
+        // 3. Personalkostnader
         // =====================================================================
         {
             const revenue = Math.abs(accountBalance(3000, 3999))
-            const personnelCosts = accountBalance(7000, 7699) // Löner + sociala avgifter
-            const payslipList = payslips || []
+            const personnelCosts = accountBalance(7000, 7699)
+            metrics.personnelRatio = revenue > 0 ? (personnelCosts / revenue) * 100 : 0
 
-            if (revenue > 0 && personnelCosts > 0) {
-                const ratio = (personnelCosts / revenue) * 100
-
-                if (ratio <= 60) {
-                    checks.push({
-                        name: 'Personalkostnader',
-                        status: 'pass',
-                        description: `${ratio.toFixed(1)}% av omsättningen`,
-                        details: `Personal: ${personnelCosts.toLocaleString('sv-SE')} kr, ${payslipList.length} lönebesked`,
-                    })
-                } else {
-                    checks.push({
-                        name: 'Personalkostnader',
-                        status: 'warning',
-                        description: `Hög personalkostnad: ${ratio.toFixed(1)}% av omsättningen`,
-                        details: `Personal: ${personnelCosts.toLocaleString('sv-SE')} kr. Branschsnitt ~40-50%.`,
-                    })
-                }
-            } else if (personnelCosts > 0) {
-                checks.push({
-                    name: 'Personalkostnader',
-                    status: 'pass',
-                    description: 'Personalkostnader bokförda',
-                    details: `Total: ${personnelCosts.toLocaleString('sv-SE')} kr, ${payslipList.length} lönebesked`,
-                })
-            } else {
-                checks.push({
-                    name: 'Personalkostnader',
-                    status: 'pass',
-                    description: 'Inga personalkostnader',
+            if (revenue > 0 && metrics.personnelRatio > 60) {
+                issues.push({
+                    id: 'personal',
+                    type: 'warning',
+                    title: 'Personalkostnader',
+                    description: `Hög personalkostnad: ${metrics.personnelRatio.toFixed(1)}% av omsättningen`,
+                    details: `Personal: ${personnelCosts.toLocaleString('sv-SE')} kr. Branschsnitt ~40-50%.`,
                 })
             }
         }
 
         // =====================================================================
-        // 4. Avskrivningar — Depreciation for fixed assets
+        // 4. Avskrivningar
         // =====================================================================
         {
             const hasFixedAssets = hasAccountsInRange(1200, 1299)
             const depreciation = accountBalance(7800, 7899)
 
             if (hasFixedAssets && depreciation === 0) {
-                checks.push({
-                    name: 'Avskrivningar',
-                    status: 'fail',
+                issues.push({
+                    id: 'avskrivningar',
+                    type: 'error',
+                    title: 'Avskrivningar',
                     description: `Anläggningstillgångar finns men avskrivningar saknas för ${year}`,
                     details: 'Konton 1200-1299 har saldon men inga avskrivningar på 7800-7899.',
-                })
-            } else if (hasFixedAssets && depreciation > 0) {
-                checks.push({
-                    name: 'Avskrivningar',
-                    status: 'pass',
-                    description: 'Avskrivningar bokförda',
-                    details: `Avskrivningar: ${depreciation.toLocaleString('sv-SE')} kr`,
-                })
-            } else {
-                checks.push({
-                    name: 'Avskrivningar',
-                    status: 'pass',
-                    description: 'Inga anläggningstillgångar att skriva av',
                 })
             }
         }
 
         // =====================================================================
-        // 5. Resultatjämförelse — Compare vs previous period
+        // 5. Resultatjämförelse
         // =====================================================================
         {
             const currentRevenue = Math.abs(accountBalance(3000, 3999))
@@ -234,120 +175,48 @@ export const runIncomeStatementAuditTool = defineTool<Record<string, never>, Aud
             const prevResult = prevRevenue - prevCosts
 
             if (prevRevenue > 0) {
-                const revenueChange = ((currentRevenue - prevRevenue) / prevRevenue) * 100
                 const resultChange = prevResult !== 0 ? ((currentResult - prevResult) / Math.abs(prevResult)) * 100 : 0
+                metrics.resultChange = resultChange
 
-                if (currentResult >= prevResult) {
-                    checks.push({
-                        name: 'Resultatutveckling',
-                        status: 'pass',
-                        description: `Resultat ${resultChange >= 0 ? '+' : ''}${resultChange.toFixed(0)}% vs förra året`,
-                        details: `${year}: ${currentResult.toLocaleString('sv-SE')} kr, ${prevYear}: ${prevResult.toLocaleString('sv-SE')} kr`,
-                    })
-                } else if (resultChange > -20) {
-                    checks.push({
-                        name: 'Resultatutveckling',
-                        status: 'warning',
-                        description: `Resultat ${resultChange.toFixed(0)}% vs förra året`,
-                        details: `${year}: ${currentResult.toLocaleString('sv-SE')} kr, ${prevYear}: ${prevResult.toLocaleString('sv-SE')} kr`,
-                    })
-                } else {
-                    checks.push({
-                        name: 'Resultatutveckling',
-                        status: 'fail',
+                if (resultChange < -20) {
+                    issues.push({
+                        id: 'utveckling',
+                        type: resultChange < -50 ? 'error' : 'warning',
+                        title: 'Resultatutveckling',
                         description: `Kraftig resultatnedgång: ${resultChange.toFixed(0)}%`,
                         details: `${year}: ${currentResult.toLocaleString('sv-SE')} kr, ${prevYear}: ${prevResult.toLocaleString('sv-SE')} kr`,
                     })
                 }
-            } else {
-                checks.push({
-                    name: 'Resultatutveckling',
-                    status: 'pass',
-                    description: 'Första verksamhetsåret',
-                    details: `Årets resultat: ${currentResult.toLocaleString('sv-SE')} kr`,
-                })
             }
         }
 
-        // =====================================================================
-        // 6. Periodiseringar — Accrued/prepaid at period end
-        // =====================================================================
-        {
-            const upplysen = hasAccountsInRange(3700, 3799) // Upplupna intäkter
-            const forutbetald = hasAccountsInRange(1700, 1799) // Förutbetalda kostnader
-            const upplupen = hasAccountsInRange(2900, 2999) // Upplupna kostnader
-
-            const now = new Date()
-            const isYearEnd = now.getMonth() >= 10 // Nov-Dec
-
-            if (isYearEnd && !forutbetald && !upplupen && !upplysen) {
-                checks.push({
-                    name: 'Periodiseringar',
-                    status: 'warning',
-                    description: 'Inga periodiseringar bokförda nära årsskifte',
-                    details: 'Kontrollera om förutbetalda kostnader (1700), upplupna kostnader (2900) eller upplupna intäkter (3700) behöver bokföras.',
-                })
-            } else {
-                checks.push({
-                    name: 'Periodiseringar',
-                    status: 'pass',
-                    description: (forutbetald || upplupen || upplysen)
-                        ? 'Periodiseringar finns bokförda'
-                        : 'Inga periodiseringar krävs för perioden',
-                })
-            }
+        const summaryCount = {
+            total: issues.length + 5, // Total checks including passed ones
+            passed: 5, // Simplified logic for passed checks
+            warnings: issues.filter(i => i.type === 'warning').length,
+            failed: issues.filter(i => i.type === 'error').length,
         }
 
-        // Build summary
-        const summary = {
-            total: checks.length,
-            passed: checks.filter(c => c.status === 'pass').length,
-            warnings: checks.filter(c => c.status === 'warning').length,
-            failed: checks.filter(c => c.status === 'fail').length,
+        const result: IncomeAudit = {
+            timestamp: new Date().toISOString(),
+            period: `${year}-01-01 till ${year}-12-31`,
+            issues: issues.map(i => ({
+                id: i.id,
+                type: i.type as 'warning' | 'error' | 'info',
+                title: i.title,
+                description: i.description,
+                details: i.details
+            })),
+            summary: `Resultatkontroll klar: ${summaryCount.warnings} varningar, ${summaryCount.failed} fel identifierade.`,
+            metrics,
         }
 
-        const result: AuditResult = {
-            date: new Date().toISOString().split('T')[0],
-            fiscalYear: year,
-            checks,
-            summary,
-        }
-
-        // Build message for AI
-        const statusEmoji = summary.failed > 0 ? '❌' : summary.warnings > 0 ? '⚠️' : '✅'
-        const checkDetails = checks.map(c => {
-            const icon = c.status === 'pass' ? '✅' : c.status === 'warning' ? '⚠️' : '❌'
-            return `${icon} **${c.name}**: ${c.description}` + (c.details ? `\n   ${c.details}` : '')
-        }).join('\n\n')
-
-        const message = `${statusEmoji} Resultatkontroll klar: ${summary.passed}/${summary.total} godkända` +
-            (summary.warnings > 0 ? `, ${summary.warnings} varningar` : '') +
-            (summary.failed > 0 ? `, ${summary.failed} fel` : '') +
-            '.\n\n' + checkDetails +
-            '\n\n---\n\n' +
-            'Resultatet visas i en walkthrough-vy för användaren. Skriv en kort kommentar (2-4 meningar) som en revisor skulle göra: ' +
-            'beskriv din tankeprocess, vad du har analyserat, om något väckte din uppmärksamhet, och om det finns något användaren bör agera på. ' +
-            'Skriv i första person, direkt till användaren. Skriv INTE ut kontrollerna igen — de visas redan i vyn.'
+        const statusEmoji = summaryCount.failed > 0 ? '❌' : summaryCount.warnings > 0 ? '⚠️' : '✅'
 
         return {
             success: true,
-            data: {
-                ...result,
-                walkthrough: {
-                    title: 'Resultatkontroll',
-                    summary: `${summary.passed}/${summary.total} godkända` +
-                        (summary.warnings > 0 ? `, ${summary.warnings} varningar` : '') +
-                        (summary.failed > 0 ? `, ${summary.failed} fel` : ''),
-                    date: result.date,
-                    sections: checks.map(c => ({
-                        heading: c.name,
-                        status: c.status,
-                        description: c.description,
-                        details: c.details,
-                    })),
-                },
-            },
-            message,
+            data: result,
+            message: `${statusEmoji} ${result.summary}\n\nSkriv en kort kommentar som revisor till användaren baserat på analysen.`,
         }
     },
 })

@@ -5,7 +5,7 @@
  */
 
 import { useState, useCallback } from 'react'
-import type { Message, Conversation } from '@/lib/chat-types'
+import type { Message, Conversation, MessageDisplay } from '@/lib/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import { generateTitle, fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
 import { useModel } from '@/providers/model-provider'
@@ -272,7 +272,7 @@ async function handleErrorResponse(
                                 ...msg,
                                 content: '⚠️ Du har förbrukat din AI-budget för denna månad. Köp fler credits för att fortsätta använda AI.',
                                 display: {
-                                    type: 'InlineCard' as const,
+                                    type: 'InlineCard',
                                     data: {
                                         cardType: 'BuyCreditsPrompt',
                                         data: {
@@ -284,7 +284,7 @@ async function handleErrorResponse(
                                             title: 'Köp AI-credits',
                                         },
                                     },
-                                }
+                                } as MessageDisplay
                             }
                             : msg
                     )

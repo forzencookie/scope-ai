@@ -4,8 +4,9 @@ import { useAsync, useAsyncMutation } from "./use-async"
 import { useAuth } from "./use-auth"
 import { shareholderService, type Shareholder } from "@/services/shareholder-service"
 import { boardService, type CompanyMeeting } from "@/services/board-service"
+import { type GeneralMeeting } from "@/types/ownership"
 
-export type { Shareholder, CompanyMeeting }
+export type { Shareholder, CompanyMeeting, GeneralMeeting }
 
 export function useCompliance() {
     const { user } = useAuth()
@@ -43,12 +44,23 @@ export function useCompliance() {
 
     // Add Document Mutation
     const addDocumentMutation = useAsyncMutation(
-        async (doc: { title: string; type: 'board' | 'annual' | 'extraordinary'; date: string; location?: string }) => {
+        async (doc: { 
+            title: string; 
+            type: 'board' | 'annual' | 'extraordinary' | 'general_meeting_minutes'; 
+            meetingCategory?: 'bolagsstamma' | 'styrelsemote';
+            date: string; 
+            location?: string;
+            content?: string;
+            status?: string;
+            source?: string;
+        }) => {
             const result = await boardService.createMeeting({
                 title: doc.title,
-                type: doc.type === 'board' ? 'board_meeting_minutes' : 'general_meeting_minutes',
+                type: (doc.type === 'board' ? 'board_meeting_minutes' : 'general_meeting_minutes'),
+                meetingCategory: doc.meetingCategory,
                 date: doc.date,
                 location: doc.location,
+                status: doc.status,
             })
             refetchDocs()
             return result
@@ -57,7 +69,7 @@ export function useCompliance() {
 
     // Update Document Mutation
     const updateDocumentMutation = useAsyncMutation(
-        async ({ id, ...updates }: Partial<CompanyMeeting> & { id: string }) => {
+        async ({ id, ...updates }: Partial<GeneralMeeting> & { id: string }) => {
             await boardService.updateMeeting(id, updates)
             refetchDocs()
             return { id, ...updates }

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server"
-import { createServerClient } from "@/lib/database/client"
+import { createServerClient } from "@/lib/database/server"
 
 export interface UserPreferences {
     // Notifications

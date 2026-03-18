@@ -1,7 +1,7 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
 import { verificationService } from '@/services/verification-service'
-import { createSimpleEntry, validateJournalEntry } from '@/lib/bookkeeping'
+import { createSimpleEntry, validateJournalEntry, generateEntryId } from '@/lib/bookkeeping'
 
 interface VerificationRow {
     account: string
@@ -45,9 +45,10 @@ export const createVerificationTool: AITool = {
         const { description, date, rows } = params as { description: string, date?: string, rows: VerificationRow[] }
         const entryDate = date || new Date().toISOString().split('T')[0]
 
-        // 1. Use the Bookkeeping Engine to create the entry
-        // This ensures the entry follows the standard internal model
-        const entry = createSimpleEntry({
+        // 1. Manually construct the JournalEntry following the internal model
+        const entry = {
+            id: generateEntryId(),
+            series: 'A', // Default to A series for manual entries
             date: entryDate,
             description,
             rows: rows.map(r => ({
@@ -55,17 +56,20 @@ export const createVerificationTool: AITool = {
                 debit: r.debit || 0,
                 credit: r.credit || 0,
                 description: r.description
-            }))
-        })
+            })),
+            finalized: false,
+            createdAt: new Date().toISOString(),
+        }
 
-        // 2. Validate using the engine rules (BFL compliance)
+        // 2. Validate the entry using the Bookkeeping Engine
         const validation = validateJournalEntry(entry)
         if (!validation.valid) {
             return {
                 success: false,
-                error: `Verifikationen är ogiltig: ${validation.errors.join('. ')}`,
+                error: `Ogiltig verifikation: ${validation.errors.join(', ')}`,
             }
         }
+
 
         // 3. Persistence flow
         if (context?.isConfirmed) {

@@ -61,7 +61,7 @@ async function seed() {
     const companyId = '00000000-0000-0000-0000-000000000001'
     await supabase.from('companies').upsert({
         id: companyId,
-        name: 'Demo Company AB'
+        name: 'Mitt Företag AB'
     })
     console.log('Company ensured')
 

@@ -2,7 +2,7 @@
  * Scope Brain - Unified AI Agent
  *
  * Single agent with access to all tools and domain expertise.
- * Uses OpenAI GPT-4o with tool calling and streaming.
+ * Uses OpenAI GPT-5 with tool calling and streaming.
  */
 
 import type {

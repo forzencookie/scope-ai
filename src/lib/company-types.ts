@@ -93,6 +93,7 @@ export type FeatureKey =
   // Payroll & Compensation
   | 'lonebesked'
   | 'agi'
+  | 'formaner'
   | 'utdelning'
   | 'k10' // K10 blankett for fåmansföretag (AB only)
   | 'egenavgifter'
@@ -372,6 +373,12 @@ export const featureInfo: Record<FeatureKey, FeatureInfo> = {
     key: 'agi',
     label: 'AGI',
     description: 'Arbetsgivardeklaration på individnivå',
+    category: 'payroll',
+  },
+  formaner: {
+    key: 'formaner',
+    label: 'Förmåner',
+    description: 'Hantera anställdas förmåner',
     category: 'payroll',
   },
   utdelning: {

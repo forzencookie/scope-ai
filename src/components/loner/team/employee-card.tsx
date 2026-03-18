@@ -8,7 +8,7 @@ import { cn } from "@/lib/utils"
 interface Employee {
     id: string
     name: string
-    role: string
+    role?: string
 }
 
 interface EmployeeCardProps {
@@ -34,7 +34,7 @@ export function EmployeeCard({ employee, balance, mileage, onViewDossier }: Empl
                 </Avatar>
                 <div className="grid gap-1">
                     <CardTitle className="text-base">{employee.name}</CardTitle>
-                    <CardDescription>{employee.role}</CardDescription>
+                    <CardDescription>{employee.role || 'Anställd'}</CardDescription>
                 </div>
             </CardHeader>
             <CardContent className="p-4 grid gap-3">

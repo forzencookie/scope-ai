@@ -4,7 +4,21 @@ import { useState, useMemo, useEffect } from "react"
 import { useEmployees } from "@/hooks/use-employees"
 import { useVerifications } from "@/hooks/use-verifications"
 import { getEmployeeBenefits } from "@/lib/formaner"
-import type { SalaryRecord, ExpenseRecord } from "./dialogs"
+
+export interface SalaryRecord {
+    period: string
+    grossSalary: number
+    netSalary: number
+    tax: number
+    status: string
+}
+
+export interface ExpenseRecord {
+    date: string
+    description: string
+    amount: number
+    type: 'expense' | 'mileage'
+}
 
 export function useTeamLogic() {
     const { verifications } = useVerifications()

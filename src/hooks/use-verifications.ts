@@ -13,7 +13,7 @@ export interface VerificationRow {
 /**
  * API-layer Verification type (simplified for hook consumers).
  * Uses `rows` instead of `entries` to match API response shape.
- * Canonical type: `CanonicalVerification` in `@/types`
+ * Canonical type: `Verification` in `@/types`
  */
 export interface Verification {
     id: string

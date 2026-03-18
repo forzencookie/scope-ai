@@ -1,4 +1,14 @@
 import { createBrowserClient } from '@/lib/database/client'
+import type { Database } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/**
+ * Internal helper to get the correct Supabase client (passed in or default browser).
+ * This makes the service "Universal" (safe for both Client and Server/AI).
+ */
+function getSupabase(client?: SupabaseClient<Database>) {
+    return client || createBrowserClient()
+}
 
 /**
  * Account Balance Row - represents an account from BAS kontoplan
@@ -125,8 +135,8 @@ export const accountService = {
         year,
         period,
         accountClass
-    }: GetAccountsOptions = {}) {
-        const supabase = createBrowserClient()
+    }: GetAccountsOptions = {}, client?: SupabaseClient<Database>) {
+        const supabase = getSupabase(client)
         const targetYear = year || new Date().getFullYear()
 
         let query = supabase
@@ -180,8 +190,8 @@ export const accountService = {
     /**
      * Get balance for a specific account
      */
-    async getAccountBalance(accountNumber: string, year?: number): Promise<Account | null> {
-        const supabase = createBrowserClient()
+    async getAccountBalance(accountNumber: string, year?: number, client?: SupabaseClient<Database>): Promise<Account | null> {
+        const supabase = getSupabase(client)
         const targetYear = year || new Date().getFullYear()
 
         const { data, error } = await supabase
@@ -210,15 +220,15 @@ export const accountService = {
     /**
      * Get accounts by account class (1xxx, 2xxx, etc.)
      */
-    async getAccountsByClass(accountClass: '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8', year?: number) {
-        return this.getAccounts({ accountClass, year, limit: 200 })
+    async getAccountsByClass(accountClass: '1' | '2' | '3' | '4' | '5' | '6' | '7' | '8', year?: number, client?: SupabaseClient<Database>) {
+        return this.getAccounts({ accountClass, year, limit: 200 }, client)
     },
 
     /**
      * Get balance sheet summary (assets, liabilities, equity)
      */
-    async getBalanceSheetSummary(year?: number): Promise<AccountBalanceSummary> {
-        const supabase = createBrowserClient()
+    async getBalanceSheetSummary(year?: number, client?: SupabaseClient<Database>): Promise<AccountBalanceSummary> {
+        const supabase = getSupabase(client)
         const targetYear = year || new Date().getFullYear()
 
         const { data } = await supabase
@@ -285,15 +295,15 @@ export const accountService = {
     /**
      * Search for accounts by name or number
      */
-    async searchAccounts(query: string, year?: number) {
-        return this.getAccounts({ search: query, year, limit: 50 })
+    async searchAccounts(query: string, year?: number, client?: SupabaseClient<Database>) {
+        return this.getAccounts({ search: query, year, limit: 50 }, client)
     },
 
     /**
      * Get chart of accounts (kontoplan) - all accounts grouped by class
      */
-    async getChartOfAccounts(year?: number) {
-        const { accounts } = await this.getAccounts({ year, limit: 500 })
+    async getChartOfAccounts(year?: number, client?: SupabaseClient<Database>) {
+        const { accounts } = await this.getAccounts({ year, limit: 500 }, client)
 
         // Group by account class
         const grouped: Record<string, Account[]> = {}
@@ -316,5 +326,46 @@ export const accountService = {
             avskrivningar: grouped['7'] || [],       // Depreciation
             finansiellaPoster: grouped['8'] || []    // Financial items
         }
+    },
+
+    /**
+     * Get all data needed for financial audits (Balance Sheet & Income Statement)
+     */
+    async getAuditData(dateFrom: string, dateTo: string, client?: SupabaseClient<Database>) {
+        const supabase = getSupabase(client)
+        
+        return Promise.all([
+            this.getAccountBalances(dateFrom, dateTo, client),
+            supabase.from('customer_invoices').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
+            supabase.from('supplier_invoices').select('*').order('due_date', { ascending: true }).limit(500).then(r => r.data || []),
+            supabase.from('payslips').select('*').order('created_at', { ascending: false }).limit(500).then(r => r.data || []),
+            supabase.from('shareholders').select('*').order('shares', { ascending: false }).then(r => r.data || []),
+            supabase.from('tax_reports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
+        ])
+    },
+
+    /**
+     * Get real account balances for a period from verification data
+     */
+    async getAccountBalances(startDate: string, endDate: string, client?: SupabaseClient<Database>): Promise<Account[]> {
+        const supabase = getSupabase(client)
+        const { data, error } = await supabase.rpc('get_account_balances', {
+            p_date_from: startDate,
+            p_date_to: endDate,
+        })
+
+        if (error) throw error
+        if (!data || data.length === 0) return []
+
+        return data.map((row: any) => ({
+            id: row.id || `acc-${row.account_number}`,
+            accountNumber: String(row.account_number),
+            accountName: row.account_name,
+            balance: row.balance || 0,
+            period: row.period || null,
+            year: row.year || new Date(endDate).getFullYear(),
+            accountClass: getAccountClass(String(row.account_number)),
+            accountType: getAccountType(String(row.account_number))
+        }))
     }
 }

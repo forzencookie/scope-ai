@@ -366,6 +366,7 @@ export function createK10Declaration(data: K10SRUData): SRUDeclaration {
 
 interface LegacySRUContact {
     name: string
+    orgnr: string
     phone: string
     email: string
     address?: string
@@ -394,7 +395,7 @@ class LegacySRUGenerator {
 
     public addMediaProvider(info: LegacySRUContact) {
         this.addLine(`#MEDIELEVERANTÖR_START`)
-        this.addLine(`#ORGNR ${info.phone}`)
+        this.addLine(`#ORGNR ${info.orgnr}`)
         this.addLine(`#NAMN ${info.name}`)
         this.addLine(`#ADRESS ${info.address || ''}`)
         this.addLine(`#POSTNR ${info.postalCode || ''}`)

@@ -350,11 +350,8 @@ export function toFullTransaction(simple: SimpleTransaction): Transaction {
 // ============================================
 // Verification Types (Canonical)
 // ============================================
-// NOTE: Layer-specific variants exist:
-//   - hooks/use-verifications.ts: API response model (uses `rows` field)
-//   - services/verification-service.ts: DB model (uses `entries` field + totals)
-//   - components/bokforing/verifikationer/types.ts: Grid display model
-// New code should import from here. Existing code will migrate gradually.
+// The single source of truth for all accounting verifications.
+// New code should import from here.
 
 /** A single entry (journal line) within a verification */
 export interface VerificationEntry {
@@ -366,7 +363,7 @@ export interface VerificationEntry {
 }
 
 /** Canonical Verification type — the complete accounting verification (verifikat) */
-export interface CanonicalVerification {
+export interface Verification {
   id: string
   /** BFL series letter, e.g. "A", "B", "Y" */
   series: string

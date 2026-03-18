@@ -137,21 +137,25 @@ function LoggaInContent() {
     }
 
     return (
-        <div
-            className="relative min-h-screen text-white font-sans selection:bg-white/30 flex flex-col"
-            style={{
-                backgroundColor: '#050505',
-                backgroundImage: "url('/premiumbg-clean.png')",
-                backgroundSize: 'cover',
-                backgroundPosition: '85% center',
-                backgroundAttachment: 'fixed',
-                backgroundRepeat: 'no-repeat',
-            }}
-        >
-            <Navbar />
+        <div className="relative min-h-screen text-white font-sans selection:bg-white/30 flex flex-col">
+            {/* Fixed Background Layer - Shared across pages */}
+            <div 
+                className="fixed inset-0 z-0"
+                style={{
+                    backgroundColor: '#050505',
+                    backgroundImage: "url('/premiumbg-clean.png')",
+                    backgroundSize: 'cover',
+                    backgroundPosition: 'center',
+                }}
+            />
+
+            {/* Navbar needs to be z-index 10 or higher */}
+            <div className="relative z-10">
+                <Navbar />
+            </div>
 
             {/* Main Content - Centered Card */}
-            <main className="flex-grow flex items-center justify-center px-4 pt-24 pb-20">
+            <main className="relative z-10 flex-grow flex items-center justify-center px-4 pt-24 pb-20">
                 <div className="w-full max-w-[440px] md:max-w-[640px] bg-black/30 backdrop-blur-2xl rounded-[2rem] p-8 md:p-10 flex flex-col min-h-[380px] md:min-h-[420px] relative overflow-hidden">
                     <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-white mb-4">
                         Välkommen

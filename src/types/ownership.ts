@@ -152,6 +152,7 @@ export interface AgendaItem {
 
 export interface GeneralMeeting {
   id: string;
+  title: string;
   year: number;
   date: string;
   location: string;
@@ -170,11 +171,13 @@ export interface GeneralMeeting {
   kallelseText?: string;
   kallelseSavedAt?: string;
   time?: string;
-  agenda?: string[];
+  agenda?: string | string[];
   // Board meeting specific fields
   attendees?: string[];
   absentees?: string[];
   meetingNumber?: number;
+  protokollText?: string;
+  notes?: string;
 }
 
 export interface GeneralMeetingDecision {
@@ -190,6 +193,7 @@ export interface GeneralMeetingDecision {
     against: number;
     abstained: number;
   };
+  protokollText?: string;
 }
 
 // ============================================

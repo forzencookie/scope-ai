@@ -15,31 +15,24 @@ export function useArsmoteStats() {
   // Map real documents to AnnualMeeting format
   const meetings = useMemo(() => {
     return (realDocuments || [])
-      .filter(doc => doc.type === 'general_meeting_minutes')
+      .filter(doc => doc.meetingCategory === 'bolagsstamma')
       .map((doc) => {
-        let content: Partial<AnnualMeeting> = {
-          year: new Date(doc.date).getFullYear(),
-          location: 'Ej angivet',
-          chairperson: '',
-          secretary: '',
-          attendeesCount: 0,
-          decisions: [],
-          motions: [],
-          type: 'ordinarie' as const
-        }
-
-        try {
-          const parsed = JSON.parse(doc.content)
-          content = { ...content, ...parsed }
-        } catch {
-          // Fallback
-        }
-
         return {
           id: doc.id,
           date: doc.date,
-          status: (doc.status === 'signed' ? 'protokoll signerat' : (doc.status === 'archived' ? 'genomförd' : 'planerad')) as AnnualMeeting['status'],
-          ...content
+          year: doc.year,
+          location: doc.location || 'Ej angivet',
+          chairperson: doc.chairperson || '',
+          secretary: doc.secretary || '',
+          attendeesCount: doc.attendeesCount,
+          decisions: doc.decisions.map(d => ({
+            id: d.id,
+            title: d.title,
+            decision: d.decision
+          })),
+          motions: [],
+          type: (doc.type === 'extra' ? 'extra' : 'ordinarie'),
+          status: doc.status
         } as AnnualMeeting
       })
   }, [realDocuments])

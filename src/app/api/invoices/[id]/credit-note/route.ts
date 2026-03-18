@@ -12,7 +12,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 import { createCreditNoteEntry } from '@/lib/bookkeeping/entries/sales'
 import type { Database } from '@/types/database'
 

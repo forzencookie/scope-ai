@@ -7,8 +7,8 @@
  */
 
 import { NextRequest } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/database/auth'
-import { createServerClient } from '@/lib/database/client'
+import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
+import { createServerClient } from '@/lib/database/server'
 import { isPaidTier, type SubscriptionTier } from '@/lib/subscription'
 import type { Database } from '@/types/database'
 
@@ -73,13 +73,13 @@ export async function GET(request: NextRequest) {
 
     // Normalize tier and add convenience flags
     const rawTier = profile.subscription_tier ?? 'pro'
-    const tier = (rawTier === 'enterprise' ? 'max' : (['pro', 'max'].includes(rawTier) ? rawTier : 'pro')) as SubscriptionTier
+    const tier = (['pro', 'max'].includes(rawTier) ? rawTier : 'pro') as SubscriptionTier
 
     const normalizedProfile = {
       ...profile,
       subscription_tier: tier,
       // Convenience flag for client - derived server-side for consistency
-      is_paid: isPaidTier(tier),
+      is_paid: true, // All users are paid
     }
 
     return Response.json(normalizedProfile)

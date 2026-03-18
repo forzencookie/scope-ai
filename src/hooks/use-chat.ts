@@ -13,6 +13,7 @@ import { useModel } from '@/providers/model-provider'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import type { Message as AppMessage, Conversation } from '@/lib/chat-types'
 import { fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
+import { type InlineCardType } from '@/components/ai/cards/inline'
 
 /** Extract tool invocations from message parts */
 interface ToolInvocationData {
@@ -33,7 +34,7 @@ function extractToolInvocations(parts: UIMessagePart<UIDataTypes, UITools>[] | u
 }
 
 /** Derive card type from tool name for proper inline card rendering */
-function deriveCardType(toolName: string): string {
+function deriveCardType(toolName: string): InlineCardType {
     const name = toolName.toLowerCase()
     if (name.includes('invoice') || name.includes('faktura')) return 'invoice'
     if (name.includes('transaction') || name.includes('transaktion')) return 'transaction'
@@ -42,6 +43,7 @@ function deriveCardType(toolName: string): string {
     if (name.includes('vat') || name.includes('moms')) return 'vat'
     if (name.includes('dividend') || name.includes('utdelning')) return 'dividend'
     if (name.includes('receipt') || name.includes('kvitto')) return 'receipt'
+    if (name.includes('task') || name.includes('uppgift')) return 'task_completed'
     return 'report'
 }
 

@@ -38,8 +38,8 @@ export function UpgradeButton({
     const Icon = config.icon
 
     // Don't show if user already has this tier or higher
-    const tierOrder = ['free', 'pro', 'max']
-    const currentIndex = tierOrder.indexOf(currentTier || 'free')
+    const tierOrder = ['pro', 'max']
+    const currentIndex = tierOrder.indexOf(currentTier || 'pro')
     const targetIndex = tierOrder.indexOf(tier)
 
     if (currentIndex >= targetIndex) {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { parseSIE } from '@/lib/parsers/sie-parser'
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 import { randomUUID } from "crypto"
 import type { Database } from '@/types/database'
 

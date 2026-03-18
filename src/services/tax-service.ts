@@ -186,6 +186,29 @@ export const taxService = {
             console.error(`[tax-service] Failed to fetch tax rates for year ${year}:`, error)
             return null
         }
+    /**
+     * Get upcoming deadlines from the tax calendar
+     */
+    async getUpcomingDeadlines(days: number = 60): Promise<any[]> {
+        const supabase = createBrowserClient()
+        const today = new Date().toISOString()
+        const futureDate = new Date()
+        futureDate.setDate(futureDate.getDate() + days)
+        const futureDateIso = futureDate.toISOString()
+
+        const { data, error } = await supabase
+            .from('tax_calendar')
+            .select('*')
+            .gte('due_date', today)
+            .lte('due_date', futureDateIso)
+            .order('due_date', { ascending: true })
+
+        if (error) {
+            console.error('Failed to fetch tax calendar:', error)
+            return []
+        }
+
+        return data || []
     },
 }
 

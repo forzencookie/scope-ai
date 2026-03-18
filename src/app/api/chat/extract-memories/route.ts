@@ -11,7 +11,7 @@
  */
 
 import { NextRequest } from 'next/server'
-import { getAuthContext, verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { userMemoryService } from '@/services/user-memory-service'
 
 // =============================================================================

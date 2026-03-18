@@ -159,7 +159,7 @@ export function UpgradeButton({
 
 /**
  * Feature gate wrapper
- * Shows children for paid users, upgrade prompt for free-tier users
+ * Shows children for users with sufficient tier, upgrade prompt otherwise.
  */
 export function FeatureGate({
   feature,
@@ -171,7 +171,7 @@ export function FeatureGate({
   fallback?: React.ReactNode
 }) {
   const { useSubscription } = require("@/hooks/use-subscription")
-  const { canUse, isSimulated, loading } = useSubscription()
+  const { canUse, loading } = useSubscription()
 
   if (loading) {
     return null
@@ -181,5 +181,5 @@ export function FeatureGate({
     return <>{children}</>
   }
 
-  return fallback ?? <UpgradePrompt feature={feature} />
+  return (fallback as React.ReactElement) ?? <UpgradePrompt feature={feature} />
 }

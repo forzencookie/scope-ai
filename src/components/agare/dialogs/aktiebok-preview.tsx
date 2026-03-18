@@ -51,10 +51,11 @@ export function AktiebokPreviewDialog({
             shares: sh.shares,
             ownershipPercentage: sh.ownershipPercentage,
             votesPercentage: sh.votesPercentage,
-            shareNumberFrom: sh.shareNumberFrom,
-            shareNumberTo: sh.shareNumberTo,
+            shareNumberFrom: sh.shareNumberFrom ?? undefined,
+            shareNumberTo: sh.shareNumberTo ?? undefined,
             acquisitionDate: sh.acquisitionDate,
-        })),
+        }))
+,
         stats: {
             totalShares: stats.totalShares,
             totalVotes: stats.totalVotes,

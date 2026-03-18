@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from '@/lib/database/auth'
-import { pendingBookingService } from '@/services/pending-booking-service'
-import { verificationService, type VerificationEntry } from '@/services/verification-service'
-import { createSimpleEntry } from '@/lib/bookkeeping'
-import type { SwedishVatRate } from '@/lib/bookkeeping'
+import { getAuthContext } from "@/lib/database/auth-server"
+import { bookTransaction } from '@/services/transactions'
 
 export async function POST(
     request: NextRequest,
@@ -17,7 +14,7 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { supabase } = ctx;
+        const { supabase, user } = ctx;
 
         const body = await request.json()
         const { category, debitAccount, creditAccount, description, vatRate } = body
@@ -29,90 +26,27 @@ export async function POST(
             )
         }
 
-        // 1. Fetch the transaction to get details
-        const { data: transaction } = await supabase
-            .from('transactions')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (!transaction) {
-            return NextResponse.json({ success: false, error: 'Transaction not found' }, { status: 404 })
-        }
-
-        // 1b. Check period lock
-        const txDate = transaction.date || new Date().toISOString().split('T')[0]
-        const locked = await verificationService.isPeriodLocked(txDate)
-        if (locked) {
-            return NextResponse.json(
-                { success: false, error: 'Perioden är låst. Kan inte bokföra i en stängd period.' },
-                { status: 403 }
-            )
-        }
-
-        const amount = Math.abs(Number(transaction.amount))
-        const isIncome = Number(transaction.amount) > 0
-
-        // 2. Use the bookkeeping engine to generate proper journal entries
-        const journalEntry = createSimpleEntry({
-            date: transaction.date || new Date().toISOString().split('T')[0],
-            description: description || transaction.description || '',
-            amount,
+        const result = await bookTransaction(id, user.id, {
+            category,
             debitAccount,
             creditAccount,
-            vatRate: (vatRate || 0) as SwedishVatRate,
-            isIncome,
-            series: 'A',
-        })
+            description,
+            vatRate
+        }, supabase)
 
-        // 3. Map engine output to verification entries
-        const entries: VerificationEntry[] = journalEntry.rows.map(row => ({
-            account: row.account,
-            debit: row.debit,
-            credit: row.credit,
-            description: row.description,
-        }))
+        if (!result.success) {
+            const status = result.error?.includes('låst') ? 403 : 
+                           result.error?.includes('balanserar inte') ? 422 : 
+                           result.error?.includes('hittades inte') ? 404 : 500;
+            return NextResponse.json(result, { status });
+        }
 
-        // 4. Create pending booking instead of auto-verification
-        const pending = await pendingBookingService.createPendingBooking({
-            sourceType: 'transaction',
-            sourceId: id,
-            description: journalEntry.description,
-            entries,
-            series: 'A',
-            date: journalEntry.date,
-            metadata: {
-                category,
-                amount,
-                isIncome,
-                transactionDescription: transaction.description,
-            },
-        })
-
-        // 5. Update Transaction category (but NOT status — that happens on booking confirmation)
-        await supabase
-            .from('transactions')
-            .update({ category })
-            .eq('id', id);
-
-        return NextResponse.json({
-            success: true,
-            pendingBookingId: pending.id,
-        })
+        return NextResponse.json(result);
 
     } catch (error) {
         console.error(`Failed to book transaction ${id}:`, error)
-        const message = error instanceof Error ? error.message : 'Failed to book transaction';
-
-        if (message.includes('balanserar inte')) {
-            return NextResponse.json({ success: false, error: message }, { status: 422 });
-        }
-        if (message.includes('redan bokförd') || message.includes('already')) {
-            return NextResponse.json({ success: false, error: message }, { status: 409 });
-        }
-
         return NextResponse.json(
-            { success: false, error: message },
+            { success: false, error: error instanceof Error ? error.message : 'Failed to book transaction' },
             { status: 500 }
         )
     }

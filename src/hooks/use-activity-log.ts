@@ -108,6 +108,9 @@ export const activityLogQueryKeys = {
     [...activityLogQueryKeys.all, "list", entityType, entityId, dateFilter] as const,
 }
 
+import type { Database } from "@/types/database"
+type ActivityLogRow = Database['public']['Tables']['activity_log']['Row']
+
 // ============================================================================
 // Main Hook
 // ============================================================================
@@ -197,17 +200,17 @@ export function useActivityLog({
           schema: "public",
           table: "activity_log",
         },
-        (payload) => {
-          // In a real app we'd map this using the service
-          // For simplicity in the subscription:
-          const newRow = payload.new as any
-          
-          // Only add if it matches our filters (basic check)
-          if (entityType && newRow.entity_type !== entityType) return
-          if (entityId && newRow.entity_id !== entityId) return
+          (payload) => {
+            // In a real app we'd map this using the service
+            // For simplicity in the subscription:
+            const newRow = payload.new as ActivityLogRow
+            
+            // Only add if it matches our filters (basic check)
+            if (entityType && newRow.entity_type !== entityType) return
+            if (entityId && newRow.entity_id !== entityId) return
 
-          refetch() // Easiest way to maintain consistency with mapping
-        }
+            refetch() // Easiest way to maintain consistency with mapping
+          }
       )
       .subscribe()
 
@@ -257,9 +260,9 @@ export async function logActivity(params: {
     userName: (user.user_metadata?.full_name || user.email?.split("@")[0]) as string,
     userEmail: user.email ?? null,
     action: params.action,
-    entity_type: params.entityType,
-    entity_id: params.entityId,
-    entity_name: params.entityName,
+    entityType: params.entityType,
+    entityId: params.entityId,
+    entityName: params.entityName,
     changes: params.changes,
     metadata: params.metadata,
   })

@@ -1,7 +1,7 @@
 
 import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { type Invoice } from "@/types"
+import { type Invoice, type InvoiceStatus } from "@/types"
 import { invoiceService } from '@/services/invoice-service'
 
 export const invoiceQueryKeys = {
@@ -21,7 +21,10 @@ export function useInvoices() {
         queryKey: invoiceQueryKeys.list(),
         queryFn: async () => {
             const result = await invoiceService.getCustomerInvoices({ limit: 100 })
-            return result.invoices
+            return result.invoices.map(inv => ({
+                ...inv,
+                status: (inv.status || 'Utkast') as InvoiceStatus
+            }))
         },
         staleTime: 5 * 60 * 1000,
     })

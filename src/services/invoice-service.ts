@@ -233,5 +233,41 @@ export const invoiceService = {
 
         if (error) throw error
         return { success: true }
+    },
+
+    /**
+     * Get customer invoices that are sent and overdue
+     */
+    async getOverdueCustomerInvoices() {
+        const supabase = createBrowserClient()
+        const today = new Date().toISOString().split('T')[0]
+        
+        const { data, error } = await supabase
+            .from('customer_invoices')
+            .select('*')
+            .eq('status', 'sent')
+            .lt('due_date', today)
+            .order('due_date', { ascending: true })
+        
+        if (error) throw error
+        return (data || []).map(mapRowToCustomerInvoice)
+    },
+
+    /**
+     * Get supplier invoices that are unpaid and overdue
+     */
+    async getOverdueSupplierInvoices() {
+        const supabase = createBrowserClient()
+        const today = new Date().toISOString().split('T')[0]
+        
+        const { data, error } = await supabase
+            .from('supplier_invoices')
+            .select('*')
+            .not('status', 'eq', 'Betald')
+            .lt('due_date', today)
+            .order('due_date', { ascending: true })
+        
+        if (error) throw error
+        return (data || []).map(mapRowToSupplierInvoice)
     }
 }

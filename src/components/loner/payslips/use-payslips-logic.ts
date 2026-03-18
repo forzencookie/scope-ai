@@ -51,8 +51,19 @@ export function usePayslipsLogic() {
             const res = await fetch('/api/payroll/payslips')
             const data = await res.json()
             if (data.payslips) {
+                type PayslipData = {
+                    id: string | number
+                    employees?: { name: string } | null
+                    period?: string
+                    gross_salary?: number | string
+                    net_salary?: number | string
+                    tax_deduction?: number | string
+                    status?: string
+                    payment_date?: string
+                }
+
                 // Map DB format to UI format with DETERMINISTIC values
-                setAllPayslips(data.payslips.map((p: any) => ({
+                setAllPayslips((data.payslips as PayslipData[]).map((p) => ({
                     id: String(p.id),
                     employee: p.employees?.name || 'Okänd anställd',
                     period: p.period || 'Okänd period',

@@ -108,7 +108,7 @@ export function K10Content() {
                                                 onClick={() => setSelectedShareholderIdx(idx)}
                                                 className={idx === selectedShareholderIdx ? "bg-accent" : ""}
                                             >
-                                                {s.name} ({s.shares_percentage || Math.round((s.shares_count / shareholders.reduce((sum, sh) => sum + (sh.shares_count || 0), 0)) * 100)}%)
+                                                {s.name} ({s.ownershipPercentage || Math.round((s.sharesCount / shareholders.reduce((sum, sh) => sum + (sh.sharesCount || 0), 0)) * 100)}%)
                                             </DropdownMenuItem>
                                         ))}
                                     </DropdownMenuContent>

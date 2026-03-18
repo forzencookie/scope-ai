@@ -5,7 +5,8 @@ import {
     Plus,
     Download,
     ArrowRightLeft,
-    Users
+    Users,
+    History as HistoryIcon
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
@@ -21,8 +22,6 @@ import { useTextMode } from "@/providers/text-mode-provider"
 
 // Sub-components
 import { AktiebokStats } from "./components/aktiebok-stats"
-import { TransactionsGrid } from "./components/TransactionsGrid"
-import { TransactionDialog } from "./components/TransactionDialog"
 import { useAktiebokLogic } from "./use-aktiebok-logic"
 import { StockTransactionType } from "./types"
 import { AktiebokPreviewDialog } from "../dialogs/aktiebok-preview"
@@ -166,16 +165,20 @@ export function Aktiebok() {
                     </h3>
                 </div>
 
-                <div className="rounded-xl border bg-card overflow-hidden">
-                    <TransactionsGrid
-                        transactions={filteredTransactions}
-                        getTransactionTypeLabel={(type: string) =>
-                            (type === 'nyemission' ? 'Nyemission' :
-                                type === 'köp' ? 'Köp' :
-                                    type.charAt(0).toUpperCase() + type.slice(1)) as StockTransactionType
-                        }
-                    />
-                </div>
+                <Card className="bg-muted/20 border-dashed">
+                    <CardContent className="py-12 flex flex-col items-center justify-center text-center gap-4">
+                        <HistoryIcon className="h-8 w-8 text-muted-foreground/50" />
+                        <div className="space-y-1">
+                            <p className="text-sm font-medium">Händelsehistoriken hanteras av Scooby</p>
+                            <p className="text-xs text-muted-foreground max-w-xs">
+                                Fråga Scooby för att se detaljerad historik över nyemissioner och aktieöverlåtelser.
+                            </p>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => navigateToAI({ prompt: "Visa min händelsehistorik för aktieboken" })}>
+                            Visa historik i chatten
+                        </Button>
+                    </CardContent>
+                </Card>
             </div>
 
             <AktiebokPreviewDialog

@@ -8,7 +8,7 @@
 
 // TODO: Run `npx supabase gen types typescript` after applying migration
 
-import { createServerClient } from './database/client'
+import { createServerClient } from './database/server'
 import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './ai/models'
 
 // ============================================================================

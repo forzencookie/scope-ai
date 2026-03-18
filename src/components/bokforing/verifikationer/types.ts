@@ -1,6 +1,6 @@
 /**
  * Grid display Verification type (flat, single-line focused).
- * Canonical type: `CanonicalVerification` in `@/types`
+ * Canonical type: `Verification` in `@/types`
  */
 export interface Verification {
     id: number | string

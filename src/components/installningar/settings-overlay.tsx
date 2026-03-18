@@ -76,7 +76,7 @@ interface SettingsOverlayProps {
  */
 export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: SettingsOverlayProps) {
   const [activeTab, setActiveTab] = React.useState("Konto")
-  const { company, updateCompany } = useCompany()
+  const { company, updateCompany, saveChanges, isSaving } = useCompany()
   const { addToast } = useToast()
 
   // Sync active tab with defaultTab when it changes
@@ -130,12 +130,24 @@ export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: Sett
     }
   }, [company])
 
-  const handleSave = () => {
+  const handleSave = async () => {
     updateCompany(formData)
-    addToast({
-      title: "Inställningar sparade",
-      description: "Dina ändringar har sparats.",
-    })
+    
+    // Explicitly call the Server Action through the provider
+    const result = await saveChanges()
+    
+    if (result.success) {
+      addToast({
+        title: "Inställningar sparade",
+        description: "Dina ändringar har sparats.",
+      })
+    } else {
+      addToast({
+        title: "Kunde inte spara",
+        description: result.error || "Ett oväntat fel uppstod.",
+        variant: "destructive",
+      })
+    }
   }
 
   const renderTabContent = () => {

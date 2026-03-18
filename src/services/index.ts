@@ -34,17 +34,20 @@ export * from "./correction-service"
 
 // Events & planning
 export * from "./event-service"
+export * from "./activity-service"
 export * from "./roadmap-service"
 
 // Settings & uploads
 export * from "./settings-service"
 export * from "./upload-service"
+export * from "./usage-service"
 
 // Navigation (uses API proxy pattern for auth)
 export * from "./navigation"
 
-// AI memory (Scooby's per-company memory)
+// AI services
 export * from "./user-memory-service"
+export * from "./ai-audit-service"
 
 // Processor services - transform raw data into display-ready format
 export * from "./processors/invoice-processor"

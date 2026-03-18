@@ -18,7 +18,7 @@ import {
     type PDFCompanyInfo,
     type DividendReceiptPDFData,
 } from "@/lib/generators/pdf-generator"
-import type { DividendDecision } from "../utdelning/use-dividend-logic"
+import type { DividendDecision } from "../utdelning/types"
 
 interface UtdelningsaviPreviewDialogProps {
     open: boolean

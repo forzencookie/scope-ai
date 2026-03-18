@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 
 // Default integration states for new users
 const DEFAULT_INTEGRATIONS: Record<string, boolean> = {

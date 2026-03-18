@@ -5,18 +5,7 @@ type EmployeeRow = Database['public']['Tables']['employees']['Row']
 type PayslipRow = Database['public']['Tables']['payslips']['Row'] & {
     employees?: { name: string } | null
 }
-type AGIReportRow = Database['public']['Tables']['agi_reports']['Row'] & {
-    year?: number | null
-    month?: number | null
-    period?: string | null
-    due_date?: string | null
-    employee_count?: number | null
-    total_salary?: number | null
-    total_tax?: number | null
-    employer_contributions?: number | null
-    status?: string | null
-    updated_at?: string | null
-}
+type AGIReportRow = Database['public']['Tables']['agi_reports']['Row']
 
 
 export type PayrollStats = {
@@ -260,4 +249,19 @@ export const payrollService = {
 
         return (data || []).map(mapRowToAGIReport)
     },
+
+    /**
+     * Get payslips that are not yet sent/paid
+     */
+    async getUnpaidPayslips(): Promise<Payslip[]> {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase
+            .from('payslips')
+            .select('*, employees(name)')
+            .not('status', 'eq', 'sent')
+            .order('period', { ascending: false })
+        
+        if (error) throw error
+        return (data || []).map(mapRowToPayslip)
+    }
 }

@@ -11,121 +11,28 @@ export interface KallelseRecipient {
   ownershipPercentage: number
 }
 
+/**
+ * useGeneralMeetings - Logic for handling bolagsstämmor and board meetings.
+ * 
+ * This hook consumes strictly typed GeneralMeeting objects from the Service layer.
+ * No manual JSON parsing of 'content' fields.
+ */
 export function useGeneralMeetings() {
-  const { documents: realDocuments, addDocument, updateDocument, shareholders: realShareholders, refetchDocs } = useCompliance()
+  const { 
+    documents: realDocuments, 
+    addDocument, 
+    updateDocument, 
+    shareholders: realShareholders, 
+    refetchDocs 
+  } = useCompliance()
+  
   const { addVerification } = useVerifications()
   const toast = useToast()
 
-  // Map real documents to GeneralMeeting format (both general_meeting_minutes and board_meeting_minutes)
+  // Map real documents to GeneralMeeting format
+  // realDocuments is already typed as CompanyMeeting[] (which is GeneralMeeting[])
   const meetings = useMemo(() => {
-    const generalMeetings = (realDocuments || [])
-      .filter(doc => doc.type === 'general_meeting_minutes')
-      .map((doc) => {
-        let content = {
-          year: new Date(doc.date).getFullYear(),
-          location: 'Ej angivet',
-          chairperson: 'Ej angivet',
-          secretary: 'Ej angivet',
-          attendeesCount: 0,
-          decisions: [] as GeneralMeetingDecision[],
-          type: 'ordinarie' as const,
-          sharesRepresented: 0,
-          votesRepresented: 0
-        }
-
-        try {
-          const parsed = JSON.parse(doc.content)
-          if (parsed && typeof parsed === 'object') {
-            content = { ...content, ...parsed }
-            if (!Array.isArray(content.decisions)) content.decisions = [];
-          }
-        } catch (e) {
-          console.warn("Failed to parse general meeting content:", doc.id, e);
-        }
-
-        const decisionsWithStatus = content.decisions.map((d: GeneralMeetingDecision) => ({
-          ...d,
-        }))
-
-        return {
-          id: doc.id,
-          date: doc.date,
-          status: (
-            doc.status === 'signed' ? 'protokoll signerat' :
-            doc.status === 'archived' ? 'genomförd' :
-            doc.status === 'pending' ? 'kallad' :
-            'planerad'
-          ) as GeneralMeeting['status'],
-          meetingType: 'bolagsstamma' as const,
-          meetingCategory: 'bolagsstamma' as const,
-          ...content,
-          decisions: decisionsWithStatus
-        }
-      })
-
-    const boardMeetings = (realDocuments || [])
-      .filter(doc => doc.type === 'board_meeting_minutes')
-      .map((doc, idx) => {
-        let content = {
-          year: new Date(doc.date).getFullYear(),
-          meetingNumber: idx + 1,
-          location: 'Ej angivet',
-          chairperson: 'Ej angivet',
-          secretary: 'Ej angivet',
-          attendees: [] as string[],
-          absentees: [] as string[],
-          agendaItems: [] as { id: string; title: string; decision?: string }[],
-          type: 'ordinarie' as const,
-        }
-
-        try {
-          const parsed = JSON.parse(doc.content)
-          if (parsed && typeof parsed === 'object') {
-            content = { ...content, ...parsed }
-            if (!Array.isArray(content.attendees)) content.attendees = [];
-            if (!Array.isArray(content.absentees)) content.absentees = [];
-            if (!Array.isArray(content.agendaItems)) content.agendaItems = [];
-          }
-        } catch (e) {
-          console.warn("Failed to parse board meeting content:", doc.id, e);
-        }
-
-        // Convert agenda items to decisions format for consistency
-        const decisions: GeneralMeetingDecision[] = content.agendaItems
-          .filter(item => item.decision)
-          .map((item, i) => ({
-            id: item.id || `${doc.id}-${i}`,
-            title: item.title,
-            decision: item.decision || '',
-            type: 'other' as const,
-          }))
-
-        return {
-          id: doc.id,
-          date: doc.date,
-          year: content.year,
-          status: (
-            doc.status === 'signed' ? 'protokoll signerat' :
-            doc.status === 'archived' ? 'genomförd' :
-            'planerad'
-          ) as GeneralMeeting['status'],
-          meetingType: 'bolagsstamma' as const,
-          meetingCategory: 'styrelsemote' as const,
-          type: content.type,
-          location: content.location,
-          chairperson: content.chairperson,
-          secretary: content.secretary,
-          attendeesCount: content.attendees.length,
-          attendees: content.attendees,
-          absentees: content.absentees,
-          meetingNumber: content.meetingNumber,
-          decisions,
-          sharesRepresented: 0,
-          votesRepresented: 0,
-        } as GeneralMeeting
-      })
-
-    return [...generalMeetings, ...boardMeetings].sort((a, b) =>
+    return (realDocuments || []).sort((a, b) =>
       new Date(b.date).getTime() - new Date(a.date).getTime()
     )
   }, [realDocuments])
@@ -184,36 +91,29 @@ export function useGeneralMeetings() {
       ]
     })
 
-    // Persist the booked flag to the document content so it survives page refreshes
-    const doc = realDocuments?.find(d => d.id === meeting.id)
-    if (doc) {
-      try {
-        const content = JSON.parse(doc.content)
-        const decisions = content.decisions || []
-        const decisionId = decision.id || `${meeting.id}-${decision.title}`
-        const updated = decisions.map((d: GeneralMeetingDecision) => {
-          if ((d.id || `${meeting.id}-${d.title}`) === decisionId) {
-            return { ...d, booked: true }
-          }
-          return d
-        })
-        await updateDocument({
-          id: meeting.id,
-          content: JSON.stringify({ ...content, decisions: updated }),
-        })
-        await refetchDocs()
-      } catch (err) {
-        console.error('[bookDividend] Failed to persist booked flag:', err)
-      }
-    }
-
-    toast.success(
-      "Utdelning bokförd",
-      `Bokfört ${decision.amount?.toLocaleString('sv-SE')} kr som skuld till aktieägare.`
+    // Update the decision status in the database
+    const updatedDecisions = meeting.decisions.map(d => 
+      d.id === decision.id ? { ...d, booked: true } : d
     )
+
+    try {
+      await updateDocument({
+        id: meeting.id,
+        decisions: updatedDecisions,
+      })
+      await refetchDocs()
+      
+      toast.success(
+        "Utdelning bokförd",
+        `Bokfört ${decision.amount?.toLocaleString('sv-SE')} kr som skuld till aktieägare.`
+      )
+    } catch (err) {
+      console.error('[bookDividend] Failed:', err)
+      toast.error("Bokföring misslyckades", "Kunde inte uppdatera stämmoprotokollet.")
+    }
   }
 
-  // Create a new meeting (saves to corporate_documents)
+  // Create a new meeting
   const createMeeting = async (meetingData: {
     date: string
     year: string | number
@@ -223,51 +123,17 @@ export function useGeneralMeetings() {
     agenda?: string[]
   }) => {
     const yearNum = typeof meetingData.year === 'string' ? parseInt(meetingData.year) : meetingData.year
-    const content = JSON.stringify({
-      year: yearNum,
-      location: meetingData.location,
-      type: meetingData.type,
-      time: meetingData.time,
-      agenda: meetingData.agenda,
-      chairperson: 'Ej angivet',
-      secretary: 'Ej angivet',
-      attendeesCount: 0,
-      decisions: [],
-      sharesRepresented: 0,
-      votesRepresented: 0,
-      kallelseText: '', // Will be filled when user creates kallelse
-      kallelseSavedAt: null
-    })
-
+    
     try {
-      // Ensure date is valid - use today if not provided
-      const meetingDate = meetingData.date && meetingData.date.trim() !== '' 
-        ? meetingData.date 
-        : new Date().toISOString().split('T')[0]
-      
-      const docData = {
-        type: 'general_meeting_minutes' as const,
+      const result = await addDocument({
+        type: 'annual',
         title: `${meetingData.type === 'ordinarie' ? 'Ordinarie' : 'Extra'} bolagsstämma ${yearNum}`,
-        date: meetingDate,
-        content,
-        status: 'draft' as const,
-        source: 'manual' as const
-      }
+        date: meetingData.date,
+        location: meetingData.location,
+        status: 'draft',
+      })
       
-      console.log('[createMeeting] Calling addDocument with:', docData)
-      
-      const result = await addDocument(docData)
-      
-      console.log('[createMeeting] addDocument result:', result)
-      
-      if (!result) {
-        throw new Error('No result returned from addDocument')
-      }
-
-      // Explicitly refetch to ensure UI updates
-      console.log('[createMeeting] Explicitly calling refetchDocs')
       await refetchDocs()
-      console.log('[createMeeting] refetchDocs completed')
 
       toast.success(
         "Stämma skapad",
@@ -276,127 +142,9 @@ export function useGeneralMeetings() {
       
       return result
     } catch (error) {
-      console.error('[createMeeting] Failed to create meeting:', error)
-      toast.error("Fel", "Kunde inte skapa stämman. Försök igen.")
+      console.error('[createMeeting] Failed:', error)
+      toast.error("Fel", "Kunde inte skapa stämman.")
       return null
-    }
-  }
-
-  // Save kallelse text to a meeting, including recipients list (ABL 7:18-24)
-  const saveKallelse = async (meetingId: string, kallelseText: string) => {
-    // Find the meeting document
-    const meeting = realDocuments?.find(d => d.id === meetingId)
-    if (!meeting) {
-      toast.error("Fel", "Kunde inte hitta stämman.")
-      return
-    }
-
-    try {
-      // Parse existing content and add kallelse + recipients
-      let content: Record<string, unknown> = {}
-      try {
-        content = JSON.parse(meeting.content) as Record<string, unknown>
-      } catch {
-        content = {}
-      }
-
-      const recipients = getKallelseRecipients()
-
-      const updatedContent = {
-        ...content,
-        kallelseText,
-        kallelseSavedAt: new Date().toISOString(),
-        kallelseSentTo: recipients,
-      }
-
-      await updateDocument({
-        id: meetingId,
-        content: JSON.stringify(updatedContent),
-        status: 'pending' as const,
-      })
-
-      const recipientNames = recipients.map(r => r.name).join(', ')
-      toast.success(
-        "Kallelse sparad",
-        recipients.length > 0
-          ? `Kallelse förberedd för ${recipients.length} aktieägare: ${recipientNames}`
-          : "Kallelsen har sparats som utkast."
-      )
-
-      await refetchDocs()
-    } catch (error) {
-      console.error('[saveKallelse] Failed to save kallelse:', error)
-      toast.error("Fel", "Kunde inte spara kallelsen.")
-    }
-  }
-
-  // Update an existing meeting
-  const updateMeeting = async (meetingId: string, updates: Partial<GeneralMeeting>) => {
-    // Find the meeting document
-    const meeting = realDocuments?.find(d => d.id === meetingId)
-    if (!meeting) {
-      toast.error("Fel", "Kunde inte hitta stämman.")
-      return
-    }
-
-    try {
-      // Parse existing content
-      let content = {}
-      try {
-        content = JSON.parse(meeting.content)
-      } catch {
-        content = {}
-      }
-
-      // Map UI status back to DB status
-      const statusMap: Record<string, string> = {
-        'planerad': 'draft',
-        'kallad': 'pending',
-        'genomförd': 'archived',
-        'protokoll signerat': 'signed'
-      }
-
-      // Build updated content
-      const updatedContent = {
-        ...content,
-        ...(updates.location && { location: updates.location }),
-        ...(updates.time && { time: updates.time }),
-        ...(updates.chairperson && { chairperson: updates.chairperson }),
-        ...(updates.secretary && { secretary: updates.secretary }),
-        ...(updates.agenda && { agenda: updates.agenda }),
-        ...(updates.kallelseText && { kallelseText: updates.kallelseText }),
-        ...(updates.attendeesCount !== undefined && { attendeesCount: updates.attendeesCount }),
-        ...(updates.decisions && { decisions: updates.decisions }),
-        ...((updates as Record<string, unknown>).protokollText !== undefined && { protokollText: (updates as Record<string, unknown>).protokollText }),
-      }
-
-      // Build update payload
-      const updatePayload: Record<string, unknown> = {
-        id: meetingId,
-        content: JSON.stringify(updatedContent),
-      }
-
-      // Add date if changed
-      if (updates.date) {
-        updatePayload.date = updates.date
-      }
-
-      // Add status if changed
-      if (updates.status) {
-        updatePayload.status = statusMap[updates.status] || 'draft'
-      }
-
-      await updateDocument(updatePayload as { id: string })
-
-      toast.success(
-        "Stämma uppdaterad",
-        "Ändringarna har sparats."
-      )
-      
-      await refetchDocs()
-    } catch (error) {
-      console.error('[updateMeeting] Failed to update meeting:', error)
-      toast.error("Fel", "Kunde inte uppdatera stämman.")
     }
   }
 
@@ -407,64 +155,72 @@ export function useGeneralMeetings() {
     location: string
     type: 'ordinarie' | 'extra'
   }) => {
-    const boardMeetingCount = (realDocuments || []).filter(d => d.type === 'board_meeting_minutes').length
-    const content = JSON.stringify({
-      meetingNumber: boardMeetingCount + 1,
-      location: meetingData.location,
-      type: meetingData.type,
-      time: meetingData.time,
-      year: new Date(meetingData.date).getFullYear(),
-      chairperson: 'Ej angivet',
-      secretary: 'Ej angivet',
-      attendees: [],
-      absentees: [],
-      agendaItems: []
-    })
-
     try {
-      const meetingDate = meetingData.date && meetingData.date.trim() !== ''
-        ? meetingData.date
-        : new Date().toISOString().split('T')[0]
-
       const result = await addDocument({
-        type: 'board_meeting_minutes' as const,
-        title: `Styrelsemöte ${meetingDate}`,
-        date: meetingDate,
-        content,
-        status: 'draft' as const,
-        source: 'manual' as const
+        type: 'board',
+        title: `Styrelsemöte ${meetingData.date}`,
+        date: meetingData.date,
+        location: meetingData.location,
+        status: 'draft',
       })
-
-      if (!result) throw new Error('No result returned from addDocument')
 
       await refetchDocs()
 
-      toast.success(
-        "Styrelsemöte skapat",
-        `Styrelsemöte #${boardMeetingCount + 1} har planerats.`
-      )
-
+      toast.success("Styrelsemöte skapat", "Styrelsemötet har planerats.")
       return result
     } catch (error) {
       console.error('[createBoardMeeting] Failed:', error)
-      toast.error("Fel", "Kunde inte skapa styrelsemötet. Försök igen.")
+      toast.error("Fel", "Kunde inte skapa styrelsemötet.")
       return null
     }
   }
 
+  // Update an existing meeting
+  const updateMeeting = async (meetingId: string, updates: Partial<GeneralMeeting>) => {
+    try {
+      await updateDocument({
+        id: meetingId,
+        ...updates
+      })
+
+      toast.success("Stämma uppdaterad", "Ändringarna har sparats.")
+      await refetchDocs()
+    } catch (error) {
+      console.error('[updateMeeting] Failed:', error)
+      toast.error("Fel", "Kunde inte uppdatera stämman.")
+    }
+  }
+
+  // Save kallelse text
+  const saveKallelse = async (meetingId: string, kallelseText: string) => {
+    try {
+      await updateDocument({
+        id: meetingId,
+        kallelseText,
+        status: 'kallad'
+      })
+
+      toast.success("Kallelse sparad", "Kallelsen har skickats till alla aktieägare.")
+      await refetchDocs()
+    } catch (error) {
+      console.error('[saveKallelse] Failed:', error)
+      toast.error("Fel", "Kunde inte spara kallelsen.")
+    }
+  }
+
   /**
-   * Get kallelse recipients from shareholders (ABL 7:23 — all shareholders entitled to notice).
+   * Get kallelse recipients from shareholders
    */
   const getKallelseRecipients = useCallback((): KallelseRecipient[] => {
     if (!realShareholders || realShareholders.length === 0) return []
 
-    const totalShares = realShareholders.reduce((sum, s) => sum + s.shares_count, 0) || 1
+    const totalShares = realShareholders.reduce((sum: number, s) => sum + s.sharesCount, 0) || 1
 
     return realShareholders.map(s => ({
       name: s.name,
-      shares: s.shares_count,
-      shareClass: s.share_class || 'B',
-      ownershipPercentage: Math.round((s.shares_count / totalShares) * 100),
+      shares: s.sharesCount,
+      shareClass: s.shareClass || 'B',
+      ownershipPercentage: Math.round((s.sharesCount / totalShares) * 100),
     }))
   }, [realShareholders])
 

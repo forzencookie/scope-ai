@@ -1169,6 +1169,7 @@ export const mockBoardMeetings: BoardMeeting[] = [
 export const mockGeneralMeetings: GeneralMeeting[] = [
   {
     id: 'gm-1',
+    title: 'Ordinarie bolagsstämma 2024',
     year: 2024,
     date: '2024-05-15',
     location: 'Kontoret, Stockholm',
@@ -1198,6 +1199,7 @@ export const mockGeneralMeetings: GeneralMeeting[] = [
   },
   {
     id: 'gm-2',
+    title: 'Ordinarie bolagsstämma 2025',
     year: 2025,
     date: '2025-05-15',
     location: 'Kontoret, Stockholm',

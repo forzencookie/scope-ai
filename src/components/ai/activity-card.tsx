@@ -10,7 +10,8 @@ import {
     CreditCard,
     Users,
     Calculator,
-    ExternalLink
+    ExternalLink,
+    Check
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -21,7 +22,7 @@ export interface ActivityChange {
 }
 
 export interface ActivityCardProps {
-    action: 'created' | 'updated' | 'deleted' | 'calculated' | 'prepared'
+    action: 'created' | 'updated' | 'deleted' | 'calculated' | 'prepared' | 'booked'
     entityType: 'receipt' | 'transaction' | 'invoice' | 'payslip' | 'report' | 'shareholder' | 'document'
     title: string
     subtitle?: string
@@ -37,6 +38,7 @@ const actionConfig = {
     deleted: { icon: Trash2, color: 'text-red-600 dark:text-red-500', bg: 'bg-red-500/10', label: 'borttagen' },
     calculated: { icon: Calculator, color: 'text-purple-600 dark:text-purple-500', bg: 'bg-purple-500/10', label: 'beräknad' },
     prepared: { icon: FileText, color: 'text-amber-600 dark:text-amber-500', bg: 'bg-amber-500/10', label: 'förberedd' },
+    booked: { icon: Check, color: 'text-emerald-600 dark:text-emerald-500', bg: 'bg-emerald-500/10', label: 'bokförd' },
 }
 
 const entityIcons = {

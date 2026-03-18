@@ -1,11 +1,19 @@
 import { createBrowserClient } from '@/lib/database/client'
-import { verificationService, type VerificationEntry } from './verification-service'
+import { verificationService } from './verification-service'
+import type { VerificationEntry } from '@/types'
 import { logAuditEntry } from '@/lib/audit'
 import type { Database, Json } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 type PendingBookingsRow = Database['public']['Tables']['pending_bookings']['Row']
 
-function db() { return createBrowserClient() }
+/**
+ * Internal helper to get the correct Supabase client (passed in or default browser).
+ * This makes the service "Universal" (safe for both Client and Server/AI).
+ */
+function getSupabase(client?: SupabaseClient<Database>) {
+  return client || createBrowserClient()
+}
 
 // =============================================================================
 // Types
@@ -122,8 +130,8 @@ export const pendingBookingService = {
    * Create a new pending booking in the queue.
    * Called by API routes after saving the source entity (payslip, invoice, etc.)
    */
-  async createPendingBooking(params: CreatePendingBookingParams): Promise<PendingBooking> {
-    const supabase = db()
+  async createPendingBooking(params: CreatePendingBookingParams, client?: SupabaseClient<Database>): Promise<PendingBooking> {
+    const supabase = getSupabase(client)
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) throw new Error('Ingen inloggad användare')
 
@@ -173,8 +181,8 @@ export const pendingBookingService = {
   /**
    * Fetch pending bookings with optional filters.
    */
-  async getPendingBookings(filters?: GetPendingBookingsFilters): Promise<PendingBooking[]> {
-    const supabase = db()
+  async getPendingBookings(filters?: GetPendingBookingsFilters, client?: SupabaseClient<Database>): Promise<PendingBooking[]> {
+    const supabase = getSupabase(client)
 
     let query = supabase
       .from('pending_bookings')
@@ -207,9 +215,10 @@ export const pendingBookingService = {
    */
   async bookPendingItem(
     id: string,
-    finalEntries?: VerificationEntry[]
+    finalEntries?: VerificationEntry[],
+    client?: SupabaseClient<Database>
   ): Promise<{ verificationId: string; verificationNumber: string }> {
-    const supabase = db()
+    const supabase = getSupabase(client)
 
     // 1. Fetch the pending booking
     const { data: row, error: fetchError } = await supabase
@@ -249,7 +258,7 @@ export const pendingBookingService = {
       entries,
       sourceType: pending.sourceType,
       sourceId: pending.sourceId,
-    })
+    }, client)
 
     // 4. Atomically update pending_booking status + source entity status via RPC
     //    Both updates happen in one DB transaction — either both succeed or both roll back.
@@ -266,9 +275,8 @@ export const pendingBookingService = {
       // Compensate: delete the orphaned verification so the user can retry
       console.error('[PendingBookingService] Atomic status update failed, compensating:', rpcError)
       try {
-        const realSupabase = createBrowserClient()
-        await realSupabase.from('verification_lines').delete().eq('verification_id', verification.id)
-        await realSupabase.from('verifications').delete().eq('id', verification.id)
+        await supabase.from('verification_lines').delete().eq('verification_id', verification.id)
+        await supabase.from('verifications').delete().eq('id', verification.id)
       } catch (cleanupErr) {
         console.error('[PendingBookingService] Compensation cleanup also failed:', cleanupErr)
       }
@@ -296,13 +304,14 @@ export const pendingBookingService = {
    * Batch book multiple pending items (for simple items that need no wizard steps).
    */
   async bookPendingItems(
-    ids: string[]
+    ids: string[],
+    client?: SupabaseClient<Database>
   ): Promise<{ booked: number; errors: Array<{ id: string; error: string }> }> {
     const results = { booked: 0, errors: [] as Array<{ id: string; error: string }> }
 
     for (const id of ids) {
       try {
-        await this.bookPendingItem(id)
+        await this.bookPendingItem(id, undefined, client)
         results.booked++
       } catch (err) {
         results.errors.push({
@@ -318,8 +327,8 @@ export const pendingBookingService = {
   /**
    * Dismiss a pending booking (user chose not to book).
    */
-  async dismissPendingBooking(id: string): Promise<void> {
-    const supabase = db()
+  async dismissPendingBooking(id: string, client?: SupabaseClient<Database>): Promise<void> {
+    const supabase = getSupabase(client)
 
     const { error } = await supabase
       .from('pending_bookings')
@@ -335,8 +344,8 @@ export const pendingBookingService = {
   /**
    * Dismiss multiple pending bookings.
    */
-  async dismissPendingBookings(ids: string[]): Promise<void> {
-    const supabase = db()
+  async dismissPendingBookings(ids: string[], client?: SupabaseClient<Database>): Promise<void> {
+    const supabase = getSupabase(client)
 
     const { error } = await supabase
       .from('pending_bookings')
@@ -350,10 +359,24 @@ export const pendingBookingService = {
   },
 
   /**
+   * Get the deterministic status of a pending booking.
+   */
+  async getStatus(id: string, client?: SupabaseClient<Database>): Promise<PendingBookingStatus> {
+    const supabase = getSupabase(client)
+    const { data } = await supabase
+      .from('pending_bookings')
+      .select('status')
+      .eq('id', id)
+      .single()
+    
+    return (data?.status as PendingBookingStatus) || 'pending'
+  },
+
+  /**
    * Get count of pending (unbooked) items for badge display.
    */
-  async getPendingCount(): Promise<number> {
-    const supabase = db()
+  async getPendingCount(client?: SupabaseClient<Database>): Promise<number> {
+    const supabase = getSupabase(client)
 
     const { count, error } = await supabase
       .from('pending_bookings')
@@ -373,11 +396,11 @@ export const pendingBookingService = {
    * Note: For normal booking flow, this is handled atomically by the
    * book_pending_item_status RPC. This method is kept for manual/admin use.
    */
-  async updateSourceEntityStatus(sourceType: string, sourceId: string): Promise<void> {
+  async updateSourceEntityStatus(sourceType: string, sourceId: string, client?: SupabaseClient<Database>): Promise<void> {
     const mapping = SOURCE_TABLE_MAP[sourceType]
     if (!mapping) return // owner_withdrawal, ai_entry — no status update needed
 
-    const supabase = db()
+    const supabase = getSupabase(client)
 
     // Each source table has its own Supabase type signature, so we update
     // them individually to keep the compiler happy.

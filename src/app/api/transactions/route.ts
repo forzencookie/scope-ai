@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from '@/lib/database/auth'
+import { getAuthContext } from "@/lib/database/auth-server"
 
 // Helper to format transaction for frontend
 function formatTransaction(tx: Record<string, unknown>) {

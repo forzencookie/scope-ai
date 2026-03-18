@@ -439,5 +439,4 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
 export const navigationTools = [
     navigateToTool,
     showPreviewTool,
-    getDeadlinesTool,
 ]

@@ -58,13 +58,18 @@ export default function TeamTab() {
             <EmployeeDossierOverlay
                 open={dossierOpen}
                 onOpenChange={setDossierOpen}
-                employee={dossierEmployee}
+                employee={employees.find(e => e.id === dossierEmployeeId) ? {
+                    id: employees.find(e => e.id === dossierEmployeeId)!.id,
+                    name: employees.find(e => e.id === dossierEmployeeId)!.name,
+                    role: employees.find(e => e.id === dossierEmployeeId)!.role,
+                } : null}
                 salaryHistory={payslipsCache}
                 expenses={dossierExpenses}
                 benefits={dossierBenefits}
-                balance={dossierEmployee ? (employeeBalances.balances[dossierEmployee.id] || 0) : 0}
-                mileage={dossierEmployee ? (employeeBalances.mileage[dossierEmployee.id] || 0) : 0}
+                balance={dossierEmployeeId ? (employeeBalances.balances[dossierEmployeeId] || 0) : 0}
+                mileage={dossierEmployeeId ? (employeeBalances.mileage[dossierEmployeeId] || 0) : 0}
             />
+
         </div>
     )
 }

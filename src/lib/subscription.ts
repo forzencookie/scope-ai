@@ -84,7 +84,7 @@ export const CREDIT_PACKAGES: CreditPackage[] = [
 ]
 
 /** Feature access by tier */
-const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "simulated" | "disabled">> = {
+const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "disabled">> = {
   pro: {
     ai_chat: "full",
     ai_extraction: "full",
@@ -120,9 +120,9 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
   }
 }
 
-// ============================================================================
+// =============================================================================
 // Feature Access Helpers
-// ============================================================================
+// =============================================================================
 
 /**
  * Check if a feature is available for a given tier
@@ -130,23 +130,15 @@ const FEATURE_ACCESS: Record<SubscriptionTier, Record<GatedFeature, "full" | "si
 export function getFeatureAccess(
   tier: SubscriptionTier,
   feature: GatedFeature
-): "full" | "simulated" | "disabled" {
+): "full" | "disabled" {
   return FEATURE_ACCESS[tier]?.[feature] ?? "disabled"
 }
 
 /**
- * Check if user can use a feature (full or simulated)
+ * Check if user can use a feature
  */
 export function canUseFeature(tier: SubscriptionTier, feature: GatedFeature): boolean {
-  const access = getFeatureAccess(tier, feature)
-  return access === "full" || access === "simulated"
-}
-
-/**
- * Check if feature should use simulated/demo behavior
- */
-export function isFeatureSimulated(tier: SubscriptionTier, feature: GatedFeature): boolean {
-  return getFeatureAccess(tier, feature) === "simulated"
+  return getFeatureAccess(tier, feature) === "full"
 }
 
 /**

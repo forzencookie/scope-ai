@@ -1,50 +1,22 @@
 import { createBrowserClient } from '@/lib/database/client'
-import type { Json } from '@/types/database'
+import type { Json, Database } from '@/types/database'
+import type { Verification, VerificationEntry } from '@/types'
 import { logAuditEntry } from '@/lib/audit'
 import { isValidAccount } from '@/lib/bookkeeping/utils'
+import type { SupabaseClient } from '@supabase/supabase-js'
+
+/**
+ * Internal helper to get the correct Supabase client (passed in or default browser).
+ * This makes the service "Universal" (safe for both Client and Server/AI).
+ */
+function getSupabase(client?: SupabaseClient<Database>) {
+    return client || createBrowserClient()
+}
 
 /**
  * Verification Row - represents a single accounting verification (verifikat)
  */
-export interface VerificationRow {
-    id: string
-    number: number | null
-    series: string | null
-    date: string | null
-    description: string | null
-    rows: VerificationEntry[] | null
-    company_id: string | null
-    user_id: string | null
-    created_at: string | null
-}
-
-/**
- * A single entry within a verification (debit/credit line)
- */
-export interface VerificationEntry {
-    account: string
-    accountName?: string
-    debit: number
-    credit: number
-    description?: string
-}
-
-/**
- * Service-layer Verification type (DB-mapped, with balance tracking).
- * Canonical type: `CanonicalVerification` in `@/types`
- */
-export interface Verification {
-    id: string
-    number: number
-    series: string
-    date: string
-    description: string
-    entries: VerificationEntry[]
-    totalDebit: number
-    totalCredit: number
-    isBalanced: boolean
-    createdAt: string
-}
+export type VerificationRow = Database['public']['Tables']['verifications']['Row']
 
 /** Map a database row to the Verification UI model. */
 function mapRowToVerification(row: Record<string, any>): Verification {
@@ -93,8 +65,8 @@ export const verificationService = {
     /**
      * Check if a financial period is locked (closed)
      */
-    async getPeriodStatus(date: string): Promise<'open' | 'closed'> {
-        const supabase = createBrowserClient()
+    async getPeriodStatus(date: string, client?: SupabaseClient<Database>): Promise<'open' | 'closed'> {
+        const supabase = getSupabase(client)
         const d = new Date(date)
         const periodId = `${d.getFullYear()}-M${String(d.getMonth() + 1).padStart(2, '0')}`
 
@@ -118,8 +90,8 @@ export const verificationService = {
         startDate,
         endDate,
         year
-    }: GetVerificationsOptions = {}) {
-        const supabase = createBrowserClient()
+    }: GetVerificationsOptions = {}, client?: SupabaseClient<Database>) {
+        const supabase = getSupabase(client)
 
         let query = supabase
             .from('verifications')
@@ -172,8 +144,8 @@ export const verificationService = {
     /**
      * Get a single verification by ID
      */
-    async getVerificationById(id: string): Promise<Verification | null> {
-        const supabase = createBrowserClient()
+    async getVerificationById(id: string, client?: SupabaseClient<Database>): Promise<Verification | null> {
+        const supabase = getSupabase(client)
 
         const { data, error } = await supabase
             .from('verifications')
@@ -190,8 +162,8 @@ export const verificationService = {
      * Get the next verification number for a given series and year.
      * Uses the database RPC for atomic numbering (BFL 5:7 compliance).
      */
-    async getNextVerificationNumber(series: string = 'A', year?: number): Promise<number> {
-        const supabase = createBrowserClient()
+    async getNextVerificationNumber(series: string = 'A', year?: number, client?: SupabaseClient<Database>): Promise<number> {
+        const supabase = getSupabase(client)
         const targetYear = year || new Date().getFullYear()
 
         const { data: { user } } = await supabase.auth.getUser()
@@ -214,8 +186,8 @@ export const verificationService = {
     /**
      * Get verification statistics
      */
-    async getStats(): Promise<VerificationStats> {
-        const supabase = createBrowserClient()
+    async getStats(client?: SupabaseClient<Database>): Promise<VerificationStats> {
+        const supabase = getSupabase(client)
         const currentYear = new Date().getFullYear()
 
         // Get total count
@@ -251,8 +223,8 @@ export const verificationService = {
      * Check if a period (month) is locked via the financialperiods table
      * (single source of truth, set by månadsavslut / period close).
      */
-    async isPeriodLocked(date: string): Promise<boolean> {
-        const supabase = createBrowserClient()
+    async isPeriodLocked(date: string, client?: SupabaseClient<Database>): Promise<boolean> {
+        const supabase = getSupabase(client)
         const d = new Date(date)
         const year = d.getFullYear()
         const month = d.getMonth() + 1
@@ -285,7 +257,7 @@ export const verificationService = {
         entries: VerificationEntry[]
         sourceType?: string
         sourceId?: string
-    }): Promise<Verification> {
+    }, client?: SupabaseClient<Database>): Promise<Verification> {
         // Validate entries are not empty
         if (!entries || entries.length === 0) {
             throw new Error('Verifikationen måste ha minst en rad.')
@@ -332,18 +304,18 @@ export const verificationService = {
         }
 
         // Period lock check — prevent booking in locked months
-        const locked = await this.isPeriodLocked(date)
+        const locked = await this.isPeriodLocked(date, client)
         if (locked) {
             const d = new Date(date)
             const monthName = d.toLocaleString('sv-SE', { month: 'long', year: 'numeric' })
             throw new Error(`Perioden ${monthName} är låst. Kan inte skapa verifikationer i en stängd period.`)
         }
 
-        const supabase = createBrowserClient()
+        const supabase = getSupabase(client)
 
         // Get next number via atomic RPC (BFL 5:7)
         const year = new Date(date).getFullYear()
-        let number = await this.getNextVerificationNumber(series, year)
+        let number = await this.getNextVerificationNumber(series, year, client)
 
         // 1. Insert the verification header (with retry on unique constraint violation)
         const insertPayload = {
@@ -366,7 +338,7 @@ export const verificationService = {
 
         // Retry once if unique constraint violation (race condition between concurrent requests)
         if (result.error?.code === '23505') {
-            number = await this.getNextVerificationNumber(series, year)
+            number = await this.getNextVerificationNumber(series, year, client)
             result = await supabase
                 .from('verifications')
                 .insert({ ...insertPayload, number })
@@ -433,26 +405,27 @@ export const verificationService = {
      */
     async updateVerification(
         id: string,
-        updates: { description?: string; date?: string; entries?: VerificationEntry[] }
+        updates: { description?: string; date?: string; entries?: VerificationEntry[] },
+        client?: SupabaseClient<Database>
     ): Promise<Verification> {
-        const existing = await this.getVerificationById(id)
+        const existing = await this.getVerificationById(id, client)
         if (!existing) throw new Error('Verifikation hittades inte')
 
         // Check lock on existing date
-        const locked = await this.isPeriodLocked(existing.date)
+        const locked = await this.isPeriodLocked(existing.date, client)
         if (locked) {
             throw new Error('Kan inte ändra verifikation i en låst period (BFL 5:4)')
         }
 
         // If moving to a new date, check lock on the new date too
         if (updates.date && updates.date !== existing.date) {
-            const newLocked = await this.isPeriodLocked(updates.date)
+            const newLocked = await this.isPeriodLocked(updates.date, client)
             if (newLocked) {
                 throw new Error('Kan inte flytta verifikation till en låst period (BFL 5:4)')
             }
         }
 
-        const supabase = createBrowserClient()
+        const supabase = getSupabase(client)
         const updatePayload: Record<string, unknown> = {}
         if (updates.description !== undefined) updatePayload.description = updates.description
         if (updates.date !== undefined) updatePayload.date = updates.date
@@ -477,23 +450,23 @@ export const verificationService = {
             metadata: { updatedFields: Object.keys(updates) },
         })
 
-        return (await this.getVerificationById(id))!
+        return (await this.getVerificationById(id, client))!
     },
 
     /**
      * Delete a verification. Checks period lock before allowing deletion (BFL 5:4 & 7 kap).
      * Note: The database trigger also prevents deletion of locked verifications as a safety net.
      */
-    async deleteVerification(id: string): Promise<void> {
-        const existing = await this.getVerificationById(id)
+    async deleteVerification(id: string, client?: SupabaseClient<Database>): Promise<void> {
+        const existing = await this.getVerificationById(id, client)
         if (!existing) throw new Error('Verifikation hittades inte')
 
-        const locked = await this.isPeriodLocked(existing.date)
+        const locked = await this.isPeriodLocked(existing.date, client)
         if (locked) {
             throw new Error('Kan inte radera verifikation i en låst period (BFL 5:4, 7 kap)')
         }
 
-        const supabase = createBrowserClient()
+        const supabase = getSupabase(client)
         const { error } = await supabase
             .from('verifications')
             .delete()

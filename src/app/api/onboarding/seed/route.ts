@@ -7,7 +7,7 @@
  * Previously used service role key without authentication!
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext, ApiResponse } from '@/lib/database/auth'
+import { getAuthContext, ApiResponse } from "@/lib/database/auth-server"
 
 interface ShareholderData {
     name: string

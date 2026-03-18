@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { verifyAuth, ApiResponse } from '@/lib/database/auth'
+import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { getOrCreateCustomer, getStripe } from '@/lib/stripe'
 import { CREDIT_PACKAGES } from '@/lib/subscription'
 
