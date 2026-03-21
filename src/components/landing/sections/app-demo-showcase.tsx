@@ -202,8 +202,8 @@ export function AppDemoShowcase() {
     const isAiThinking = phase === 4 || phase === 7 || phase === 10 || phase === 13 || phase === 18
 
     return (
-        <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full py-16">
-            <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto text-center mb-6 mt-8">
+        <section className="flex flex-col items-center justify-center px-4 w-full pb-16 pt-0">
+            <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto text-center mb-6">
                 {/* Interactive Timeline Playback Controls */}
                 <div className={`inline-flex items-center p-1.5 rounded-full bg-white/5 border border-white/10 backdrop-blur-md transition-opacity duration-300 ${ready ? 'opacity-100' : 'opacity-0'}`}>
                     {/* Play/Pause Button */}

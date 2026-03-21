@@ -162,7 +162,7 @@ class AIToolRegistry {
 
         // 1. Company-Type Guard (Enforce legal scope)
         if (tool.allowedCompanyTypes && tool.allowedCompanyTypes.length > 0) {
-            const { companyService } = await import('@/services/company-service')
+            const { companyService } = await import('@/services/company-service.server')
             const company = await companyService.getByUserId(context.userId)
             
             if (!company || !tool.allowedCompanyTypes.includes(company.companyType)) {

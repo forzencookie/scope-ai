@@ -6,7 +6,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { boardService, Signatory as BoardSignatory } from '@/services/board-service'
-import { companyService } from '@/services/company-service'
+import { companyService } from '@/services/company-service.server'
 import { taxService } from '@/services/tax-service'
 
 // =============================================================================

@@ -1,12 +1,19 @@
 /**
  * Chat API - Vercel AI SDK Integration
  *
- * Unified chat endpoint using Vercel AI SDK and OpenAI.
+ * Architecture: Gate → Stream → Persist
+ * - Gate: Auth, budget, company type (blocking, ~50ms)
+ * - Stream: Build prompt, call OpenAI, stream immediately
+ * - Persist: Save messages + consume tokens in onFinish
+ *
+ * Sources:
+ * - https://sdk.vercel.ai/docs/ai-sdk-ui/storing-messages
+ * - https://developers.openai.com/api/docs/guides/latency-optimization
  */
 
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
-import { validateChatMessages, validateJsonBody } from '@/lib/validation'
+import { validateJsonBody } from '@/lib/validation'
 import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import {
     checkUsageLimits,
@@ -21,6 +28,8 @@ import { buildSystemPrompt } from '@/lib/agents/scope-brain/system-prompt'
 import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 const RATE_LIMIT_CONFIG = {
     maxRequests: 30,
@@ -36,8 +45,139 @@ function ensureToolsInitialized() {
     }
 }
 
+// =============================================================================
+// Helpers
+// =============================================================================
+
+/**
+ * Extract text content from a message regardless of format.
+ * Vercel AI SDK v4+ may send `parts` array instead of flat `content` string.
+ */
+function extractMessageContent(msg: Record<string, unknown>): string {
+    // Standard format: content is a string
+    if (typeof msg.content === 'string') return msg.content
+
+    // Vercel AI SDK v4 format: content is an array of parts
+    if (Array.isArray(msg.content)) {
+        const textPart = msg.content.find(
+            (p: unknown) => typeof p === 'object' && p !== null && (p as Record<string, unknown>).type === 'text'
+        )
+        if (textPart && typeof (textPart as Record<string, unknown>).text === 'string') {
+            return (textPart as Record<string, string>).text
+        }
+    }
+
+    // UIMessage format: parts array at top level
+    if (Array.isArray(msg.parts)) {
+        const textPart = msg.parts.find(
+            (p: unknown) => typeof p === 'object' && p !== null && (p as Record<string, unknown>).type === 'text'
+        )
+        if (textPart && typeof (textPart as Record<string, unknown>).text === 'string') {
+            return (textPart as Record<string, string>).text
+        }
+    }
+
+    return ''
+}
+
+/**
+ * Map company_type string from DB to strict union type.
+ */
+function parseCompanyType(raw: string | null): 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' {
+    const upper = (raw || '').toUpperCase()
+    if (upper === 'EF') return 'EF'
+    if (upper === 'HB') return 'HB'
+    if (upper === 'KB') return 'KB'
+    if (upper === 'FORENING') return 'FORENING'
+    return 'AB'
+}
+
+/**
+ * Fetch activity snapshot (pending transactions, overdue invoices).
+ * Non-blocking enrichment — returns undefined on failure.
+ */
+async function fetchActivitySnapshot(
+    supabase: SupabaseClient<Database>
+): Promise<Record<string, unknown> | undefined> {
+    try {
+        const [txResult, invResult] = await Promise.all([
+            supabase
+                .from('transactions')
+                .select('*', { count: 'exact', head: true })
+                .eq('status', 'pending'),
+            supabase
+                .from('customer_invoices')
+                .select('total_amount')
+                .eq('status', 'sent')
+                .lt('due_date', new Date().toISOString().split('T')[0]),
+        ])
+
+        const overdueCount = invResult.data?.length ?? 0
+        const overdueTotal = invResult.data?.reduce(
+            (sum, i) => sum + (Number(i.total_amount) || 0), 0
+        ) ?? 0
+
+        return {
+            pendingTransactions: txResult.count ?? 0,
+            overdueInvoices: overdueCount,
+            overdueInvoiceTotal: overdueTotal,
+        }
+    } catch (e) {
+        console.warn('[Chat] Activity snapshot failed:', e)
+        return undefined
+    }
+}
+
+/**
+ * Fetch relevant user memories for prompt injection.
+ * Non-blocking enrichment — returns empty array on failure.
+ */
+async function fetchRelevantMemories(
+    companyId: string,
+    query: string
+): Promise<Array<{ content: string; category: string }>> {
+    try {
+        const { userMemoryService } = await import('@/services/user-memory-service')
+        const memories = await userMemoryService.getMemoriesForCompany(companyId)
+
+        const queryLower = query.toLowerCase()
+        const relevantMemories = memories.filter(m => {
+            const content = m.content.toLowerCase()
+
+            // Always include preferences (they define Scooby's personality)
+            if (m.category === 'preference') return true
+
+            // Keywords for topical filtering
+            const keywords = [
+                'lön', 'anställd', 'skatt', 'moms', 'utdelning', 'aktie',
+                'faktura', 'kvitto', 'bank', 'resultat', 'balans', 'bokslut',
+                'inventarie', 'tillgång', 'avskrivning', 'semester', 'sjuk',
+                'pension', 'förmån', 'dividende', 'k10', 'deklaration',
+            ]
+
+            return keywords.some(k => queryLower.includes(k) && content.includes(k))
+        })
+
+        return relevantMemories.slice(0, 15).map(m => ({
+            content: m.content,
+            category: m.category,
+        }))
+    } catch (e) {
+        console.warn('[Chat] Memory injection failed:', e)
+        return []
+    }
+}
+
+// =============================================================================
+// POST handler
+// =============================================================================
+
 export async function POST(request: NextRequest) {
     try {
+        // =====================================================================
+        // GATE — blocking checks (~50ms total)
+        // =====================================================================
+
         const auth = await verifyAuth(request)
         if (!auth) {
             return ApiResponse.unauthorized('Authentication required')
@@ -52,7 +192,6 @@ export async function POST(request: NextRequest) {
 
         const clientId = getClientIdentifier(request)
         const rateLimitResult = await checkRateLimit(clientId, RATE_LIMIT_CONFIG)
-
         if (!rateLimitResult.success) {
             return new Response(
                 JSON.stringify({ error: 'Too many requests.', retryAfter: rateLimitResult.retryAfter }),
@@ -78,25 +217,21 @@ export async function POST(request: NextRequest) {
             return new Response(JSON.stringify({ error: bodyValidation.error }), { status: 400 })
         }
 
-        const messagesInput = (body as { messages: Array<{ role: string; content: string }> }).messages
-        const conversationIdInput = (body as { conversationId?: string }).conversationId
-        const attachmentsInput = (body as { attachments?: Array<{ name: string; type: string; data: string }> }).attachments
-        const mentionsInput = (body as { mentions?: Array<{ type: string; label: string; aiContext?: string }> }).mentions
-        const requestedModelInput = (body as { model?: string }).model
-        const incognitoInput = (body as { incognito?: boolean }).incognito || false
+        const typedBody = body as Record<string, unknown>
+        const messages = typedBody.messages as Array<Record<string, unknown>>
+        const conversationId = (typedBody.conversationId as string) || undefined
+        const attachments = typedBody.attachments as Array<{ name: string; type: string; data: string }> | undefined
+        const mentions = typedBody.mentions as Array<{ type: string; label: string; aiContext?: string }> | undefined
+        const requestedModel = (typedBody.model as string) || undefined
+        const incognito = (typedBody.incognito as boolean) || false
 
-        const messages = messagesInput
-        let conversationId = conversationIdInput
-        const attachments = attachmentsInput
-        const mentions = mentionsInput
-        const requestedModel = requestedModelInput
-        const incognito = incognitoInput
+        if (!messages || !Array.isArray(messages) || messages.length === 0) {
+            return new Response(JSON.stringify({ error: 'Messages array is required' }), { status: 400 })
+        }
 
-        // Vercel AI passes standard CoreMessages
-        // For compatibility with previous validation we map them or skip strict validation if needed
-        // Here we just extract the last user message for DB saving and context building.
+        // Extract latest user content (handles both flat string and parts array)
         const latestUserMessage = messages.filter(m => m.role === 'user').pop()
-        const latestContent = latestUserMessage?.content || ''
+        const latestContent = latestUserMessage ? extractMessageContent(latestUserMessage) : ''
 
         const authResult = await authorizeModel(userId, requestedModel || DEFAULT_MODEL_ID)
 
@@ -116,88 +251,54 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        if (!incognito) {
-            if (!conversationId) {
-                const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
-                const { data: conv } = await supabase
-                    .from('conversations')
-                    .insert({ title, user_id: userId })
-                    .select()
-                    .single()
-                if (conv && 'id' in conv) conversationId = conv.id
-            }
-
-            if (conversationId && latestContent) {
-                await supabase
-                    .from('messages')
-                    .insert({
-                        conversation_id: conversationId,
-                        role: 'user',
-                        content: latestContent,
-                        user_id: userId
-                    })
-                    .select()
-                    .single()
-            }
-        }
-
-        ensureToolsInitialized()
-
-        let activitySnapshot: Record<string, unknown> | undefined
-        try {
-            const { count: pendingTx } = await supabase
-                .from('transactions')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'pending')
-
-            const today = new Date().toISOString().split('T')[0]
-            const { data: overdueInv } = await supabase
-                .from('customer_invoices')
-                .select('total_amount')
-                .eq('status', 'sent')
-                .lt('due_date', today)
-
-            const overdueCount = overdueInv?.length ?? 0
-            const overdueTotal = overdueInv?.reduce((sum, i) => sum + (Number(i.total_amount) || 0), 0) ?? 0
-
-            activitySnapshot = {
-                pendingTransactions: pendingTx ?? 0,
-                overdueInvoices: overdueCount,
-                overdueInvoiceTotal: overdueTotal,
-            }
-        } catch (e) {
-            console.error('[Chat] Activity snapshot failed:', e)
+        // Company type — required for prompt and tool scoping
+        if (!companyId) {
+            return new Response(
+                JSON.stringify({ error: 'Inget företag kopplat till ditt konto. Slutför onboarding.' }),
+                { status: 400 }
+            )
         }
 
         const { data: company, error: companyError } = await supabase
             .from('companies')
-            .select('company_type')
+            .select('company_type, name')
+            .eq('id', companyId)
             .single()
 
         if (companyError || !company) {
-            return new Response(JSON.stringify({ error: 'Företagsinformation saknas. Slutför onboarding.' }), { status: 400 })
+            return new Response(
+                JSON.stringify({ error: 'Företagsinformation saknas. Slutför onboarding.' }),
+                { status: 400 }
+            )
         }
 
-        // Map database string to our strict union type
-        const rawType = company.company_type || 'AB'
-        const companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' = 
-            rawType === 'EF' ? 'EF' :
-            rawType === 'HB' ? 'HB' :
-            rawType === 'KB' ? 'KB' :
-            rawType === 'FORENING' ? 'FORENING' : 'AB'
-        
+        const companyType = parseCompanyType(company.company_type)
+
+        // =====================================================================
+        // STREAM — build context and start streaming immediately
+        // =====================================================================
+
+        ensureToolsInitialized()
+
+        // Kick off non-blocking enrichment in parallel
+        const [activitySnapshot, relevantMemories] = await Promise.all([
+            fetchActivitySnapshot(supabase),
+            companyId ? fetchRelevantMemories(companyId, latestContent) : Promise.resolve([]),
+        ])
+
         const context = createAgentContext({
             userId,
-            companyId: companyId || '',
+            companyId,
             companyType,
+            companyName: company.name || undefined,
             locale: 'sv',
-            conversationId: conversationId || undefined,
+            conversationId,
             messages: messages.map(m => {
                 const role: 'user' | 'assistant' = m.role === 'user' ? 'user' : 'assistant'
                 return {
                     id: crypto.randomUUID(),
                     role,
-                    content: m.content,
+                    content: extractMessageContent(m),
                     timestamp: new Date(),
                 }
             }),
@@ -207,41 +308,8 @@ export async function POST(request: NextRequest) {
             context.sharedMemory.activitySnapshot = activitySnapshot
         }
 
-        try {
-            const { userMemoryService } = await import('@/services/user-memory-service')
-            if (companyId) {
-                const memories = await userMemoryService.getMemoriesForCompany(companyId)
-                
-                // Smart Relevance Filtering
-                // Only inject memories that are relevant to the current conversation
-                const query = latestContent.toLowerCase()
-                const relevantMemories = memories.filter(m => {
-                    const content = m.content.toLowerCase()
-                    
-                    // Always include preferences (they define Scooby's personality)
-                    if (m.category === 'preference') return true
-                    
-                    // Keywords for topical filtering
-                    const keywords = [
-                        'lön', 'anställd', 'skatt', 'moms', 'utdelning', 'aktie', 
-                        'faktura', 'kvitto', 'bank', 'resultat', 'balans', 'bokslut'
-                    ]
-                    
-                    // If user is asking about a specific topic, include relevant decisions/pending items
-                    return keywords.some(k => query.includes(k) && content.includes(k))
-                })
-
-                if (relevantMemories.length > 0) {
-                    // Limit to top 15 most relevant/recent to save tokens
-                    const injected = relevantMemories.slice(0, 15).map(m => ({
-                        content: m.content,
-                        category: m.category,
-                    }))
-                    context.sharedMemory.userMemories = injected
-                }
-            }
-        } catch (e) {
-            console.error('[Chat] Memory injection failed:', e)
+        if (relevantMemories.length > 0) {
+            context.sharedMemory.userMemories = relevantMemories
         }
 
         if (attachments && attachments.length > 0) {
@@ -263,7 +331,6 @@ export async function POST(request: NextRequest) {
             isConfirmed: false,
         })
 
-        // Model Selection
         const modelConfig = selectModel(latestContent)
         const activeModelId = getModelId(modelConfig)
 
@@ -272,17 +339,43 @@ export async function POST(request: NextRequest) {
             system: systemPrompt,
             messages: messages as Array<{ role: 'user' | 'assistant'; content: string }>,
             ...deferredConfig,
+
+            // =================================================================
+            // PERSIST — save everything after stream completes
+            // =================================================================
             onFinish: async ({ text, usage, toolCalls, toolResults }) => {
-                if (usage && usage.totalTokens && usage.totalTokens > 0) {
-                    await consumeTokens(userId, usage.totalTokens, authResult.modelId)
+                // Consume tokens
+                const totalTokens = usage?.totalTokens ?? 0
+                if (totalTokens > 0) {
+                    await consumeTokens(userId, totalTokens, authResult.modelId)
+                        .catch(e => console.error('[Chat] Token consumption failed:', e))
                 }
 
-                if (conversationId && !incognito) {
-                    // Save assistant message even if text is empty (tool-only responses)
-                    const hasContent = text && text.trim().length > 0
-                    const hasTools = toolCalls && toolCalls.length > 0
-                    if (hasContent || hasTools) {
-                        try {
+                // Save conversation + messages (both user and assistant)
+                if (!incognito && conversationId) {
+                    try {
+                        // Ensure conversation exists
+                        const title = latestContent.slice(0, 50) + (latestContent.length > 50 ? '...' : '') || 'Ny konversation'
+                        await supabase
+                            .from('conversations')
+                            .upsert({ id: conversationId, title, user_id: userId }, { onConflict: 'id' })
+
+                        // Save user message
+                        if (latestContent) {
+                            await supabase
+                                .from('messages')
+                                .insert({
+                                    conversation_id: conversationId,
+                                    role: 'user',
+                                    content: latestContent,
+                                    user_id: userId
+                                })
+                        }
+
+                        // Save assistant message
+                        const hasContent = text && text.trim().length > 0
+                        const hasTools = toolCalls && toolCalls.length > 0
+                        if (hasContent || hasTools) {
                             await supabase
                                 .from('messages')
                                 .insert({
@@ -293,11 +386,9 @@ export async function POST(request: NextRequest) {
                                     tool_calls: toolCalls && toolCalls.length > 0 ? JSON.stringify(toolCalls) : null,
                                     tool_results: toolResults && toolResults.length > 0 ? JSON.stringify(toolResults) : null,
                                 })
-                                .select()
-                                .single()
-                        } catch (e) {
-                            console.error('[Chat] Failed to save message:', e)
                         }
+                    } catch (e) {
+                        console.error('[Chat] Failed to persist conversation:', e)
                     }
                 }
             }

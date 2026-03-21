@@ -1,14 +1,17 @@
 "use client"
 
-import { useRef, useEffect, useState, useCallback } from "react"
-import { useChat } from "@/hooks/use-chat"
-import { useAIUsage } from "@/hooks/use-ai-usage"
-import { useSubscription } from "@/hooks/use-subscription"
-import { useModel } from "@/providers/model-provider"
+/**
+ * AI Chat Sidebar — compact chat view inside the collapsible sidebar.
+ *
+ * This is a thin UI shell. All chat state lives in ChatProvider (useChatContext).
+ * No duplicate hooks, no duplicate event listeners, no duplicate state.
+ */
+
+import { useRef, useEffect, useState } from "react"
+import { useChatContext } from "@/providers/chat-provider"
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { BuyCreditsDialog } from "@/components/billing"
-import { type MentionItem } from "@/components/ai/mention-popover"
 import { getGreeting } from "@/lib/chat-utils"
 import { Plus, MessageSquare } from "lucide-react"
 import { Button } from "@/components/ui/button"
@@ -21,7 +24,6 @@ import {
     useSidebar,
 } from "@/components/ui/sidebar"
 import { type SidebarMode } from "./app-sidebar"
-import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
 
 interface AIChatSidebarProps {
     mode?: SidebarMode
@@ -31,10 +33,8 @@ interface AIChatSidebarProps {
 export function AIChatSidebar({ }: AIChatSidebarProps) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
-    const { modelId } = useModel()
-    const { canAfford, refresh: refreshUsage } = useAIUsage()
-    const { isPaid } = useSubscription()
 
+    // All chat state from the shared provider — no duplicate useChat()
     const {
         conversations,
         currentConversationId,
@@ -42,160 +42,29 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
         isLoading,
         sendMessage,
         regenerateResponse,
-        startNewConversation,
+        handleSend,
+        handleCancelConfirmation,
+        handleNewConversation,
         loadConversation,
-        deleteMessage,
-    } = useChat()
+        textareaValue,
+        setTextareaValue,
+        mentionItems,
+        setMentionItems,
+        attachedFiles,
+        setAttachedFiles,
+        isInputFocused,
+        setIsInputFocused,
+        showBuyCredits,
+        setShowBuyCredits,
+    } = useChatContext()
 
-    const [textareaValue, setTextareaValue] = useState("")
-    const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
-    const [attachedFiles, setAttachedFiles] = useState<File[]>([])
     const [showHistory, setShowHistory] = useState(false)
-    const [isInputFocused, setIsInputFocused] = useState(false)
-    const [showBuyCredits, setShowBuyCredits] = useState(false)
     const messagesEndRef = useRef<HTMLDivElement>(null)
 
     // Scroll to bottom when messages change
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
     }, [messages])
-
-    const handleSend = useCallback(() => {
-        // Check if user can afford this request (Pro users only)
-        if (isPaid && !canAfford(modelId)) {
-            setShowBuyCredits(true)
-            return
-        }
-
-        const content = textareaValue
-        const files = [...attachedFiles]
-        const mentions = [...mentionItems]
-
-        setTextareaValue("")
-        setAttachedFiles([])
-        setMentionItems([])
-
-        sendMessage({
-            content,
-            files,
-            mentions
-        })
-
-        // Refresh usage after sending
-        setTimeout(() => refreshUsage(), 2000)
-    }, [textareaValue, attachedFiles, mentionItems, sendMessage, isPaid, canAfford, modelId, refreshUsage])
-
-    const handleCancelConfirmation = useCallback((messageId: string) => {
-        deleteMessage(messageId)
-    }, [deleteMessage])
-
-    const handleNewConversation = useCallback(() => {
-        startNewConversation()
-        setTextareaValue("")
-        setMentionItems([])
-        setAttachedFiles([])
-        setShowHistory(false)
-    }, [startNewConversation])
-
-    // Handle incoming AI context (from event or pending)
-    const handleAIContextRef = useRef((context: PageContext) => { })
-    useEffect(() => {
-        handleAIContextRef.current = (context: PageContext) => {
-            startNewConversation()
-            if (context.autoSend) {
-                sendMessage({
-                    content: context.initialPrompt,
-                    actionTrigger: context.actionTrigger
-                })
-            } else {
-                setTextareaValue(context.initialPrompt)
-            }
-            setShowHistory(false)
-        }
-    })
-
-    // On mount, check for pending context (set before this component mounted)
-    const mountedRef = useRef(false)
-    useEffect(() => {
-        if (mountedRef.current) return
-        mountedRef.current = true
-        const pending = consumePendingAIContext()
-        if (pending) {
-            handleAIContextRef.current(pending)
-        }
-    }, [])
-
-    // Listen for global events to trigger chat actions
-    useEffect(() => {
-        const handleOpenAIChat = (e: Event) => {
-            // If there's pending context, it was already handled by mount effect
-            const pending = consumePendingAIContext()
-            if (pending) {
-                // Already handled or handle now
-                handleAIContextRef.current(pending)
-                return
-            }
-            const context = (e as CustomEvent).detail as PageContext
-            if (context) {
-                handleAIContextRef.current(context)
-            }
-        }
-
-        const handleLoadConversation = (e: Event) => {
-            const conversationId = (e as CustomEvent).detail as string
-            if (conversationId) {
-                loadConversation(conversationId)
-                setShowHistory(false)
-            }
-        }
-
-        const handleShowHistory = () => {
-            setShowHistory(true)
-        }
-
-        const onNewConversationEvent = () => {
-            startNewConversation()
-            setTextareaValue("")
-            setMentionItems([])
-            setAttachedFiles([])
-            setShowHistory(false)
-        }
-
-        // Handle focus input event from AI dialog edit button
-        const handleFocusInput = (e: Event) => {
-            const detail = (e as CustomEvent<{ prefill?: string }>).detail
-            setShowHistory(false)
-
-            // Set prefill value if provided
-            if (detail?.prefill) {
-                setTextareaValue(detail.prefill)
-            }
-
-            // Focus the textarea after a short delay to ensure DOM is ready
-            setTimeout(() => {
-                const textarea = document.querySelector('[data-ai-chat-input]') as HTMLTextAreaElement
-                if (textarea) {
-                    textarea.focus()
-                    // Move cursor to end
-                    textarea.setSelectionRange(textarea.value.length, textarea.value.length)
-                }
-            }, 100)
-        }
-
-        window.addEventListener(AI_CHAT_EVENT, handleOpenAIChat)
-        window.addEventListener("load-conversation", handleLoadConversation)
-        window.addEventListener("ai-chat-show-history", handleShowHistory)
-        window.addEventListener("ai-chat-new-conversation", onNewConversationEvent)
-        window.addEventListener("ai-chat-focus-input", handleFocusInput)
-
-        return () => {
-            window.removeEventListener(AI_CHAT_EVENT, handleOpenAIChat)
-            window.removeEventListener("load-conversation", handleLoadConversation)
-            window.removeEventListener("ai-chat-show-history", handleShowHistory)
-            window.removeEventListener("ai-chat-new-conversation", onNewConversationEvent)
-            window.removeEventListener("ai-chat-focus-input", handleFocusInput)
-        }
-    }, [loadConversation])
 
     // When collapsed, show only icons
     if (isCollapsed) {
@@ -269,68 +138,11 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
     // Chat view
     return (
         <SidebarGroup className="flex-1 flex flex-col overflow-hidden gap-2 -mt-0.5">
-            {/* Main Chat Container */}
             <div className="flex-1 flex flex-col min-h-0 bg-sidebar-accent rounded-lg overflow-hidden">
                 {/* Messages Area */}
                 <div className="flex-1 overflow-y-auto px-3">
                     {messages.length === 0 ? (
                         <div className="flex flex-col items-center justify-center h-full text-center py-8">
-                            {/* Interactive Pixel Art Dog - click to hop, smiles when input focused */}
-                            <div
-                                className="mb-4 cursor-pointer"
-                                onClick={(e) => {
-                                    const dog = e.currentTarget.querySelector('svg')
-                                    if (dog) {
-                                        dog.classList.add('animate-bounce')
-                                        setTimeout(() => dog.classList.remove('animate-bounce'), 500)
-                                    }
-                                }}
-                            >
-                                <svg width="48" height="48" viewBox="0 0 16 16" shapeRendering="crispEdges">
-                                    {/* Ears */}
-                                    <rect x="2" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500" />
-                                    <rect x="12" y="2" width="2" height="3" className="fill-amber-600 dark:fill-amber-500" />
-                                    {/* Head */}
-                                    <rect x="3" y="4" width="10" height="6" className="fill-amber-400 dark:fill-amber-300" />
-                                    {/* Face markings */}
-                                    <rect x="5" y="5" width="6" height="4" className="fill-amber-100 dark:fill-amber-50" />
-                                    {/* Eyes - open when not focused */}
-                                    {!isInputFocused && (
-                                        <>
-                                            <rect x="5" y="6" width="2" height="2" className="fill-gray-800 dark:fill-gray-900" />
-                                            <rect x="9" y="6" width="2" height="2" className="fill-gray-800 dark:fill-gray-900" />
-                                            <rect x="5" y="6" width="1" height="1" className="fill-white" />
-                                            <rect x="9" y="6" width="1" height="1" className="fill-white" />
-                                        </>
-                                    )}
-                                    {/* Closed Eyes (^ ^) - when input focused */}
-                                    {isInputFocused && (
-                                        <>
-                                            {/* Left Eye ^ */}
-                                            <rect x="5" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                            <rect x="6" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                            <rect x="7" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                            {/* Right Eye ^ */}
-                                            <rect x="9" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                            <rect x="10" y="6" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                            <rect x="11" y="7" width="1" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                        </>
-                                    )}
-                                    {/* Nose */}
-                                    <rect x="7" y="8" width="2" height="1" className="fill-gray-800 dark:fill-gray-900" />
-                                    {/* Tongue */}
-                                    <rect x="7" y="9" width="2" height="1" className="fill-pink-400" />
-                                    {/* Body */}
-                                    <rect x="4" y="10" width="8" height="4" className="fill-amber-400 dark:fill-amber-300" />
-                                    {/* Chest */}
-                                    <rect x="6" y="10" width="4" height="3" className="fill-amber-100 dark:fill-amber-50" />
-                                    {/* Tail */}
-                                    <rect x="12" y="11" width="2" height="2" className="fill-amber-600 dark:fill-amber-500" />
-                                    {/* Feet */}
-                                    <rect x="4" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
-                                    <rect x="10" y="14" width="2" height="1" className="fill-amber-600 dark:fill-amber-500" />
-                                </svg>
-                            </div>
                             <p className="text-sm font-medium">{getGreeting()}!</p>
                             <p className="text-xs text-muted-foreground mt-1">
                                 Hur kan jag hjälpa dig?
@@ -367,7 +179,6 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
                         onBlur={() => setIsInputFocused(false)}
                     />
 
-                    {/* Disclaimer */}
                     <div className="px-2 pt-2 text-center">
                         <p className="text-[10px] text-muted-foreground/60">
                             Scope AI kan göra misstag. Kontrollera viktig information.
@@ -376,7 +187,6 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
                 </div>
             </div>
 
-            {/* Out of tokens dialog */}
             <BuyCreditsDialog
                 open={showBuyCredits}
                 onOpenChange={setShowBuyCredits}

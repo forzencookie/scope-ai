@@ -1,7 +1,7 @@
 'use server'
 
 import { getAuthContext } from "@/lib/database/auth-server"
-import { updateCompany as updateCompanyInDb } from "@/services/company-service"
+import { updateCompany as updateCompanyInDb } from "@/services/company-service.server"
 import { CompanySettingsSchema } from "@/lib/ai-schema"
 import { revalidatePath } from "next/cache"
 

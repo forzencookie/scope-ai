@@ -4,6 +4,12 @@
 > Read before working on that area. Update when code changes.
 > Once production-ready, these become living archives of how things work.
 
+## Foundation
+
+| Flow | What It Covers |
+|------|---------------|
+| [AI-First Philosophy](ai-first-philosophy.md) | Why we exist, the two brains problem, what AI handles vs what code handles |
+
 ## Core Flows
 
 | Flow | What It Covers |

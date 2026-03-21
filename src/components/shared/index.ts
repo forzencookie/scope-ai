@@ -27,9 +27,6 @@ export type { ReportWizardShellProps, ReportStatus } from "./report-wizard-shell
 export { TierBadge, TierIndicator } from "./tier-badge"
 export { UpgradePrompt, UpgradeButton, FeatureGate } from "./upgrade-prompt"
 
-// Real-time collaboration components
-export { OnlineUsers, OnlineUsersBadge, EditConflictWarning } from "./online-users"
-
 // Year navigation
 export { YearSlider } from "./year-slider"
 

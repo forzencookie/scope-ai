@@ -145,7 +145,8 @@ function LoggaInContent() {
                     backgroundColor: '#050505',
                     backgroundImage: "url('/premiumbg-clean.png')",
                     backgroundSize: 'cover',
-                    backgroundPosition: 'center',
+                    backgroundPosition: '50% 50%',
+                    backgroundRepeat: 'no-repeat',
                 }}
             />
 

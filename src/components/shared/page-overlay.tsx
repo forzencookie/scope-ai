@@ -24,6 +24,8 @@ interface PageOverlayProps {
     /** Additional action buttons in the header */
     actions?: React.ReactNode
     className?: string
+    /** Whether to remove the max-width and padding from the content area (for immersive layouts) */
+    fullContent?: boolean
 }
 
 export function PageOverlay({
@@ -35,7 +37,8 @@ export function PageOverlay({
     children,
     scoobyPrompt,
     actions,
-    className
+    className,
+    fullContent = false
 }: PageOverlayProps) {
     const { navigateToAI } = useChatNavigation()
 
@@ -66,7 +69,7 @@ export function PageOverlay({
                     exit={{ opacity: 0, x: 20 }}
                     transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     className={cn(
-                        "absolute inset-0 z-30 flex flex-col bg-background",
+                        "absolute inset-0 z-50 flex flex-col bg-background",
                         className
                     )}
                 >
@@ -117,7 +120,10 @@ export function PageOverlay({
 
                     {/* Scrollable Content area */}
                     <div className="flex-1 overflow-y-auto custom-scrollbar">
-                        <div className="max-w-5xl mx-auto w-full p-6 md:p-8">
+                        <div className={cn(
+                            "w-full",
+                            !fullContent && "max-w-5xl mx-auto p-6 md:p-8"
+                        )}>
                             {children}
                         </div>
                     </div>

@@ -54,6 +54,21 @@ This is a pre-production MVP. No code is in production. There is no excuse for d
 4. **Do you lack context?** Ask the founder. Do not guess. A wrong guess creates debt.
 5. **Update the flow doc** if your changes alter the workflow.
 
+## After You Touch Code — Propagation Rule
+
+**When you change a feature, update EVERY file that references it.** This is non-negotiable. Stale references across files are the #1 source of bugs in this codebase.
+
+Before marking any change as done, trace the full dependency chain:
+
+1. **Navigation** — Does `src/data/app-navigation.ts` reference this feature? Update tab keys, URLs, labels, feature gates.
+2. **Page components** — Do tab definitions in the page component match what navigation promises? Check `allTabs` arrays, `tabsByCompanyType` maps, `?tab=` query param handling.
+3. **Types** — Did you add/remove/rename a feature key? Update `src/lib/company-types.ts` and every `featureKey` reference.
+4. **AI tools** — Does a tool reference this feature? Update tool descriptions, keywords, `allowedCompanyTypes`.
+5. **Flow docs** — Does `docs/flows/` describe this feature? Update to match reality.
+6. **Fix docs** — Does `docs/fix/` have an assessment? Mark items as done or update the status.
+
+**The rule:** If you change file A and file B references the same concept, file B must be updated in the same change. No exceptions. No "I'll fix it later." Check the chain, update everything, then mark it done.
+
 ## Flow Documentation
 
 Read before working. Update when code changes.

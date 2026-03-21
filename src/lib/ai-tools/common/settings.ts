@@ -8,7 +8,12 @@
  */
 
 import { defineTool } from '../registry'
-import { settingsService } from '@/services/settings-service'
+import { settingsService } from '@/services/settings-service.server'
+import { 
+    updateNotificationPreference,
+    getNotificationPreferences,
+    getIntegrations
+} from '@/services/settings-service'
 import type {
     SubscriptionStatus as ServiceSubscriptionStatus,
     NotificationPreferences as ServiceNotificationPreferences,
@@ -119,7 +124,7 @@ export const getNotificationPreferencesTool = defineTool<Record<string, never>, 
             }
         }
 
-        const prefs = await settingsService.getNotificationPreferences(userId)
+        const prefs = await getNotificationPreferences(userId)
         const enabledCount = Object.values(prefs.email).filter(Boolean).length
 
         return {
@@ -162,7 +167,7 @@ export const updateNotificationPreferencesTool = defineTool<UpdateNotificationPa
         }
 
         // Update in database
-        const updatedPrefs = await settingsService.updateNotificationPreference(
+        const updatedPrefs = await updateNotificationPreference(
             userId,
             params.channel,
             params.setting,
@@ -215,7 +220,7 @@ export const listActiveIntegrationsTool = defineTool<Record<string, never>, Inte
     parameters: { type: 'object', properties: {} },
     execute: async () => {
         // Get real integrations from database
-        const integrations = await settingsService.getIntegrations()
+        const integrations = await getIntegrations()
 
         const connectedCount = integrations.filter(i => i.status === 'connected').length
 

@@ -25,14 +25,14 @@ function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) 
                 if (i <= fullText.length) {
                     setDisplayedText(fullText.substring(0, i))
                     i++
-                    // Natural, deliberate typing speed: 50-120ms per character
-                    const delay = Math.random() * 70 + 50
+                    // More deliberate, thoughtful typing speed: 80-180ms per character
+                    const delay = Math.random() * 100 + 80
                     timeoutId = setTimeout(typeChar, delay)
                 }
             }
 
-            // Initial pause before typing starts
-            timeoutId = setTimeout(typeChar, 400)
+            // Longer initial pause for impact
+            timeoutId = setTimeout(typeChar, 800)
         } else {
             setDisplayedText("")
         }
@@ -43,7 +43,7 @@ function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) 
     const parts = displayedText.split("\n")
 
     return (
-        <h1 ref={ref} className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-10 leading-[1.1] text-white min-h-[2.2em] md:min-h-[2.2em]">
+        <h1 ref={ref} className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-12 leading-[1.1] text-white min-h-[2.2em] md:min-h-[2.2em]">
             {parts[0]}
             {parts.length > 1 && <><br />{parts[1]}</>}
             <motion.span
@@ -128,7 +128,8 @@ export default function LandingPage() {
                         backgroundColor: '#050505',
                         backgroundImage: "url('/premiumbg-clean.png')",
                         backgroundSize: 'cover',
-                        backgroundPosition: 'center',
+                        backgroundPosition: '50% 50%',
+                        backgroundRepeat: 'no-repeat',
                     }}
                 />
 
@@ -145,7 +146,7 @@ export default function LandingPage() {
                                 Beta
                             </div>
 
-                            <TypewriterHeroText line1="bokföring för framtiden." line2="starta ditt bolag." />
+                            <TypewriterHeroText line1="framtidens ekonomi." line2="se helheten, förstå detaljerna." />
 
                             <Link href="/logga-in" className="flex items-center justify-center gap-2 px-10 py-3.5 bg-[#f5f5f5] text-black rounded-2xl hover:bg-white transition-all font-medium text-lg w-fit hover:scale-[1.02] active:scale-[0.98]">
                                 kom igång <ArrowRight className="w-5 h-5" />
@@ -156,11 +157,11 @@ export default function LandingPage() {
                     {/* Section 2: App Demo */}
                     <div className="w-full flex flex-col items-center z-20 mt-12 md:mt-0">
                         <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto px-5">
-                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-0 leading-tight pb-0">
+                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-12 leading-tight">
                                 Din AI-assistent som jobbar dygnet runt.
                             </h2>
                         </div>
-                        <div className="-mt-[20px] md:-mt-[40px] w-full">
+                        <div className="w-full">
                             <AppDemoShowcase />
                         </div>
                     </div>
@@ -210,7 +211,7 @@ export default function LandingPage() {
                         </section>
                     ) : (
                         <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
-                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-16 leading-tight">
+                            <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-12 leading-tight">
                                 Priser
                             </h2>
                             <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">

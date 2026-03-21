@@ -1,41 +1,22 @@
 // ============================================
-// Navigation Mock Data
+// Navigation Data
 // ============================================
 
 import {
     BookOpen,
-    Box,
     CheckSquare,
     PieChart,
-    Building2,
     Users,
     Settings,
     Landmark,
     Vote,
     FileText,
     PiggyBank,
-
-    Scale,
     Gift,
-    Send,
     Coins,
     Calendar,
 } from "lucide-react"
-// import type { FeatureKey } from "@/lib/company-types"
-import type { User, Team, NavItem } from "@/types"
-
-
-// ============================================
-// Platform Navigation (Core)
-// ============================================
-
-
-
-// ============================================
-// Platform Navigation (combined)
-// ============================================
-
-export const navPlatform: NavItem[] = []  // Platform-level nav items (populated dynamically or kept empty)
+import type { NavItem } from "@/types"
 
 // ============================================
 // Feature-based Navigation Modules
@@ -54,12 +35,8 @@ export const navBokforing: NavItem[] = [
         url: "/dashboard/bokforing?tab=fakturor",
         icon: FileText,
     },
-    {
-        title: "Kvitton",
-        titleEnkel: "Kvitton",
-        url: "/dashboard/bokforing?tab=kvitton",
-        icon: PiggyBank,
-    },
+    // Kvitton tab: not yet built. Add back when receipts component exists.
+    // See docs/fix/information-pages.md for tracking.
     {
         title: "Inventarier",
         titleEnkel: "Inventarier",
@@ -76,62 +53,14 @@ export const navBokforing: NavItem[] = [
     },
 ]
 
+// Rapporter uses a card grid (not tabs). Single nav entry — the page shows
+// all available reports filtered by company type features.
 export const navRapporter: NavItem[] = [
     {
-        title: "Resultaträkning",
-        titleEnkel: "Resultaträkning",
-        url: "/dashboard/rapporter?tab=resultatrakning",
+        title: "Rapporter",
+        titleEnkel: "Rapporter",
+        url: "/dashboard/rapporter",
         icon: PieChart,
-        featureKey: "resultatrakning",
-    },
-    {
-        title: "Balansräkning",
-        titleEnkel: "Balansräkning",
-        url: "/dashboard/rapporter?tab=balansrakning",
-        icon: Scale,
-        featureKey: "balansrakning",
-    },
-    {
-        title: "Momsdeklaration",
-        titleEnkel: "Moms",
-        url: "/dashboard/rapporter?tab=momsdeklaration",
-        icon: FileText,
-        featureKey: "momsdeklaration",
-    },
-    {
-        title: "Inkomstdeklaration",
-        titleEnkel: "Inkomst",
-        url: "/dashboard/rapporter?tab=inkomstdeklaration",
-        icon: FileText,
-        featureKey: "inkomstdeklaration",
-    },
-    {
-        title: "AGI",
-        titleEnkel: "AGI",
-        url: "/dashboard/rapporter?tab=agi",
-        icon: Send,
-        featureKey: "agi",
-    },
-    {
-        title: "Årsredovisning",
-        titleEnkel: "Årsredovisning",
-        url: "/dashboard/rapporter?tab=arsredovisning",
-        icon: FileText,
-        featureKey: "arsredovisning",
-    },
-    {
-        title: "Årsbokslut",
-        titleEnkel: "Årsbokslut",
-        url: "/dashboard/rapporter?tab=arsbokslut",
-        icon: FileText,
-        featureKey: "arsbokslut",
-    },
-    {
-        title: "K10",
-        titleEnkel: "K10",
-        url: "/dashboard/rapporter?tab=k10",
-        icon: FileText,
-        featureKey: "k10",
     },
 ]
 
@@ -146,7 +75,7 @@ export const navLoner: NavItem[] = [
     {
         title: "Förmåner",
         titleEnkel: "Förmåner",
-        url: "/dashboard/loner?tab=benefits",
+        url: "/dashboard/loner?tab=formaner",
         icon: Gift,
         featureKey: "lonebesked",
     },
@@ -172,6 +101,14 @@ export const navLoner: NavItem[] = [
     },
 ]
 
+// Agare tabs are company-type-dependent. The page component (ownership-page.tsx)
+// filters tabs by company type. Nav items here must match what the page actually renders.
+// Feature keys gate visibility in the sidebar via hasFeature().
+//
+// AB: aktiebok, bolagsstamma
+// EF: agarinfo (rendered inline, single-tab)
+// HB/KB: delagare
+// Forening: medlemsregister, bolagsstamma (shown as arsmote)
 export const navAgare: NavItem[] = [
     {
         title: "Aktiebok",
@@ -187,20 +124,6 @@ export const navAgare: NavItem[] = [
         icon: Users,
         featureKey: "delagare",
     },
-    {
-        title: "Utdelning",
-        titleEnkel: "Utdelning",
-        url: "/dashboard/agare?tab=utdelning",
-        icon: Coins,
-        featureKey: "utdelning",
-    },
-    // {
-    //     title: "Ägarinfo",
-    //     titleEnkel: "Ägarinfo",
-    //     url: "/dashboard/agare?tab=agarinfo",
-    //     icon: Building2,
-    //     featureKey: "agarinfo",
-    // },
     {
         title: "Medlemsregister",
         titleEnkel: "Medlemmar",
@@ -221,12 +144,6 @@ export const navAgare: NavItem[] = [
         url: "/dashboard/agare?tab=arsmote",
         icon: Vote,
         featureKey: "arsmote",
-    },
-    {
-        title: "Firmatecknare",
-        titleEnkel: "Firmatecknare",
-        url: "/dashboard/agare?tab=firmatecknare",
-        icon: FileText,
     },
 ]
 

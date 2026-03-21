@@ -7,16 +7,18 @@
 | Fix | Flow | Thinking | Status |
 |-----|------|----------|--------|
 | [database-schema.md](database-schema.md) | Cross-cutting (all pages/tools) | 🟢 Medium | ⬜ Not started |
-| [ai-interface.md](ai-interface.md) | [AI Interface](../flows/ai-interface.md) | 🔵 Ultrathink | ⬜ Not started |
-| [scooby-engine.md](scooby-engine.md) | [Scooby Engine](../flows/scooby-engine.md) | 🔵 Ultrathink | ⬜ Not started |
-| [tools.md](tools.md) | [Tools](../flows/tools.md) | 🔵 Ultrathink | ⬜ Not started |
+| [ai-interface.md](ai-interface.md) | [AI Interface](../flows/ai-interface.md) | 🔵 Ultrathink | 🟡 In progress |
+| [scooby-engine.md](scooby-engine.md) | [Scooby Engine](../flows/scooby-engine.md) | 🔵 Ultrathink | 🟡 Assessed |
+| [tools.md](tools.md) | [Tools](../flows/tools.md) | 🔵 Ultrathink | 🟡 Assessed |
 | [walkthrough-overlays.md](walkthrough-overlays.md) | [Walkthrough Overlays](../flows/walkthrough-overlays.md) | 🔵 Ultrathink | ⬜ Not started |
 | [page-overlays.md](page-overlays.md) | [Page Overlays](../flows/page-overlays.md) | 🔵 Ultrathink | ⬜ Not started |
-| [information-pages.md](information-pages.md) | [Information Pages](../flows/information-pages.md) | 🔵 Ultrathink | ⬜ Not started |
+| [information-pages.md](information-pages.md) | [Information Pages](../flows/information-pages.md) | 🔵 Ultrathink | 🟡 In progress |
 | [settings.md](settings.md) | [Settings](../flows/settings.md) | 🟢 Medium | ⬜ Not started |
 | [payments.md](payments.md) | [Payments](../flows/payments.md) | 🟢 Medium | ⬜ Not started |
 | [onboarding.md](onboarding.md) | [Onboarding](../flows/onboarding.md) | 🟢 Medium | ⬜ Not started |
 | [landing-page.md](landing-page.md) | [Landing Page](../flows/landing-page.md) | 🟢 Medium | ⬜ Not started |
+| [architecture-layer-violations.md](architecture-layer-violations.md) | Cross-cutting (hooks/services) | 🟢 Medium | 🟡 In progress |
+| [service-ui-standardization.md](service-ui-standardization.md) | Cross-cutting (types/contracts) | 🔴 Hard | 🟡 In progress |
 
 ## How This Works
 

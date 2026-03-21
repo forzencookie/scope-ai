@@ -9,7 +9,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { taxService } from '@/services/tax-service'
-import { companyService } from '@/services/company-service'
+import { companyService } from '@/services/company-service.server'
 import { shareholderService } from '@/services/shareholder-service'
 import { OWNER_ACCOUNTS, EQUITY_ACCOUNTS } from '@/data/account-constants'
 

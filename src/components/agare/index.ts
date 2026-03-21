@@ -12,6 +12,4 @@ export { Arsmote } from './arsmote'
 export { Medlemsregister } from './medlemsregister'
 
 // Corporate Actions & Compliance
-export { Firmatecknare } from './firmatecknare'
-export { ActionWizard } from './action-wizard'
 export { UtdelningContent } from './utdelning'

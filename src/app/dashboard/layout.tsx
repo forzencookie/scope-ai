@@ -9,7 +9,8 @@ import { AIDialogProvider } from "@/providers/ai-overlay-provider"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useState } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
-import React, { useEffect } from "react"
+import React, { useEffect, Suspense } from "react"
+import { Loader2 } from "lucide-react"
 import { QueryProvider } from "@/providers/query-provider"
 import { ChatProvider } from "@/providers/chat-provider"
 import { ChatHistorySidebar } from "@/components/layout/chat-history-sidebar"
@@ -17,26 +18,12 @@ import { MainContentArea } from "@/components/layout/main-content-area"
 import { SettingsOverlay } from "@/components/installningar/settings-overlay"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
 
-function DashboardContent({ children }: { children: React.ReactNode }) {
+function DashboardContentInner({ children }: { children: React.ReactNode }) {
     const { shouldRedirect, isLoading } = useOnboarding()
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
     
-    // 1. Mandatory Onboarding Check — show nothing until we know status
-    if (isLoading) {
-        return (
-            <div className="h-screen w-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center animate-pulse">
-                        <ScopeAILogo className="h-8 w-8 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground animate-pulse">Säkrar din session...</p>
-                </div>
-            </div>
-        )
-    }
-
     const settingsParam = searchParams?.get("settings")
     const [settingsOpen, setSettingsOpen] = useState(!!settingsParam)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
@@ -83,6 +70,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('ai-navigate', handleAINavigate as EventListener)
     }, [router])
 
+    // 1. Mandatory Onboarding Check — show nothing until we know status
+    if (isLoading) {
+        return (
+            <div className="h-screen w-screen flex items-center justify-center bg-background">
+                <div className="flex flex-col items-center gap-4">
+                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center animate-pulse">
+                        <ScopeAILogo className="h-8 w-8 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground animate-pulse">Säkrar din session...</p>
+                </div>
+            </div>
+        )
+    }
+
     return (
         <ChatProvider>
             <div className="flex h-screen bg-background dark:bg-[oklch(0.12_0_0)]">
@@ -105,6 +106,20 @@ function DashboardContent({ children }: { children: React.ReactNode }) {
                 </MainContentArea>
             </div>
         </ChatProvider>
+    )
+}
+
+function DashboardContent({ children }: { children: React.ReactNode }) {
+    return (
+        <Suspense fallback={
+            <div className="h-screen w-screen flex items-center justify-center bg-background">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+        }>
+            <DashboardContentInner>
+                {children}
+            </DashboardContentInner>
+        </Suspense>
     )
 }
 

@@ -183,15 +183,15 @@ export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: Sett
       onClose={() => onOpenChange?.(false)}
       title="Inställningar"
       subtitle="Hantera ditt konto, företag och preferenser"
-      scoobyPrompt="Hjälp mig att ändra mina inställningar"
-      className="p-0" // Remove default padding to allow sidebar layout
+      className="p-0"
+      fullContent={true}
     >
-      <div className="flex h-full min-h-[600px]">
-        <SidebarProvider className="items-start h-full">
-          <Sidebar collapsible="none" className="w-64 border-r h-full bg-muted/20">
-            <SidebarContent>
-              <SidebarGroup>
-                <SidebarGroupContent>
+      <div className="flex h-full min-h-0 bg-background overflow-hidden">
+        <SidebarProvider className="items-start h-full min-h-0">
+          <Sidebar collapsible="none" className="w-64 border-r h-full bg-muted/20 shrink-0">
+            <SidebarContent className="h-full">
+              <SidebarGroup className="h-full">
+                <SidebarGroupContent className="h-full">
                   <SidebarMenu>
                     {data.nav.map((item) => (
                       <SidebarMenuItem key={item.name}>
@@ -211,12 +211,12 @@ export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: Sett
             </SidebarContent>
           </Sidebar>
           
-          <main className="flex-1 flex flex-col min-h-0 bg-background">
+          <main className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden">
             <header className="flex h-14 shrink-0 items-center gap-2 border-b px-6">
               <Breadcrumb>
                 <BreadcrumbList>
                   <BreadcrumbItem>
-                    <BreadcrumbLink href="#">Inställningar</BreadcrumbLink>
+                    <span className="text-muted-foreground">Inställningar</span>
                   </BreadcrumbItem>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
@@ -226,8 +226,8 @@ export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: Sett
               </Breadcrumb>
             </header>
             
-            <div className="flex-1 overflow-y-auto p-8 custom-scrollbar">
-              <div className="max-w-2xl mx-auto w-full">
+            <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
+              <div className="max-w-3xl w-full">
                 {renderTabContent()}
               </div>
             </div>
