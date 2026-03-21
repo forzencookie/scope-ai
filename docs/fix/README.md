@@ -46,3 +46,12 @@ See `docs/AI_NOTEPAD.md` for the full phase plan. Summary:
 |-----|-------|--------|
 | [ai-driven-k10-dividends.md](ai-driven-k10-dividends.md) | K10 dividend threshold calculation → AI tool | ⬜ Not started (Phase 4) |
 | [smart-vat-extraction.md](smart-vat-extraction.md) | VAT extraction logic → AI tool | ⬜ Not started (Phase 4) |
+
+## How To Work a Fix
+
+1. Read the flow doc — understand the vision
+2. Read the fix doc — understand what needs to happen
+3. Compare vision to current code
+4. Execute the fix
+5. **Flag suspicious code** — anything that doesn't serve the vision, cross-reference with the flow and flag for founder review rather than silently keeping or deleting
+6. Update both the fix doc (mark done) and the flow doc (if the workflow changed)
