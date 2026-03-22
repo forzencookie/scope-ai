@@ -36,9 +36,8 @@ export const TRANSACTION_STATUSES = TRANSACTION_STATUS_LABELS
 export type TransactionStatus = (typeof TRANSACTION_STATUSES)[keyof typeof TRANSACTION_STATUSES]
 
 export const TRANSACTION_STATUS_VARIANT: Record<TransactionStatus, StatusVariant> = {
-    "Att bokföra": "warning",
+    "Obokförd": "warning",
     "Bokförd": "success",
-    "Saknar underlag": "error",
     "Ignorerad": "neutral",
 }
 
@@ -51,13 +50,10 @@ export const INVOICE_STATUSES = INVOICE_STATUS_LABELS
 export type InvoiceStatus = (typeof INVOICE_STATUSES)[keyof typeof INVOICE_STATUSES]
 
 export const INVOICE_STATUS_VARIANT: Record<InvoiceStatus, StatusVariant> = {
-    "Betald": "success",
-    "Skickad": "info",
     "Utkast": "neutral",
-    "Förfallen": "error",
+    "Skickad": "info",
+    "Betald": "success",
     "Makulerad": "neutral",
-    "Bokförd": "violet",
-    "Mottagen": "info",
 }
 
 // =============================================================================
@@ -69,15 +65,9 @@ export const RECEIPT_STATUSES = RECEIPT_STATUS_LABELS
 export type ReceiptStatus = (typeof RECEIPT_STATUSES)[keyof typeof RECEIPT_STATUSES]
 
 export const RECEIPT_STATUS_VARIANT: Record<ReceiptStatus, StatusVariant> = {
-    "Verifierad": "success",
-    "Väntar": "warning",
-    "Bearbetar": "neutral",
-    "Granskning krävs": "error",
-    "Behandlad": "success",
-    "Matchad": "success",
+    "Ny": "info",
+    "Bokförd": "success",
     "Avvisad": "error",
-    "Bokförd": "violet",
-    "Uppladdad": "info",
 }
 
 // =============================================================================
@@ -126,12 +116,9 @@ export const SUPPLIER_INVOICE_STATUSES = SUPPLIER_INVOICE_STATUS_LABELS
 export type SupplierInvoiceStatus = (typeof SUPPLIER_INVOICE_STATUSES)[keyof typeof SUPPLIER_INVOICE_STATUSES]
 
 export const SUPPLIER_INVOICE_STATUS_VARIANT: Record<SupplierInvoiceStatus, StatusVariant> = {
-    "Mottagen": "violet",
-    "Attesterad": "warning",
+    "Mottagen": "info",
+    "Godkänd": "warning",
     "Betald": "success",
-    "Förfallen": "error",
-    "Tvist": "purple",
-    "Bokförd": "violet",
 }
 
 // =============================================================================

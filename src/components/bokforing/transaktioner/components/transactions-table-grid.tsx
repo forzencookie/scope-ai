@@ -15,12 +15,12 @@ import { cn } from "@/lib/utils"
 import { Checkbox } from "@/components/ui/checkbox"
 import { GridTableHeader, GridTableRows, GridTableRow } from "@/components/ui/grid-table"
 import { AppStatusBadge } from "@/components/ui/status-badge"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { TransactionWithAI } from "@/types"
 import { ActionEmptyState } from "@/components/shared"
 import { useHighlight } from "@/hooks"
 
-const UNBOOKED_STATUSES = ["Att bokföra", "Saknar underlag"]
+const UNBOOKED_STATUSES = ["Obokförd"]
 
 interface TransactionsTableGridProps {
     transactions: TransactionWithAI[]
@@ -40,8 +40,6 @@ export function TransactionsTableGrid({
     onTransactionClick,
     hasActiveFilters,
 }: TransactionsTableGridProps) {
-    const { text } = useTextMode()
-
     const { unbooked, booked } = useMemo(() => {
         const unbooked: TransactionWithAI[] = []
         const booked: TransactionWithAI[] = []
@@ -133,12 +131,10 @@ export function TransactionsTableGrid({
                     <ActionEmptyState
                         icon={ArrowRightLeft}
                         title={hasActiveFilters ? "Inga matchningar" : "Inga transaktioner än"}
-                        description={hasActiveFilters 
+                        description={hasActiveFilters
                             ? "Vi hittade inga transaktioner som matchar dina filter. Prova att ändra filterinställningarna."
                             : "Ditt transaktionsflöde är tomt. Fråga Scooby att hämta de senaste transaktionerna från din bank."
                         }
-                        actionLabel={!hasActiveFilters ? "Hämta från bank" : undefined}
-                        actionPrompt="Hämta mina senaste banktransaktioner"
                     />
                 )}
             </div>

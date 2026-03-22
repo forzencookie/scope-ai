@@ -129,6 +129,31 @@ async function fetchActivitySnapshot(
 }
 
 /**
+ * Fetch integration state (which integrations are connected).
+ * Non-blocking enrichment — returns undefined on failure.
+ */
+async function fetchIntegrationState(
+    supabase: SupabaseClient<Database>
+): Promise<Array<{ name: string; type: string; connected: boolean }> | undefined> {
+    try {
+        const { data } = await supabase
+            .from('integrations')
+            .select('name, integration_id, type, connected')
+
+        if (!data || data.length === 0) return []
+
+        return data.map(row => ({
+            name: row.name || row.integration_id || 'okänd',
+            type: row.type || 'other',
+            connected: !!row.connected,
+        }))
+    } catch (e) {
+        console.warn('[Chat] Integration state failed:', e)
+        return undefined
+    }
+}
+
+/**
  * Fetch relevant user memories for prompt injection.
  * Non-blocking enrichment — returns empty array on failure.
  */
@@ -252,28 +277,42 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Company type — required for prompt and tool scoping
-        if (!companyId) {
-            return new Response(
-                JSON.stringify({ error: 'Inget företag kopplat till ditt konto. Slutför onboarding.' }),
-                { status: 400 }
-            )
+        // Company context — optional. Chat works without it but with limited capabilities.
+        let companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' | null = null
+        let companyName: string | undefined
+        let companySetupState: Record<string, boolean> | undefined
+
+        if (companyId) {
+            const { data: company, error: companyError } = await supabase
+                .from('companies')
+                .select('company_type, name, org_number, address, city, zip_code, email, phone, vat_number, has_f_skatt, has_moms_registration, has_employees, accounting_method, fiscal_year_end, registration_date')
+                .eq('id', companyId)
+                .single()
+
+            if (!companyError && company) {
+                companyType = parseCompanyType(company.company_type)
+                companyName = company.name || undefined
+
+                // Build setup state so Scooby knows exactly what's filled in
+                companySetupState = {
+                    name: !!company.name,
+                    orgNumber: !!company.org_number,
+                    companyType: !!company.company_type,
+                    address: !!company.address,
+                    city: !!company.city,
+                    zipCode: !!company.zip_code,
+                    email: !!company.email,
+                    phone: !!company.phone,
+                    vatNumber: !!company.vat_number,
+                    hasFSkatt: company.has_f_skatt !== null,
+                    hasMomsRegistration: company.has_moms_registration !== null,
+                    hasEmployees: company.has_employees !== null,
+                    accountingMethod: !!company.accounting_method,
+                    fiscalYearEnd: !!company.fiscal_year_end,
+                    registrationDate: !!company.registration_date,
+                }
+            }
         }
-
-        const { data: company, error: companyError } = await supabase
-            .from('companies')
-            .select('company_type, name')
-            .eq('id', companyId)
-            .single()
-
-        if (companyError || !company) {
-            return new Response(
-                JSON.stringify({ error: 'Företagsinformation saknas. Slutför onboarding.' }),
-                { status: 400 }
-            )
-        }
-
-        const companyType = parseCompanyType(company.company_type)
 
         // =====================================================================
         // STREAM — build context and start streaming immediately
@@ -283,11 +322,13 @@ export async function POST(request: NextRequest) {
 
         // Enrichment with 100ms timeout — never block stream start
         const ENRICHMENT_TIMEOUT = 100
-        const [activitySnapshot, relevantMemories] = await Promise.all([
-            Promise.race([
-                fetchActivitySnapshot(supabase),
-                new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), ENRICHMENT_TIMEOUT)),
-            ]),
+        const [activitySnapshot, relevantMemories, integrationState] = await Promise.all([
+            companyId
+                ? Promise.race([
+                    fetchActivitySnapshot(supabase),
+                    new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), ENRICHMENT_TIMEOUT)),
+                ])
+                : Promise.resolve(undefined),
             companyId
                 ? Promise.race([
                     fetchRelevantMemories(companyId, latestContent),
@@ -296,13 +337,19 @@ export async function POST(request: NextRequest) {
                     ),
                 ])
                 : Promise.resolve([]),
+            companyId
+                ? Promise.race([
+                    fetchIntegrationState(supabase),
+                    new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), ENRICHMENT_TIMEOUT)),
+                ])
+                : Promise.resolve(undefined),
         ])
 
         const context = createAgentContext({
             userId,
             companyId,
             companyType,
-            companyName: company.name || undefined,
+            companyName,
             locale: 'sv',
             conversationId,
             messages: messages.map(m => {
@@ -315,6 +362,14 @@ export async function POST(request: NextRequest) {
                 }
             }),
         })
+
+        if (companySetupState) {
+            context.sharedMemory.companySetupState = companySetupState
+        }
+
+        if (integrationState !== undefined) {
+            context.sharedMemory.integrationState = integrationState
+        }
 
         if (activitySnapshot) {
             context.sharedMemory.activitySnapshot = activitySnapshot

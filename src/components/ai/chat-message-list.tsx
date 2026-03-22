@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button"
 import { AlertCircle, RefreshCw, FileText, Image as ImageIcon } from "lucide-react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
+import Link from "next/link"
 import { ConfirmationCard } from "@/components/ai"
 import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
 import { TransactionCard } from "@/components/ai/cards/TransactionCard"
@@ -132,7 +133,26 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {/* Markdown Text */}
                 {message.content && (
                     <div className="prose prose-sm max-w-none dark:prose-invert prose-table:border-collapse prose-td:border prose-td:border-border/40 prose-td:p-2 prose-th:border prose-th:border-border/40 prose-th:p-2 prose-th:bg-muted/30">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{message.content}</ReactMarkdown>
+                        <ReactMarkdown
+                            remarkPlugins={[remarkGfm]}
+                            components={{
+                                a: ({ href, children }) => {
+                                    if (href?.startsWith('/')) {
+                                        return (
+                                            <Link
+                                                href={href}
+                                                className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-primary/10 text-primary text-xs font-medium no-underline hover:bg-primary/20 transition-colors"
+                                            >
+                                                {children}
+                                            </Link>
+                                        )
+                                    }
+                                    return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
+                                },
+                            }}
+                        >
+                            {message.content}
+                        </ReactMarkdown>
                     </div>
                 )}
 

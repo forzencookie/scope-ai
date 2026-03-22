@@ -306,7 +306,7 @@ export class ScopeBrain {
         try {
             const result = await aiToolRegistry.execute(toolName, params, {
                 userId: context.userId,
-                companyId: context.companyId,
+                companyId: context.companyId || undefined,
             })
 
             return {

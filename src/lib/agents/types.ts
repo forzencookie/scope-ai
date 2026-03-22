@@ -102,8 +102,8 @@ export interface IntentEntity {
 export interface AgentContext {
     // User & Company
     userId: string
-    companyId: string
-    companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING'
+    companyId: string | null
+    companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' | null
     companyName?: string
     
     // Conversation
@@ -131,7 +131,7 @@ export interface AgentContext {
  */
 export function createAgentContext(config: {
     userId: string
-    companyId: string
+    companyId: string | null
     companyType: AgentContext['companyType']
     companyName?: string
     locale?: 'sv' | 'en'

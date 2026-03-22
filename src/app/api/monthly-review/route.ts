@@ -45,9 +45,8 @@ interface MonthlyReviewResponse {
 
 // Status → variant mapping (mirrors status-types.ts)
 const TRANSACTION_VARIANTS: Record<string, string> = {
-    "Att bokföra": "warning",
+    "Obokförd": "warning",
     "Bokförd": "success",
-    "Saknar underlag": "error",
     "Ignorerad": "neutral",
 }
 
@@ -55,30 +54,20 @@ const INVOICE_VARIANTS: Record<string, string> = {
     "Betald": "success",
     "Skickad": "info",
     "Utkast": "neutral",
-    "Förfallen": "error",
     "Makulerad": "neutral",
-    "Bokförd": "violet",
     "Mottagen": "info",
 }
 
 const SUPPLIER_VARIANTS: Record<string, string> = {
-    "Mottagen": "violet",
-    "Attesterad": "warning",
+    "Mottagen": "info",
+    "Godkänd": "warning",
     "Betald": "success",
-    "Förfallen": "error",
-    "Tvist": "purple",
-    "Bokförd": "violet",
 }
 
 const RECEIPT_VARIANTS: Record<string, string> = {
-    "Verifierad": "success",
-    "Väntar": "warning",
-    "Bearbetar": "neutral",
-    "Granskning krävs": "error",
-    "Behandlad": "success",
-    "Matchad": "success",
+    "Ny": "info",
+    "Bokförd": "success",
     "Avvisad": "error",
-    "Bokförd": "violet",
 }
 
 const PAYSLIP_VARIANTS: Record<string, string> = {

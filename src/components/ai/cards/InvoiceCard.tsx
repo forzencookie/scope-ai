@@ -37,7 +37,7 @@ export function InvoiceCard({ invoice }: InvoiceCardProps) {
                                 "bg-yellow-500/10 text-yellow-600"
                     )}>
                         {invoice.status === "paid" ? "Betald" :
-                            invoice.status === "overdue" ? "Förfallen" : "Väntar"}
+                            invoice.status === "sent" ? "Skickad" : "Utkast"}
                     </span>
                 </div>
             </div>

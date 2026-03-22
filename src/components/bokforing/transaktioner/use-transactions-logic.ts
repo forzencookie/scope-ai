@@ -41,8 +41,7 @@ export function useTransactionsLogic({
 
     const handleTransactionClick = useCallback((transaction: TransactionWithAI) => {
         // If unbooked, ask Scooby to handle it
-        const isUnbooked = transaction.status === TRANSACTION_STATUSES.TO_RECORD || 
-                          transaction.status === TRANSACTION_STATUSES.MISSING_DOCUMENTATION
+        const isUnbooked = transaction.status === TRANSACTION_STATUSES.UNBOOKED
         
         if (isUnbooked) {
             navigateToAI({ 
@@ -67,8 +66,7 @@ export function useTransactionsLogic({
             .reduce((sum, t) => sum + Math.abs(parseAmount(t.amount)), 0)
 
         const pending = transactions.filter(t =>
-            t.status === TRANSACTION_STATUSES.TO_RECORD ||
-            t.status === TRANSACTION_STATUSES.MISSING_DOCUMENTATION
+            t.status === TRANSACTION_STATUSES.UNBOOKED
         ).length
 
         const booked = transactions.filter(t =>

@@ -6,7 +6,6 @@ import {
     Plus,
     FileText,
     Calendar,
-    ChevronDown,
     ArrowDownLeft,
     ArrowUpRight,
     ChevronLeft,
@@ -121,7 +120,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         <KanbanBoard>
             {UNIFIED_COLUMNS.map(column => {
                 const columnInvoices = unifiedInvoices.filter(inv =>
-                    column.statuses.includes(inv.status)
+                    (column.statuses as readonly string[]).includes(inv.status)
                 )
                 return (
                     <KanbanColumn
@@ -188,8 +187,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                     <DropdownMenuTrigger asChild>
                         <Button className="gap-2 shrink-0">
                             <Plus className="h-4 w-4" />
-                            <span className="sm:inline">Ny faktura</span>
-                            <ChevronDown className="h-3.5 w-3.5" />
+                            Ny faktura
                         </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">

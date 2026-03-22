@@ -127,13 +127,19 @@ export function buildSystemPrompt(context: AgentContext): string {
     // 4. Company context
     parts.push(buildCompanyContext(context))
 
-    // 5. Activity snapshot (if available)
+    // 5. Integration state (if available)
+    const integrations = formatIntegrationState(context.sharedMemory)
+    if (integrations) {
+        parts.push(integrations)
+    }
+
+    // 6. Activity snapshot (if available)
     const snapshot = formatActivitySnapshot(context.sharedMemory)
     if (snapshot) {
         parts.push(snapshot)
     }
 
-    // 6. User memory (if provided in context)
+    // 7. User memory (if provided in context)
     const memory = formatUserMemory(context.sharedMemory)
     if (memory) {
         parts.push(memory)
@@ -144,14 +150,70 @@ export function buildSystemPrompt(context: AgentContext): string {
 
 /**
  * Build company context section.
+ * When no company is linked, injects a deficiency notice so Scooby
+ * can guide users to complete onboarding or fill in settings.
  */
 function buildCompanyContext(context: AgentContext): string {
     let section = `## Aktuell Kontext\n\n`
+
+    if (!context.companyId || !context.companyType) {
+        section += `**⚠️ Inget företag kopplat.**\n\n`
+        section += `Användaren har inte slutfört onboarding eller kopplat ett företag ännu.\n\n`
+        section += `**Vad du KAN göra:**\n`
+        section += `- Svara på allmänna frågor om bokföring, skatt, löner och företagande\n`
+        section += `- Förklara regler och begrepp\n`
+        section += `- Hjälpa användaren förstå vad Scope kan göra\n\n`
+        section += `**Vad du INTE kan göra utan företag:**\n`
+        section += `- Bokföra transaktioner, skapa verifikationer\n`
+        section += `- Skapa eller hantera fakturor\n`
+        section += `- Köra löner eller beräkna skatt\n`
+        section += `- Generera rapporter (resultat, balans, etc.)\n`
+        section += `- Hämta eller visa företagsspecifik data\n\n`
+        section += `**När användaren försöker göra något som kräver ett företag**, svara vänligt att de behöver slutföra sin setup först. `
+        section += `Inkludera denna länk i ditt svar: [Slutför onboarding →](/onboarding) eller [Gå till inställningar →](/dashboard/installningar?tab=foretag).\n`
+        section += `Förklara kort vad de behöver fylla i (företagsnamn, organisationsnummer, företagstyp).\n`
+        return section
+    }
 
     section += `**Företagstyp:** ${formatCompanyType(context.companyType)}\n`
 
     if (context.companyName) {
         section += `**Företag:** ${context.companyName}\n`
+    }
+
+    // Granular setup state — tells Scooby exactly what's missing
+    const setupState = context.sharedMemory?.companySetupState as Record<string, boolean> | undefined
+    if (setupState) {
+        const missing = Object.entries(setupState)
+            .filter(([, filled]) => !filled)
+            .map(([key]) => key)
+
+        if (missing.length > 0) {
+            const labelMap: Record<string, string> = {
+                orgNumber: 'Organisationsnummer',
+                companyType: 'Företagstyp',
+                address: 'Adress',
+                city: 'Ort',
+                zipCode: 'Postnummer',
+                email: 'E-post',
+                phone: 'Telefon',
+                vatNumber: 'Momsregistreringsnummer',
+                hasFSkatt: 'F-skatt (ja/nej)',
+                hasMomsRegistration: 'Momsregistrering (ja/nej)',
+                hasEmployees: 'Har anställda (ja/nej)',
+                accountingMethod: 'Bokföringsmetod (fakturering/kontant)',
+                fiscalYearEnd: 'Räkenskapsårets slut',
+                registrationDate: 'Registreringsdatum',
+            }
+
+            const missingLabels = missing
+                .filter(k => labelMap[k])
+                .map(k => labelMap[k])
+
+            section += `\n**⚠️ Ofullständig företagsprofil — saknas:** ${missingLabels.join(', ')}\n`
+            section += `När användaren försöker göra något som kräver denna information, berätta vänligt vad som saknas `
+            section += `och ge länken [Fyll i under Inställningar →](/dashboard/installningar?tab=foretag).\n`
+        }
     }
 
     // Add page context if available
@@ -224,6 +286,39 @@ function formatActivitySnapshot(memory: Record<string, unknown>): string | null 
 }
 
 /**
+ * Format integration state for inclusion in prompt.
+ * Tells Scooby which integrations are connected so it knows what data sources are available.
+ */
+function formatIntegrationState(memory: Record<string, unknown>): string | null {
+    const integrations = memory?.integrationState as Array<{
+        name: string
+        type: string
+        connected: boolean
+    }> | undefined
+
+    // undefined = not fetched (no company), skip entirely
+    if (integrations === undefined) return null
+
+    // Empty array = no integrations configured
+    if (integrations.length === 0) {
+        return `## Integrationer\n\nInga integrationer konfigurerade. Transaktioner måste läggas in manuellt.\nOm användaren frågar om bankimport eller automatisk synkning, förklara att detta finns under [Integrationer i Inställningar →](/dashboard/installningar?tab=integrationer) (bankkoppling kommer snart).`
+    }
+
+    const connected = integrations.filter(i => i.connected)
+    const disconnected = integrations.filter(i => !i.connected)
+
+    let section = `## Integrationer\n\n`
+    if (connected.length > 0) {
+        section += `**Anslutna:** ${connected.map(i => i.name).join(', ')}\n`
+    }
+    if (disconnected.length > 0) {
+        section += `**Ej anslutna:** ${disconnected.map(i => i.name).join(', ')}\n`
+    }
+
+    return section
+}
+
+/**
  * Format user memory for inclusion in prompt.
  * Only included if there's relevant memory.
  */
@@ -251,7 +346,8 @@ function formatUserMemory(memory: Record<string, unknown>): string | null {
  * Format company type for display.
  */
 function formatCompanyType(type: AgentContext['companyType']): string {
-    const names: Record<AgentContext['companyType'], string> = {
+    if (!type) return 'Okänd'
+    const names: Record<NonNullable<AgentContext['companyType']>, string> = {
         'AB': 'Aktiebolag (AB)',
         'EF': 'Enskild firma',
         'HB': 'Handelsbolag',

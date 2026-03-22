@@ -243,7 +243,7 @@ export interface SupplierInvoice {
   vatAmount: number;
   totalAmount: number;
   currency: 'SEK' | 'EUR' | 'USD';
-  status: 'mottagen' | 'attesterad' | 'betald' | 'förfallen' | 'tvist' | 'bokförd';
+  status: 'Mottagen' | 'Godkänd' | 'Betald';
   paymentDate?: string;
   category?: string;
   accountNumber?: string;

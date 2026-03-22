@@ -71,7 +71,7 @@ export function TransactionDetailsOverlay({
                                                 <p className="text-xs text-muted-foreground">Matchad via Scooby AI</p>
                                             </div>
                                         </div>
-                                        <AppStatusBadge status="Verifierad" size="sm" />
+                                        <AppStatusBadge status="Bokförd" size="sm" />
                                     </div>
                                 </div>
                             ) : (

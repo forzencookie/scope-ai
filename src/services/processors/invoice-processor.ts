@@ -83,7 +83,7 @@ export interface ProcessedSupplierInvoice {
   dueDate: string
   amount: string
   amountValue: number
-  status: 'mottagen' | 'attesterad' | 'betald' | 'förfallen' | 'tvist'
+  status: 'Mottagen' | 'Godkänd' | 'Betald'
   isOverdue: boolean
   daysUntilDue: number
   ocrNumber?: string
@@ -105,8 +105,7 @@ function determineInvoiceStatus(dueDate: string, isPaid: boolean = false): Invoi
   if (isPaid) return INVOICE_STATUSES.PAID as InvoiceStatus
   
   const daysUntilDue = calculateDaysUntilDue(dueDate)
-  if (daysUntilDue < 0) return INVOICE_STATUSES.OVERDUE as InvoiceStatus
-  if (daysUntilDue <= 7) return INVOICE_STATUSES.SENT as InvoiceStatus // Sent, due soon
+  if (daysUntilDue <= 7) return INVOICE_STATUSES.SENT as InvoiceStatus
   return INVOICE_STATUSES.DRAFT as InvoiceStatus
 }
 
@@ -114,11 +113,8 @@ function determineSupplierInvoiceStatus(
   dueDate: string, 
   isPaid: boolean = false
 ): ProcessedSupplierInvoice['status'] {
-  if (isPaid) return 'betald'
-  
-  const daysUntilDue = calculateDaysUntilDue(dueDate)
-  if (daysUntilDue < 0) return 'förfallen'
-  return 'mottagen'
+  if (isPaid) return 'Betald'
+  return 'Mottagen'
 }
 
 // ============================================================================

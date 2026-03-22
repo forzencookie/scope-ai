@@ -204,8 +204,8 @@ class AIToolRegistry {
                         request: preflightResult.confirmationRequired,
                         expiresAt: pending.expiresAt 
                     }, 
-                    context.userId, 
-                    context.companyId
+                    context.userId,
+                    context.companyId || ''
                 ).catch(err => console.error('[Registry] Failed to persist confirmation:', err))
 
                 return {
@@ -257,11 +257,11 @@ class AIToolRegistry {
             // Log the action for audit trail
             if (tool.requiresConfirmation || tool.category === 'write') {
                 await aiAuditService.logToolExecution(
-                    name, 
-                    params, 
-                    result, 
-                    context.userId, 
-                    context.companyId
+                    name,
+                    params,
+                    result,
+                    context.userId,
+                    context.companyId || ''
                 )
             }
 

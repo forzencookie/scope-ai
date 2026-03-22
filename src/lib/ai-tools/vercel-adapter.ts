@@ -21,7 +21,7 @@ function makeExecute(t: AITool, context: InteractionContext) {
     return async (args: Record<string, unknown>): Promise<ToolExecuteResult> => {
         const result = await aiToolRegistry.execute(t.name, args, {
             userId: context.userId,
-            companyId: context.companyId,
+            companyId: context.companyId || undefined,
             confirmationId: context.confirmationId,
         })
 

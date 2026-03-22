@@ -171,7 +171,7 @@ export function AppDemoShowcase() {
 
     // ─── Derive visual states from phase ───
     const showNewReceipt = phase >= 1 && phase <= 6
-    const receiptStatus: AppStatus = phase >= 5 ? "Bokförd" : "Uppladdad"
+    const receiptStatus: AppStatus = phase >= 5 ? "Bokförd" : "Ny"
     const isProcessingReceipt = phase === 4
 
     // Content view: kvitton (0-6), verifikationer (7-10), momsdeklaration (11+)
@@ -752,7 +752,7 @@ export function AppDemoShowcase() {
                                                                 <div className="col-span-2 text-[13px] text-white/70">22 Feb</div>
                                                                 <div className="col-span-2"><span className="text-[11px] px-2 py-0.5 rounded-full bg-white/5 border border-white/10 text-white/60">Drivmedel</span></div>
                                                                 <div className="col-span-2 text-[14px] font-medium text-white text-right">- 892,50 kr</div>
-                                                                <div className="col-span-2 flex justify-center"><AppStatusBadge status="Granskning krävs" size="sm" /></div>
+                                                                <div className="col-span-2 flex justify-center"><AppStatusBadge status="Ny" size="sm" /></div>
                                                                 <div className="col-span-1 flex justify-end"><div className="text-white/30 bg-white/5 p-1 rounded-sm"><Paperclip className="h-3 w-3" /></div></div>
                                                             </div>
                                                             <div className="grid grid-cols-12 items-center px-4 py-3 rounded-xl bg-[#0a0a0a] hover:bg-white/[0.03] transition-all">

@@ -424,7 +424,7 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
         // TODO: Fetch real deadlines from taxcalendar table
         const deadlines: Deadline[] = [
             { type: 'Moms', period: 'Q4 2024', dueDate: '12 feb 2025', amount: 80000, status: 'Kommande' },
-            { type: 'AGI', period: 'December 2024', dueDate: '12 jan 2025', amount: 47090, status: 'Väntar' },
+            { type: 'AGI', period: 'December 2024', dueDate: '12 jan 2025', amount: 47090, status: 'Kommande' },
         ]
 
         return {

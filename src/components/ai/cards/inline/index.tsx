@@ -65,7 +65,7 @@ export interface InlineInvoiceData {
 export function InlineInvoiceCard({ data }: { data: InlineInvoiceData }) {
     const router = useRouter()
     const statusVariant = data.status === "paid" ? "success" : data.status === "overdue" ? "error" : "warning"
-    const statusLabel = data.status === "paid" ? "Betald" : data.status === "overdue" ? "Förfallen" : data.status === "sent" ? "Skickad" : "Utkast"
+    const statusLabel = data.status === "paid" ? "Betald" : data.status === "sent" ? "Skickad" : "Utkast"
 
     return (
         <CardShell
@@ -117,7 +117,7 @@ export function InlineTransactionCard({ data }: { data: InlineTransactionData })
                     </p>
                 </div>
                 <StatusBadge
-                    status={isBooked ? "Bokförd" : "Att bokföra"}
+                    status={isBooked ? "Bokförd" : "Obokförd"}
                     variant={isBooked ? "success" : "warning"}
                 />
             </div>

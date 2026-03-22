@@ -20,7 +20,7 @@ function formatTransaction(tx: Record<string, unknown>) {
         timestamp: tx.created_at,
         amount: `${isExpense ? '-' : ''}${absAmount.toLocaleString('sv-SE', { minimumFractionDigits: 2 })} kr`,
         amountValue: amount,
-        status: tx.status || 'Att bokföra',
+        status: tx.status || 'Obokförd',
         category: tx.category || 'Okategoriserad',
         account: tx.account || '',
         iconName: 'Banknote',

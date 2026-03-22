@@ -81,7 +81,7 @@ export const receiptService = {
             date: row.date || row.captured_at || '',
             amount: String(row.amount || row.total_amount || '0'),
             category: row.category || 'Övrigt',
-            status: (row.status as ReceiptStatus) || RECEIPT_STATUSES.PENDING,
+            status: (row.status as ReceiptStatus) || RECEIPT_STATUSES.NEW,
             attachment: row.image_url || row.file_url || '',
             hasAttachment: !!(row.image_url || row.file_url),
             attachmentUrl: row.image_url || row.file_url || undefined,
@@ -140,8 +140,8 @@ export const receiptService = {
         * Get receipts that are pending or need review
         */
         async getUnbookedReceipts() {
-        const result = await this.getReceipts({ 
-            statuses: [RECEIPT_STATUSES.PENDING, RECEIPT_STATUSES.PROCESSING, 'needs_review'] 
+        const result = await this.getReceipts({
+            statuses: [RECEIPT_STATUSES.NEW]
         })
         return result.receipts
         }

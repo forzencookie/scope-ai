@@ -72,7 +72,7 @@ export function useDynamicTasks() {
         const newGoals: DynamicGoal[] = []
 
         // 1. Bokföring Goal
-        const pendingTransactions = transactions ? transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.TO_RECORD).length : 0
+        const pendingTransactions = transactions ? transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.UNBOOKED).length : 0
 
         const bokforingTasks: DynamicTask[] = []
 

@@ -34,42 +34,38 @@ describe('Localization Constants', () => {
 
     describe('TRANSACTION_STATUS_LABELS', () => {
         it('should have all transaction statuses in Swedish', () => {
-            expect(TRANSACTION_STATUS_LABELS.TO_RECORD).toBe('Att bokföra')
+            expect(TRANSACTION_STATUS_LABELS.UNBOOKED).toBe('Obokförd')
             expect(TRANSACTION_STATUS_LABELS.RECORDED).toBe('Bokförd')
-            expect(TRANSACTION_STATUS_LABELS.MISSING_DOCUMENTATION).toBe('Saknar underlag')
             expect(TRANSACTION_STATUS_LABELS.IGNORED).toBe('Ignorerad')
         })
 
-        it('should have exactly 4 statuses', () => {
-            expect(Object.keys(TRANSACTION_STATUS_LABELS)).toHaveLength(4)
+        it('should have exactly 3 statuses', () => {
+            expect(Object.keys(TRANSACTION_STATUS_LABELS)).toHaveLength(3)
         })
     })
 
     describe('INVOICE_STATUS_LABELS', () => {
         it('should have all invoice statuses in Swedish', () => {
-            expect(INVOICE_STATUS_LABELS.PAID).toBe('Betald')
-            expect(INVOICE_STATUS_LABELS.SENT).toBe('Skickad')
             expect(INVOICE_STATUS_LABELS.DRAFT).toBe('Utkast')
-            expect(INVOICE_STATUS_LABELS.OVERDUE).toBe('Förfallen')
+            expect(INVOICE_STATUS_LABELS.SENT).toBe('Skickad')
+            expect(INVOICE_STATUS_LABELS.PAID).toBe('Betald')
+            expect(INVOICE_STATUS_LABELS.CANCELLED).toBe('Makulerad')
         })
 
-        it('should have exactly 7 statuses', () => {
-            expect(Object.keys(INVOICE_STATUS_LABELS)).toHaveLength(7)
+        it('should have exactly 4 statuses', () => {
+            expect(Object.keys(INVOICE_STATUS_LABELS)).toHaveLength(4)
         })
     })
 
     describe('RECEIPT_STATUS_LABELS', () => {
         it('should have all receipt statuses in Swedish', () => {
-            expect(RECEIPT_STATUS_LABELS.VERIFIED).toBe('Verifierad')
-            expect(RECEIPT_STATUS_LABELS.PENDING).toBe('Väntar')
-            expect(RECEIPT_STATUS_LABELS.PROCESSING).toBe('Bearbetar')
-            expect(RECEIPT_STATUS_LABELS.REVIEW_NEEDED).toBe('Granskning krävs')
-            expect(RECEIPT_STATUS_LABELS.PROCESSED).toBe('Behandlad')
+            expect(RECEIPT_STATUS_LABELS.NEW).toBe('Ny')
+            expect(RECEIPT_STATUS_LABELS.RECORDED).toBe('Bokförd')
             expect(RECEIPT_STATUS_LABELS.REJECTED).toBe('Avvisad')
         })
 
-        it('should have exactly 9 statuses', () => {
-            expect(Object.keys(RECEIPT_STATUS_LABELS)).toHaveLength(9)
+        it('should have exactly 3 statuses', () => {
+            expect(Object.keys(RECEIPT_STATUS_LABELS)).toHaveLength(3)
         })
     })
 

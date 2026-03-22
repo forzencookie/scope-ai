@@ -1,7 +1,7 @@
 import { useState, useMemo, useCallback } from "react"
 import { useToast } from "@/components/ui/toast"
 import { useInvoicesPaginated } from "@/hooks/use-invoices"
-import { INVOICE_STATUS_LABELS } from "@/lib/localization"
+import { INVOICE_STATUS_LABELS, SUPPLIER_INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { mapCustomerInvoices, mapSupplierInvoices, mapToUnifiedInvoices } from "./mappers"
 import { Invoice } from "@/data/invoices"
 import { SupplierInvoice } from "@/types/ownership"
@@ -67,16 +67,16 @@ export function useInvoicesLogic() {
     // Statistics
     const stats = useMemo(() => {
         const incoming = customerInvoices
-            .filter(i => i.status === INVOICE_STATUS_LABELS.SENT || i.status === INVOICE_STATUS_LABELS.OVERDUE)
+            .filter(i => i.status === INVOICE_STATUS_LABELS.SENT)
             .reduce((sum, start) => sum + (start.amount + (start.vatAmount || 0)), 0)
 
         const outgoing = supplierInvoices
-            .filter(i => i.status !== 'betald')
+            .filter(i => i.status !== SUPPLIER_INVOICE_STATUS_LABELS.PAID)
             .reduce((sum, i) => sum + (i.totalAmount || i.amount), 0)
 
         const today = new Date().toISOString().split('T')[0]
-        const overdueCustomer = customerInvoices.filter(i => i.status === INVOICE_STATUS_LABELS.OVERDUE || (i.status === INVOICE_STATUS_LABELS.SENT && i.dueDate < today))
-        const overdueSupplier = supplierInvoices.filter(i => i.status === 'förfallen' || (i.status !== 'betald' && i.dueDate < today))
+        const overdueCustomer = customerInvoices.filter(i => i.status === INVOICE_STATUS_LABELS.SENT && i.dueDate < today)
+        const overdueSupplier = supplierInvoices.filter(i => i.status !== SUPPLIER_INVOICE_STATUS_LABELS.PAID && i.dueDate < today)
 
         const overdueCount = overdueCustomer.length + overdueSupplier.length
         const overdueAmount = overdueCustomer.reduce((sum, i) => sum + (i.amount + (i.vatAmount || 0)), 0) + overdueSupplier.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
@@ -86,7 +86,7 @@ export function useInvoicesLogic() {
             .reduce((sum, i) => sum + (i.amount + (i.vatAmount || 0)), 0)
 
         const paidSupplier = supplierInvoices
-            .filter(i => i.status === 'betald')
+            .filter(i => i.status === SUPPLIER_INVOICE_STATUS_LABELS.PAID)
             .reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
         return {
@@ -124,7 +124,7 @@ export function useInvoicesLogic() {
             await fetch(`/api/supplier-invoices/${id}/status`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "Attesterad" })
+                body: JSON.stringify({ status: "Godkänd" })
             })
             fetchInvoices()
             toast.success("Faktura attesterad", "Fakturan har godkänts för betalning")

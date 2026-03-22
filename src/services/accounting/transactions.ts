@@ -46,7 +46,7 @@ function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
     timestamp: new Date(db.date),
     amount: formattedAmount,
     amountValue: db.amount_value,
-    status: (db.status as TransactionStatus) || TRANSACTION_STATUS_LABELS.TO_RECORD,
+    status: (db.status as TransactionStatus) || TRANSACTION_STATUS_LABELS.UNBOOKED,
     category: category || db.category || 'Uncategorized',
     iconName: getIconForCategory(category || db.category || 'Uncategorized'),
     iconColor: getIconColorForCategory(category || db.category || 'Uncategorized'),
@@ -220,7 +220,7 @@ export async function getTransactionStatus(id: string, userId: string, client?: 
     .eq('user_id', userId)
     .single()
   
-  return (data?.status as TransactionStatus) || TRANSACTION_STATUS_LABELS.TO_RECORD
+  return (data?.status as TransactionStatus) || TRANSACTION_STATUS_LABELS.UNBOOKED
 }
 
 /**
@@ -382,9 +382,9 @@ export async function getTransactionStats(userId: string, client?: SupabaseClien
     totalCount: data.length,
     income,
     expenses,
-    pending: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.TO_RECORD).length,
+    pending: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.UNBOOKED).length,
     booked: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.RECORDED).length,
-    missingDocs: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.MISSING_DOCUMENTATION).length,
+    missingDocs: 0,
     ignored: data.filter(t => t.status === TRANSACTION_STATUS_LABELS.IGNORED).length,
   }
 
@@ -397,7 +397,7 @@ export async function getUnbookedTransactions(userId: string, client?: SupabaseC
     .from('transactions')
     .select('*')
     .eq('user_id', userId)
-    .eq('status', TRANSACTION_STATUS_LABELS.TO_RECORD)
+    .eq('status', TRANSACTION_STATUS_LABELS.UNBOOKED)
     .order('date', { ascending: false })
   
   if (error) throw error

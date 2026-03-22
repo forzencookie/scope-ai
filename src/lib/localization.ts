@@ -37,9 +37,8 @@ export const ACTIONS = {
 // =============================================================================
 
 export const TRANSACTION_STATUS_LABELS = {
-    TO_RECORD: "Att bokföra",
+    UNBOOKED: "Obokförd",
     RECORDED: "Bokförd",
-    MISSING_DOCUMENTATION: "Saknar underlag",
     IGNORED: "Ignorerad",
 } as const
 
@@ -48,13 +47,10 @@ export const TRANSACTION_STATUS_LABELS = {
 // =============================================================================
 
 export const INVOICE_STATUS_LABELS = {
-    PAID: "Betald",
-    SENT: "Skickad",
     DRAFT: "Utkast",
-    OVERDUE: "Förfallen",
+    SENT: "Skickad",
+    PAID: "Betald",
     CANCELLED: "Makulerad",
-    RECORDED: "Bokförd",
-    RECEIVED: "Mottagen",
 } as const
 
 // =============================================================================
@@ -62,15 +58,9 @@ export const INVOICE_STATUS_LABELS = {
 // =============================================================================
 
 export const RECEIPT_STATUS_LABELS = {
-    VERIFIED: "Verifierad",
-    PENDING: "Väntar",
-    PROCESSING: "Bearbetar",
-    REVIEW_NEEDED: "Granskning krävs",
-    PROCESSED: "Behandlad",
-    REJECTED: "Avvisad",
-    MATCHED: "Matchad",
+    NEW: "Ny",
     RECORDED: "Bokförd",
-    UPLOADED: "Uppladdad",
+    REJECTED: "Avvisad",
 } as const
 
 // =============================================================================
@@ -113,17 +103,10 @@ export type GeneralStatus = (typeof GENERAL_STATUS_LABELS)[keyof typeof GENERAL_
 // Supplier Invoice Statuses (Leverantörsfakturor)
 // =============================================================================
 
-// =============================================================================
-// Supplier Invoice Statuses (Leverantörsfakturor)
-// =============================================================================
-
 export const SUPPLIER_INVOICE_STATUS_LABELS = {
     RECEIVED: "Mottagen",
-    ATTESTED: "Attesterad",
+    APPROVED: "Godkänd",
     PAID: "Betald",
-    OVERDUE: "Förfallen",
-    DISPUTE: "Tvist",
-    RECORDED: "Bokförd",
 } as const
 
 // =============================================================================
@@ -210,7 +193,6 @@ export const TRANSACTIONS = {
     NO_TRANSACTIONS: "Inga transaktioner ännu",
     NO_MATCHES: "Inga transaktioner matchar din sökning",
     TRY_OTHER_TERMS: "Försök med andra söktermer eller filter",
-    CONNECT_BANK: "Koppla din bank för att komma igång med automatisk bokföring",
     FILTER_BY_STATUS: "Filtrera på status",
     TRANSACTION_COUNT: (count: number) => `${count} transaktioner`,
     TRANSACTION_DETAILS: "Transaktionsdetaljer",

@@ -13,6 +13,7 @@ import { ArrowLeft, BookOpen, Users, PieChart, Building2, CalendarDays, PawPrint
 import { cn } from "@/lib/utils"
 import { AIOverlay } from "@/components/ai"
 import { SuggestionChips } from "@/components/ai/suggestion-chips"
+import { ConversationHeader } from "@/components/ai/conversation-header"
 
 const pageButtons = [
     { label: "Händelser", icon: CalendarDays, href: "/dashboard/handelser", color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25" },
@@ -224,10 +225,10 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         // State 2: Active chat
         return (
             <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
-                {ghostButton}
                 {/* Messages area */}
                 <div className="flex-1 overflow-y-auto px-4">
                     <div className="max-w-3xl mx-auto w-full space-y-4 py-4">
+                        <ConversationHeader />
                         <ChatMessageList
                             messages={messages}
                             isLoading={isLoading}

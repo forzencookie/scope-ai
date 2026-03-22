@@ -30,7 +30,7 @@ export type FunctionParameters = {
 
 export interface InteractionContext {
     userId: string
-    companyId: string
+    companyId: string | null
     isConfirmed: boolean
     confirmationId?: string
 }

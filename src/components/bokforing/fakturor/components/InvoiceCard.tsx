@@ -10,7 +10,7 @@ import {
     FileX2,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { INVOICE_STATUS_LABELS } from "@/lib/localization"
+import { INVOICE_STATUS_LABELS, SUPPLIER_INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { KanbanCard } from "@/components/shared/kanban"
 import {
     DropdownMenuItem,
@@ -58,7 +58,10 @@ export const InvoiceCard = React.memo(function InvoiceCard({
             subtitle={invoice.counterparty}
             amount={isCustomer ? invoice.totalAmount : -invoice.totalAmount}
             date={invoice.dueDate}
-            isOverdue={invoice.status === INVOICE_STATUS_LABELS.OVERDUE || invoice.status === "förfallen"}
+            isOverdue={
+                (invoice.status === INVOICE_STATUS_LABELS.SENT || invoice.status === "Mottagen") &&
+                !!invoice.dueDate && new Date(invoice.dueDate) < new Date()
+            }
         >
             <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
             <DropdownMenuItem>
@@ -81,7 +84,7 @@ export const InvoiceCard = React.memo(function InvoiceCard({
                             Skicka faktura
                         </DropdownMenuItem>
                     )}
-                    {(invoice.status === INVOICE_STATUS_LABELS.SENT || invoice.status === INVOICE_STATUS_LABELS.OVERDUE) && (
+                    {invoice.status === INVOICE_STATUS_LABELS.SENT && (
                         <>
                             <DropdownMenuItem onClick={() => onMarkCustomerPaid(invoice.originalCustomerInvoice!.id)}>
                                 <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
@@ -101,13 +104,13 @@ export const InvoiceCard = React.memo(function InvoiceCard({
             {/* Supplier invoice actions */}
             {!isCustomer && invoice.originalSupplierInvoice && (
                 <>
-                    {invoice.status === "mottagen" && (
+                    {invoice.status === SUPPLIER_INVOICE_STATUS_LABELS.RECEIVED && (
                         <DropdownMenuItem onClick={() => onApproveSupplier(invoice.originalSupplierInvoice!.id)}>
                             <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
                             Attestera
                         </DropdownMenuItem>
                     )}
-                    {invoice.status === "attesterad" && (
+                    {invoice.status === SUPPLIER_INVOICE_STATUS_LABELS.APPROVED && (
                         <DropdownMenuItem onClick={() => onMarkSupplierPaid(invoice.originalSupplierInvoice!.id)}>
                             <Banknote className="h-3.5 w-3.5 mr-2" />
                             Markera betald

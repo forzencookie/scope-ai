@@ -129,7 +129,7 @@ export const periodClosingService = {
             client
                 .from('transactions')
                 .select('date')
-                .eq('status', 'Att bokföra')
+                .eq('status', 'Obokförd')
                 .gte('date', fyStartDate)
                 .lte('date', fyEndDate),
             ...fiscalMonths.map(fm =>

@@ -70,7 +70,7 @@ export type SupplierInvoice = {
     totalAmount: number
     invoiceDate: string
     dueDate: string
-    status: 'Mottagen' | 'Attesterad' | 'Betald' | 'Förfallen' | 'Tvist' | 'Bokförd'
+    status: 'Mottagen' | 'Godkänd' | 'Betald'
     currency?: string
 }
 

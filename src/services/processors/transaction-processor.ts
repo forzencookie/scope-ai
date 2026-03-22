@@ -95,7 +95,7 @@ function getTransactionIcon(name: string, amount: number): { iconName: string; i
  * Get initial status for a transaction
  */
 function getInitialStatus(): TransactionStatus {
-  return TRANSACTION_STATUSES.TO_RECORD as TransactionStatus
+  return TRANSACTION_STATUSES.UNBOOKED as TransactionStatus
 }
 
 // ============================================================================

@@ -1,7 +1,6 @@
 import { ReactElement, ReactNode } from "react"
 import { render, RenderOptions } from "@testing-library/react"
 import { QueryProvider } from "@/providers/query-provider"
-import { TextModeProvider } from "@/providers/text-mode-provider"
 import { ToastProvider } from "@/components/ui/toast"
 import type { Transaction, Invoice, Receipt, QuickStat, PendingTask } from "@/types"
 import { TRANSACTION_STATUS_LABELS, INVOICE_STATUS_LABELS, RECEIPT_STATUS_LABELS } from "@/lib/localization"
@@ -21,7 +20,7 @@ export function createMockTransaction(overrides?: Partial<Transaction>): Transac
         timestamp: new Date("2024-05-01"),
         amount: "-$100.00",
         amountValue: -100.00,
-        status: TRANSACTION_STATUS_LABELS.TO_RECORD,
+        status: TRANSACTION_STATUS_LABELS.UNBOOKED,
         category: "Software",
         iconName: "Tag",
         iconColor: "text-blue-500",
@@ -79,7 +78,7 @@ export function createMockReceipt(overrides?: Partial<Receipt>): Receipt {
         supplier: "Test Vendor",
         date: "2024-05-01",
         amount: "250.00",
-        status: RECEIPT_STATUS_LABELS.PENDING,
+        status: RECEIPT_STATUS_LABELS.NEW,
         category: "Supplies",
         attachment: "",
         ...overrides,
@@ -164,11 +163,9 @@ export function renderWithProviders(
 ) {
     const Wrapper = ({ children }: { children: ReactNode }) => (
         <QueryProvider>
-            <TextModeProvider>
-                <ToastProvider>
-                    {children}
-                </ToastProvider>
-            </TextModeProvider>
+            <ToastProvider>
+                {children}
+            </ToastProvider>
         </QueryProvider>
     )
 

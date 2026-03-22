@@ -593,11 +593,10 @@ export const PAGE_CONTEXTS: PageContext[] = [
             'Visa prenumerationsstatus',
             'Hantera notifikationer',
             'Visa integrationer',
-            'Ansluta bankkonto',
         ],
         dataEntities: ['Inställningar', 'Integrationer', 'Prenumeration'],
-        relatedTools: ['get_subscription_status', 'get_notification_preferences', 'list_active_integrations', 'connect_bank_account'],
-        keywords: ['inställning', 'integration', 'notifikation', 'prenumeration', 'bank'],
+        relatedTools: ['get_subscription_status', 'get_notification_preferences', 'list_active_integrations'],
+        keywords: ['inställning', 'integration', 'notifikation', 'prenumeration'],
     },
 ]
 
@@ -778,9 +777,7 @@ Använd 'show_walkthrough' för att visa en tidigare sparad genomgång.`,
     installningar: `Användaren tittar på Inställningar-sidan.
 Använd 'get_subscription_status' för att visa prenumeration och plan.
 Använd 'get_notification_preferences' och 'update_notification_preferences' för notifieringar.
-Använd 'list_active_integrations' för att visa kopplade banker och system.
-Använd 'connect_bank_account' för att koppla ett nytt bankkonto.
-Använd 'sync_bank_transactions' för att synka transaktioner från banken.`,
+Använd 'list_active_integrations' för att visa aktiva integrationer.`,
 
     resultatrakning: `Användaren tittar på Resultaträkning-sidan.
 Använd 'get_financial_summary' för att hämta intäkter, kostnader och resultat.
