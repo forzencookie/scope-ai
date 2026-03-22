@@ -12,7 +12,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { useSubscription } from "./use-subscription"
 import { getModelMultiplier } from "@/lib/subscription"
-import { usageService, type UsageDetails } from "@/services/usage-service"
+import { usageService, type UsageDetails } from "@/services/common/usage-service"
 
 // Query key for AI usage - shared across all useAIUsage calls
 export const aiUsageQueryKey = ["ai", "usage"] as const

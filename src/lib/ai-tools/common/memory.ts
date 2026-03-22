@@ -11,7 +11,7 @@
  */
 
 import { defineTool } from '../registry'
-import { userMemoryService, type MemoryCategory, type UserMemory } from '@/services/user-memory-service'
+import { userMemoryService, type MemoryCategory, type UserMemory } from '@/services/common/user-memory-service'
 
 // =============================================================================
 // Query Memories Tool

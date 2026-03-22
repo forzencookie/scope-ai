@@ -8,9 +8,6 @@ export { useIsMobile } from "./use-mobile"
 // Generic async hooks
 export { useAsync, useAsyncMutation } from "./use-async"
 
-// Cached query hook (reduces API calls with TTL-based caching)
-export { useCachedQuery } from "./use-cached-query"
-
 // AI usage tracking
 export { useAIUsage, formatTokens } from "./use-ai-usage"
 export type { AIUsageStats } from "./use-ai-usage"

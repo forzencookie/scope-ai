@@ -1,8 +1,12 @@
 import { useState, useMemo, useEffect } from "react"
-import { useVerifications } from "@/hooks/use-verifications"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
-import { taxCalculationService } from "@/services/tax-calculation-service"
-import type { MonthlyData } from "./types"
+import { taxCalculationService } from "@/services/tax/tax-calculation-service"
+
+export interface MonthlyData {
+    month: string
+    profit: number
+    egenavgifter: number
+}
 
 export function useTaxCalculator() {
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())

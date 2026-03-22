@@ -1,7 +1,7 @@
 'use server'
 
 import { getAuthContext } from "@/lib/database/auth-server"
-import { updateCompany as updateCompanyInDb } from "@/services/company-service.server"
+import { updateCompany as updateCompanyInDb } from "@/services/company/company-service.server"
 import { CompanySettingsSchema } from "@/lib/ai-schema"
 import { revalidatePath } from "next/cache"
 
@@ -15,19 +15,19 @@ export async function updateCompanyAction(id: string, settings: any) {
         return { success: false, error: "Unauthorized" }
     }
 
-    const { user } = ctx
-    
+    const { userId } = ctx
+
     // Validate settings using the standard schema
     const validation = CompanySettingsSchema.safeParse(settings)
     if (!validation.success) {
-        return { 
-            success: false, 
-            error: "Valideringsfel: " + validation.error.errors[0].message 
+        return {
+            success: false,
+            error: "Valideringsfel: " + validation.error.issues[0].message
         }
     }
 
     try {
-        await updateCompanyInDb(id, user.id, validation.data)
+        await updateCompanyInDb(id, userId, validation.data)
         
         // Revalidate the dashboard and settings pages
         revalidatePath('/dashboard')

@@ -1,6 +1,6 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
-import { taxService } from '@/services/tax-service'
+import { taxService } from '@/services/tax/tax-service'
 
 export const registerEmployeeTool: AITool = {
     name: "register_employee",

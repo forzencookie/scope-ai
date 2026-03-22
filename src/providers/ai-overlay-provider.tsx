@@ -4,7 +4,7 @@ import { createContext, useContext, useState, useCallback, useEffect, useMemo, t
 import type { SceneType } from "@/components/ai/pixel-mascots"
 import type { WalkthroughContent } from "@/components/ai/walkthrough-overlay"
 import type { WalkthroughResponse } from "@/components/ai/blocks"
-import { emitEvent } from "@/services/event-service"
+import { emitEvent } from "@/services/common/event-service"
 
 // Types for AI Dialog state
 export type AIDialogStatus = "hidden" | "thinking" | "complete" | "error" | "walkthrough" | "walkthrough-blocks"

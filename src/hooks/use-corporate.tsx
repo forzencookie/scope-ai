@@ -2,7 +2,7 @@
 
 import { useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { boardService, CompanyMeeting } from "@/services/board-service"
+import { boardService, CompanyMeeting } from "@/services/corporate/board-service"
 
 export function useCorporate() {
     const queryClient = useQueryClient()

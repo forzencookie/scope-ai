@@ -1,6 +1,7 @@
 import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
+import type { AccountBalance } from '@/services/processors/reports/types'
 
 /**
  * Internal helper to get the correct Supabase client (passed in or default browser).
@@ -342,6 +343,26 @@ export const accountService = {
             supabase.from('shareholders').select('*').order('shares', { ascending: false }).then(r => r.data || []),
             supabase.from('tax_reports').select('*').eq('type', 'vat').order('created_at', { ascending: false }).then(r => r.data || []),
         ])
+    },
+
+    /**
+     * Get simplified account balances for a period (account number + balance only).
+     * Used by financial report hooks that need the lighter AccountBalance shape.
+     */
+    async getBalancesForPeriod(startDate: string, endDate: string, client?: SupabaseClient<Database>): Promise<AccountBalance[]> {
+        const supabase = getSupabase(client)
+        const { data, error } = await supabase.rpc('get_account_balances', {
+            p_date_from: startDate,
+            p_date_to: endDate,
+        })
+
+        if (error) throw error
+        if (!data || data.length === 0) return []
+
+        return data.map((row: { account_number: number | string; balance: number }) => ({
+            account: String(row.account_number),
+            balance: row.balance,
+        }))
     },
 
     /**

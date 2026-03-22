@@ -1,5 +1,5 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAsyncMutation } from "./use-async"
-import { useCachedQuery } from "./use-cached-query"
 
 export interface Member {
   id: string
@@ -15,17 +15,22 @@ export interface Member {
   roles: string[]
 }
 
+const memberQueryKeys = {
+    all: ['members'] as const,
+}
+
 export function useMembers() {
+    const queryClient = useQueryClient()
+
     const {
         data: members,
         isLoading,
         error,
-        invalidate: refetch
-    } = useCachedQuery({
-        cacheKey: 'members-list',
+    } = useQuery({
+        queryKey: memberQueryKeys.all,
         queryFn: async () => {
             try {
-                const res = await fetch('/api/members'); 
+                const res = await fetch('/api/members');
                 if (!res.ok) return [];
                 const json = await res.json();
                 const currentYear = new Date().getFullYear();
@@ -38,8 +43,10 @@ export function useMembers() {
                 return [];
             }
         },
-        ttlMs: 2 * 60 * 1000, // 2 minute cache
+        staleTime: 2 * 60 * 1000, // 2 minute cache
     });
+
+    const refetch = () => queryClient.invalidateQueries({ queryKey: memberQueryKeys.all })
 
     const addMember = useAsyncMutation(async (data: Partial<Member>) => {
         const res = await fetch('/api/members', {

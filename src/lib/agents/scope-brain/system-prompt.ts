@@ -118,8 +118,9 @@ export function buildSystemPrompt(context: AgentContext): string {
         parts.push(knowledgeMaster)
     }
 
-    // 3. Tool reference (compact instructions on how to find tools)
-    parts.push(`## Verktyg\n\nDu har tillgång till över 100 verktyg för bokföring, löner, skatt och bolagsförvaltning. Du känner till de viktigaste (sökning, transaktioner, navigation, kunskap) direkt. För att se en lista över alla tillgängliga verktyg, använd \`get_knowledge(topic: "ai_tools")\`. För att hitta ett specifikt verktyg för en uppgift, använd \`search_tools\`.`)
+    // 3. Tool index (compact list of all tools by domain — ~300 tokens)
+    const toolIndex = aiToolRegistry.getToolIndex()
+    parts.push(`## Verktyg\n\nDu har tillgång till följande verktyg:\n\n${toolIndex}\n\nAnvänd \`search_tools\` för att aktivera ett verktyg innan du anropar det.`)
 
     // === DYNAMIC SECTION (per request) ===
 

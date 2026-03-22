@@ -531,7 +531,7 @@ export const PAGE_CONTEXTS: PageContext[] = [
         title: 'Årsmöte',
         shortTitle: 'Årsmöte',
         category: 'agare',
-        url: '/dashboard/agare?tab=arsmote',
+        url: '/dashboard/agare?tab=bolagsstamma',
         icon: Vote,
         description: 'Årsmöte för föreningar och ekonomiska föreningar.',
         aiCapabilities: [

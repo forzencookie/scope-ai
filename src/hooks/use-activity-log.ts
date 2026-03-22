@@ -23,11 +23,12 @@
  * events = high-level company narrative.
  */
 
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { createBrowserClient } from "@/lib/database/client"
-import { activityService, type ActivityLogEntry, type ActivityAction, type EntityType } from "@/services/activity-service"
+import { useCompany } from "@/providers/company-provider"
+import { activityService, type ActivityLogEntry, type ActivityAction, type EntityType } from "@/services/common/activity-service"
 
 export type { ActivityLogEntry, ActivityAction, EntityType }
 
@@ -123,6 +124,8 @@ export function useActivityLog({
   realtime = true,
 }: UseActivityLogOptions = {}): UseActivityLogReturn {
   const { user } = useAuth()
+  const { company } = useCompany()
+  const companyId = company?.id
   const queryClient = useQueryClient()
   const [extraActivities, setExtraActivities] = useState<ActivityLogEntry[]>([])
   const [hasMore, setHasMore] = useState(true)
@@ -138,12 +141,10 @@ export function useActivityLog({
   } = useQuery({
     queryKey: activityLogQueryKeys.list(entityType, entityId, dateFilter?.toISOString()?.split('T')[0]),
     queryFn: async () => {
-      // Get company info first for explicit filtering
-      const { data: company } = await supabase.from('companies').select('id').single()
-      if (!company) return []
+      if (!companyId) return []
 
       const result = await activityService.getActivities({
-        companyId: company.id,
+        companyId,
         entityType,
         entityId,
         dateFilter,
@@ -156,7 +157,7 @@ export function useActivityLog({
       setExtraActivities([])
       return result.activities
     },
-    enabled: !!user,
+    enabled: !!user && !!companyId,
     staleTime: 2 * 60 * 1000,
   })
 
@@ -167,14 +168,10 @@ export function useActivityLog({
 
   // Load more (pagination beyond the initial query)
   const loadMore = useCallback(async () => {
-    if (!user) return
-
-    // Get company info first for explicit filtering
-    const { data: company } = await supabase.from('companies').select('id').single()
-    if (!company) return
+    if (!user || !companyId) return
 
     const result = await activityService.getActivities({
-      companyId: company.id,
+      companyId,
       entityType,
       entityId,
       dateFilter,
@@ -185,7 +182,7 @@ export function useActivityLog({
     setExtraActivities(prev => [...prev, ...result.activities])
     setLoadMoreOffset(prev => prev + limit)
     setHasMore(result.hasMore)
-  }, [user, supabase, entityType, entityId, limit, loadMoreOffset, dateFilter])
+  }, [user, companyId, entityType, entityId, limit, loadMoreOffset, dateFilter])
 
   // Real-time subscription
   useEffect(() => {
@@ -193,20 +190,18 @@ export function useActivityLog({
 
     let channel: any;
 
-    const setupSubscription = async () => {
-      // Get company info for filtering
-      const { data: company } = await supabase.from('companies').select('id').single()
-      if (!company) return
+    const setupSubscription = () => {
+      if (!companyId) return
 
       channel = supabase
-        .channel(`activity_log_changes_${company.id}`)
+        .channel(`activity_log_changes_${companyId}`)
         .on(
           "postgres_changes",
           {
             event: "INSERT",
             schema: "public",
             table: "activity_log",
-            filter: `company_id=eq.${company.id}`
+            filter: `company_id=eq.${companyId}`
           },
           (payload) => {
             // New entry matches company, refetch to get full mapped data
@@ -221,7 +216,7 @@ export function useActivityLog({
     return () => {
       if (channel) channel.unsubscribe()
     }
-  }, [realtime, user, entityType, entityId, supabase, refetch])
+  }, [realtime, user, companyId, entityType, entityId, supabase, refetch])
 
   const refresh = useCallback(async () => {
     await refetch()

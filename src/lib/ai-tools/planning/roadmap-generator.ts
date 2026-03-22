@@ -1,5 +1,5 @@
 
-import { createRoadmap } from "@/services/roadmap-service"
+import { createRoadmap } from "@/services/common/roadmap-service"
 
 export const generateRoadmapTool = {
     name: "generate_roadmap",

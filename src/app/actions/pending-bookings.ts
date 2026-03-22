@@ -1,7 +1,7 @@
 'use server'
 
 import { getAuthContext } from "@/lib/database/auth-server"
-import { pendingBookingService } from "@/services/pending-booking-service"
+import { pendingBookingService } from "@/services/accounting/pending-booking-service"
 import { revalidatePath } from "next/cache"
 import type { VerificationEntry } from "@/types"
 

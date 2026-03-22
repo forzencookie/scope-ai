@@ -1,7 +1,7 @@
 
 import { useCallback } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
-import { payrollService, type Employee } from "@/services/payroll-service"
+import { payrollService, type Employee } from "@/services/payroll/payroll-service"
 
 export type { Employee }
 

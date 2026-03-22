@@ -9,12 +9,12 @@ import {
     Users,
     Settings,
     Landmark,
-    Vote,
     FileText,
     PiggyBank,
     Gift,
     Coins,
     Calendar,
+    PenTool,
 } from "lucide-react"
 import type { NavItem } from "@/types"
 
@@ -105,10 +105,10 @@ export const navLoner: NavItem[] = [
 // filters tabs by company type. Nav items here must match what the page actually renders.
 // Feature keys gate visibility in the sidebar via hasFeature().
 //
-// AB: aktiebok, bolagsstamma
+// AB: aktiebok, utdelning, firmatecknare, bolagsstamma
 // EF: agarinfo (rendered inline, single-tab)
-// HB/KB: delagare
-// Forening: medlemsregister, bolagsstamma (shown as arsmote)
+// HB/KB: delagare, firmatecknare
+// Forening: medlemsregister, firmatecknare, bolagsstamma (shown as årsmöte)
 export const navAgare: NavItem[] = [
     {
         title: "Aktiebok",
@@ -125,11 +125,25 @@ export const navAgare: NavItem[] = [
         featureKey: "delagare",
     },
     {
+        title: "Utdelning",
+        titleEnkel: "Utdelning",
+        url: "/dashboard/agare?tab=utdelning",
+        icon: Coins,
+        featureKey: "utdelning",
+    },
+    {
         title: "Medlemsregister",
         titleEnkel: "Medlemmar",
         url: "/dashboard/agare?tab=medlemsregister",
         icon: Users,
         featureKey: "medlemsregister",
+    },
+    {
+        title: "Firmatecknare",
+        titleEnkel: "Firmatecknare",
+        url: "/dashboard/agare?tab=firmatecknare",
+        icon: PenTool,
+        featureKey: "firmatecknare",
     },
     {
         title: "Möten & Protokoll",
@@ -138,13 +152,19 @@ export const navAgare: NavItem[] = [
         icon: Landmark,
         featureKey: "bolagsstamma",
     },
-    {
-        title: "Årsmöte",
-        titleEnkel: "Årsmöte",
-        url: "/dashboard/agare?tab=arsmote",
-        icon: Vote,
-        featureKey: "arsmote",
-    },
+    // arsmote nav item removed — bolagsstamma handles both AB (Bolagsstämma)
+    // and Förening (Årsmöte) via company-type switching in ownership-page.tsx
+]
+
+// ============================================
+// Platform Navigation (combined)
+// ============================================
+
+export const navPlatform: NavItem[] = [
+    ...navBokforing,
+    ...navRapporter,
+    ...navLoner,
+    ...navAgare,
 ]
 
 // ============================================

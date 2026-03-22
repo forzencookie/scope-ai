@@ -6,9 +6,9 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { reportingService } from '@/services/reporting-service'
-import { companyService } from '@/services/company-service.server'
-import { taxService } from '@/services/tax-service'
+import { reportingService } from '@/services/reporting/reporting-service'
+import { companyService } from '@/services/company/company-service.server'
+import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================
 // Shared helpers
@@ -287,7 +287,7 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, any>({
         const netIncome = report.summary.result
         const revenue = report.summary.revenue
 
-        const { rates } = await taxService.getAllTaxRates(params.year)
+        const rates = await taxService.getAllTaxRates(params.year)
         if (!rates) {
             return { success: false, error: `Skattesatser för ${params.year} saknas — kan inte beräkna bolagsskatt.` }
         }

@@ -3,7 +3,6 @@
 import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { useToast } from "@/components/ui/toast"
-import { useCachedQuery } from '@/hooks/use-cached-query'
 import {
     TooltipProvider,
 } from "@/components/ui/tooltip"

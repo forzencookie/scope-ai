@@ -2,7 +2,7 @@
 
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { createBrowserClient } from "@/lib/database/client"
+import { taxCalendarService } from "@/services/tax/tax-calendar-service"
 import { useCompany } from "@/providers/company-provider"
 import { cn } from "@/lib/utils"
 import type { CompanyType } from "@/lib/company-types"
@@ -47,32 +47,23 @@ export function DeadlinesList() {
   const { data: deadlines = [] } = useQuery<Deadline[]>({
     queryKey: ["deadlines", fiscalYearEnd, companyType],
     queryFn: async () => {
-      const supabase = createBrowserClient()
       const today = new Date()
       const items: Deadline[] = []
 
-      // Fetch pending tax calendar items
-      const { data: taxItems } = await supabase
-        .from("tax_calendar")
-        .select("id, title, due_date, deadline_type, status")
-        .in("status", ["pending", "overdue"])
-        .order("due_date", { ascending: true })
-        .limit(10)
+      // Fetch pending tax calendar items via service
+      const taxItems = await taxCalendarService.getPendingDeadlines(10)
 
-      if (taxItems) {
-        for (const item of taxItems) {
-          if (!item.due_date) continue
-          const dueDate = new Date(item.due_date)
-          const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
-          items.push({
-            id: item.id,
-            title: item.title ?? '',
-            dueDate,
-            daysUntil,
-            type: item.deadline_type as Deadline["type"],
-            status: getDeadlineStatus(daysUntil),
-          })
-        }
+      for (const item of taxItems) {
+        const dueDate = new Date(item.dueDate)
+        const daysUntil = Math.ceil((dueDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24))
+        items.push({
+          id: item.id,
+          title: item.title,
+          dueDate,
+          daysUntil,
+          type: item.deadlineType as Deadline["type"],
+          status: getDeadlineStatus(daysUntil),
+        })
       }
 
       // Add computed deadlines (arsredovisning = 7 months after fiscal year end)

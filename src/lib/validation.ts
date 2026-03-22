@@ -17,7 +17,7 @@ export const ChatMessageSchema = z.object({
 export type ChatMessage = z.infer<typeof ChatMessageSchema>
 
 export const ChatHistorySchema = z.array(ChatMessageSchema, {
-    invalid_type_error: "Messages must be an array"
+    error: "Messages must be an array"
 })
 .min(1, "At least one message is required")
 .max(50, "Too many messages. Maximum allowed: 50")

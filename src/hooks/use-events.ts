@@ -15,7 +15,7 @@ import {
     emitUserEvent,
     emitSystemEvent,
     emitAuthorityEvent,
-} from '@/services/event-service'
+} from '@/services/common/event-service'
 
 export interface UseEventsReturn {
     /** All events matching current filters */

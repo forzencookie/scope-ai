@@ -12,7 +12,7 @@
 
 import { createBrowserClient } from '@/lib/database/client'
 import { verificationService } from './verification-service'
-import { taxService } from './tax-service'
+import { taxService } from '../tax/tax-service'
 
 // =============================================================================
 // Types

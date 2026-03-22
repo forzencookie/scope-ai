@@ -14,7 +14,7 @@ import type {
     BenefitCategory,
 } from './ai/tool-types'
 import { formanerCatalog } from './ai/reference-data'
-import { taxService } from '@/services/tax-service'
+import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================
 // Database Row Types

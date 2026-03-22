@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { accountService } from '@/services/account-service'
+import { accountService } from '@/services/accounting/account-service'
 import type { IncomeAudit } from '@/lib/ai-schema'
 
 // =============================================================================

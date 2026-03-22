@@ -2,7 +2,7 @@
 
 import { useCallback, useState } from 'react'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
-import type { VerificationEntry } from '@/services/verification-service'
+import type { VerificationEntry } from '@/types'
 
 // =============================================================================
 // Types

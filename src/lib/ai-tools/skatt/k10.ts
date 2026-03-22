@@ -5,7 +5,7 @@
  */
 
 import { defineTool } from '../registry'
-import { taxService } from '@/services/tax-service'
+import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================
 // K10 Calculation Tools

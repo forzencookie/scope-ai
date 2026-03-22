@@ -5,12 +5,12 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll-service'
-import { companyService } from '@/services/company-service.server'
-import { taxService } from '@/services/tax-service'
+import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll/payroll-service'
+import { companyService } from '@/services/company/company-service.server'
+import { taxService } from '@/services/tax/tax-service'
 import { getEmployeeBenefits } from '@/lib/formaner'
 import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '@/lib/bookkeeping'
-import { verificationService } from '@/services/verification-service'
+import { verificationService } from '@/services/accounting/verification-service'
 
 // =============================================================================
 // Helpers
@@ -149,7 +149,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
             if (!emp.taxTable) {
                 return { success: false, error: `Skattetabell saknas för ${emp.name}. Ange skattetabell i personalregistret innan lönekörning.` }
             }
-            const skvTax = await taxService.lookupTaxDeduction(currentYear, emp.taxTable, 1, taxableIncome)
+            const skvTax = await taxService.lookupTaxDeduction(currentYear, String(emp.taxTable), 1, taxableIncome)
             if (skvTax === null) {
                 return { success: false, error: `Skattetabell ${emp.taxTable} kunde inte slås upp för ${emp.name} (${currentYear}). Kontrollera att skattetabellen finns i systemet.` }
             }

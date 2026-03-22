@@ -6,7 +6,7 @@
  */
 
 import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext, AIToolDomain } from './types'
-import { aiAuditService } from '@/services/ai-audit-service'
+import { aiAuditService } from '@/services/common/ai-audit-service'
 
 // Re-export types that tools may need
 export type { AIConfirmationRequest } from './types'
@@ -162,7 +162,7 @@ class AIToolRegistry {
 
         // 1. Company-Type Guard (Enforce legal scope)
         if (tool.allowedCompanyTypes && tool.allowedCompanyTypes.length > 0) {
-            const { companyService } = await import('@/services/company-service.server')
+            const { companyService } = await import('@/services/company/company-service.server')
             const company = await companyService.getByUserId(context.userId)
             
             if (!company || !tool.allowedCompanyTypes.includes(company.companyType)) {

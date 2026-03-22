@@ -13,7 +13,7 @@ import { useState, useCallback, useMemo, useEffect } from "react"
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import type { TransactionFilters, SortConfig, Transaction, TransactionWithAI } from "@/types"
 import type { TransactionStatus } from "@/lib/status-types"
-import * as transactionService from "@/services/transactions"
+import * as transactionService from "@/services/accounting/transactions"
 import { useAuth } from "./use-auth"
 import { checkPeriodLocked } from './use-month-closing'
 

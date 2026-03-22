@@ -5,7 +5,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { receiptService } from '@/services/receipt-service'
+import { receiptService } from '@/services/accounting/receipt-service'
 
 // =============================================================================
 // Receipt Tools

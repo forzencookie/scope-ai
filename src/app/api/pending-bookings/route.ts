@@ -4,8 +4,8 @@ import {
   pendingBookingService,
   type PendingBookingSourceType,
   type PendingBookingStatus,
-} from '@/services/pending-booking-service'
-import type { VerificationEntry } from '@/services/verification-service'
+} from '@/services/accounting/pending-booking-service'
+import type { VerificationEntry } from '@/types'
 
 /**
  * GET /api/pending-bookings

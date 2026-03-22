@@ -6,7 +6,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { vatService, type VATDeclaration, type VATStats } from '@/services/vat-service'
+import { vatService, type VATDeclaration, type VATStats } from '@/services/tax/vat-service'
 
 // =============================================================================
 // VAT Read Tools

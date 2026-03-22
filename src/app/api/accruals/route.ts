@@ -15,7 +15,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { accrualService, type AccrualInput } from '@/services/accrual-service'
+import { accrualService, type AccrualInput } from '@/services/accounting/accrual-service'
 
 export async function POST(req: NextRequest) {
     try {

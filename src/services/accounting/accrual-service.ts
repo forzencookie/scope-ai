@@ -15,7 +15,8 @@
  * - 1790: Upplupna intäkter (accrued revenue)
  */
 
-import { verificationService, type VerificationEntry } from './verification-service'
+import { verificationService } from './verification-service'
+import type { VerificationEntry } from '@/types'
 
 // =============================================================================
 // Types

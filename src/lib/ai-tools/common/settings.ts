@@ -8,17 +8,17 @@
  */
 
 import { defineTool } from '../registry'
-import { settingsService } from '@/services/settings-service.server'
+import { settingsService } from '@/services/company/settings-service.server'
 import { 
     updateNotificationPreference,
     getNotificationPreferences,
     getIntegrations
-} from '@/services/settings-service'
+} from '@/services/company/settings-service'
 import type {
     SubscriptionStatus as ServiceSubscriptionStatus,
     NotificationPreferences as ServiceNotificationPreferences,
     Integration as ServiceIntegration,
-} from '@/services/settings-service'
+} from '@/services/company/settings-service'
 
 // =============================================================================
 // Subscription & Billing Tools

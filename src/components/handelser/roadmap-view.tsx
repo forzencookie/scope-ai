@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { type Roadmap, type RoadmapStep, type RoadmapStepStatus } from "@/types/roadmap"
-import { getRoadmaps, updateStep, deleteRoadmap } from "@/services/roadmap-service"
+import { getRoadmaps, updateStep, deleteRoadmap } from "@/services/common/roadmap-service"
 import {
     AlertDialog,
     AlertDialogAction,

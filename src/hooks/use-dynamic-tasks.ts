@@ -3,8 +3,9 @@ import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTransactions } from '@/hooks/use-transactions-query'
 import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
-import { createBrowserClient } from '@/lib/database/client'
 import { useCompany } from '@/providers/company-provider'
+import { invoiceService } from '@/services/invoicing/invoice-service'
+import { payrollService } from '@/services/payroll/payroll-service'
 
 export interface DynamicTask {
     id: string
@@ -38,29 +39,16 @@ function useStatCounts(): StatCounts & { isLoading: boolean } {
     const { data, isLoading } = useQuery<StatCounts>({
         queryKey: dynamicTaskQueryKeys.statCounts(),
         queryFn: async () => {
-            const supabase = createBrowserClient()
-            const today = new Date().toISOString().split('T')[0]
-
             const [draftRes, overdueRes, payslipRes] = await Promise.all([
-                supabase
-                    .from('customer_invoices')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('status', 'DRAFT'),
-                supabase
-                    .from('customer_invoices')
-                    .select('id', { count: 'exact', head: true })
-                    .lt('due_date', today)
-                    .not('status', 'in', '("PAID","CANCELLED")'),
-                supabase
-                    .from('payslips')
-                    .select('id', { count: 'exact', head: true })
-                    .eq('status', 'draft'),
+                invoiceService.getDraftCount(),
+                invoiceService.getOverdueCount(),
+                payrollService.getPendingPayslipCount(),
             ])
 
             return {
-                draftInvoices: draftRes.count || 0,
-                overdueInvoices: overdueRes.count || 0,
-                pendingPayslips: payslipRes.count || 0,
+                draftInvoices: draftRes,
+                overdueInvoices: overdueRes,
+                pendingPayslips: payslipRes,
             }
         },
         staleTime: 5 * 60 * 1000,

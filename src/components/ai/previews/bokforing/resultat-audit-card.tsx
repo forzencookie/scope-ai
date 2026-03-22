@@ -9,11 +9,28 @@
 
 import { cn } from "@/lib/utils"
 import { CheckCircle2, AlertTriangle, XCircle, TrendingUp } from "lucide-react"
-import type { AuditCheck, AuditResult } from "@/lib/ai-tools/bokforing/audit"
 
 // =============================================================================
 // Types
 // =============================================================================
+
+export interface AuditCheck {
+    name: string
+    status: 'pass' | 'warning' | 'fail'
+    description: string
+    details?: string
+}
+
+export interface AuditResult {
+    date: string
+    checks: AuditCheck[]
+    summary: {
+        total: number
+        passed: number
+        warnings: number
+        failed: number
+    }
+}
 
 export interface ResultatAuditCardProps {
     audit?: AuditResult

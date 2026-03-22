@@ -220,11 +220,10 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 )}
 
                 {/* Inline-only cards (always visible, no overlay) */}
-                {message.display && (message.display.type === 'BalanceAuditCard' || (message.display as any).component === 'BalanceAuditCard') && (
+                {message.display?.type === 'BalanceAuditCard' && (
                     <div className="my-2">
                         <BalanceAuditCard
                             audit={message.display.type === 'BalanceAuditCard' ? message.display.data.audit : undefined}
-                            data={message.display.type === 'BalanceAuditCard' ? (message.display.data.audit || message.display.data) : {}}
                         />
                     </div>
                 )}

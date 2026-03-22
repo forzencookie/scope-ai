@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { taxService, type TaxRates } from '@/services/tax-service'
+import { taxService, type TaxRates } from '@/services/tax/tax-service'
 
 export interface TaxParameters {
     ibb: number
@@ -60,11 +60,11 @@ export function useAllTaxRates(year: number) {
     const { data: rates = null, isLoading, error } = useQuery<TaxRates | null>({
         queryKey: taxParameterQueryKeys.rates(year),
         queryFn: async () => {
-            const fetched = await taxService.getAllTaxRates(year)
-            if (!fetched) {
+            const rates = await taxService.getAllTaxRates(year)
+            if (!rates) {
                 throw new Error(`Skattesatser för ${year} kunde inte laddas från databasen.`)
             }
-            return fetched
+            return rates
         },
         staleTime: 30 * 60 * 1000,
     })

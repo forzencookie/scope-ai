@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { closingEntryService } from '@/services/closing-entry-service'
+import { closingEntryService } from '@/services/accounting/closing-entry-service'
 
 export async function GET(req: NextRequest) {
     try {

@@ -31,7 +31,7 @@ export type MessageDisplay =
         component?: string
         data: {
             audit?: BalanceAuditCardProps['audit']
-        } & Record<string, any>
+        } & Record<string, unknown>
     }
     | {
         type: 'ActionTrigger'

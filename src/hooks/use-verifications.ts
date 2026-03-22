@@ -1,7 +1,6 @@
 
 import { useCallback, useState } from "react"
-import { useCachedQuery } from "./use-cached-query"
-import { createBrowserClient } from '@/lib/database/client'
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 
 export interface VerificationRow {
     account: string
@@ -35,17 +34,22 @@ async function fetchVerificationsFromAPI(): Promise<Verification[]> {
     return data.verifications || []
 }
 
+const verificationQueryKeys = {
+    all: ['verifications'] as const,
+}
+
 export function useVerifications() {
+    const queryClient = useQueryClient()
+
     const {
         data: verifications,
         isLoading,
         error,
         refetch,
-        invalidate,
-    } = useCachedQuery<Verification[]>({
-        cacheKey: 'verifications',
+    } = useQuery<Verification[]>({
+        queryKey: verificationQueryKeys.all,
         queryFn: fetchVerificationsFromAPI,
-        ttlMs: 5 * 60 * 1000, // 5 minutes cache
+        staleTime: 5 * 60 * 1000, // 5 minutes cache
     })
 
     const [lockError, setLockError] = useState<string | null>(null)
@@ -53,7 +57,7 @@ export function useVerifications() {
     const addVerification = useCallback(async (verification: Omit<Verification, "id">) => {
         setLockError(null)
         try {
-            const { verificationService } = await import('@/services/verification-service')
+            const { verificationService } = await import('@/services/accounting/verification-service')
             const status = await verificationService.getPeriodStatus(verification.date)
 
             if (status === 'closed') {
@@ -69,18 +73,18 @@ export function useVerifications() {
                 body: JSON.stringify(verification)
             })
             if (!response.ok) throw new Error('Failed to create verification')
-            await invalidate() // Invalidate cache and refetch
+            await queryClient.invalidateQueries({ queryKey: verificationQueryKeys.all })
             return true
         } catch (err) {
             console.error(err)
             return false
         }
-    }, [invalidate])
+    }, [queryClient])
 
     return {
         verifications: verifications || [],
         isLoading,
-        error,
+        error: error instanceof Error ? error.message : error ? String(error) : null,
         lockError,
         refresh: refetch,
         addVerification,

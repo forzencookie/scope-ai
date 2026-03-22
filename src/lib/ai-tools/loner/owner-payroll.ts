@@ -8,9 +8,9 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { taxService } from '@/services/tax-service'
-import { companyService } from '@/services/company-service.server'
-import { shareholderService } from '@/services/shareholder-service'
+import { taxService } from '@/services/tax/tax-service'
+import { companyService } from '@/services/company/company-service.server'
+import { shareholderService } from '@/services/corporate/shareholder-service'
 import { OWNER_ACCOUNTS, EQUITY_ACCOUNTS } from '@/data/account-constants'
 
 /**
@@ -200,7 +200,7 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
         // If confirmed, create pending booking (user books via wizard)
         if (context?.isConfirmed) {
             try {
-                const { pendingBookingService } = await import('@/services/pending-booking-service')
+                const { pendingBookingService } = await import('@/services/accounting/pending-booking-service')
                 const accounts = accountMap[type]
 
                 const pending = await pendingBookingService.createPendingBooking({

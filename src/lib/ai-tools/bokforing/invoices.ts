@@ -6,7 +6,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoice-service'
+import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoicing/invoice-service'
 
 // Helper to get base URL for API calls
 function getBaseUrl() {

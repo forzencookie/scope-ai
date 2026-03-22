@@ -1,4 +1,6 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { generateOCR } from '@/lib/ocr'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
 type CustomerInvoiceRow = Database['public']['Tables']['customer_invoices']['Row']
@@ -16,6 +18,47 @@ export type CustomerInvoice = {
     issueDate: string
     dueDate: string
     status: string
+}
+
+export type CreateInvoiceParams = {
+    customer: string
+    email?: string
+    address?: string
+    orgNumber?: string
+    issueDate?: string
+    dueDate?: string
+    subtotal?: number
+    vatAmount?: number
+    amount?: number
+    items?: Array<{ quantity?: number; unitPrice?: number; vatRate?: number }>
+    bankgiro?: string
+    plusgiro?: string
+    notes?: string
+    reference?: string
+    status?: string
+    currency?: string
+}
+
+export type CreatedInvoice = {
+    id: string
+    ocrReference: string
+    customer: string | null
+    email: string | null
+    address: string | null
+    orgNumber: string | null
+    amount: number | null
+    vatAmount: number | null
+    subtotal: number | null
+    issueDate: string | null
+    dueDate: string | null
+    status: string | null
+    currency: string
+    reference: string | null
+    bankgiro: string | null
+    plusgiro: string | null
+    notes: string | null
+    items: unknown[]
+    dbId: string
 }
 
 export type SupplierInvoice = {
@@ -256,6 +299,149 @@ export const invoiceService = {
     /**
      * Get supplier invoices that are unpaid and overdue
      */
+    /**
+     * Count customer invoices with DRAFT status
+     */
+    async getDraftCount(): Promise<number> {
+        const supabase = createBrowserClient()
+
+        const { count, error } = await supabase
+            .from('customer_invoices')
+            .select('id', { count: 'exact', head: true })
+            .eq('status', 'DRAFT')
+
+        if (error) throw error
+        return count || 0
+    },
+
+    /**
+     * Count customer invoices that are overdue (due_date < today, not PAID or CANCELLED)
+     */
+    async getOverdueCount(): Promise<number> {
+        const supabase = createBrowserClient()
+        const today = new Date().toISOString().split('T')[0]
+
+        const { count, error } = await supabase
+            .from('customer_invoices')
+            .select('id', { count: 'exact', head: true })
+            .lt('due_date', today)
+            .not('status', 'in', '("PAID","CANCELLED")')
+
+        if (error) throw error
+        return count || 0
+    },
+
+    /**
+     * Create a new customer invoice with sequential numbering, VAT calculation, and OCR reference.
+     */
+    async createInvoice(
+        params: CreateInvoiceParams,
+        userId: string,
+        companyId: string,
+        client?: SupabaseClient<Database>
+    ): Promise<CreatedInvoice> {
+        const supabase = client ?? createBrowserClient()
+
+        // Generate next sequential invoice number (FAK-YYYY-NNNN)
+        const year = new Date().getFullYear()
+        const { data: lastInvoices } = await supabase
+            .from('customer_invoices')
+            .select('invoice_number')
+            .like('invoice_number', `FAK-${year}-%`)
+            .order('invoice_number', { ascending: false })
+            .limit(1)
+
+        let nextNum = 1
+        if (lastInvoices && lastInvoices.length > 0) {
+            const lastNum = parseInt(lastInvoices[0]?.invoice_number?.split('-')[2] ?? '0') || 0
+            nextNum = lastNum + 1
+        }
+        const invoiceNumber = `FAK-${year}-${String(nextNum).padStart(4, '0')}`
+
+        // Calculate totals from line items
+        let subtotal = 0
+        let vatAmount = 0
+        if (params.items && params.items.length > 0) {
+            subtotal = params.items.reduce((sum, item) => {
+                return sum + ((item.quantity || 0) * (item.unitPrice || 0))
+            }, 0)
+            vatAmount = params.items.reduce((sum, item) => {
+                const lineTotal = (item.quantity || 0) * (item.unitPrice || 0)
+                return sum + (lineTotal * (item.vatRate || 0) / 100)
+            }, 0)
+        }
+
+        // Use provided amounts or calculated ones
+        const finalSubtotal = params.subtotal ?? subtotal
+        const finalVatAmount = params.vatAmount ?? vatAmount
+        const finalTotal = params.amount ?? (finalSubtotal + finalVatAmount)
+
+        // Generate OCR reference (Luhn check digit)
+        const ocrReference = generateOCR(invoiceNumber)
+
+        const invoiceData = {
+            invoice_number: invoiceNumber,
+            ocr_reference: ocrReference,
+            customer_name: params.customer,
+            customer_email: params.email || null,
+            customer_address: params.address || null,
+            customer_org_number: params.orgNumber || null,
+            invoice_date: params.issueDate || new Date().toISOString().split('T')[0],
+            due_date: params.dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            subtotal: finalSubtotal,
+            vat_amount: finalVatAmount,
+            total_amount: finalTotal,
+            items: {
+                lines: params.items || [],
+                bankgiro: params.bankgiro || null,
+                plusgiro: params.plusgiro || null,
+                notes: params.notes || null,
+            },
+            status: params.status || 'Utkast',
+            payment_reference: params.reference || null,
+            user_id: userId,
+            company_id: companyId || '',
+        }
+
+        const { data: created, error } = await supabase
+            .from('customer_invoices')
+            .insert(invoiceData)
+            .select()
+            .single()
+
+        if (error) {
+            throw new Error(`Failed to create invoice: ${error.message}`)
+        }
+
+        if (!created) {
+            throw new Error('Failed to create invoice: no data returned')
+        }
+
+        const storedItems = created.items as { lines?: unknown[]; bankgiro?: string; plusgiro?: string; notes?: string } | null
+
+        return {
+            id: created.invoice_number ?? invoiceNumber,
+            ocrReference,
+            customer: created.customer_name,
+            email: created.customer_email,
+            address: created.customer_address,
+            orgNumber: created.customer_org_number,
+            amount: created.total_amount,
+            vatAmount: created.vat_amount,
+            subtotal: created.subtotal,
+            issueDate: created.invoice_date,
+            dueDate: created.due_date,
+            status: created.status,
+            currency: params.currency || 'SEK',
+            reference: created.payment_reference,
+            bankgiro: storedItems?.bankgiro || null,
+            plusgiro: storedItems?.plusgiro || null,
+            notes: storedItems?.notes || null,
+            items: storedItems?.lines || [],
+            dbId: created.id,
+        }
+    },
+
     async getOverdueSupplierInvoices() {
         const supabase = createBrowserClient()
         const today = new Date().toISOString().split('T')[0]

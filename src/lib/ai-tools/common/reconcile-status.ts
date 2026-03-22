@@ -6,11 +6,11 @@
  */
 
 import { defineTool } from '../registry'
-import { invoiceService } from '@/services/invoice-service'
-import { receiptService } from '@/services/receipt-service'
-import { payrollService } from '@/services/payroll-service'
-import { pendingBookingService } from '@/services/pending-booking-service'
-import { getUnbookedTransactions } from '@/services/transactions'
+import { invoiceService } from '@/services/invoicing/invoice-service'
+import { receiptService } from '@/services/accounting/receipt-service'
+import { payrollService } from '@/services/payroll/payroll-service'
+import { pendingBookingService } from '@/services/accounting/pending-booking-service'
+import { getUnbookedTransactions } from '@/services/accounting/transactions'
 
 // =============================================================================
 // Types

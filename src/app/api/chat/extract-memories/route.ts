@@ -12,7 +12,7 @@
 
 import { NextRequest } from 'next/server'
 import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { userMemoryService } from '@/services/user-memory-service'
+import { userMemoryService } from '@/services/common/user-memory-service'
 
 // =============================================================================
 // Extraction Prompt

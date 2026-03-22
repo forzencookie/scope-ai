@@ -1,5 +1,5 @@
 import { TransactionWithAI } from "@/types"
-import type { TransactionStats } from '@/services/transactions'
+import type { TransactionStats } from '@/services/accounting/transactions'
 import { BookingData } from "@/types"
 
 export interface TransactionsTableProps {

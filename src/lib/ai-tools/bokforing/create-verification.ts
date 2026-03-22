@@ -1,6 +1,6 @@
 
 import { AITool, InteractionContext } from "@/lib/ai-tools/types"
-import { verificationService } from '@/services/verification-service'
+import { verificationService } from '@/services/accounting/verification-service'
 import { createSimpleEntry, validateJournalEntry, generateEntryId } from '@/lib/bookkeeping'
 
 interface VerificationRow {

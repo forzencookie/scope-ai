@@ -10,7 +10,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { correctionService } from '@/services/correction-service'
+import { correctionService } from '@/services/accounting/correction-service'
 
 export async function POST(req: NextRequest) {
     try {

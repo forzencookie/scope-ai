@@ -1,8 +1,8 @@
 
 import { useState, useCallback, useEffect, useRef } from "react"
-import { receiptService, type Receipt } from '@/services/receipt-service'
+import { useQuery, useQueryClient } from "@tanstack/react-query"
+import { receiptService, type Receipt } from '@/services/accounting/receipt-service'
 import { useAsync } from "./use-async"
-import { useCachedQuery } from "./use-cached-query"
 
 export function useReceiptsPaginated(
     pageSize: number = 20,
@@ -79,22 +79,29 @@ export function useReceiptsPaginated(
     }
 }
 
+const receiptQueryKeys = {
+    stats: ['receipt-stats'] as const,
+}
+
 export function useReceiptStats() {
+    const queryClient = useQueryClient()
+
     const {
         data: stats,
         isLoading,
         error,
-        invalidate: refetch
-    } = useCachedQuery({
-        cacheKey: 'receipt-stats',
+    } = useQuery({
+        queryKey: receiptQueryKeys.stats,
         queryFn: () => receiptService.getStats(),
-        ttlMs: 60 * 1000, // 1 minute cache
+        staleTime: 60 * 1000, // 1 minute cache
     })
 
-    return { 
-        stats: stats ?? { matchedCount: 0, unmatchedCount: 0, total: 0, totalAmount: 0 }, 
-        isLoading, 
-        error, 
-        refetch 
+    const refetch = () => queryClient.invalidateQueries({ queryKey: receiptQueryKeys.stats })
+
+    return {
+        stats: stats ?? { matchedCount: 0, unmatchedCount: 0, total: 0, totalAmount: 0 },
+        isLoading,
+        error,
+        refetch
     }
 }

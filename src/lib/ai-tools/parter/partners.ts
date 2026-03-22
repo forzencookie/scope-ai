@@ -5,7 +5,7 @@
  */
 
 import { defineTool } from '../registry'
-import { shareholderService } from '@/services/shareholder-service'
+import { shareholderService } from '@/services/corporate/shareholder-service'
 
 // =============================================================================
 // Partner Tools

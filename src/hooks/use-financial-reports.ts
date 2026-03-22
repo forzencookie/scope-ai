@@ -1,8 +1,8 @@
 
 import { useMemo } from "react"
-import { createBrowserClient } from '@/lib/database/client'
+import { useQuery } from "@tanstack/react-query"
+import { accountService } from "@/services/accounting/account-service"
 import { FinancialReportProcessor, AccountBalance, FinancialSection } from "@/services/processors/reports"
-import { useCachedQuery } from "./use-cached-query"
 import { useCompany } from "@/providers/company-provider"
 import { getFiscalYearRange } from "@/lib/bookkeeping/utils"
 
@@ -14,8 +14,6 @@ interface BalanceData {
 }
 
 async function fetchAllBalances(fiscalYearEnd: string): Promise<BalanceData> {
-    const supabase = createBrowserClient()
-
     const now = new Date()
     const currentFY = getFiscalYearRange(fiscalYearEnd, now)
 
@@ -24,56 +22,28 @@ async function fetchAllBalances(fiscalYearEnd: string): Promise<BalanceData> {
     prevRefDate.setFullYear(prevRefDate.getFullYear() - 1)
     const previousFY = getFiscalYearRange(fiscalYearEnd, prevRefDate)
 
-    const [bsResult, plResult, prevBsResult, prevPlResult] = await Promise.all([
+    const [bsBalances, plBalances, prevBsBalances, prevPlBalances] = await Promise.all([
         // Balance Sheet: All time to current FY end
-        supabase.rpc('get_account_balances', {
-            p_date_from: '2000-01-01',
-            p_date_to: currentFY.endStr
-        }),
+        accountService.getBalancesForPeriod('2000-01-01', currentFY.endStr),
         // P&L: Current Fiscal Year
-        supabase.rpc('get_account_balances', {
-            p_date_from: currentFY.startStr,
-            p_date_to: currentFY.endStr
-        }),
+        accountService.getBalancesForPeriod(currentFY.startStr, currentFY.endStr),
         // Balance Sheet: All time to previous FY end
-        supabase.rpc('get_account_balances', {
-            p_date_from: '2000-01-01',
-            p_date_to: previousFY.endStr
-        }),
+        accountService.getBalancesForPeriod('2000-01-01', previousFY.endStr),
         // P&L: Previous Fiscal Year
-        supabase.rpc('get_account_balances', {
-            p_date_from: previousFY.startStr,
-            p_date_to: previousFY.endStr
-        })
+        accountService.getBalancesForPeriod(previousFY.startStr, previousFY.endStr),
     ])
 
-    if (bsResult.error) throw bsResult.error
-    if (plResult.error) throw plResult.error
-    if (prevBsResult.error) throw prevBsResult.error
-    if (prevPlResult.error) throw prevPlResult.error
-
-    const toAccountBalances = (data: typeof bsResult.data): AccountBalance[] =>
-        (data || []).map(row => ({
-            account: String(row.account_number),
-            balance: row.balance
-        }))
-
-    return {
-        bsBalances: toAccountBalances(bsResult.data),
-        plBalances: toAccountBalances(plResult.data),
-        prevBsBalances: toAccountBalances(prevBsResult.data),
-        prevPlBalances: toAccountBalances(prevPlResult.data),
-    }
+    return { bsBalances, plBalances, prevBsBalances, prevPlBalances }
 }
 
 export function useFinancialReports() {
     const { company } = useCompany()
     const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
 
-    const { data: balances, isLoading } = useCachedQuery<BalanceData>({
-        cacheKey: `financial-reports-${fiscalYearEnd}-${new Date().getFullYear()}`,
+    const { data: balances, isLoading } = useQuery<BalanceData>({
+        queryKey: ['financial-reports', fiscalYearEnd, new Date().getFullYear()],
         queryFn: () => fetchAllBalances(fiscalYearEnd),
-        ttlMs: 3 * 60 * 1000, // 3 minutes — balances don't change frequently
+        staleTime: 3 * 60 * 1000, // 3 minutes — balances don't change frequently
     })
 
     const bsBalances = balances?.bsBalances ?? []

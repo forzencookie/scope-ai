@@ -11,7 +11,7 @@ import {
     BoardMember,
     BoardMeetingMinutes,
     CompanyMeeting
-} from '@/services/board-service'
+} from '@/services/corporate/board-service'
 
 // =============================================================================
 // Get Board Members Tool

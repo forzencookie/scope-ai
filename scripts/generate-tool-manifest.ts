@@ -10,11 +10,6 @@ import { aiToolRegistry } from '../src/lib/ai-tools/registry'
 import * as fs from 'fs'
 import * as path from 'path'
 
-// Mock browser globals if needed (though universal services shouldn't need them)
-if (typeof window === 'undefined') {
-    (global as any).window = {}
-}
-
 async function generateManifest() {
     console.log('--- Generating AI Tool Manifest ---')
     

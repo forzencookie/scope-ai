@@ -2,8 +2,8 @@
 
 import { useAsync, useAsyncMutation } from "./use-async"
 import { useAuth } from "./use-auth"
-import { shareholderService, type Shareholder } from "@/services/shareholder-service"
-import { boardService, type CompanyMeeting } from "@/services/board-service"
+import { shareholderService, type Shareholder } from "@/services/corporate/shareholder-service"
+import { boardService, type CompanyMeeting } from "@/services/corporate/board-service"
 import { type GeneralMeeting } from "@/types/ownership"
 
 export type { Shareholder, CompanyMeeting, GeneralMeeting }

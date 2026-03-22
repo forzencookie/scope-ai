@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { type Invoice, type InvoiceStatus } from "@/types"
-import { invoiceService } from '@/services/invoice-service'
+import { invoiceService } from '@/services/invoicing/invoice-service'
 
 export const invoiceQueryKeys = {
     all: ["invoices"] as const,

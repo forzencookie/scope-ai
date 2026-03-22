@@ -5,7 +5,8 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { verificationService, Verification } from '@/services/verification-service'
+import { verificationService } from '@/services/accounting/verification-service'
+import type { Verification } from '@/types'
 
 // =============================================================================
 // Get Verifications Tool (NEW - queries real database)

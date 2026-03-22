@@ -10,7 +10,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { Database } from '@/types/database';
 import { getAuthContext } from "@/lib/database/auth-server";
-import { verificationService } from '@/services/verification-service';
+import { verificationService } from '@/services/accounting/verification-service';
 
 export async function GET() {
     try {

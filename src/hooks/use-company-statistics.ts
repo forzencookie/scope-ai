@@ -1,6 +1,7 @@
 import { useMemo } from "react"
 import { useQuery } from "@tanstack/react-query"
-import { createBrowserClient } from '@/lib/database/client'
+import { companyStatisticsService } from '@/services/corporate/company-statistics-service'
+import type { DashboardRpcData } from '@/services/corporate/company-statistics-service'
 import { normalizeBalances } from './use-normalized-balances'
 import { useCompany } from '@/providers/company-provider'
 import { getAccountClass, isCashAccount } from '@/lib/bookkeeping/utils'
@@ -11,23 +12,6 @@ export const companyStatisticsQueryKeys = {
     dashboard: () => [...companyStatisticsQueryKeys.all, "dashboard"] as const,
 }
 
-interface MonthlyFlowEntry {
-    month: string
-    revenue: number
-    expenses: number
-    result: number
-}
-
-interface DashboardRpcData {
-    monthlyFlow: MonthlyFlowEntry[]
-    dashboardCounts: {
-        transactions: { total: number; unbooked: number }
-        invoices: { sent: number; overdue: number; totalValue: number }
-    }
-    accountBalances: Array<{ account: string; balance: number }>
-    prevYearBalances: Array<{ account: string; balance: number }>
-}
-
 export function useCompanyStatistics() {
     const { companyType } = useCompany()
 
@@ -35,51 +19,9 @@ export function useCompanyStatistics() {
         data: rpcData,
         isLoading,
         error,
-    } = useQuery({
+    } = useQuery<DashboardRpcData>({
         queryKey: companyStatisticsQueryKeys.dashboard(),
-        queryFn: async (): Promise<DashboardRpcData> => {
-            const supabase = createBrowserClient()
-            const year = new Date().getFullYear()
-            const prevYearStart = `${year - 1}-01-01`
-            const prevYearEnd = `${year - 1}-12-31`
-
-            const [flowRes, countsRes, balancesRes, prevBalancesRes] = await Promise.all([
-                supabase.rpc('get_monthly_cashflow', { p_year: year }),
-                supabase.rpc('get_dashboard_counts'),
-                supabase.rpc('get_account_balances', {
-                    p_date_from: '2000-01-01',
-                    p_date_to: new Date().toISOString().split('T')[0]
-                }),
-                supabase.rpc('get_account_balances', {
-                    p_date_from: prevYearStart,
-                    p_date_to: prevYearEnd
-                })
-            ])
-
-            if (flowRes.error) console.error('Flow Error:', flowRes.error)
-            if (countsRes.error) console.error('Counts Error:', countsRes.error)
-            if (balancesRes.error) console.error('Balances Error:', balancesRes.error)
-            if (prevBalancesRes.error) console.error('Prev Balances Error:', prevBalancesRes.error)
-
-            // Cast RPC responses to expected shapes (Supabase types return generic Json)
-            const counts = (countsRes.data || {
-                transactions: { total: 0, unbooked: 0 },
-                invoices: { sent: 0, overdue: 0, totalValue: 0 }
-            }) as DashboardRpcData['dashboardCounts']
-
-            return {
-                monthlyFlow: flowRes.data || [],
-                dashboardCounts: counts,
-                accountBalances: (balancesRes.data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
-                    account: String(row.account_number),
-                    balance: row.balance
-                })),
-                prevYearBalances: (prevBalancesRes.data || []).map((row: { account_number: string; balance: number; account_name: string; credit: number; debit: number }) => ({
-                    account: String(row.account_number),
-                    balance: row.balance
-                })),
-            }
-        },
+        queryFn: () => companyStatisticsService.getDashboardData(new Date().getFullYear()),
         staleTime: 5 * 60 * 1000,
     })
 

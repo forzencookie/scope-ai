@@ -8,10 +8,10 @@
 
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthContext } from "@/lib/database/auth-server"
-import { pendingBookingService } from '@/services/pending-booking-service'
+import { pendingBookingService } from '@/services/accounting/pending-booking-service'
 import { createSimpleEntry } from '@/lib/bookkeeping'
 import type { SwedishVatRate } from '@/lib/bookkeeping'
-import type { VerificationEntry } from '@/services/verification-service'
+import type { VerificationEntry } from '@/types'
 
 export async function POST(
     request: NextRequest,

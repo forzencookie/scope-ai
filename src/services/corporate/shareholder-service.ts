@@ -331,6 +331,10 @@ export const shareholderService = {
         const supabase = createBrowserClient()
         const date = transferDate || new Date().toISOString().split('T')[0]
 
+        // Get authenticated user for required user_id fields
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Ej inloggad.')
+
         // 1. Fetch seller and validate
         const { data: seller, error: sellerErr } = await supabase
             .from('shareholders')
@@ -369,6 +373,7 @@ export const shareholderService = {
                 .from('shareholders')
                 .insert({
                     company_id: companyId,
+                    user_id: user.id,
                     name: toShareholderName,
                     ssn_org_nr: toShareholderSsnOrgNr ?? null,
                     shares: sharesCount,
@@ -423,6 +428,7 @@ export const shareholderService = {
         const { data: txn, error: txnErr } = await supabase
             .from('share_transactions')
             .insert({
+                user_id: user.id,
                 from_shareholder_id: fromShareholderId,
                 to_shareholder_id: buyerId,
                 share_count: sharesCount,

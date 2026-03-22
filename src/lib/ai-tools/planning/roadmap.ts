@@ -5,7 +5,7 @@
  */
 
 import { defineTool } from '../registry'
-import { createRoadmap, getRoadmaps, updateStep } from '@/services/roadmap-service'
+import { createRoadmap, getRoadmaps, updateStep } from '@/services/common/roadmap-service'
 import type { Roadmap, RoadmapStep } from '@/types/roadmap'
 
 // =============================================================================

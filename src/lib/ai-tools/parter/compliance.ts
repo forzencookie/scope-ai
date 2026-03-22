@@ -5,9 +5,9 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { boardService, Signatory as BoardSignatory } from '@/services/board-service'
-import { companyService } from '@/services/company-service.server'
-import { taxService } from '@/services/tax-service'
+import { boardService, Signatory as BoardSignatory } from '@/services/corporate/board-service'
+import { companyService } from '@/services/company/company-service.server'
+import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================
 // Compliance Document Tools
@@ -46,12 +46,12 @@ export const getComplianceDocsTool = defineTool<GetComplianceDocsParams, Complia
         try {
             const data = await boardService.getComplianceDocuments()
             let docs = (data || []).map(d => ({
+                ...d,
                 id: d.id,
                 type: d.type,
                 title: d.title,
                 date: d.date || d.created_at,
                 status: d.status,
-                ...d
             }))
 
             if (params.type) {
@@ -120,7 +120,7 @@ export const registerDividendTool = defineTool<RegisterDividendParams, DividendR
             // === CASCADE: Create GL entries for dividend ===
             let glMessage = ''
             try {
-                const { verificationService } = await import('@/services/verification-service')
+                const { verificationService } = await import('@/services/accounting/verification-service')
 
                 // 1. Dividend decision: Debit 2098 (Vinst) → Credit 2898 (Skuld utdelning)
                 await verificationService.createVerification({

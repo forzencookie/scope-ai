@@ -188,7 +188,7 @@ const ROUTES: Record<string, RouteInfo> = {
         aliases: ['bolagsstämma', 'bolagsstamma', 'stämma', 'årsstämma'],
     },
     annual_meeting: {
-        path: '/dashboard/agare?tab=arsmote',
+        path: '/dashboard/agare?tab=bolagsstamma',
         label: 'Årsmöte',
         aliases: ['årsmöte', 'arsmote', 'föreningsmöte'],
     },

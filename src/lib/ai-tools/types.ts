@@ -32,6 +32,7 @@ export interface InteractionContext {
     userId: string
     companyId: string
     isConfirmed: boolean
+    confirmationId?: string
 }
 
 // =============================================================================

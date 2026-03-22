@@ -1,7 +1,7 @@
 'use server'
 
 import { getAuthContext } from "@/lib/database/auth-server"
-import { bookTransaction } from "@/services/transactions"
+import { bookTransaction } from "@/services/accounting/transactions"
 import { revalidatePath } from "next/cache"
 
 /**
@@ -20,10 +20,10 @@ export async function bookTransactionAction(id: string, params: {
         return { success: false, error: "Unauthorized" }
     }
 
-    const { supabase, user } = ctx
-    
+    const { supabase, userId } = ctx
+
     try {
-        const result = await bookTransaction(id, user.id, params, supabase)
+        const result = await bookTransaction(id, userId, params, supabase)
         
         if (result.success) {
             revalidatePath('/dashboard/bokforing/transaktioner')

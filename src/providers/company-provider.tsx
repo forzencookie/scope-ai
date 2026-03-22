@@ -9,7 +9,7 @@ import * as React from "react"
 import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
-import { getMyCompany } from "@/services/company-service"
+import { getMyCompany } from "@/services/company/company-service"
 import { updateCompanyAction } from "@/app/actions/company"
 
 // ============================================

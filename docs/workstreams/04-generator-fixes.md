@@ -1,28 +1,27 @@
-# 09 — Generator Fixes
+# 04 — Generator Fixes
 
 | Field | Value |
 |-------|-------|
-| **Status** | ⬜ Not started |
+| **Status** | 🟡 Partially done |
 | **Priority** | 🟠 High |
 | **Phase** | 3 — Polish |
 | **Dream State Section** | Section 3 — Deterministic Rule Engine (generators must produce legally correct output) |
 | **Thinking Mode** | 🟢 Medium |
 | **Estimated LOC changed** | ~100 |
 
-## Audit Findings
+## Progress (as of 2026-03-21)
 
-- **BUG:** `src/lib/generators/sru-generator.ts` line 397 uses `info.phone` instead of `info.orgnr` — SRU files submitted to Skatteverket would have wrong org number
-- **Disconnected model system:** `src/lib/ai/models.ts` defines fictional model IDs (`gpt-5-mini`, `gpt-5`, `gpt-5-turbo`) with a tier system (snabb/smart/expert). Meanwhile, `model-selector.ts` hardcodes `gpt-4o` and ignores `models.ts` entirely. The two systems are disconnected — the tier UI is non-functional.
-- AGI/annual report generator — needs audit against ÅRL compliance
-- iXBRL generator — needs audit for tag coverage
+- **SRU generator bug — FIXED.** Line 397 now correctly uses `info.orgnr` (not `info.phone`).
 
-## Why
+## Remaining
 
-Generators produce legally binding documents. A wrong field in an SRU file means incorrect tax submission. The founder's explicit fear: "The paperwork might not be sufficient — government says it's missing stuff." Every generator output must be audit-proof.
+- **Disconnected model system:** `src/lib/ai/models.ts` defines fictional model IDs (`gpt-5-mini`, `gpt-5`, `gpt-5-turbo`) with a tier system (snabb/smart/expert). Meanwhile, all API routes hardcode real `gpt-4o` / `gpt-4o-mini` (10+ files). The two systems are completely disconnected — the tier UI is non-functional. Coordinate with workstream 02.
+- **AGI/annual report generator** — needs audit against ÅRL compliance
+- **iXBRL generator** — needs audit for tag coverage
 
 ## What to Do
 
-1. 🟢 **Fix SRU generator bug:** Line 397 in `sru-generator.ts` — change `info.phone` to `info.orgnr`.
+1. ~~Fix SRU generator bug~~ ✅ Done
 2. 🟢 **Fix model ID system:** Either:
    - Delete `models.ts` + `model-auth.ts` as dead code (if the tier system isn't needed yet), OR
    - Rewire `model-selector.ts` to use `models.ts` and replace fictional IDs with real ones
@@ -30,18 +29,11 @@ Generators produce legally binding documents. A wrong field in an SRU file means
    - SRU generator: Verify all field mappings against Skatteverket SRU spec
    - Annual report generator: Audit against ÅRL compliance
    - iXBRL generator: Audit for tag coverage
-4. 🟢 **Add validation assertions** to generator outputs where feasible — e.g., org number format check, required field presence.
-
-## Files to Touch
-
-- `src/lib/generators/sru-generator.ts` (fix bug + audit)
-- `src/lib/generators/` (audit all files)
-- `src/lib/ai/models.ts` (fix or delete — coordinate with workstream 02)
-- `src/lib/model-auth.ts` (fix or delete — coordinate with workstream 02)
+4. 🟢 **Add validation assertions** to generator outputs where feasible
 
 ## Acceptance Criteria
 
-- [ ] SRU generator line 397 uses `info.orgnr` not `info.phone`
+- [x] SRU generator uses `info.orgnr` not `info.phone`
 - [ ] All generator field mappings verified against official specs
 - [ ] Model ID system either deleted or rewired with real model IDs
 - [ ] Generator outputs include basic validation (required fields, format checks)

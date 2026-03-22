@@ -4,7 +4,7 @@ import { useState, useMemo } from "react"
 import { useVerifications } from "@/hooks/use-verifications"
 import { useCompliance } from "@/hooks/use-compliance"
 import { ShareholderDisplay, TransactionDisplay, StockTransactionType } from "./types"
-import { type Shareholder } from "@/services/shareholder-service"
+import { type Shareholder } from "@/services/corporate/shareholder-service"
 
 const SHARE_REGEX = /(\d+)\s*aktier/i
 const NAME_REGEX_TO = /till\s+(.+?)(?:\s*$|\s*från)/i

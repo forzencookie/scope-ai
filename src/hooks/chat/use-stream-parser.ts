@@ -6,7 +6,7 @@
 
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Message, Conversation } from '@/lib/chat-types'
+import { Message, Conversation, type MessageDisplay } from '@/lib/chat-types'
 import { normalizeAIDisplay } from '@/lib/ai-schema'
 
 
@@ -41,10 +41,10 @@ interface WalkthroughBlockResponse {
 }
 
 interface StreamData {
-    display?: unknown
+    display?: MessageDisplay
     navigation?: { route: string }
-    confirmationRequired?: unknown
-    toolResults?: unknown[]
+    confirmationRequired?: Message['confirmationRequired']
+    toolResults?: Message['toolResults']
     walkthrough?: {
         title: string
         summary: string
@@ -116,10 +116,10 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                             walkthroughBlocks: normalizedWalkthrough,
                         }
                     } else if (line.startsWith('D:')) {
-                        const data = JSON.parse(line.slice(2))
+                        const data = JSON.parse(line.slice(2)) as Record<string, unknown>
 
                         // Transform and normalize display data
-                        let displayData = data.display
+                        let displayData = data.display as Record<string, unknown> | null
                         if (data.type === 'inline_card') {
                             displayData = {
                                 type: 'InlineCard',
@@ -132,7 +132,10 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
 
                         if (displayData && displayData.type) {
                             try {
-                                displayData = normalizeAIDisplay(displayData.type, displayData.data || displayData)
+                                displayData = normalizeAIDisplay(
+                                    displayData.type as string,
+                                    (displayData.data || displayData) as Record<string, unknown>
+                                ) as Record<string, unknown> | null
                             } catch (e) {
                                 console.error('[StreamParser] Normalization failed:', e)
                                 // Keep going but without the broken display part
@@ -141,19 +144,28 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                         }
 
                         // Merge data chunks instead of overwriting
-                        lastData = {
-                            ...(lastData || {}),
-                            ...data,
-                            display: displayData || lastData?.display,
-                            toolResults: data.toolResults || lastData?.toolResults,
-                            confirmationRequired: data.confirmationRequired || lastData?.confirmationRequired,
+                        const navigation = data.navigation as StreamData['navigation'] | undefined
+                        const toolResults = (data.toolResults || lastData?.toolResults) as StreamData['toolResults']
+                        const confirmationRequired = (data.confirmationRequired || lastData?.confirmationRequired) as StreamData['confirmationRequired']
+
+                        const streamPayload = data as StreamData
+                        const merged: StreamData = {
+                            ...(lastData ?? {}),
+                            display: (displayData as MessageDisplay | null) ?? lastData?.display,
+                            toolResults,
+                            confirmationRequired,
+                            navigation,
+                            walkthrough: streamPayload.walkthrough ?? lastData?.walkthrough,
+                            walkthroughBlocks: streamPayload.walkthroughBlocks ?? lastData?.walkthroughBlocks,
                         }
+                        lastData = merged
 
                         // Handle immediate navigation
-                        if (data.navigation) {
-                            router.push(data.navigation.route)
+                        if (navigation) {
+                            router.push(navigation.route)
                         }
 
+                        const currentLastData = lastData
                         setConversations(prev => prev.map(c =>
                             c.id === conversationId
                                 ? {
@@ -162,9 +174,9 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                                         msg.id === assistantMessageId
                                             ? {
                                                 ...msg,
-                                                display: lastData?.display || msg.display,
-                                                confirmationRequired: lastData?.confirmationRequired || msg.confirmationRequired,
-                                                toolResults: lastData?.toolResults || msg.toolResults
+                                                display: currentLastData?.display || msg.display,
+                                                confirmationRequired: currentLastData?.confirmationRequired || msg.confirmationRequired,
+                                                toolResults: currentLastData?.toolResults || msg.toolResults
                                             }
                                             : msg
                                     )

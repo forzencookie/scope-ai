@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { usageService } from '@/services/usage-service'
+import { usageService } from '@/services/common/usage-service'
 import type { AIUsageStatus } from '@/lib/ai-schema'
 
 // =============================================================================

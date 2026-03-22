@@ -137,7 +137,7 @@ async function fetchRelevantMemories(
     query: string
 ): Promise<Array<{ content: string; category: string }>> {
     try {
-        const { userMemoryService } = await import('@/services/user-memory-service')
+        const { userMemoryService } = await import('@/services/common/user-memory-service')
         const memories = await userMemoryService.getMemoriesForCompany(companyId)
 
         const queryLower = query.toLowerCase()
@@ -224,6 +224,7 @@ export async function POST(request: NextRequest) {
         const mentions = typedBody.mentions as Array<{ type: string; label: string; aiContext?: string }> | undefined
         const requestedModel = (typedBody.model as string) || undefined
         const incognito = (typedBody.incognito as boolean) || false
+        const confirmationId = (typedBody.confirmationId as string) || undefined
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return new Response(JSON.stringify({ error: 'Messages array is required' }), { status: 400 })
@@ -280,10 +281,21 @@ export async function POST(request: NextRequest) {
 
         ensureToolsInitialized()
 
-        // Kick off non-blocking enrichment in parallel
+        // Enrichment with 100ms timeout — never block stream start
+        const ENRICHMENT_TIMEOUT = 100
         const [activitySnapshot, relevantMemories] = await Promise.all([
-            fetchActivitySnapshot(supabase),
-            companyId ? fetchRelevantMemories(companyId, latestContent) : Promise.resolve([]),
+            Promise.race([
+                fetchActivitySnapshot(supabase),
+                new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), ENRICHMENT_TIMEOUT)),
+            ]),
+            companyId
+                ? Promise.race([
+                    fetchRelevantMemories(companyId, latestContent),
+                    new Promise<Array<{ content: string; category: string }>>(resolve =>
+                        setTimeout(() => resolve([]), ENRICHMENT_TIMEOUT)
+                    ),
+                ])
+                : Promise.resolve([]),
         ])
 
         const context = createAgentContext({
@@ -328,7 +340,8 @@ export async function POST(request: NextRequest) {
         const deferredConfig = createDeferredToolConfig({
             userId: context.userId,
             companyId: context.companyId,
-            isConfirmed: false,
+            isConfirmed: !!confirmationId,
+            confirmationId,
         })
 
         const modelConfig = selectModel(latestContent)
@@ -337,7 +350,10 @@ export async function POST(request: NextRequest) {
         const result = streamText({
             model: openai(activeModelId),
             system: systemPrompt,
-            messages: messages as Array<{ role: 'user' | 'assistant'; content: string }>,
+            messages: messages.map(m => ({
+                role: m.role as 'user' | 'assistant' | 'system',
+                content: extractMessageContent(m),
+            })),
             ...deferredConfig,
 
             // =================================================================

@@ -1,4 +1,25 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { accountService } from '@/services/accounting/account-service'
+
+/**
+ * Dashboard data shape consumed by use-company-statistics hook
+ */
+export interface MonthlyFlowEntry {
+    month: string
+    revenue: number
+    expenses: number
+    result: number
+}
+
+export interface DashboardRpcData {
+    monthlyFlow: MonthlyFlowEntry[]
+    dashboardCounts: {
+        transactions: { total: number; unbooked: number }
+        invoices: { sent: number; overdue: number; totalValue: number }
+    }
+    accountBalances: Array<{ account: string; balance: number }>
+    prevYearBalances: Array<{ account: string; balance: number }>
+}
 
 /**
  * Company-wide statistics aggregated from multiple tables
@@ -373,5 +394,54 @@ export const companyStatisticsService = {
             receipts: { total: receipts.count || 0, unmatched: unmatchedRec },
             employees: { total: employees.count || 0 }
         }
-    }
+    },
+
+    /**
+     * Get monthly cashflow via RPC
+     */
+    async getMonthlyCashflow(year: number): Promise<MonthlyFlowEntry[]> {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase.rpc('get_monthly_cashflow', { p_year: year })
+        if (error) console.error('Flow Error:', error)
+        return (data || []) as MonthlyFlowEntry[]
+    },
+
+    /**
+     * Get dashboard counts via RPC (transactions + invoices)
+     */
+    async getRpcDashboardCounts(): Promise<DashboardRpcData['dashboardCounts']> {
+        const supabase = createBrowserClient()
+        const { data, error } = await supabase.rpc('get_dashboard_counts')
+        if (error) console.error('Counts Error:', error)
+
+        const fallback: DashboardRpcData['dashboardCounts'] = {
+            transactions: { total: 0, unbooked: 0 },
+            invoices: { sent: 0, overdue: 0, totalValue: 0 },
+        }
+        return (data || fallback) as DashboardRpcData['dashboardCounts']
+    },
+
+    /**
+     * Get combined dashboard data for the statistics hook.
+     * Runs all 4 RPC calls in parallel and returns the DashboardRpcData shape.
+     */
+    async getDashboardData(year: number): Promise<DashboardRpcData> {
+        const today = new Date().toISOString().split('T')[0]
+        const prevYearStart = `${year - 1}-01-01`
+        const prevYearEnd = `${year - 1}-12-31`
+
+        const [monthlyFlow, dashboardCounts, accountBalances, prevYearBalances] = await Promise.all([
+            this.getMonthlyCashflow(year),
+            this.getRpcDashboardCounts(),
+            accountService.getBalancesForPeriod('2000-01-01', today),
+            accountService.getBalancesForPeriod(prevYearStart, prevYearEnd),
+        ])
+
+        return {
+            monthlyFlow,
+            dashboardCounts,
+            accountBalances,
+            prevYearBalances,
+        }
+    },
 }

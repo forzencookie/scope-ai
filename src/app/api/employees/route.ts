@@ -6,7 +6,7 @@
 
 import { NextResponse } from "next/server";
 import { getAuthContext } from "@/lib/database/auth-server";
-import { taxService } from '@/services/tax-service';
+import { taxService } from '@/services/tax/tax-service';
 
 export async function GET() {
     try {

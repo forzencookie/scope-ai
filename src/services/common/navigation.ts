@@ -5,9 +5,9 @@
 // Uses direct Supabase auth + company-service (Pattern A).
 
 import { createBrowserClient } from '@/lib/database/client'
-import { getMyCompany, type CompanyInfo } from './company-service'
+import { getMyCompany, type CompanyInfo } from '../company/company-service'
 import type { User, Team, NavItem, NavigationData, ApiResponse } from "@/types"
-import { navPlatform, navSettings } from "@/data/navigation"
+import { navPlatform, navSettings } from "@/data/app-navigation"
 
 // ============================================
 // User Service (direct Supabase auth)

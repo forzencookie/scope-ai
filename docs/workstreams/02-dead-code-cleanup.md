@@ -2,50 +2,38 @@
 
 | Field | Value |
 |-------|-------|
-| **Status** | 🟡 In progress |
+| **Status** | 🟡 Nearly done |
 | **Priority** | 🔴 Critical |
 | **Phase** | 1 — Clean Foundation |
 | **Dream State Section** | Section 2 — Chat Is Everything (remove old UI cruft) |
 | **Thinking Mode** | 🟢 Medium |
-| **Estimated LOC removed** | ~500 remaining (was ~3,060) |
+| **Estimated LOC removed** | ~100 remaining (was ~3,060) |
 
 ## Completed
 
 - **Duplicate booking flows — DONE.** All 3 booking dialogs deleted (`BookingWizardDialog`, `BookingDialog`, `NewTransactionDialog`). All mutation dialogs removed from pages.
 - **18 mutation dialogs deleted** across bokforing/agare/loner — pages are now read-only as intended.
 - **Deleted file references cleaned** — `bank.ts`, `upload-invoice/route.ts`, `kivra.svg` removed and imports cleared.
+- **Duplicate tool name collision — FIXED.** `events.ts` now exports `getUpcomingDeadlinesTool` (uses real `taxService.getUpcomingDeadlines()`). No registry collision.
+- **`get_activity_summary` stub — FIXED.** Now uses real `activityService.getActivitySummary()`.
 
-## Remaining Audit Findings
+## Remaining
 
-- **3 stub AI tools returning hardcoded data:**
-  1. `src/lib/ai-tools/common/navigation.ts:421-434` — `get_upcoming_deadlines` (hardcoded 2 deadlines)
-  2. `src/lib/ai-tools/common/events.ts:216-267` — `get_upcoming_deadlines` (hardcoded 5 deadlines, DUPLICATE NAME with navigation.ts)
-  3. `src/lib/ai-tools/common/events.ts:319-342` — `get_activity_summary` (hardcoded mock stats)
-- **Disconnected model system:** `src/lib/ai/models.ts` defines fictional model IDs (`gpt-5-mini`, `gpt-5`, `gpt-5-turbo`) while `model-selector.ts` hardcodes `gpt-4o`. The entire `models.ts` + `model-auth.ts` tier system (snabb/smart/expert) is disconnected dead code. See also workstream 04 for the model ID fix.
-
-## Why
-
-Dead code confuses AI assistants and humans alike. Every deprecated file is cognitive overhead and a place where an AI might accidentally wire up old patterns. The app needs to be lean — only code that serves the dream state should exist.
+- **1 stub AI tool:** `src/lib/ai-tools/common/navigation.ts:415-437` — `get_upcoming_deadlines` returns hardcoded 2 deadlines. Note: this version is NOT exported to the registry, so it's dead code rather than an active bug. Should be deleted.
+- **Disconnected model system:** `src/lib/ai/models.ts` defines fictional model IDs (`gpt-5-mini`, `gpt-5`, `gpt-5-turbo`) with a tier system (snabb/smart/expert). All actual API routes hardcode real `gpt-4o` / `gpt-4o-mini`. The entire `models.ts` + `model-auth.ts` tier system is disconnected. See also workstream 04.
 
 ## What to Do
 
-1. 🟢 **Rewire 3 stub AI tools** that return hardcoded data — replace with real DB queries or remove entirely.
+1. 🟢 **Delete stub `get_upcoming_deadlines` from `navigation.ts`** — the real version lives in `events.ts`.
 2. 🟢 **Clean up disconnected model system** — `models.ts` + `model-auth.ts` define a tier system that nothing uses. Either delete or rewire. Coordinate with workstream 04.
 3. 🟢 **Run build** to verify nothing breaks: `npm run build`
 
-## Files to Touch
-
-- `src/lib/ai-tools/common/navigation.ts` (stub tool)
-- `src/lib/ai-tools/common/events.ts` (2 stub tools)
-- `src/lib/ai/models.ts` (fictional model IDs — coordinate with workstream 04)
-- `src/lib/model-auth.ts` (disconnected tier system)
-- Any file importing deleted modules
-
 ## Acceptance Criteria
 
-- [ ] `npm run build` passes with zero errors
-- [ ] No file in the codebase imports from deleted paths
-- [ ] No stub tools returning hardcoded mock data
+- [x] `npm run build` passes with zero errors (from dead code — type errors tracked in WS-01)
+- [x] No file in the codebase imports from deleted paths
+- [x] No duplicate tool names in the registry
+- [ ] No stub tools returning hardcoded mock data (1 remaining — not exported, but should be deleted)
 - [ ] Disconnected model/tier system cleaned up
 
 ## Do NOT Touch

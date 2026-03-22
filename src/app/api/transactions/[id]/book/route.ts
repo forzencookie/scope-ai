@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getAuthContext } from "@/lib/database/auth-server"
-import { bookTransaction } from '@/services/transactions'
+import { bookTransaction } from '@/services/accounting/transactions'
 
 export async function POST(
     request: NextRequest,
@@ -14,7 +14,7 @@ export async function POST(
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
-        const { supabase, user } = ctx;
+        const { supabase, userId } = ctx;
 
         const body = await request.json()
         const { category, debitAccount, creditAccount, description, vatRate } = body
@@ -26,7 +26,7 @@ export async function POST(
             )
         }
 
-        const result = await bookTransaction(id, user.id, {
+        const result = await bookTransaction(id, userId, {
             category,
             debitAccount,
             creditAccount,

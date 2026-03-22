@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { shareholderService, Shareholder } from '@/services/shareholder-service'
+import { shareholderService, Shareholder } from '@/services/corporate/shareholder-service'
 
 // =============================================================================
 // Shareholder Read Tools
@@ -269,7 +269,7 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
                 let glMessage = ''
                 if (totalValue && totalValue > 0) {
                     try {
-                        const { verificationService } = await import('@/services/verification-service')
+                        const { verificationService } = await import('@/services/accounting/verification-service')
                         await verificationService.createVerification({
                             date: transferDate,
                             description: `Aktieöverlåtelse: ${params.sharesCount} ${params.shareClass}-aktier, ${result.from.name} → ${result.to.name}`,

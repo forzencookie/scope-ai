@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import ical, { ICalCalendarMethod } from 'ical-generator';
-import { getRoadmaps } from '@/services/roadmap-service'; // NOTE: This will require service to work on server (it does)
+import { getRoadmaps } from '@/services/common/roadmap-service'; // NOTE: This will require service to work on server (it does)
 
 export async function GET(request: Request) {
     // In a real app, we would validate the 'userId' or 'token' query param

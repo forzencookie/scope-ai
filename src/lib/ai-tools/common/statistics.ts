@@ -9,7 +9,7 @@ import {
     companyStatisticsService,
     CompanyStatistics,
     MonthlyFinancialSummary
-} from '@/services/company-statistics-service'
+} from '@/services/corporate/company-statistics-service'
 
 // =============================================================================
 // Get Company Statistics Tool

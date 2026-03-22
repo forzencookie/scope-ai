@@ -9,7 +9,8 @@
  * This preserves the full audit trail as required by law.
  */
 
-import { verificationService, type VerificationEntry, type Verification } from './verification-service'
+import { verificationService } from './verification-service'
+import type { VerificationEntry, Verification } from '@/types'
 import { logAuditEntry } from '@/lib/audit'
 
 // =============================================================================

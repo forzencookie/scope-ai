@@ -5,7 +5,7 @@
  */
 
 import { defineTool } from '../registry'
-import { accountService, Account, AccountBalanceSummary } from '@/services/account-service'
+import { accountService, Account, AccountBalanceSummary } from '@/services/accounting/account-service'
 
 // =============================================================================
 // Get Accounts Tool

@@ -6,10 +6,9 @@
  */
 
 import { defineTool } from '../registry'
-import { getEvents as getEventsFromDB, emitEvent } from '@/services/event-service'
-import { taxService } from '@/services/tax-service'
-import { activityService } from '@/services/activity-service'
-import type { ActivitySummary } from '@/lib/ai-schema'
+import { getEvents as getEventsFromDB, emitEvent } from '@/services/common/event-service'
+import { taxService } from '@/services/tax/tax-service'
+import { activityService } from '@/services/common/activity-service'
 import type { EventSource, EventCategory } from '@/types/events'
 
 // =============================================================================

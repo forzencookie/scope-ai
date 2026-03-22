@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import { accountService } from './account-service'
+import { accountService } from '../accounting/account-service'
 import { calculateEgenavgifter, type EgenavgifterRates } from '@/lib/egenavgifter'
 import { taxService } from './tax-service'
 
@@ -40,7 +40,7 @@ export const taxCalculationService = {
         const realProfit = revenue - expenses
 
         // 3. Get Tax Rates for the year
-        const { rates: taxRates } = await taxService.getAllTaxRates(year, client)
+        const taxRates = await taxService.getAllTaxRates(year, client)
         if (!taxRates) throw new Error(`Skattesatser för ${year} saknas.`)
 
         // 4. Calculate Egenavgifter

@@ -1,29 +1,23 @@
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAsyncMutation } from "./use-async"
-import { useCachedQuery } from "./use-cached-query"
 import { type Partner } from "@/types/ownership"
 
+const partnerQueryKeys = {
+    all: ['partners'] as const,
+}
+
 export function usePartners() {
-    
-    // In a real scenario, we would have /api/partners. 
-    // Since I don't see usePartners existing yet, implementing a quick version that 
-    // presumably hits an endpoint we need to ensure exists or uses compliance API if 'shareholders' covers it.
-    // If 'partners' are distinct from 'shareholders' (HB vs AB), we need a distinct endpoint.
-    // For now, I will mirror the useCompliance structure but target 'partners' type if possible
-    // or assume we need to create it.
-    
-    // Assuming /api/compliance?type=partners works or we use a new endpoint.
-    // Let's assume we create a dedicatd hook for cleaner code.
+    const queryClient = useQueryClient()
 
     const {
         data: partners,
         isLoading,
         error,
-        invalidate: refetch
-    } = useCachedQuery({
-        cacheKey: 'partners-list',
+    } = useQuery({
+        queryKey: partnerQueryKeys.all,
         queryFn: async () => {
             try {
-                const res = await fetch('/api/partners'); 
+                const res = await fetch('/api/partners');
                 if (!res.ok) return [];
                 const json = await res.json();
                 return json.partners as Partner[];
@@ -32,8 +26,10 @@ export function usePartners() {
                 return [];
             }
         },
-        ttlMs: 2 * 60 * 1000, // 2 minute cache
+        staleTime: 2 * 60 * 1000, // 2 minute cache
     });
+
+    const refetch = () => queryClient.invalidateQueries({ queryKey: partnerQueryKeys.all })
 
     const addPartner = useAsyncMutation(async (data: Partial<Partner>) => {
         const res = await fetch('/api/partners', {
