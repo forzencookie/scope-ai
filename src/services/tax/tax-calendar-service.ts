@@ -14,7 +14,7 @@ export const taxCalendarService = {
     const { data, error } = await supabase
       .from("tax_calendar")
       .select("id, title, due_date, deadline_type, status")
-      .in("status", ["pending", "overdue"])
+      .in("status", ["Kommande", "Försenad"])
       .order("due_date", { ascending: true })
       .limit(limit)
 

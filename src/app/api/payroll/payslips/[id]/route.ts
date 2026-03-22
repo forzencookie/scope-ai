@@ -63,7 +63,7 @@ export async function DELETE(
         if (fetchError || !existing) {
             return NextResponse.json({ error: 'Payslip not found' }, { status: 404 });
         }
-        if (existing.status !== 'draft') {
+        if (existing.status !== 'Utkast') {
             return NextResponse.json(
                 { error: 'Kan bara ta bort utkast. Ändra status till utkast först.' },
                 { status: 422 }

@@ -131,7 +131,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
         }
 
         // 4. Draft payslips
-        const draftPayslips = unpaidPayslips.filter(p => p.status === 'draft')
+        const draftPayslips = unpaidPayslips.filter(p => p.status === 'Utkast')
         const payCount = draftPayslips.length
         if (payCount > 0) {
             items.push({

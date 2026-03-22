@@ -50,7 +50,7 @@ export const registerEmployeeTool: AITool = {
                         tax_rate: defaultTaxRate,
                         tax_table: taxTable || null,
                         tax_column: taxColumn || null,
-                        status: 'active',
+                        status: 'Aktiv',
                     }),
                 })
 

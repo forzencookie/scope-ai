@@ -39,7 +39,7 @@ export interface AnnualReportData {
         previousYear: string | number
     }>
 
-    status: "draft" | "signed" | "submitted"
+    status: "Utkast" | "Signerad" | "Inskickad"
 }
 
 export interface AnnualReportPreviewProps {

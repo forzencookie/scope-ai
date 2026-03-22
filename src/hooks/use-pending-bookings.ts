@@ -28,7 +28,7 @@ export interface PendingBooking {
   proposedEntries: VerificationEntry[]
   proposedSeries: string
   proposedDate: string
-  status: 'pending' | 'booked' | 'dismissed'
+  status: 'Väntande' | 'Bokförd' | 'Avfärdad'
   createdAt: string
   bookedAt: string | null
   verificationId: string | null

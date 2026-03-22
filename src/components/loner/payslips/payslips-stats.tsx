@@ -15,30 +15,30 @@ interface PayslipsStatsProps {
         totalTax: number
         totalEmployerContributions: number
     }
-    periodStatus?: "draft" | "review" | "paid"
+    periodStatus?: "Utkast" | "Granskas" | "Skickad"
     isLoading?: boolean
     actionButton?: React.ReactNode
 }
 
 const statusConfig = {
-    draft: {
+    "Utkast": {
         label: "Utkast",
         badgeClass: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/40 dark:text-amber-300 dark:border-amber-800",
         dotClass: "bg-amber-500",
     },
-    review: {
+    "Granskas": {
         label: "Granskas",
         badgeClass: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/40 dark:text-blue-300 dark:border-blue-800",
         dotClass: "bg-blue-500",
     },
-    paid: {
-        label: "Utbetald",
+    "Skickad": {
+        label: "Skickad",
         badgeClass: "bg-green-100 text-green-800 border-green-200 dark:bg-green-900/40 dark:text-green-300 dark:border-green-800",
         dotClass: "bg-green-500",
     },
 }
 
-export function PayslipsStats({ stats, periodStatus = "draft", isLoading, actionButton }: PayslipsStatsProps) {
+export function PayslipsStats({ stats, periodStatus = "Utkast", isLoading, actionButton }: PayslipsStatsProps) {
     const totalNet = stats.totalGross - stats.totalTax
     const config = statusConfig[periodStatus]
 

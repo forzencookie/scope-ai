@@ -47,14 +47,14 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
 
     // Derive the overall period status from current period payslips
     const periodStatus = useMemo(() => {
-        if (!allPayslips.length) return "draft" as const
+        if (!allPayslips.length) return "Utkast" as const
         const periodSlips = allPayslips.filter(p => p.period === stats.currentPeriod)
-        if (!periodSlips.length) return "draft" as const
-        const allPaid = periodSlips.every(p => p.status === "paid")
-        if (allPaid) return "paid" as const
-        const anyReview = periodSlips.some(p => p.status === "review")
-        if (anyReview) return "review" as const
-        return "draft" as const
+        if (!periodSlips.length) return "Utkast" as const
+        const allSent = periodSlips.every(p => p.status === "Skickad")
+        if (allSent) return "Skickad" as const
+        const anyReview = periodSlips.some(p => p.status === "Godkänd")
+        if (anyReview) return "Granskas" as const
+        return "Utkast" as const
     }, [allPayslips, stats.currentPeriod])
 
     const bulkActions: BulkAction[] = [
@@ -128,31 +128,31 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-[180px]">
                                 <DropdownMenuCheckboxItem
-                                    checked={statusFilter.includes('draft')}
+                                    checked={statusFilter.includes('Utkast')}
                                     onCheckedChange={(checked) => {
-                                        if (checked) setStatusFilter([...statusFilter, 'draft'])
-                                        else setStatusFilter(statusFilter.filter(s => s !== 'draft'))
+                                        if (checked) setStatusFilter([...statusFilter, 'Utkast'])
+                                        else setStatusFilter(statusFilter.filter(s => s !== 'Utkast'))
                                     }}
                                 >
                                     Utkast
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuCheckboxItem
-                                    checked={statusFilter.includes('review')}
+                                    checked={statusFilter.includes('Godkänd')}
                                     onCheckedChange={(checked) => {
-                                        if (checked) setStatusFilter([...statusFilter, 'review'])
-                                        else setStatusFilter(statusFilter.filter(s => s !== 'review'))
+                                        if (checked) setStatusFilter([...statusFilter, 'Godkänd'])
+                                        else setStatusFilter(statusFilter.filter(s => s !== 'Godkänd'))
                                     }}
                                 >
-                                    Granskas
+                                    Godkänd
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuCheckboxItem
-                                    checked={statusFilter.includes('paid')}
+                                    checked={statusFilter.includes('Skickad')}
                                     onCheckedChange={(checked) => {
-                                        if (checked) setStatusFilter([...statusFilter, 'paid'])
-                                        else setStatusFilter(statusFilter.filter(s => s !== 'paid'))
+                                        if (checked) setStatusFilter([...statusFilter, 'Skickad'])
+                                        else setStatusFilter(statusFilter.filter(s => s !== 'Skickad'))
                                     }}
                                 >
-                                    Utbetald
+                                    Skickad
                                 </DropdownMenuCheckboxItem>
                                 <DropdownMenuSeparator />
                                 <DropdownMenuCheckboxItem

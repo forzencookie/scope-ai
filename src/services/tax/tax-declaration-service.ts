@@ -64,7 +64,7 @@ export type IncomeDeclaration = {
     expenses: number
     profitBeforeTax: number
     taxAmount: number
-    status: 'draft' | 'pending' | 'submitted'
+    status: 'Utkast' | 'Klar' | 'Inskickad'
     submittedAt?: string
 }
 
@@ -82,7 +82,7 @@ export async function getIncomeDeclarations(taxYear?: number): Promise<IncomeDec
         expenses: Number(d.expenses) || 0,
         profitBeforeTax: Number(d.profit_before_tax) || 0,
         taxAmount: Number(d.tax_amount) || 0,
-        status: (d.status as IncomeDeclaration['status']) || 'draft',
+        status: (d.status as IncomeDeclaration['status']) || 'Utkast',
         submittedAt: d.submitted_at ?? undefined,
     }))
 }
@@ -99,7 +99,7 @@ export type NEAppendix = {
     netBusinessIncome: number
     egenavgifter: number
     schablonavdrag: number
-    status: 'draft' | 'pending' | 'submitted'
+    status: 'Utkast' | 'Klar' | 'Inskickad'
     submittedAt?: string
 }
 
@@ -117,7 +117,7 @@ export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
         netBusinessIncome: Number(d.net_business_income) || 0,
         egenavgifter: Number(d.egenavgifter) || 0,
         schablonavdrag: Number(d.schablonavdrag) || 0,
-        status: (d.status as NEAppendix['status']) || 'draft',
+        status: (d.status as NEAppendix['status']) || 'Utkast',
         submittedAt: d.submitted_at ?? undefined,
     }))
 }
@@ -137,7 +137,7 @@ export type AnnualClosing = {
     totalAssets: number
     totalLiabilities: number
     totalEquity: number
-    status: 'draft' | 'in_progress' | 'completed' | 'submitted'
+    status: 'Utkast' | 'Pågår' | 'Klar' | 'Inskickad'
     completedAt?: string
 }
 
@@ -158,7 +158,7 @@ export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClos
         totalAssets: Number(d.total_assets) || 0,
         totalLiabilities: Number(d.total_liabilities) || 0,
         totalEquity: Number(d.total_equity) || 0,
-        status: (d.status as AnnualClosing['status']) || 'draft',
+        status: (d.status as AnnualClosing['status']) || 'Utkast',
         completedAt: d.completed_at ?? undefined,
     }))
 }

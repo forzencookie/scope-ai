@@ -19,6 +19,10 @@ import {
     MEMBERSHIP_CHANGE_TYPE_LABELS,
     MEETING_STATUS_LABELS,
     BENEFIT_STATUS_LABELS,
+    PAYSLIP_STATUS_LABELS,
+    AGI_STATUS_LABELS,
+    EMPLOYEE_STATUS_LABELS,
+    PENDING_BOOKING_STATUS_LABELS,
 } from "./localization"
 
 // =============================================================================
@@ -197,6 +201,61 @@ export const BENEFIT_STATUS_VARIANT: Record<BenefitStatus, StatusVariant> = {
 }
 
 // =============================================================================
+// Payslip Status (Lönespecifikationer)
+// =============================================================================
+
+export const PAYSLIP_STATUSES = PAYSLIP_STATUS_LABELS
+
+export type PayslipStatus = (typeof PAYSLIP_STATUSES)[keyof typeof PAYSLIP_STATUSES]
+
+export const PAYSLIP_STATUS_VARIANT: Record<PayslipStatus, StatusVariant> = {
+    "Utkast": "neutral",
+    "Godkänd": "warning",
+    "Skickad": "success",
+}
+
+// =============================================================================
+// AGI Report Status (Arbetsgivardeklaration)
+// =============================================================================
+
+export const AGI_STATUSES = AGI_STATUS_LABELS
+
+export type AGIStatus = (typeof AGI_STATUSES)[keyof typeof AGI_STATUSES]
+
+export const AGI_STATUS_VARIANT: Record<AGIStatus, StatusVariant> = {
+    "Utkast": "neutral",
+    "Klar": "info",
+    "Inskickad": "success",
+}
+
+// =============================================================================
+// Employee Status (Anställda)
+// =============================================================================
+
+export const EMPLOYEE_STATUSES = EMPLOYEE_STATUS_LABELS
+
+export type EmployeeStatus = (typeof EMPLOYEE_STATUSES)[keyof typeof EMPLOYEE_STATUSES]
+
+export const EMPLOYEE_STATUS_VARIANT: Record<EmployeeStatus, StatusVariant> = {
+    "Aktiv": "success",
+    "Inaktiv": "neutral",
+}
+
+// =============================================================================
+// Pending Booking Status (Väntande bokföringar)
+// =============================================================================
+
+export const PENDING_BOOKING_STATUSES = PENDING_BOOKING_STATUS_LABELS
+
+export type PendingBookingStatus = (typeof PENDING_BOOKING_STATUSES)[keyof typeof PENDING_BOOKING_STATUSES]
+
+export const PENDING_BOOKING_STATUS_VARIANT: Record<PendingBookingStatus, StatusVariant> = {
+    "Väntande": "warning",
+    "Bokförd": "success",
+    "Avfärdad": "neutral",
+}
+
+// =============================================================================
 // Combined Status Type (for StatusBadge component)
 // =============================================================================
 
@@ -211,6 +270,10 @@ export type AppStatus =
     | MembershipChangeType
     | MeetingStatus
     | BenefitStatus
+    | PayslipStatus
+    | AGIStatus
+    | EmployeeStatus
+    | PendingBookingStatus
 
 export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...TRANSACTION_STATUS_VARIANT,
@@ -223,6 +286,10 @@ export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...MEMBERSHIP_CHANGE_TYPE_VARIANT,
     ...MEETING_STATUS_VARIANT,
     ...BENEFIT_STATUS_VARIANT,
+    ...PAYSLIP_STATUS_VARIANT,
+    ...AGI_STATUS_VARIANT,
+    ...EMPLOYEE_STATUS_VARIANT,
+    ...PENDING_BOOKING_STATUS_VARIANT,
 }
 
 // =============================================================================

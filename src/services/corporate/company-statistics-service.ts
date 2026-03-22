@@ -144,8 +144,8 @@ export const companyStatisticsService = {
         let uncategorizedCount = 0
         const transactions = transactionStats.data || []
         for (const t of transactions) {
-            if (t.status === 'pending') pendingCount++
-            if (t.status === 'pending' || t.status === 'needs_review') uncategorizedCount++
+            if (t.status === 'Obokförd') pendingCount++
+            if (t.status === 'Obokförd') uncategorizedCount++
         }
 
         // Calculate invoice metrics
@@ -156,7 +156,7 @@ export const companyStatisticsService = {
         const invoices = invoiceStats.data || []
         for (const inv of invoices) {
             invoicesTotal += inv.total_amount || 0
-            if (inv.status !== 'paid') {
+            if (inv.status !== 'Betald') {
                 invoicesOutstanding += inv.total_amount || 0
                 if (inv.due_date && inv.due_date < today) {
                     overdueCount++
@@ -168,7 +168,7 @@ export const companyStatisticsService = {
         let unmatchedReceipts = 0
         const receipts = receiptStats.data || []
         for (const r of receipts) {
-            if (r.status === 'pending' || r.status === 'processing') {
+            if (r.status === 'Ny') {
                 unmatchedReceipts++
             }
         }
@@ -381,12 +381,12 @@ export const companyStatisticsService = {
             supabase.from('transactions').select('status', { count: 'exact' }),
             supabase.from('customer_invoices').select('status, due_date', { count: 'exact' }),
             supabase.from('receipts').select('status', { count: 'exact' }),
-            supabase.from('employees').select('id', { count: 'exact' }).eq('status', 'active')
+            supabase.from('employees').select('id', { count: 'exact' }).eq('status', 'Aktiv')
         ])
 
-        const pendingTx = (transactions.data || []).filter(t => t.status === 'pending').length
-        const overdueInv = (invoices.data || []).filter(i => i.status !== 'paid' && i.due_date != null && i.due_date < today).length
-        const unmatchedRec = (receipts.data || []).filter(r => r.status === 'pending' || r.status === 'processing').length
+        const pendingTx = (transactions.data || []).filter(t => t.status === 'Obokförd').length
+        const overdueInv = (invoices.data || []).filter(i => i.status !== 'Betald' && i.due_date != null && i.due_date < today).length
+        const unmatchedRec = (receipts.data || []).filter(r => r.status === 'Ny').length
 
         return {
             transactions: { total: transactions.count || 0, pending: pendingTx },

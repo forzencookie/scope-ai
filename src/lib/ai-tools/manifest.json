@@ -843,10 +843,10 @@
         "status": {
           "type": "string",
           "enum": [
-            "draft",
-            "sent",
-            "paid",
-            "overdue"
+            "Utkast",
+            "Skickad",
+            "Betald",
+            "Makulerad"
           ],
           "description": "Filtrera på status"
         },
@@ -1016,9 +1016,9 @@
         "status": {
           "type": "string",
           "enum": [
-            "pending",
-            "review",
-            "booked"
+            "Väntande",
+            "Bokförd",
+            "Avfärdad"
           ],
           "description": "Filtrera på status"
         }

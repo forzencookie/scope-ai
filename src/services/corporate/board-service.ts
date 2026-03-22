@@ -376,12 +376,12 @@ export const boardService = {
         if (updates.title) dbUpdates.title = updates.title
         if (updates.status) {
             const statusMap: Record<string, string> = {
-                'planerad': 'draft',
-                'kallad': 'pending',
-                'genomförd': 'archived',
-                'protokoll signerat': 'signed'
+                'planerad': 'Planerad',
+                'kallad': 'Kallad',
+                'genomförd': 'Genomförd',
+                'protokoll signerat': 'Signerat',
             }
-            dbUpdates.status = statusMap[updates.status] || 'draft'
+            dbUpdates.status = statusMap[updates.status] || 'Planerad'
         }
         if (updates.location) dbUpdates.location = updates.location
         if (updates.attendees) dbUpdates.attendees = updates.attendees

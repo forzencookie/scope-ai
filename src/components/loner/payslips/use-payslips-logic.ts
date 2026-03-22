@@ -70,7 +70,7 @@ export function usePayslipsLogic() {
                     grossSalary: Number(p.gross_salary) || 0,
                     netSalary: Number(p.net_salary) || 0,
                     tax: Number(p.tax_deduction) || 0,
-                    status: p.status || 'draft',
+                    status: p.status || 'Utkast',
                     paymentDate: p.payment_date || null
                 })))
             }

@@ -74,7 +74,7 @@ export function AGIDetailsDialog({
                         </div>
                         <div className="ml-auto">
                             <AppStatusBadge
-                                status={report.status === "submitted" ? "Inskickad" : "Kommande"}
+                                status={report.status === "Inskickad" ? "Inskickad" : "Kommande"}
                             />
                         </div>
                     </div>

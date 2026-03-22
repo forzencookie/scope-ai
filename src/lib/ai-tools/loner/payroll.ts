@@ -167,7 +167,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 netSalary: gross - tax,
                 bonuses: 0,
                 otherDeductions: 0,
-                status: 'draft',
+                status: 'Utkast',
             })
         }
 
@@ -197,7 +197,7 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                             net_salary: payslip.netSalary,
                             employer_contributions: employerContribution,
                             employer_contribution_rate: rates.employerContributionRate,
-                            status: 'draft',
+                            status: 'Utkast',
                             payment_date: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
                         }),
                     })

@@ -75,13 +75,13 @@ export function AGIContent() {
                                 <DropdownMenuItem onClick={() => setStatusFilter(null)}>
                                     Alla
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setStatusFilter("pending")}>
+                                <DropdownMenuItem onClick={() => setStatusFilter("Klar")}>
                                     <Clock className="h-4 w-4 mr-2" />
                                     Ej inlämnad
                                 </DropdownMenuItem>
-                                <DropdownMenuItem onClick={() => setStatusFilter("submitted")}>
+                                <DropdownMenuItem onClick={() => setStatusFilter("Inskickad")}>
                                     <CheckCircle2 className="h-4 w-4 mr-2" />
-                                    Inlämnad
+                                    Inskickad
                                 </DropdownMenuItem>
                             </DropdownMenuContent>
                         </DropdownMenu>

@@ -51,7 +51,7 @@ export interface AGIEmployeeRecord {
 export interface AGIReport {
     period: string
     dueDate: string
-    status: "pending" | "submitted"
+    status: "Utkast" | "Klar" | "Inskickad"
     employees: number
     totalSalary: number
     totalBenefits: number
@@ -125,7 +125,7 @@ export function useEmployerDeclaration() {
                 reportsMap.set(period, {
                     period: periodName.charAt(0).toUpperCase() + periodName.slice(1),
                     dueDate,
-                    status: "pending",
+                    status: "Klar",
                     employees: 0,
                     totalSalary: 0,
                     totalBenefits: 0,

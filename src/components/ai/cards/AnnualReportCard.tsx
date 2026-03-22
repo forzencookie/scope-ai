@@ -28,7 +28,7 @@ export const AnnualReportDataSchema = z.object({
     period: z.string(),
     fiscalYearStart: z.string(),
     fiscalYearEnd: z.string(),
-    status: z.enum(["draft", "signed", "submitted"]).default("draft"),
+    status: z.enum(["Utkast", "Signerad", "Inskickad"]).default("Utkast"),
     sections: AnnualReportSectionSchema,
     keyFigures: z.array(AnnualReportKeyFigureSchema)
 })

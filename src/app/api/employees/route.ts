@@ -65,7 +65,7 @@ export async function POST(req: Request) {
                 tax_table: body.tax_table != null ? Number(body.tax_table) : null,
                 tax_column: body.tax_column != null ? Number(body.tax_column) : null,
                 kommun: body.kommun || null,
-                status: body.status || 'active',
+                status: body.status || 'Aktiv',
                 start_date: body.employment_date || body.start_date || new Date().toISOString().split('T')[0],
                 user_id: userId,
             })

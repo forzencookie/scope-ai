@@ -96,8 +96,8 @@ export function AgiGrid({ reports, selectedIds, onToggleSelection, onToggleAll }
                                         <TableCell className="font-medium">{report.period}</TableCell>
                                         <TableCell>{report.dueDate}</TableCell>
                                         <TableCell>
-                                            <Badge variant={report.status === "submitted" ? "secondary" : "default"}>
-                                                {report.status === "submitted" ? "Inlämnad" : "Ej inlämnad"}
+                                            <Badge variant={report.status === "Inskickad" ? "secondary" : "default"}>
+                                                {report.status === "Inskickad" ? "Inskickad" : "Ej inskickad"}
                                             </Badge>
                                         </TableCell>
                                         <TableCell className="text-right">{formatCurrency(report.totalSalary)}</TableCell>

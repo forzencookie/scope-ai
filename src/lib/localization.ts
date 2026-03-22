@@ -165,6 +165,45 @@ export const BENEFIT_STATUS_LABELS = {
 } as const
 
 // =============================================================================
+// Payslip Statuses (Lönespecifikationer)
+// =============================================================================
+
+export const PAYSLIP_STATUS_LABELS = {
+    DRAFT: "Utkast",
+    APPROVED: "Godkänd",
+    SENT: "Skickad",
+} as const
+
+// =============================================================================
+// AGI Report Statuses (Arbetsgivardeklaration)
+// =============================================================================
+
+export const AGI_STATUS_LABELS = {
+    DRAFT: "Utkast",
+    READY: "Klar",
+    SUBMITTED: "Inskickad",
+} as const
+
+// =============================================================================
+// Employee Statuses (Anställda)
+// =============================================================================
+
+export const EMPLOYEE_STATUS_LABELS = {
+    ACTIVE: "Aktiv",
+    INACTIVE: "Inaktiv",
+} as const
+
+// =============================================================================
+// Pending Booking Statuses (Väntande bokföringar)
+// =============================================================================
+
+export const PENDING_BOOKING_STATUS_LABELS = {
+    PENDING: "Väntande",
+    BOOKED: "Bokförd",
+    DISMISSED: "Avfärdad",
+} as const
+
+// =============================================================================
 // Table Headers & Labels
 // =============================================================================
 

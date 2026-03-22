@@ -32,7 +32,7 @@ export type PendingBookingSourceType =
   | 'egenavgifter'
   | 'ai_entry'
 
-export type PendingBookingStatus = 'pending' | 'booked' | 'dismissed'
+export type PendingBookingStatus = 'Väntande' | 'Bokförd' | 'Avfärdad'
 
 export interface PendingBookingRow {
   id: string
@@ -97,7 +97,7 @@ function mapDbRowToPendingBooking(row: PendingBookingsRow): PendingBooking {
     proposedEntries: (meta?.entries ?? []) as VerificationEntry[],
     proposedSeries: ((meta?.series as string) ?? 'A'),
     proposedDate: ((meta?.date as string) ?? row.created_at ?? new Date().toISOString()),
-    status: (row.status ?? 'pending') as PendingBookingStatus,
+    status: (row.status ?? 'Väntande') as PendingBookingStatus,
     createdAt: row.created_at ?? new Date().toISOString(),
     bookedAt: null,
     verificationId: null,
@@ -112,13 +112,13 @@ function mapDbRowToPendingBooking(row: PendingBookingsRow): PendingBooking {
 type SupabaseTableName = keyof Database['public']['Tables']
 
 const SOURCE_TABLE_MAP: Record<string, { table: SupabaseTableName; statusValue: string }> = {
-  payslip: { table: 'payslips', statusValue: 'booked' },
+  payslip: { table: 'payslips', statusValue: 'Bokförd' },
   customer_invoice: { table: 'customer_invoices', statusValue: 'Bokförd' },
   supplier_invoice: { table: 'supplier_invoices', statusValue: 'Bokförd' },
   invoice_payment: { table: 'customer_invoices', statusValue: 'Betald' },
   transaction: { table: 'transactions', statusValue: 'Bokförd' },
-  dividend_decision: { table: 'dividends', statusValue: 'booked' },
-  dividend_payment: { table: 'dividends', statusValue: 'paid' },
+  dividend_decision: { table: 'dividends', statusValue: 'Bokförd' },
+  dividend_payment: { table: 'dividends', statusValue: 'Betald' },
 }
 
 // =============================================================================
@@ -194,7 +194,7 @@ export const pendingBookingService = {
     }
 
     // Default to pending only unless explicitly requesting another status
-    query = query.eq('status', filters?.status || 'pending')
+    query = query.eq('status', filters?.status || 'Väntande')
 
     const { data, error } = await query
 
@@ -233,7 +233,7 @@ export const pendingBookingService = {
 
     const pending = mapDbRowToPendingBooking(row)
 
-    if (pending.status !== 'pending') {
+    if (pending.status !== 'Väntande') {
       throw new Error(`Kan inte bokföra — status är redan "${pending.status}"`)
     }
 
@@ -332,7 +332,7 @@ export const pendingBookingService = {
 
     const { error } = await supabase
       .from('pending_bookings')
-      .update({ status: 'dismissed' })
+      .update({ status: 'Avfärdad' })
       .eq('id', id)
 
     if (error) {
@@ -349,7 +349,7 @@ export const pendingBookingService = {
 
     const { error } = await supabase
       .from('pending_bookings')
-      .update({ status: 'dismissed' })
+      .update({ status: 'Avfärdad' })
       .in('id', ids)
 
     if (error) {

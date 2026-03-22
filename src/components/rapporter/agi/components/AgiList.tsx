@@ -46,7 +46,7 @@ export function AgiList({ reports, onSelectReport }: AgiListProps) {
                                 </div>
 
                                 <AppStatusBadge
-                                    status={report.status === "submitted" ? "Inskickad" : "Kommande"}
+                                    status={report.status === "Inskickad" ? "Inskickad" : "Kommande"}
                                 />
 
                                 <ChevronRight className="h-4 w-4 text-muted-foreground/50" />

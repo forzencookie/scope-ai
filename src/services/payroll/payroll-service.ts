@@ -24,7 +24,7 @@ export type Employee = {
     taxTable: number
     startDate?: string
     email?: string
-    status: 'active' | 'inactive'
+    status: 'Aktiv' | 'Inaktiv'
 }
 
 export type Payslip = {
@@ -39,7 +39,7 @@ export type Payslip = {
     netSalary: number
     bonuses: number
     otherDeductions: number
-    status: 'draft' | 'pending' | 'sent'
+    status: 'Utkast' | 'Godkänd' | 'Skickad'
     sentAt?: string
 }
 
@@ -53,7 +53,7 @@ export type AGIReport = {
     totalSalary: number
     totalTax: number
     employerContributions: number
-    status: 'draft' | 'pending' | 'submitted'
+    status: 'Utkast' | 'Klar' | 'Inskickad'
     submittedAt?: string
 }
 
@@ -68,7 +68,7 @@ function mapRowToEmployee(e: EmployeeRow): Employee {
         taxTable: e.tax_table_number || 33,
         startDate: e.start_date ?? undefined,
         email: e.email ?? undefined,
-        status: (e.status as Employee['status']) || 'active',
+        status: (e.status as Employee['status']) || 'Aktiv',
     }
 }
 
@@ -89,7 +89,7 @@ function mapRowToPayslip(p: PayslipRow): Payslip {
         netSalary: Number(p.net_salary) || 0,
         bonuses: Number(p.bonuses) || 0,
         otherDeductions: Number(p.deductions) || 0,
-        status: (p.status as Payslip['status']) || 'draft',
+        status: (p.status as Payslip['status']) || 'Utkast',
         sentAt: p.payment_date ?? undefined,
     }
 }
@@ -106,7 +106,7 @@ function mapRowToAGIReport(r: AGIReportRow): AGIReport {
         totalSalary: Number(r.total_salary) || 0,
         totalTax: Number(r.total_tax) || 0,
         employerContributions: Number(r.employer_contributions) || 0,
-        status: (r.status as AGIReport['status']) || 'draft',
+        status: (r.status as AGIReport['status']) || 'Utkast',
         submittedAt: r.updated_at ?? undefined,
     }
 }

@@ -71,10 +71,9 @@ const RECEIPT_VARIANTS: Record<string, string> = {
 }
 
 const PAYSLIP_VARIANTS: Record<string, string> = {
-    "draft": "neutral",
-    "pending": "warning",
-    "sent": "success",
-    "paid": "success",
+    "Utkast": "neutral",
+    "Godkänd": "warning",
+    "Skickad": "success",
 }
 
 function groupByStatus<T extends Record<string, unknown>>(
