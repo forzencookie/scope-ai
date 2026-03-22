@@ -1,26 +1,28 @@
 # Fix: Tools
 
 > **Flow:** [`docs/flows/tools.md`](../flows/tools.md)
-> **Status:** Yellow — registry and execution work, individual tools need audit
+> **Status:** ✅ Green — registry, execution, and confirmation all working
 
 ## What the Flow Describes
 
-60+ tools organized by domain. Every tool: Zod validation -> service layer -> DB (or lib/bookkeeping/ for accounting). Deterministic rule tools for Swedish law. Confirmation pattern for all mutations. No direct Supabase calls from tools.
+60+ tools organized by domain. Every tool: Zod validation → service layer → DB (or lib/bookkeeping/ for accounting). Deterministic rule tools for Swedish law. Confirmation pattern for all mutations. No direct Supabase calls from tools.
 
 ## What Works
 
 ### Registry (`registry.ts`)
 - Register, get, search, execute — all working
 - Company-type guard: checks `allowedCompanyTypes` before execution
-- Confirmation flow: preflight -> pending confirmation (in-memory + DB) -> confirm/expire
+- Confirmation flow: preflight → pending confirmation (in-memory + DB) → confirm/expire
 - Audit logging via `aiAuditService` for write/confirmation tools
 - `getCoreTools()` returns tools marked with `coreTool: true`
 - `search()` scores by name (3x), keywords (2x), description (1x)
+- `getToolIndex()` generates compact domain-grouped list (~300 tokens)
 
 ### Vercel Adapter (`vercel-adapter.ts`)
 - Converts AITool[] to Vercel SDK ToolSet
 - Handles both Zod schemas and JSON schemas
 - `makeExecute()` bridges registry.execute() to Vercel's tool() format
+- Passes `confirmationId` through to registry for 2-step confirmation
 - Two `@ts-expect-error` are justified (Vercel SDK generic overload limitation)
 
 ### Initialization (`index.ts`)
@@ -28,79 +30,55 @@
 - Single `initializeAITools()` registers all at once
 - Lazy initialization in route (only runs once per server lifecycle)
 
-## What's Broken
+### Core Tools (verified ✅)
+- `search_tools` — tool discovery
+- `create_verification` — booking transactions
+- `get_transactions` — transaction queries
+- `navigate_to_page` — page navigation
+- `get_knowledge` — knowledge retrieval
 
-### P0: company-service.server.ts is untracked
+### Rule Tools (verified ✅)
+- `lookup_bas_account` — BAS chart lookup
+- `calculate_employer_tax` — employer tax calculation
+- `calculate_vat` — VAT calculation
+- `calculate_vacation_accrual` — vacation pay accrual
+- `validate_verification` — bookkeeping validation
 
-`registry.ts:165` imports `company-service.server.ts` for the company-type guard:
-```typescript
-const { companyService } = await import('@/services/company-service.server')
-```
+## Fixed Issues
 
-Per git status, this file is **untracked** (new, uncommitted). If it has errors or missing exports, every tool execution that has `allowedCompanyTypes` will fail.
+| Issue | Fix |
+|-------|-----|
+| P0: company-service.server.ts untracked | Tracked and committed |
+| P1: Tool execute passes wrong context | Confirmation flow fully wired through adapter |
+| P1: Core tools list | Verified — 5 correct tools |
 
-**Action:** Audit `company-service.server.ts` — verify it exports `companyService` with a `getByUserId()` method that returns `{ companyType: string }`.
+## Future Features
 
-### P1: Tool execute passes wrong context shape
+These are backlog items — not broken, just not built yet. Pages are read-only by design; these tools would enable mutations via chat.
 
-`vercel-adapter.ts:22-25` — `makeExecute` calls `registry.execute()` with:
-```typescript
-{ userId: context.userId, companyId: context.companyId }
-```
+### Missing mutation tools (dialog replacements)
+All 8 reference dialogs that have been deleted. Pages are read-only as designed.
 
-But `registry.execute()` at line 149-153 builds its own `InteractionContext`:
-```typescript
-const context: InteractionContext = {
-    userId: options?.userId || 'system',
-    companyId: options?.companyId || '',
-    isConfirmed: false
-}
-```
+| Tool | Domain |
+|------|--------|
+| `create_supplier_invoice` | bokforing |
+| `batch_create_verifications` | bokforing |
+| `plan_meeting` | parter |
+| `send_meeting_notice` | parter |
+| `create_motion` | parter |
+| `add_member` | parter |
+| `add_partner` | parter |
+| `create_time_report` | loner |
 
-The `isConfirmed` is always `false` here, which is correct for first calls. But the adapter never passes `confirmationId` or `skipConfirmation` — so confirmed tool calls from the UI won't actually confirm.
-
-**Fix:** The confirmation flow needs to be wired through the Vercel adapter. When the model calls a tool with a confirmationId argument, the adapter should pass it to `registry.execute()`.
-
-### P1: Core tools list needs verification
-
-The deferred loading system depends on `coreTool: true` being set on the right tools. Per the flow doc, core tools should be:
-- `search_tools`
-- `create_verification`
-- `get_transactions`
-- `navigate_to_page`
-- `get_company_info`
-
-**Action:** Grep for `coreTool: true` across all tool definitions and verify these 5 (and only these 5) are marked.
-
-### P2: No tool namespacing
-
-Flow doc says: `bokforing:create_verification`, `loner:run_payroll`. Currently all tools use flat names. Low priority but affects tool discovery when the registry grows.
-
-### P2: Missing tools (per flow doc)
-
-| Tool | Domain | Was |
-|------|--------|-----|
-| `create_supplier_invoice` | bokforing | SupplierInvoiceDialog |
-| `batch_create_verifications` | bokforing | AutoVerifikationDialog |
-| `plan_meeting` | parter | PlanMeetingDialog |
-| `send_meeting_notice` | parter | SendNoticeDialog |
-| `create_motion` | parter | MotionDialog |
-| `add_member` | parter | AddMemberDialog |
-| `add_partner` | parter | AddPartnerDialog |
-| `create_time_report` | loner | ReportDialog |
-
-### P2: Rule tools incomplete
-
+### Missing rule tools
 | Tool | Status |
 |------|--------|
-| `lookup_bas_account` | Exists |
-| `calculate_employer_tax` | Exists |
-| `calculate_vat` | Exists |
-| `calculate_vacation_accrual` | Exists |
-| `validate_verification` | Exists (via bookkeeping engine) |
-| `calculate_312` | Needs verification |
-| `get_tax_table` | Needs verification |
-| `get_filing_deadlines` | Needs verification |
+| `calculate_312` | Not built |
+| `get_tax_table` | Not built |
+| `get_filing_deadlines` | Not built |
+
+### Tool namespacing
+Flow doc says `bokforing:create_verification`. Currently flat names. Low priority.
 
 ## Files
 
@@ -116,14 +94,3 @@ Flow doc says: `bokforing:create_verification`, `loner:run_payroll`. Currently a
 | `src/lib/ai-tools/parter/` | Partners/shareholders tools |
 | `src/lib/ai-tools/common/` | Navigation, company, settings, events, stats |
 | `src/lib/ai-tools/planning/` | Roadmap tools |
-| `src/services/company-service.server.ts` | Company lookup (untracked) |
-| `src/services/ai-audit-service.ts` | Audit logging for tool execution |
-
-## Execution Order
-
-1. Audit and commit `company-service.server.ts` (P0)
-2. Verify core tools are marked correctly (P1)
-3. Wire confirmation flow through Vercel adapter (P1)
-4. Verify rule tools exist and work (P2)
-5. Build missing dialog-replacement tools (P2)
-6. Add tool namespacing (P2)

@@ -9,7 +9,7 @@ import {
     SelectValue,
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { usePreferences } from "@/hooks/use-preferences"
 import { useTheme } from "next-themes"
 import {
@@ -20,7 +20,6 @@ import {
 } from "@/components/ui/settings-items"
 
 export function AppearanceTab() {
-    const { text } = useTextMode()
     const { preferences, updatePreference, isLoading } = usePreferences()
     const { theme, setTheme } = useTheme()
 

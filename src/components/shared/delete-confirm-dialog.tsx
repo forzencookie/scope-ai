@@ -1,7 +1,7 @@
 "use client"
 
 import * as React from "react"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import {
     AlertDialog,
     AlertDialogAction,
@@ -28,7 +28,7 @@ interface DeleteConfirmDialogProps {
 
 /**
  * Reusable delete confirmation dialog.
- * Uses centralized text from useTextMode for default labels.
+ * Uses centralized text from @/lib/translations for default labels.
  */
 export function DeleteConfirmDialog({
     open,
@@ -37,8 +37,6 @@ export function DeleteConfirmDialog({
     title,
     description,
 }: DeleteConfirmDialogProps) {
-    const { text } = useTextMode()
-
     const handleConfirm = () => {
         onConfirm()
         onOpenChange(false)

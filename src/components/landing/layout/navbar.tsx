@@ -45,14 +45,14 @@ export function Navbar() {
                                 className="text-white hover:text-white/70 transition-colors"
                                 onClick={() => setIsOpen(false)}
                             >
-                                Sign up
+                                Logga in
                             </Link>
                             <Link
-                                href="/logga-in"
-                                className="text-white hover:text-white/70 transition-colors"
+                                href="/logga-in?signup=true"
+                                className="text-white/60 hover:text-white transition-colors"
                                 onClick={() => setIsOpen(false)}
                             >
-                                Log in
+                                Skapa konto
                             </Link>
                         </nav>
                     </motion.div>

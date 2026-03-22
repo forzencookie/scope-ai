@@ -3,7 +3,6 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { Navbar } from "@/components/landing/layout/navbar"
-import { TextModeProvider } from "@/providers/text-mode-provider"
 
 interface LegalPageLayoutProps {
     brandLabel?: string
@@ -14,11 +13,10 @@ interface LegalPageLayoutProps {
 
 export function LegalPageLayout({ brandLabel = "scope ai", title, effectiveDate, children }: LegalPageLayoutProps) {
     return (
-        <TextModeProvider>
-            <div
-                className="relative min-h-screen text-white font-sans selection:bg-white/30"
-                style={{ backgroundColor: '#050505' }}
-            >
+        <div
+            className="relative min-h-screen text-white font-sans selection:bg-white/30"
+            style={{ backgroundColor: '#050505' }}
+        >
                 <div className="relative z-10 flex flex-col items-center w-full">
                     <Navbar />
 
@@ -70,6 +68,5 @@ export function LegalPageLayout({ brandLabel = "scope ai", title, effectiveDate,
                     </main>
                 </div>
             </div>
-        </TextModeProvider>
     )
 }

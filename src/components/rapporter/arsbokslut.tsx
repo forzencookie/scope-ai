@@ -18,7 +18,7 @@ import {
     type CollapsibleTableItem
 } from "@/components/ui/collapsible-table"
 import { useCompany } from "@/providers/company-provider"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { useAccountBalances, type AccountActivity } from "@/hooks/use-account-balances"
 import { useToast } from "@/components/ui/toast"
 import { formatCurrency } from "@/lib/utils"
@@ -42,8 +42,6 @@ export function ArsbokslutContent() {
         totalRevenue: number; totalExpenses: number; corporateTax: number;
         netResult: number; entryCount: number; closingCompanyType: string;
     } | null>(null)
-    const { text } = useTextMode()
-
     // Calculate default year (previous completed FY)
     const fiscalYearEnd = company?.fiscalYearEnd || '12-31'
     const defaultFY = useMemo(() => {

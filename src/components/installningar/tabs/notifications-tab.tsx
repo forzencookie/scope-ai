@@ -2,7 +2,7 @@
 
 import { FileText, AlertCircle, TrendingUp, Calendar, Smartphone } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { usePreferences } from "@/hooks/use-preferences"
 import {
     SettingsPageHeader,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/settings-items"
 
 export function NotificationsTab() {
-    const { text } = useTextMode()
     const { preferences, updatePreference, isLoading } = usePreferences()
 
     return (

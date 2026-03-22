@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Check, Copy, Calendar } from "lucide-react"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import {
     SettingsPageHeader,
     IntegrationCard,
@@ -19,7 +19,6 @@ import { Label } from "@/components/ui/label"
 import { useToast } from "@/components/ui/toast"
 
 export function IntegrationsTab() {
-    const { text } = useTextMode()
     const { success } = useToast()
     const [calendarOpen, setCalendarOpen] = useState(false)
     const [hasCopied, setHasCopied] = useState(false)

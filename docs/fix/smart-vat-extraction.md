@@ -1,35 +1,26 @@
-# Fix: Smart Receipt Extraction (Dynamic VAT)
+# Feature: Split-VAT Bookings
 
-> **Flow:** [`docs/flows/ai-interface.md`](../flows/ai-interface.md)
-> **Status:** 🔴 Red (Currently Hardcoded)
+> **Flow:** [`docs/flows/tools.md`](../flows/tools.md)
+> **Status:** ⬜ Not started — future feature
 
-## The Problem
-Receipt extraction is currently "stupid OCR." It expects standard VAT rates (25, 12, 6) and struggles with non-standard scenarios. A "Digital CFO" needs to handle the complexity of the Swedish tax system dynamically.
+## What This Is
 
-## The Fix: Moving from Picks to Logic
+A receipt can have multiple VAT rates (e.g., grocery receipt: 12% food + 25% household items). Currently `create_receipt` accepts a single `vatRate` parameter. Scooby already reasons about VAT freely — there's no dropdown or hardcoded picker. The only gap is that the service layer doesn't support split-VAT bookings (multiple ledger rows for one receipt).
 
-### 1. Dynamic VAT Identification
-- **Old Way:** OCR picks from a dropdown of [25, 12, 6, 0].
-- **New Way:** 
-    - AI identifies the **Merchant Category** and **Item Descriptions**.
-    - AI detects **Mixed VAT** (e.g., a grocery receipt with both 12% food and 25% household items).
-    - AI detects **Reverse Charge** (Omvänd skattskyldighet) for construction or EU purchases.
-    - AI detects **Tax-Free** items (Insurance, healthcare, postage stamps).
+## What Needs to Be Built
 
-### 2. Intelligent BAS Mapping
-- **Old Way:** Basic regex for vendor names.
-- **New Way:** AI reasons about the purchase. 
-    - *Example:* A receipt from "Circle K". 
-        - If amount is 800 SEK → Mapping: 5800 (Travel).
-        - If amount is 45 SEK → Mapping: 6071 (Representation/Coffee).
-        - If it's a car wash → Mapping: 5613 (Car maintenance).
+1. **`create_receipt` schema** — Accept an array of line items with individual VAT rates instead of a single global rate
+2. **`receipt-service.ts`** — Support creating multiple ledger rows for one receipt
+3. **`ReceiptCard`** — Display VAT breakdown when multiple rates exist
+4. **System prompt** — Add guidance for common split-VAT scenarios (grocery, mixed retail, reverse charge for EU/construction)
 
-## Technical Transition
-- **Tool:** Update `extract_receipt` schema to return an array of `line_items` with their own VAT rates, rather than a single global rate.
-- **Service:** `receipt-service.ts` must support split-VAT bookings (multiple ledger rows for one receipt).
-- **UI:** `ReceiptCard` must display the VAT breakdown if multiple rates were found.
+## What Does NOT Need to Change
+
+- Scooby already decides VAT rates — no OCR dropdown exists, no hardcoded picker
+- BAS account mapping already works through Scooby's reasoning
+- Single-VAT receipts continue working as-is
 
 ## Acceptance Criteria
-- [ ] Successful extraction of mixed-VAT receipts.
-- [ ] Automatic identification of reverse-charge (EU) invoices.
-- [ ] No "NaN" or "Unknown" values when VAT is 0% or non-standard.
+- [ ] `create_receipt` supports multiple line items with different VAT rates
+- [ ] Service creates correct multi-row ledger entries
+- [ ] Card displays VAT breakdown

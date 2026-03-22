@@ -6,12 +6,10 @@ export function InvoicesEmptyState({ hasFilters }: { hasFilters: boolean }) {
         <ActionEmptyState
             icon={FileText}
             title={hasFilters ? "Inga matchningar" : "Inga fakturor än"}
-            description={hasFilters 
+            description={hasFilters
                 ? "Vi hittade inga fakturor som matchar dina filter. Prova att ändra filterinställningarna."
                 : "Här samlas alla dina kund- och leverantörsfakturor. Fråga Scooby att skapa din första faktura!"
             }
-            actionLabel={!hasFilters ? "Skapa faktura" : undefined}
-            actionPrompt="Jag vill skapa en ny kundfaktura"
         />
     )
 }

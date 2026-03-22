@@ -53,6 +53,8 @@ export {
     LazyMedlemsregister,
     LazyBolagsstamma,
     LazyArsmote,
+    LazyUtdelning,
+    LazyFirmatecknare,
     // Onboarding
     LazyOnboardingWizard,
 } from "./lazy-loader"

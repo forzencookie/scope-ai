@@ -69,9 +69,7 @@ export function PayslipsTable({
                         <ActionEmptyState
                             icon={Banknote}
                             title="Inga lönebesked än"
-                            description="Det är dags att förbereda månadens löner. Scooby kan hjälpa dig att räkna ut bruttolön och skatt för alla anställda."
-                            actionLabel="Starta lönekörning"
-                            actionPrompt="Jag vill göra en ny lönekörning för den här månaden"
+                            description="Fråga Scooby att starta en lönekörning — hen hjälper dig med bruttolön, skatt och arbetsgivaravgifter."
                         />
                     )}
                 </GridTableRows>

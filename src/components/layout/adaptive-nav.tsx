@@ -18,7 +18,6 @@ import {
 } from "@/components/ui/sidebar"
 
 import { useCompany } from "@/providers/company-provider"
-import { useTextMode } from "@/providers/text-mode-provider"
 import type { NavItem } from "@/types"
 
 // ============================================================================
@@ -33,11 +32,10 @@ export function AdaptiveNavMain({
   label?: string
 }) {
   const { hasFeature } = useCompany()
-  const { isEnkel } = useTextMode()
 
-  // Helper to get the correct title based on mode
-  const getTitle = (item: { title: string; titleEnkel?: string }) => {
-    return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
+  // Helper to get the title
+  const getTitle = (item: { title: string }) => {
+    return item.title
   }
 
   // Filter items based on features

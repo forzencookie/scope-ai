@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useCompany } from "@/providers/company-provider"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { CompanyTypeSelector } from "@/components/onboarding/company-type-selector"
 import {
     SettingsPageHeader,
@@ -32,7 +32,6 @@ interface CompanyTabProps {
 }
 
 export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
-    const { text } = useTextMode()
     const { company, updateCompany } = useCompany()
     const accountingMethod = company?.accountingMethod || 'invoice'
     const [isExporting, setIsExporting] = React.useState(false)

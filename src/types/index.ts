@@ -91,7 +91,6 @@ export interface Team {
 
 export interface NavItem {
   title: string
-  titleEnkel?: string  // Easy mode label
   url: string
   icon?: LucideIcon
   isActive?: boolean
@@ -104,7 +103,6 @@ export interface NavItem {
 
 export interface NavSubItem {
   title: string
-  titleEnkel?: string  // Easy mode label
   url: string
   featureKey?: FeatureKey
 }

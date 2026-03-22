@@ -25,13 +25,11 @@ import type { NavItem } from "@/types"
 export const navBokforing: NavItem[] = [
     {
         title: "Transaktioner",
-        titleEnkel: "Transaktioner",
         url: "/dashboard/bokforing?tab=transaktioner",
         icon: BookOpen,
     },
     {
         title: "Fakturor",
-        titleEnkel: "Fakturor",
         url: "/dashboard/bokforing?tab=fakturor",
         icon: FileText,
     },
@@ -39,13 +37,11 @@ export const navBokforing: NavItem[] = [
     // See docs/fix/information-pages.md for tracking.
     {
         title: "Inventarier",
-        titleEnkel: "Inventarier",
         url: "/dashboard/bokforing?tab=inventarier",
         icon: CheckSquare,
     },
     {
         title: "Verifikationer",
-        titleEnkel: "Verifikationer",
         url: "/dashboard/bokforing?tab=verifikationer",
         icon: CheckSquare,
         featureKey: "verifikationer",
@@ -58,7 +54,6 @@ export const navBokforing: NavItem[] = [
 export const navRapporter: NavItem[] = [
     {
         title: "Rapporter",
-        titleEnkel: "Rapporter",
         url: "/dashboard/rapporter",
         icon: PieChart,
     },
@@ -67,34 +62,29 @@ export const navRapporter: NavItem[] = [
 export const navLoner: NavItem[] = [
     {
         title: "Lönekörning",
-        titleEnkel: "Lönekörning",
         url: "/dashboard/loner?tab=lonebesked",
         icon: PiggyBank,
         featureKey: "lonebesked",
     },
     {
         title: "Förmåner",
-        titleEnkel: "Förmåner",
         url: "/dashboard/loner?tab=formaner",
         icon: Gift,
         featureKey: "lonebesked",
     },
     {
         title: "Team",
-        titleEnkel: "Team",
         url: "/dashboard/loner?tab=team",
         icon: Users,
     },
     {
         title: "Egenavgifter",
-        titleEnkel: "Egenavgifter",
         url: "/dashboard/loner?tab=egenavgifter",
         icon: PiggyBank,
         featureKey: "egenavgifter",
     },
     {
         title: "Delägaruttag",
-        titleEnkel: "Delägaruttag",
         url: "/dashboard/loner?tab=delagaruttag",
         icon: Coins,
         featureKey: "delagaruttag",
@@ -112,42 +102,36 @@ export const navLoner: NavItem[] = [
 export const navAgare: NavItem[] = [
     {
         title: "Aktiebok",
-        titleEnkel: "Aktiebok",
         url: "/dashboard/agare?tab=aktiebok",
         icon: BookOpen,
         featureKey: "aktiebok",
     },
     {
         title: "Delägare",
-        titleEnkel: "Delägare",
         url: "/dashboard/agare?tab=delagare",
         icon: Users,
         featureKey: "delagare",
     },
     {
         title: "Utdelning",
-        titleEnkel: "Utdelning",
         url: "/dashboard/agare?tab=utdelning",
         icon: Coins,
         featureKey: "utdelning",
     },
     {
         title: "Medlemsregister",
-        titleEnkel: "Medlemmar",
         url: "/dashboard/agare?tab=medlemsregister",
         icon: Users,
         featureKey: "medlemsregister",
     },
     {
         title: "Firmatecknare",
-        titleEnkel: "Firmatecknare",
         url: "/dashboard/agare?tab=firmatecknare",
         icon: PenTool,
         featureKey: "firmatecknare",
     },
     {
         title: "Möten & Protokoll",
-        titleEnkel: "Möten",
         url: "/dashboard/agare?tab=bolagsstamma",
         icon: Landmark,
         featureKey: "bolagsstamma",
@@ -174,13 +158,11 @@ export const navPlatform: NavItem[] = [
 export const navSettings: NavItem[] = [
     {
         title: "Händelser",
-        titleEnkel: "Händelser",
         url: "/dashboard/handelser",
         icon: Calendar,
     },
     {
         title: "Inställningar",
-        titleEnkel: "Inställningar",
         url: "/dashboard/installningar",
         icon: Settings,
     },

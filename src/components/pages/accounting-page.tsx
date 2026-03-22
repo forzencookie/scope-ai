@@ -19,7 +19,6 @@ import {
     LazyInventarierTable,
 } from "@/components/shared"
 import { VerifikationerTable } from "@/components/bokforing/verifikationer"
-import { useTextMode } from "@/providers/text-mode-provider"
 
 import { useTransactionsPaginated, useTransactionStats } from "@/hooks"
 
@@ -27,29 +26,25 @@ import { useTransactionsPaginated, useTransactionStats } from "@/hooks"
 const allTabs = [
     {
         id: "transaktioner",
-        labelEnkel: "Transaktioner",
-        labelAvancerad: "Transaktioner",
+        label: "Transaktioner",
         color: "bg-blue-500",
         feature: null, // Available to all
     },
     {
         id: "fakturor",
-        labelEnkel: "Fakturor",
-        labelAvancerad: "Fakturor",
+        label: "Fakturor",
         color: "bg-purple-500",
         feature: null, // Available to all
     },
     {
         id: "verifikationer",
-        labelEnkel: "Huvudbok",
-        labelAvancerad: "Huvudbok",
+        label: "Huvudbok",
         color: "bg-emerald-500",
         feature: 'verifikationer' as const,
     },
     {
         id: "inventarier",
-        labelEnkel: "Tillgångar",
-        labelAvancerad: "Inventarier",
+        label: "Inventarier",
         color: "bg-orange-500",
         feature: 'inventarier' as const,
     },
@@ -128,10 +123,7 @@ function AccountingPageContent() {
     // Feature checks for conditional tabs
     const hasVerifikationer = useFeature('verifikationer')
 
-    // Text mode for Enkel/Avancerad labels
-    const { isEnkel } = useTextMode()
-
-    // Filter tabs based on available features AND map to PageTabsLayout format
+    // Filter tabs based on available features
     const tabs = useMemo(() => {
         return allTabs
             .filter(tab => {
@@ -139,11 +131,7 @@ function AccountingPageContent() {
                 if (tab.feature === 'verifikationer') return hasVerifikationer
                 return true
             })
-            .map(tab => ({
-                ...tab,
-                label: isEnkel ? tab.labelEnkel : tab.labelAvancerad
-            }))
-    }, [hasVerifikationer, isEnkel])
+    }, [hasVerifikationer])
 
     const setCurrentTab = useCallback((tab: string) => {
         router.push(`/dashboard/bokforing?tab=${tab}`, { scroll: false })

@@ -49,10 +49,12 @@ This is a pre-production MVP. No code is in production. There is no excuse for d
 ## Before You Touch Code
 
 1. **Read the flow doc** for the feature area you're working on (`docs/flows/`). Understand the full chain before editing a single file.
-2. **Does this file serve the app's purpose?** If not, flag it for removal — don't fix dead code.
-3. **Will your change introduce suppressors?** If yes, it's not a fix. Do the proper fix.
-4. **Do you lack context?** Ask the founder. Do not guess. A wrong guess creates debt.
-5. **Update the flow doc** if your changes alter the workflow.
+2. **Read the fix doc** (`docs/fix/`) — understand what needs to happen and what's already done.
+3. **Compare vision to current code** — the fix docs may be stale. Verify against the actual codebase before acting.
+4. **Does this file serve the app's purpose?** If not, flag it for removal — don't fix dead code.
+5. **Will your change introduce suppressors?** If yes, it's not a fix. Do the proper fix.
+6. **Do you lack context?** Ask the founder. Do not guess. A wrong guess creates debt.
+7. **Flag suspicious code** — anything that doesn't serve the vision, cross-reference with the flow and flag for founder review rather than silently keeping or deleting.
 
 ## After You Touch Code — Propagation Rule
 
@@ -65,7 +67,7 @@ Before marking any change as done, trace the full dependency chain:
 3. **Types** — Did you add/remove/rename a feature key? Update `src/lib/company-types.ts` and every `featureKey` reference.
 4. **AI tools** — Does a tool reference this feature? Update tool descriptions, keywords, `allowedCompanyTypes`.
 5. **Flow docs** — Does `docs/flows/` describe this feature? Update to match reality.
-6. **Fix docs** — Does `docs/fix/` have an assessment? Mark items as done or update the status.
+6. **Fix docs** — Does `docs/fix/` have an assessment? Mark items as done or update the status. If a fix doc says something is broken but it's already fixed, update the doc immediately.
 
 **The rule:** If you change file A and file B references the same concept, file B must be updated in the same change. No exceptions. No "I'll fix it later." Check the chain, update everything, then mark it done.
 
@@ -98,7 +100,7 @@ Fix the codebase so it achieves the vision described in `docs/flows/`. Three fol
 | Folder | Purpose | Start Here |
 |--------|---------|------------|
 | [`docs/flows/`](docs/flows/README.md) | **Vision** — what each feature should be | Read first |
-| [`docs/fix/`](docs/fix/README.md) | **Execution plans** — what to build/change to reach the vision (maps 1:1 to flows) | Work from here |
+| [`docs/fix/`](docs/fix/) | **Execution plans** — what to build/change to reach the vision (maps 1:1 to flows) | Work from here |
 | [`docs/workstreams/`](docs/workstreams/PROGRESS.md) | **What's broken** — type errors, dead code, consistency bugs | Clean these first |
 
 **Order of operations:** workstreams (clean the foundation) → fix docs (build toward the vision).

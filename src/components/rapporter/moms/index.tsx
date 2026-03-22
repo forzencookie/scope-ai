@@ -18,7 +18,7 @@ import { SectionCard } from "@/components/ui/section-card"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
 // MomsWizardDialog removed — AI generates momsdeklaration via navigateToAI()
 import { MomsDetailDialog } from "../dialogs/moms"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
 // Logic
@@ -30,7 +30,6 @@ import { MomsList } from "./components/MomsList"
 
 export function MomsdeklarationContent() {
     const navigateToAI = useNavigateToAIChat()
-    const { text } = useTextMode()
 
 
     const {

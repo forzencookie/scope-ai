@@ -5,7 +5,7 @@ import { CreditCard, Zap, AlertCircle, TrendingUp, Loader2, ExternalLink } from 
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useAIUsage, formatTokens } from "@/hooks/use-ai-usage"
 import { CREDIT_PACKAGES } from "@/lib/subscription"
@@ -186,7 +186,6 @@ function useBillingHistory() {
 }
 
 export function BillingTab() {
-    const { text } = useTextMode()
     const { tierName } = useSubscription()
     const { items: billingItems, paymentMethod, loading: billingLoading } = useBillingHistory()
     const [portalLoading, setPortalLoading] = useState(false)

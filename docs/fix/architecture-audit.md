@@ -3,6 +3,8 @@
 > **Date:** 2026-03-21
 > **Scope:** Every `.ts`/`.tsx` file across `src/app`, `src/components`, `src/providers`, `src/hooks`, `src/services`, `src/lib`, `src/data`, `src/types`, `scripts/`, `supabase/`
 > **Stats:** 270 files, 111,313 lines of TypeScript
+>
+> **Note:** Some issues identified here have been addressed since this audit (e.g., company-service.server.ts is now tracked, tool-service consistency improved). See individual fix docs for current status.
 
 ---
 

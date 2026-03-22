@@ -120,6 +120,16 @@ export const LazyArsmote = createLazyComponent(
     "Laddar årsmöte..."
 )
 
+export const LazyUtdelning = createLazyComponent(
+    () => import("@/components/agare").then(m => ({ default: m.UtdelningContent })),
+    "Laddar utdelning..."
+)
+
+export const LazyFirmatecknare = createLazyComponent(
+    () => import("@/components/agare").then(m => ({ default: m.Firmatecknare })),
+    "Laddar firmatecknare..."
+)
+
 // --- Onboarding ---
 export const LazyOnboardingWizard = createLazyComponent(
     () => import("@/components/onboarding/onboarding-wizard").then(m => ({ default: m.OnboardingWizard })),

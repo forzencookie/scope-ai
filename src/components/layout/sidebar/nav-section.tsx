@@ -4,7 +4,6 @@ import * as React from "react"
 import { MoreHorizontal, type LucideIcon } from "lucide-react"
 import Link from "next/link"
 
-import { useTextMode } from "@/providers/text-mode-provider"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -26,7 +25,6 @@ import {
 
 interface NavSectionItem {
   title: string
-  titleEnkel?: string
   url: string
   icon?: LucideIcon
   isActive?: boolean
@@ -40,11 +38,10 @@ interface NavSectionProps {
 
 export function NavSection({ items, label, icon: Icon }: NavSectionProps) {
   const { isMobile } = useSidebar()
-  const { isEnkel } = useTextMode()
 
-  // Helper to get the correct title based on mode
+  // Helper to get the title
   const getTitle = (item: NavSectionItem) => {
-    return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
+    return item.title
   }
 
   // Split items into visible (first 3) and hidden (rest)

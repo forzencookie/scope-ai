@@ -1,13 +1,11 @@
 "use client"
 
 import { Navbar } from "@/components/landing/layout/navbar"
-import { TextModeProvider } from "@/providers/text-mode-provider"
 import { motion } from "framer-motion"
 
 export default function VantelistaPage() {
     return (
-        <TextModeProvider>
-            <div
+        <div
                 className="relative min-h-screen text-white font-sans selection:bg-white/30 overscroll-y-none flex flex-col"
                 style={{
                     backgroundColor: '#050505',
@@ -54,6 +52,5 @@ export default function VantelistaPage() {
                     </main>
                 </div>
             </div>
-        </TextModeProvider>
     )
 }

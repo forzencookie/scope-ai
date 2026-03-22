@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { useToast } from "@/components/ui/toast"
 import { Separator } from "@/components/ui/separator"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { usePreferences } from "@/hooks/use-preferences"
 import {
     SettingsPageHeader,
@@ -16,7 +16,6 @@ import {
 } from "@/components/ui/settings-items"
 
 export function EmailTab() {
-    const { text } = useTextMode()
     const { preferences, updatePreference, isLoading } = usePreferences()
 
     // Test Email State

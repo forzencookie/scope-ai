@@ -5,7 +5,7 @@ import { useRef, useState } from "react"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import { Loader2 } from "lucide-react"
 import {
     SettingsPageHeader,
@@ -34,7 +34,6 @@ interface AccountTabProps {
 }
 
 export function AccountTab({ formData, setFormData, onSave, avatarUrl, onAvatarChange }: AccountTabProps) {
-    const { text } = useTextMode()
     const fileInputRef = useRef<HTMLInputElement>(null)
     const [isUploading, setIsUploading] = useState(false)
 

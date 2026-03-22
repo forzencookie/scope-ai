@@ -102,22 +102,6 @@ export function StatusBadge({
  * 
  * @see status-types.ts for all available status values
  */
-import { useTextMode } from "@/providers/text-mode-provider"
-
-const EASY_MODE_MAP: Record<string, string> = {
-    "Attesterad": "Godkänd",
-    "Tvist": "Problem",
-    "Makulerad": "Borttagen",
-    "Avvisad": "Nekad",
-    "Bearbetar": "Läser in...",
-    "Förfallen": "Sen",
-    "Granskning krävs": "Kolla över",
-    "Behandlad": "Klar",
-    "Att bokföra": "Att sortera",
-    "Saknar underlag": "Saknar kvitto",
-    "Mottagen": "Ny",
-}
-
 export function AppStatusBadge({
     status,
     className,
@@ -129,12 +113,10 @@ export function AppStatusBadge({
     size?: "sm" | "md"
     showIcon?: boolean
 }) {
-    const { isEnkel } = useTextMode()
     const variant = getStatusVariant(status)
     const isBooked = status === "Bokförd"
 
-    // Determine display text
-    const displayText = (isEnkel && EASY_MODE_MAP[status]) ? EASY_MODE_MAP[status] : status
+    const displayText = status
 
     // Automatically use BookOpen icon for 'Bokförd' status
     const statusIcon = isBooked ? BookOpen : undefined

@@ -4,15 +4,17 @@ import * as React from "react"
 import { memo } from "react"
 import { TransactionDetailsOverlay } from "./components/transaction-details-overlay"
 import { TransactionWithAI } from "@/types"
-import { ChevronLeft, ChevronRight } from "lucide-react"
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
 import { PageHeader } from "@/components/shared"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 // Components
 import { TransactionFilters } from "./components/transaction-filters"
 import { TransactionsTableGrid } from "./components/transactions-table-grid"
+import { TransactionsStats } from "./components/transactions-stats"
 
 // Logic
 import { useTransactionsLogic } from "./use-transactions-logic"
@@ -27,8 +29,6 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
         total = 0,
         onPageChange
     } = props
-
-    const { text } = useTextMode()
 
     const {
         // Hooks
@@ -45,6 +45,7 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
         handleTransactionClick,
     } = useTransactionsLogic(props)
 
+    const { navigateToAI } = useChatNavigation()
     const [selectedTransaction, setSelectedTransaction] = React.useState<TransactionWithAI | null>(null)
 
     const onRowClick = (transaction: TransactionWithAI) => {
@@ -69,6 +70,23 @@ export const TransactionsTable = memo(function TransactionsTable(props: Transact
             <PageHeader
                 title={text.transactions?.title || "Transaktioner"}
                 subtitle={text.transactions?.subtitle || "Hantera dina bokförda transaktioner"}
+                actions={
+                    <Button
+                        className="gap-2 shrink-0"
+                        onClick={() => navigateToAI({ prompt: "Hjälp mig att bokföra mina senaste transaktioner" })}
+                    >
+                        <Plus className="h-4 w-4" />
+                        Bokför
+                    </Button>
+                }
+            />
+
+            {/* Stats Cards */}
+            <TransactionsStats
+                totalCount={stats.totalCount}
+                income={stats.income}
+                expenses={stats.expenses}
+                isLoading={isLoading}
             />
 
             {/* Table Area */}

@@ -16,6 +16,8 @@ import {
     LazyMedlemsregister,
     LazyBolagsstamma,
     LazyArsmote,
+    LazyUtdelning,
+    LazyFirmatecknare,
 } from '@/components/shared';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
@@ -35,6 +37,8 @@ interface TabConfig {
 const tabsByCompanyType: Record<CompanyType, TabConfig[]> = {
     ab: [
         { id: 'aktiebok', label: 'Aktiebok & Styrning', color: 'bg-blue-500' },
+        { id: 'utdelning', label: 'Utdelning', color: 'bg-emerald-500' },
+        { id: 'firmatecknare', label: 'Firmatecknare', color: 'bg-slate-500' },
         { id: 'bolagsstamma', label: 'Möten & Beslut', color: 'bg-orange-500' },
     ],
     ef: [
@@ -42,12 +46,15 @@ const tabsByCompanyType: Record<CompanyType, TabConfig[]> = {
     ],
     hb: [
         { id: 'delagare', label: 'Delägare & Styrning', color: 'bg-purple-500' },
+        { id: 'firmatecknare', label: 'Firmatecknare', color: 'bg-slate-500' },
     ],
     kb: [
         { id: 'delagare', label: 'Delägare & Styrning', color: 'bg-purple-500' },
+        { id: 'firmatecknare', label: 'Firmatecknare', color: 'bg-slate-500' },
     ],
     forening: [
         { id: 'medlemsregister', label: 'Medlemsregister', color: 'bg-indigo-500' },
+        { id: 'firmatecknare', label: 'Firmatecknare', color: 'bg-slate-500' },
         { id: 'bolagsstamma', label: 'Möten & Beslut', color: 'bg-orange-500' },
     ],
 };
@@ -91,6 +98,8 @@ function ParterPageContent() {
                     {currentTab === 'delagare' && <LazyDelagare />}
                     {currentTab === 'agarinfo' && <EnskildFirmaOwnerInfo />}
                     {currentTab === 'medlemsregister' && <LazyMedlemsregister />}
+                    {currentTab === 'utdelning' && <LazyUtdelning />}
+                    {currentTab === 'firmatecknare' && <LazyFirmatecknare />}
                     {currentTab === 'bolagsstamma' && (
                         companyType === 'forening' ? (
                             <>

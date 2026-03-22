@@ -90,30 +90,31 @@ export function AIOverlay() {
                 exit={{ opacity: 0 }}
                 className="absolute inset-0 z-40 flex flex-col bg-background/95 backdrop-blur-sm"
             >
-                {/* Overlay Header */}
-                <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-border/60">
-                    <div className="flex items-center gap-3">
-                        <div className="p-1.5 rounded-lg bg-primary/10">
-                            <Sparkles className="h-4 w-4 text-primary" />
+                {/* Overlay Header — hidden during error state (ErrorState has its own UI) */}
+                {status !== "error" && (
+                    <div className="shrink-0 flex items-center justify-between px-6 py-4 border-b border-border/60">
+                        <div className="flex items-center gap-3">
+                            <div className="p-1.5 rounded-lg bg-primary/10">
+                                <Sparkles className="h-4 w-4 text-primary" />
+                            </div>
+                            <span className="font-semibold text-foreground">
+                                {status === "thinking" && "Scooby tänker..."}
+                                {status === "walkthrough-blocks" && (walkthroughBlocks?.title || "Walkthrough")}
+                                {status === "walkthrough" && (walkthroughContent?.title || "Walkthrough")}
+                                {status === "complete" && (output?.title || "Resultat")}
+                            </span>
                         </div>
-                        <span className="font-semibold text-foreground">
-                            {status === "thinking" && "Scooby tänker..."}
-                            {status === "walkthrough-blocks" && (walkthroughBlocks?.title || "Walkthrough")}
-                            {status === "walkthrough" && (walkthroughContent?.title || "Walkthrough")}
-                            {status === "complete" && (output?.title || "Resultat")}
-                            {status === "error" && "Något gick fel"}
-                        </span>
+
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            className="rounded-full hover:bg-muted"
+                            onClick={status === "walkthrough" || status === "walkthrough-blocks" ? closeWalkthrough : handleCancel}
+                        >
+                            <X className="h-5 w-5 text-muted-foreground" />
+                        </Button>
                     </div>
-                    
-                    <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-full hover:bg-muted"
-                        onClick={status === "walkthrough" || status === "walkthrough-blocks" ? closeWalkthrough : handleCancel}
-                    >
-                        <X className="h-5 w-5 text-muted-foreground" />
-                    </Button>
-                </div>
+                )}
 
                 {/* Overlay Content Area */}
                 <div className="flex-1 overflow-y-auto custom-scrollbar">

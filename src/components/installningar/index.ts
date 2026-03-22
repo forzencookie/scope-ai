@@ -1,2 +1,2 @@
 // Settings Components
-export { SettingsDialog } from "./settings-dialog"
+export { SettingsOverlay } from "./settings-overlay"

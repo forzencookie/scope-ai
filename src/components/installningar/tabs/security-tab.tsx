@@ -2,7 +2,7 @@
 
 import { Lock } from "lucide-react"
 import { Separator } from "@/components/ui/separator"
-import { useTextMode } from "@/providers/text-mode-provider"
+import { text } from "@/lib/translations"
 import {
     SettingsPageHeader,
     SettingsSection,
@@ -11,7 +11,6 @@ import {
 } from "@/components/ui/settings-items"
 
 export function SecurityTab() {
-    const { text } = useTextMode()
     return (
         <div className="space-y-6">
             <SettingsPageHeader

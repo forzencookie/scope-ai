@@ -21,8 +21,6 @@ export interface UserPreferences {
     currency: string
     date_format: string
     first_day_of_week: number
-    text_mode: 'enkel' | 'avancerad'
-    
     // Email
     daily_summary: boolean
     marketing_emails: boolean
@@ -46,7 +44,6 @@ const defaultPreferences: UserPreferences = {
     currency: 'SEK',
     date_format: 'YYYY-MM-DD',
     first_day_of_week: 1,
-    text_mode: 'enkel',
     daily_summary: false,
     marketing_emails: false,
     reduce_motion: false,

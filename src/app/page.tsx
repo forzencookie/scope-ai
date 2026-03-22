@@ -4,7 +4,6 @@ import { ArrowRight, Check } from "lucide-react"
 import Link from "next/link"
 import { Navbar } from "@/components/landing/layout/navbar"
 import { AppDemoShowcase } from "@/components/landing/sections/app-demo-showcase"
-import { TextModeProvider } from "@/providers/text-mode-provider"
 import { motion, useInView } from "framer-motion"
 import { useState, useEffect, useRef } from "react"
 
@@ -119,8 +118,7 @@ export default function LandingPage() {
     }, [])
 
     return (
-        <TextModeProvider>
-            <div className="relative min-h-screen text-white font-sans selection:bg-white/30">
+        <div className="relative min-h-screen text-white font-sans selection:bg-white/30">
                 {/* Fixed Background Layer - Ensures consistent look across all pages and devices */}
                 <div 
                     className="fixed inset-0 z-0"
@@ -383,6 +381,5 @@ export default function LandingPage() {
                     </section>
                 </div>
             </div>
-        </TextModeProvider>
     )
 }

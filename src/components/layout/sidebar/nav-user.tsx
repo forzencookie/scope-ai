@@ -37,7 +37,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { SettingsDialog } from "@/components/installningar/settings-dialog"
+import { useRouter, usePathname } from "next/navigation"
 
 // ============================================================================
 // NavUser - User profile dropdown in sidebar
@@ -53,7 +53,8 @@ interface NavUserProps {
 
 export function NavUser({ user }: NavUserProps) {
   const { isMobile } = useSidebar()
-  const [settingsOpen, setSettingsOpen] = React.useState(false)
+  const router = useRouter()
+  const pathname = usePathname()
   const { theme, setTheme } = useTheme()
 
   return (
@@ -118,7 +119,7 @@ export function NavUser({ user }: NavUserProps) {
                     </DropdownMenuSubContent>
                   </DropdownMenuPortal>
                 </DropdownMenuSub>
-                <DropdownMenuItem onSelect={() => setSettingsOpen(true)}><Settings />Inställningar</DropdownMenuItem>
+                <DropdownMenuItem onSelect={() => router.push(`${pathname}?settings=Konto`)}><Settings />Inställningar</DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator className="my-1" />
               <DropdownMenuItem><LogOut />Logga ut</DropdownMenuItem>
@@ -126,7 +127,6 @@ export function NavUser({ user }: NavUserProps) {
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
-      <SettingsDialog open={settingsOpen} onOpenChange={setSettingsOpen} />
     </>
   )
 }

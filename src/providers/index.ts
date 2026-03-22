@@ -14,13 +14,6 @@ export {
     useCompanyType,
 } from "./company-provider"
 
-// Text mode provider (Enkel/Avancerad)
-export {
-    TextModeProvider,
-    useTextMode,
-    T,
-} from "./text-mode-provider"
-
 // AI overlay provider (Scooby dialog state)
 export {
     AIDialogProvider,
@@ -32,8 +25,6 @@ export {
 export { ModelProvider, useModel } from "./model-provider"
 
 // Types
-export type { TextMode } from "./text-mode-provider"
-
 export type {
     AIDialogStatus,
     AIDialogOutput,

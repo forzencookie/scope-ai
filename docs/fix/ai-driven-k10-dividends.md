@@ -1,32 +1,37 @@
-# Fix: AI-Driven K10 & Dividend Planning
+# Feature: K10 & Dividend Calculation
 
-> **Flow:** [`docs/flows/ai-interface.md`](../flows/ai-interface.md)
-> **Status:** 🔴 Red (Needs Transition from "Calculator" to "CFO")
+> **Flow:** [`docs/flows/tools.md`](../flows/tools.md)
+> **Status:** ⬜ Not started — future feature
 
-## The Problem
-Currently, K10 and Dividend logic is partially hardcoded into "calculators" in the UI layer. This makes the app a "manageable tool" rather than a "Digital CFO." The AI should own the regulatory references, while the code owns the verified financial data.
+## What This Is
 
-## The Fix: Moving Logic to the "Brain"
+A tool that pulls the user's real financial data (shares, acquisition price, salary paid, free equity) so Scooby can calculate optimal K10 dividend. Same pattern as every other tool — `get_dividend_data` fetches numbers, Scooby reasons about them.
 
-### 1. The Calculator is a Bridge, not a Source
-- **Old Way:** A TypeScript file calculates the `gränsbelopp` using a hardcoded variable for the 2025/2026 Price Base Amount (Prisbasbelopp).
-- **New Way:** 
-    - The **Code** provides: Total shares, acquisition price, salary paid by the company last year.
-    - The **AI (Scooby)** provides: The current legal rules (Simplified rule vs. Salary-based rule) and the specific index values for that tax year.
-    - **Result:** Scooby calculates the optimal dividend and explains *why* (e.g., "Because you paid X in salary, the salary-based rule is better this year").
+## What Needs to Be Built
 
-### 2. Solvency Ownership (ABL 17:3)
-- **Old Way:** UI shows a warning if dividend > distributable equity.
-- **New Way:** 
-    - The **Code** provides: Free equity balance (Konto 2091-2099).
-    - The **AI** evaluates the risk: "You have 500k in free equity, but you have large upcoming tax payments. I recommend a max dividend of 300k to maintain liquidity."
+1. **`get_dividend_data` tool** — Returns from the user's data:
+   - Total shares and acquisition price (from share register)
+   - Salary paid by the company last year (from payroll)
+   - Free equity balance (Konto 2091-2099)
+   - Previous year's dividend (if any)
 
-## Technical Transition
-- **Deprecate:** `src/components/agare/utdelning/dividend-calculator.tsx` (static logic).
-- **Implement:** A tool `get_dividend_data` that returns raw ledger values. 
-- **System Prompt:** Add K10 rule references to Scooby's context so he can reason about the numbers.
+2. **`calculate_k10` tool** — Deterministic calculation (like `calculate_employer_tax`):
+   - Simplified rule (förenklingsregeln): uses IBB (inkomstbasbelopp)
+   - Salary-based rule (huvudregeln): uses actual salary data
+   - Returns both results so Scooby can recommend the better one
+
+3. **Solvency check** — Tool returns distributable equity so Scooby can warn if dividend exceeds safe limits (ABL 17:3)
+
+4. **System prompt context** — K10 rules reference so Scooby can explain *why* one rule is better
+
+## Design Principles
+
+- Named `get_dividend_data` and `calculate_k10` — consistent with other tools (no "AI" prefix)
+- Deterministic calculation in the tool, reasoning and explanation from Scooby
+- Tax rates and IBB values from data sources, not hardcoded
 
 ## Acceptance Criteria
-- [ ] No hardcoded Swedish tax rules in the frontend.
-- [ ] Scooby can explain the difference between the "Simplified rule" and "Salary rule" using the user's real numbers.
-- [ ] Dividend planning starts in the chat, not by opening a calculator.
+- [ ] `get_dividend_data` returns real ledger values for the user's company
+- [ ] `calculate_k10` computes both rules correctly
+- [ ] Scooby explains which rule is better and why, using the user's actual numbers
+- [ ] Dividend planning happens in chat, not a static calculator page

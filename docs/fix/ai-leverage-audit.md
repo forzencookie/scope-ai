@@ -18,7 +18,7 @@
 | **scripts/** | 7 | 7 | 0 | 0 | 0 |
 
 **Totals: ~15 AI-leverage candidates remaining, ~51 dead files deleted ✅, 0 misplaced logic**
-**TypeScript errors: 82 (down from 106)**
+**TypeScript errors: 0 ✅ (down from 106)**
 
 ---
 
@@ -116,7 +116,7 @@ These power instant page renders. Keep the deterministic numbers, let AI add nar
 | `src/components/loner/egenavgifter/use-tax-calculator.ts` | Self-employed tax calculation with reduced rates and karens reductions | AI tool `calculate_egenavgifter` — component becomes display-only |
 | `src/components/rapporter/k10/use-k10-calculation.ts` | K10 dividend threshold: schablonregel (2.75 × IBB × ownership%), lönebaserat utrymme (50% × salary × ownership%), räntebaserat, sparat utrymme | Complex rule engine → AI-driven K10 planning tool |
 | `src/components/rapporter/arsbokslut.tsx` | Year-end closing: P&L aggregation by account ranges (3xxx revenue, 4xxx materials, 5-6xxx external, 7xxx personnel, 8xxx financial) | Scooby suggests closing entries via AI tool |
-| `src/components/agare/utdelning/use-dividend-logic.ts` | Dividend tax blending (20% capital vs 32% income above gränsbelopp), effective rate calculation | AI dividend planning tool with tax optimization |
+| `src/components/agare/utdelning/use-dividend-logic.ts` | Dividend tax blending (20% capital vs 32% income above gränsbelopp), effective rate calculation. **Confirmed: still has hardcoded `0.2` and `0.32` on lines 23, 28-29 — must come from `taxService.getTaxRates()`** | AI dividend planning tool with tax optimization |
 | `src/components/rapporter/agi/use-employer-declaration.ts` | AGI: age extraction from personnummer, employer contribution rates (10.21% under 26/over 65, ~31.42% others), period aggregation | AI tool for AGI generation |
 
 ---
@@ -165,13 +165,13 @@ These power instant page renders. Keep the deterministic numbers, let AI add nar
 
 ## Execution Order
 
-### Phase 1: Delete Dead Code
-Delete all files listed in the DEAD section. Update barrel exports (`index.ts` files) to remove references. Run `tsc --noEmit` to confirm error count drops.
+### Phase 1: Delete Dead Code ✅ Complete
+~~Delete all files listed in the DEAD section. Update barrel exports (`index.ts` files) to remove references.~~
 
-**Expected impact:** ~25-30 fewer TypeScript errors.
+All 51 dead files deleted across two rounds. Barrel exports updated.
 
 ### Phase 2: Fix Remaining TypeScript Errors
-The 81 errors (from before this audit) collapse into ~6 root causes:
+~~The remaining errors collapse into ~6 root causes:~~ ✅ All resolved — `tsc --noEmit` passes clean.
 1. `use-tax-parameters.ts` returns `{ rates }` wrapper — ~40 cascade errors
 2. `VerificationEntry` renamed to `VerificationRow` — ~6 errors
 3. Missing modules (processors/reports, annual-report-processor, ./types) — ~4 errors

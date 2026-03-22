@@ -19,7 +19,6 @@ import {
   SidebarMenuAction,
   useSidebar,
 } from "@/components/ui/sidebar"
-import { SettingsDialog } from "@/components/installningar/settings-dialog"
 import { SidebarModeDropdown } from "./sidebar-mode-dropdown"
 import { AI_CHAT_EVENT, type PageContext } from "@/lib/ai/context"
 import { useAuth } from "@/hooks/use-auth"
@@ -32,7 +31,7 @@ import {
   navAgare,
   navSettings
 } from "../../data/app-navigation"
-import { getTeams } from "@/services/navigation"
+import { getTeams } from "@/services/common/navigation"
 import { Building2, Box } from "lucide-react"
 
 // Default team based on company provider
@@ -72,7 +71,6 @@ export function AppSidebar({
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
-  const settingsParam = searchParams?.get("settings")
   const { state, toggleSidebar } = useSidebar()
   const { user } = useAuth()
 
@@ -107,32 +105,12 @@ export function AppSidebar({
   // Use controlled mode if provided, otherwise internal
   const sidebarMode = mode ?? internalMode
 
-  // State for settings dialog
-  const [settingsOpen, setSettingsOpen] = React.useState(!!settingsParam)
-
-  // Sync state with URL param
-  React.useEffect(() => {
-    setSettingsOpen(!!settingsParam)
-  }, [settingsParam])
-
   // Handle opening settings (pushes to history for back button support)
   const handleOpenSettings = React.useCallback(() => {
     const params = new URLSearchParams(searchParams?.toString())
     params.set("settings", "Konto") // Default tab
     router.push(`${pathname}?${params.toString()}`)
   }, [router, pathname, searchParams])
-
-  // Handle dialog state change
-  const handleSettingsOpenChange = (open: boolean) => {
-    if (!open && settingsParam) {
-      const params = new URLSearchParams(searchParams?.toString())
-      params.delete("settings")
-      router.replace(`${pathname}?${params.toString()}`)
-    } else if (open && !settingsParam) {
-      handleOpenSettings()
-    }
-    setSettingsOpen(open)
-  }
 
   // Store pending AI context when mode switches
   const pendingAIContextRef = React.useRef<PageContext | null>(null)
@@ -239,11 +217,6 @@ export function AppSidebar({
 
   return (
     <>
-      <SettingsDialog
-        open={settingsOpen}
-        onOpenChange={handleSettingsOpenChange}
-        defaultTab={settingsParam || undefined}
-      />
       <Sidebar
         collapsible="offcanvas"
         variant={sidebarVariant}

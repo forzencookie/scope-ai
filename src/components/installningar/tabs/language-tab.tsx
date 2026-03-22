@@ -8,23 +8,14 @@ import {
     SelectTrigger,
     SelectValue,
 } from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
-import { useTextMode } from "@/providers/text-mode-provider"
 import { usePreferences } from "@/hooks/use-preferences"
+import { text } from "@/lib/translations"
 import {
     SettingsPageHeader,
-    SettingsSection,
-    ModeButton,
 } from "@/components/ui/settings-items"
 
 export function LanguageTab() {
-    const { text, setMode } = useTextMode()
     const { preferences, updatePreference, isLoading } = usePreferences()
-
-    const handleTextModeChange = (mode: 'enkel' | 'avancerad') => {
-        setMode(mode)
-        updatePreference('text_mode', mode)
-    }
 
     return (
         <div className="space-y-6">
@@ -109,28 +100,6 @@ export function LanguageTab() {
                     </Select>
                 </div>
             </div>
-
-            <Separator />
-
-            <SettingsSection
-                title={text.settings.textModeSection}
-                description={text.settings.textModeDesc}
-            >
-                <div className="grid grid-cols-2 gap-3 mt-2">
-                    <ModeButton
-                        label="Enkel"
-                        description="Förenklad terminologi för nybörjare"
-                        selected={preferences.text_mode === 'enkel'}
-                        onClick={() => handleTextModeChange('enkel')}
-                    />
-                    <ModeButton
-                        label="Expert"
-                        description="Standard bokföringstermer"
-                        selected={preferences.text_mode === 'avancerad'}
-                        onClick={() => handleTextModeChange('avancerad')}
-                    />
-                </div>
-            </SettingsSection>
         </div>
     )
 }

@@ -74,9 +74,7 @@ export function VerifikationerGrid({
                         <ActionEmptyState
                             icon={FileText}
                             title="Huvudboken är tom"
-                            description="Inga verifikationer har skapats än. Scooby kan hjälpa dig att bokföra dina transaktioner."
-                            actionLabel="Bokför transaktioner"
-                            actionPrompt="Visa mig transaktioner som behöver bokföras"
+                            description="Inga verifikationer har skapats än. Fråga Scooby att bokföra dina transaktioner."
                         />
                     )}
                 </GridTableRows>

@@ -4,7 +4,6 @@ import * as React from "react"
 import { type LucideIcon } from "lucide-react"
 import Link from "next/link"
 
-import { useTextMode } from "@/providers/text-mode-provider"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -19,7 +18,6 @@ import {
 
 interface NavSettingsItem {
   title: string
-  titleEnkel?: string
   url: string
   icon?: LucideIcon
 }
@@ -35,14 +33,12 @@ export function NavSettings({
   onSettingsClick,
   icon: Icon,
 }: NavSettingsProps) {
-  const { isEnkel } = useTextMode()
-
-  // Helper to get the correct title based on mode
-  const getTitle = (item: { title: string; titleEnkel?: string }) => {
-    return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
+  // Helper to get the title
+  const getTitle = (item: { title: string }) => {
+    return item.title
   }
 
-  const label = isEnkel ? "Övrigt" : "Mer"
+  const label = "Mer"
 
   return (
     <SidebarGroup className="group-data-[collapsible=icon]:hidden">

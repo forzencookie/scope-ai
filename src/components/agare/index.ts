@@ -13,3 +13,4 @@ export { Medlemsregister } from './medlemsregister'
 
 // Corporate Actions & Compliance
 export { UtdelningContent } from './utdelning'
+export { Firmatecknare } from './firmatecknare'

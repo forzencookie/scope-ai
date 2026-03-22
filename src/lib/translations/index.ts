@@ -5,22 +5,17 @@ import { settings } from "./settings"
 import { ai } from "./ai"
 
 export const translations = {
-    // Core
     common,
     nav,
     actions,
     labels,
     errors,
     confirm,
-
-    // Finance
     transactions,
     invoices,
     assets,
     supplierInvoices,
     receipts,
-
-    // Business
     reports,
     payroll,
     owners,
@@ -29,14 +24,11 @@ export const translations = {
     periodiseringsfonder,
     formaner,
     investments,
-
-    // Settings
     settings,
-
-    // AI
     ai,
 } as const
 
-// Type helpers
-export type TranslationKey = keyof typeof translations
+/** Direct access to all translated strings */
+export const text = translations
+
 export type Translations = typeof translations

@@ -6,7 +6,6 @@ import Link from "next/link"
 import { cn } from "@/lib/utils"
 
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
-import { useTextMode } from "@/providers/text-mode-provider"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
 import { useQuery } from "@tanstack/react-query"
@@ -25,7 +24,6 @@ import {
 
 interface NavCollapsibleItem {
   title: string
-  titleEnkel?: string
   url: string
   icon?: LucideIcon
   isActive?: boolean
@@ -48,7 +46,6 @@ export function NavCollapsibleSection({
   defaultOpen = false,
   icon: _Icon,
 }: NavCollapsibleSectionProps) {
-  const { isEnkel } = useTextMode()
   const { hasFeature } = useCompany()
 
   // Filter items based on company features
@@ -101,9 +98,9 @@ export function NavCollapsibleSection({
     }
   }, [])
 
-  // Helper to get the correct title based on mode
-  const getTitle = (item: { title: string; titleEnkel?: string }) => {
-    return isEnkel && item.titleEnkel ? item.titleEnkel : item.title
+  // Helper to get the title
+  const getTitle = (item: { title: string }) => {
+    return item.title
   }
 
   // Share the pending-bookings query with usePendingBookings() — React Query deduplicates

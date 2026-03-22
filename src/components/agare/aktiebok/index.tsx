@@ -18,7 +18,6 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useTextMode } from "@/providers/text-mode-provider"
 
 // Sub-components
 import { AktiebokStats } from "./components/aktiebok-stats"
