@@ -27,6 +27,7 @@ import { KanbanBoard, KanbanColumn } from "@/components/shared/kanban"
 import { InvoicesEmptyState } from "./components/InvoicesEmptyState"
 import { InvoicesStats } from "./components/invoices-stats"
 import { InvoiceCard } from "./components/InvoiceCard"
+import { InvoiceDetailOverlay } from "./components/InvoiceDetailOverlay"
 import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 // Constants & Types
@@ -66,6 +67,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
     } = useInvoicesLogic()
 
     const { company } = useCompany()
+    const [selectedInvoice, setSelectedInvoice] = React.useState<UnifiedInvoice | null>(null)
 
     const handleDownloadPDF = React.useCallback((unified: UnifiedInvoice) => {
         const inv = unified.originalCustomerInvoice
@@ -113,6 +115,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
             onMarkSupplierPaid={handleMarkSupplierPaid}
             onDownloadPDF={handleDownloadPDF}
             onCreateCreditNote={handleCreateCreditNote}
+            onViewDetails={setSelectedInvoice}
         />
     )
 
@@ -294,6 +297,13 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
                     </div>
                 )}
 
+            {/* Invoice Detail Overlay */}
+            <InvoiceDetailOverlay
+                isOpen={!!selectedInvoice}
+                onClose={() => setSelectedInvoice(null)}
+                invoice={selectedInvoice}
+                onDownloadPDF={handleDownloadPDF}
+            />
         </div>
     )
 })

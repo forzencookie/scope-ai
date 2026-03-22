@@ -19,6 +19,7 @@ import { useChatNavigation } from "@/hooks/use-chat-navigation"
 import { usePayslipsLogic } from "./use-payslips-logic"
 import { PayslipsStats } from "./payslips-stats"
 import { PayslipsTable } from "./payslips-table"
+import { PayslipDetailOverlay } from "./PayslipDetailOverlay"
 
 export const LonesbeskContent = memo(function LonesbeskContent() {
     const toast = useToast()
@@ -37,6 +38,9 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
 
         // Derived Data
         stats,
+
+        // Overlay
+        selectedPayslip, setSelectedPayslip,
 
         // Handlers
         handleRowClick,
@@ -175,6 +179,13 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
                     onAddPayslip={() => navigateToAI({ prompt: "Kör lönerna" })}
                 />
             </div>
+
+            {/* Payslip Detail Overlay */}
+            <PayslipDetailOverlay
+                isOpen={!!selectedPayslip}
+                onClose={() => setSelectedPayslip(null)}
+                payslip={selectedPayslip}
+            />
 
             {/* Bulk Action Toolbar */}
             <BulkActionToolbar

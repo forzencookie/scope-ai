@@ -96,6 +96,7 @@ export const GENERAL_STATUS_VARIANT: Record<GeneralStatus, StatusVariant> = {
     "Transaktion saknas": "error",
     "Underlag finns": "success",
     "Underlag saknas": "warning",
+    "Obalanserad": "error",
     // Account type labels
     "Tillgång": "info",
     "Skuld": "error",

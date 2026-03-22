@@ -6,6 +6,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { verificationService } from '@/services/accounting/verification-service'
+import { isValidAccount } from '@/lib/bookkeeping/utils'
 import type { Verification } from '@/types'
 
 // =============================================================================
@@ -497,10 +498,150 @@ export const createAccrualTool = defineTool<CreateAccrualParams, AccrualResult>(
     },
 })
 
+// =============================================================================
+// Book Receipt with Verification Tool
+// =============================================================================
+
+export interface BookReceiptParams {
+    receiptId: string
+    supplier: string
+    amount: number
+    date: string
+    expenseAccount: string
+    paymentAccount?: string
+    description?: string
+    vatRate?: number
+}
+
+export interface BookReceiptResult {
+    receiptId: string
+    verificationId: string
+    verificationNumber: string
+    amount: number
+}
+
+export const bookReceiptTool = defineTool<BookReceiptParams, BookReceiptResult>({
+    name: 'book_receipt_with_verification',
+    description: 'Bokför ett kvitto genom att skapa en verifikation med kopplade konteringsrader. Kvittot sparas som underlag (bilaga) på verifikationen. Kräver bekräftelse.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: [],
+    domain: 'bokforing',
+    keywords: ['kvitto', 'bokför', 'verifikation', 'underlag', 'bilaga'],
+    parameters: {
+        type: 'object',
+        properties: {
+            receiptId: { type: 'string', description: 'ID för kvittot att bokföra' },
+            supplier: { type: 'string', description: 'Leverantör' },
+            amount: { type: 'number', description: 'Belopp exkl. moms' },
+            date: { type: 'string', description: 'Bokföringsdatum (YYYY-MM-DD)' },
+            expenseAccount: { type: 'string', description: 'Kostnadskonto (t.ex. 5410 Kontorsmaterial, 6110 Kontorsservice)' },
+            paymentAccount: { type: 'string', description: 'Betalningskonto (standard: 1930 Företagskonto)' },
+            description: { type: 'string', description: 'Beskrivning av köpet' },
+            vatRate: { type: 'number', description: 'Momssats (t.ex. 0.25 = 25%)' },
+        },
+        required: ['receiptId', 'supplier', 'amount', 'date', 'expenseAccount'],
+    },
+    execute: async (params, context) => {
+        const paymentAccount = params.paymentAccount || '1930'
+
+        // Validate accounts against BAS kontoplan
+        if (!isValidAccount(params.expenseAccount)) {
+            return { success: false, error: `Ogiltigt kostnadskonto: ${params.expenseAccount}. Kontrollera mot BAS-kontoplanen.` }
+        }
+        if (!isValidAccount(paymentAccount)) {
+            return { success: false, error: `Ogiltigt betalningskonto: ${paymentAccount}. Kontrollera mot BAS-kontoplanen.` }
+        }
+
+        const desc = params.description || `Kvitto: ${params.supplier}`
+        const vatRate = params.vatRate || 0
+        const vatAmount = Math.round(params.amount * vatRate)
+        const totalAmount = params.amount + vatAmount
+
+        // Build journal entries
+        const entries = [
+            { account: params.expenseAccount, debit: params.amount, credit: 0, description: desc },
+        ]
+
+        // Add VAT entry if applicable
+        if (vatAmount > 0) {
+            entries.push({ account: '2640', debit: vatAmount, credit: 0, description: 'Ingående moms' })
+        }
+
+        // Credit payment account for total
+        entries.push({ account: paymentAccount, debit: 0, credit: totalAmount, description: `Betalning ${params.supplier}` })
+
+        if (context?.isConfirmed) {
+            try {
+                const verification = await verificationService.createVerification({
+                    series: 'A',
+                    date: params.date,
+                    description: desc,
+                    entries,
+                    sourceType: 'receipt',
+                    sourceId: params.receiptId,
+                })
+
+                return {
+                    success: true,
+                    data: {
+                        receiptId: params.receiptId,
+                        verificationId: verification.id,
+                        verificationNumber: `${verification.series}${verification.number}`,
+                        amount: totalAmount,
+                    },
+                    message: `Kvitto bokfört som ${verification.series}${verification.number} (${totalAmount.toLocaleString('sv-SE')} kr). Verifikationen är sparad med kvittot som underlag.`,
+                }
+            } catch (error) {
+                const msg = error instanceof Error ? error.message : 'Kunde inte bokföra kvittot.'
+                return { success: false, error: msg }
+            }
+        }
+
+        // Preflight: return confirmation request
+        const summaryLines = [
+            { label: 'Leverantör', value: params.supplier },
+            { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
+        ]
+
+        if (vatAmount > 0) {
+            summaryLines.push({ label: 'Moms', value: `${vatAmount.toLocaleString('sv-SE')} kr (${Math.round(vatRate * 100)}%)` })
+            summaryLines.push({ label: 'Totalt', value: `${totalAmount.toLocaleString('sv-SE')} kr` })
+        }
+
+        summaryLines.push(
+            { label: 'Kostnadskonto', value: params.expenseAccount },
+            { label: 'Betalningskonto', value: paymentAccount },
+            { label: 'Datum', value: params.date },
+        )
+
+        const confirmationRequest: AIConfirmationRequest = {
+            title: 'Bokför kvitto',
+            description: desc,
+            summary: summaryLines,
+            action: { toolName: 'book_receipt_with_verification', params },
+            requireCheckbox: true,
+        }
+
+        return {
+            success: true,
+            data: {
+                receiptId: params.receiptId,
+                verificationId: 'pending',
+                verificationNumber: 'pending',
+                amount: totalAmount,
+            },
+            message: `Kvitto från ${params.supplier} förberett för bokföring (${totalAmount.toLocaleString('sv-SE')} kr). Bekräfta för att spara.`,
+            confirmationRequired: confirmationRequest,
+        }
+    },
+})
+
 export const verificationExtendedTools = [
     getVerificationsTool,
     getVerificationStatsTool,
     periodizeExpenseTool,
     reverseVerificationTool,
     createAccrualTool,
+    bookReceiptTool,
 ]

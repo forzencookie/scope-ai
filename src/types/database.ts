@@ -2743,6 +2743,70 @@ export type Database = {
           },
         ]
       }
+      verification_attachments: {
+        Row: {
+          id: string
+          verification_id: string
+          file_name: string
+          file_url: string
+          file_type: string
+          source_type: string | null
+          source_id: string | null
+          user_id: string
+          company_id: string
+          uploaded_at: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          verification_id: string
+          file_name: string
+          file_url: string
+          file_type?: string
+          source_type?: string | null
+          source_id?: string | null
+          user_id: string
+          company_id: string
+          uploaded_at?: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          verification_id?: string
+          file_name?: string
+          file_url?: string
+          file_type?: string
+          source_type?: string | null
+          source_id?: string | null
+          user_id?: string
+          company_id?: string
+          uploaded_at?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "verification_attachments_verification_id_fkey"
+            columns: ["verification_id"]
+            isOneToOne: false
+            referencedRelation: "verifications"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_attachments_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "users"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "verification_attachments_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       verifications: {
         Row: {
           company_id: string | null

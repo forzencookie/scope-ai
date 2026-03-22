@@ -377,6 +377,21 @@ export interface Verification {
   /** Source that created this verification (e.g. 'manual', 'receipt', 'invoice') */
   sourceType?: string
   sourceId?: string
+  /** Underlag — supporting documents attached to this verification (BFL 5:6) */
+  attachments?: VerificationAttachment[]
+}
+
+/** A file attached to a verification as underlag (supporting documentation per BFL 5:6) */
+export interface VerificationAttachment {
+  id: string
+  verificationId: string
+  fileName: string
+  fileUrl: string
+  fileType: 'image/jpeg' | 'image/png' | 'application/pdf' | string
+  uploadedAt: string
+  /** What generated this attachment */
+  sourceType?: 'receipt' | 'invoice' | 'manual'
+  sourceId?: string
 }
 
 // ============================================

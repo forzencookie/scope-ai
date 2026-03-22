@@ -18,6 +18,7 @@ export type AuditAction =
 
 export type AuditEntityType =
     | 'verifications'
+    | 'verification_attachments'
     | 'transactions'
     | 'receipts'
     | 'payslips'

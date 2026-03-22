@@ -1,6 +1,6 @@
 import { createBrowserClient } from '@/lib/database/client'
 import type { Json, Database } from '@/types/database'
-import type { Verification, VerificationEntry } from '@/types'
+import type { Verification, VerificationEntry, VerificationAttachment } from '@/types'
 import { logAuditEntry } from '@/lib/audit'
 import { isValidAccount } from '@/lib/bookkeeping/utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
@@ -19,7 +19,7 @@ function getSupabase(client?: SupabaseClient<Database>) {
 export type VerificationRow = Database['public']['Tables']['verifications']['Row']
 
 /** Map a database row to the Verification UI model. */
-function mapRowToVerification(row: Record<string, any>): Verification {
+function mapRowToVerification(row: VerificationRow): Verification {
     const entries = (row.rows as VerificationEntry[] | null) || []
     const totalDebit = entries.reduce((sum, e) => sum + (e.debit || 0), 0)
     const totalCredit = entries.reduce((sum, e) => sum + (e.credit || 0), 0)
@@ -426,7 +426,7 @@ export const verificationService = {
         }
 
         const supabase = getSupabase(client)
-        const updatePayload: Record<string, unknown> = {}
+        const updatePayload: Database['public']['Tables']['verifications']['Update'] = {}
         if (updates.description !== undefined) updatePayload.description = updates.description
         if (updates.date !== undefined) updatePayload.date = updates.date
         if (updates.entries !== undefined) {
@@ -483,4 +483,222 @@ export const verificationService = {
             metadata: { date: existing.date, description: existing.description },
         })
     },
+
+    // =========================================================================
+    // Attachments (underlag) — BFL 5:6
+    // =========================================================================
+
+    /**
+     * Get attachments for a verification
+     */
+    async getAttachmentsForVerification(
+        verificationId: string,
+        client?: SupabaseClient<Database>
+    ): Promise<VerificationAttachment[]> {
+        const supabase = getSupabase(client)
+
+        const { data, error } = await supabase
+            .from('verification_attachments')
+            .select('*')
+            .eq('verification_id', verificationId)
+            .order('uploaded_at', { ascending: false })
+
+        if (error) throw error
+        if (!data) return []
+
+        return data.map(mapRowToAttachment)
+    },
+
+    /**
+     * Get a verification by ID with its attachments included
+     */
+    async getVerificationWithAttachments(
+        id: string,
+        client?: SupabaseClient<Database>
+    ): Promise<(Verification & { attachments: VerificationAttachment[] }) | null> {
+        const verification = await this.getVerificationById(id, client)
+        if (!verification) return null
+
+        const attachments = await this.getAttachmentsForVerification(id, client)
+
+        return { ...verification, attachments }
+    },
+
+    /**
+     * Upload a file and attach it to a verification as underlag.
+     * Stores the file in Supabase Storage and creates a row in verification_attachments.
+     */
+    async addAttachment(
+        verificationId: string,
+        file: File,
+        metadata?: { sourceType?: 'receipt' | 'invoice' | 'manual'; sourceId?: string },
+        client?: SupabaseClient<Database>
+    ): Promise<VerificationAttachment> {
+        const supabase = getSupabase(client)
+
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) throw new Error('Ingen inloggad användare.')
+
+        const { data: company } = await supabase.from('companies').select('id').single()
+        if (!company) throw new Error('Företag saknas.')
+
+        // Verify the verification exists
+        const verification = await this.getVerificationById(verificationId, client)
+        if (!verification) throw new Error('Verifikation hittades inte.')
+
+        // Upload file to Supabase Storage
+        const fileExt = file.name.split('.').pop() || 'bin'
+        const storagePath = `${company.id}/${verificationId}/${crypto.randomUUID()}.${fileExt}`
+
+        const { error: uploadError } = await supabase.storage
+            .from('verification-underlag')
+            .upload(storagePath, file, { contentType: file.type })
+
+        if (uploadError) {
+            throw new Error(`Kunde inte ladda upp fil: ${uploadError.message}`)
+        }
+
+        // Get the public URL
+        const { data: urlData } = supabase.storage
+            .from('verification-underlag')
+            .getPublicUrl(storagePath)
+
+        // Insert attachment row
+        const { data, error } = await supabase
+            .from('verification_attachments')
+            .insert({
+                verification_id: verificationId,
+                file_name: file.name,
+                file_url: urlData.publicUrl,
+                file_type: file.type,
+                source_type: metadata?.sourceType || 'manual',
+                source_id: metadata?.sourceId || null,
+                user_id: user.id,
+                company_id: company.id,
+            })
+            .select()
+            .single()
+
+        if (error) {
+            // Clean up uploaded file on insert failure
+            await supabase.storage.from('verification-underlag').remove([storagePath])
+            throw new Error(`Kunde inte spara bilaga: ${error.message}`)
+        }
+
+        logAuditEntry({
+            action: 'created',
+            entityType: 'verification_attachments',
+            entityId: data.id,
+            entityName: file.name,
+            metadata: { verificationId, sourceType: metadata?.sourceType || 'manual' },
+        })
+
+        return mapRowToAttachment(data)
+    },
+
+    /**
+     * Delete an attachment from a verification
+     */
+    async deleteAttachment(
+        attachmentId: string,
+        client?: SupabaseClient<Database>
+    ): Promise<void> {
+        const supabase = getSupabase(client)
+
+        // Get attachment to find storage path
+        const { data: attachment, error: fetchError } = await supabase
+            .from('verification_attachments')
+            .select('*')
+            .eq('id', attachmentId)
+            .single()
+
+        if (fetchError || !attachment) throw new Error('Bilaga hittades inte.')
+
+        // Extract storage path from URL and remove file
+        const url = new URL(attachment.file_url)
+        const storagePath = url.pathname.split('/verification-underlag/').pop()
+        if (storagePath) {
+            await supabase.storage.from('verification-underlag').remove([storagePath])
+        }
+
+        // Delete the row
+        const { error } = await supabase
+            .from('verification_attachments')
+            .delete()
+            .eq('id', attachmentId)
+
+        if (error) throw error
+
+        logAuditEntry({
+            action: 'deleted',
+            entityType: 'verification_attachments',
+            entityId: attachmentId,
+            entityName: attachment.file_name,
+            metadata: { verificationId: attachment.verification_id },
+        })
+    },
+
+    /**
+     * Create a verification and attach a file atomically.
+     * Used by the receipt booking flow: transaction + verification + attachment in one go.
+     */
+    async createVerificationWithAttachment(
+        params: {
+            series?: string
+            date: string
+            description: string
+            entries: VerificationEntry[]
+            sourceType?: string
+            sourceId?: string
+            attachment: File
+            attachmentSourceType?: 'receipt' | 'invoice' | 'manual'
+            attachmentSourceId?: string
+        },
+        client?: SupabaseClient<Database>
+    ): Promise<Verification & { attachments: VerificationAttachment[] }> {
+        // Create the verification first (validates entries, numbering, period lock)
+        const verification = await this.createVerification({
+            series: params.series,
+            date: params.date,
+            description: params.description,
+            entries: params.entries,
+            sourceType: params.sourceType,
+            sourceId: params.sourceId,
+        }, client)
+
+        // Attach the file
+        const attachment = await this.addAttachment(
+            verification.id,
+            params.attachment,
+            {
+                sourceType: params.attachmentSourceType || (() => {
+                    const valid = ['receipt', 'invoice', 'manual'] as const
+                    return valid.find(t => t === params.sourceType)
+                })(),
+                sourceId: params.attachmentSourceId || params.sourceId,
+            },
+            client
+        )
+
+        return { ...verification, attachments: [attachment] }
+    },
+}
+
+type AttachmentRow = Database['public']['Tables']['verification_attachments']['Row']
+
+/** Map a verification_attachments row to the VerificationAttachment UI model */
+function mapRowToAttachment(row: AttachmentRow): VerificationAttachment {
+    const validSourceTypes = ['receipt', 'invoice', 'manual'] as const
+    const sourceType = validSourceTypes.find(t => t === row.source_type)
+
+    return {
+        id: row.id,
+        verificationId: row.verification_id,
+        fileName: row.file_name,
+        fileUrl: row.file_url,
+        fileType: row.file_type,
+        uploadedAt: row.uploaded_at,
+        sourceType,
+        sourceId: row.source_id || undefined,
+    }
 }

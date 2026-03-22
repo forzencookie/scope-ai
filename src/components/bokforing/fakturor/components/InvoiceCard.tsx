@@ -28,6 +28,7 @@ interface InvoiceCardProps {
     onMarkSupplierPaid: (id: string) => void
     onDownloadPDF?: (invoice: UnifiedInvoice) => void
     onCreateCreditNote?: (id: string) => void
+    onViewDetails?: (invoice: UnifiedInvoice) => void
 }
 
 export const InvoiceCard = React.memo(function InvoiceCard({
@@ -38,6 +39,7 @@ export const InvoiceCard = React.memo(function InvoiceCard({
     onMarkSupplierPaid,
     onDownloadPDF,
     onCreateCreditNote,
+    onViewDetails,
 }: InvoiceCardProps) {
     const isCustomer = invoice.direction === "in"
     const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
@@ -64,7 +66,7 @@ export const InvoiceCard = React.memo(function InvoiceCard({
             }
         >
             <DropdownMenuLabel>Åtgärder</DropdownMenuLabel>
-            <DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onViewDetails?.(invoice)}>
                 <Eye className="h-3.5 w-3.5 mr-2" />
                 Visa detaljer
             </DropdownMenuItem>

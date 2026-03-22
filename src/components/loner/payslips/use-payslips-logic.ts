@@ -3,7 +3,6 @@
 import { useState, useMemo, useEffect, useCallback } from "react"
 import { useAllTaxRates } from "@/hooks/use-tax-parameters"
 import { useToast } from "@/components/ui/toast"
-import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 export type Payslip = {
     id: string
@@ -23,7 +22,6 @@ export type Payslip = {
  * This hook purely maps database state to the UI.
  */
 export function usePayslipsLogic() {
-    const { navigateToAI } = useChatNavigation()
     const { rates: taxRates } = useAllTaxRates(new Date().getFullYear())
     const [allPayslips, setAllPayslips] = useState<Payslip[]>([])
     const [isLoading, setIsLoading] = useState(true)
@@ -85,8 +83,10 @@ export function usePayslipsLogic() {
         fetchPayslips()
     }, [fetchPayslips])
 
+    const [selectedPayslip, setSelectedPayslip] = useState<Payslip | null>(null)
+
     const handleRowClick = (slip: Payslip) => {
-        navigateToAI({ prompt: `Jag vill se detaljer för lönebeskedet för ${slip.employee} period ${slip.period}.` })
+        setSelectedPayslip(slip)
     }
 
     const stats = useMemo(() => {
@@ -163,6 +163,9 @@ export function usePayslipsLogic() {
 
         // Derived Data
         stats,
+
+        // Overlay
+        selectedPayslip, setSelectedPayslip,
 
         // Handlers
         handleRowClick,

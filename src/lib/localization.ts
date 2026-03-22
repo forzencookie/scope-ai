@@ -81,6 +81,7 @@ export const GENERAL_STATUS_LABELS = {
     TRANSACTION_MISSING: "Transaktion saknas",
     DOCUMENT_EXISTS: "Underlag finns",
     DOCUMENT_MISSING: "Underlag saknas",
+    UNBALANCED: "Obalanserad",
     // Account type labels
     ASSET: "Tillgång",
     LIABILITY: "Skuld",
