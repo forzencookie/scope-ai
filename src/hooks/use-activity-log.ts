@@ -17,7 +17,7 @@
  * 2. `events` table (useEvents hook) — Company timeline/calendar
  *    - Tracks company-level happenings from all sources (AI, system, authority)
  *    - Has workflow status, corporate action types, proof/hash chain
- *    - Used by: Översikt tab, EventsCalendar, AI tools
+ *    - Used by: Händelser page, AI tools (get_events_by_date)
  *
  * These are intentionally separate: activity_log = granular audit,
  * events = high-level company narrative.

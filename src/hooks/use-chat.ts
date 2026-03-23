@@ -83,7 +83,7 @@ export function useChat(options: UseChatOptions = {}) {
         status,
         setMessages: setVercelMessages,
     } = useVercelChat({
-        id: currentConversationId || 'new',
+        id: currentConversationId ?? undefined,
         transport: new DefaultChatTransport({
             api: '/api/chat',
             body: {
@@ -251,28 +251,19 @@ export function useChat(options: UseChatOptions = {}) {
     }, [vercelMessages])
 
     const sendMessage = useCallback(async (opts: SendMessageOptions) => {
-        let conversationId = currentConversationId
-
-        if (!conversationId) {
-            conversationId = crypto.randomUUID()
-            setCurrentConversationId(conversationId)
-        }
-
         const attachments = opts.files ? await Promise.all(opts.files.map(fileToBase64)) : undefined
 
         await append({
             role: 'user',
             parts: [{ type: 'text', text: opts.content }],
-            // Pass attachments/mentions in the options
-            // Note: In a full app, we'd map attachments to Vercel's experimental_attachments
         }, {
             body: {
-                conversationId,
+                conversationId: currentConversationId,
                 attachments,
                 mentions: opts.mentions,
             }
         })
-    }, [append, currentConversationId, setCurrentConversationId])
+    }, [append, currentConversationId])
 
     const regenerateResponse = useCallback(() => {
         reload()

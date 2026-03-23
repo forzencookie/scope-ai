@@ -1,6 +1,6 @@
 "use client"
 
-import { memo, useMemo } from "react"
+import { memo } from "react"
 import { Plus, Send, Download, Trash2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { SearchBar } from "@/components/ui/search-bar"
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { useToast } from "@/components/ui/toast"
 import { BulkActionToolbar, type BulkAction } from "@/components/shared"
+import { PageHeader } from "@/components/shared"
 import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 import { usePayslipsLogic } from "./use-payslips-logic"
@@ -27,7 +28,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
 
     const {
         // State
-        allPayslips,
         filteredPayslips,
         isLoading,
         selectedIds,
@@ -48,18 +48,6 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         toggleAll,
         clearSelection
     } = usePayslipsLogic()
-
-    // Derive the overall period status from current period payslips
-    const periodStatus = useMemo(() => {
-        if (!allPayslips.length) return "Utkast" as const
-        const periodSlips = allPayslips.filter(p => p.period === stats.currentPeriod)
-        if (!periodSlips.length) return "Utkast" as const
-        const allSent = periodSlips.every(p => p.status === "Skickad")
-        if (allSent) return "Skickad" as const
-        const anyReview = periodSlips.some(p => p.status === "Godkänd")
-        if (anyReview) return "Granskas" as const
-        return "Utkast" as const
-    }, [allPayslips, stats.currentPeriod])
 
     const bulkActions: BulkAction[] = [
         {
@@ -91,21 +79,27 @@ export const LonesbeskContent = memo(function LonesbeskContent() {
         },
     ]
 
-    const actionButton = (
-        <Button onClick={() => navigateToAI({ prompt: "Kör lönerna" })} size="lg" className="w-full sm:w-auto">
-            <Plus className="h-4 w-4 mr-2" />
-            Ny lönekörning
-        </Button>
-    )
-
     return (
-        <div className="w-full space-y-6">
-            {/* Dashboard: Status Banner + Key Metrics */}
+        <div className="w-full space-y-4 md:space-y-6">
+            {/* Page Heading */}
+            <PageHeader
+                title="Löneöversikt"
+                subtitle={`Period: ${stats.currentPeriod} — ${stats.employeeCount} anställd${stats.employeeCount !== 1 ? "a" : ""}`}
+                actions={
+                    <Button
+                        className="gap-2 shrink-0"
+                        onClick={() => navigateToAI({ prompt: "Kör lönerna" })}
+                    >
+                        <Plus className="h-4 w-4" />
+                        Ny lönekörning
+                    </Button>
+                }
+            />
+
+            {/* Stats Cards */}
             <PayslipsStats
                 stats={stats}
-                periodStatus={periodStatus}
                 isLoading={isLoading}
-                actionButton={actionButton}
             />
 
             {/* Table Area — secondary section */}

@@ -7,7 +7,7 @@
  * The conversation history is fetched once and cached.
  */
 
-import { useState, useCallback, useEffect, useMemo } from 'react'
+import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Conversation, Message } from '@/lib/chat-types'
 
@@ -52,6 +52,9 @@ function mapConversation(conv: RawConversation): Conversation {
 export function useConversations() {
     const queryClient = useQueryClient()
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
+    // Ref mirrors the state so startNewConversation can read it without a dependency
+    const conversationIdRef = useRef(currentConversationId)
+    conversationIdRef.current = currentConversationId
 
     // Use React Query for caching conversation history
     const { data: conversations = [], isLoading } = useQuery({
@@ -109,25 +112,27 @@ export function useConversations() {
         } catch {}
     }, [])
 
-    // Start new conversation
+    // Start new conversation — reads the current ID from a ref to avoid
+    // recreating this callback when currentConversationId changes.
     const startNewConversation = useCallback(() => {
+        const prevId = conversationIdRef.current
         // Extract memories from the conversation we're leaving (skip incognito)
-        if (currentConversationId) {
+        if (prevId) {
             const current = queryClient.getQueryData<Conversation[]>(conversationsQueryKey)
-            const conv = current?.find(c => c.id === currentConversationId)
+            const conv = current?.find(c => c.id === prevId)
             if (conv && !conv.isIncognito) {
-                extractMemories(currentConversationId)
+                extractMemories(prevId)
             }
             // Remove incognito conversations from cache when leaving
             if (conv?.isIncognito) {
                 queryClient.setQueryData<Conversation[]>(conversationsQueryKey, (old = []) =>
-                    old.filter(c => c.id !== currentConversationId)
+                    old.filter(c => c.id !== prevId)
                 )
             }
         }
-        setCurrentConversationId(null)
+        setCurrentConversationId(crypto.randomUUID())
         window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [currentConversationId, extractMemories, queryClient])
+    }, [extractMemories, queryClient])
 
     // Load a conversation (fetches messages if not already loaded)
     const loadConversation = useCallback(async (conversationId: string) => {

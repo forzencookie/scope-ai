@@ -35,7 +35,7 @@ export function ActionEmptyState({
 
     return (
         <div className={cn("flex flex-col items-center justify-center py-16 px-4 text-center animate-in fade-in zoom-in duration-300", className)}>
-            <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4 border border-border/50">
+            <div className="h-16 w-16 rounded-2xl bg-muted/50 flex items-center justify-center mb-4">
                 <Icon className="h-8 w-8 text-muted-foreground/60" />
             </div>
             <h3 className="text-lg font-semibold mb-2">{title}</h3>

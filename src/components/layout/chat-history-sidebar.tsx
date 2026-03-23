@@ -48,9 +48,9 @@ function groupConversationsByDate(conversations: Conversation[]) {
     return groups.filter(g => g.convs.length > 0)
 }
 
-/** Build a Scooby prompt from a task so clicking it starts a conversation about it. */
+/** Build a Scooby prompt from a task. Uses the task's rich prompt if available. */
 function taskToPrompt(task: DynamicTask): string {
-    return `Hjälp mig med: ${task.title}`
+    return task.prompt || `Hjälp mig med: ${task.title}`
 }
 
 interface ChatHistorySidebarProps {
