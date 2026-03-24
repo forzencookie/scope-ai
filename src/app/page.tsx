@@ -144,7 +144,7 @@ export default function LandingPage() {
                                 Beta
                             </div>
 
-                            <TypewriterHeroText line1="framtidens ekonomi." line2="se helheten, förstå detaljerna." />
+                            <TypewriterHeroText line1="bokföring för framtiden." line2="starta ditt bolag." />
 
                             <Link href="/logga-in" className="flex items-center justify-center gap-2 px-10 py-3.5 bg-[#f5f5f5] text-black rounded-2xl hover:bg-white transition-all font-medium text-lg w-fit hover:scale-[1.02] active:scale-[0.98]">
                                 kom igång <ArrowRight className="w-5 h-5" />
