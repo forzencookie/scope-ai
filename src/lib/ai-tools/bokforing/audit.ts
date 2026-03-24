@@ -33,7 +33,6 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, Balanc
             supplierInvoices,
             payslips,
             shareholders,
-            _taxReports,
         ] = await accountService.getAuditData('2000-01-01', dateTo)
 
         const balances = rawBalances.map(b => ({
@@ -123,8 +122,8 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, Balanc
         {
             const accountBal = -(accountBalance(1510, 1519))
             const openInvoices = (customerInvoices || [])
-                .filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-            const invoiceTotal = openInvoices.reduce((sum: number, i: any) => sum + (i.total_amount || 0), 0)
+                .filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
+            const invoiceTotal = openInvoices.reduce((sum: number, i) => sum + (i.total_amount || 0), 0)
 
             if (Math.abs(accountBal - invoiceTotal) > 100 && (accountBal > 0 || invoiceTotal > 0)) {
                 issues.push({
@@ -152,8 +151,8 @@ export const runBalanceSheetAuditTool = defineTool<Record<string, never>, Balanc
         {
             const accountBal = accountBalance(2440, 2449)
             const openBills = (supplierInvoices || [])
-                .filter((i: any) => i.status !== 'paid' && i.status !== 'cancelled')
-            const billsTotal = openBills.reduce((sum: number, i: any) => sum + (i.total_amount || 0), 0)
+                .filter((i) => i.status !== 'paid' && i.status !== 'cancelled')
+            const billsTotal = openBills.reduce((sum: number, i) => sum + (i.total_amount || 0), 0)
 
             if (Math.abs(accountBal - billsTotal) > 100 && (Math.abs(accountBal) > 0 || billsTotal > 0)) {
                 issues.push({

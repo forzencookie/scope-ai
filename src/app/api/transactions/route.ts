@@ -1,11 +1,12 @@
 /**
  * Transactions API
  *
- * Security: Uses getAuthContext() with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
+import { nullToUndefined } from "@/lib/utils"
 
 // Helper to format transaction for frontend
 function formatTransaction(tx: Record<string, unknown>) {
@@ -29,78 +30,50 @@ function formatTransaction(tx: Record<string, unknown>) {
     }
 }
 
-export async function GET(request: NextRequest) {
-    try {
-        const ctx = await getAuthContext();
+export const GET = withAuth(async (request, { supabase, userId, companyId }) => {
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '200', 10);
+    const startDate = nullToUndefined(searchParams.get('startDate'));
+    const endDate = nullToUndefined(searchParams.get('endDate'));
+    const status = nullToUndefined(searchParams.get('status'));
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    let query = supabase
+        .from('transactions')
+        .select('*')
+        .order('date', { ascending: false })
+        .limit(limit);
 
-        const { supabase, userId, companyId } = ctx;
+    if (startDate) query = query.gte('date', startDate);
+    if (endDate) query = query.lte('date', endDate);
+    if (status) query = query.eq('status', status);
 
-        const { searchParams } = new URL(request.url);
-        const limit = parseInt(searchParams.get('limit') || '200', 10);
-        const startDate = searchParams.get('startDate') || undefined;
-        const endDate = searchParams.get('endDate') || undefined;
-        const status = searchParams.get('status') || undefined;
+    const { data: transactions, error } = await query;
+    if (error) console.error('[Transactions] list error:', error);
 
-        let query = supabase
-            .from('transactions')
-            .select('*')
-            .order('date', { ascending: false })
-            .limit(limit);
+    return NextResponse.json({
+        transactions: (transactions || []).map(tx => formatTransaction(tx as Record<string, unknown>)),
+        userId,
+        companyId,
+        timestamp: new Date()
+    })
+})
 
-        if (startDate) query = query.gte('date', startDate);
-        if (endDate) query = query.lte('date', endDate);
-        if (status) query = query.eq('status', status);
+export const POST = withAuth(async (request, { supabase, userId, companyId }) => {
+    const body = await request.json();
 
-        const { data: transactions, error } = await query;
-        if (error) console.error('[Transactions] list error:', error);
+    const { data: transaction, error } = await supabase
+        .from('transactions')
+        .insert({ ...body, user_id: body.user_id ?? userId, company_id: body.company_id ?? companyId })
+        .select()
+        .single();
 
-        return NextResponse.json({
-            success: true,
-            transactions: (transactions || []).map(tx => formatTransaction(tx as Record<string, unknown>)),
-            userId,
-            companyId,
-            timestamp: new Date()
-        })
-    } catch (error) {
-        console.error('Transactions API error:', error)
-        return NextResponse.json({ error: 'Failed to fetch transactions' }, { status: 500 })
+    if (error) console.error('[Transactions] create error:', error);
+
+    if (!transaction) {
+        return ApiResponse.serverError('Failed to create transaction');
     }
-}
 
-export async function POST(request: NextRequest) {
-    try {
-        const ctx = await getAuthContext();
-
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { supabase, userId, companyId } = ctx;
-
-        const body = await request.json();
-
-        const { data: transaction, error } = await supabase
-            .from('transactions')
-            .insert({ ...body, user_id: body.user_id ?? userId, company_id: body.company_id ?? companyId })
-            .select()
-            .single();
-
-        if (error) console.error('[Transactions] create error:', error);
-
-        if (!transaction) {
-            return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
-        }
-
-        return NextResponse.json({
-            success: true,
-            transaction: formatTransaction(transaction as Record<string, unknown>),
-        });
-    } catch (error) {
-        console.error('Transactions POST error:', error);
-        return NextResponse.json({ error: 'Failed to create transaction' }, { status: 500 });
-    }
-}
+    return NextResponse.json({
+        transaction: formatTransaction(transaction as Record<string, unknown>),
+    });
+})

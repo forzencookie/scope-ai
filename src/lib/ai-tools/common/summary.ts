@@ -7,7 +7,7 @@
 
 import { defineTool } from '../registry'
 import { verificationService } from '@/services/accounting/verification-service'
-import { activityService } from '@/services/common/activity-service'
+import { getEvents } from '@/services/common/event-service'
 import { formatCurrency } from '@/lib/utils'
 
 export interface SummaryParams {
@@ -63,11 +63,10 @@ export const getSummaryTool = defineTool<SummaryParams, SummaryResult>({
             limit: 1000
         })
 
-        // 2. Fetch activities for action summary
-        const { activities } = await activityService.getActivities({
-            companyId,
-            dateFilter: params.period === 'day' ? now : null,
-            limit: 50
+        // 2. Fetch events for action summary
+        const { events } = await getEvents({
+            dateFrom: startDate,
+            limit: 50,
         })
 
         // 3. Calculate financial totals
@@ -89,9 +88,9 @@ export const getSummaryTool = defineTool<SummaryParams, SummaryResult>({
         })
 
         const highlights: string[] = []
-        if (activities.length > 0) {
-            const latest = activities[0]
-            highlights.push(`${latest.userName} ${latest.action} ${latest.entityName}`)
+        if (events.length > 0) {
+            const latest = events[0]
+            highlights.push(`${latest.actor.name || 'System'} ${latest.action} ${latest.title}`)
         }
 
         const periodLabel = params.period === 'day' ? 'idag' : params.period === 'week' ? 'senaste veckan' : 'senaste månaden'
@@ -104,7 +103,7 @@ export const getSummaryTool = defineTool<SummaryParams, SummaryResult>({
                 expenses,
                 netResult: revenue - expenses,
                 verificationCount: verifications.length,
-                activityCount: activities.length,
+                activityCount: events.length,
                 highlights
             },
             message: `Här är en sammanfattning för ${periodLabel}: Resultatet är ${formatCurrency(revenue - expenses)}. Vi har registrerat ${verifications.length} verifikationer.`

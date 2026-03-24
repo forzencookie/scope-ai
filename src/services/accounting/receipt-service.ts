@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import { RECEIPT_STATUSES, type ReceiptStatus } from '@/lib/status-types'
 import type { Database } from '@/types/database'
 
@@ -84,7 +85,7 @@ export const receiptService = {
             status: (row.status as ReceiptStatus) || RECEIPT_STATUSES.NEW,
             attachment: row.image_url || row.file_url || '',
             hasAttachment: !!(row.image_url || row.file_url),
-            attachmentUrl: row.image_url || row.file_url || undefined,
+            attachmentUrl: nullToUndefined(row.image_url || row.file_url),
             linkedTransaction: undefined,
         }))
 

@@ -10,12 +10,21 @@
 - **Database schema fix** — `docs/fix/database-schema.md` is complete. WS-01 is unblocked.
 - **Architecture cleanup** — Services restructured into domain subdirectories. `use-cached-query.ts` deleted, all consumers migrated to React Query. Dead code removed from `types/ownership.ts`. Dead world map script deleted.
 - **Route extraction** — Invoice numbering/VAT and månadsavslut logic moved from API routes into services.
+- **Null/undefined boundary** — `nullToUndefined()` utility added. 40 `?? undefined` and 46 `|| undefined` fixed across ~40 files. Convention: `T | undefined` (matching React).
+- **withAuth migration** — All 39 API routes migrated from manual `getAuthContext()` to `withAuth`/`withAuthParams` wrappers. New `requireAuthContext()` bridges auth types.
+- **API response standardization** — Removed `success: true/false` from all routes. Data returned directly with HTTP status codes. Consistent `{ error }` for failures.
+- **RPC type safety** — All `any` casts in service RPC calls replaced with proper types (account-service, closing-entry-service, verification-service, invoice-service, tax-calculation-service, board-service, ai-audit-service).
+- **Zero-tolerance cleanup** — 0 `as any`, 0 `@ts-nocheck`, 0 `@ts-ignore`, 0 `eslint-disable`, 0 `_` prefix unused vars. All `any` in hooks/tools/schema also fixed.
+- **Stale deadlines fixed** — Hardcoded 2024-2025 dates in `navigation.ts` replaced with dynamic calculation.
+- **`company_members` table dropped** — Confusing overlap with domain tables. Auth now queries `companies.user_id` directly.
+- **`pending_bookings` system removed** — Table, service (441 lines), hook (229 lines), API route, server actions all deleted. Booking routes now create verifications directly. Confirmation happens in Scooby chat UI, not a database staging table.
+- **`activity_log` merged into `events`** — Table, service (211 lines), trigger function dropped. Hook (`use-activity-log.ts`) and UI (`activity-feed.tsx`) now query the `events` table. `audit.ts` inserts into `events`. AI summary tool uses `event-service`. Single unified timeline with hash chain integrity.
 
 ## Active Workstreams
 
 | # | Issue | Thinking | Status |
 |---|-------|----------|--------|
-| 01 | [Type Safety](01-type-safety.md) — 0 type errors ✅, 1 remaining `as any`, 0 `@ts-nocheck`, 0 `@ts-ignore` | 🟢 Medium | 🟢 Done — `tsc --noEmit` passes clean |
+| 01 | [Type Safety](01-type-safety.md) — 0 type errors ✅, 0 `as any` ✅, 0 `@ts-nocheck`, 0 `@ts-ignore`, 0 `?? undefined`, 0 `|| undefined` (1 intentional). All RPC results typed. | 🟢 Medium | 🟢 Done |
 | 02 | [Dead Code](02-dead-code-cleanup.md) — 1 stub tool remaining, disconnected model system | 🟢 Medium | 🟡 Nearly done |
 | 03 | [Tool–Service Consistency](03-tool-service-consistency.md) — duplicate tool name fixed, service bypasses largely fixed, some direct Supabase in tools may remain | 🟢 Medium | 🟢 Mostly done |
 | 04 | [Generator Fixes](04-generator-fixes.md) — SRU bug fixed, disconnected model ID system remains | 🟢 Medium | 🟡 Partially done |
@@ -53,4 +62,4 @@
 | Route extraction | Invoice creation + månadsavslut business logic extracted to services |
 | `use-cached-query.ts` | Deleted. 6 consumers migrated to React Query (`useQuery`) |
 | Dead code | `calculateEgenavgifter()` removed from `types/ownership.ts`, world map script deleted |
-| Suppressors | 0 `@ts-nocheck`, 0 `@ts-ignore`, 1 `as any` (known, in `validation.ts`) |
+| Suppressors | 0 `@ts-nocheck`, 0 `@ts-ignore`, 0 `as any` across entire codebase |

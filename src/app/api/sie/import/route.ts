@@ -1,36 +1,23 @@
 import { NextRequest, NextResponse } from "next/server"
 import { parseSIE } from '@/lib/parsers/sie-parser'
-import { getAuthContext } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 import { randomUUID } from "crypto"
 import type { Database } from '@/types/database'
 
 type TransactionInsert = Database['public']['Tables']['transactions']['Insert']
 type AccountBalanceInsert = Database['public']['Tables']['account_balances']['Insert']
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req, { supabase, userId }) => {
     try {
         const formData = await req.formData()
         const file = formData.get("file") as File
 
         if (!file) {
-            return NextResponse.json(
-                { error: "No file provided" },
-                { status: 400 }
-            )
+            return ApiResponse.badRequest("No file provided")
         }
 
         const text = await file.text()
         const data = parseSIE(text)
-
-        // Get authenticated database connection
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
-        }
-        const { supabase, userId } = ctx
 
         // Track import statistics
         let transactionsInserted = 0
@@ -42,11 +29,11 @@ export async function POST(req: NextRequest) {
             // Each verification row becomes a transaction
             for (const row of ver.rows) {
                 const transactionId = randomUUID()
-                
+
                 // Find account name from parsed accounts
                 const account = data.accounts.find(a => a.number === row.account)
                 const accountName = account?.name || `Konto ${row.account}`
-                
+
                 const txPayload: TransactionInsert = {
                     id: transactionId,
                     name: ver.description || `${ver.series}${ver.verNumber}`,
@@ -81,7 +68,7 @@ export async function POST(req: NextRequest) {
         // Insert/update account balances
         for (const balance of data.balances) {
             // Determine period based on balance type (IB = period 0, UB = period 12)
-            const period = balance.year === 0 ? 
+            const period = balance.year === 0 ?
                 data.fiskalYear[0]?.start?.slice(0, 7) || new Date().toISOString().slice(0, 7) :
                 data.fiskalYear[0]?.end?.slice(0, 7) || new Date().toISOString().slice(0, 7)
 
@@ -111,7 +98,6 @@ export async function POST(req: NextRequest) {
         }
 
         return NextResponse.json({
-            success: true,
             stats: {
                 verifications: data.verifications.length,
                 accounts: data.accounts.length,
@@ -124,12 +110,9 @@ export async function POST(req: NextRequest) {
         })
     } catch (error) {
         console.error("SIE Import error:", error)
-        return NextResponse.json(
-            { error: "Failed to parse SIE file" },
-            { status: 500 }
-        )
+        return ApiResponse.serverError("Failed to parse SIE file")
     }
-}
+})
 
 /**
  * Format SIE date (YYYYMMDD) to ISO format

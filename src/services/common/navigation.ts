@@ -8,6 +8,7 @@ import { createBrowserClient } from '@/lib/database/client'
 import { getMyCompany, type CompanyInfo } from '../company/company-service'
 import type { User, Team, NavItem, NavigationData, ApiResponse } from "@/types"
 import { navPlatform, navSettings } from "@/data/app-navigation"
+import { nullToUndefined } from "@/lib/utils"
 
 // ============================================
 // User Service (direct Supabase auth)
@@ -99,7 +100,7 @@ function companyToTeam(company: CompanyInfo): Team {
     return {
         id: company.id,
         name: company.name,
-        orgNumber: company.orgNumber || undefined,
+        orgNumber: nullToUndefined(company.orgNumber),
     } as Team
 }
 

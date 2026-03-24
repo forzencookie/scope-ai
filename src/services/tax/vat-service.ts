@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import type { Database } from '@/types/database'
 import type { PostgrestError } from '@supabase/supabase-js'
 
@@ -80,7 +81,7 @@ export const vatService = {
                 inputVat: d.input_vat ?? 0,
                 netVat: d.net_vat ?? 0,
                 status: (d.status || 'upcoming') as 'upcoming' | 'pending' | 'submitted',
-                submittedAt: d.submitted_at ?? undefined,
+                submittedAt: nullToUndefined(d.submitted_at),
             }))
     },
 

@@ -1,23 +1,15 @@
 /**
  * Processed Supplier Invoices API
  *
- * Security: Uses getAuthContext() with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
 import { processSupplierInvoices, type NakedSupplierInvoice } from "@/services/processors/invoice-processor"
-import { getAuthContext } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
+import { nullToUndefined } from "@/lib/utils"
 
-export async function GET() {
-  try {
-    const ctx = await getAuthContext()
-
-    if (!ctx) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { supabase, userId, companyId } = ctx;
-
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
     // Fetch invoices - RLS automatically filters by user's company
     const { data: dbInvoices, error } = await supabase
         .from('supplier_invoices')
@@ -29,47 +21,34 @@ export async function GET() {
 
     // Transform to NakedSupplierInvoice format for processing
     const nakedInvoices: NakedSupplierInvoice[] = (dbInvoices || []).map(i => ({
-      id: i.id,
-      invoiceNumber: i.invoice_number || '',
-      supplierName: i.supplier_name || 'Unknown',
-      amount: Number(i.amount ?? i.total_amount) || 0,
-      issueDate: i.issue_date || i.created_at || '',
-      dueDate: i.due_date || '',
-      ocrNumber: i.ocr || undefined,
+        id: i.id,
+        invoiceNumber: i.invoice_number || '',
+        supplierName: i.supplier_name || 'Unknown',
+        amount: Number(i.amount ?? i.total_amount) || 0,
+        issueDate: i.issue_date || i.created_at || '',
+        dueDate: i.due_date || '',
+        ocrNumber: nullToUndefined(i.ocr),
     }))
 
     const processedInvoices = processSupplierInvoices(nakedInvoices)
 
     return NextResponse.json({
-      invoices: processedInvoices,
-      count: processedInvoices.length,
-      userId,
-      companyId,
+        invoices: processedInvoices,
+        count: processedInvoices.length,
+        userId,
+        companyId,
     })
-  } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json({ error: 'Failed' }, { status: 500 })
-  }
-}
+})
 
 /**
  * POST - Create a new supplier invoice
  */
-export async function POST(request: NextRequest) {
-  try {
-    const ctx = await getAuthContext()
-
-    if (!ctx) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const { supabase, companyId } = ctx;
-
+export const POST = withAuth(async (request, { supabase, companyId }) => {
     const body = await request.json()
 
     // Validate required fields
     if (!body.supplier) {
-      return NextResponse.json({ error: 'Supplier name is required' }, { status: 400 })
+        return ApiResponse.badRequest('Supplier name is required')
     }
 
     // Generate unique ID
@@ -84,18 +63,18 @@ export async function POST(request: NextRequest) {
     const { data: invoice, error } = await supabase
         .from('supplier_invoices')
         .insert({
-          id: invoiceId,
-          company_id: companyId,
-          supplier_name: body.supplier,
-          invoice_number: body.invoiceNumber || null,
-          amount: amount,
-          vat_amount: vatAmount,
-          total_amount: totalAmount,
-          due_date: body.dueDate || null,
-          issue_date: body.issueDate || new Date().toISOString().split('T')[0],
-          status: body.status || 'mottagen',
-          ocr: body.ocr || null,
-          document_url: body.documentUrl || null,
+            id: invoiceId,
+            company_id: companyId,
+            supplier_name: body.supplier,
+            invoice_number: body.invoiceNumber || null,
+            amount: amount,
+            vat_amount: vatAmount,
+            total_amount: totalAmount,
+            due_date: body.dueDate || null,
+            issue_date: body.issueDate || new Date().toISOString().split('T')[0],
+            status: body.status || 'mottagen',
+            ocr: body.ocr || null,
+            document_url: body.documentUrl || null,
         })
         .select()
         .single()
@@ -103,26 +82,21 @@ export async function POST(request: NextRequest) {
     if (error) console.error('[SupplierInvoices] create error:', error)
 
     if (!invoice) {
-      return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 })
+        return ApiResponse.serverError('Failed to create invoice')
     }
 
     return NextResponse.json({
-      success: true,
-      invoice: {
-        id: invoice.id,
-        supplier: invoice.supplier_name,
-        invoiceNumber: invoice.invoice_number,
-        amount: invoice.amount,
-        vatAmount: invoice.vat_amount,
-        totalAmount: invoice.total_amount,
-        dueDate: invoice.due_date,
-        issueDate: invoice.issue_date,
-        status: invoice.status,
-        ocr: invoice.ocr,
-      }
+        invoice: {
+            id: invoice.id,
+            supplier: invoice.supplier_name,
+            invoiceNumber: invoice.invoice_number,
+            amount: invoice.amount,
+            vatAmount: invoice.vat_amount,
+            totalAmount: invoice.total_amount,
+            dueDate: invoice.due_date,
+            issueDate: invoice.issue_date,
+            status: invoice.status,
+            ocr: invoice.ocr,
+        }
     }, { status: 201 })
-  } catch (error) {
-    console.error('Error creating supplier invoice:', error)
-    return NextResponse.json({ error: 'Failed to create invoice' }, { status: 500 })
-  }
-}
+})

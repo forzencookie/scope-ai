@@ -93,6 +93,12 @@ All mutation dialogs have been removed from the app. The following actions previ
 |-------------|-----|-------|
 | `create_time_report` | ReportDialog | Create time, expense, or mileage reports for employees. Feeds into payroll. |
 
+### Common
+
+| Tool Needed | Purpose | Notes |
+|-------------|---------|-------|
+| `web_search` | Search the internet for information | Scooby can answer questions about tax rules, look up org numbers, check Skatteverket deadlines, find business info. Uses a search API (Serper, Tavily, or Google Custom Search). Should be scoped to Swedish business/tax/legal topics primarily but allow general queries. Returns summarized results, not raw HTML. |
+
 ## What Connects Here
 
 - AI interface invokes tools via the chat route

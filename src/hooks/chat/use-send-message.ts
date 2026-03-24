@@ -183,7 +183,7 @@ export function useSendMessage({
                     attachments: attachments.length > 0 ? attachments : undefined,
                     mentions: mentions.length > 0 ? mentions : undefined,
                     model: modelId,
-                    incognito: isIncognito || undefined,
+                    incognito: isIncognito ? true : undefined,
                 })
             })
 

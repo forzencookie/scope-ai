@@ -1,26 +1,17 @@
 /**
  * Members API
  *
- * Security: Uses getAuthContext() with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
-import { NextResponse } from 'next/server'
-import { getAuthContext } from "@/lib/database/auth-server";
+import { NextRequest, NextResponse } from 'next/server'
+import { withAuth } from "@/lib/database/auth-server"
 
-export async function GET() {
-  try {
-    const ctx = await getAuthContext();
-
-    if (!ctx) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { supabase, userId, companyId } = ctx;
-
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
     const { data, error } = await supabase
-      .from('members')
-      .select('*')
-      .order('name', { ascending: true })
+        .from('members')
+        .select('*')
+        .order('name', { ascending: true })
 
     if (error) throw error
 
@@ -39,25 +30,13 @@ export async function GET() {
     }));
 
     return NextResponse.json({
-      members,
-      userId,
-      companyId,
+        members,
+        userId,
+        companyId,
     })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
+})
 
-export async function POST(request: Request) {
-  try {
-    const ctx = await getAuthContext();
-
-    if (!ctx) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const { supabase, companyId } = ctx;
+export const POST = withAuth(async (request, { supabase, companyId }) => {
     const json = await request.json()
 
     // Transform camelCase to snake_case
@@ -75,16 +54,12 @@ export async function POST(request: Request) {
     }
 
     const { data, error } = await supabase
-      .from('members')
-      .insert(dbPayload)
-      .select()
-      .single()
+        .from('members')
+        .insert(dbPayload)
+        .select()
+        .single()
 
     if (error) throw error
 
     return NextResponse.json({ member: data })
-  } catch (error: unknown) {
-    const message = error instanceof Error ? error.message : 'Unknown error';
-    return NextResponse.json({ error: message }, { status: 500 })
-  }
-}
+})

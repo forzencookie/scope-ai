@@ -9,7 +9,6 @@ import { defineTool } from '../registry'
 import { invoiceService } from '@/services/invoicing/invoice-service'
 import { receiptService } from '@/services/accounting/receipt-service'
 import { payrollService } from '@/services/payroll/payroll-service'
-import { pendingBookingService } from '@/services/accounting/pending-booking-service'
 import { getUnbookedTransactions } from '@/services/accounting/transactions'
 
 // =============================================================================
@@ -17,7 +16,7 @@ import { getUnbookedTransactions } from '@/services/accounting/transactions'
 // =============================================================================
 
 export interface ReconcileItem {
-    area: 'transactions' | 'invoices' | 'receipts' | 'payroll' | 'bookings'
+    area: 'transactions' | 'invoices' | 'receipts' | 'payroll'
     severity: 'info' | 'warning' | 'critical'
     count: number
     message: string
@@ -37,7 +36,7 @@ export interface ReconcileResult {
 
 export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileResult>({
     name: 'reconcile_status',
-    description: 'Skannar appdata efter inaktuella eller inkonsekventa tillstånd. Kontrollerar obokförda transaktioner, förfallna fakturor, omatchade kvitton, utkast-lönebesked och gamla väntande bokningar. Returnerar en lista med åtgärdsförslag.',
+    description: 'Skannar appdata efter inaktuella eller inkonsekventa tillstånd. Kontrollerar obokförda transaktioner, förfallna fakturor, omatchade kvitton och utkast-lönebesked. Returnerar en lista med åtgärdsförslag.',
     category: 'read',
     requiresConfirmation: false,
   allowedCompanyTypes: [],
@@ -46,7 +45,6 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
     parameters: { type: 'object', properties: {} },
     execute: async (_params, context) => {
         const today = new Date().toISOString().split('T')[0]
-        const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000)
         const userId = context?.userId
 
         if (!userId) {
@@ -60,14 +58,12 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
             overdueSupplierInv,
             unmatchedReceipts,
             unpaidPayslips,
-            allPendingBookings,
         ] = await Promise.all([
             getUnbookedTransactions(userId),
             invoiceService.getOverdueCustomerInvoices(),
             invoiceService.getOverdueSupplierInvoices(),
             receiptService.getUnbookedReceipts(),
             payrollService.getUnpaidPayslips(),
-            pendingBookingService.getPendingBookings(),
         ])
 
         const items: ReconcileItem[] = []
@@ -143,27 +139,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
                 details: draftPayslips.slice(0, 5).map(p => ({
                     id: p.id,
                     description: `Utkast: ${p.employeeName} (${p.period})`,
-                    date: p.sentAt || undefined,
-                })),
-            })
-        }
-
-        // 5. Stale pending bookings (> 7 days)
-        const stalePending = allPendingBookings.filter(b => 
-            new Date(b.createdAt) < sevenDaysAgo
-        )
-        const bookCount = stalePending.length
-        if (bookCount > 0) {
-            items.push({
-                area: 'bookings',
-                severity: 'info',
-                count: bookCount,
-                message: `${bookCount} väntande bokning${bookCount === 1 ? '' : 'ar'} äldre än 7 dagar`,
-                suggestion: 'Dessa kan behöva granskas eller tas bort om de inte längre är aktuella.',
-                details: stalePending.slice(0, 5).map(b => ({
-                    id: b.id,
-                    description: `${b.sourceType}: ${b.description}`,
-                    date: b.createdAt,
+                    date: p.sentAt,
                 })),
             })
         }
@@ -193,7 +169,7 @@ export const reconcileStatusTool = defineTool<Record<string, never>, ReconcileRe
             sections: items.length === 0
                 ? [{ heading: 'Allt uppdaterat', status: 'pass' as const, description: 'Inga inkonsekvenser hittades.' }]
                 : items.map(item => ({
-                    heading: `${severityIcon(item.severity)} ${item.area === 'transactions' ? 'Transaktioner' : item.area === 'invoices' ? 'Fakturor' : item.area === 'receipts' ? 'Kvitton' : item.area === 'payroll' ? 'Löner' : 'Bokningar'}`,
+                    heading: `${severityIcon(item.severity)} ${item.area === 'transactions' ? 'Transaktioner' : item.area === 'invoices' ? 'Fakturor' : item.area === 'receipts' ? 'Kvitton' : 'Löner'}`,
                     status: (item.severity === 'critical' ? 'fail' : item.severity === 'warning' ? 'warning' : 'pass') as 'pass' | 'warning' | 'fail',
                     description: item.message,
                     details: item.suggestion,

@@ -128,7 +128,6 @@ export async function PATCH(req: NextRequest) {
         }
 
         return NextResponse.json({
-            success: true,
             action,
             message: action === 'complete'
                 ? 'Onboarding completed successfully'

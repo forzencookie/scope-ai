@@ -65,18 +65,18 @@ export function useAiExtraction<T>({
                     body: formData,
                 })
 
+                if (!response.ok) {
+                    const errBody = await response.json()
+                    throw new Error(errBody.error || "Failed to extract data")
+                }
+
                 const result = await response.json()
+                const transformed = transformResponse(result)
+                setFormState((prev) => ({ ...prev, ...transformed }))
+                setAiState("preview")
 
-                if (result.success && result.data) {
-                    const transformed = transformResponse(result.data)
-                    setFormState((prev) => ({ ...prev, ...transformed }))
-                    setAiState("preview")
-
-                    if (result.warning) {
-                        setErrorMessage(result.warning)
-                    }
-                } else {
-                    throw new Error(result.error || "Failed to extract data")
+                if (result.warning) {
+                    setErrorMessage(result.warning)
                 }
             } catch (error) {
                 console.error("AI extraction error:", error)

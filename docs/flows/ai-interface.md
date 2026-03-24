@@ -128,7 +128,7 @@ User clicks "Visa förhandsgranskning" or the card itself → walkthrough overla
 
 When Scooby executes an action, downstream entries are created automatically:
 - **Payroll** → vacation accrual (7090/2920) auto-posted
-- **Invoice** → pending booking auto-created
+- **Invoice** → verification auto-created on confirm
 - **Dividend** → withholding tax (2898/2750) auto-posted
 - **Period close** → routine accruals offered
 - User never manually creates the second entry

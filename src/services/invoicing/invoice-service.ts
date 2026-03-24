@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import { generateOCR } from '@/lib/ocr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
@@ -88,7 +89,7 @@ function mapRowToCustomerInvoice(row: CustomerInvoiceRow): CustomerInvoice {
         id: row.id,
         invoiceNumber: row.invoice_number ?? row.id,
         customer: row.customer_name ?? '',
-        email: row.customer_email ?? undefined,
+        email: nullToUndefined(row.customer_email),
         amount: Number(row.subtotal ?? 0),
         vatAmount: row.vat_amount != null ? Number(row.vat_amount) : undefined,
         totalAmount: Number(row.total_amount ?? 0),
@@ -225,9 +226,9 @@ export const invoiceService = {
             }
         }
 
-        // Handle array return — RPC returns Json, cast for property access
+        // Handle array return — RPC returns Json
         const raw = Array.isArray(data) ? data[0] : data
-        const stats = (raw ?? {}) as Record<string, unknown>
+        const stats = (raw ?? {}) as { total_amount?: number; overdue_count?: number; overdue_amount?: number; paid_amount?: number }
 
         if (!raw) {
             return {

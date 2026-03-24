@@ -13,6 +13,7 @@ import { useModel } from '@/providers/model-provider'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import type { Message as AppMessage, Conversation } from '@/lib/chat-types'
 import { fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
+import { nullToUndefined } from '@/lib/utils'
 import { type InlineCardType } from '@/components/ai/cards/inline'
 
 /** Extract tool invocations from message parts */
@@ -83,7 +84,7 @@ export function useChat(options: UseChatOptions = {}) {
         status,
         setMessages: setVercelMessages,
     } = useVercelChat({
-        id: currentConversationId ?? undefined,
+        id: nullToUndefined(currentConversationId),
         transport: new DefaultChatTransport({
             api: '/api/chat',
             body: {

@@ -1,5 +1,4 @@
-import { useState, useMemo, useCallback } from "react"
-import { useToast } from "@/components/ui/toast"
+import { useState, useMemo } from "react"
 import { useInvoicesPaginated } from "@/hooks/use-invoices"
 import { INVOICE_STATUS_LABELS, SUPPLIER_INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { mapCustomerInvoices, mapSupplierInvoices, mapToUnifiedInvoices } from "./mappers"
@@ -8,7 +7,6 @@ import { SupplierInvoice } from "@/types/ownership"
 import { ViewFilter, PeriodFilter, UnifiedInvoice } from "./types"
 
 export function useInvoicesLogic() {
-    const toast = useToast()
 
     // Local State
     const [viewFilter, setViewFilter] = useState<ViewFilter>("all")
@@ -98,98 +96,21 @@ export function useInvoicesLogic() {
         }
     }, [customerInvoices, supplierInvoices])
 
-    // Actions
-    const handleSendInvoice = useCallback(async (id: string) => {
-        try {
-            await fetch(`/api/invoices/${id}/book`, { method: "POST" })
-            fetchInvoices()
-            toast.success("Faktura bokförd", "Fakturan har bokförts.")
-        } catch {
-            toast.error("Kunde inte skicka faktura", "Ett fel uppstod")
-        }
-    }, [fetchInvoices, toast])
-
-    const handleMarkCustomerPaid = useCallback(async (id: string) => {
-        try {
-            await fetch(`/api/invoices/${id}/pay`, { method: "POST" })
-            fetchInvoices()
-            toast.success("Betalning registrerad!", "Fakturan har markerats som betald")
-        } catch {
-            toast.error("Kunde inte registrera betalning", "Ett fel uppstod")
-        }
-    }, [fetchInvoices, toast])
-
-    const handleApproveSupplier = useCallback(async (id: string) => {
-        try {
-            await fetch(`/api/supplier-invoices/${id}/status`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "Godkänd" })
-            })
-            fetchInvoices()
-            toast.success("Faktura attesterad", "Fakturan har godkänts för betalning")
-        } catch {
-            toast.error("Kunde inte attestera", "Ett fel uppstod")
-        }
-    }, [fetchInvoices, toast])
-
-    const handleMarkSupplierPaid = useCallback(async (id: string) => {
-        try {
-            await fetch(`/api/supplier-invoices/${id}/status`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status: "Betald" })
-            })
-            fetchInvoices()
-            toast.success("Betalning registrerad", "Fakturan har markerats som betald")
-        } catch {
-            toast.error("Kunde inte registrera betalning", "Ett fel uppstod")
-        }
-    }, [fetchInvoices, toast])
-
-    const handleCreateCreditNote = useCallback(async (id: string) => {
-        try {
-            const res = await fetch(`/api/invoices/${id}/credit-note`, { method: "POST" })
-            if (!res.ok) {
-                const data = await res.json()
-                toast.error("Kunde inte kreditera", data.error || "Ett fel uppstod")
-                return
-            }
-            const data = await res.json()
-            fetchInvoices()
-            toast.success("Kreditfaktura skapad", `${data.creditNote.creditNoteNumber} har skapats`)
-        } catch {
-            toast.error("Kunde inte kreditera", "Ett fel uppstod")
-        }
-    }, [fetchInvoices, toast])
-
-    const handleInvoiceCreated = useCallback(() => {
-        fetchInvoices()
-    }, [fetchInvoices])
-
     return {
         // State
         viewFilter, setViewFilter,
         periodFilter, setPeriodFilter,
         customerDialogOpen, setCustomerDialogOpen,
         isLoading,
-        
+
         // Pagination
         page, setPage, pageSize,
         totalCustomerCount, totalSupplierCount,
-        
+
         // Data
         customerInvoices,
         supplierInvoices,
         unifiedInvoices,
         stats,
-        
-        // Handlers
-        handleSendInvoice,
-        handleMarkCustomerPaid,
-        handleApproveSupplier,
-        handleMarkSupplierPaid,
-        handleCreateCreditNote,
-        handleInvoiceCreated
     }
 }

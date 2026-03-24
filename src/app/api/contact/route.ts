@@ -69,7 +69,6 @@ export async function POST(request: NextRequest) {
         // })
 
         return NextResponse.json({
-            success: true,
             message: 'Contact form submitted successfully'
         })
     } catch (error) {

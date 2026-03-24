@@ -28,7 +28,6 @@ export async function POST(req: NextRequest) {
         )
 
         return NextResponse.json({
-            success: true,
             ...result,
             message: 'Rättelseverifikat har skapats.',
         })

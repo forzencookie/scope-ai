@@ -12,6 +12,7 @@ import {
     DocumentTable,
     DocumentSummaryRow,
 } from "@/components/ai/previews/document-preview"
+import { nullToUndefined } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
 import {
     generateShareRegisterPDF,
@@ -51,8 +52,8 @@ export function AktiebokPreviewDialog({
             shares: sh.shares,
             ownershipPercentage: sh.ownershipPercentage,
             votesPercentage: sh.votesPercentage,
-            shareNumberFrom: sh.shareNumberFrom ?? undefined,
-            shareNumberTo: sh.shareNumberTo ?? undefined,
+            shareNumberFrom: nullToUndefined(sh.shareNumberFrom),
+            shareNumberTo: nullToUndefined(sh.shareNumberTo),
             acquisitionDate: sh.acquisitionDate,
         }))
 ,

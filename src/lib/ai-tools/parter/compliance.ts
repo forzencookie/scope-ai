@@ -8,6 +8,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import { boardService, Signatory as BoardSignatory } from '@/services/corporate/board-service'
 import { companyService } from '@/services/company/company-service.server'
 import { taxService } from '@/services/tax/tax-service'
+import { nullToUndefined } from '@/lib/utils'
 
 // =============================================================================
 // Compliance Document Tools
@@ -362,7 +363,7 @@ export const getSignatoriesTool = defineTool<Record<string, never>, Signatory[]>
                 role: mapRole(s.role),
                 signingRights: mapSigningAuthority(s.signingAuthority),
                 registeredDate: new Date().toISOString().split('T')[0], // Would come from DB
-                personalNumber: s.personalNumber || undefined,
+                personalNumber: nullToUndefined(s.personalNumber),
             }))
 
             return {

@@ -2,7 +2,6 @@
 
 import { useCallback, Suspense, useMemo, useEffect, useState } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
-import { useToast } from "@/components/ui/toast"
 import {
     TooltipProvider,
 } from "@/components/ui/tooltip"
@@ -12,6 +11,7 @@ import { PageTabsLayout } from "@/components/shared/layout/page-tabs-layout"
 import { DataErrorState } from "@/components/ui/data-error-state"
 import { SectionErrorBoundary } from "@/components/shared/error-boundary"
 
+import { nullToUndefined } from "@/lib/utils"
 import { useFeature } from "@/providers/company-provider"
 import {
     LazyTransactionsTable,
@@ -55,7 +55,6 @@ function AccountingPageContent() {
     // ... no changes to hooks ...
     const searchParams = useSearchParams()
     const router = useRouter()
-    const toast = useToast()
     const paramTab = searchParams.get("tab")
     const currentTab = paramTab || "transaktioner"
 
@@ -95,30 +94,6 @@ function AccountingPageContent() {
     // Use only api transactions (no mock data)
     // const transactions = apiTransactions // Already destructured from hook
 
-    // Handle transaction booking - update the transaction status
-    const handleTransactionBooked = useCallback(async (transactionId: string, bookingData: { category: string; debitAccount: string; creditAccount: string; description?: string }) => {
-        try {
-            const response = await fetch(`/api/transactions/${transactionId}/book`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(bookingData)
-            })
-
-            if (!response.ok) throw new Error('Failed to book')
-
-            /* 
-            // NOTE: Optimistic updates are handled internally by the hook or we rely on re-fetch
-            // But for now, since we don't have a setTransactions exposed from the hook easily for this specific mutation,
-            // we will just trigger a refresh or let the hook handle it if we switch to Mutation hook later.
-            // For immediate feedback, we can relay on the toast.
-             */
-            handleRefresh()
-            toast.success('Transaktion bokförd', `Bokförd på konto ${bookingData.debitAccount}`)
-        } catch (err) {
-            console.error(err)
-            toast.error('Fel vid bokföring', 'Kunde inte bokföra transaktionen')
-        }
-    }, [handleRefresh, toast])
 
     // Feature checks for conditional tabs
     const hasVerifikationer = useFeature('verifikationer')
@@ -159,8 +134,7 @@ function AccountingPageContent() {
                                     <LazyTransactionsTable
                                         title="Transaktioner"
                                         transactions={transactions}
-                                        stats={transactionStats ?? undefined}
-                                        onTransactionBooked={handleTransactionBooked}
+                                        stats={nullToUndefined(transactionStats)}
                                         page={page}
                                         pageSize={pageSize}
                                         total={total}

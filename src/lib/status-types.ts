@@ -22,7 +22,6 @@ import {
     PAYSLIP_STATUS_LABELS,
     AGI_STATUS_LABELS,
     EMPLOYEE_STATUS_LABELS,
-    PENDING_BOOKING_STATUS_LABELS,
 } from "./localization"
 
 // =============================================================================
@@ -243,20 +242,6 @@ export const EMPLOYEE_STATUS_VARIANT: Record<EmployeeStatus, StatusVariant> = {
 }
 
 // =============================================================================
-// Pending Booking Status (Väntande bokföringar)
-// =============================================================================
-
-export const PENDING_BOOKING_STATUSES = PENDING_BOOKING_STATUS_LABELS
-
-export type PendingBookingStatus = (typeof PENDING_BOOKING_STATUSES)[keyof typeof PENDING_BOOKING_STATUSES]
-
-export const PENDING_BOOKING_STATUS_VARIANT: Record<PendingBookingStatus, StatusVariant> = {
-    "Väntande": "warning",
-    "Bokförd": "success",
-    "Avfärdad": "neutral",
-}
-
-// =============================================================================
 // Combined Status Type (for StatusBadge component)
 // =============================================================================
 
@@ -274,7 +259,6 @@ export type AppStatus =
     | PayslipStatus
     | AGIStatus
     | EmployeeStatus
-    | PendingBookingStatus
 
 export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...TRANSACTION_STATUS_VARIANT,
@@ -290,7 +274,6 @@ export const ALL_STATUS_VARIANTS: Record<AppStatus, StatusVariant> = {
     ...PAYSLIP_STATUS_VARIANT,
     ...AGI_STATUS_VARIANT,
     ...EMPLOYEE_STATUS_VARIANT,
-    ...PENDING_BOOKING_STATUS_VARIANT,
 }
 
 // =============================================================================

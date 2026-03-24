@@ -1,8 +1,8 @@
 /**
  * Server-side audit logging utility.
  *
- * Inserts directly into the activity_log table for server-side operations
- * (API routes, services) where the client-side useActivityLog hook is unavailable.
+ * Inserts into the events table for server-side operations
+ * (API routes, services) where the client-side hooks are unavailable.
  */
 
 import { createBrowserClient } from '@/lib/database/client'
@@ -34,21 +34,35 @@ export async function logAuditEntry(params: {
 }): Promise<void> {
     try {
         const supabase = createBrowserClient()
-        const { data: { user } } = await supabase.auth.getUser()
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single(),
+        ])
         if (!user) return
 
-        await supabase.from('activity_log').insert({
-            action: params.action,
-            entity_type: params.entityType,
-            entity_id: params.entityId ?? null,
-            entity_name: params.entityName ?? null,
+        const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'System'
+
+        await supabase.from('events').insert({
             user_id: user.id,
-            user_name: user.user_metadata?.full_name || user.email?.split('@')[0] || null,
-            user_email: user.email ?? null,
-            metadata: (params.metadata as Json) ?? null,
+            company_id: company?.id ?? null,
+            source: 'system',
+            category: 'bokföring',
+            action: params.action,
+            title: params.entityName ?? `${params.entityType} ${params.action}`,
+            actor_type: 'user',
+            actor_id: user.id,
+            actor_name: userName as string,
+            metadata: {
+                entityType: params.entityType,
+                entityId: params.entityId,
+                ...params.metadata,
+            } as unknown as Json,
+            related_to: params.entityId
+                ? [{ type: params.entityType, id: params.entityId }] as unknown as Json
+                : null,
         })
     } catch (error) {
         // Audit logging should never break the main operation
-        console.error('[audit] Failed to log activity:', error)
+        console.error('[audit] Failed to log event:', error)
     }
 }

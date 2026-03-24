@@ -21,7 +21,7 @@ export async function POST(_request: NextRequest) {
         }
 
         // Create response that redirects to login
-        const response = NextResponse.json({ success: true })
+        const response = NextResponse.json({})
 
         // Clear any auth-related cookies explicitly
         response.cookies.delete('sb-access-token')

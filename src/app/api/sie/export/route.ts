@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from "@/lib/database/auth-server"
-import { 
-    generateSIE, 
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
+import { nullToUndefined } from "@/lib/utils"
+import {
+    generateSIE,
     generateSIEFilename,
     type SIEExportData,
     type SIEAccount,
@@ -12,44 +13,27 @@ import {
 
 /**
  * GET /api/sie/export
- * 
+ *
  * Export accounting data as a SIE4 file.
- * 
+ *
  * Query params:
  * - year (required): The fiscal year to export
  * - includeOpeningBalances (optional): Include IB records (default: true)
  */
-export async function GET(req: NextRequest) {
+export const GET = withAuth(async (req, { supabase }) => {
     try {
         const { searchParams } = new URL(req.url)
         const yearParam = searchParams.get('year')
         const includeOpeningBalances = searchParams.get('includeOpeningBalances') !== 'false'
 
         if (!yearParam) {
-            return NextResponse.json(
-                { error: "Missing required parameter: year" },
-                { status: 400 }
-            )
+            return ApiResponse.badRequest("Missing required parameter: year")
         }
 
         const year = parseInt(yearParam, 10)
         if (isNaN(year) || year < 1900 || year > 2100) {
-            return NextResponse.json(
-                { error: "Invalid year parameter" },
-                { status: 400 }
-            )
+            return ApiResponse.badRequest("Invalid year parameter")
         }
-
-        // Get authenticated database connection
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return NextResponse.json(
-                { error: "Unauthorized" },
-                { status: 401 }
-            )
-        }
-
-        const { supabase } = ctx
 
         // =====================================================================
         // Fetch company info
@@ -84,7 +68,7 @@ export async function GET(req: NextRequest) {
         // Parse fiscal year dates
         const fiscalYearEnd = company.fiscal_year_end || '12-31'
         const [endMonth, endDay] = fiscalYearEnd.split('-').map(Number)
-        
+
         // Most Swedish companies have calendar year fiscal year
         const fiscalYearStart = `${year}0101`
         const fiscalYearEndDate = `${year}${String(endMonth).padStart(2, '0')}${String(endDay).padStart(2, '0')}`
@@ -105,10 +89,7 @@ export async function GET(req: NextRequest) {
 
         if (verError) {
             console.error('Error fetching verifications:', verError)
-            return NextResponse.json(
-                { error: "Failed to fetch verifications" },
-                { status: 500 }
-            )
+            return ApiResponse.serverError("Failed to fetch verifications")
         }
 
         // =====================================================================
@@ -172,7 +153,7 @@ export async function GET(req: NextRequest) {
             for (const bal of balancesData) {
                 const accountNum = bal.account_number
                 const firstDigit = accountNum.charAt(0)
-                
+
                 // Balance sheet accounts (1xxx, 2xxx) have IB/UB
                 if (firstDigit === '1' || firstDigit === '2') {
                     closingBalances.push({
@@ -197,11 +178,11 @@ export async function GET(req: NextRequest) {
 
         if (verificationsData) {
             for (const ver of verificationsData) {
-                const rows = ver.rows as Array<{ 
+                const rows = ver.rows as Array<{
                     account: string
                     debit?: number
                     credit?: number
-                    description?: string 
+                    description?: string
                 }> | null
 
                 if (!rows || rows.length === 0) continue
@@ -222,7 +203,7 @@ export async function GET(req: NextRequest) {
                     date: (ver.date || '').replace(/-/g, ''), // Convert YYYY-MM-DD to YYYYMMDD
                     description: ver.description || '',
                     entries,
-                    regDate: (ver.created_at || '').substring(0, 10).replace(/-/g, '') || undefined // Registration date
+                    regDate: nullToUndefined((ver.created_at || '').substring(0, 10).replace(/-/g, '') || null) // Registration date
                 })
             }
         }
@@ -242,11 +223,11 @@ export async function GET(req: NextRequest) {
                 previousYearStart,
                 previousYearEnd,
                 taxYear: year + 1, // Tax year is the year after the fiscal year
-                address: company.address || undefined,
-                city: company.city || undefined,
-                zipCode: company.zip_code || undefined,
-                phone: company.phone || undefined,
-                contact: company.contact_person || undefined
+                address: nullToUndefined(company.address),
+                city: nullToUndefined(company.city),
+                zipCode: nullToUndefined(company.zip_code),
+                phone: nullToUndefined(company.phone),
+                contact: nullToUndefined(company.contact_person)
             },
             accounts,
             openingBalances,
@@ -272,19 +253,16 @@ export async function GET(req: NextRequest) {
 
     } catch (error) {
         console.error('SIE export error:', error)
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        )
+        return ApiResponse.serverError("Internal server error")
     }
-}
+})
 
 /**
  * Determine account type from account number
  */
 function getAccountType(accountNumber: string): 'T' | 'S' | 'K' | 'I' | undefined {
     const firstDigit = accountNumber.charAt(0)
-    
+
     switch (firstDigit) {
         case '1':
             return 'T' // Tillgång (Asset)

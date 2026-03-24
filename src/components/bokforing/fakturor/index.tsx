@@ -56,14 +56,6 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         customerInvoices,
         unifiedInvoices,
         stats,
-
-        // Handlers
-        handleSendInvoice,
-        handleMarkCustomerPaid,
-        handleApproveSupplier,
-        handleMarkSupplierPaid,
-        handleCreateCreditNote,
-        handleInvoiceCreated
     } = useInvoicesLogic()
 
     const { company } = useCompany()
@@ -109,12 +101,7 @@ export const UnifiedInvoicesView = memo(function UnifiedInvoicesView() {
         <InvoiceCard
             key={invoice.id}
             invoice={invoice}
-            onSend={handleSendInvoice}
-            onMarkCustomerPaid={handleMarkCustomerPaid}
-            onApproveSupplier={handleApproveSupplier}
-            onMarkSupplierPaid={handleMarkSupplierPaid}
             onDownloadPDF={handleDownloadPDF}
-            onCreateCreditNote={handleCreateCreditNote}
             onViewDetails={setSelectedInvoice}
         />
     )

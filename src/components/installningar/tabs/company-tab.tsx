@@ -315,7 +315,7 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     placeholder="2024-01-15"
                     type="date"
                     value={company?.registrationDate || ''}
-                    onChange={(e) => updateCompany({ registrationDate: e.target.value || undefined })}
+                    onChange={(e) => updateCompany({ registrationDate: e.target.value || undefined })} // intentional: empty string means "cleared" → store as undefined
                 />
 
                 {company?.companyType === 'ab' && (

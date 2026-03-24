@@ -14,6 +14,7 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateJsonBody } from '@/lib/validation'
+import { nullToUndefined } from '@/lib/utils'
 import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import {
     checkUsageLimits,
@@ -244,12 +245,12 @@ export async function POST(request: NextRequest) {
 
         const typedBody = body as Record<string, unknown>
         const messages = typedBody.messages as Array<Record<string, unknown>>
-        const conversationId = (typedBody.conversationId as string) || undefined
+        const conversationId = typeof typedBody.conversationId === 'string' ? typedBody.conversationId : undefined
         const attachments = typedBody.attachments as Array<{ name: string; type: string; data: string }> | undefined
         const mentions = typedBody.mentions as Array<{ type: string; label: string; aiContext?: string }> | undefined
-        const requestedModel = (typedBody.model as string) || undefined
+        const requestedModel = typeof typedBody.model === 'string' ? typedBody.model : undefined
         const incognito = (typedBody.incognito as boolean) || false
-        const confirmationId = (typedBody.confirmationId as string) || undefined
+        const confirmationId = typeof typedBody.confirmationId === 'string' ? typedBody.confirmationId : undefined
 
         if (!messages || !Array.isArray(messages) || messages.length === 0) {
             return new Response(JSON.stringify({ error: 'Messages array is required' }), { status: 400 })
@@ -291,7 +292,7 @@ export async function POST(request: NextRequest) {
 
             if (!companyError && company) {
                 companyType = parseCompanyType(company.company_type)
-                companyName = company.name || undefined
+                companyName = nullToUndefined(company.name)
 
                 // Build setup state so Scooby knows exactly what's filled in
                 companySetupState = {

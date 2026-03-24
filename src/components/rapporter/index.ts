@@ -8,6 +8,5 @@ export { K10Content } from './k10'
 export { ArsbokslutContent } from './arsbokslut'
 export { AGIContent } from './agi'
 
-// Dialogs (legacy — migrating to overlays)
-export { MomsDetailDialog } from './dialogs/moms'
+// Dialogs
 export { AGIDetailsDialog } from './dialogs/agi'

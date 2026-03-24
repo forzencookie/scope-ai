@@ -136,7 +136,7 @@ Everything else is polish. These must work:
 
 ### 6. Cascades — Automatic Downstream Effects
 - Payroll → vacation accrual auto-posted
-- Invoice → pending booking auto-created
+- Invoice → verification auto-created on confirm
 - Dividend → withholding tax auto-posted
 - User never manually creates the second entry
 

@@ -46,7 +46,6 @@ export async function POST(req: NextRequest) {
         const result = await closingEntryService.executeClosingEntries(year, companyType)
 
         return NextResponse.json({
-            success: true,
             ...result,
             message: `Bokslutsposter skapade för ${year}. Årets resultat: ${result.netResult.toLocaleString('sv-SE')} kr.`,
         })

@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
             tier: tier as 'pro' | 'max',
             successUrl: `${origin}/dashboard/settings?payment=success`,
             cancelUrl: `${origin}/dashboard/settings?payment=cancelled`,
-            discountCode: discountCode || undefined,
+            discountCode: typeof discountCode === 'string' ? discountCode : undefined,
         })
 
         return NextResponse.json({ url: checkoutUrl })

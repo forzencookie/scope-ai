@@ -17,7 +17,7 @@ import {
 import { cn } from "@/lib/utils"
 import { formatSEK, formatSEKCompact } from "@/lib/formatters"
 import { useMonthClosing } from "@/hooks/use-month-closing"
-import { MonthReviewDialog } from "./month-review-dialog"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 interface MonthlySummary {
     month: number
@@ -66,9 +66,9 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
     const now = new Date()
     const defaultMonth = now.getFullYear() === year ? now.getMonth() + 1 : 1
     const [selectedMonth, setSelectedMonth] = useState<number>(defaultMonth)
-    const [dialogMonth, setDialogMonth] = useState<number | null>(null)
 
     const { toggleCheck, getVerificationStats, getResolvedChecks, getCheckProgress, updatePendingCounts } = useMonthClosing()
+    const { navigateToAI } = useChatNavigation()
 
     const fetchMonthData = useCallback(async () => {
         try {
@@ -232,16 +232,16 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                             </div>
                         )}
 
-                        {/* Open full review */}
+                        {/* Ask Scooby about this month */}
                         <div className="pt-2 border-t">
                             <Button
                                 variant="outline"
                                 size="sm"
                                 className="w-full gap-2 overflow-hidden"
-                                onClick={() => setDialogMonth(selectedMonth)}
+                                onClick={() => navigateToAI({ prompt: `Ge mig en översikt av månadsavslutet för ${selectedSummary?.label || `månad ${selectedMonth}`} ${year}` })}
                             >
                                 <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                                <span className="truncate">Öppna fullständig månadsöversikt</span>
+                                <span className="truncate">Fråga Scooby om månaden</span>
                             </Button>
                         </div>
                     </CardContent>
@@ -304,16 +304,6 @@ export function ManadsavslutView({ year }: ManadsavslutViewProps) {
                 </Card>
             </div>
 
-            {/* Full Month Review Dialog */}
-            <MonthReviewDialog
-                open={dialogMonth !== null}
-                onOpenChange={(open) => {
-                    if (!open) setDialogMonth(null)
-                }}
-                year={year}
-                month={dialogMonth ?? 1}
-                onMonthChange={(newMonth) => setDialogMonth(newMonth)}
-            />
         </>
     )
 }

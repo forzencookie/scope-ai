@@ -3,6 +3,7 @@
 // Manages event emission and storage via Supabase
 // ============================================
 
+import { nullToUndefined } from '@/lib/utils'
 import type {
     HändelseEvent,
     CreateEventInput,
@@ -34,23 +35,23 @@ function mapDtoToEvent(dto: EventsRow): HändelseEvent {
         title: dto.title ?? '',
         actor: {
             type: (dto.actor_type ?? 'system') as EventActor['type'],
-            id: dto.actor_id ?? undefined,
-            name: dto.actor_name ?? undefined,
+            id: nullToUndefined(dto.actor_id),
+            name: nullToUndefined(dto.actor_name),
         },
-        description: dto.description ?? undefined,
+        description: nullToUndefined(dto.description),
         metadata: (dto.metadata && typeof dto.metadata === 'object' && !Array.isArray(dto.metadata))
             ? dto.metadata as Record<string, unknown>
             : undefined,
         relatedTo: Array.isArray(dto.related_to)
             ? dto.related_to as unknown as RelatedEntity[]
             : undefined,
-        status: (dto.status ?? undefined) as EventStatus | undefined,
-        corporateActionType: (dto.corporate_action_type ?? undefined) as CorporateActionType | undefined,
+        status: nullToUndefined(dto.status) as EventStatus | undefined,
+        corporateActionType: nullToUndefined(dto.corporate_action_type) as CorporateActionType | undefined,
         proof: (dto.proof && typeof dto.proof === 'object' && !Array.isArray(dto.proof))
             ? dto.proof as unknown as EventProof
             : undefined,
-        hash: dto.hash ?? undefined,
-        previousHash: dto.previous_hash ?? undefined,
+        hash: nullToUndefined(dto.hash),
+        previousHash: nullToUndefined(dto.previous_hash),
     }
 }
 
@@ -295,4 +296,48 @@ export async function emitAuthorityEvent(
         actor: { type: 'authority', id: authority, name: authority },
         ...options,
     })
+}
+
+// ============================================
+// Activity Summary (merged from activity-service)
+// ============================================
+
+import type { ActivitySummary } from '@/lib/ai-schema'
+
+export async function getActivitySummary(companyId: string, days: number = 30): Promise<ActivitySummary> {
+    const supabase = createBrowserClient()
+    const startDate = new Date()
+    startDate.setDate(startDate.getDate() - days)
+
+    const { data, error } = await supabase
+        .from('events')
+        .select('action, source, category')
+        .eq('company_id', companyId)
+        .gte('timestamp', startDate.toISOString())
+
+    if (error) throw error
+
+    const totalEvents = (data || []).length
+    const bySource: Record<string, number> = {}
+    const byType: Record<string, number> = {}
+
+    for (const row of (data || [])) {
+        const source = row.source || 'system'
+        const type = row.category || 'other'
+        bySource[source] = (bySource[source] || 0) + 1
+        byType[type] = (byType[type] || 0) + 1
+    }
+
+    const topType = Object.entries(byType).sort((a, b) => b[1] - a[1])[0]?.[0]
+
+    return {
+        period: `senaste ${days} dagarna`,
+        totalEvents,
+        bySource,
+        byType,
+        highlights: [
+            `${totalEvents} händelser loggade senaste perioden.`,
+            topType ? `Mest aktiva kategori: ${topType}.` : 'Ingen aktivitet loggad.'
+        ]
+    }
 }

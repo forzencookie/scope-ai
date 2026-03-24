@@ -324,7 +324,7 @@ export const prepareINK2Tool = defineTool<PrepareINK2Params, any>({
                 summary: {
                     taxableIncome,
                     corporateTax,
-                    periodiseringsfond: maxPeriodiseringsfond || undefined,
+                    periodiseringsfond: maxPeriodiseringsfond > 0 ? maxPeriodiseringsfond : undefined,
                 },
                 status: 'draft' as const,
             },
@@ -362,7 +362,7 @@ export const closeFiscalYearTool = defineTool<CloseFiscalYearParams, any>({
         const netIncome = report.summary.result
 
         // Preview closing entries
-        const closingEntries: any[] = []
+        const closingEntries: Array<{ description: string; debit: string; credit: string; amount: number }> = []
 
         if (netIncome > 0) {
             // Profit: Debit 8999 (Årets resultat) → Credit 2099 (Årets resultat)

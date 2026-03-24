@@ -11,6 +11,7 @@ import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
 import { getMyCompany } from "@/services/company/company-service"
 import { updateCompanyAction } from "@/app/actions/company"
+import { nullToUndefined } from "@/lib/utils"
 
 // ============================================
 // Types
@@ -156,7 +157,7 @@ export function CompanyProvider({
             email: dbCompanyInfo.email || '',
             phone: dbCompanyInfo.phone || '',
             contactPerson: dbCompanyInfo.contactPerson || '',
-            registrationDate: dbCompanyInfo.registrationDate || undefined,
+            registrationDate: nullToUndefined(dbCompanyInfo.registrationDate),
             hasMomsRegistration: dbCompanyInfo.hasMomsRegistration ?? true,
             hasEmployees: dbCompanyInfo.hasEmployees ?? false,
             fiscalYearEnd: dbCompanyInfo.fiscalYearEnd || '12-31',
@@ -204,13 +205,13 @@ export function CompanyProvider({
         name: company.name,
         orgNumber: company.orgNumber,
         companyType: company.companyType,
-        vatNumber: company.vatNumber || undefined,
-        address: company.address || undefined,
-        city: company.city || undefined,
-        zipCode: company.zipCode || undefined,
-        email: company.email || undefined,
-        phone: company.phone || undefined,
-        contactPerson: company.contactPerson || undefined,
+        vatNumber: company.vatNumber,
+        address: company.address,
+        city: company.city,
+        zipCode: company.zipCode,
+        email: company.email,
+        phone: company.phone,
+        contactPerson: company.contactPerson,
         registrationDate: company.registrationDate,
         fiscalYearEnd: company.fiscalYearEnd,
         accountingMethod: company.accountingMethod,

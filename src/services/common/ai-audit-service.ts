@@ -4,8 +4,8 @@ import type { Database, Json } from '@/types/database'
 export interface AIAuditEntry {
     id: string
     tool_name: string
-    parameters: any
-    result: any
+    parameters: Json
+    result: Json
     user_id: string
     company_id: string
     created_at: string
@@ -15,7 +15,7 @@ export const aiAuditService = {
     /**
      * Save a pending tool confirmation
      */
-    async savePendingConfirmation(confirmationId: string, params: any, userId: string, companyId: string) {
+    async savePendingConfirmation(confirmationId: string, params: Record<string, unknown>, userId: string, companyId: string) {
         const supabase = createBrowserClient()
         const { error } = await supabase
             .from('ai_audit_log')
@@ -62,7 +62,7 @@ export const aiAuditService = {
     /**
      * Log a completed tool execution
      */
-    async logToolExecution(toolName: string, params: any, result: any, userId: string, companyId: string) {
+    async logToolExecution(toolName: string, params: unknown, result: unknown, userId: string, companyId: string) {
         const supabase = createBrowserClient()
         const { error } = await supabase
             .from('ai_audit_log')

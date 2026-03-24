@@ -6,9 +6,8 @@
  */
 
 import { defineTool } from '../registry'
-import { getEvents as getEventsFromDB, emitEvent } from '@/services/common/event-service'
+import { getEvents as getEventsFromDB, emitEvent, getActivitySummary } from '@/services/common/event-service'
 import { taxService } from '@/services/tax/tax-service'
-import { activityService } from '@/services/common/activity-service'
 import type { EventSource, EventCategory } from '@/types/events'
 
 // =============================================================================
@@ -281,7 +280,7 @@ export const getActivitySummaryTool = defineTool<{ period?: 'week' | 'month' | '
         const companyId = context?.companyId
         if (!companyId) return { success: false, error: 'Inget företag valt.' }
 
-        const summary = await activityService.getActivitySummary(companyId, days)
+        const summary = await getActivitySummary(companyId, days)
 
         return {
             success: true,

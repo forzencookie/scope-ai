@@ -4,25 +4,17 @@
  * GET: List all payslips
  * POST: Create a payslip and auto-generate salary verification (journal entries)
  *
- * Security: Uses getAuthContext() with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
-import { pendingBookingService } from '@/services/accounting/pending-booking-service';
+import { withAuth, ApiResponse } from "@/lib/database/auth-server";
+import { verificationService } from '@/services/accounting/verification-service';
 import { taxService } from '@/services/tax/tax-service';
 import { createSalaryEntry } from '@/lib/bookkeeping';
 
-export async function GET() {
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
     try {
-        const ctx = await getAuthContext();
-
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { supabase, userId, companyId } = ctx;
-
         const { data: payslips, error } = await supabase
             .from('payslips')
             .select('*, employees(name)')
@@ -37,19 +29,12 @@ export async function GET() {
         });
     } catch (error) {
         console.error("Failed to fetch payslips:", error);
-        return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+        return ApiResponse.serverError("Failed to fetch");
     }
-}
+})
 
-export async function POST(req: NextRequest) {
+export const POST = withAuth(async (req, { supabase, userId }) => {
     try {
-        const ctx = await getAuthContext();
-
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { supabase, userId } = ctx;
         const body = await req.json();
 
         const { data: saved, error: insertError } = await supabase
@@ -59,15 +44,14 @@ export async function POST(req: NextRequest) {
             .single();
 
         if (insertError || !saved) {
-            return NextResponse.json({ error: "Failed to create" }, { status: 500 });
+            return ApiResponse.serverError("Failed to create");
         }
 
-        // Create pending booking instead of auto-verification
-        // User confirms via BookingWizard before entries become a verification
+        // Create verification directly (user confirms via Scooby chat before calling this route)
         const grossSalary = Number(body.gross_salary) || 0
         const taxDeduction = Number(body.tax_deduction) || 0
-        const netSalary = Number(body.net_salary) || (grossSalary - taxDeduction)
-        let pendingBookingId: string | undefined
+        let verificationId: string | undefined
+        let verificationNumber: string | undefined
 
         if (grossSalary > 0 && !body.skip_verification) {
             const currentYear = new Date().getFullYear()
@@ -104,27 +88,28 @@ export async function POST(req: NextRequest) {
                     series: 'L',
                 })
 
-                const pending = await pendingBookingService.createPendingBooking({
-                    sourceType: 'payslip',
-                    sourceId: saved.id,
-                    description: journalEntry.description,
+                const verification = await verificationService.createVerification({
                     series: 'L',
                     date: paymentDate,
+                    description: journalEntry.description,
                     entries: journalEntry.rows.map(row => ({
                         account: row.account,
                         debit: row.debit,
                         credit: row.credit,
                         description: row.description,
                     })),
-                    metadata: { employeeName, period, grossSalary, netSalary },
-                })
-                pendingBookingId = pending.id
-            } catch (pbError) {
-                console.error('Failed to create pending booking for payslip:', pbError)
+                    sourceType: 'payslip',
+                    sourceId: saved.id,
+                }, supabase)
+
+                verificationId = verification.id
+                verificationNumber = `${verification.series}${verification.number}`
+            } catch (vError) {
+                console.error('Failed to create verification for payslip:', vError)
             }
         }
 
-        return NextResponse.json({ success: true, payslip: saved, pendingBookingId });
+        return NextResponse.json({ payslip: saved, verificationId, verificationNumber });
     } catch (error) {
         console.error("Failed to create payslip:", error);
         const message = error instanceof Error ? error.message : 'Failed to create payslip';
@@ -133,6 +118,6 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: message }, { status: 422 });
         }
 
-        return NextResponse.json({ error: message }, { status: 500 });
+        return ApiResponse.serverError(message);
     }
-}
+})

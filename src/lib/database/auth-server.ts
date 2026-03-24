@@ -85,16 +85,16 @@ export async function getAuthContext(): Promise<AuthContext | null> {
         return null
     }
 
-    const { data: membership } = await supabase
-        .from('company_members')
-        .select('company_id')
+    const { data: company } = await supabase
+        .from('companies')
+        .select('id')
         .eq('user_id', user.id)
         .single()
 
     return {
         supabase,
         userId: user.id,
-        companyId: membership?.company_id ?? null,
+        companyId: company?.id ?? null,
     }
 }
 
@@ -187,13 +187,27 @@ export async function requireAdminAuth(request: NextRequest): Promise<AuthResult
     return auth
 }
 
-export function withAuth<T>(
-    handler: (request: NextRequest, auth: AuthResult) => Promise<NextResponse<T>>
+/**
+ * Require authenticated context with supabase client, userId, and companyId.
+ * Throws AuthError if not authenticated — use inside withAuth/withAuthParams wrappers.
+ */
+export async function requireAuthContext(): Promise<AuthContext> {
+    const ctx = await getAuthContext()
+    if (!ctx) throw new AuthError('Unauthorized', 401)
+    return ctx
+}
+
+/**
+ * Wrap a route handler with authentication. Provides AuthContext (supabase, userId, companyId).
+ * Use for routes WITHOUT dynamic params.
+ */
+export function withAuth(
+    handler: (request: NextRequest, ctx: AuthContext) => Promise<NextResponse>
 ) {
     return async (request: NextRequest): Promise<NextResponse> => {
         try {
-            const auth = await requireApiAuth(request)
-            return await handler(request, auth)
+            const ctx = await requireAuthContext()
+            return await handler(request, ctx)
         } catch (error) {
             if (error instanceof AuthError) {
                 return NextResponse.json(
@@ -208,8 +222,34 @@ export function withAuth<T>(
     }
 }
 
-export function withAdminAuth<T>(
-    handler: (request: NextRequest, auth: AuthResult) => Promise<NextResponse<T>>
+/**
+ * Wrap a route handler with authentication + dynamic route params.
+ * Use for routes WITH dynamic params like [id].
+ */
+export function withAuthParams<P extends Record<string, string> = { id: string }>(
+    handler: (request: NextRequest, ctx: AuthContext, params: P) => Promise<NextResponse>
+) {
+    return async (request: NextRequest, context: { params: Promise<P> }): Promise<NextResponse> => {
+        try {
+            const ctx = await requireAuthContext()
+            const params = await context.params
+            return await handler(request, ctx, params)
+        } catch (error) {
+            if (error instanceof AuthError) {
+                return NextResponse.json(
+                    { error: error.message },
+                    { status: error.statusCode }
+                )
+            }
+
+            console.error('API error:', error)
+            return ApiResponse.serverError()
+        }
+    }
+}
+
+export function withAdminAuth(
+    handler: (request: NextRequest, auth: AuthResult) => Promise<NextResponse>
 ) {
     return async (request: NextRequest): Promise<NextResponse> => {
         try {

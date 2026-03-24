@@ -19,7 +19,7 @@ export async function DELETE(
             return NextResponse.json({ error: "Benefit assignment not found" }, { status: 404 });
         }
 
-        return NextResponse.json({ success: true });
+        return NextResponse.json({});
     } catch (error) {
         console.error("Failed to delete benefit assignment:", error);
         return NextResponse.json({ error: "Failed to delete" }, { status: 500 });

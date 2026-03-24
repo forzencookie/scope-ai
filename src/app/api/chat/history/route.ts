@@ -1,35 +1,22 @@
 /**
  * Chat History API
  *
- * Security: Uses getAuthContext() with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
-import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
+import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "@/lib/database/auth-server";
 
-export async function GET() {
-    try {
-        const ctx = await getAuthContext();
+export const GET = withAuth(async (_request, { supabase, userId }) => {
+    // Get conversations for the authenticated user only
+    const { data: conversations, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('user_id', userId)
+        .order('updated_at', { ascending: false })
+        .limit(50);
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) throw error;
 
-        const { supabase, userId } = ctx;
-
-        // Get conversations for the authenticated user only
-        const { data: conversations, error } = await supabase
-            .from('conversations')
-            .select('*')
-            .eq('user_id', userId)
-            .order('updated_at', { ascending: false })
-            .limit(50);
-
-        if (error) throw error;
-
-        return NextResponse.json(conversations || []);
-    } catch (error) {
-        console.error("Error fetching chat history:", error);
-        return NextResponse.json({ error: "Failed to fetch conversations" }, { status: 500 });
-    }
-}
+    return NextResponse.json(conversations || []);
+})

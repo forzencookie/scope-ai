@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 
 export type Benefit = {
     id: string
@@ -110,8 +111,8 @@ export const benefitService = {
             employeeId: eb.user_id || employeeId,
             benefitId: eb.id,
             benefitName: eb.name ?? 'Okänd förmån',
-            startDate: eb.created_at ?? undefined,
-            endDate: eb.updated_at ?? undefined,
+            startDate: nullToUndefined(eb.created_at),
+            endDate: nullToUndefined(eb.updated_at),
         }))
     },
 }

@@ -43,8 +43,7 @@ export async function POST(request: NextRequest) {
         })
 
         return NextResponse.json({
-            text: transcription,
-            success: true
+            text: transcription
         })
 
     } catch (error: unknown) {

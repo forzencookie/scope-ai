@@ -160,10 +160,7 @@ export async function POST(request: NextRequest) {
 
         console.log('[AI Extract] Extracted:', extractedData)
 
-        return NextResponse.json({
-            success: true,
-            ...extractedData
-        })
+        return NextResponse.json(extractedData)
     } catch (error) {
         console.error('[AI Extract] Error:', error)
         return NextResponse.json({ 

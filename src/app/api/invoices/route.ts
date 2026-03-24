@@ -1,62 +1,37 @@
 /**
  * Customer Invoices API
  *
- * Security: Uses getAuthContext() with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
+import { withAuth, ApiResponse } from "@/lib/database/auth-server";
 import { invoiceService } from "@/services/invoicing/invoice-service";
 
-export async function GET() {
-    try {
-        const ctx = await getAuthContext();
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
+    const { data: invoices, error } = await supabase
+        .from('customer_invoices')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) console.error('[Invoices] list error:', error);
 
-        const { supabase, userId, companyId } = ctx;
+    return NextResponse.json({
+        invoices: invoices || [],
+        userId,
+        companyId,
+    });
+})
 
-        const { data: invoices, error } = await supabase
-            .from('customer_invoices')
-            .select('*')
-            .order('created_at', { ascending: false })
-            .limit(100);
+export const POST = withAuth(async (req, { supabase, userId, companyId }) => {
+    const body = await req.json();
 
-        if (error) console.error('[Invoices] list error:', error);
-
-        return NextResponse.json({
-            invoices: invoices || [],
-            userId,
-            companyId,
-        });
-    } catch (error) {
-        console.error("Failed to fetch invoices:", error);
-        return NextResponse.json({ error: "Failed to fetch invoices" }, { status: 500 });
+    if (!body.customer) {
+        return ApiResponse.badRequest("Kundnamn krävs");
     }
-}
 
-export async function POST(req: NextRequest) {
-    try {
-        const ctx = await getAuthContext();
+    const invoice = await invoiceService.createInvoice(body, userId, companyId ?? '', supabase);
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { supabase, userId, companyId } = ctx;
-        const body = await req.json();
-
-        if (!body.customer) {
-            return NextResponse.json({ error: "Kundnamn krävs" }, { status: 400 });
-        }
-
-        const invoice = await invoiceService.createInvoice(body, userId, companyId ?? '', supabase);
-
-        return NextResponse.json({ success: true, invoice });
-    } catch (error) {
-        console.error("Failed to create invoice:", error);
-        return NextResponse.json({ error: "Failed to create invoice" }, { status: 500 });
-    }
-}
+    return NextResponse.json({ invoice });
+})

@@ -16,6 +16,7 @@ import { ChatHistorySidebar } from "@/components/layout/chat-history-sidebar"
 import { MainContentArea } from "@/components/layout/main-content-area"
 import { SettingsOverlay } from "@/components/installningar/settings-overlay"
 import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { nullToUndefined } from "@/lib/utils"
 
 function DashboardContentInner({ children }: { children: React.ReactNode }) {
     const { shouldRedirect, isLoading } = useOnboarding()
@@ -100,7 +101,7 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
                     <SettingsOverlay
                         open={settingsOpen}
                         onOpenChange={handleSettingsOpenChange}
-                        defaultTab={settingsParam || undefined}
+                        defaultTab={nullToUndefined(settingsParam)}
                     />
                 </MainContentArea>
             </div>

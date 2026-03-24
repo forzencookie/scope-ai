@@ -210,6 +210,14 @@ export function isDefined<T>(value: T | null | undefined): value is T {
 }
 
 /**
+ * Convert Supabase null to React undefined at the service boundary.
+ * Use in service mapper functions where DB returns T | null but UI expects T | undefined.
+ */
+export function nullToUndefined<T>(value: T | null): T | undefined {
+  return value === null ? undefined : value
+}
+
+/**
  * Generate a unique ID
  */
 export function generateId(prefix = "id"): string {

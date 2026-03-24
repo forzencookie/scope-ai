@@ -32,8 +32,7 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
     category: 'read',
     requiresConfirmation: false,
   allowedCompanyTypes: [],
-  coreTool: true,
-    domain: 'bokforing',
+  domain: 'bokforing',
     keywords: ['transaktion', 'kontoutdrag', 'betalning', 'bank'],
     parameters: {
         type: 'object',
@@ -562,7 +561,7 @@ export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams,
             try {
                 const baseUrl = getBaseUrl()
 
-                // 1. Call invoice payment endpoint (creates pending booking + marks invoice as Betald)
+                // 1. Call invoice payment endpoint (creates verification + marks invoice as Betald)
                 const payRes = await fetch(`${baseUrl}/api/invoices/${params.invoiceId}/pay`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },

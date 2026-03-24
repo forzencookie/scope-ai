@@ -16,8 +16,6 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { SectionCard } from "@/components/ui/section-card"
 import { BulkActionToolbar } from "@/components/shared/bulk-action-toolbar"
-// MomsWizardDialog removed — AI generates momsdeklaration via navigateToAI()
-import { MomsDetailDialog } from "../dialogs/moms"
 import { text } from "@/lib/translations"
 import { useNavigateToAIChat, getDefaultAIContext } from "@/lib/ai/context"
 
@@ -38,9 +36,6 @@ export function MomsdeklarationContent() {
         isLoading,
         searchQuery, setSearchQuery,
         statusFilter, setStatusFilter,
-        selectedReport, setSelectedReport,
-
-
         // Data
         filteredPeriods,
 
@@ -50,7 +45,6 @@ export function MomsdeklarationContent() {
 
         // Actions
         refreshData,
-        handleUpdateReport,
     } = useVatReport()
 
     return (
@@ -123,7 +117,12 @@ export function MomsdeklarationContent() {
                 {/* Main List */}
                 <MomsList
                     periods={filteredPeriods}
-                    onSelectReport={setSelectedReport}
+                    onSelectReport={(report) => navigateToAI({
+                        pageName: "Momsdeklaration",
+                        pageType: "moms",
+                        initialPrompt: `Visa momsdeklaration för ${report.period}`,
+                        autoSend: true,
+                    })}
                     onGenerateAI={() => {
                         navigateToAI(getDefaultAIContext('moms'))
                     }}
@@ -136,13 +135,6 @@ export function MomsdeklarationContent() {
                     actions={bulkActions}
                 />
 
-                {/* VAT Report Detail Dialog */}
-                <MomsDetailDialog
-                    report={selectedReport}
-                    open={!!selectedReport}
-                    onOpenChange={(open) => !open && setSelectedReport(null)}
-                    onSave={handleUpdateReport}
-                />
             </div>
         </div>
     )

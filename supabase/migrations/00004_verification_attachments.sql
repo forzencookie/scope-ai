@@ -6,14 +6,14 @@
 -- =============================================================================
 CREATE TABLE IF NOT EXISTS public.verification_attachments (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    verification_id UUID NOT NULL REFERENCES public.verifications(id) ON DELETE CASCADE,
+    verification_id TEXT NOT NULL REFERENCES public.verifications(id) ON DELETE CASCADE,
     file_name TEXT NOT NULL,
     file_url TEXT NOT NULL,
     file_type TEXT NOT NULL DEFAULT 'application/octet-stream',
     source_type TEXT CHECK (source_type IN ('receipt', 'invoice', 'manual')),
-    source_id UUID,
+    source_id TEXT,
     user_id UUID NOT NULL REFERENCES auth.users(id),
-    company_id UUID NOT NULL REFERENCES public.companies(id),
+    company_id TEXT NOT NULL REFERENCES public.companies(id),
     uploaded_at TIMESTAMPTZ NOT NULL DEFAULT now(),
     created_at TIMESTAMPTZ NOT NULL DEFAULT now()
 );

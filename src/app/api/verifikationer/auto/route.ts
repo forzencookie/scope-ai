@@ -2,8 +2,7 @@
  * Auto-Verifikation Proposal Endpoint
  *
  * POST — Takes pending items + accountingMethod, returns AI-generated
- * verifikation proposals. Pre-calculated entries (payslips, dividends)
- * are passed through; transactions and invoices are categorized by AI.
+ * verifikation proposals. Transactions and invoices are categorized by AI.
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -14,16 +13,6 @@ import { basAccounts } from '@/data/accounts'
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
-
-interface PendingBookingItem {
-  type: 'pending_booking'
-  id: string
-  sourceType: string
-  description: string
-  proposedEntries: VerificationEntryInput[]
-  proposedDate: string
-  proposedSeries: string
-}
 
 interface TransactionItem {
   type: 'transaction'
@@ -55,7 +44,6 @@ interface SupplierInvoiceItem {
 }
 
 type PendingItem =
-  | PendingBookingItem
   | TransactionItem
   | CustomerInvoiceItem
   | SupplierInvoiceItem
@@ -103,22 +91,6 @@ function buildAccountContext(): string {
     .map((a) => `${a.number} ${a.name}`)
     .join('\n')
   return list
-}
-
-/** Pass through pre-calculated pending bookings without AI */
-function passThroughPendingBooking(item: PendingBookingItem): VerifikationProposal {
-  return {
-    tempId: `pb-${item.id}`,
-    sourceType: item.sourceType,
-    sourceId: item.id,
-    date: item.proposedDate,
-    description: item.description,
-    series: item.proposedSeries || 'A',
-    entries: item.proposedEntries,
-    reasoning: 'Förberäknade poster — inga AI-ändringar.',
-    confidence: 100,
-    needsReview: false,
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -237,45 +209,26 @@ export async function POST(request: NextRequest) {
 
     const proposals: VerifikationProposal[] = []
 
-    // Separate pre-calculated pending bookings from items needing AI
-    const passThrough: PendingBookingItem[] = []
-    const needsAI: PendingItem[] = []
+    // AI categorize all items
+    const accounts = buildAccountContext()
+    const aiResult = await categorizeWithAI(items, accountingMethod, accounts)
 
-    for (const item of items) {
-      if (item.type === 'pending_booking') {
-        passThrough.push(item)
-      } else {
-        needsAI.push(item)
-      }
-    }
+    for (const p of aiResult.proposals) {
+      const source = items[p.itemIndex]
+      if (!source) continue
 
-    // 1. Pass through pre-calculated entries
-    for (const item of passThrough) {
-      proposals.push(passThroughPendingBooking(item))
-    }
-
-    // 2. AI categorize remaining items
-    if (needsAI.length > 0) {
-      const accounts = buildAccountContext()
-      const aiResult = await categorizeWithAI(needsAI, accountingMethod, accounts)
-
-      for (const p of aiResult.proposals) {
-        const source = needsAI[p.itemIndex]
-        if (!source) continue
-
-        proposals.push({
-          tempId: `ai-${source.type}-${source.id}`,
-          sourceType: source.type,
-          sourceId: source.id,
-          date: 'date' in source ? source.date : new Date().toISOString().split('T')[0],
-          description: p.description,
-          series: p.series || 'A',
-          entries: p.entries,
-          reasoning: p.reasoning,
-          confidence: p.confidence,
-          needsReview: p.confidence < 80,
-        })
-      }
+      proposals.push({
+        tempId: `ai-${source.type}-${source.id}`,
+        sourceType: source.type,
+        sourceId: source.id,
+        date: 'date' in source ? source.date : new Date().toISOString().split('T')[0],
+        description: p.description,
+        series: p.series || 'A',
+        entries: p.entries,
+        reasoning: p.reasoning,
+        confidence: p.confidence,
+        needsReview: p.confidence < 80,
+      })
     }
 
     return NextResponse.json({ proposals })

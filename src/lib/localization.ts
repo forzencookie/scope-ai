@@ -195,16 +195,6 @@ export const EMPLOYEE_STATUS_LABELS = {
 } as const
 
 // =============================================================================
-// Pending Booking Statuses (Väntande bokföringar)
-// =============================================================================
-
-export const PENDING_BOOKING_STATUS_LABELS = {
-    PENDING: "Väntande",
-    BOOKED: "Bokförd",
-    DISMISSED: "Avfärdad",
-} as const
-
-// =============================================================================
 // Table Headers & Labels
 // =============================================================================
 

@@ -61,7 +61,8 @@ export function validateChatMessages(messages: unknown): ValidationResult<ChatMe
             return { valid: false, error: `Message at index ${i} must be an object` }
         }
 
-        const { role, content } = msg as any
+        const record = msg as Record<string, unknown>
+        const { role, content } = record
         
         // Role check
         if (role !== 'user' && role !== 'assistant' && role !== 'system') {

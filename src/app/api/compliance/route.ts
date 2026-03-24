@@ -1,127 +1,89 @@
 /**
  * Compliance API (Shareholders, Corporate Documents)
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request, { supabase }) => {
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type')
 
-    try {
-        const ctx = await getAuthContext();
-
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { supabase } = ctx;
-
-        if (type === 'shareholders') {
-            const { data: shareholders, error } = await supabase
-                .from('shareholders')
-                .select('*')
-            
-            if (error) throw error;
-            return NextResponse.json({ success: true, data: shareholders || [] })
-        }
-
-        const { data: documents, error } = await supabase
-            .from('meetings')
+    if (type === 'shareholders') {
+        const { data: shareholders, error } = await supabase
+            .from('shareholders')
             .select('*')
-        
+
         if (error) throw error;
-        return NextResponse.json({ success: true, data: documents || [] })
-    } catch (error) {
-        console.error('Compliance API GET error:', error)
-        return NextResponse.json(
-            { success: false, error: 'Failed to fetch compliance data' },
-            { status: 500 }
-        )
+        return NextResponse.json({ data: shareholders || [] })
     }
-}
 
-export async function POST(request: NextRequest) {
-    try {
-        const ctx = await getAuthContext();
+    const { data: documents, error } = await supabase
+        .from('meetings')
+        .select('*')
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) throw error;
+    return NextResponse.json({ data: documents || [] })
+})
 
-        const body = await request.json()
-        // Use 'action' key to avoid collision with document's 'type' field
-        const { action, ...data } = body
-        const { supabase, userId, companyId } = ctx;
+export const POST = withAuth(async (request, { supabase, userId, companyId }) => {
+    const body = await request.json()
+    // Use 'action' key to avoid collision with document's 'type' field
+    const { action, ...data } = body
 
-        if (action === 'document') {
-            // Note: corporate_documents doesn't have company_id column, only user_id
-            const insertData = { ...data, user_id: userId }
-            console.log('[Compliance API] Inserting document:', insertData)
-            const { data: newDoc, error } = await supabase
-                .from('meetings')
-                .insert(insertData)
-                .select()
-                .single();
-            
-            console.log('[Compliance API] Insert result:', { newDoc, error })
-            if (error) throw error;
-            return NextResponse.json({ success: true, data: newDoc })
-        }
+    if (action === 'document') {
+        // Note: corporate_documents doesn't have company_id column, only user_id
+        const insertData = { ...data, user_id: userId }
+        const { data: newDoc, error } = await supabase
+            .from('meetings')
+            .insert(insertData)
+            .select()
+            .single();
 
-        if (action === 'document_update') {
-            const { id, ...updates } = data
-            console.log('[Compliance API] Updating document:', { id, updates })
-            const { data: updated, error } = await supabase
-                .from('meetings')
-                .update(updates)
-                .eq('id', id)
-                .eq('user_id', userId) // Ensure user owns this document
-                .select()
-                .single();
-            
-            console.log('[Compliance API] Update result:', { updated, error })
-            if (error) throw error;
-            return NextResponse.json({ success: true, data: updated })
-        }
-
-        if (action === 'shareholder_update') {
-            const { id, ...updates } = data
-            const { data: updated, error } = await supabase
-                .from('shareholders')
-                .update(updates)
-                .eq('id', id)
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return NextResponse.json({ success: true, data: updated })
-        }
-
-        if (action === 'shareholder_create') {
-            const { id: _id, ...newShareholder } = data
-            const { data: created, error } = await supabase
-                .from('shareholders')
-                .insert({ ...newShareholder, company_id: companyId })
-                .select()
-                .single();
-            
-            if (error) throw error;
-            return NextResponse.json({ success: true, data: created })
-        }
-
-        return NextResponse.json(
-            { success: false, error: 'Invalid compliance action type' },
-            { status: 400 }
-        )
-    } catch (error) {
-        console.error('Compliance API POST error:', error)
-        return NextResponse.json(
-            { success: false, error: 'Failed to process compliance action' },
-            { status: 500 }
-        )
+        if (error) throw error;
+        return NextResponse.json({ data: newDoc })
     }
-}
+
+    if (action === 'document_update') {
+        const { id, ...updates } = data
+        const { data: updated, error } = await supabase
+            .from('meetings')
+            .update(updates)
+            .eq('id', id)
+            .eq('user_id', userId) // Ensure user owns this document
+            .select()
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json({ data: updated })
+    }
+
+    if (action === 'shareholder_update') {
+        const { id, ...updates } = data
+        const { data: updated, error } = await supabase
+            .from('shareholders')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json({ data: updated })
+    }
+
+    if (action === 'shareholder_create') {
+        const { id: _id, ...newShareholder } = data
+        const { data: created, error } = await supabase
+            .from('shareholders')
+            .insert({ ...newShareholder, company_id: companyId })
+            .select()
+            .single();
+
+        if (error) throw error;
+        return NextResponse.json({ data: created })
+    }
+
+    return ApiResponse.badRequest('Invalid compliance action type')
+})

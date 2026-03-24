@@ -5,6 +5,7 @@
  */
 
 import { createBrowserClient, isSupabaseConfigured } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import type {
     ShareHolding,
     CreateShareHoldingInput,
@@ -33,7 +34,7 @@ const mapShareHolding = (row: ShareholdingsRow): ShareHolding => ({
     id: row.id,
     companyId: row.company_id || '',
     companyName: row.company_name || '',
-    orgNumber: row.org_number || undefined,
+    orgNumber: nullToUndefined(row.org_number),
     holdingType: (row.holding_type || 'other') as ShareHolding['holdingType'],
     sharesCount: row.shares_count || 0,
     purchaseDate: row.purchase_date ? new Date(row.purchase_date) : undefined,
@@ -41,7 +42,7 @@ const mapShareHolding = (row: ShareholdingsRow): ShareHolding => ({
     currentValue: row.current_value ? Number(row.current_value) : undefined,
     dividendReceived: Number(row.dividend_received || 0),
     basAccount: row.bas_account || '1350',
-    notes: row.notes || undefined,
+    notes: nullToUndefined(row.notes),
     createdAt: new Date(row.created_at || ''),
     updatedAt: new Date(row.updated_at || ''),
 })

@@ -43,7 +43,7 @@ export async function PATCH(request: NextRequest) {
       return ApiResponse.serverError('Failed to update profile')
     }
 
-    return Response.json({ success: true })
+    return Response.json({})
   } catch (error) {
     console.error('[Profile API] Unexpected error:', error)
     return ApiResponse.serverError('Internal server error')

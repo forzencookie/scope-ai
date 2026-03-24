@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import type { Database } from '@/types/database'
 
 type EmployeeRow = Database['public']['Tables']['employees']['Row']
@@ -62,12 +63,12 @@ function mapRowToEmployee(e: EmployeeRow): Employee {
     return {
         id: e.id,
         name: e.name,
-        personalNumber: e.personal_number ?? undefined,
-        role: e.role ?? undefined,
+        personalNumber: nullToUndefined(e.personal_number),
+        role: nullToUndefined(e.role),
         monthlySalary: Number(e.monthly_salary) || 0,
         taxTable: e.tax_table_number || 33,
-        startDate: e.start_date ?? undefined,
-        email: e.email ?? undefined,
+        startDate: nullToUndefined(e.start_date),
+        email: nullToUndefined(e.email),
         status: (e.status as Employee['status']) || 'Aktiv',
     }
 }
@@ -90,7 +91,7 @@ function mapRowToPayslip(p: PayslipRow): Payslip {
         bonuses: Number(p.bonuses) || 0,
         otherDeductions: Number(p.deductions) || 0,
         status: (p.status as Payslip['status']) || 'Utkast',
-        sentAt: p.payment_date ?? undefined,
+        sentAt: nullToUndefined(p.payment_date),
     }
 }
 
@@ -107,7 +108,7 @@ function mapRowToAGIReport(r: AGIReportRow): AGIReport {
         totalTax: Number(r.total_tax) || 0,
         employerContributions: Number(r.employer_contributions) || 0,
         status: (r.status as AGIReport['status']) || 'Utkast',
-        submittedAt: r.updated_at ?? undefined,
+        submittedAt: nullToUndefined(r.updated_at),
     }
 }
 

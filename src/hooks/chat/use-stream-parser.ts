@@ -113,7 +113,7 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                         const normalizedWalkthrough = normalizeAIDisplay('DiscoveredTools', walkthroughData) // Using this as proxy for now or add WalkthroughSchema
                         lastData = {
                             ...(lastData || {}),
-                            walkthroughBlocks: normalizedWalkthrough,
+                            walkthroughBlocks: normalizedWalkthrough as WalkthroughBlockResponse,
                         }
                     } else if (line.startsWith('D:')) {
                         const data = JSON.parse(line.slice(2)) as Record<string, unknown>

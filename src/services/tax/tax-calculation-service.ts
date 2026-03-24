@@ -3,7 +3,7 @@ import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { accountService } from '../accounting/account-service'
 import { calculateEgenavgifter, type EgenavgifterRates } from '@/lib/egenavgifter'
-import { taxService } from './tax-service'
+import { taxService, type TaxRates } from './tax-service'
 
 /**
  * Tax Calculation Service - Universal specialist for tax-related math.
@@ -69,7 +69,7 @@ export const taxCalculationService = {
     /**
      * Synchronous version for UI estimators (sliders).
      */
-    getYTDProfitAndTaxSync(profit: number, taxRates: any, options: {
+    getYTDProfitAndTaxSync(profit: number, taxRates: TaxRates, options: {
         isReduced?: boolean
         includeKarensReduction?: boolean
     } = {}) {

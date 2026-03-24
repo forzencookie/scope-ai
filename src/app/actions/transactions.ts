@@ -1,6 +1,6 @@
 'use server'
 
-import { getAuthContext } from "@/lib/database/auth-server"
+import { requireAuthContext } from "@/lib/database/auth-server"
 import { bookTransaction } from "@/services/accounting/transactions"
 import { revalidatePath } from "next/cache"
 
@@ -15,26 +15,21 @@ export async function bookTransactionAction(id: string, params: {
     description?: string
     vatRate?: number
 }) {
-    const ctx = await getAuthContext()
-    if (!ctx) {
-        return { success: false, error: "Unauthorized" }
-    }
-
-    const { supabase, userId } = ctx
-
     try {
+        const { supabase, userId } = await requireAuthContext()
+
         const result = await bookTransaction(id, userId, params, supabase)
-        
+
         if (result.success) {
             revalidatePath('/dashboard/bokforing/transaktioner')
         }
-        
+
         return result
     } catch (error) {
         console.error('[Action] bookTransactionAction error:', error)
-        return { 
-            success: false, 
-            error: error instanceof Error ? error.message : "Failed to book transaction" 
+        return {
+            success: false,
+            error: error instanceof Error ? error.message : "Failed to book transaction"
         }
     }
 }

@@ -1,7 +1,7 @@
-import { tool, jsonSchema, stepCountIs, type ToolSet } from 'ai'
-import { ZodTypeAny } from 'zod'
+import { jsonSchema, stepCountIs, type ToolSet } from 'ai'
 import { aiToolRegistry } from './registry'
 import type { AITool, InteractionContext } from './types'
+import { nullToUndefined } from '@/lib/utils'
 
 interface ToolExecuteResult {
     success: boolean
@@ -21,7 +21,7 @@ function makeExecute(t: AITool, context: InteractionContext) {
     return async (args: Record<string, unknown>): Promise<ToolExecuteResult> => {
         const result = await aiToolRegistry.execute(t.name, args, {
             userId: context.userId,
-            companyId: context.companyId || undefined,
+            companyId: nullToUndefined(context.companyId),
             confirmationId: context.confirmationId,
         })
 
@@ -43,25 +43,21 @@ function makeExecute(t: AITool, context: InteractionContext) {
 /**
  * Convert an array of AITools into Vercel AI SDK tool format.
  *
- * Note: Vercel AI SDK's tool() has strict generic overloads that cannot
- * resolve dynamically-typed schemas (Zod | JSON Schema) at compile time.
- * We use @ts-expect-error on each call since the runtime behavior is correct.
+ * streamText reads `inputSchema` (not `parameters`) from each tool entry.
+ * We build tool objects directly with the correct shape instead of using
+ * the `tool()` helper which sets `parameters` (a passthrough that doesn't
+ * set `inputSchema`).
  */
 function convertToVercelTools(tools: AITool[], context: InteractionContext): ToolSet {
     const vercelTools: ToolSet = {}
 
     for (const t of tools) {
         const execute = makeExecute(t, context)
+        const schema = ('_def' in t.parameters)
+            ? t.parameters
+            : jsonSchema(t.parameters as Parameters<typeof jsonSchema>[0])
 
-        if (t.parameters && '_def' in t.parameters) {
-            vercelTools[t.name] =
-                // @ts-expect-error — tool() overloads can't infer types from dynamic ZodTypeAny
-                tool({ description: t.description, parameters: t.parameters as ZodTypeAny, execute })
-        } else {
-            vercelTools[t.name] =
-                // @ts-expect-error — tool() overloads can't infer types from dynamic jsonSchema()
-                tool({ description: t.description, parameters: jsonSchema(t.parameters as Parameters<typeof jsonSchema>[0]), execute })
-        }
+        vercelTools[t.name] = { description: t.description, inputSchema: schema, execute } as ToolSet[string]
     }
 
     return vercelTools

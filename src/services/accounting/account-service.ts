@@ -378,13 +378,13 @@ export const accountService = {
         if (error) throw error
         if (!data || data.length === 0) return []
 
-        return data.map((row: any) => ({
-            id: row.id || `acc-${row.account_number}`,
+        return data.map((row) => ({
+            id: `acc-${row.account_number}`,
             accountNumber: String(row.account_number),
             accountName: row.account_name,
             balance: row.balance || 0,
-            period: row.period || null,
-            year: row.year || new Date(endDate).getFullYear(),
+            period: null,
+            year: new Date(endDate).getFullYear(),
             accountClass: getAccountClass(String(row.account_number)),
             accountType: getAccountType(String(row.account_number))
         }))

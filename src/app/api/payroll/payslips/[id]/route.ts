@@ -5,83 +5,49 @@
  * DELETE: Delete a draft payslip
  */
 
-import { NextRequest, NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
+import { NextRequest } from "next/server";
+import { withAuthParams, ApiResponse } from "@/lib/database/auth-server";
 
-export async function PUT(
-    req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const ctx = await getAuthContext();
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+export const PUT = withAuthParams(async (req: NextRequest, { supabase }, { id }) => {
+    const body = await req.json();
 
-        const { supabase } = ctx;
-        const { id } = await params;
-        const body = await req.json();
+    const { data: updated, error } = await supabase
+        .from('payslips')
+        .update(body)
+        .eq('id', id)
+        .select()
+        .single();
 
-        const { data: updated, error } = await supabase
-            .from('payslips')
-            .update(body)
-            .eq('id', id)
-            .select()
-            .single();
-
-        if (error || !updated) {
-            return NextResponse.json({ error: 'Payslip not found' }, { status: 404 });
-        }
-
-        return NextResponse.json({ success: true, payslip: updated });
-    } catch (error) {
-        console.error("Failed to update payslip:", error);
-        return NextResponse.json({ error: "Failed to update" }, { status: 500 });
+    if (error || !updated) {
+        return ApiResponse.notFound('Payslip not found');
     }
-}
 
-export async function DELETE(
-    _req: NextRequest,
-    { params }: { params: Promise<{ id: string }> }
-) {
-    try {
-        const ctx = await getAuthContext();
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    return ApiResponse.success({ payslip: updated });
+})
 
-        const { supabase } = ctx;
-        const { id } = await params;
+export const DELETE = withAuthParams(async (_req: NextRequest, { supabase }, { id }) => {
+    // Only allow deletion of draft payslips
+    const { data: existing, error: fetchError } = await supabase
+        .from('payslips')
+        .select('*')
+        .eq('id', id)
+        .single();
 
-        // Only allow deletion of draft payslips
-        const { data: existing, error: fetchError } = await supabase
-            .from('payslips')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (fetchError || !existing) {
-            return NextResponse.json({ error: 'Payslip not found' }, { status: 404 });
-        }
-        if (existing.status !== 'Utkast') {
-            return NextResponse.json(
-                { error: 'Kan bara ta bort utkast. Ändra status till utkast först.' },
-                { status: 422 }
-            );
-        }
-
-        const { error: deleteError } = await supabase
-            .from('payslips')
-            .delete()
-            .eq('id', id);
-
-        if (deleteError) {
-            return NextResponse.json({ error: 'Failed to delete' }, { status: 500 });
-        }
-
-        return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error("Failed to delete payslip:", error);
-        return NextResponse.json({ error: "Failed to delete" }, { status: 500 });
+    if (fetchError || !existing) {
+        return ApiResponse.notFound('Payslip not found');
     }
-}
+    if (existing.status !== 'Utkast') {
+        return ApiResponse.badRequest('Kan bara ta bort utkast. Ändra status till utkast först.');
+    }
+
+    const { error: deleteError } = await supabase
+        .from('payslips')
+        .delete()
+        .eq('id', id);
+
+    if (deleteError) {
+        return ApiResponse.serverError('Failed to delete');
+    }
+
+    return ApiResponse.success({});
+})

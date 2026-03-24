@@ -1,13 +1,12 @@
 /**
  * Onboarding Seed API
- * 
+ *
  * Seeds initial data for company onboarding (shareholders, partners, members)
- * 
+ *
  * SECURITY: Requires authentication and user_id is enforced on all inserts
- * Previously used service role key without authentication!
  */
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext, ApiResponse } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 
 interface ShareholderData {
     name: string
@@ -46,16 +45,9 @@ interface OnboardingSeedRequest {
     members?: MemberData[]
 }
 
-export async function POST(request: NextRequest) {
-    // Verify authentication
-    const ctx = await getAuthContext()
-    if (!ctx) {
-        return ApiResponse.unauthorized('Authentication required')
-    }
-    const { supabase, userId, companyId } = ctx
-
+export const POST = withAuth(async (request, { supabase, userId, companyId }) => {
     if (!companyId) {
-        return NextResponse.json({ success: false, error: 'No company selected' }, { status: 400 })
+        return ApiResponse.badRequest('No company selected')
     }
 
     try {
@@ -82,7 +74,7 @@ export async function POST(request: NextRequest) {
                 results.shareholders = shareholders?.length || 0
             } catch (error) {
                 console.error('Error inserting shareholders:', error)
-                return NextResponse.json({ success: false, error: 'Failed to insert shareholders' }, { status: 500 })
+                return ApiResponse.serverError('Failed to insert shareholders')
             }
         }
 
@@ -106,7 +98,7 @@ export async function POST(request: NextRequest) {
                 results.partners = partners?.length || 0
             } catch (error) {
                 console.error('Error inserting partners:', error)
-                return NextResponse.json({ success: false, error: 'Failed to insert partners' }, { status: 500 })
+                return ApiResponse.serverError('Failed to insert partners')
             }
         }
 
@@ -129,20 +121,16 @@ export async function POST(request: NextRequest) {
                 results.members = members?.length || 0
             } catch (error) {
                 console.error('Error inserting members:', error)
-                return NextResponse.json({ success: false, error: 'Failed to insert members' }, { status: 500 })
+                return ApiResponse.serverError('Failed to insert members')
             }
         }
 
         return NextResponse.json({
-            success: true,
             message: 'Onboarding data seeded successfully',
             results
         })
     } catch (error) {
         console.error('Onboarding seed error:', error)
-        return NextResponse.json(
-            { success: false, error: 'Failed to seed onboarding data' },
-            { status: 500 }
-        )
+        return ApiResponse.serverError('Failed to seed onboarding data')
     }
-}
+})

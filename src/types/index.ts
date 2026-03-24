@@ -97,8 +97,6 @@ export interface NavItem {
   muted?: boolean  // Lower opacity styling
   featureKey?: FeatureKey
   items?: NavSubItem[]
-  /** Cache key for dynamic badge count (e.g., 'pending-bookings') */
-  badgeKey?: string
 }
 
 export interface NavSubItem {

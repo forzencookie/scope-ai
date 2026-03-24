@@ -249,14 +249,15 @@ export type DiscoveredTool = z.infer<typeof DiscoveredToolSchema>
  * 
  * STRICT MANDATE: Never return raw data as a fallback.
  */
-export function normalizeAIDisplay(type: string, data: any): any {
+export function normalizeAIDisplay(type: string, data: unknown): unknown {
     if (!data) {
         throw new Error(`[Normalization] Missing data for type: ${type}`);
     }
 
     // Handle AI sometimes wrapping data in a key (e.g., { receipt: {...} } vs {...})
-    const unwrapped = (typeof data === 'object' && !Array.isArray(data))
-        ? (data[type.toLowerCase().replace('card', '')] || data)
+    const record = (typeof data === 'object' && !Array.isArray(data)) ? data as Record<string, unknown> : null
+    const unwrapped = record
+        ? (record[type.toLowerCase().replace('card', '')] || data)
         : data;
 
     try {

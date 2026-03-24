@@ -42,7 +42,6 @@ export async function POST(req: NextRequest) {
         if (execute) {
             const result = await accrualService.executeAccrual(input)
             return NextResponse.json({
-                success: true,
                 ...result,
                 message: `Periodisering skapad: ${result.periodCount} verifikationer, ${result.monthlyAmount.toLocaleString('sv-SE')} kr/mån.`,
             })

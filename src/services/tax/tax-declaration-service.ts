@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import type { Database } from '@/types/database'
 
 // The generated DB types for these tables are incomplete stubs.
@@ -77,13 +78,13 @@ export async function getIncomeDeclarations(taxYear?: number): Promise<IncomeDec
     return (data || []).map((d: IncomeDeclarationRow) => ({
         id: d.id,
         taxYear: d.tax_year || 0,
-        dueDate: d.due_date ?? undefined,
+        dueDate: nullToUndefined(d.due_date),
         revenue: Number(d.revenue) || 0,
         expenses: Number(d.expenses) || 0,
         profitBeforeTax: Number(d.profit_before_tax) || 0,
         taxAmount: Number(d.tax_amount) || 0,
         status: (d.status as IncomeDeclaration['status']) || 'Utkast',
-        submittedAt: d.submitted_at ?? undefined,
+        submittedAt: nullToUndefined(d.submitted_at),
     }))
 }
 
@@ -118,7 +119,7 @@ export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
         egenavgifter: Number(d.egenavgifter) || 0,
         schablonavdrag: Number(d.schablonavdrag) || 0,
         status: (d.status as NEAppendix['status']) || 'Utkast',
-        submittedAt: d.submitted_at ?? undefined,
+        submittedAt: nullToUndefined(d.submitted_at),
     }))
 }
 
@@ -150,8 +151,8 @@ export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClos
     return (data || []).map((d: AnnualClosingRow) => ({
         id: d.id,
         fiscalYear: d.fiscal_year || 0,
-        fiscalYearStart: d.fiscal_year_start ?? undefined,
-        fiscalYearEnd: d.fiscal_year_end ?? undefined,
+        fiscalYearStart: nullToUndefined(d.fiscal_year_start),
+        fiscalYearEnd: nullToUndefined(d.fiscal_year_end),
         totalRevenue: Number(d.total_revenue) || 0,
         totalExpenses: Number(d.total_expenses) || 0,
         netProfit: Number(d.net_profit) || 0,
@@ -159,7 +160,7 @@ export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClos
         totalLiabilities: Number(d.total_liabilities) || 0,
         totalEquity: Number(d.total_equity) || 0,
         status: (d.status as AnnualClosing['status']) || 'Utkast',
-        completedAt: d.completed_at ?? undefined,
+        completedAt: nullToUndefined(d.completed_at),
     }))
 }
 
@@ -190,15 +191,15 @@ export async function getAnnualReports(fiscalYear?: number): Promise<AnnualRepor
     return (data || []).map((d: AnnualReportRow) => ({
         id: d.id,
         fiscalYear: d.fiscal_year || 0,
-        companyName: d.company_name ?? undefined,
-        orgNumber: d.org_number ?? undefined,
+        companyName: nullToUndefined(d.company_name),
+        orgNumber: nullToUndefined(d.org_number),
         reportSections: (d.report_sections || {}) as Record<string, unknown>,
-        directorsReport: d.directors_report ?? undefined,
-        auditorReport: d.auditor_report ?? undefined,
+        directorsReport: nullToUndefined(d.directors_report),
+        auditorReport: nullToUndefined(d.auditor_report),
         status: (d.status as AnnualReport['status']) || 'draft',
-        approvedAt: d.approved_at ?? undefined,
-        submittedAt: d.submitted_at ?? undefined,
-        bolagsverketReference: d.bolagsverket_reference ?? undefined,
+        approvedAt: nullToUndefined(d.approved_at),
+        submittedAt: nullToUndefined(d.submitted_at),
+        bolagsverketReference: nullToUndefined(d.bolagsverket_reference),
     }))
 }
 

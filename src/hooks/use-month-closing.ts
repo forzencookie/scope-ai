@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from "react"
 import { useVerifications } from "./use-verifications"
 import { useCompany } from "@/providers/company-provider"
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import {
     getApplicableChecks,
     resolveChecks,
@@ -88,7 +89,7 @@ export function useMonthClosing() {
                             // Migrate old JSONB format to new format
                             const raw = (p.reconciliation_checks as Record<string, unknown>) || {}
                             const { manualChecks, notes } = migrateOldChecks(raw)
-                            const dayNotes = (raw.dayNotes as Record<string, string>) || undefined
+                            const dayNotes = nullToUndefined((raw.dayNotes as Record<string, string> | null))
 
                             return {
                                 id: p.id,
@@ -98,8 +99,8 @@ export function useMonthClosing() {
                                 manualChecks,
                                 notes,
                                 dayNotes,
-                                locked_at: p.locked_at || undefined,
-                                locked_by: p.locked_by || undefined
+                                locked_at: nullToUndefined(p.locked_at),
+                                locked_by: nullToUndefined(p.locked_by)
                             }
                         }))
                     }

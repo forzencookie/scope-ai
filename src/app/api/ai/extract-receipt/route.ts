@@ -140,10 +140,7 @@ Swedish receipt hints:
             overallConfidence: extractedData.overallConfidence
         })
 
-        return NextResponse.json({
-            success: true,
-            data: extractedData
-        })
+        return NextResponse.json(extractedData)
 
     } catch (error) {
         console.error('[Receipt OCR Error]', error)
@@ -151,7 +148,6 @@ Swedish receipt hints:
         // In production, return an error; in development, provide fallback
         if (process.env.NODE_ENV === 'production') {
             return NextResponse.json({
-                success: false,
                 error: 'Failed to extract receipt data. Please try again.'
             }, { status: 500 })
         }
@@ -167,8 +163,7 @@ Swedish receipt hints:
         }
 
         return NextResponse.json({
-            success: true,
-            data: fallbackData,
+            ...fallbackData,
             warning: 'Extraction failed - using placeholder data'
         })
     }

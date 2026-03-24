@@ -2,7 +2,7 @@ import { useNavigateToAIChat } from "@/lib/ai/context"
 import { usePathname, useRouter } from "next/navigation"
 
 export function useChatNavigation() {
-    const _navigateToAI = useNavigateToAIChat()
+    const navigateToAI = useNavigateToAIChat()
     const pathname = usePathname()
     const router = useRouter()
 
@@ -13,7 +13,7 @@ export function useChatNavigation() {
                 router.push("/dashboard")
             }
             
-            _navigateToAI({
+            navigateToAI({
                 pageName: "Assistent",
                 pageType: "resultatrakning", // fallback
                 initialPrompt: options.prompt,

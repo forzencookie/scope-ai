@@ -1,5 +1,11 @@
-import { NextResponse } from 'next/server'
-import { getAuthContext } from "@/lib/database/auth-server"
+/**
+ * Integrations API
+ *
+ * Security: Uses withAuth wrapper with RLS enforcement
+ */
+
+import { NextRequest, NextResponse } from 'next/server'
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 
 // Default integration states for new users
 const DEFAULT_INTEGRATIONS: Record<string, boolean> = {
@@ -9,95 +15,71 @@ const DEFAULT_INTEGRATIONS: Record<string, boolean> = {
     'skatteverket': false,
 }
 
+export const GET = withAuth(async (_request, { supabase }) => {
+    // Fetch user's integrations
+    const { data, error } = await supabase
+        .from('integrations')
+        .select('integration_id, connected')
 
-export async function GET() {
-    try {
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-        const { supabase } = ctx
-
-        // Fetch user's integrations
-        const { data, error } = await supabase
-            .from('integrations')
-            .select('integration_id, connected')
-
-        if (error) {
-            console.error('Failed to fetch integrations:', error)
-            return NextResponse.json({ error: 'Failed to fetch integrations' }, { status: 500 })
-        }
-
-        // Merge with defaults (user settings override defaults)
-        const integrations = { ...DEFAULT_INTEGRATIONS }
-        const rows = data || []
-        for (const row of rows) {
-            if (row.integration_id) {
-                integrations[row.integration_id] = row.connected ?? false
-            }
-        }
-
-        return NextResponse.json({ integrations })
-    } catch (error) {
-        console.error('Integrations GET error:', error)
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+    if (error) {
+        console.error('Failed to fetch integrations:', error)
+        return ApiResponse.serverError('Failed to fetch integrations')
     }
-}
 
-export async function POST(request: Request) {
-    try {
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    // Merge with defaults (user settings override defaults)
+    const integrations = { ...DEFAULT_INTEGRATIONS }
+    const rows = data || []
+    for (const row of rows) {
+        if (row.integration_id) {
+            integrations[row.integration_id] = row.connected ?? false
         }
-        const { supabase, userId } = ctx
+    }
 
-        const body = await request.json()
-        const { id, connected } = body
+    return NextResponse.json({ integrations })
+})
 
-        if (typeof id !== 'string' || typeof connected !== 'boolean') {
-            return NextResponse.json({ error: 'Invalid request' }, { status: 400 })
-        }
+export const POST = withAuth(async (request, { supabase, userId }) => {
+    const body = await request.json()
+    const { id, connected } = body
 
-        // Upsert the integration state
-        const { error } = await supabase
-            .from('integrations')
-            .upsert({
-                user_id: userId,
-                integration_id: id,
-                connected,
-                connected_at: connected ? new Date().toISOString() : null,
-                updated_at: new Date().toISOString(),
-            }, {
-                onConflict: 'user_id,integration_id'
-            })
+    if (typeof id !== 'string' || typeof connected !== 'boolean') {
+        return ApiResponse.badRequest('Invalid request')
+    }
 
-        if (error) {
-            console.error('Failed to update integration:', error)
-            return NextResponse.json({ error: 'Failed to update integration' }, { status: 500 })
-        }
-
-        // Fetch all integrations to return current state
-        const { data: allData } = await supabase
-            .from('integrations')
-            .select('integration_id, connected')
-
-        const integrations = { ...DEFAULT_INTEGRATIONS }
-        const rows = allData || []
-        for (const row of rows) {
-            if (row.integration_id) {
-                integrations[row.integration_id] = row.connected ?? false
-            }
-        }
-
-        return NextResponse.json({
-            success: true,
-            id,
+    // Upsert the integration state
+    const { error } = await supabase
+        .from('integrations')
+        .upsert({
+            user_id: userId,
+            integration_id: id,
             connected,
-            integrations
+            connected_at: connected ? new Date().toISOString() : null,
+            updated_at: new Date().toISOString(),
+        }, {
+            onConflict: 'user_id,integration_id'
         })
-    } catch (error) {
-        console.error('Integrations POST error:', error)
-        return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 })
+
+    if (error) {
+        console.error('Failed to update integration:', error)
+        return ApiResponse.serverError('Failed to update integration')
     }
-}
+
+    // Fetch all integrations to return current state
+    const { data: allData } = await supabase
+        .from('integrations')
+        .select('integration_id, connected')
+
+    const integrations = { ...DEFAULT_INTEGRATIONS }
+    const rows = allData || []
+    for (const row of rows) {
+        if (row.integration_id) {
+            integrations[row.integration_id] = row.connected ?? false
+        }
+    }
+
+    return NextResponse.json({
+        id,
+        connected,
+        integrations
+    })
+})

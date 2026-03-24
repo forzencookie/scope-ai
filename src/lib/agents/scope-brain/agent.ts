@@ -15,6 +15,7 @@ import type {
 import { aiToolRegistry } from '../../ai-tools/registry'
 import { selectModel, getModelId, type ModelConfig } from './model-selector'
 import { buildSystemPrompt } from './system-prompt'
+import { nullToUndefined } from '@/lib/utils'
 import { DiscoveredToolsSchema } from '@/lib/ai-schema'
 import type OpenAI from 'openai'
 
@@ -306,7 +307,7 @@ export class ScopeBrain {
         try {
             const result = await aiToolRegistry.execute(toolName, params, {
                 userId: context.userId,
-                companyId: context.companyId || undefined,
+                companyId: nullToUndefined(context.companyId),
             })
 
             return {

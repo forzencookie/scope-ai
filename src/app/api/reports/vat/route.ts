@@ -1,78 +1,53 @@
 /**
  * VAT Reports API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
+import { withAuth, ApiResponse } from "@/lib/database/auth-server";
 
-export async function GET() {
-    try {
-        const ctx = await getAuthContext();
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
+    const { data: reports, error } = await supabase
+        .from('tax_reports')
+        .select('*')
+        .eq('type', 'vat')
+        .order('created_at', { ascending: false });
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) throw error;
 
-        const { supabase, userId, companyId } = ctx;
+    return NextResponse.json({
+        reports: reports || [],
+        userId,
+        companyId,
+    });
+})
 
-        const { data: reports, error } = await supabase
-            .from('tax_reports')
-            .select('*')
-            .eq('type', 'vat')
-            .order('created_at', { ascending: false });
+export const POST = withAuth(async (req, { supabase, companyId }) => {
+    const report = await req.json();
 
-        if (error) throw error;
-
-        return NextResponse.json({
-            reports: reports || [],
-            userId,
-            companyId,
-        });
-    } catch (error) {
-        console.error("Failed to fetch VAT reports:", error);
-        return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
+    if (!report.period_id) {
+        return ApiResponse.badRequest("Missing period_id");
     }
-}
 
-export async function POST(req: NextRequest) {
-    try {
-        const ctx = await getAuthContext();
+    const { data: savedReport, error } = await supabase
+        .from('tax_reports')
+        .upsert({
+            ...report,
+            company_id: companyId,
+        })
+        .select()
+        .single();
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) throw error;
 
-        const { supabase, companyId } = ctx;
-        const report = await req.json();
-
-        if (!report.period_id) {
-            return NextResponse.json({ error: "Missing period_id" }, { status: 400 });
-        }
-
-        const { data: savedReport, error } = await supabase
-            .from('tax_reports')
-            .upsert({
-                ...report,
-                company_id: companyId,
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        // If status is 'submitted', update the financial period status too
-        if (report.status === 'submitted') {
-            await supabase
-                .from('financial_periods')
-                .update({ status: 'submitted' })
-                .eq('id', report.period_id);
-        }
-
-        return NextResponse.json({ success: true, report: savedReport });
-    } catch (error) {
-        console.error("Failed to save VAT report:", error);
-        return NextResponse.json({ error: "Failed to save" }, { status: 500 });
+    // If status is 'submitted', update the financial period status too
+    if (report.status === 'submitted') {
+        await supabase
+            .from('financial_periods')
+            .update({ status: 'submitted' })
+            .eq('id', report.period_id);
     }
-}
+
+    return NextResponse.json({ report: savedReport });
+})

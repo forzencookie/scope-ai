@@ -8,14 +8,11 @@ import { cn } from "@/lib/utils"
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible"
 import { useCompany } from "@/providers/company-provider"
 import type { FeatureKey } from "@/lib/company-types"
-import { useQuery } from "@tanstack/react-query"
-import { pendingBookingQueryKeys } from "@/hooks/use-pending-bookings"
 import {
   SidebarGroup,
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuBadge,
 } from "@/components/ui/sidebar"
 
 // ============================================================================
@@ -28,7 +25,6 @@ interface NavCollapsibleItem {
   icon?: LucideIcon
   isActive?: boolean
   featureKey?: FeatureKey
-  badgeKey?: string
 }
 
 interface NavCollapsibleSectionProps {
@@ -62,7 +58,7 @@ export function NavCollapsibleSection({
     const stored = localStorage.getItem(`sidebar-section-${storageKey}`)
     return stored !== null ? stored === 'true' : defaultOpen
   })
-  
+
   // Track if we're currently toggling to prevent rapid clicks
   const isToggling = React.useRef(false)
   const saveTimeout = React.useRef<NodeJS.Timeout | null>(null)
@@ -72,9 +68,9 @@ export function NavCollapsibleSection({
     // Prevent rapid toggles
     if (isToggling.current) return
     isToggling.current = true
-    
+
     setIsOpen(open)
-    
+
     // Debounce localStorage write to prevent excessive writes
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current)
@@ -82,13 +78,13 @@ export function NavCollapsibleSection({
     saveTimeout.current = setTimeout(() => {
       localStorage.setItem(`sidebar-section-${storageKey}`, String(open))
     }, 100)
-    
+
     // Reset toggle lock after animation
     setTimeout(() => {
       isToggling.current = false
     }, 200)
   }, [storageKey])
-  
+
   // Cleanup timeout on unmount
   React.useEffect(() => {
     return () => {
@@ -97,27 +93,6 @@ export function NavCollapsibleSection({
       }
     }
   }, [])
-
-  // Helper to get the title
-  const getTitle = (item: { title: string }) => {
-    return item.title
-  }
-
-  // Share the pending-bookings query with usePendingBookings() — React Query deduplicates
-  const hasBadgeItems = filteredItems.some(item => item.badgeKey)
-  const { data: pendingData } = useQuery({
-    queryKey: pendingBookingQueryKeys.list(),
-    queryFn: async () => {
-      const res = await fetch('/api/pending-bookings')
-      if (!res.ok) return { bookings: [], pendingCount: 0 }
-      return res.json() as Promise<{ bookings: unknown[]; pendingCount: number }>
-    },
-    staleTime: 2 * 60 * 1000,
-    enabled: hasBadgeItems,
-  })
-  const badgeCounts: Record<string, number> = React.useMemo(() => {
-    return { 'pending-bookings': pendingData?.pendingCount || 0 }
-  }, [pendingData])
 
   if (filteredItems.length === 0) return null
 
@@ -135,21 +110,15 @@ export function NavCollapsibleSection({
         </CollapsibleTrigger>
         <CollapsibleContent>
           <SidebarMenu>
-            {filteredItems.map((item) => {
-              const badgeCount = item.badgeKey ? badgeCounts?.[item.badgeKey] || 0 : 0
-              return (
-                <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild tooltip={getTitle(item)} className="pl-6 h-8">
-                    <Link href={item.url}>
-                      <span className="text-sm">{getTitle(item)}</span>
-                    </Link>
-                  </SidebarMenuButton>
-                  {badgeCount > 0 && (
-                    <SidebarMenuBadge>{badgeCount}</SidebarMenuBadge>
-                  )}
-                </SidebarMenuItem>
-              )
-            })}
+            {filteredItems.map((item) => (
+              <SidebarMenuItem key={item.title}>
+                <SidebarMenuButton asChild tooltip={item.title} className="pl-6 h-8">
+                  <Link href={item.url}>
+                    <span className="text-sm">{item.title}</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            ))}
           </SidebarMenu>
         </CollapsibleContent>
       </Collapsible>

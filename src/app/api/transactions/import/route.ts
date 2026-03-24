@@ -1,11 +1,11 @@
 /**
  * Transaction Import API
- * 
+ *
  * Security: Uses user-scoped DB access with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getAuthContext } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 import { randomUUID } from 'crypto'
 import OpenAI from 'openai'
 import type { Database } from '@/types/database'
@@ -185,21 +185,14 @@ function parseCSV(text: string): CSVRow[] {
     return rows
 }
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { supabase, userId, companyId }) => {
     try {
-        const ctx = await getAuthContext();
-
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-        const { supabase, userId, companyId } = ctx;
-
         const formData = await request.formData()
         const file = formData.get('file') as File
         const type = formData.get('type') as string
 
         if (!file) {
-            return NextResponse.json({ error: 'No file provided' }, { status: 400 })
+            return ApiResponse.badRequest('No file provided')
         }
 
         const createdTransactions: TransactionRow[] = []
@@ -212,7 +205,7 @@ export async function POST(request: NextRequest) {
             const data = await parseZRapport(base64)
 
             if (!data) {
-                return NextResponse.json({ error: 'Could not parse Z-rapport' }, { status: 400 })
+                return ApiResponse.badRequest('Could not parse Z-rapport')
             }
 
             // Create transactions for cash and card sales
@@ -285,7 +278,7 @@ export async function POST(request: NextRequest) {
                 if (tx) createdTransactions.push(tx)
             }
         } else if (type === 'ocr') {
-            // Auto-detect: spreadsheet files → CSV parser, images/PDFs → GPT OCR
+            // Auto-detect: spreadsheet files -> CSV parser, images/PDFs -> GPT OCR
             const fileName = file.name || ''
 
             if (isSpreadsheetFile(fileName)) {
@@ -313,7 +306,7 @@ export async function POST(request: NextRequest) {
                     if (tx) createdTransactions.push(tx)
                 }
             } else {
-                // Image or PDF → GPT-4o-mini OCR
+                // Image or PDF -> GPT-4o-mini OCR
                 const buffer = await file.arrayBuffer()
                 const base64 = Buffer.from(buffer).toString('base64')
                 const mimeType = file.type || getFileMimeType(fileName)
@@ -321,7 +314,7 @@ export async function POST(request: NextRequest) {
                 const transactions = await parseGenericDocument(base64, mimeType)
 
                 if (transactions.length === 0) {
-                    return NextResponse.json({ error: 'Kunde inte läsa några transaktioner från dokumentet' }, { status: 400 })
+                    return ApiResponse.badRequest('Kunde inte läsa några transaktioner från dokumentet')
                 }
 
                 for (const t of transactions) {
@@ -345,17 +338,16 @@ export async function POST(request: NextRequest) {
                 }
             }
         } else {
-            return NextResponse.json({ error: 'Unknown import type' }, { status: 400 })
+            return ApiResponse.badRequest('Unknown import type')
         }
 
         return NextResponse.json({
-            success: true,
             imported: createdTransactions.length,
             transactions: createdTransactions
         })
 
     } catch (error) {
         console.error('Transaction import error:', error)
-        return NextResponse.json({ error: 'Import failed' }, { status: 500 })
+        return ApiResponse.serverError('Import failed')
     }
-}
+})

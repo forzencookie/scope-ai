@@ -16,10 +16,10 @@ import { TRANSACTION_STATUS_LABELS } from "@/lib/localization"
 import { createBrowserClient } from "@/lib/database/client"
 import type { Database, Tables } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { pendingBookingService } from "./pending-booking-service"
 import { verificationService } from "./verification-service"
 import { createSimpleEntry, type SwedishVatRate } from "@/lib/bookkeeping"
 import type { VerificationEntry } from "@/types"
+import { nullToUndefined } from "@/lib/utils"
 
 type DbTransaction = Tables<"transactions">
 
@@ -51,7 +51,7 @@ function mapDbToTransaction(db: DbTransaction, category?: string): Transaction {
     iconName: getIconForCategory(category || db.category || 'Uncategorized'),
     iconColor: getIconColorForCategory(category || db.category || 'Uncategorized'),
     account: db.account || 'Main Account',
-    description: db.description || undefined,
+    description: nullToUndefined(db.description),
   }
 }
 
@@ -224,8 +224,7 @@ export async function getTransactionStatus(id: string, userId: string, client?: 
 }
 
 /**
- * Prepares a transaction for booking by generating journal entries 
- * and creating a pending booking record.
+ * Books a transaction by generating journal entries and creating a verification.
  */
 export async function bookTransaction(
   id: string,
@@ -238,7 +237,7 @@ export async function bookTransaction(
     vatRate?: number
   },
   client?: SupabaseClient<Database>
-): Promise<ApiResponse<{ pendingBookingId: string } | null>> {
+): Promise<ApiResponse<{ verificationId: string; verificationNumber: string } | null>> {
   const supabase = getSupabase(client)
 
   try {
@@ -284,29 +283,26 @@ export async function bookTransaction(
       description: row.description,
     }))
 
-    // 4. Create pending booking instead of auto-verification
-    const pending = await pendingBookingService.createPendingBooking({
-      sourceType: 'transaction',
-      sourceId: id,
-      description: journalEntry.description,
-      entries,
+    // 4. Create verification directly
+    const verification = await verificationService.createVerification({
       series: 'A',
       date: journalEntry.date,
-      metadata: {
-        category: params.category,
-        amount,
-        isIncome,
-        transactionDescription: transaction.description,
-      },
+      description: journalEntry.description,
+      entries,
+      sourceType: 'transaction',
+      sourceId: id,
     }, client)
 
-    // 5. Update Transaction category (but NOT status — that happens on booking confirmation)
+    // 5. Update Transaction status + category
     await supabase
       .from('transactions')
-      .update({ category: params.category })
+      .update({ category: params.category, status: 'Bokförd' })
       .eq('id', id);
 
-    return successResponse({ pendingBookingId: pending.id })
+    return successResponse({
+      verificationId: verification.id,
+      verificationNumber: `${verification.series}${verification.number}`,
+    })
 
   } catch (error) {
     console.error(`Failed to book transaction ${id}:`, error)

@@ -1,69 +1,44 @@
 /**
  * Income Declaration (INK2) Reports API
  *
- * Security: Uses user-scoped DB access with RLS enforcement
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
+import { withAuth } from "@/lib/database/auth-server";
 
-export async function GET() {
-    try {
-        const ctx = await getAuthContext();
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
+    const { data: reports, error } = await supabase
+        .from('tax_reports')
+        .select('*')
+        .eq('type', 'income_declaration')
+        .order('created_at', { ascending: false });
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) throw error;
 
-        const { supabase, userId, companyId } = ctx;
+    return NextResponse.json({
+        reports: reports || [],
+        userId,
+        companyId,
+    });
+})
 
-        const { data: reports, error } = await supabase
-            .from('tax_reports')
-            .select('*')
-            .eq('type', 'income_declaration')
-            .order('created_at', { ascending: false });
+export const POST = withAuth(async (req, { supabase, companyId }) => {
+    const report = await req.json();
 
-        if (error) throw error;
+    const { data: savedReport, error } = await supabase
+        .from('tax_reports')
+        .insert({
+            type: 'income_declaration',
+            tax_year: report.taxYear,
+            data: report.data,
+            status: report.status || 'draft',
+            company_id: companyId,
+        })
+        .select()
+        .single();
 
-        return NextResponse.json({
-            reports: reports || [],
-            userId,
-            companyId,
-        });
-    } catch (error) {
-        console.error("Failed to fetch income declaration reports:", error);
-        return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
-    }
-}
+    if (error) throw error;
 
-export async function POST(req: NextRequest) {
-    try {
-        const ctx = await getAuthContext();
-
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
-
-        const { supabase, companyId } = ctx;
-        const report = await req.json();
-
-        const { data: savedReport, error } = await supabase
-            .from('tax_reports')
-            .insert({
-                type: 'income_declaration',
-                tax_year: report.taxYear,
-                data: report.data,
-                status: report.status || 'draft',
-                company_id: companyId,
-            })
-            .select()
-            .single();
-
-        if (error) throw error;
-
-        return NextResponse.json({ success: true, report: savedReport });
-    } catch (error) {
-        console.error("Failed to save income declaration:", error);
-        return NextResponse.json({ error: "Failed to save" }, { status: 500 });
-    }
-}
+    return NextResponse.json({ report: savedReport });
+})

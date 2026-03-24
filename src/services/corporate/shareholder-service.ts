@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 import type { Database } from '@/types/database'
 
 type ShareholderRow = Database['public']['Tables']['shareholders']['Row']
@@ -452,7 +453,7 @@ export const shareholderService = {
             sharesTransferred: sharesCount,
             shareClass,
             transferDate: date,
-            totalValue: totalAmount ?? undefined,
+            totalValue: nullToUndefined(totalAmount),
         }
     },
 

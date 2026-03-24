@@ -351,7 +351,6 @@ function filterByCompanyType(
     })
 }
 
-// function mapCatalogFromDb(row: any): FormanCatalogItem {
 function mapCatalogFromDb(row: FormanCatalogRow): FormanCatalogItem {
     return {
         id: row.id,

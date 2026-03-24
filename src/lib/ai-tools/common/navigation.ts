@@ -421,17 +421,60 @@ export const getDeadlinesTool = defineTool<Record<string, never>, Deadline[]>({
     keywords: ['deadline', 'förfallodag', 'kommande', 'datum', 'kalender'],
     parameters: { type: 'object', properties: {} },
     execute: async () => {
-        // TODO: Fetch real deadlines from taxcalendar table
-        const deadlines: Deadline[] = [
-            { type: 'Moms', period: 'Q4 2024', dueDate: '12 feb 2025', amount: 80000, status: 'Kommande' },
-            { type: 'AGI', period: 'December 2024', dueDate: '12 jan 2025', amount: 47090, status: 'Kommande' },
-        ]
+        // Generate upcoming deadlines dynamically based on current date.
+        // Swedish tax calendar: AGI due 12th monthly, Moms (quarterly) due 12th of month after quarter end.
+        // TODO: Replace with real data from taxcalendar table when populated.
+        const now = new Date()
+        const year = now.getFullYear()
+        const month = now.getMonth() // 0-indexed
+
+        const months = ['jan', 'feb', 'mar', 'apr', 'maj', 'jun', 'jul', 'aug', 'sep', 'okt', 'nov', 'dec']
+
+        const deadlines: Deadline[] = []
+
+        // Next 3 AGI deadlines (due 12th of each month for previous month)
+        for (let offset = 0; offset < 3; offset++) {
+            const dueMonth = (month + offset) % 12
+            const dueYear = year + Math.floor((month + offset) / 12)
+            const prevMonth = dueMonth === 0 ? 11 : dueMonth - 1
+            const prevYear = dueMonth === 0 ? dueYear - 1 : dueYear
+            const dueDate = new Date(dueYear, dueMonth, 12)
+
+            if (dueDate >= now) {
+                deadlines.push({
+                    type: 'AGI',
+                    period: `${months[prevMonth]} ${prevYear}`,
+                    dueDate: `12 ${months[dueMonth]} ${dueYear}`,
+                    status: 'Kommande',
+                })
+            }
+        }
+
+        // Next quarterly moms deadline (due 12th of month after quarter end)
+        const quarterEndMonths = [2, 5, 8, 11] // Mar, Jun, Sep, Dec (0-indexed)
+        for (const qEnd of quarterEndMonths) {
+            const dueMonth = (qEnd + 1) % 12
+            const dueYear = qEnd === 11 ? year + 1 : year
+            const dueDate = new Date(dueYear, dueMonth, 12)
+
+            if (dueDate >= now) {
+                const qLabel = `Q${Math.floor(qEnd / 3) + 1} ${qEnd === 11 && dueYear > year ? year : year}`
+                deadlines.push({
+                    type: 'Moms',
+                    period: qLabel,
+                    dueDate: `12 ${months[dueMonth]} ${dueYear}`,
+                    status: 'Kommande',
+                })
+                break // Only next upcoming quarter
+            }
+        }
 
         return {
             success: true,
             data: deadlines,
-            message: `Du har ${deadlines.length} kommande deadlines.`,
-            // AI composes timeline or checklist blocks from this data
+            message: deadlines.length > 0
+                ? `Du har ${deadlines.length} kommande deadlines.`
+                : 'Inga kommande deadlines hittades.',
         }
     },
 })

@@ -6,6 +6,7 @@
  */
 
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 
 // =============================================================================
 // Types
@@ -182,6 +183,6 @@ export async function getIntegrations(): Promise<Integration[]> {
         status: row.connected ? 'connected' : (row.status || 'disconnected') as Integration['status'],
         connectedAt: row.connected_at || null,
         lastSync: row.last_sync_at || null,
-        provider: row.provider ?? undefined,
+        provider: nullToUndefined(row.provider),
     }))
 }

@@ -2,6 +2,7 @@ import { createBrowserClient } from '@/lib/database/client'
 import type { Json, Database } from '@/types/database'
 import type { Verification, VerificationEntry, VerificationAttachment } from '@/types'
 import { logAuditEntry } from '@/lib/audit'
+import { nullToUndefined } from '@/lib/utils'
 import { isValidAccount } from '@/lib/bookkeeping/utils'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
@@ -180,7 +181,7 @@ export const verificationService = {
             throw new Error('Kunde inte hämta nästa verifikationsnummer')
         }
 
-        return (data as number) || 1
+        return (typeof data === 'number' ? data : 1) || 1
     },
 
     /**
@@ -699,6 +700,6 @@ function mapRowToAttachment(row: AttachmentRow): VerificationAttachment {
         fileType: row.file_type,
         uploadedAt: row.uploaded_at,
         sourceType,
-        sourceId: row.source_id || undefined,
+        sourceId: nullToUndefined(row.source_id),
     }
 }

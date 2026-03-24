@@ -2,15 +2,12 @@ import React from "react"
 import {
     ArrowDownLeft,
     ArrowUpRight,
-    Send,
     Eye,
-    CheckCircle2,
-    Banknote,
     Download,
-    FileX2,
+    Bot,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { INVOICE_STATUS_LABELS, SUPPLIER_INVOICE_STATUS_LABELS } from "@/lib/localization"
+import { INVOICE_STATUS_LABELS } from "@/lib/localization"
 import { KanbanCard } from "@/components/shared/kanban"
 import {
     DropdownMenuItem,
@@ -19,31 +16,23 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { UnifiedInvoice } from "../types"
 import { useHighlight } from "@/hooks"
+import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 interface InvoiceCardProps {
     invoice: UnifiedInvoice
-    onSend: (id: string) => void
-    onMarkCustomerPaid: (id: string) => void
-    onApproveSupplier: (id: string) => void
-    onMarkSupplierPaid: (id: string) => void
     onDownloadPDF?: (invoice: UnifiedInvoice) => void
-    onCreateCreditNote?: (id: string) => void
     onViewDetails?: (invoice: UnifiedInvoice) => void
 }
 
 export const InvoiceCard = React.memo(function InvoiceCard({
     invoice,
-    onSend,
-    onMarkCustomerPaid,
-    onApproveSupplier,
-    onMarkSupplierPaid,
     onDownloadPDF,
-    onCreateCreditNote,
     onViewDetails,
 }: InvoiceCardProps) {
     const isCustomer = invoice.direction === "in"
     const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
     const { highlightClass } = useHighlight(invoice.id)
+    const { navigateToAI } = useChatNavigation()
 
     return (
         <KanbanCard
@@ -77,52 +66,17 @@ export const InvoiceCard = React.memo(function InvoiceCard({
                 </DropdownMenuItem>
             )}
 
-            {/* Customer invoice actions */}
-            {isCustomer && invoice.originalCustomerInvoice && (
-                <>
-                    {invoice.status === INVOICE_STATUS_LABELS.DRAFT && (
-                        <DropdownMenuItem onClick={() => onSend(invoice.originalCustomerInvoice!.id)}>
-                            <Send className="h-3.5 w-3.5 mr-2" />
-                            Skicka faktura
-                        </DropdownMenuItem>
-                    )}
-                    {invoice.status === INVOICE_STATUS_LABELS.SENT && (
-                        <>
-                            <DropdownMenuItem onClick={() => onMarkCustomerPaid(invoice.originalCustomerInvoice!.id)}>
-                                <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                                Markera betald
-                            </DropdownMenuItem>
-                        </>
-                    )}
-                    {invoice.status !== INVOICE_STATUS_LABELS.DRAFT && invoice.status !== 'Krediterad' && onCreateCreditNote && (
-                        <DropdownMenuItem onClick={() => onCreateCreditNote(invoice.originalCustomerInvoice!.id)}>
-                            <FileX2 className="h-3.5 w-3.5 mr-2" />
-                            Skapa kreditfaktura
-                        </DropdownMenuItem>
-                    )}
-                </>
-            )}
-
-            {/* Supplier invoice actions */}
-            {!isCustomer && invoice.originalSupplierInvoice && (
-                <>
-                    {invoice.status === SUPPLIER_INVOICE_STATUS_LABELS.RECEIVED && (
-                        <DropdownMenuItem onClick={() => onApproveSupplier(invoice.originalSupplierInvoice!.id)}>
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-2" />
-                            Attestera
-                        </DropdownMenuItem>
-                    )}
-                    {invoice.status === SUPPLIER_INVOICE_STATUS_LABELS.APPROVED && (
-                        <DropdownMenuItem onClick={() => onMarkSupplierPaid(invoice.originalSupplierInvoice!.id)}>
-                            <Banknote className="h-3.5 w-3.5 mr-2" />
-                            Markera betald
-                        </DropdownMenuItem>
-                    )}
-                </>
-            )}
-
             <DropdownMenuSeparator />
-            <DropdownMenuItem className="text-red-600">Radera</DropdownMenuItem>
+
+            {/* All mutation actions route through Scooby */}
+            <DropdownMenuItem onClick={() => navigateToAI({
+                prompt: isCustomer
+                    ? `Hantera faktura ${invoice.number} från ${invoice.counterparty} (${invoice.totalAmount} kr, status: ${invoice.status})`
+                    : `Hantera leverantörsfaktura ${invoice.number} från ${invoice.counterparty} (${invoice.totalAmount} kr, status: ${invoice.status})`
+            })}>
+                <Bot className="h-3.5 w-3.5 mr-2" />
+                Hantera med Scooby
+            </DropdownMenuItem>
         </KanbanCard>
     )
 })

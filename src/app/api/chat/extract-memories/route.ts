@@ -10,8 +10,8 @@
  * Called after a conversation ends or when the user starts a new conversation.
  */
 
-import { NextRequest } from 'next/server'
-import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
+import { NextRequest, NextResponse } from 'next/server'
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 import { userMemoryService } from '@/services/common/user-memory-service'
 
 // =============================================================================
@@ -44,14 +44,8 @@ Viktigt:
 // Handler
 // =============================================================================
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { supabase, userId }) => {
     try {
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return ApiResponse.unauthorized('Authentication required')
-        }
-        const { supabase, userId } = ctx
-
         const { conversationId, companyId } = await request.json()
         if (!conversationId || !companyId) {
             return ApiResponse.badRequest('conversationId and companyId are required')
@@ -77,7 +71,7 @@ export async function POST(request: NextRequest) {
             .order('created_at', { ascending: true })
         if (!messages || messages.length < 2) {
             // Too short to extract anything meaningful
-            return Response.json({ extracted: 0, memories: [] })
+            return NextResponse.json({ extracted: 0, memories: [] })
         }
 
         // Build a condensed transcript (skip tool calls/results for efficiency)
@@ -88,7 +82,7 @@ export async function POST(request: NextRequest) {
 
         // Skip if transcript is too short
         if (transcript.length < 100) {
-            return Response.json({ extracted: 0, memories: [] })
+            return NextResponse.json({ extracted: 0, memories: [] })
         }
 
         // Call OpenAI for extraction (use fast model, non-streaming)
@@ -107,7 +101,7 @@ export async function POST(request: NextRequest) {
 
         const raw = completion.choices[0]?.message?.content
         if (!raw) {
-            return Response.json({ extracted: 0, memories: [] })
+            return NextResponse.json({ extracted: 0, memories: [] })
         }
 
         // Parse extracted memories
@@ -118,7 +112,7 @@ export async function POST(request: NextRequest) {
             extracted = Array.isArray(parsed) ? parsed : (parsed.memories || parsed.items || [])
         } catch {
             console.error('[ExtractMemories] Failed to parse response:', raw)
-            return Response.json({ extracted: 0, memories: [] })
+            return NextResponse.json({ extracted: 0, memories: [] })
         }
 
         // Validate and save each memory
@@ -142,7 +136,7 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        return Response.json({
+        return NextResponse.json({
             extracted: saved.length,
             memories: saved,
         })
@@ -150,4 +144,4 @@ export async function POST(request: NextRequest) {
         console.error('[ExtractMemories] Error:', error)
         return ApiResponse.serverError('Failed to extract memories')
     }
-}
+})

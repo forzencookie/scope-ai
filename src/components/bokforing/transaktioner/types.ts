@@ -1,13 +1,11 @@
 import { TransactionWithAI } from "@/types"
 import type { TransactionStats } from '@/services/accounting/transactions'
-import { BookingData } from "@/types"
 
 export interface TransactionsTableProps {
     title?: string
     subtitle?: string
     transactions?: TransactionWithAI[]
     stats?: TransactionStats
-    onTransactionBooked?: (transactionId: string, bookingData: BookingData) => void
     // Pagination support
     page?: number
     pageSize?: number

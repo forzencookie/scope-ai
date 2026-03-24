@@ -8,17 +8,11 @@
  */
 
 import { NextRequest, NextResponse } from "next/server"
-import { getAuthContext } from "@/lib/database/auth-server"
+import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 import { periodClosingService } from "@/services/accounting/period-closing-service"
 
-export async function GET(request: NextRequest) {
+export const GET = withAuth(async (request, { supabase }) => {
     try {
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const { supabase } = ctx
         const { searchParams } = new URL(request.url)
         const year = parseInt(searchParams.get('year') || '') || new Date().getFullYear()
 
@@ -35,27 +29,21 @@ export async function GET(request: NextRequest) {
         return NextResponse.json({ summaries, year, pendingTransactions })
     } catch (error) {
         console.error("Failed to fetch monthly summaries:", error)
-        return NextResponse.json({ error: "Failed to fetch" }, { status: 500 })
+        return ApiResponse.serverError("Failed to fetch")
     }
-}
+})
 
-export async function POST(request: NextRequest) {
+export const POST = withAuth(async (request, { supabase, userId, companyId }) => {
     try {
-        const ctx = await getAuthContext()
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-        }
-
-        const { supabase, userId, companyId } = ctx
         const body = await request.json()
         const { year, month, action } = body as { year: number; month: number; action: 'close' | 'reopen' }
 
         if (!year || !month || !action) {
-            return NextResponse.json({ error: 'year, month, and action required' }, { status: 400 })
+            return ApiResponse.badRequest('year, month, and action required')
         }
 
         if (!companyId) {
-            return NextResponse.json({ error: 'No company selected' }, { status: 400 })
+            return ApiResponse.badRequest('No company selected')
         }
 
         const result = await periodClosingService.toggleMonthStatus(
@@ -63,9 +51,9 @@ export async function POST(request: NextRequest) {
             supabase,
         )
 
-        return NextResponse.json({ success: true, ...result })
+        return NextResponse.json(result)
     } catch (error) {
         console.error("Failed to update monthly closing:", error)
-        return NextResponse.json({ error: "Failed to update" }, { status: 500 })
+        return ApiResponse.serverError("Failed to update")
     }
-}
+})

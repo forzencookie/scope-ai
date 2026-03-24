@@ -1,36 +1,23 @@
 /**
  * Financial Periods API
- * 
- * Security: Uses user-scoped DB access with RLS enforcement
+ *
+ * Security: Uses withAuth wrapper with RLS enforcement
  */
 
-import { NextResponse } from "next/server";
-import { getAuthContext } from "@/lib/database/auth-server";
+import { NextRequest, NextResponse } from "next/server";
+import { withAuth } from "@/lib/database/auth-server";
 
-export async function GET() {
-    try {
-        const ctx = await getAuthContext();
+export const GET = withAuth(async (_request, { supabase, userId, companyId }) => {
+    const { data: periods, error } = await supabase
+        .from('financial_periods')
+        .select('*')
+        .order('start_date', { ascending: false });
 
-        if (!ctx) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+    if (error) throw error;
 
-        const { supabase, userId, companyId } = ctx;
-
-        const { data: periods, error } = await supabase
-            .from('financial_periods')
-            .select('*')
-            .order('start_date', { ascending: false });
-
-        if (error) throw error;
-
-        return NextResponse.json({
-            periods: periods || [],
-            userId,
-            companyId,
-        });
-    } catch (error) {
-        console.error("Failed to fetch financial periods:", error);
-        return NextResponse.json({ error: "Failed to fetch" }, { status: 500 });
-    }
-}
+    return NextResponse.json({
+        periods: periods || [],
+        userId,
+        companyId,
+    });
+})

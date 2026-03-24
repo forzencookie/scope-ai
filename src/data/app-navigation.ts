@@ -45,7 +45,6 @@ export const navBokforing: NavItem[] = [
         url: "/dashboard/bokforing?tab=verifikationer",
         icon: CheckSquare,
         featureKey: "verifikationer",
-        badgeKey: "pending-bookings",
     },
 ]
 

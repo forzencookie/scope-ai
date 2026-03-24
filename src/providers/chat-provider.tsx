@@ -9,6 +9,7 @@ import type { MentionItem } from "@/components/ai/mention-popover"
 import type { Conversation } from "@/lib/chat-types"
 import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
 import type { ActionTriggerDisplay } from "@/components/ai/action-trigger-chip"
+import { nullToUndefined } from "@/lib/utils"
 
 interface ChatContextValue {
     conversations: Conversation[]
@@ -112,7 +113,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         setMentionItems([])
         setActionTrigger(null)
 
-        sendMessage({ content: finalContent, files, mentions, actionTrigger: trigger || undefined })
+        sendMessage({ content: finalContent, files, mentions, actionTrigger: nullToUndefined(trigger) })
     }, [textareaValue, attachedFiles, mentionItems, actionTrigger, sendMessage, isPaid, canAfford, modelId])
 
     // Refresh usage when AI stream completes (event dispatched from use-chat.ts)

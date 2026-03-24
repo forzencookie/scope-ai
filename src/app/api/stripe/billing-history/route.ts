@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { getStripe } from '@/lib/stripe'
+import { nullToUndefined } from '@/lib/utils'
 import { createServerClient } from '@/lib/database/server'
 
 /**
@@ -91,8 +92,8 @@ export async function GET(request: NextRequest) {
                         amount: `${amountSek} kr`,
                         status,
                         type: 'subscription',
-                        invoiceUrl: invoice.hosted_invoice_url ?? undefined,
-                        receiptUrl: invoice.invoice_pdf ?? undefined,
+                        invoiceUrl: nullToUndefined(invoice.hosted_invoice_url),
+                        receiptUrl: nullToUndefined(invoice.invoice_pdf),
                     })
                 }
             } catch (error) {

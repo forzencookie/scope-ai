@@ -1,4 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
+import { nullToUndefined } from '@/lib/utils'
 
 
 // Types matching schema.sql inventarier table
@@ -69,7 +70,7 @@ export const inventarieService = {
             inkopsdatum: row.inkopsdatum ?? '',
             inkopspris: Number(row.inkopspris),
             livslangdAr: row.livslangd_ar || 5,
-            anteckningar: row.anteckningar ?? undefined,
+            anteckningar: nullToUndefined(row.anteckningar),
         }))
 
         return { inventarier, totalCount: count || 0 }

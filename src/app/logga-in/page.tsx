@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth"
 import Link from "next/link"
 import { Navbar } from "@/components/landing/layout/navbar"
 import { ArrowRight, Loader2 } from "lucide-react"
+import { nullToUndefined } from "@/lib/utils"
 
 function LoginFallback() {
     return (
@@ -149,7 +150,7 @@ function LoggaInContent() {
         setError(null)
 
         try {
-            const { error } = await signInWithOAuth(provider, plan || undefined)
+            const { error } = await signInWithOAuth(provider, nullToUndefined(plan))
             if (error) {
                 setError(error.message)
                 setLoading(false)

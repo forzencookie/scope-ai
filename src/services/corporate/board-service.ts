@@ -372,7 +372,7 @@ export const boardService = {
         const { data: company } = await supabase.from('companies').select('id').single()
         if (!company) throw new Error('Företag saknas.')
 
-        const dbUpdates: any = {}
+        const dbUpdates: Record<string, string | string[] | null> = {}
         if (updates.title) dbUpdates.title = updates.title
         if (updates.status) {
             const statusMap: Record<string, string> = {

@@ -156,18 +156,21 @@ export function useOwnerWithdrawals() {
         ]
 
     try {
-      const { postPendingBookingAction } = await import('@/hooks/use-pending-bookings')
-      const data = await postPendingBookingAction({
-        action: 'create',
-        sourceType: 'owner_withdrawal',
-        sourceId: `withdrawal-${Date.now()}`,
-        description,
-        entries,
-        series: 'A',
-        date,
-        metadata: { type, partnerId, partnerName, amount },
+      const res = await fetch('/api/verifikationer/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          series: 'A',
+          date,
+          description,
+          entries,
+          sourceType: 'owner_withdrawal',
+          sourceId: `withdrawal-${Date.now()}`,
+        }),
       })
-      return data.pendingBooking?.id || null
+      if (!res.ok) throw new Error('Failed to create verification')
+      const data = await res.json()
+      return data.verificationId || null
     } catch (err) {
       console.error('[useOwnerWithdrawals] registerTransaction error:', err)
       return null
