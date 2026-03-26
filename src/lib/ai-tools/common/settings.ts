@@ -25,7 +25,7 @@ import type {
 // =============================================================================
 
 export interface SubscriptionStatus {
-    plan: 'starter' | 'professional' | 'max'
+    plan: 'pro' | 'max' | 'enterprise'
     status: 'active' | 'trial' | 'cancelled' | 'past_due'
     currentPeriodEnd: string
     usageThisMonth: {

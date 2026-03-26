@@ -126,8 +126,8 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
             console.log(`[Stripe Webhook] Subscription updated - user ${userId} now has ${tier}`)
         }
     } else if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
-        await updateUserTier(userId, 'free')
-        console.log(`[Stripe Webhook] Subscription inactive - downgraded user ${userId} to free`)
+        await updateUserTier(userId, 'pro')
+        console.log(`[Stripe Webhook] Subscription inactive - downgraded user ${userId} to pro`)
     }
 }
 
@@ -140,7 +140,7 @@ async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
         return
     }
 
-    // Downgrade to free tier
-    await updateUserTier(userId, 'free')
-    console.log(`[Stripe Webhook] Subscription deleted - downgraded user ${userId} to free`)
+    // Downgrade to lowest paid tier
+    await updateUserTier(userId, 'pro')
+    console.log(`[Stripe Webhook] Subscription deleted - downgraded user ${userId} to pro`)
 }

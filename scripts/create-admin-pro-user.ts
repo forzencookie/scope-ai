@@ -13,11 +13,11 @@ const supabase = createClient(supabaseUrl, serviceRoleKey, {
   }
 })
 
-async function createAdminProUser() {
+async function createAdminMaxUser() {
   const email = 'admin@scope.ai'
   const password = 'ScopeAI_Admin2026!'
 
-  console.log('Creating Admin Pro user:', email)
+  console.log('Creating Admin Max user:', email)
 
   // Create user via admin API
   const { data: authData, error: authError } = await supabase.auth.admin.createUser({
@@ -37,7 +37,7 @@ async function createAdminProUser() {
       const user = users?.users?.find(u => u.email === email)
       if (user) {
         console.log('Found existing user:', user.id)
-        await upgradeToAdminPro(user.id)
+        await upgradeToAdminMax(user.id)
         return
       }
     }
@@ -46,16 +46,16 @@ async function createAdminProUser() {
   }
 
   console.log('User created:', authData.user.id)
-  await upgradeToAdminPro(authData.user.id)
+  await upgradeToAdminMax(authData.user.id)
 }
 
-async function upgradeToAdminPro(userId: string) {
-  // Update profile to admin role and pro tier
+async function upgradeToAdminMax(userId: string) {
+  // Update profile to admin role and max tier
   const { error: profileError } = await supabase
     .from('profiles')
     .update({
       role: 'admin',
-      subscription_tier: 'pro',
+      subscription_tier: 'max',
       updated_at: new Date().toISOString()
     })
     .eq('id', userId)
@@ -66,7 +66,6 @@ async function upgradeToAdminPro(userId: string) {
   }
 
   // Add credits to user_credits table
-  // Checking if table exists first might be good, but script assumes it does
   const { error: creditsError } = await supabase
     .from('user_credits')
     .upsert({
@@ -79,14 +78,14 @@ async function upgradeToAdminPro(userId: string) {
     console.log('Credits table note (might not exist):', creditsError.message)
   }
 
-  console.log('✅ User upgraded to Admin role and Pro tier!')
+  console.log('✅ User upgraded to Admin role and Max tier!')
   console.log('')
-  console.log('=== ADMIN PRO USER CREDENTIALS ===')
+  console.log('=== ADMIN MAX USER CREDENTIALS ===')
   console.log('Email:    admin@scope.ai')
   console.log('Password: ScopeAI_Admin2026!')
   console.log('Role:     admin')
-  console.log('Tier:     pro')
+  console.log('Tier:     max')
   console.log('==================================')
 }
 
-createAdminProUser()
+createAdminMaxUser()

@@ -18,9 +18,9 @@ import {
 // =============================================================================
 
 const TIER_LIMITS: Record<string, { tokens: number; requests: number }> = {
-    starter: { tokens: 500000, requests: 500 },
-    professional: { tokens: 2000000, requests: 2000 },
+    pro: { tokens: 2000000, requests: 2000 },
     max: { tokens: 10000000, requests: 10000 },
+    enterprise: { tokens: 999999999, requests: 999999 },
 }
 
 // =============================================================================
@@ -58,8 +58,8 @@ export async function getSubscriptionStatus(userId: string): Promise<Subscriptio
     const usage = await getMonthlyUsage(userId)
     const limits = await checkUsageLimits(userId)
 
-    const tier = (profile.subscription_tier || 'starter') as keyof typeof TIER_LIMITS
-    const tierConfig = TIER_LIMITS[tier] || TIER_LIMITS.starter
+    const tier = (profile.subscription_tier || 'pro') as keyof typeof TIER_LIMITS
+    const tierConfig = TIER_LIMITS[tier] || TIER_LIMITS.pro
 
     // Calculate period end (end of current month)
     const now = new Date()

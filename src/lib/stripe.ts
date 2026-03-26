@@ -186,7 +186,7 @@ export async function createPortalSession(
  */
 export async function updateUserTier(
     userId: string,
-    tier: 'pro' | 'max' | 'free'
+    tier: 'pro' | 'max'
 ): Promise<void> {
     const { createAdminClient } = await import('./database/server')
     const supabase = createAdminClient()

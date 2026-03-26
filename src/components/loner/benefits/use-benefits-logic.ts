@@ -37,7 +37,7 @@ export function useBenefitsLogic() {
                 const companyType = (company?.companyType || 'ab').toUpperCase() as 'AB' | 'EF' | 'EnskildFirma'
                 const [allBenefits, unusedSuggestions, empRes, assigned] = await Promise.all([
                     listAvailableBenefits(companyType),
-                    suggestUnusedBenefits('Demo Anställd', currentYear, companyType),
+                    suggestUnusedBenefits('Anställd', currentYear, companyType),
                     fetch('/api/employees'),
                     getAllAssignedBenefits(currentYear),
                 ])

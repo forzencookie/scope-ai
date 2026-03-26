@@ -3,7 +3,7 @@
 /**
  * Upgrade Prompt
  * 
- * Shown when free-tier users try to access features that require a paid subscription.
+ * Shown when users try to access features that require a higher subscription tier.
  * Can be displayed inline or as a modal dialog.
  */
 
