@@ -42,7 +42,7 @@ function TypewriterHeroText({ line1, line2 }: { line1: string; line2: string }) 
     const parts = displayedText.split("\n")
 
     return (
-        <h1 ref={ref} className="text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-12 leading-[1.1] text-white min-h-[2.2em] md:min-h-[2.2em]">
+        <h1 ref={ref} className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-medium tracking-tight mb-8 leading-[1.15] text-white min-h-[2.4em] md:min-h-[2.2em]">
             {parts[0]}
             {parts.length > 1 && <><br />{parts[1]}</>}
             <motion.span
@@ -108,29 +108,12 @@ function WaitlistForm() {
     )
 }
 
-export default function LandingPage() {
-    const [isPreLaunch, setIsPreLaunch] = useState(false)
-    const [mounted, setMounted] = useState(false)
+const IS_PRE_LAUNCH = process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true'
 
-    useEffect(() => {
-        setMounted(true)
-        setIsPreLaunch(process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true')
-    }, [])
+export default function LandingPage() {
 
     return (
-        <div className="relative min-h-screen text-white font-sans selection:bg-white/30">
-                {/* Fixed Background Layer - Ensures consistent look across all pages and devices */}
-                <div 
-                    className="fixed inset-0 z-0"
-                    style={{
-                        backgroundColor: '#050505',
-                        backgroundImage: "url('/premiumbg-clean.png')",
-                        backgroundSize: 'cover',
-                        backgroundPosition: '50% 50%',
-                        backgroundRepeat: 'no-repeat',
-                    }}
-                />
-
+        <div className="relative min-h-screen text-white font-sans selection:bg-white/30 landing-bg">
                 {/* Main scrollable container */}
                 <div className="relative z-10 flex flex-col items-center w-full">
 
@@ -138,23 +121,23 @@ export default function LandingPage() {
                     <Navbar />
 
                     {/* Section 1: Hero */}
-                    <section className="flex flex-col items-center justify-center min-h-[85vh] text-center px-4 w-full pt-20 md:pt-0">
-                        <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto flex flex-col items-center md:mt-24">
+                    <section className="flex flex-col items-center justify-center min-h-[80vh] text-center px-5 w-full pt-16 md:pt-0">
+                        <div className="w-full max-w-[calc(100%-1rem)] sm:max-w-[400px] md:max-w-[640px] mx-auto flex flex-col items-center md:mt-24">
                             <div className="px-3 py-1 rounded text-[10px] font-bold text-white/70 bg-white/10 mb-6 tracking-widest uppercase border border-white/10">
                                 Beta
                             </div>
 
                             <TypewriterHeroText line1="bokföring för framtiden." line2="starta ditt bolag." />
 
-                            <Link href="/logga-in" className="flex items-center justify-center gap-2 px-10 py-3.5 bg-[#f5f5f5] text-black rounded-2xl hover:bg-white transition-all font-medium text-lg w-fit hover:scale-[1.02] active:scale-[0.98]">
+                            <Link href="/logga-in" className="flex items-center justify-center gap-2 px-8 py-3 bg-[#f5f5f5] text-black rounded-2xl hover:bg-white transition-all font-medium text-base w-fit hover:scale-[1.02] active:scale-[0.98]">
                                 kom igång <ArrowRight className="w-5 h-5" />
                             </Link>
                         </div>
                     </section>
 
                     {/* Section 2: App Demo */}
-                    <div className="w-full flex flex-col items-center z-20 mt-12 md:mt-0">
-                        <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto px-5">
+                    <div className="w-full flex flex-col items-center z-20 py-24 md:py-32">
+                        <div className="w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px] mx-auto px-5">
                             <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-12 leading-tight">
                                 Din AI-assistent som jobbar dygnet runt.
                             </h2>
@@ -165,11 +148,11 @@ export default function LandingPage() {
                     </div>
 
                     {/* Section 3: Vision */}
-                    <section className="flex flex-col items-center justify-center min-h-[80vh] px-4 w-full py-20">
+                    <section className="flex flex-col items-center justify-center px-4 w-full py-24 md:py-32">
                         <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white gap-2 text-center mb-12 leading-tight">
                             Vision
                         </h2>
-                        <div className="max-w-[440px] md:max-w-[640px] w-full p-8 md:p-12 rounded-[2rem] bg-black/30 backdrop-blur-2xl">
+                        <div className="max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px] w-full p-8 md:p-12 rounded-[2rem] bg-black/30 backdrop-blur-2xl">
                             <p className="text-xl md:text-2xl font-medium leading-normal mb-16 text-white/95 tracking-tight">
                                 scope ai har som uppdrag att förenkla företagande genom en autonom AI-plattform som underlättar och planerar din bokföring, så att du kan ägna mer tid till att fokusera på det du gör bäst.
                             </p>
@@ -180,13 +163,12 @@ export default function LandingPage() {
                     </section>
 
                     {/* Section 4: Priser / Waitlist */}
-                    {mounted && (
-                        isPreLaunch ? (
-                        <section className="flex flex-col items-center justify-center min-h-[70vh] px-4 w-full mt-24 md:mt-0">
+                    {IS_PRE_LAUNCH ? (
+                        <section className="flex flex-col items-center justify-center px-4 w-full py-24 md:py-32">
                             <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-8 md:mb-12 leading-tight">
                                 Få tidig åtkomst
                             </h2>
-                            <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[540px]">
+                            <div className="flex flex-col gap-5 w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px]">
                                 <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
                                     <div className="rounded-[1.6rem] bg-black/30 p-8 md:p-10 flex flex-col items-center text-center">
                                         <div className="mb-6 space-y-1">
@@ -208,11 +190,11 @@ export default function LandingPage() {
                             </div>
                         </section>
                     ) : (
-                        <section className="flex flex-col items-center justify-center min-h-screen px-4 w-full">
+                        <section className="flex flex-col items-center justify-center px-4 w-full py-24 md:py-32">
                             <h2 className="text-3xl md:text-5xl font-medium tracking-tight text-white text-center mb-12 leading-tight">
                                 Priser
                             </h2>
-                            <div className="flex flex-col gap-5 w-full max-w-[440px] md:max-w-[640px]">
+                            <div className="flex flex-col gap-5 w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px]">
 
                                 {/* Bento Row 1: Max — hero card, full width */}
                                 <div className="rounded-[2rem] bg-white/[0.04] backdrop-blur-2xl p-1.5">
@@ -333,11 +315,11 @@ export default function LandingPage() {
 
                             </div>
                         </section>
-                    ))}
+                    )}
 
                     {/* Section 5: Footer */}
-                    <section className="min-h-screen flex flex-col justify-end w-full px-8 pb-0 pt-32 overflow-hidden">
-                        <div className="w-full max-w-[440px] md:max-w-[640px] mx-auto z-10 flex flex-col px-5">
+                    <section className="flex flex-col justify-end w-full px-8 pb-0 py-24 md:py-32 overflow-hidden">
+                        <div className="w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px] mx-auto z-10 flex flex-col px-5">
 
                             {/* Links Row */}
                             <div className="flex flex-row justify-between w-full mb-8 md:mb-12">

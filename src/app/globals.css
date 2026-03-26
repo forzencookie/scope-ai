@@ -379,6 +379,23 @@
   will-change: transform, opacity;
 }
 
+
+/* Landing page background — simple scroll on mobile, fixed centered on desktop */
+.landing-bg {
+  background-color: #050505 !important;
+  background-image: url('/premiumbg-clean.png') !important;
+  background-size: cover !important;
+  background-repeat: no-repeat !important;
+  background-position: 85% center !important;
+}
+
+@media (min-width: 768px) {
+  .landing-bg {
+    background-position: 50% 50% !important;
+    background-attachment: fixed !important;
+  }
+}
+
 /* Respect user's motion preferences for accessibility */
 @media (prefers-reduced-motion: reduce) {
   .animate-marquee {

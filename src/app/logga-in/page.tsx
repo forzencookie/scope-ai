@@ -1,11 +1,11 @@
 "use client"
 
-import { useState, useEffect, Suspense } from "react"
+import { useState, useEffect, useRef, Suspense } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import Link from "next/link"
 import { Navbar } from "@/components/landing/layout/navbar"
-import { ArrowRight, Loader2 } from "lucide-react"
+import { ArrowRight, Loader2, Eye, EyeOff } from "lucide-react"
 import { nullToUndefined } from "@/lib/utils"
 
 function LoginFallback() {
@@ -36,7 +36,17 @@ function LoggaInContent() {
     const [isForgotPassword, setIsForgotPassword] = useState(false)
     const [resetSent, setResetSent] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [showPassword, setShowPassword] = useState(false)
     const [error, setError] = useState<string | null>(null)
+    const passwordRef = useRef<HTMLInputElement>(null)
+
+    const togglePasswordVisibility = () => {
+        // Sync browser autofill value into React state before toggling
+        if (passwordRef.current && passwordRef.current.value !== password) {
+            setPassword(passwordRef.current.value)
+        }
+        setShowPassword(!showPassword)
+    }
 
     const oauthError = searchParams.get("error")
     const errorMessage = searchParams.get("message")
@@ -166,27 +176,12 @@ function LoggaInContent() {
     }
 
     return (
-        <div className="relative min-h-screen text-white font-sans selection:bg-white/30 flex flex-col">
-            {/* Fixed Background Layer - Shared across pages */}
-            <div 
-                className="fixed inset-0 z-0"
-                style={{
-                    backgroundColor: '#050505',
-                    backgroundImage: "url('/premiumbg-clean.png')",
-                    backgroundSize: 'cover',
-                    backgroundPosition: '50% 50%',
-                    backgroundRepeat: 'no-repeat',
-                }}
-            />
-
-            {/* Navbar needs to be z-index 10 or higher */}
-            <div className="relative z-10">
-                <Navbar />
-            </div>
+        <div className="relative min-h-screen text-white font-sans selection:bg-white/30 flex flex-col landing-bg">
+            <Navbar />
 
             {/* Main Content - Centered Card */}
             <main className="relative z-10 flex-grow flex items-center justify-center px-4 pt-24 pb-20">
-                <div className="w-full max-w-[440px] md:max-w-[640px] bg-black/30 backdrop-blur-2xl rounded-[2rem] p-8 md:p-10 flex flex-col min-h-[380px] md:min-h-[420px] relative overflow-hidden">
+                <div className="w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px] bg-black/30 backdrop-blur-2xl rounded-[2rem] p-8 md:p-10 flex flex-col min-h-[380px] md:min-h-[420px] relative overflow-hidden">
                     <h1 className="text-4xl md:text-5xl font-medium tracking-tight text-white mb-4">
                         Välkommen
                     </h1>
@@ -292,26 +287,42 @@ function LoggaInContent() {
                             {showPasswordField && (
                                 <div className="w-full relative animate-in slide-in-from-top-2 duration-200">
                                     <input
-                                        type="password"
+                                        ref={passwordRef}
+                                        type={showPassword ? "text" : "password"}
                                         placeholder={isSignUp ? "Välj ett lösenord (minst 8 tecken)" : "Lösenord"}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
                                         minLength={isSignUp ? 8 : undefined}
                                         autoFocus
-                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-5 pr-14 text-white placeholder:text-white/40 outline-none transition-all focus:bg-white/10 focus:border-white/20 text-[15px]"
+                                        autoComplete={isSignUp ? "new-password" : "current-password"}
+                                        className="w-full bg-white/5 border border-white/10 rounded-2xl py-4 pl-5 pr-24 text-white placeholder:text-white/40 outline-none transition-all focus:bg-white/10 focus:border-white/20 text-[15px]"
                                     />
-                                    <button
-                                        type="submit"
-                                        disabled={loading}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center justify-center group"
-                                    >
-                                        {loading ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
-                                        )}
-                                    </button>
+                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                        <button
+                                            type="button"
+                                            onClick={togglePasswordVisibility}
+                                            className="p-2.5 rounded-xl hover:bg-white/10 text-white/40 hover:text-white/70 transition-colors"
+                                            tabIndex={-1}
+                                        >
+                                            {showPassword ? (
+                                                <EyeOff className="w-4 h-4" />
+                                            ) : (
+                                                <Eye className="w-4 h-4" />
+                                            )}
+                                        </button>
+                                        <button
+                                            type="submit"
+                                            disabled={loading}
+                                            className="p-2.5 rounded-xl hover:bg-white/10 text-white transition-colors flex items-center justify-center group"
+                                        >
+                                            {loading ? (
+                                                <Loader2 className="w-5 h-5 animate-spin" />
+                                            ) : (
+                                                <ArrowRight className="w-5 h-5 group-hover:translate-x-0.5 transition-transform" />
+                                            )}
+                                        </button>
+                                    </div>
                                 </div>
                             )}
 

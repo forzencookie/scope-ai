@@ -11,8 +11,8 @@ export function Navbar() {
 
     return (
         <>
-            <header className="fixed top-6 left-0 right-0 z-[60] w-full max-w-[440px] md:max-w-[640px] mx-auto transition-all duration-300">
-                <div className="flex items-center justify-between px-5 py-3 bg-black/40 backdrop-blur-xl rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
+            <header className="fixed top-6 left-0 right-0 z-[60] w-full max-w-[calc(100%-5rem)] sm:max-w-[380px] md:max-w-[620px] mx-auto transition-all duration-300">
+                <div className="flex items-center justify-between px-4 py-2.5 bg-black/40 backdrop-blur-xl rounded-full shadow-[0_4px_30px_rgba(0,0,0,0.3)]">
                     <Link href="/" className="flex items-center gap-3 font-medium cursor-pointer" onClick={() => setIsOpen(false)}>
                         <ScopeAILogo className="w-5 h-5 text-white" />
                         <span className="text-[15px] font-semibold tracking-tight text-white mt-[1px]">scope ai</span>

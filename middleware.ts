@@ -109,35 +109,6 @@ export async function middleware(request: NextRequest) {
         }
     }
 
-    // For protected routes, verify the user still exists in the database
-    // This catches deleted users whose JWT hasn't expired yet
-    if (isProtectedRoute && isAuthenticated && user) {
-        try {
-            const { count } = await supabase
-                .from('profiles')
-                .select('*', { count: 'exact', head: true })
-                .eq('id', user.id)
-
-            if (count === 0) {
-                // User was deleted from database - clear session and redirect
-                response.cookies.delete('sb-access-token')
-                response.cookies.delete('sb-refresh-token')
-                // Also try to delete the project-specific cookies
-                const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1]
-                if (projectRef) {
-                    response.cookies.delete(`sb-${projectRef}-auth-token`)
-                }
-
-                const loginUrl = new URL('/login', request.url)
-                loginUrl.searchParams.set('error', 'account_deleted')
-                return NextResponse.redirect(loginUrl)
-            }
-        } catch (e) {
-            // If profiles table doesn't exist, skip this check
-            console.warn('Could not verify user exists in profiles:', e)
-        }
-    }
-
     const isPreLaunch = process.env.NEXT_PUBLIC_PRE_LAUNCH_MODE === 'true'
 
     // Redirect unauthenticated users away from protected routes
@@ -147,16 +118,42 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(loginUrl)
     }
 
-    // --- PRE-LAUNCH GATE ---
-    if (isPreLaunch && isAuthenticated && isProtectedRoute) {
-        return NextResponse.redirect(new URL('/vantelista', request.url))
+    // For protected routes: verify user exists + check pre-launch gate (single query)
+    if (isProtectedRoute && isAuthenticated && user) {
+        try {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', user.id)
+                .single()
+
+            if (!profile) {
+                // User was deleted from database - clear session and redirect
+                response.cookies.delete('sb-access-token')
+                response.cookies.delete('sb-refresh-token')
+                const projectRef = process.env.NEXT_PUBLIC_SUPABASE_URL?.match(/https:\/\/([^.]+)/)?.[1]
+                if (projectRef) {
+                    response.cookies.delete(`sb-${projectRef}-auth-token`)
+                }
+                const loginUrl = new URL('/login', request.url)
+                loginUrl.searchParams.set('error', 'account_deleted')
+                return NextResponse.redirect(loginUrl)
+            }
+
+            // Pre-launch gate — admins bypass
+            if (isPreLaunch && profile.role !== 'admin') {
+                return NextResponse.redirect(new URL('/vantelista', request.url))
+            }
+        } catch (e) {
+            console.warn('Could not verify user profile:', e)
+            if (isPreLaunch) {
+                return NextResponse.redirect(new URL('/vantelista', request.url))
+            }
+        }
     }
 
     // Redirect authenticated users away from login/register pages
     if (isPublicRoute && isAuthenticated && (pathname === '/login' || pathname === '/register')) {
-        if (isPreLaunch) {
-            return NextResponse.redirect(new URL('/vantelista', request.url))
-        }
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 
