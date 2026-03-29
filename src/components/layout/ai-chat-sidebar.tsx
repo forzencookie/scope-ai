@@ -8,7 +8,7 @@
  */
 
 import { useRef, useEffect, useState } from "react"
-import { useChatContext } from "@/providers/chat-provider"
+import { useChatContext, useChatSessionContext } from "@/providers/chat-provider"
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { BuyCreditsDialog } from "@/components/billing"
@@ -34,14 +34,12 @@ export function AIChatSidebar({ }: AIChatSidebarProps) {
     const { state } = useSidebar()
     const isCollapsed = state === "collapsed"
 
-    // All chat state from the shared provider — no duplicate useChat()
+    // Session-level state (fresh per conversation)
+    const { messages, isLoading, sendMessage, regenerateResponse } = useChatSessionContext()
+    // Folder-level state (persists across conversations)
     const {
         conversations,
         currentConversationId,
-        messages,
-        isLoading,
-        sendMessage,
-        regenerateResponse,
         handleSend,
         handleCancelConfirmation,
         handleNewConversation,

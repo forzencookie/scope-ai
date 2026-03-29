@@ -7,7 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Progress } from "@/components/ui/progress"
 import { text } from "@/lib/translations"
 import { useSubscription } from "@/hooks/use-subscription"
-import { useAIUsage, formatTokens } from "@/hooks/use-ai-usage"
+import { useAIUsage } from "@/hooks/use-ai-usage"
 import { CREDIT_PACKAGES } from "@/lib/subscription"
 import {
     SettingsPageHeader,
@@ -62,10 +62,10 @@ function UsageBar() {
                         isOver && "text-red-600 dark:text-red-400",
                         isLow && !isOver && "text-amber-600 dark:text-amber-400"
                     )}>
-                        {formatTokens(usage.tokensUsed)} av {formatTokens(usage.totalAvailable)} tokens
+                        {Math.round(usage.usagePercent)}% använt
                     </span>
                     <span className="text-muted-foreground">
-                        {usage.requestsCount} anrop
+                        {usage.requestsCount} anrop denna månad
                     </span>
                 </div>
             </div>
@@ -185,8 +185,14 @@ function useBillingHistory() {
     return { items, paymentMethod, loading }
 }
 
+const TIER_PRICES: Record<string, number> = {
+    pro: 249,
+    max: 449,
+    enterprise: 0,
+}
+
 export function BillingTab() {
-    const { tierName } = useSubscription()
+    const { tierName, tier, isAdmin } = useSubscription()
     const { items: billingItems, paymentMethod, loading: billingLoading } = useBillingHistory()
     const [portalLoading, setPortalLoading] = useState(false)
 
@@ -207,6 +213,8 @@ export function BillingTab() {
         }
     }
 
+    const monthlyPrice = isAdmin ? 0 : (TIER_PRICES[tier] ?? 449)
+
     return (
         <div className="space-y-6">
             <SettingsPageHeader
@@ -220,17 +228,19 @@ export function BillingTab() {
                     <div>
                         <p className="font-medium">{tierName}-plan</p>
                         <p className="text-sm text-muted-foreground">
-                            449 kr/månad
+                            {monthlyPrice === 0 ? "Utan kostnad" : `${monthlyPrice} kr/månad`}
                         </p>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={openPortal} disabled={portalLoading}>
-                            {portalLoading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
-                            Hantera prenumeration
-                            <ExternalLink className="h-3 w-3 ml-1" />
-                        </Button>
+                        {!isAdmin && (
+                            <Button variant="outline" size="sm" onClick={openPortal} disabled={portalLoading}>
+                                {portalLoading && <Loader2 className="h-3 w-3 mr-1 animate-spin" />}
+                                Hantera prenumeration
+                                <ExternalLink className="h-3 w-3 ml-1" />
+                            </Button>
+                        )}
                         <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">
-                            {text.settings.active}
+                            {isAdmin ? "Admin" : text.settings.active}
                         </span>
                     </div>
                 </div>
@@ -240,12 +250,12 @@ export function BillingTab() {
             <UsageBar />
 
             {/* Buy Credits */}
-            <BuyCreditsSection />
+            {!isAdmin && <BuyCreditsSection />}
 
-            <Separator />
+            {!isAdmin && <Separator />}
 
             {/* Payment Method */}
-            <SettingsSection title={text.settings.paymentMethod}>
+            {!isAdmin && <SettingsSection title={text.settings.paymentMethod}>
                 <div className="flex items-center justify-between rounded-lg border-2 border-border/60 p-4">
                     <div className="flex items-center gap-3">
                         <CreditCard className="h-5 w-5 text-muted-foreground" />
@@ -271,37 +281,39 @@ export function BillingTab() {
                         {portalLoading ? <Loader2 className="h-3 w-3 animate-spin" /> : text.actions.edit}
                     </Button>
                 </div>
-            </SettingsSection>
+            </SettingsSection>}
 
             {/* Billing History */}
-            <SettingsSection title={text.settings.billingHistory}>
-                {billingLoading ? (
-                    <div className="space-y-3 animate-pulse">
-                        {[1, 2, 3].map((i) => (
-                            <div key={i} className="h-8 bg-muted rounded" />
-                        ))}
-                    </div>
-                ) : billingItems.length === 0 ? (
-                    <p className="text-sm text-muted-foreground py-4 text-center">
-                        Ingen betalningshistorik ännu.
-                    </p>
-                ) : (
-                    <div className="space-y-1">
-                        {billingItems.map((item) => (
-                            <BillingHistoryRow
-                                key={item.id}
-                                date={new Date(item.date).toLocaleDateString("sv-SE")}
-                                id={item.id}
-                                paymentMethod={item.type === "credits" ? "Credits" : "Prenumeration"}
-                                amount={item.amount}
-                                status={item.status}
-                                onDownloadReceipt={item.receiptUrl ? () => window.open(item.receiptUrl, "_blank") : undefined}
-                                onViewInvoice={item.invoiceUrl ? () => window.open(item.invoiceUrl, "_blank") : undefined}
-                            />
-                        ))}
-                    </div>
-                )}
-            </SettingsSection>
+            {!isAdmin && (
+                <SettingsSection title={text.settings.billingHistory}>
+                    {billingLoading ? (
+                        <div className="space-y-3 animate-pulse">
+                            {[1, 2, 3].map((i) => (
+                                <div key={i} className="h-8 bg-muted rounded" />
+                            ))}
+                        </div>
+                    ) : billingItems.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center">
+                            Ingen betalningshistorik ännu.
+                        </p>
+                    ) : (
+                        <div className="space-y-1">
+                            {billingItems.map((item) => (
+                                <BillingHistoryRow
+                                    key={item.id}
+                                    date={new Date(item.date).toLocaleDateString("sv-SE")}
+                                    id={item.id}
+                                    paymentMethod={item.type === "credits" ? "Credits" : "Prenumeration"}
+                                    amount={item.amount}
+                                    status={item.status}
+                                    onDownloadReceipt={item.receiptUrl ? () => window.open(item.receiptUrl, "_blank") : undefined}
+                                    onViewInvoice={item.invoiceUrl ? () => window.open(item.invoiceUrl, "_blank") : undefined}
+                                />
+                            ))}
+                        </div>
+                    )}
+                </SettingsSection>
+            )}
         </div>
     )
 }

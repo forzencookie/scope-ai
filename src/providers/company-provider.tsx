@@ -5,10 +5,11 @@
 // React context for company type state
 // ============================================
 
-import * as React from "react"
-import { createContext, useContext, useState, useEffect, useCallback, useMemo } from "react"
+import { createContext, useContext, useState, useEffect, useCallback, useMemo, useRef } from "react"
+import type { ReactNode } from "react"
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
+import type { SubscriptionTier } from "@/lib/subscription"
 import { getMyCompany } from "@/services/company/company-service"
 import { updateCompanyAction } from "@/app/actions/company"
 import { nullToUndefined } from "@/lib/utils"
@@ -18,12 +19,10 @@ import { nullToUndefined } from "@/lib/utils"
 // ============================================
 
 interface CompanyInfo {
-  // Basic info
   id: string
   name: string
   orgNumber: string
   companyType: CompanyType
-  // Additional metadata
   registrationDate?: string
   address?: string
   city?: string
@@ -32,86 +31,118 @@ interface CompanyInfo {
   phone?: string
   vatNumber?: string
   contactPerson?: string
-  // Payment details
   bankgiro?: string
   plusgiro?: string
-  // Settings
   hasMomsRegistration: boolean
   hasEmployees: boolean
-  fiscalYearEnd: string // MM-DD format, e.g., "12-31"
+  fiscalYearEnd: string
   accountingMethod: 'cash' | 'invoice'
-  // Tax Settings (Onboarding-driven)
   vatFrequency: 'monthly' | 'quarterly' | 'annually'
-  isCloselyHeld: boolean // Fåmansföretag - determines K10 applicability
-  hasFskatt: boolean // Innehar F-skattsedel
-  // Share Structure (AB only)
-  shareCapital: number       // e.g., 25000 or 50000
-  totalShares: number        // e.g., 500 or 1000
-  shareClasses: { A: number; B: number }  // A-aktier, B-aktier
-  // Member/Partner Settings (Förening/HB/KB)
-  memberFee: number          // Annual member fee
-  capitalContribution: number // Insats/capital contribution
-  // Branding
+  isCloselyHeld: boolean
+  hasFskatt: boolean
+  shareCapital: number
+  totalShares: number
+  shareClasses: { A: number; B: number }
+  memberFee: number
+  capitalContribution: number
   logoUrl?: string
-  // Onboarding State
   onboardingMode: 'fresh' | 'existing'
   onboardingComplete: boolean
 }
 
 interface CompanyContextValue {
-  // Current company
   company: CompanyInfo | null
   companyType: CompanyType
   isLoading: boolean
   isSaving: boolean
-
-  // Actions
   setCompanyType: (type: CompanyType) => void
   setCompany: (company: CompanyInfo) => void
   updateCompany: (updates: Partial<CompanyInfo>) => void
   saveChanges: () => Promise<{ success: boolean; error?: string }>
-
-  // Feature checks
   hasFeature: (feature: FeatureKey) => boolean
-
-  // Helpers
   companyTypeName: string
   companyTypeFullName: string
 }
 
 // ============================================
-// Default Values
+// Tier-based Company Type Defaults
 // ============================================
+// Pro  → EF, Förening (solo, non-profit entities)
+// Max  → AB, HB, KB (all company types including profit-driven)
+// Enterprise → all types
 
-const defaultCompany: CompanyInfo = {
-  id: "",
-  name: "",
-  orgNumber: "",
-  vatNumber: "",
-  address: "",
-  city: "",
-  zipCode: "",
-  email: "",
-  phone: "",
-  contactPerson: "",
-  companyType: "ab",
-  hasMomsRegistration: true,
-  hasEmployees: false,
+const DEFAULT_COMPANY_TYPE_BY_TIER: Record<SubscriptionTier, CompanyType> = {
+  pro: "ef",
+  max: "ab",
+  enterprise: "ab",
+}
+
+// Company-type-specific defaults applied when type is known
+const COMPANY_TYPE_DEFAULTS: Record<CompanyType, Partial<CompanyInfo>> = {
+  ef: {
+    accountingMethod: "cash",
+    isCloselyHeld: false,
+    shareCapital: 0,
+    totalShares: 0,
+    shareClasses: { A: 0, B: 0 },
+    hasMomsRegistration: true,
+  },
+  ab: {
+    accountingMethod: "invoice",
+    isCloselyHeld: true,
+    shareCapital: 25000,
+    totalShares: 500,
+    shareClasses: { A: 0, B: 500 },
+    hasMomsRegistration: true,
+  },
+  hb: {
+    accountingMethod: "invoice",
+    isCloselyHeld: false,
+    shareCapital: 0,
+    totalShares: 0,
+    shareClasses: { A: 0, B: 0 },
+    hasMomsRegistration: true,
+  },
+  kb: {
+    accountingMethod: "invoice",
+    isCloselyHeld: false,
+    shareCapital: 0,
+    totalShares: 0,
+    shareClasses: { A: 0, B: 0 },
+    hasMomsRegistration: true,
+  },
+  forening: {
+    accountingMethod: "cash",
+    isCloselyHeld: false,
+    shareCapital: 0,
+    totalShares: 0,
+    shareClasses: { A: 0, B: 0 },
+    hasMomsRegistration: false,
+  },
+}
+
+// Legal defaults that are correct regardless of company type
+const LEGAL_DEFAULTS: Partial<CompanyInfo> = {
   fiscalYearEnd: "12-31",
-  accountingMethod: "invoice",
   vatFrequency: "quarterly",
-  isCloselyHeld: true,
   hasFskatt: true,
-  // Share Structure (AB defaults)
-  shareCapital: 25000,
-  totalShares: 500,
-  shareClasses: { A: 0, B: 500 },
-  // Member/Partner (Förening/HB/KB defaults)
-  memberFee: 0,
-  capitalContribution: 0,
-  // Onboarding
-  onboardingMode: "fresh",
-  onboardingComplete: false,
+}
+
+function buildCompanyDefaults(type: CompanyType): CompanyInfo {
+  return {
+    id: "",
+    name: "",
+    orgNumber: "",
+    companyType: type,
+    hasEmployees: false,
+    memberFee: 0,
+    capitalContribution: 0,
+    onboardingMode: "fresh",
+    onboardingComplete: false,
+    // Spread legal defaults first, then type-specific overrides
+    ...LEGAL_DEFAULTS,
+    ...COMPANY_TYPE_DEFAULTS[type],
+  } as CompanyInfo
 }
 
 // ============================================
@@ -125,31 +156,42 @@ const CompanyContext = createContext<CompanyContextValue | undefined>(undefined)
 // ============================================
 
 interface CompanyProviderProps {
-  children: React.ReactNode
-  initialCompanyType?: CompanyType
+  children: ReactNode
+  initialTier?: SubscriptionTier
 }
 
 export function CompanyProvider({
   children,
-  initialCompanyType = "ab"
+  initialTier = "pro",
 }: CompanyProviderProps) {
   const [company, setCompanyState] = useState<CompanyInfo | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
 
-  // Load company from database first, then localStorage fallback
+  // Ref for latest company state — prevents stale closure in saveChanges
+  const companyRef = useRef(company)
+  companyRef.current = company
+
+  const defaultType = DEFAULT_COMPANY_TYPE_BY_TIER[initialTier]
+
+  // Load company from database
   useEffect(() => {
+    let cancelled = false
+
     async function loadCompany() {
       try {
-        // Try to fetch from database via company-service (direct Supabase)
         const dbCompanyInfo = await getMyCompany()
+        if (cancelled) return
+
         if (dbCompanyInfo) {
-          // Map company-service CompanyInfo to provider's CompanyInfo shape
-          const company: CompanyInfo = {
+          const resolvedType = dbCompanyInfo.companyType || defaultType
+          const typeDefaults = COMPANY_TYPE_DEFAULTS[resolvedType]
+
+          const loaded: CompanyInfo = {
             id: dbCompanyInfo.id,
             name: dbCompanyInfo.name,
             orgNumber: dbCompanyInfo.orgNumber || '',
-            companyType: dbCompanyInfo.companyType || 'ab',
+            companyType: resolvedType,
             vatNumber: dbCompanyInfo.vatNumber || '',
             address: dbCompanyInfo.address || '',
             city: dbCompanyInfo.city || '',
@@ -158,70 +200,71 @@ export function CompanyProvider({
             phone: dbCompanyInfo.phone || '',
             contactPerson: dbCompanyInfo.contactPerson || '',
             registrationDate: nullToUndefined(dbCompanyInfo.registrationDate),
-            hasMomsRegistration: dbCompanyInfo.hasMomsRegistration ?? true,
+            hasMomsRegistration: dbCompanyInfo.hasMomsRegistration ?? typeDefaults.hasMomsRegistration ?? true,
             hasEmployees: dbCompanyInfo.hasEmployees ?? false,
             fiscalYearEnd: dbCompanyInfo.fiscalYearEnd || '12-31',
-            accountingMethod: dbCompanyInfo.accountingMethod || 'invoice',
+            accountingMethod: dbCompanyInfo.accountingMethod || typeDefaults.accountingMethod || 'invoice',
             vatFrequency: dbCompanyInfo.vatFrequency || 'quarterly',
-            isCloselyHeld: dbCompanyInfo.isCloselyHeld ?? true,
+            isCloselyHeld: dbCompanyInfo.isCloselyHeld ?? typeDefaults.isCloselyHeld ?? false,
             hasFskatt: dbCompanyInfo.hasFskatt ?? true,
-            shareCapital: dbCompanyInfo.shareCapital ?? 25000,
-            totalShares: dbCompanyInfo.totalShares ?? 500,
-            shareClasses: { A: 0, B: dbCompanyInfo.totalShares ?? 500 },
+            shareCapital: dbCompanyInfo.shareCapital ?? typeDefaults.shareCapital ?? 0,
+            totalShares: dbCompanyInfo.totalShares ?? typeDefaults.totalShares ?? 0,
+            shareClasses: typeDefaults.shareClasses ?? { A: 0, B: 0 },
             memberFee: 0,
             capitalContribution: 0,
             onboardingMode: 'existing',
             onboardingComplete: true,
           }
-          setCompanyState(company)
+          setCompanyState(loaded)
           setIsLoading(false)
           return
         }
       } catch (error) {
+        if (cancelled) return
         console.warn('[CompanyProvider] Failed to fetch from database:', error)
       }
 
-      // Fallback to defaults when DB is unavailable
-      setCompanyState({
-        ...defaultCompany,
-        companyType: initialCompanyType,
-      })
-      setIsLoading(false)
+      // Fallback: no company in DB — use tier-based defaults
+      if (!cancelled) {
+        setCompanyState(buildCompanyDefaults(defaultType))
+        setIsLoading(false)
+      }
     }
 
     loadCompany()
-  }, [initialCompanyType])
+    return () => { cancelled = true }
+  }, [defaultType])
 
-  // Get current company type (fallback to 'ab')
-  const companyType = company?.companyType ?? "ab"
+  const companyType = company?.companyType ?? defaultType
 
-  // Explicitly save company to database via Server Action
+  // Save reads from ref to always get latest state — no stale closure
   const saveChanges = useCallback(async () => {
-    if (!company || !company.id) return { success: false, error: "Ingen företag valt" }
-    
+    const current = companyRef.current
+    if (!current || !current.id) return { success: false, error: "Ingen företag valt" }
+
     setIsSaving(true)
     try {
-      const result = await updateCompanyAction(company.id, {
-        name: company.name,
-        orgNumber: company.orgNumber,
-        companyType: company.companyType,
-        vatNumber: company.vatNumber,
-        address: company.address,
-        city: company.city,
-        zipCode: company.zipCode,
-        email: company.email,
-        phone: company.phone,
-        contactPerson: company.contactPerson,
-        registrationDate: company.registrationDate,
-        fiscalYearEnd: company.fiscalYearEnd,
-        accountingMethod: company.accountingMethod,
-        vatFrequency: company.vatFrequency,
-        isCloselyHeld: company.isCloselyHeld,
-        hasEmployees: company.hasEmployees,
-        hasMomsRegistration: company.hasMomsRegistration,
-        hasFskatt: company.hasFskatt,
-        shareCapital: company.shareCapital,
-        totalShares: company.totalShares,
+      const result = await updateCompanyAction(current.id, {
+        name: current.name,
+        orgNumber: current.orgNumber,
+        companyType: current.companyType,
+        vatNumber: current.vatNumber,
+        address: current.address,
+        city: current.city,
+        zipCode: current.zipCode,
+        email: current.email,
+        phone: current.phone,
+        contactPerson: current.contactPerson,
+        registrationDate: current.registrationDate,
+        fiscalYearEnd: current.fiscalYearEnd,
+        accountingMethod: current.accountingMethod,
+        vatFrequency: current.vatFrequency,
+        isCloselyHeld: current.isCloselyHeld,
+        hasEmployees: current.hasEmployees,
+        hasMomsRegistration: current.hasMomsRegistration,
+        hasFskatt: current.hasFskatt,
+        shareCapital: current.shareCapital,
+        totalShares: current.totalShares,
       })
       return result
     } catch (error) {
@@ -230,61 +273,43 @@ export function CompanyProvider({
     } finally {
       setIsSaving(false)
     }
-  }, [company])
+  }, [])
 
-  // Set just the company type with smart defaults
+  // Set company type with type-specific defaults
   const setCompanyType = useCallback((type: CompanyType) => {
+    const typeDefaults = COMPANY_TYPE_DEFAULTS[type]
     setCompanyState(prev => {
-      // Smart default: EF usually uses Cash method, AB usually uses Invoice method
-      // But smaller ABs can use Cash. For safety/standard, default AB to Invoice, EF to Cash.
-      const defaultMethod = type === 'ef' ? 'cash' : 'invoice'
-
       if (!prev) {
-        return {
-          ...defaultCompany,
-          companyType: type,
-          accountingMethod: defaultMethod
-        }
+        return buildCompanyDefaults(type)
       }
-      return {
-        ...prev,
-        companyType: type,
-        accountingMethod: defaultMethod
-      }
+      return { ...prev, companyType: type, ...typeDefaults }
     })
   }, [])
 
-  // Set entire company object
   const setCompany = useCallback((newCompany: CompanyInfo) => {
     setCompanyState(newCompany)
   }, [])
 
-  // Update partial company data (local state only)
   const updateCompany = useCallback((updates: Partial<CompanyInfo>) => {
     setCompanyState(prev => {
       if (!prev) {
-        return { ...defaultCompany, ...updates }
+        return { ...buildCompanyDefaults(defaultType), ...updates }
       }
       return { ...prev, ...updates }
     })
-  }, [])
+  }, [defaultType])
 
-  // Check if current company type has a feature
   const checkFeature = useCallback((feature: FeatureKey): boolean => {
-    // Special cases for conditional features
-    if (feature === "momsdeklaration" && company && !company.hasMomsRegistration) {
+    const current = companyRef.current
+    if (feature === "momsdeklaration" && current && !current.hasMomsRegistration) {
       return false
     }
-    if ((feature === "lonebesked" || feature === "agi") && company && !company.hasEmployees) {
-      // Still show for AB (owner can be employee)
-      if (companyType !== "ab") {
-        return false
-      }
+    if ((feature === "lonebesked" || feature === "agi") && current && !current.hasEmployees) {
+      if (companyType !== "ab") return false
     }
     return hasFeature(companyType, feature)
-  }, [company, companyType])
+  }, [companyType])
 
-  // Computed values
   const companyTypeName = companyTypes[companyType].name
   const companyTypeFullName = getCompanyTypeFullName(companyType)
 
@@ -310,7 +335,7 @@ export function CompanyProvider({
 }
 
 // ============================================
-// Hook
+// Hooks
 // ============================================
 
 export function useCompany(): CompanyContextValue {
@@ -321,18 +346,10 @@ export function useCompany(): CompanyContextValue {
   return context
 }
 
-// ============================================
-// Optional: Hook for just checking features
-// ============================================
-
 export function useFeature(feature: FeatureKey): boolean {
   const { hasFeature } = useCompany()
   return hasFeature(feature)
 }
-
-// ============================================
-// Optional: Hook for getting company type info
-// ============================================
 
 export function useCompanyType() {
   const { companyType, companyTypeName, companyTypeFullName } = useCompany()

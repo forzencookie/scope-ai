@@ -182,7 +182,7 @@ export type ComparisonTable = z.infer<typeof ComparisonTableSchema>
 export const CompanySettingsSchema = z.object({
     name: z.string().min(1),
     orgNumber: z.string(),
-    companyType: z.enum(['ab', 'ef', 'hb', 'kb', 'forening']),
+    companyType: z.enum(['ab', 'ef', 'hb', 'kb', 'forening']).default('ef'),
     vatNumber: z.string().optional(),
     address: z.string().optional(),
     city: z.string().optional(),

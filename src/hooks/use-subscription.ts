@@ -31,6 +31,7 @@ export const subscriptionQueryKey = ["subscription", "profile"] as const
 interface SubscriptionProfile {
   tier: SubscriptionTier
   isPaid: boolean
+  role: string
 }
 
 interface UseSubscriptionReturn {
@@ -42,6 +43,8 @@ interface UseSubscriptionReturn {
   tierColor: string
   /** Whether user has paid subscription (server-derived) */
   isPaid: boolean
+  /** Whether user is an admin (no billing) */
+  isAdmin: boolean
   /** Loading state */
   loading: boolean
   /** Check if a feature is available */
@@ -54,7 +57,8 @@ interface UseSubscriptionReturn {
 
 const DEFAULT_PROFILE: SubscriptionProfile = {
   tier: "pro",
-  isPaid: true, // All users are on paid tier now
+  isPaid: true,
+  role: "member",
 }
 
 export function useSubscription(): UseSubscriptionReturn {
@@ -74,6 +78,7 @@ export function useSubscription(): UseSubscriptionReturn {
           // Use server-provided values - these are authoritative
           tier: data.subscription_tier as SubscriptionTier,
           isPaid: data.is_paid ?? true,
+          role: data.role ?? "member",
         }
       }
       return DEFAULT_PROFILE
@@ -106,6 +111,7 @@ export function useSubscription(): UseSubscriptionReturn {
       tierColor: TIER_COLORS[profile.tier],
       // Use server-derived flag - cannot be manipulated client-side
       isPaid: profile.isPaid,
+      isAdmin: profile.role === "admin",
       // Use isPending OR isFetching to ensure we wait for real data
       loading: isPending || isFetching || authLoading,
       canUse,

@@ -3,8 +3,8 @@
 // =============================================================================
 // Settings Tabs - Re-export from modular components
 // =============================================================================
-// This file now serves as a simple re-export hub for all settings tabs.
-// Each tab has been modularized into its own file under ./tabs/
+// Each tab is self-contained: owns its data, owns its save logic.
+// settings-overlay.tsx is a pure router — no form state.
 
 export {
     AccountTab,
@@ -17,5 +17,4 @@ export {
     EmailTab,
     AccessibilityTab,
     SecurityTab,
-    type SettingsFormData,
 } from "./tabs"

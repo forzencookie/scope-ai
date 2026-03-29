@@ -2,7 +2,7 @@
 
 import { useRef, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
-import { useChatContext } from "@/providers/chat-provider"
+import { useChatContext, useChatSessionContext } from "@/providers/chat-provider"
 import { useAIDialog } from "@/providers/ai-overlay-provider"
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
@@ -27,11 +27,10 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
     const pathname = usePathname()
     const router = useRouter()
     const { isAIOverlayOpen } = useAIDialog()
+    // Session-level state (fresh per conversation)
+    const { messages, isLoading, sendMessage, regenerateResponse } = useChatSessionContext()
+    // Folder-level state (persists across conversations)
     const {
-        messages,
-        isLoading,
-        sendMessage,
-        regenerateResponse,
         textareaValue,
         setTextareaValue,
         attachedFiles,

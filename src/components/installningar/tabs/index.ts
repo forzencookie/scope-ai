@@ -1,5 +1,5 @@
 // Re-export all tab components for easy importing
-export { AccountTab, type SettingsFormData } from "./account-tab"
+export { AccountTab } from "./account-tab"
 export { CompanyTab } from "./company-tab"
 export { IntegrationsTab } from "./integrations-tab"
 export { BillingTab } from "./billing-tab"

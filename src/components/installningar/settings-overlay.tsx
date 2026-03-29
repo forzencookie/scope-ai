@@ -2,22 +2,17 @@
 
 import * as React from "react"
 import {
-  Bell,
   Building2,
   CreditCard,
-  Globe,
-  Keyboard,
   Lock,
   Paintbrush,
   Puzzle,
   User,
-  Mail,
 } from "lucide-react"
 
 import {
   Breadcrumb,
   BreadcrumbItem,
-  BreadcrumbLink,
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
@@ -32,20 +27,13 @@ import {
   SidebarMenuItem,
   SidebarProvider,
 } from "@/components/ui/sidebar"
-import { useCompany } from "@/providers/company-provider"
-import { useToast } from "@/components/ui/toast"
-import { cn } from "@/lib/utils"
 import { PageOverlay } from "@/components/shared"
 import {
   AccountTab,
   CompanyTab,
   IntegrationsTab,
   BillingTab,
-  NotificationsTab,
   AppearanceTab,
-  LanguageTab,
-  EmailTab,
-  AccessibilityTab,
   SecurityTab,
 } from "./settings-tabs"
 
@@ -55,11 +43,7 @@ const data = {
     { name: "Företagsinformation", icon: Building2 },
     { name: "Integrationer", icon: Puzzle },
     { name: "Fakturering", icon: CreditCard },
-    { name: "Notiser", icon: Bell },
     { name: "Utseende", icon: Paintbrush },
-    { name: "Språk & region", icon: Globe },
-    { name: "E-post", icon: Mail },
-    { name: "Tillgänglighet", icon: Keyboard },
     { name: "Säkerhet & sekretess", icon: Lock },
   ],
 }
@@ -71,105 +55,37 @@ interface SettingsOverlayProps {
 }
 
 /**
- * SettingsOverlay - Immersive settings view that takes over the main content area.
- * Replaces the traditional SettingsDialog.
+ * SettingsOverlay — Pure router. Each tab owns its own data and save logic.
+ *
+ * Konto → user profile (name, email, avatar) → /api/user/profile
+ * Företagsinformation → company data (name, type, org nr) → CompanyProvider.saveChanges()
+ *
+ * These are separate domains with separate DB tables and separate save paths.
  */
 export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: SettingsOverlayProps) {
-  const [activeTab, setActiveTab] = React.useState("Konto")
-  const { company, updateCompany, saveChanges, isSaving } = useCompany()
-  const { addToast } = useToast()
-
-  // Sync active tab with defaultTab when it changes
-  React.useEffect(() => {
+  const [activeTab, setActiveTab] = React.useState(() => {
     if (defaultTab) {
-      const matchedTab = data.nav.find(item =>
+      const matched = data.nav.find(item =>
         item.name.toLowerCase() === defaultTab.toLowerCase() ||
         item.name === defaultTab
       )
-      if (matchedTab) {
-        setActiveTab(matchedTab.name)
-      }
+      return matched?.name ?? "Konto"
     }
-  }, [defaultTab])
-
-  const [avatarUrl, setAvatarUrl] = React.useState<string>("")
-  const [formData, setFormData] = React.useState({
-    name: "",
-    orgNumber: "",
-    vatNumber: "",
-    address: "",
-    email: "",
-    phone: "",
-    contactPerson: "",
-    bankgiro: "",
-    plusgiro: "",
+    return "Konto"
   })
-
-  React.useEffect(() => {
-    fetch('/api/user/profile')
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        if (data?.avatar_url) setAvatarUrl(data.avatar_url)
-      })
-      .catch(() => {})
-  }, [])
-
-  React.useEffect(() => {
-    if (company) {
-      setFormData({
-        name: company.name || "",
-        orgNumber: company.orgNumber || "",
-        vatNumber: company.vatNumber || "",
-        address: company.address || "",
-        email: company.email || "",
-        phone: company.phone || "",
-        contactPerson: company.contactPerson || "",
-        bankgiro: company.bankgiro || "",
-        plusgiro: company.plusgiro || "",
-      })
-    }
-  }, [company])
-
-  const handleSave = async () => {
-    updateCompany(formData)
-    
-    // Explicitly call the Server Action through the provider
-    const result = await saveChanges()
-    
-    if (result.success) {
-      addToast({
-        title: "Inställningar sparade",
-        description: "Dina ändringar har sparats.",
-      })
-    } else {
-      addToast({
-        title: "Kunde inte spara",
-        description: result.error || "Ett oväntat fel uppstod.",
-        variant: "destructive",
-      })
-    }
-  }
 
   const renderTabContent = () => {
     switch (activeTab) {
       case "Konto":
-        return <AccountTab formData={formData} setFormData={setFormData} onSave={handleSave} avatarUrl={avatarUrl} onAvatarChange={setAvatarUrl} />
+        return <AccountTab />
       case "Företagsinformation":
-        return <CompanyTab formData={formData} setFormData={setFormData} onSave={handleSave} />
+        return <CompanyTab />
       case "Integrationer":
         return <IntegrationsTab />
       case "Fakturering":
         return <BillingTab />
-      case "Notiser":
-        return <NotificationsTab />
       case "Utseende":
         return <AppearanceTab />
-      case "Språk & region":
-        return <LanguageTab />
-      case "E-post":
-        return <EmailTab />
-      case "Tillgänglighet":
-        return <AccessibilityTab />
       case "Säkerhet & sekretess":
         return <SecurityTab />
       default:
@@ -210,7 +126,7 @@ export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: Sett
               </SidebarGroup>
             </SidebarContent>
           </Sidebar>
-          
+
           <main className="flex-1 flex flex-col min-h-0 bg-background overflow-hidden">
             <header className="flex h-14 shrink-0 items-center gap-2 border-b px-6">
               <Breadcrumb>
@@ -225,7 +141,7 @@ export function SettingsOverlay({ open = false, onOpenChange, defaultTab }: Sett
                 </BreadcrumbList>
               </Breadcrumb>
             </header>
-            
+
             <div className="flex-1 overflow-y-auto p-8 md:p-12 custom-scrollbar">
               <div className="max-w-3xl w-full">
                 {renderTabContent()}

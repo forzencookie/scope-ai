@@ -18,10 +18,12 @@ const PROTECTED_ROUTES = [
  */
 const PUBLIC_ROUTES = [
     '/login',
+    '/logga-in',
     '/register',
     '/auth/callback',
     '/auth/reset-password',
     '/api/auth',
+    '/api/waitlist',
     '/',
     '/vantelista',
 ]
@@ -79,9 +81,8 @@ export async function middleware(request: NextRequest) {
     // Check admin routes
     if (isAdminRoute) {
         if (!isAuthenticated) {
-            const loginUrl = new URL('/login', request.url)
-            loginUrl.searchParams.set('redirect', pathname)
-            loginUrl.searchParams.set('error', 'auth_required')
+            const loginUrl = new URL('/logga-in', request.url)
+                loginUrl.searchParams.set('error', 'auth_required')
             return NextResponse.redirect(loginUrl)
         }
 
@@ -113,8 +114,7 @@ export async function middleware(request: NextRequest) {
 
     // Redirect unauthenticated users away from protected routes
     if (isProtectedRoute && !isAuthenticated) {
-        const loginUrl = new URL('/login', request.url)
-        loginUrl.searchParams.set('redirect', pathname)
+        const loginUrl = new URL('/logga-in', request.url)
         return NextResponse.redirect(loginUrl)
     }
 
@@ -135,7 +135,7 @@ export async function middleware(request: NextRequest) {
                 if (projectRef) {
                     response.cookies.delete(`sb-${projectRef}-auth-token`)
                 }
-                const loginUrl = new URL('/login', request.url)
+                const loginUrl = new URL('/logga-in', request.url)
                 loginUrl.searchParams.set('error', 'account_deleted')
                 return NextResponse.redirect(loginUrl)
             }
@@ -153,7 +153,7 @@ export async function middleware(request: NextRequest) {
     }
 
     // Redirect authenticated users away from login/register pages
-    if (isPublicRoute && isAuthenticated && (pathname === '/login' || pathname === '/register')) {
+    if (isPublicRoute && isAuthenticated && ['/login', '/logga-in', '/register'].includes(pathname)) {
         return NextResponse.redirect(new URL('/dashboard', request.url))
     }
 

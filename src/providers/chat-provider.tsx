@@ -1,7 +1,23 @@
 "use client"
 
+/**
+ * Chat Provider — Dual-context architecture.
+ *
+ * Outer context (ChatContext): Folder-level state that survives conversation switches.
+ *   - Conversation list, current ID, UI state (textarea, files, mentions)
+ *   - Event listeners, orchestration (new conversation, load, delete)
+ *
+ * Inner context (ChatSessionContext): Per-conversation state, fresh each switch.
+ *   - Vercel AI SDK instance, messages, loading state, send/regenerate
+ *   - Mounted inside ChatSessionGate with key={conversationId}
+ *
+ * The key boundary ensures React unmounts/remounts the session on every
+ * conversation switch — no stale state, no message leaks, no sync effects.
+ */
+
 import { createContext, useContext, useState, useCallback, useRef, useEffect } from "react"
-import { useChat } from "@/hooks/use-chat"
+import { useConversations } from "@/hooks/chat/use-conversations"
+import { useChatSession, type SendMessageOptions, type ChatSession } from "@/hooks/use-chat-session"
 import { useAIUsage } from "@/hooks/use-ai-usage"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useModel } from "@/providers/model-provider"
@@ -11,18 +27,20 @@ import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/
 import type { ActionTriggerDisplay } from "@/components/ai/action-trigger-chip"
 import { nullToUndefined } from "@/lib/utils"
 
+// =============================================================================
+// Outer Context — Folder Level
+// =============================================================================
+
 interface ChatContextValue {
+    // Conversation management
     conversations: Conversation[]
     currentConversationId: string | null
-    messages: ReturnType<typeof useChat>["messages"]
-    isLoading: boolean
-    sendMessage: ReturnType<typeof useChat>["sendMessage"]
-    regenerateResponse: ReturnType<typeof useChat>["regenerateResponse"]
-    startNewConversation: () => void
+    currentConversation: Conversation | undefined
+    handleNewConversation: () => void
     loadConversation: (id: string) => void
     deleteConversation: (id: string) => void
     deleteMessage: (id: string) => void
-    // Input state (shared between sidebar new-chat and main area)
+    // Input state (shared between components)
     textareaValue: string
     setTextareaValue: (v: string) => void
     mentionItems: MentionItem[]
@@ -41,7 +59,6 @@ interface ChatContextValue {
     setShowBuyCredits: (v: boolean) => void
     handleSend: () => void
     handleCancelConfirmation: (messageId: string) => void
-    handleNewConversation: () => void
     // Incognito mode
     isIncognito: boolean
     toggleIncognito: () => void
@@ -55,6 +72,114 @@ export function useChatContext() {
     return ctx
 }
 
+// =============================================================================
+// Inner Context — Conversation Level
+// =============================================================================
+
+const ChatSessionContext = createContext<ChatSession | null>(null)
+
+export function useChatSessionContext(): ChatSession {
+    const ctx = useContext(ChatSessionContext)
+    if (!ctx) throw new Error("useChatSessionContext must be used within ChatSessionGate")
+    return ctx
+}
+
+// =============================================================================
+// ChatSessionGate — Keyed wrapper that remounts per conversation
+// =============================================================================
+
+interface ChatSessionGateProps {
+    children: React.ReactNode
+}
+
+/**
+ * Reads the current conversation from the outer context and renders
+ * a ChatSessionProvider with key={conversationId}. When the ID changes,
+ * React unmounts the old provider and mounts a fresh one.
+ */
+export function ChatSessionGate({ children }: ChatSessionGateProps) {
+    const { currentConversationId, currentConversation, isIncognito } = useChatContext()
+    const { modelId } = useModel()
+
+    const initialMessages = currentConversation?.messages ?? []
+
+    return (
+        <ChatSessionInner
+            key={currentConversationId ?? 'empty'}
+            conversationId={currentConversationId}
+            initialMessages={initialMessages}
+            modelId={modelId}
+            isIncognito={isIncognito}
+        >
+            {children}
+        </ChatSessionInner>
+    )
+}
+
+interface ChatSessionInnerProps {
+    conversationId: string | null
+    initialMessages: Conversation['messages']
+    modelId: string
+    isIncognito: boolean
+    children: React.ReactNode
+}
+
+/**
+ * Inner provider that owns the Vercel AI SDK instance.
+ * Registers its sendMessage/regenerate with the outer provider's ref bridge
+ * so the outer "Send" button can reach across the boundary.
+ */
+function ChatSessionInner({
+    conversationId,
+    initialMessages,
+    modelId,
+    isIncognito,
+    children,
+}: ChatSessionInnerProps) {
+    const session = useChatSession({ conversationId, initialMessages, modelId, isIncognito })
+
+    // Register with outer provider's ref bridge
+    const outerCtx = useContext(ChatContext)
+    const registered = useRef(false)
+    if (!registered.current && outerCtx) {
+        // Synchronous registration on first render — no useEffect delay
+        registerSessionRef.current?.({
+            sendMessage: session.sendMessage,
+            regenerateResponse: session.regenerateResponse,
+        })
+        registered.current = true
+    }
+
+    // Keep refs updated if callbacks change (e.g., after Vercel SDK stabilizes)
+    useEffect(() => {
+        registerSessionRef.current?.({
+            sendMessage: session.sendMessage,
+            regenerateResponse: session.regenerateResponse,
+        })
+        return () => {
+            registerSessionRef.current?.(null)
+        }
+    }, [session.sendMessage, session.regenerateResponse])
+
+    return (
+        <ChatSessionContext.Provider value={session}>
+            {children}
+        </ChatSessionContext.Provider>
+    )
+}
+
+// Module-level ref for the registration bridge.
+// This avoids threading a callback through context (which would cause the
+// inner provider to depend on outer context changes).
+const registerSessionRef: React.MutableRefObject<((session: {
+    sendMessage: ChatSession['sendMessage']
+    regenerateResponse: ChatSession['regenerateResponse']
+} | null) => void) | null> = { current: null }
+
+// =============================================================================
+// ChatProvider — Outer Provider
+// =============================================================================
+
 export function ChatProvider({ children }: { children: React.ReactNode }) {
     const { modelId } = useModel()
     const { canAfford, refresh: refreshUsage } = useAIUsage()
@@ -64,15 +189,14 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const {
         conversations,
         currentConversationId,
-        messages,
-        isLoading,
-        sendMessage,
-        regenerateResponse,
-        startNewConversation,
+        setCurrentConversationId,
+        currentConversation,
         loadConversation,
         deleteConversation,
         deleteMessage,
-    } = useChat({ isIncognito })
+        extractMemories,
+        cleanupIncognitoConversation,
+    } = useConversations()
 
     const [textareaValue, setTextareaValue] = useState("")
     const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
@@ -82,15 +206,73 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const [showBuyCredits, setShowBuyCredits] = useState(false)
     const [returnTo, setReturnTo] = useState<string | null>(null)
 
-    const toggleIncognito = useCallback(() => {
-        setIsIncognito(prev => !prev)
-        // Start a fresh conversation when toggling
-        startNewConversation()
+    // Ref bridge — inner session registers its functions here
+    const sendMessageRef = useRef<ChatSession['sendMessage'] | null>(null)
+    const regenerateRef = useRef<ChatSession['regenerateResponse'] | null>(null)
+    const pendingMessageRef = useRef<SendMessageOptions | null>(null)
+
+    // Wire up the module-level registration ref
+    useEffect(() => {
+        registerSessionRef.current = (session) => {
+            if (session) {
+                sendMessageRef.current = session.sendMessage
+                regenerateRef.current = session.regenerateResponse
+                // Flush pending message if queued (auto-send from page context)
+                if (pendingMessageRef.current) {
+                    const pending = pendingMessageRef.current
+                    pendingMessageRef.current = null
+                    session.sendMessage(pending)
+                }
+            } else {
+                sendMessageRef.current = null
+                regenerateRef.current = null
+            }
+        }
+        return () => {
+            registerSessionRef.current = null
+        }
+    }, [])
+
+    // Clear input state helper
+    const clearInputState = useCallback(() => {
         setTextareaValue("")
         setMentionItems([])
         setAttachedFiles([])
         setActionTrigger(null)
-    }, [startNewConversation])
+    }, [])
+
+    // Orchestrate leaving the current conversation (memory extraction + incognito cleanup)
+    const leaveCurrentConversation = useCallback(() => {
+        if (currentConversationId === null) return
+
+        // Check if this is an incognito conversation
+        const conv = conversations.find(c => c.id === currentConversationId)
+        if (conv?.isIncognito) {
+            cleanupIncognitoConversation(currentConversationId)
+        } else {
+            extractMemories(currentConversationId)
+        }
+    }, [currentConversationId, conversations, extractMemories, cleanupIncognitoConversation])
+
+    const handleNewConversation = useCallback(() => {
+        leaveCurrentConversation()
+        setCurrentConversationId(crypto.randomUUID())
+        clearInputState()
+        setReturnTo(null)
+        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
+    }, [leaveCurrentConversation, setCurrentConversationId, clearInputState])
+
+    const handleLoadConversation = useCallback((id: string) => {
+        leaveCurrentConversation()
+        loadConversation(id)
+        clearInputState()
+        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
+    }, [leaveCurrentConversation, loadConversation, clearInputState])
+
+    const toggleIncognito = useCallback(() => {
+        setIsIncognito(prev => !prev)
+        handleNewConversation()
+    }, [handleNewConversation])
 
     const handleSend = useCallback(() => {
         if (isPaid && !canAfford(modelId)) {
@@ -103,68 +285,66 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         const trigger = actionTrigger
 
         let finalContent = textareaValue
-        if (trigger && trigger.meta && typeof trigger.meta === 'string') {
-             // If the trigger has a hidden prompt in meta, prepend it
-             finalContent = `${trigger.meta} ${textareaValue}`.trim()
+        if (trigger?.meta && typeof trigger.meta === 'string') {
+            finalContent = `${trigger.meta} ${textareaValue}`.trim()
         }
 
-        setTextareaValue("")
-        setAttachedFiles([])
-        setMentionItems([])
-        setActionTrigger(null)
+        clearInputState()
 
-        sendMessage({ content: finalContent, files, mentions, actionTrigger: nullToUndefined(trigger) })
-    }, [textareaValue, attachedFiles, mentionItems, actionTrigger, sendMessage, isPaid, canAfford, modelId])
+        sendMessageRef.current?.({
+            content: finalContent,
+            files,
+            mentions,
+            actionTrigger: nullToUndefined(trigger),
+        })
+    }, [textareaValue, attachedFiles, mentionItems, actionTrigger, isPaid, canAfford, modelId, clearInputState])
 
-    // Refresh usage when AI stream completes (event dispatched from use-chat.ts)
+    const handleCancelConfirmation = useCallback((messageId: string) => {
+        deleteMessage(messageId)
+    }, [deleteMessage])
+
+    // Refresh usage when AI stream completes
     useEffect(() => {
         const handler = () => refreshUsage()
         window.addEventListener('ai-stream-complete', handler)
         return () => window.removeEventListener('ai-stream-complete', handler)
     }, [refreshUsage])
 
-    const handleCancelConfirmation = useCallback((messageId: string) => {
-        deleteMessage(messageId)
-    }, [deleteMessage])
+    // Handle incoming AI context (auto-send from page actions)
+    const handleAIContext = useCallback((context: PageContext) => {
+        // Start fresh conversation
+        leaveCurrentConversation()
+        setCurrentConversationId(crypto.randomUUID())
+        clearInputState()
 
-    const handleNewConversation = useCallback(() => {
-        startNewConversation()
-        setTextareaValue("")
-        setMentionItems([])
-        setAttachedFiles([])
-        setActionTrigger(null)
-        setReturnTo(null)
-    }, [startNewConversation])
-
-    // Handle incoming AI context
-    const handleAIContextRef = useRef((context: PageContext) => { })
-    useEffect(() => {
-        handleAIContextRef.current = (context: PageContext) => {
-            startNewConversation()
-            if (context.returnTo) {
-                setReturnTo(context.returnTo)
-            }
-            if (context.actionTrigger) {
-                // Determine icon mapping if it's just a string, though PageContext ActionTrigger is typed differently
-                setActionTrigger({
-                    type: 'action-trigger',
-                    icon: context.actionTrigger.icon,
-                    title: context.actionTrigger.title,
-                    subtitle: context.actionTrigger.subtitle,
-                    meta: context.actionTrigger.meta
-                })
-            }
-            if (context.autoSend) {
-                sendMessage({
-                    content: context.initialPrompt,
-                    actionTrigger: context.actionTrigger ? { ...context.actionTrigger } : undefined
-                })
-                setActionTrigger(null) // clear it since it was sent
-            } else {
-                setTextareaValue(context.initialPrompt)
-            }
+        if (context.returnTo) {
+            setReturnTo(context.returnTo)
         }
-    })
+        if (context.actionTrigger) {
+            setActionTrigger({
+                type: 'action-trigger',
+                icon: context.actionTrigger.icon,
+                title: context.actionTrigger.title,
+                subtitle: context.actionTrigger.subtitle,
+                meta: context.actionTrigger.meta,
+            })
+        }
+
+        if (context.autoSend) {
+            // Queue the message — inner session will flush it on mount
+            pendingMessageRef.current = {
+                content: context.initialPrompt,
+                actionTrigger: context.actionTrigger ? { ...context.actionTrigger } : undefined,
+            }
+            setActionTrigger(null)
+        } else {
+            setTextareaValue(context.initialPrompt)
+        }
+    }, [leaveCurrentConversation, setCurrentConversationId, clearInputState])
+
+    // Keep handleAIContext in a ref so event listeners always see the latest
+    const handleAIContextRef = useRef(handleAIContext)
+    handleAIContextRef.current = handleAIContext
 
     // On mount, check for pending context
     const mountedRef = useRef(false)
@@ -191,18 +371,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             }
         }
 
-        const handleLoadConversation = (e: Event) => {
+        const onLoadConversation = (e: Event) => {
             const conversationId = (e as CustomEvent).detail as string
             if (conversationId) {
-                loadConversation(conversationId)
+                handleLoadConversation(conversationId)
             }
         }
 
-        const onNewConversationEvent = () => {
-            startNewConversation()
-            setTextareaValue("")
-            setMentionItems([])
-            setAttachedFiles([])
+        const onNewConversation = () => {
+            handleNewConversation()
         }
 
         const handleFocusInput = (e: Event) => {
@@ -220,28 +397,25 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         }
 
         window.addEventListener(AI_CHAT_EVENT, handleOpenAIChat)
-        window.addEventListener("load-conversation", handleLoadConversation)
-        window.addEventListener("ai-chat-new-conversation", onNewConversationEvent)
+        window.addEventListener("load-conversation", onLoadConversation)
+        window.addEventListener("ai-chat-new-conversation", onNewConversation)
         window.addEventListener("ai-chat-focus-input", handleFocusInput)
 
         return () => {
             window.removeEventListener(AI_CHAT_EVENT, handleOpenAIChat)
-            window.removeEventListener("load-conversation", handleLoadConversation)
-            window.removeEventListener("ai-chat-new-conversation", onNewConversationEvent)
+            window.removeEventListener("load-conversation", onLoadConversation)
+            window.removeEventListener("ai-chat-new-conversation", onNewConversation)
             window.removeEventListener("ai-chat-focus-input", handleFocusInput)
         }
-    }, [loadConversation, startNewConversation])
+    }, [handleLoadConversation, handleNewConversation])
 
     return (
         <ChatContext.Provider value={{
             conversations,
             currentConversationId,
-            messages,
-            isLoading,
-            sendMessage,
-            regenerateResponse,
-            startNewConversation,
-            loadConversation,
+            currentConversation,
+            handleNewConversation,
+            loadConversation: handleLoadConversation,
             deleteConversation,
             deleteMessage,
             textareaValue,
@@ -260,7 +434,6 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             setShowBuyCredits,
             handleSend,
             handleCancelConfirmation,
-            handleNewConversation,
             isIncognito,
             toggleIncognito,
         }}>

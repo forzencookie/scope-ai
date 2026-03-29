@@ -159,9 +159,9 @@ export const TIER_DISPLAY_NAMES: Record<SubscriptionTier, string> = {
 }
 
 export const TIER_COLORS: Record<SubscriptionTier, string> = {
-  pro: "bg-blue-500/10 text-blue-600 border-blue-500/20",
-  max: "bg-purple-500/10 text-purple-600 border-purple-500/20",
-  enterprise: "bg-amber-500/10 text-amber-600 border-amber-500/20",
+  pro: "bg-blue-500/10 text-blue-600",
+  max: "bg-purple-500/10 text-purple-600",
+  enterprise: "bg-amber-500/10 text-amber-600",
 }
 
 /**

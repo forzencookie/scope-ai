@@ -18,6 +18,7 @@ import {
     LazyArsmote,
     LazyUtdelning,
     LazyFirmatecknare,
+    PageHeader,
 } from '@/components/shared';
 import { useLastUpdated } from '@/hooks/use-last-updated';
 import {
@@ -122,6 +123,11 @@ function EnskildFirmaOwnerInfo() {
 
     return (
         <div className="space-y-6 max-w-4xl">
+            <PageHeader
+                title="Ägare"
+                subtitle="Innehavare och företagsinformation för din enskilda firma."
+            />
+
             <div className="grid gap-6 md:grid-cols-3">
                 <Card className="md:col-span-2">
                     <CardHeader>

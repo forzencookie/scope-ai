@@ -1,8 +1,8 @@
 "use client"
 
-import * as React from "react"
+import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
-import { Download, Upload, Building2 } from "lucide-react"
+import { Download, Upload, Building2, Loader2 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Label } from "@/components/ui/label"
 import {
@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select"
 import { Separator } from "@/components/ui/separator"
 import { useCompany } from "@/providers/company-provider"
+import { useToast } from "@/components/ui/toast"
 import { text } from "@/lib/translations"
 import { CompanyTypeSelector } from "@/components/onboarding/company-type-selector"
 import {
@@ -23,44 +24,104 @@ import {
     SettingsSection,
     SettingsActionCard,
 } from "@/components/ui/settings-items"
-import type { SettingsFormData } from "./account-tab"
 
-interface CompanyTabProps {
-    formData: SettingsFormData
-    setFormData: React.Dispatch<React.SetStateAction<SettingsFormData>>
-    onSave: () => void
-}
+export function CompanyTab() {
+    const { company, isLoading, updateCompany, saveChanges } = useCompany()
+    const { addToast } = useToast()
+    const [isExporting, setIsExporting] = useState(false)
+    const [isUploadingLogo, setIsUploadingLogo] = useState(false)
+    const logoInputRef = useRef<HTMLInputElement>(null)
 
-export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
-    const { company, updateCompany } = useCompany()
-    const accountingMethod = company?.accountingMethod || 'invoice'
-    const [isExporting, setIsExporting] = React.useState(false)
-    const [isUploadingLogo, setIsUploadingLogo] = React.useState(false)
-    const logoInputRef = React.useRef<HTMLInputElement>(null)
+    // Local form state for text fields — avoids provider re-renders on every keystroke.
+    // Synced from provider once on load. Pushed back to provider on save.
+    const [formData, setFormData] = useState({
+        name: "", orgNumber: "", vatNumber: "", address: "",
+        bankgiro: "", plusgiro: "",
+    })
+
+    useEffect(() => {
+        if (company) {
+            setFormData({
+                name: company.name || "",
+                orgNumber: company.orgNumber || "",
+                vatNumber: company.vatNumber || "",
+                address: company.address || "",
+                bankgiro: company.bankgiro || "",
+                plusgiro: company.plusgiro || "",
+            })
+        }
+    }, [company?.id]) // Only re-sync when the company entity changes, not on every field edit
+
+    const handleSave = async () => {
+        try {
+            // Push local form state to provider, then save
+            updateCompany(formData)
+            const result = await saveChanges()
+            if (result.success) {
+                addToast({
+                    title: "Företagsinformation sparad",
+                    description: "Dina ändringar har sparats.",
+                })
+            } else {
+                addToast({
+                    title: "Kunde inte spara",
+                    description: result.error || "Ett oväntat fel uppstod.",
+                    variant: "destructive",
+                })
+            }
+        } catch (error) {
+            console.error('[CompanyTab] Save error:', error)
+            addToast({
+                title: "Kunde inte spara",
+                description: "Ett oväntat fel uppstod.",
+                variant: "destructive",
+            })
+        }
+    }
 
     const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
 
+        if (file.size > 2 * 1024 * 1024) {
+            addToast({
+                title: "Filen är för stor",
+                description: "Max 2 MB.",
+                variant: "destructive",
+            })
+            return
+        }
+
         setIsUploadingLogo(true)
         try {
-            const formData = new FormData()
-            formData.append('file', file)
+            const body = new FormData()
+            body.append('file', file)
 
             const res = await fetch('/api/company/logo', {
                 method: 'POST',
-                body: formData,
+                body,
             })
 
             if (res.ok) {
                 const data = await res.json()
                 updateCompany({ logoUrl: data.logo_url })
+                addToast({ title: "Logotyp uppdaterad" })
             } else {
-                const err = await res.json()
-                alert(err.message || 'Kunde inte ladda upp logotyp')
+                let message = "Försök igen."
+                try { const err = await res.json(); message = err.message || message } catch { /* non-JSON response */ }
+                addToast({
+                    title: "Kunde inte ladda upp",
+                    description: message,
+                    variant: "destructive",
+                })
             }
-        } catch {
-            alert('Ett fel uppstod vid uppladdning')
+        } catch (error) {
+            console.error('[Logo] Upload error:', error)
+            addToast({
+                title: "Uppladdning misslyckades",
+                description: "Ett oväntat fel uppstod.",
+                variant: "destructive",
+            })
         } finally {
             setIsUploadingLogo(false)
             if (logoInputRef.current) logoInputRef.current.value = ''
@@ -68,25 +129,23 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
     }
 
     const handleSIEExport = async () => {
+        if (isExporting) return
         setIsExporting(true)
         try {
-            // Get current fiscal year
             const currentYear = new Date().getFullYear()
             const response = await fetch(`/api/sie/export?year=${currentYear}`)
-            
+
             if (!response.ok) {
                 throw new Error('Export failed')
             }
-            
-            // Get the filename from Content-Disposition header or use default
+
             const contentDisposition = response.headers.get('Content-Disposition')
             let filename = `bokforing_${currentYear}.se`
             if (contentDisposition) {
                 const match = contentDisposition.match(/filename="(.+)"/)
                 if (match) filename = match[1]
             }
-            
-            // Create blob and download
+
             const blob = await response.blob()
             const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
@@ -96,12 +155,33 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
             link.click()
             document.body.removeChild(link)
             URL.revokeObjectURL(url)
+
+            addToast({ title: "SIE-fil exporterad" })
         } catch (error) {
-            console.error('SIE export error:', error)
-            alert('Kunde inte exportera SIE-fil. Försök igen.')
+            console.error('[SIE] Export error:', error)
+            addToast({
+                title: "Exportfel",
+                description: "Kunde inte exportera SIE-fil. Försök igen.",
+                variant: "destructive",
+            })
         } finally {
             setIsExporting(false)
         }
+    }
+
+    if (isLoading) {
+        return (
+            <div className="space-y-6">
+                <SettingsPageHeader
+                    title={text.settings.companyInfo}
+                    description={text.settings.companyInfoDesc}
+                />
+                <div className="flex items-center justify-center py-12 text-muted-foreground">
+                    <Loader2 className="h-5 w-5 animate-spin mr-2" />
+                    Laddar företagsinformation...
+                </div>
+            </div>
+        )
     }
 
     return (
@@ -168,13 +248,13 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     label="Företagsnamn"
                     placeholder="Mitt Företag AB"
                     value={formData.name}
-                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 />
 
                 <div className="grid gap-2">
                     <Label>Bokföringsmetod</Label>
                     <Select
-                        value={accountingMethod}
+                        value={company?.accountingMethod || 'invoice'}
                         onValueChange={(val: 'cash' | 'invoice') => updateCompany({ accountingMethod: val })}
                     >
                         <SelectTrigger className="w-full text-left justify-between px-3">
@@ -315,7 +395,7 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     placeholder="2024-01-15"
                     type="date"
                     value={company?.registrationDate || ''}
-                    onChange={(e) => updateCompany({ registrationDate: e.target.value || undefined })} // intentional: empty string means "cleared" → store as undefined
+                    onChange={(e) => updateCompany({ registrationDate: e.target.value || undefined })}
                 />
 
                 {company?.companyType === 'ab' && (
@@ -325,7 +405,7 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                             label="Aktiekapital (SEK)"
                             placeholder="25000"
                             type="number"
-                            value={String(company?.shareCapital || '')}
+                            value={String(company.shareCapital || '')}
                             onChange={(e) => updateCompany({ shareCapital: Number(e.target.value) || 0 })}
                         />
                         <SettingsFormField
@@ -333,7 +413,7 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                             label="Antal aktier"
                             placeholder="500"
                             type="number"
-                            value={String(company?.totalShares || '')}
+                            value={String(company.totalShares || '')}
                             onChange={(e) => updateCompany({ totalShares: Number(e.target.value) || 0 })}
                         />
                     </div>
@@ -345,14 +425,14 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                         label="Organisationsnummer"
                         placeholder="556123-4567"
                         value={formData.orgNumber}
-                        onChange={(e) => setFormData({ ...formData, orgNumber: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, orgNumber: e.target.value }))}
                     />
                     <SettingsFormField
                         id="vat-nr"
                         label="Momsreg.nr"
                         placeholder="SE556123456701"
                         value={formData.vatNumber}
-                        onChange={(e) => setFormData({ ...formData, vatNumber: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, vatNumber: e.target.value }))}
                     />
                 </div>
                 <SettingsFormField
@@ -360,7 +440,7 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                     label="Adress"
                     placeholder="Storgatan 1, 111 22 Stockholm"
                     value={formData.address}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
                 />
 
                 <div className="grid grid-cols-2 gap-4">
@@ -369,14 +449,14 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                         label="Bankgiro"
                         placeholder="123-4567"
                         value={formData.bankgiro}
-                        onChange={(e) => setFormData({ ...formData, bankgiro: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, bankgiro: e.target.value }))}
                     />
                     <SettingsFormField
                         id="plusgiro"
                         label="Plusgiro"
                         placeholder="12 34 56-7"
                         value={formData.plusgiro}
-                        onChange={(e) => setFormData({ ...formData, plusgiro: e.target.value })}
+                        onChange={(e) => setFormData(prev => ({ ...prev, plusgiro: e.target.value }))}
                     />
                 </div>
             </div>
@@ -397,7 +477,7 @@ export function CompanyTab({ formData, setFormData, onSave }: CompanyTabProps) {
                 />
             </SettingsSection>
 
-            <SettingsSaveButton onClick={onSave} />
+            <SettingsSaveButton onClick={handleSave} />
         </div>
     )
 }

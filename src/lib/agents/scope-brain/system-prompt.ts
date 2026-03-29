@@ -178,21 +178,21 @@ function buildCompanyContext(context: AgentContext): string {
     let section = `## Current Context\n\n`
 
     if (!context.companyId || !context.companyType) {
-        section += `**⚠️ No company linked.**\n\n`
-        section += `The user has not completed onboarding or linked a company yet.\n\n`
-        section += `**What you CAN do:**\n`
-        section += `- Answer general questions about bookkeeping, tax, payroll, and business\n`
-        section += `- Explain rules and concepts\n`
-        section += `- Help the user understand what Scope can do\n\n`
-        section += `**What you CANNOT do without a company:**\n`
-        section += `- Book transactions, create verifications\n`
-        section += `- Create or manage invoices\n`
-        section += `- Run payroll or calculate tax\n`
-        section += `- Generate reports (income statement, balance sheet, etc.)\n`
-        section += `- Fetch or display company-specific data\n\n`
-        section += `**When the user tries to do something that requires a company**, respond kindly that they need to complete setup first. `
-        section += `Include this link: [Slutför onboarding →](/onboarding) or [Gå till inställningar →](/dashboard/installningar?tab=foretag).\n`
-        section += `Briefly explain what they need to fill in (company name, org number, company type).\n`
+        section += `**⚠️ Företagsuppgifter saknas.**\n\n`
+        section += `Användaren har inte fyllt i företagsuppgifter ännu.\n\n`
+        section += `**Du KAN:**\n`
+        section += `- Svara på allmänna frågor om bokföring, skatt, löner och företagande\n`
+        section += `- Förklara regler och begrepp\n`
+        section += `- Hjälpa användaren förstå vad Scope kan göra\n\n`
+        section += `**Du KAN INTE utan företagsuppgifter:**\n`
+        section += `- Bokföra transaktioner\n`
+        section += `- Skapa fakturor\n`
+        section += `- Köra löner eller beräkna skatt\n`
+        section += `- Generera rapporter\n\n`
+        section += `**När användaren vill göra något som kräver företagsuppgifter**, erbjud dig att samla in dem direkt i chatten. `
+        section += `Fråga efter: företagsnamn, organisationsnummer och företagsform (AB, EF, HB, KB eller förening). `
+        section += `Använd sedan verktyget update_company_info för att spara. `
+        section += `Du behöver INTE skicka dem till en annan sida — du kan hantera det själv här.\n`
         return section
     }
 
@@ -231,9 +231,9 @@ function buildCompanyContext(context: AgentContext): string {
                 .filter(k => labelMap[k])
                 .map(k => labelMap[k])
 
-            section += `\n**⚠️ Incomplete company profile — missing:** ${missingLabels.join(', ')}\n`
-            section += `When the user tries to do something that requires this information, kindly tell them what's missing `
-            section += `and provide the link [Fyll i under Inställningar →](/dashboard/installningar?tab=foretag).\n`
+            section += `\n**⚠️ Ofullständig företagsprofil — saknas:** ${missingLabels.join(', ')}\n`
+            section += `När användaren försöker göra något som kräver dessa uppgifter, fråga efter dem direkt i chatten `
+            section += `och spara med update_company_info. Du behöver inte hänvisa till inställningar.\n`
         }
     }
 

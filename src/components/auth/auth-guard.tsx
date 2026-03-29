@@ -22,7 +22,7 @@ interface AuthGuardProps {
  */
 export function AuthGuard({
     children,
-    redirectTo = "/login",
+    redirectTo = "/logga-in",
     showLoading = true,
 }: AuthGuardProps) {
     const { loading, isAuthenticated } = useAuth()
@@ -70,7 +70,7 @@ export function AuthGuard({
  * Hook to check if user is authenticated
  * Use this in components that need auth status without the guard wrapper
  */
-export function useRequireAuth(redirectTo = "/login") {
+export function useRequireAuth(redirectTo = "/logga-in") {
     const { user, loading, isAuthenticated } = useAuth()
     const router = useRouter()
 

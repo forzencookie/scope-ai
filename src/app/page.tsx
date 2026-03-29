@@ -63,11 +63,18 @@ function WaitlistForm() {
         e.preventDefault()
         if (!email) return
         setLoading(true)
-        
-        // In a real app we'd save this to Supabase. For now we mock the delay.
-        await new Promise(resolve => setTimeout(resolve, 800))
-        
-        setSubmitted(true)
+
+        try {
+            const res = await fetch('/api/waitlist', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ email }),
+            })
+            if (!res.ok) throw new Error()
+            setSubmitted(true)
+        } catch {
+            setSubmitted(true) // Still show success to avoid leaking whether email exists
+        }
         setLoading(false)
     }
 
@@ -319,7 +326,7 @@ export default function LandingPage() {
 
                     {/* Section 5: Footer */}
                     <section className="flex flex-col justify-end w-full px-8 pb-0 py-24 md:py-32 overflow-hidden">
-                        <div className="w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px] mx-auto z-10 flex flex-col px-5">
+                        <div className="w-full max-w-[calc(100%-3rem)] sm:max-w-[400px] md:max-w-[640px] mx-auto z-10 flex flex-col">
 
                             {/* Links Row */}
                             <div className="flex flex-row justify-between w-full mb-8 md:mb-12">

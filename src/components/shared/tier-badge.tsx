@@ -8,7 +8,7 @@
  */
 
 import * as React from "react"
-import { Crown, Star, Building2, type LucideIcon } from "lucide-react"
+import { Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSubscription, type SubscriptionTier } from "@/hooks/use-subscription"
 import { Badge } from "@/components/ui/badge"
@@ -26,28 +26,24 @@ interface TierBadgeProps {
 }
 
 const TIER_CONFIG: Record<SubscriptionTier, {
-  icon: LucideIcon
   label: string
   tooltip: string
   className: string
 }> = {
   pro: {
-    icon: Star,
     label: "Pro",
     tooltip: "Pro-abonnemang med fulla funktioner",
-    className: "bg-blue-500/10 text-blue-600 border-blue-500/20 hover:bg-blue-500/20",
+    className: "bg-blue-500/10 text-blue-600 border-transparent hover:bg-blue-500/20",
   },
   max: {
-    icon: Building2,
     label: "Max",
     tooltip: "Max med prioriterad support",
-    className: "bg-purple-500/10 text-purple-600 border-purple-500/20 hover:bg-purple-500/20",
+    className: "bg-purple-500/10 text-purple-600 border-transparent hover:bg-purple-500/20",
   },
   enterprise: {
-    icon: Crown,
     label: "Enterprise",
     tooltip: "Enterprise med anpassade lösningar",
-    className: "bg-amber-500/10 text-amber-600 border-amber-500/20 hover:bg-amber-500/20",
+    className: "bg-amber-500/10 text-amber-600 border-transparent hover:bg-amber-500/20",
   },
 }
 
@@ -78,15 +74,12 @@ export function TierBadge({
   }
 
   const config = TIER_CONFIG[tier]
-  const IconComponent = config.icon
-  const iconSizeClass = size === "sm" ? "h-3 w-3" : size === "lg" ? "h-4 w-4" : "h-3.5 w-3.5"
 
   const badge = (
-    <Badge 
-      variant="outline" 
+    <Badge
+      variant="outline"
       className={cn(SIZE_CONFIG[size], config.className, className)}
     >
-      <IconComponent className={iconSizeClass} />
       {config.label}
     </Badge>
   )

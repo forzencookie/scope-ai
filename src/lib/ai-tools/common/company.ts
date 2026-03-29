@@ -50,12 +50,8 @@ export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | 
         if (!company) {
             return {
                 success: false,
-                error: 'Ingen företagsinformation hittades. Gå till Inställningar för att konfigurera ditt företag.',
+                error: 'Ingen företagsinformation hittades. Fråga användaren efter företagsnamn, organisationsnummer och företagsform, och spara med update_company_info.',
                 data: null,
-                navigation: {
-                    route: '/dashboard/installningar',
-                    label: 'Gå till inställningar',
-                },
             }
         }
 
@@ -174,7 +170,146 @@ export const getCompanyStatsTool = defineTool<Record<string, never>, CompanyStat
     },
 })
 
+// =============================================================================
+// Update Company Info Tool
+// =============================================================================
+
+export const updateCompanyInfoTool = defineTool<{
+    name?: string
+    orgNumber?: string
+    companyType?: 'ab' | 'ef' | 'hb' | 'kb' | 'forening'
+    address?: string
+    city?: string
+    zipCode?: string
+    email?: string
+    phone?: string
+    vatNumber?: string
+    contactPerson?: string
+    registrationDate?: string
+    fiscalYearEnd?: string
+    accountingMethod?: 'cash' | 'invoice'
+    vatFrequency?: 'monthly' | 'quarterly' | 'annually'
+    isCloselyHeld?: boolean
+    hasFskatt?: boolean
+    hasEmployees?: boolean
+    hasMomsRegistration?: boolean
+    shareCapital?: number
+    totalShares?: number
+}, CompanyInfo | null>({
+    name: 'update_company_info',
+    description: 'Uppdatera företagsinformation: namn, organisationsnummer, företagsform, adress, skatteuppgifter, räkenskapsår m.m. Använd detta när användaren anger eller korrigerar företagsuppgifter.',
+    parameters: {
+        type: 'object' as const,
+        properties: {
+            name: { type: 'string', description: 'Företagsnamn' },
+            orgNumber: { type: 'string', description: 'Organisationsnummer (XXXXXX-XXXX)' },
+            companyType: { type: 'string', enum: ['ab', 'ef', 'hb', 'kb', 'forening'], description: 'Företagsform' },
+            address: { type: 'string', description: 'Gatuadress' },
+            city: { type: 'string', description: 'Ort' },
+            zipCode: { type: 'string', description: 'Postnummer' },
+            email: { type: 'string', description: 'Företagets e-postadress' },
+            phone: { type: 'string', description: 'Telefonnummer' },
+            vatNumber: { type: 'string', description: 'Momsregistreringsnummer (SE + org.nr + 01)' },
+            contactPerson: { type: 'string', description: 'Kontaktperson' },
+            registrationDate: { type: 'string', description: 'Registreringsdatum (YYYY-MM-DD)' },
+            fiscalYearEnd: { type: 'string', description: 'Räkenskapsårets slutdatum (MM-DD, t.ex. 12-31)' },
+            accountingMethod: { type: 'string', enum: ['cash', 'invoice'], description: 'Bokföringsmetod: kontant eller faktura' },
+            vatFrequency: { type: 'string', enum: ['monthly', 'quarterly', 'annually'], description: 'Momsredovisningsperiod' },
+            isCloselyHeld: { type: 'boolean', description: 'Fåmansföretag (3:12-regler)' },
+            hasFskatt: { type: 'boolean', description: 'Innehar F-skattsedel' },
+            hasEmployees: { type: 'boolean', description: 'Har anställda' },
+            hasMomsRegistration: { type: 'boolean', description: 'Momsregistrerad' },
+            shareCapital: { type: 'number', description: 'Aktiekapital i SEK (AB)' },
+            totalShares: { type: 'number', description: 'Antal aktier (AB)' },
+        },
+    },
+    requiresConfirmation: true,
+    allowedCompanyTypes: [],
+    category: 'write',
+    domain: 'common',
+    keywords: ['företag', 'uppdatera', 'ändra', 'namn', 'organisationsnummer', 'adress', 'företagsform', 'onboarding'],
+    execute: async (params, context) => {
+        const userId = context?.userId
+        const companyId = context?.companyId
+
+        if (!userId) {
+            return {
+                success: false,
+                error: 'Kunde inte identifiera användaren.',
+                data: null,
+            }
+        }
+
+        if (!companyId) {
+            return {
+                success: false,
+                error: 'Inget företag kopplat till ditt konto. Kontakta support om problemet kvarstår.',
+                data: null,
+            }
+        }
+
+        // Build update object from provided params only
+        const updates: Record<string, unknown> = {}
+        const fieldLabels: string[] = []
+
+        const fieldMap: Record<string, string> = {
+            name: 'Företagsnamn',
+            orgNumber: 'Organisationsnummer',
+            companyType: 'Företagsform',
+            address: 'Adress',
+            city: 'Ort',
+            zipCode: 'Postnummer',
+            email: 'E-post',
+            phone: 'Telefon',
+            vatNumber: 'Momsreg.nr',
+            contactPerson: 'Kontaktperson',
+            registrationDate: 'Registreringsdatum',
+            fiscalYearEnd: 'Räkenskapsår',
+            accountingMethod: 'Bokföringsmetod',
+            vatFrequency: 'Momsperiod',
+            isCloselyHeld: 'Fåmansföretag',
+            hasFskatt: 'F-skatt',
+            hasEmployees: 'Har anställda',
+            hasMomsRegistration: 'Momsregistrerad',
+            shareCapital: 'Aktiekapital',
+            totalShares: 'Antal aktier',
+        }
+
+        for (const [key, label] of Object.entries(fieldMap)) {
+            if (params[key as keyof typeof params] !== undefined) {
+                updates[key] = params[key as keyof typeof params]
+                fieldLabels.push(label)
+            }
+        }
+
+        if (fieldLabels.length === 0) {
+            return {
+                success: false,
+                error: 'Inga uppgifter att uppdatera. Ange minst ett fält.',
+                data: null,
+            }
+        }
+
+        const result = await companyService.update(companyId, userId, updates)
+
+        if (!result) {
+            return {
+                success: false,
+                error: 'Kunde inte spara ändringarna. Försök igen.',
+                data: null,
+            }
+        }
+
+        return {
+            success: true,
+            data: result,
+            message: `Uppdaterade: ${fieldLabels.join(', ')}.`,
+        }
+    },
+})
+
 export const companyTools = [
     getCompanyInfoTool,
     getCompanyStatsTool,
+    updateCompanyInfoTool,
 ]

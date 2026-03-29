@@ -11,7 +11,7 @@ import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import React, { useEffect, Suspense } from "react"
 import { Loader2 } from "lucide-react"
 import { QueryProvider } from "@/providers/query-provider"
-import { ChatProvider } from "@/providers/chat-provider"
+import { ChatProvider, ChatSessionGate } from "@/providers/chat-provider"
 import { ChatHistorySidebar } from "@/components/layout/chat-history-sidebar"
 import { MainContentArea } from "@/components/layout/main-content-area"
 import { SettingsOverlay } from "@/components/installningar/settings-overlay"
@@ -70,8 +70,8 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('ai-navigate', handleAINavigate as EventListener)
     }, [router])
 
-    // 1. Mandatory Onboarding Check — show nothing until we know status
-    if (isLoading) {
+    // 1. Mandatory Onboarding Check — show nothing until we know status, or while redirecting
+    if (isLoading || shouldRedirect) {
         return (
             <div className="h-screen w-screen flex items-center justify-center bg-background">
                 <div className="flex flex-col items-center gap-4">
@@ -94,16 +94,18 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
                     onOpenSettings={() => setSettingsOpen(true)}
                 />
 
-                {/* Main Content Area — right, rounded dark container */}
-                <MainContentArea>
-                    {children}
-                    
-                    <SettingsOverlay
-                        open={settingsOpen}
-                        onOpenChange={handleSettingsOpenChange}
-                        defaultTab={nullToUndefined(settingsParam)}
-                    />
-                </MainContentArea>
+                {/* Main Content Area — keyed per conversation for fresh chat state */}
+                <ChatSessionGate>
+                    <MainContentArea>
+                        {children}
+
+                        <SettingsOverlay
+                            open={settingsOpen}
+                            onOpenChange={handleSettingsOpenChange}
+                            defaultTab={nullToUndefined(settingsParam)}
+                        />
+                    </MainContentArea>
+                </ChatSessionGate>
             </div>
         </ChatProvider>
     )
@@ -129,7 +131,7 @@ export default function DashboardLayout({
     children: React.ReactNode
 }) {
     return (
-        <AuthGuard>
+        <AuthGuard showLoading={false}>
             <QueryProvider>
                 <ModelProvider>
                     <CompanyProvider>

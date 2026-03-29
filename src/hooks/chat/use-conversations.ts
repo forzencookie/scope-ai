@@ -1,13 +1,17 @@
 "use client"
 
 /**
- * useConversations - Hook for managing conversation list
- * 
- * PERFORMANCE: Uses React Query for automatic caching and deduplication.
- * The conversation history is fetched once and cached.
+ * useConversations — Folder-level conversation management.
+ *
+ * Manages the conversation list (React Query cache), current selection,
+ * and CRUD operations. Lives above the key boundary — never remounts
+ * when conversations switch.
+ *
+ * Conversation switching orchestration (memory extraction, incognito cleanup,
+ * ID generation) is handled by ChatProvider, not here.
  */
 
-import { useState, useCallback, useEffect, useMemo, useRef } from 'react'
+import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import type { Conversation, Message } from '@/lib/chat-types'
 
@@ -52,9 +56,6 @@ function mapConversation(conv: RawConversation): Conversation {
 export function useConversations() {
     const queryClient = useQueryClient()
     const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
-    // Ref mirrors the state so startNewConversation can read it without a dependency
-    const conversationIdRef = useRef(currentConversationId)
-    conversationIdRef.current = currentConversationId
 
     // Use React Query for caching conversation history
     const { data: conversations = [], isLoading } = useQuery({
@@ -67,12 +68,12 @@ export function useConversations() {
             }
             return []
         },
-        staleTime: 2 * 60 * 1000, // Cache for 2 minutes
-        gcTime: 5 * 60 * 1000, // Keep in cache for 5 minutes
+        staleTime: 2 * 60 * 1000,
+        gcTime: 5 * 60 * 1000,
     })
 
     // Derived state
-    const currentConversation = useMemo(() => 
+    const currentConversation = useMemo(() =>
         conversations.find(c => c.id === currentConversationId),
         [conversations, currentConversationId]
     )
@@ -98,7 +99,6 @@ export function useConversations() {
 
     // Extract memories from a completed conversation (fire-and-forget)
     const extractMemories = useCallback((conversationId: string) => {
-        // Get companyId from localStorage (same source as CompanyProvider)
         try {
             const stored = localStorage.getItem('scope_company_data')
             const companyId = stored ? JSON.parse(stored)?.id : null
@@ -109,35 +109,21 @@ export function useConversations() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ conversationId, companyId }),
             }).catch(() => {}) // Silent — memory extraction is best-effort
-        } catch {}
+        } catch {
+            // localStorage access can throw in some environments
+        }
     }, [])
 
-    // Start new conversation — reads the current ID from a ref to avoid
-    // recreating this callback when currentConversationId changes.
-    const startNewConversation = useCallback(() => {
-        const prevId = conversationIdRef.current
-        // Extract memories from the conversation we're leaving (skip incognito)
-        if (prevId) {
-            const current = queryClient.getQueryData<Conversation[]>(conversationsQueryKey)
-            const conv = current?.find(c => c.id === prevId)
-            if (conv && !conv.isIncognito) {
-                extractMemories(prevId)
-            }
-            // Remove incognito conversations from cache when leaving
-            if (conv?.isIncognito) {
-                queryClient.setQueryData<Conversation[]>(conversationsQueryKey, (old = []) =>
-                    old.filter(c => c.id !== prevId)
-                )
-            }
-        }
-        setCurrentConversationId(crypto.randomUUID())
-        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
-    }, [extractMemories, queryClient])
+    // Remove an incognito conversation from the cache
+    const cleanupIncognitoConversation = useCallback((conversationId: string) => {
+        queryClient.setQueryData<Conversation[]>(conversationsQueryKey, (old = []) =>
+            old.filter(c => c.id !== conversationId)
+        )
+    }, [queryClient])
 
     // Load a conversation (fetches messages if not already loaded)
     const loadConversation = useCallback(async (conversationId: string) => {
         setCurrentConversationId(conversationId)
-        window.dispatchEvent(new CustomEvent('ai-dialog-hide'))
 
         // Check if this conversation already has messages loaded
         const existing = queryClient.getQueryData<Conversation[]>(conversationsQueryKey)
@@ -151,7 +137,6 @@ export function useConversations() {
             const data = await res.json()
             const mapped = mapConversation(data)
 
-            // Update the conversation in cache with its messages
             queryClient.setQueryData<Conversation[]>(conversationsQueryKey, (old = []) =>
                 old.map(c => c.id === conversationId ? { ...c, messages: mapped.messages } : c)
             )
@@ -162,7 +147,6 @@ export function useConversations() {
 
     // Delete a conversation
     const deleteConversation = useCallback((conversationId: string) => {
-        // Extract memories before deleting
         extractMemories(conversationId)
         setConversations(prev => prev.filter(c => c.id !== conversationId))
         if (currentConversationId === conversationId) {
@@ -185,11 +169,12 @@ export function useConversations() {
         currentConversationId,
         setCurrentConversationId,
         currentConversation,
-        startNewConversation,
         loadConversation,
         deleteConversation,
         deleteMessage,
         refreshConversations,
+        extractMemories,
+        cleanupIncognitoConversation,
         isLoading,
     }
 }
