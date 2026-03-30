@@ -4,18 +4,23 @@
  * POST /api/chat/extract-memories
  * Body: { conversationId: string, companyId: string }
  *
- * Analyzes a completed conversation and extracts user-specific facts
- * (decisions, preferences, pending considerations) into the user_memory table.
+ * Two-phase process:
+ * 1. EXTRACT — Analyze conversation, pull out decisions/preferences/pending items
+ * 2. CONSOLIDATE — If total memories exceed cap, merge duplicates and prune stale ones
  *
- * Called after a conversation ends or when the user starts a new conversation.
+ * This keeps Scooby's working memory fresh and under ~500 tokens.
+ * Old memories don't disappear — they get merged into consolidated entries.
  */
 
-import { NextRequest, NextResponse } from 'next/server'
+import { NextResponse } from 'next/server'
 import { withAuth, ApiResponse } from "@/lib/database/auth-server"
 import { userMemoryService } from '@/services/common/user-memory-service'
 
+// Maximum active memories before consolidation triggers
+const MEMORY_CAP = 20
+
 // =============================================================================
-// Extraction Prompt
+// Prompts
 // =============================================================================
 
 const EXTRACTION_PROMPT = `Du är en minnesextraherare för en svensk bokföringsapp. Analysera konversationen nedan och extrahera viktiga fakta om användaren/företaget.
@@ -39,6 +44,19 @@ Viktigt:
 - Extrahera INTE saker som AI:n redan vet från databasen (saldon, antal transaktioner etc)
 - Fokusera på ANVÄNDARENS specifika situation och beslut
 - confidence 1.0 = explicit uttalat, 0.7 = starkt antydd, 0.5 = svagt antydd`
+
+const CONSOLIDATION_PROMPT = `Du är en minneskonsoliderare för en svensk bokföringsapp. Du har fått en lista med minnen om en användare/företag. Listan har blivit för lång.
+
+Konsolidera dem till max ${MEMORY_CAP} poster genom att:
+1. **Slå ihop dubbletter** — om två minnen säger samma sak, behåll den bästa formuleringen
+2. **Ta bort inaktuella "pending"** — om ett beslut har tagits om samma sak, ta bort "pending"-posten
+3. **Prioritera:** preferenser > beslut > pågående (preferenser formar alla framtida svar)
+4. **Behåll datumreferenser** — "december 2025", "Q2 2026" etc. är viktiga
+
+Svara ENBART med JSON-array av konsoliderade minnen.
+Varje objekt: { "content": "...", "category": "decision|preference|pending", "confidence": 0.0-1.0 }
+
+Maximal längd per minne: 100 tecken. Var koncis.`
 
 // =============================================================================
 // Handler
@@ -136,9 +154,93 @@ export const POST = withAuth(async (request, { supabase, userId }) => {
             }
         }
 
+        // =================================================================
+        // CONSOLIDATE — if over cap, merge and prune
+        // =================================================================
+
+        const allMemories = await userMemoryService.getMemoriesForCompany(companyId)
+
+        let consolidated = false
+        if (allMemories.length > MEMORY_CAP) {
+            try {
+                const memoryList = allMemories.map(m =>
+                    `[${m.category}] ${m.content}`
+                ).join('\n')
+
+                const consolidationResult = await openai.chat.completions.create({
+                    model: 'gpt-4o-mini',
+                    temperature: 0.2,
+                    messages: [
+                        { role: 'system', content: CONSOLIDATION_PROMPT },
+                        { role: 'user', content: `Nuvarande minnen (${allMemories.length} st):\n\n${memoryList}` },
+                    ],
+                    response_format: { type: 'json_object' },
+                })
+
+                const consolidatedRaw = consolidationResult.choices[0]?.message?.content
+                if (consolidatedRaw) {
+                    const parsedConsolidated = JSON.parse(consolidatedRaw)
+                    const consolidatedItems: Array<{ content: string; category: string; confidence: number }> =
+                        Array.isArray(parsedConsolidated)
+                            ? parsedConsolidated
+                            : (parsedConsolidated.memories || parsedConsolidated.items || [])
+
+                    if (consolidatedItems.length > 0 && consolidatedItems.length <= MEMORY_CAP) {
+                        // Supersede all old memories with a single marker
+                        // Then insert the consolidated set
+                        const markerMemory = await userMemoryService.addMemory({
+                            companyId,
+                            content: `[CONSOLIDATED ${new Date().toISOString().split('T')[0]}]`,
+                            category: 'decision',
+                            confidence: 0,
+                        })
+
+                        if (markerMemory) {
+                            // Supersede all old memories
+                            for (const old of allMemories) {
+                                await userMemoryService.supersedeMemory(old.id, markerMemory.id)
+                            }
+
+                            // Also supersede the marker itself (it's just a placeholder)
+                            const firstNew = await userMemoryService.addMemory({
+                                companyId,
+                                content: consolidatedItems[0].content,
+                                category: consolidatedItems[0].category as 'decision' | 'preference' | 'pending',
+                                confidence: consolidatedItems[0].confidence,
+                            })
+
+                            if (firstNew) {
+                                await userMemoryService.supersedeMemory(markerMemory.id, firstNew.id)
+                            }
+
+                            // Insert remaining consolidated memories
+                            for (let i = 1; i < consolidatedItems.length; i++) {
+                                const ci = consolidatedItems[i]
+                                if (!ci.content || !validCategories.includes(ci.category)) continue
+                                await userMemoryService.addMemory({
+                                    companyId,
+                                    content: ci.content,
+                                    category: ci.category as 'decision' | 'preference' | 'pending',
+                                    confidence: ci.confidence,
+                                })
+                            }
+
+                            consolidated = true
+                            console.log(`[ExtractMemories] Consolidated ${allMemories.length} → ${consolidatedItems.length} memories`)
+                        }
+                    }
+                }
+            } catch (e) {
+                // Consolidation is best-effort — extraction still succeeded
+                console.warn('[ExtractMemories] Consolidation failed:', e)
+            }
+        }
+
         return NextResponse.json({
             extracted: saved.length,
             memories: saved,
+            consolidated,
+            totalMemories: consolidated ? MEMORY_CAP : allMemories.length,
         })
     } catch (error) {
         console.error('[ExtractMemories] Error:', error)

@@ -140,66 +140,88 @@ export function useChatSession({
     // Convert initial app messages to Vercel format (once, on mount)
     const initialUIMessages = useRef(appMessagesToUIMessages(initialMessages)).current
 
+    // -------------------------------------------------------------------------
+    // Stable callback refs — ROOT CAUSE FIX
+    //
+    // The Vercel AI SDK v6 uses the onError/onFinish options as dependencies
+    // when constructing its internal Chat class instance. Inline arrow functions
+    // are new objects on every render, so the SDK was destroying and recreating
+    // its Chat instance on every single render — wiping messages each time.
+    //
+    // Pattern: mutable ref holds latest logic; stable useCallback ([] deps)
+    // is passed to the SDK so its reference never changes.
+    // -------------------------------------------------------------------------
+    const onErrorLogicRef = useRef<(error: Error) => void>(() => {})
+    onErrorLogicRef.current = (error: Error) => {
+        console.error('[useChatSession] Stream error:', error)
+        window.dispatchEvent(new CustomEvent('ai-dialog-error', {
+            detail: {
+                message: 'Något gick fel med AI-assistenten. Försök igen.',
+                error: error instanceof Error ? error.message : String(error),
+            }
+        }))
+    }
+
+    const onFinishLogicRef = useRef<(opts: { message: UIMessage }) => void>(() => {})
+    onFinishLogicRef.current = ({ message }: { message: UIMessage }) => {
+        window.dispatchEvent(new Event('ai-stream-complete'))
+
+        const toolInvocations = extractToolInvocations(message.parts)
+
+        if (toolInvocations.length > 0) {
+            const firstTool = toolInvocations[0]
+            const result = firstTool?.result as Record<string, unknown> | undefined
+
+            if (result) {
+                const walkthrough = result.walkthrough || (result.data as Record<string, unknown>)?.walkthrough
+
+                if (walkthrough) {
+                    window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough-blocks', {
+                        detail: walkthrough
+                    }))
+                } else if (result.confirmationRequired) {
+                    const confirmationRequired = result.confirmationRequired as Record<string, unknown>
+                    window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
+                        detail: {
+                            contentType: 'action',
+                            title: confirmationRequired.title || 'Bekräftelse krävs',
+                            content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
+                            confirmationRequired: result.confirmationRequired,
+                            data: result.data
+                        }
+                    }))
+                } else if (result.display && typeof result.display === 'object' && 'fullViewRoute' in result.display) {
+                    const display = result.display as Record<string, unknown>
+                    window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
+                        detail: {
+                            contentType: 'document',
+                            title: display.title || 'Resultat',
+                            content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
+                            display: result.display,
+                            data: result.data
+                        }
+                    }))
+                }
+            }
+        }
+    }
+
+    // Stable wrappers: created once ([] deps), always call the latest ref logic.
+    const stableOnError = useCallback((error: Error) => onErrorLogicRef.current(error), [])
+    const stableOnFinish = useCallback((opts: { message: UIMessage }) => onFinishLogicRef.current(opts), [])
+
     const {
         messages: vercelMessages,
         sendMessage: append,
         regenerate: reload,
         status,
     } = useVercelChat({
-        id: conversationId ?? undefined,
+        ...(conversationId != null ? { id: conversationId } : {}),
         transport: transportRef.current,
         messages: initialUIMessages.length > 0 ? initialUIMessages : undefined,
-        onError: (error) => {
-            console.error('[useChatSession] Stream error:', error)
-            window.dispatchEvent(new CustomEvent('ai-dialog-error', {
-                detail: {
-                    message: 'Något gick fel med AI-assistenten. Försök igen.',
-                    error: error instanceof Error ? error.message : String(error),
-                }
-            }))
-        },
-        onFinish: ({ message }) => {
-            window.dispatchEvent(new Event('ai-stream-complete'))
-
-            const toolInvocations = extractToolInvocations(message.parts)
-
-            if (toolInvocations.length > 0) {
-                const firstTool = toolInvocations[0]
-                const result = firstTool?.result as Record<string, unknown> | undefined
-
-                if (result) {
-                    const walkthrough = result.walkthrough || (result.data as Record<string, unknown>)?.walkthrough
-
-                    if (walkthrough) {
-                        window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough-blocks', {
-                            detail: walkthrough
-                        }))
-                    } else if (result.confirmationRequired) {
-                        const confirmationRequired = result.confirmationRequired as Record<string, unknown>
-                        window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
-                            detail: {
-                                contentType: 'action',
-                                title: confirmationRequired.title || 'Bekräftelse krävs',
-                                content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
-                                confirmationRequired: result.confirmationRequired,
-                                data: result.data
-                            }
-                        }))
-                    } else if (result.display && typeof result.display === 'object' && 'fullViewRoute' in result.display) {
-                        const display = result.display as Record<string, unknown>
-                        window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
-                            detail: {
-                                contentType: 'document',
-                                title: display.title || 'Resultat',
-                                content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
-                                display: result.display,
-                                data: result.data
-                            }
-                        }))
-                    }
-                }
-            }
-        }
+        experimental_throttle: 50,
+        onError: stableOnError,
+        onFinish: stableOnFinish,
     })
 
     const isLoading = status === 'submitted' || status === 'streaming'
@@ -208,7 +230,8 @@ export function useChatSession({
     const messages: AppMessage[] = useMemo(() => {
         return vercelMessages.map(vm => {
             const textPart = vm.parts?.find(p => p.type === 'text')
-            const content = textPart && 'text' in textPart ? (textPart as { text: string }).text : ''
+            const textPartContent = textPart && 'text' in textPart ? (textPart as { text: string }).text : ''
+            const content = textPartContent || ('content' in vm && typeof vm.content === 'string' ? vm.content : '')
 
             const toolInvocations = extractToolInvocations(vm.parts)
 
@@ -251,8 +274,7 @@ export function useChatSession({
         const attachments = opts.files ? await Promise.all(opts.files.map(fileToBase64)) : undefined
 
         await append({
-            role: 'user',
-            parts: [{ type: 'text', text: opts.content }],
+            text: opts.content,
         }, {
             body: {
                 conversationId,

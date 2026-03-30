@@ -196,6 +196,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         deleteMessage,
         extractMemories,
         cleanupIncognitoConversation,
+        refreshConversations,
     } = useConversations()
 
     const [textareaValue, setTextareaValue] = useState("")
@@ -211,8 +212,11 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     const regenerateRef = useRef<ChatSession['regenerateResponse'] | null>(null)
     const pendingMessageRef = useRef<SendMessageOptions | null>(null)
 
-    // Wire up the module-level registration ref
-    useEffect(() => {
+    // Wire up the module-level registration ref SYNCHRONOUSLY during render.
+    // This must happen before children render so ChatSessionInner can register
+    // during its own render phase. useEffect runs children-first, which causes
+    // a race condition where the inner component's registration call finds null.
+    if (!registerSessionRef.current) {
         registerSessionRef.current = (session) => {
             if (session) {
                 sendMessageRef.current = session.sendMessage
@@ -228,6 +232,10 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
                 regenerateRef.current = null
             }
         }
+    }
+
+    // Cleanup registration on unmount
+    useEffect(() => {
         return () => {
             registerSessionRef.current = null
         }
@@ -303,12 +311,15 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
         deleteMessage(messageId)
     }, [deleteMessage])
 
-    // Refresh usage when AI stream completes
+    // Refresh usage + conversation list when AI stream completes
     useEffect(() => {
-        const handler = () => refreshUsage()
+        const handler = () => {
+            refreshUsage()
+            refreshConversations()
+        }
         window.addEventListener('ai-stream-complete', handler)
         return () => window.removeEventListener('ai-stream-complete', handler)
-    }, [refreshUsage])
+    }, [refreshUsage, refreshConversations])
 
     // Handle incoming AI context (auto-send from page actions)
     const handleAIContext = useCallback((context: PageContext) => {

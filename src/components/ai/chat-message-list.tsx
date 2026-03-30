@@ -132,7 +132,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
             <div className="space-y-4 w-full">
                 {/* Markdown Text */}
                 {message.content && (
-                    <div className="prose prose-sm max-w-none dark:prose-invert prose-table:border-collapse prose-td:border prose-td:border-border/40 prose-td:p-2 prose-th:border prose-th:border-border/40 prose-th:p-2 prose-th:bg-muted/30">
+                    <div className="prose prose-sm max-w-none dark:prose-invert prose-p:leading-relaxed prose-p:mb-3 prose-headings:mb-2 prose-headings:mt-4 first:prose-headings:mt-0 prose-ul:my-2 prose-ol:my-2 prose-li:my-0.5 prose-hr:my-4 prose-table:border-collapse prose-td:border prose-td:border-border/40 prose-td:px-3 prose-td:py-1.5 prose-th:border prose-th:border-border/40 prose-th:px-3 prose-th:py-1.5 prose-th:bg-muted/30 prose-th:text-left prose-strong:text-foreground prose-code:text-[0.85em] prose-code:bg-muted/50 prose-code:px-1 prose-code:py-0.5 prose-code:rounded">
                         <ReactMarkdown
                             remarkPlugins={[remarkGfm]}
                             components={{
@@ -149,6 +149,27 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                                     }
                                     return <a href={href} target="_blank" rel="noopener noreferrer">{children}</a>
                                 },
+                                h3: ({ children }) => (
+                                    <h3 className="text-sm font-semibold text-foreground">{children}</h3>
+                                ),
+                                h2: ({ children }) => (
+                                    <h2 className="text-base font-semibold text-foreground">{children}</h2>
+                                ),
+                                p: ({ children }) => (
+                                    <p className="text-sm leading-relaxed text-foreground/90">{children}</p>
+                                ),
+                                ul: ({ children }) => (
+                                    <ul className="text-sm space-y-1 text-foreground/90">{children}</ul>
+                                ),
+                                ol: ({ children }) => (
+                                    <ol className="text-sm space-y-1 text-foreground/90">{children}</ol>
+                                ),
+                                li: ({ children }) => (
+                                    <li className="text-sm leading-relaxed">{children}</li>
+                                ),
+                                hr: () => (
+                                    <hr className="border-border/40" />
+                                ),
                             }}
                         >
                             {message.content}
@@ -262,32 +283,38 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                     </div>
                 )}
 
-                {/* Pending tool calls — show loading while tools execute */}
+                {/* Pending tool calls — show each tool individually */}
                 {message.pendingTools && message.pendingTools.length > 0 && (
-                    <div className="w-full">
-                        <AiProcessingState
-                            className="py-2 items-start"
-                            messages={[
-                                "Kör verktyg...",
-                                "Hämtar data...",
-                                "Bearbetar...",
-                            ]}
-                        />
+                    <div className="w-full space-y-0.5">
+                        {message.pendingTools.map((toolName, i) => (
+                            <AiProcessingState
+                                key={`${toolName}-${i}`}
+                                toolName={toolName}
+                                className="items-start"
+                            />
+                        ))}
                     </div>
                 )}
 
-                {/* Typing Indicator / Processing State */}
+                {/* Completed tool results — show checkmark */}
+                {message.toolResults && message.toolResults.length > 0 && !message.display && (
+                    <div className="w-full space-y-0.5">
+                        {message.toolResults.map((tr, i) => (
+                            <AiProcessingState
+                                key={`${tr.toolName}-done-${i}`}
+                                toolName={tr.toolName}
+                                completed
+                                className="items-start"
+                            />
+                        ))}
+                    </div>
+                )}
+
+                {/* Thinking state — clean shimmer, no spinning star */}
                 {isLoading && isLast && !message.content && !message.display && !message.confirmationRequired && !message.pendingTools?.length && (
                     <div className="w-full">
                         <AiProcessingState
-                            className="py-2 items-start"
-                            messages={[
-                                "Snurrar",
-                                "Kokar på en idé",
-                                "Brygger ett svar",
-                                "Funderar djupt",
-                                "Knådar tankar"
-                            ]}
+                            className="items-start"
                         />
                     </div>
                 )}
@@ -359,6 +386,16 @@ export const ChatMessageList = React.memo(function ChatMessageList({
 
                 </div>
             ))}
+
+            {/* Thinking state — shown when loading and the last message is from the user
+                (SDK hasn't created the assistant message yet) */}
+            {isLoading && messages.length > 0 && messages[messages.length - 1].role === 'user' && (
+                <div className="flex flex-col gap-2 items-start">
+                    <div className="w-full max-w-[85%]">
+                        <AiProcessingState className="items-start" />
+                    </div>
+                </div>
+            )}
         </div>
     )
 })

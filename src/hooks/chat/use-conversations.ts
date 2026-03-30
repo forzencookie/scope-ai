@@ -55,7 +55,11 @@ function mapConversation(conv: RawConversation): Conversation {
 
 export function useConversations() {
     const queryClient = useQueryClient()
-    const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
+    // Start with a fresh conversation ID so the first message is always persisted.
+    // handleNewConversation generates a new UUID when switching conversations.
+    const [currentConversationId, setCurrentConversationId] = useState<string | null>(
+        () => crypto.randomUUID()
+    )
 
     // Use React Query for caching conversation history
     const { data: conversations = [], isLoading } = useQuery({

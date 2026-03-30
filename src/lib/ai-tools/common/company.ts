@@ -28,8 +28,9 @@ export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | 
         }
     },
     requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  category: 'read',
+    coreTool: true,
+    allowedCompanyTypes: [],
+    category: 'read',
     domain: 'common',
     keywords: ['företag', 'bolag', 'organisationsnummer', 'info'],
     execute: async (params, context) => {

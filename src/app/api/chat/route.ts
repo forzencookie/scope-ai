@@ -14,7 +14,6 @@
 import { NextRequest } from 'next/server'
 import { checkRateLimit, getClientIdentifier } from '@/lib/rate-limiter'
 import { validateJsonBody } from '@/lib/validation'
-import { nullToUndefined } from '@/lib/utils'
 import { getAuthContext, verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import {
     checkUsageLimits,
@@ -29,8 +28,6 @@ import { buildSystemPrompt } from '@/lib/agents/scope-brain/system-prompt'
 import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
-import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
 
 const RATE_LIMIT_CONFIG = {
     maxRequests: 30,
@@ -91,107 +88,6 @@ function parseCompanyType(raw: string | null): 'AB' | 'EF' | 'HB' | 'KB' | 'FORE
     if (upper === 'KB') return 'KB'
     if (upper === 'FORENING') return 'FORENING'
     return 'AB'
-}
-
-/**
- * Fetch activity snapshot (pending transactions, overdue invoices).
- * Non-blocking enrichment — returns undefined on failure.
- */
-async function fetchActivitySnapshot(
-    supabase: SupabaseClient<Database>
-): Promise<Record<string, unknown> | undefined> {
-    try {
-        const [txResult, invResult] = await Promise.all([
-            supabase
-                .from('transactions')
-                .select('*', { count: 'exact', head: true })
-                .eq('status', 'pending'),
-            supabase
-                .from('customer_invoices')
-                .select('total_amount')
-                .eq('status', 'sent')
-                .lt('due_date', new Date().toISOString().split('T')[0]),
-        ])
-
-        const overdueCount = invResult.data?.length ?? 0
-        const overdueTotal = invResult.data?.reduce(
-            (sum, i) => sum + (Number(i.total_amount) || 0), 0
-        ) ?? 0
-
-        return {
-            pendingTransactions: txResult.count ?? 0,
-            overdueInvoices: overdueCount,
-            overdueInvoiceTotal: overdueTotal,
-        }
-    } catch (e) {
-        console.warn('[Chat] Activity snapshot failed:', e)
-        return undefined
-    }
-}
-
-/**
- * Fetch integration state (which integrations are connected).
- * Non-blocking enrichment — returns undefined on failure.
- */
-async function fetchIntegrationState(
-    supabase: SupabaseClient<Database>
-): Promise<Array<{ name: string; type: string; connected: boolean }> | undefined> {
-    try {
-        const { data } = await supabase
-            .from('integrations')
-            .select('name, integration_id, type, connected')
-
-        if (!data || data.length === 0) return []
-
-        return data.map(row => ({
-            name: row.name || row.integration_id || 'okänd',
-            type: row.type || 'other',
-            connected: !!row.connected,
-        }))
-    } catch (e) {
-        console.warn('[Chat] Integration state failed:', e)
-        return undefined
-    }
-}
-
-/**
- * Fetch relevant user memories for prompt injection.
- * Non-blocking enrichment — returns empty array on failure.
- */
-async function fetchRelevantMemories(
-    companyId: string,
-    query: string
-): Promise<Array<{ content: string; category: string }>> {
-    try {
-        const { userMemoryService } = await import('@/services/common/user-memory-service')
-        const memories = await userMemoryService.getMemoriesForCompany(companyId)
-
-        const queryLower = query.toLowerCase()
-        const relevantMemories = memories.filter(m => {
-            const content = m.content.toLowerCase()
-
-            // Always include preferences (they define Scooby's personality)
-            if (m.category === 'preference') return true
-
-            // Keywords for topical filtering
-            const keywords = [
-                'lön', 'anställd', 'skatt', 'moms', 'utdelning', 'aktie',
-                'faktura', 'kvitto', 'bank', 'resultat', 'balans', 'bokslut',
-                'inventarie', 'tillgång', 'avskrivning', 'semester', 'sjuk',
-                'pension', 'förmån', 'dividende', 'k10', 'deklaration',
-            ]
-
-            return keywords.some(k => queryLower.includes(k) && content.includes(k))
-        })
-
-        return relevantMemories.slice(0, 15).map(m => ({
-            content: m.content,
-            category: m.category,
-        }))
-    } catch (e) {
-        console.warn('[Chat] Memory injection failed:', e)
-        return []
-    }
 }
 
 // =============================================================================
@@ -278,79 +174,33 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Company context — optional. Chat works without it but with limited capabilities.
+        // Company type — fast path, one field only.
+        // All other company data is fetched via get_company_info tool on demand.
         let companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' | null = null
-        let companyName: string | undefined
-        let companySetupState: Record<string, boolean> | undefined
 
         if (companyId) {
-            const { data: company, error: companyError } = await supabase
+            const { data: company } = await supabase
                 .from('companies')
-                .select('company_type, name, org_number, address, city, zip_code, email, phone, vat_number, has_f_skatt, has_moms_registration, has_employees, accounting_method, fiscal_year_end, registration_date')
+                .select('company_type')
                 .eq('id', companyId)
                 .single()
 
-            if (!companyError && company) {
+            if (company) {
                 companyType = parseCompanyType(company.company_type)
-                companyName = nullToUndefined(company.name)
-
-                // Build setup state so Scooby knows exactly what's filled in
-                companySetupState = {
-                    name: !!company.name,
-                    orgNumber: !!company.org_number,
-                    companyType: !!company.company_type,
-                    address: !!company.address,
-                    city: !!company.city,
-                    zipCode: !!company.zip_code,
-                    email: !!company.email,
-                    phone: !!company.phone,
-                    vatNumber: !!company.vat_number,
-                    hasFSkatt: company.has_f_skatt !== null,
-                    hasMomsRegistration: company.has_moms_registration !== null,
-                    hasEmployees: company.has_employees !== null,
-                    accountingMethod: !!company.accounting_method,
-                    fiscalYearEnd: !!company.fiscal_year_end,
-                    registrationDate: !!company.registration_date,
-                }
             }
         }
 
         // =====================================================================
         // STREAM — build context and start streaming immediately
+        // No DB enrichment here — Scooby fetches data via tools on demand.
         // =====================================================================
 
         ensureToolsInitialized()
-
-        // Enrichment with 100ms timeout — never block stream start
-        const ENRICHMENT_TIMEOUT = 100
-        const [activitySnapshot, relevantMemories, integrationState] = await Promise.all([
-            companyId
-                ? Promise.race([
-                    fetchActivitySnapshot(supabase),
-                    new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), ENRICHMENT_TIMEOUT)),
-                ])
-                : Promise.resolve(undefined),
-            companyId
-                ? Promise.race([
-                    fetchRelevantMemories(companyId, latestContent),
-                    new Promise<Array<{ content: string; category: string }>>(resolve =>
-                        setTimeout(() => resolve([]), ENRICHMENT_TIMEOUT)
-                    ),
-                ])
-                : Promise.resolve([]),
-            companyId
-                ? Promise.race([
-                    fetchIntegrationState(supabase),
-                    new Promise<undefined>(resolve => setTimeout(() => resolve(undefined), ENRICHMENT_TIMEOUT)),
-                ])
-                : Promise.resolve(undefined),
-        ])
 
         const context = createAgentContext({
             userId,
             companyId,
             companyType,
-            companyName,
             locale: 'sv',
             conversationId,
             messages: messages.map(m => {
@@ -364,22 +214,7 @@ export async function POST(request: NextRequest) {
             }),
         })
 
-        if (companySetupState) {
-            context.sharedMemory.companySetupState = companySetupState
-        }
-
-        if (integrationState !== undefined) {
-            context.sharedMemory.integrationState = integrationState
-        }
-
-        if (activitySnapshot) {
-            context.sharedMemory.activitySnapshot = activitySnapshot
-        }
-
-        if (relevantMemories.length > 0) {
-            context.sharedMemory.userMemories = relevantMemories
-        }
-
+        // Lightweight per-message context (no DB calls)
         if (attachments && attachments.length > 0) {
             context.sharedMemory.attachments = attachments.map(a => ({
                 name: a.name,

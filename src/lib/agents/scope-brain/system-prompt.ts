@@ -1,16 +1,18 @@
 /**
- * Unified System Prompt for Scope Brain - v3
+ * Unified System Prompt for Scope Brain - v4
  *
- * Architecture: Instinct-first design with deferred tool loading.
+ * Architecture: Fully static system prompt with deferred tool loading.
  *
- * Structure (static → dynamic for prompt caching):
- * 1. Core Instincts          (static — never changes)        ← cacheable
- * 2. Knowledge master        (static — changes on deploy)    ← cacheable
- * 3. Tool index              (static — changes on deploy)    ← cacheable
- * --- cache boundary ---
- * 4. Company context         (dynamic — per request)
- * 5. Activity snapshot       (dynamic — per request)
- * 6. User memories           (dynamic — per request)
+ * Structure (all static — fully cacheable):
+ * 1. Core Instincts          (personality + behavior rules)
+ * 2. Tool Manual              (when to use which tool)
+ * 3. Knowledge master        (domain reference index)
+ * 4. Tool index              (compact list of all tools)
+ *
+ * Dynamic data (company info, activity, memories) is fetched via tools
+ * on demand — not injected into the system prompt.
+ *
+ * Token budget: ~1,700 tokens (down from ~3-4K with dynamic sections)
  */
 
 import type { AgentContext } from '../types'
@@ -58,10 +60,36 @@ After answering, offer the next logical step.
 "Ska jag skicka påminnelser?" — don't just list data.
 
 ### 5. Tool Discovery
-You start with a few core tools (search, transactions, verifications, navigation, knowledge).
+You start with a few core tools (company info, search, navigation, knowledge).
 If you need a capability beyond these, USE search_tools FIRST.
 After searching you gain access to the found tools and can call them directly.
 Search broadly — e.g. "skapa faktura", "kör lönerna", "beräkna skatt".
+
+### 6. Transparent Orchestration
+The user should feel like the orchestrator — like THEY are doing the work
+and you are their hands. This means being specific about every step:
+
+**Before a tool call — say exactly what you're about to look at:**
+- NOT: "Jag kollar momsen..." (vague, user is a passenger)
+- YES: "Jag hämtar momsrapporten för februari — kollar ingående och utgående moms i bokföringen..." (specific, user can redirect)
+
+**After a tool call — explain what you found and what it means:**
+- NOT: "Momsen var 12 450 kr." (data dump)
+- YES: "Okej, jag ser att du hade 24 500 kr utgående och 12 050 kr ingående. Det ger en momsskuld på 12 450 kr." (transparent reasoning)
+
+**Then offer the next decision to the user:**
+- "Vill du att jag bryter ner det per konto, eller ska vi börja med deklarationen?"
+- The user decides direction. You execute.
+
+**For simple questions — just respond from knowledge, no tools:**
+- "hej" → respond warmly, no tools
+- "vad är moms?" → explain from knowledge, no fetch needed
+- Only reach for tools when you need SPECIFIC data from their company
+
+**The principle:** Be specific enough that the user could have said it
+themselves. They should understand your entire thought process and feel
+like they could redirect you at any moment. You are the skilled hands,
+they are the decision-maker.
 
 ---
 
@@ -112,256 +140,34 @@ You can create structured blocks (W: protocol) to display data visually.
 `
 
 // =============================================================================
-// Context Builder
+// Tool Manual - When to Use Which Tool
 // =============================================================================
 
-/**
- * Build the complete system prompt with context.
- *
- * Token budget (~3-4k total):
- * - Core instincts: ~500 tokens
- * - Knowledge master: ~500 tokens
- * - Tool index: ~300 tokens
- * - Company context: ~2k tokens
- * - Buffer for memory: ~1k tokens
- */
-export function buildSystemPrompt(context: AgentContext): string {
-    const parts: string[] = []
+const TOOL_MANUAL = `## When to Use Which Tool
 
-    // === STATIC SECTION (cacheable) ===
+**Company & Status:**
+- User asks about their company details → get_company_info
+- User asks about pending/overdue items or company status → get_company_stats
+- User asks what happened / activity / recent events → search_tools "händelser"
 
-    // 1. Core instincts
-    parts.push(CORE_INSTINCTS)
+**Domain tools (discover via search_tools):**
+- User mentions moms/VAT → search_tools "moms"
+- User wants to book/bokföra → search_tools "bokför"
+- User asks about invoices/fakturor → search_tools "faktura"
+- User asks about salary/payroll → search_tools "lön"
+- User asks about rules/law/how-to → get_knowledge
+- For anything else → search_tools with relevant Swedish keywords
 
-    // 2. Knowledge master (Scooby's reference data + knowledge index)
-    const knowledgeMaster = loadKnowledgeMaster()
-    if (knowledgeMaster) {
-        parts.push(knowledgeMaster)
-    }
+**Memory (two layers):**
+- "Vad vet du om mig/oss?" or you need quick context → query_memories (Layer 1: rolling summary, fast, small)
+- "Vad pratade vi om förra månaden?" or deep dive into history → search_conversations + read_conversation (Layer 2: full archive)
+- For "vad hände förra månaden?" → use BOTH search_conversations AND get_events, then synthesize what was discussed AND what actually happened
+- Always summarize conversation content — never dump raw transcripts to the user
+`
 
-    // 3. Tool index (compact list of all tools by domain — ~300 tokens)
-    const toolIndex = aiToolRegistry.getToolIndex()
-    parts.push(`## Tools\n\nYou have access to the following tools:\n\n${toolIndex}\n\nUse \`search_tools\` to discover and activate a tool before calling it.`)
-
-    // === DYNAMIC SECTION (per request) ===
-
-    // 4. Company context
-    parts.push(buildCompanyContext(context))
-
-    // 5. Integration state (if available)
-    const integrations = formatIntegrationState(context.sharedMemory)
-    if (integrations) {
-        parts.push(integrations)
-    }
-
-    // 6. Activity snapshot (if available)
-    const snapshot = formatActivitySnapshot(context.sharedMemory)
-    if (snapshot) {
-        parts.push(snapshot)
-    }
-
-    // 7. User memory (if provided in context)
-    const memory = formatUserMemory(context.sharedMemory)
-    if (memory) {
-        parts.push(memory)
-    }
-
-    return parts.join('\n\n---\n\n')
-}
-
-/**
- * Build company context section.
- * When no company is linked, injects a deficiency notice so Scooby
- * can guide users to complete onboarding or fill in settings.
- */
-function buildCompanyContext(context: AgentContext): string {
-    let section = `## Current Context\n\n`
-
-    if (!context.companyId || !context.companyType) {
-        section += `**⚠️ Företagsuppgifter saknas.**\n\n`
-        section += `Användaren har inte fyllt i företagsuppgifter ännu.\n\n`
-        section += `**Du KAN:**\n`
-        section += `- Svara på allmänna frågor om bokföring, skatt, löner och företagande\n`
-        section += `- Förklara regler och begrepp\n`
-        section += `- Hjälpa användaren förstå vad Scope kan göra\n\n`
-        section += `**Du KAN INTE utan företagsuppgifter:**\n`
-        section += `- Bokföra transaktioner\n`
-        section += `- Skapa fakturor\n`
-        section += `- Köra löner eller beräkna skatt\n`
-        section += `- Generera rapporter\n\n`
-        section += `**När användaren vill göra något som kräver företagsuppgifter**, erbjud dig att samla in dem direkt i chatten. `
-        section += `Fråga efter: företagsnamn, organisationsnummer och företagsform (AB, EF, HB, KB eller förening). `
-        section += `Använd sedan verktyget update_company_info för att spara. `
-        section += `Du behöver INTE skicka dem till en annan sida — du kan hantera det själv här.\n`
-        return section
-    }
-
-    section += `**Company type:** ${formatCompanyType(context.companyType)}\n`
-
-    if (context.companyName) {
-        section += `**Company:** ${context.companyName}\n`
-    }
-
-    // Granular setup state — tells Scooby exactly what's missing
-    const setupState = context.sharedMemory?.companySetupState as Record<string, boolean> | undefined
-    if (setupState) {
-        const missing = Object.entries(setupState)
-            .filter(([, filled]) => !filled)
-            .map(([key]) => key)
-
-        if (missing.length > 0) {
-            const labelMap: Record<string, string> = {
-                orgNumber: 'Organisationsnummer',
-                companyType: 'Företagstyp',
-                address: 'Adress',
-                city: 'Ort',
-                zipCode: 'Postnummer',
-                email: 'E-post',
-                phone: 'Telefon',
-                vatNumber: 'Momsregistreringsnummer',
-                hasFSkatt: 'F-skatt (ja/nej)',
-                hasMomsRegistration: 'Momsregistrering (ja/nej)',
-                hasEmployees: 'Har anställda (ja/nej)',
-                accountingMethod: 'Bokföringsmetod (fakturering/kontant)',
-                fiscalYearEnd: 'Räkenskapsårets slut',
-                registrationDate: 'Registreringsdatum',
-            }
-
-            const missingLabels = missing
-                .filter(k => labelMap[k])
-                .map(k => labelMap[k])
-
-            section += `\n**⚠️ Ofullständig företagsprofil — saknas:** ${missingLabels.join(', ')}\n`
-            section += `När användaren försöker göra något som kräver dessa uppgifter, fråga efter dem direkt i chatten `
-            section += `och spara med update_company_info. Du behöver inte hänvisa till inställningar.\n`
-        }
-    }
-
-    // Add page context if available
-    if (context.sharedMemory?.currentPage) {
-        section += `**Current page:** ${context.sharedMemory.currentPage}\n`
-    }
-
-    // Add any page mentions with their AI context
-    if (context.sharedMemory?.mentions && Array.isArray(context.sharedMemory.mentions)) {
-        const pageContexts = (context.sharedMemory.mentions as Array<{
-            type: string
-            label: string
-            aiContext?: string
-        }>)
-            .filter(m => m.type === 'page' && m.aiContext)
-            .map(m => m.aiContext)
-
-        if (pageContexts.length > 0) {
-            section += `\n**Page data:**\n${pageContexts.join('\n\n')}\n`
-        }
-    }
-
-    // Add attachments if any
-    if (context.sharedMemory?.attachments) {
-        section += `\n**Attachments:** ${JSON.stringify(context.sharedMemory.attachments)}\n`
-    }
-
-    // Add selected items if any
-    const selectedItems = ['selectedTransaction', 'selectedInvoice', 'selectedReceipt']
-    for (const key of selectedItems) {
-        if (context.sharedMemory?.[key]) {
-            section += `\n**${key}:** ${JSON.stringify(context.sharedMemory[key])}\n`
-        }
-    }
-
-    return section
-}
-
-/**
- * Format activity snapshot for inclusion in prompt.
- * Gives Scooby immediate awareness of the company's current state (~50 tokens).
- */
-function formatActivitySnapshot(memory: Record<string, unknown>): string | null {
-    const snapshot = memory?.activitySnapshot as {
-        pendingTransactions?: number
-        overdueInvoices?: number
-        overdueInvoiceTotal?: number
-        monthClosingStatus?: string
-    } | undefined
-
-    if (!snapshot) return null
-
-    const lines: string[] = ['## Current Status\n']
-
-    if (snapshot.pendingTransactions !== undefined && snapshot.pendingTransactions > 0) {
-        lines.push(`- ${snapshot.pendingTransactions} unbooked transactions`)
-    }
-    if (snapshot.overdueInvoices !== undefined && snapshot.overdueInvoices > 0) {
-        const total = snapshot.overdueInvoiceTotal
-            ? ` (total ${snapshot.overdueInvoiceTotal.toLocaleString('sv-SE')} kr)`
-            : ''
-        lines.push(`- ${snapshot.overdueInvoices} overdue invoice${snapshot.overdueInvoices > 1 ? 's' : ''}${total}`)
-    }
-    if (snapshot.monthClosingStatus) {
-        lines.push(`- Month closing: ${snapshot.monthClosingStatus}`)
-    }
-
-    // Only return if we have any data beyond the header
-    return lines.length > 1 ? lines.join('\n') : null
-}
-
-/**
- * Format integration state for inclusion in prompt.
- * Tells Scooby which integrations are connected so it knows what data sources are available.
- */
-function formatIntegrationState(memory: Record<string, unknown>): string | null {
-    const integrations = memory?.integrationState as Array<{
-        name: string
-        type: string
-        connected: boolean
-    }> | undefined
-
-    // undefined = not fetched (no company), skip entirely
-    if (integrations === undefined) return null
-
-    // Empty array = no integrations configured
-    if (integrations.length === 0) {
-        return `## Integrations\n\nNo integrations configured. Transactions must be entered manually.\nIf the user asks about bank import or auto-sync, explain this is available under [Integrationer i Inställningar →](/dashboard/installningar?tab=integrationer) (bank connection coming soon).`
-    }
-
-    const connected = integrations.filter(i => i.connected)
-    const disconnected = integrations.filter(i => !i.connected)
-
-    let section = `## Integrations\n\n`
-    if (connected.length > 0) {
-        section += `**Connected:** ${connected.map(i => i.name).join(', ')}\n`
-    }
-    if (disconnected.length > 0) {
-        section += `**Not connected:** ${disconnected.map(i => i.name).join(', ')}\n`
-    }
-
-    return section
-}
-
-/**
- * Format user memory for inclusion in prompt.
- * Only included if there's relevant memory.
- */
-function formatUserMemory(memory: Record<string, unknown>): string | null {
-    if (!memory?.userMemories || !Array.isArray(memory.userMemories) || memory.userMemories.length === 0) {
-        return null
-    }
-
-    const memories = memory.userMemories as Array<{
-        content: string
-        category: string
-    }>
-
-    let section = `## User Memories\n\n`
-    section += `Prior context about this user/company:\n\n`
-
-    for (const m of memories) {
-        section += `- [${m.category}] ${m.content}\n`
-    }
-
-    return section
-}
+// =============================================================================
+// Context Builder
+// =============================================================================
 
 /**
  * Format company type for display.
@@ -378,6 +184,87 @@ function formatCompanyType(type: AgentContext['companyType']): string {
     return names[type] || type
 }
 
+/**
+ * Build the complete system prompt.
+ *
+ * Mostly static (~1,700 tokens total). The only dynamic part is the
+ * company type (one word), which is needed for tool filtering.
+ * All other company data is fetched via tools on demand.
+ *
+ * Token budget:
+ * - Core instincts: ~800 tokens
+ * - Tool manual: ~100 tokens
+ * - Knowledge master: ~500 tokens
+ * - Tool index: ~300 tokens
+ */
+export function buildSystemPrompt(context: AgentContext): string {
+    const parts: string[] = []
+
+    // 1. Core instincts (personality + behavior rules)
+    parts.push(CORE_INSTINCTS)
+
+    // 2. Tool manual (when to use which tool)
+    parts.push(TOOL_MANUAL)
+
+    // 3. Knowledge master (domain reference index)
+    const knowledgeMaster = loadKnowledgeMaster()
+    if (knowledgeMaster) {
+        parts.push(knowledgeMaster)
+    }
+
+    // 4. Tool index (compact list of all tools by domain — ~300 tokens)
+    const toolIndex = aiToolRegistry.getToolIndex()
+    parts.push(`## Tools\n\nYou have access to the following tools:\n\n${toolIndex}\n\nUse \`search_tools\` to discover and activate a tool before calling it.`)
+
+    // 5. Minimal dynamic context — just company type + no-company guidance
+    if (!context.companyId || !context.companyType) {
+        parts.push(`## Context\n\n**⚠️ Företagsuppgifter saknas.**\nAnvändaren har inte kopplat ett företag ännu. Du kan svara på allmänna frågor men inte bokföra, fakturera eller köra löner.\nNär användaren vill göra något som kräver företagsuppgifter, fråga efter företagsnamn, organisationsnummer och företagsform, och spara med update_company_info.`)
+    } else {
+        parts.push(`## Context\n\n**Company type:** ${formatCompanyType(context.companyType)}\nUse get_company_info when you need specific company details.`)
+    }
+
+    // 6. Per-message context (attachments, mentions, page context — lightweight)
+    const messageContext = buildMessageContext(context)
+    if (messageContext) {
+        parts.push(messageContext)
+    }
+
+    return parts.join('\n\n---\n\n')
+}
+
+/**
+ * Build per-message context — only the lightweight stuff that comes
+ * from the current request (attachments, mentions, page context).
+ * No DB fetches involved.
+ */
+function buildMessageContext(context: AgentContext): string | null {
+    const lines: string[] = []
+
+    if (context.sharedMemory?.currentPage) {
+        lines.push(`**Current page:** ${context.sharedMemory.currentPage}`)
+    }
+
+    if (context.sharedMemory?.mentions && Array.isArray(context.sharedMemory.mentions)) {
+        const pageContexts = (context.sharedMemory.mentions as Array<{
+            type: string
+            label: string
+            aiContext?: string
+        }>)
+            .filter(m => m.type === 'page' && m.aiContext)
+            .map(m => m.aiContext)
+
+        if (pageContexts.length > 0) {
+            lines.push(`**Page data:**\n${pageContexts.join('\n\n')}`)
+        }
+    }
+
+    if (context.sharedMemory?.attachments) {
+        lines.push(`**Attachments:** ${JSON.stringify(context.sharedMemory.attachments)}`)
+    }
+
+    return lines.length > 0 ? `## Message Context\n\n${lines.join('\n')}` : null
+}
+
 // =============================================================================
 // Exports
 // =============================================================================
@@ -390,9 +277,10 @@ export const BLOCK_GUIDANCE = '' // Now integrated into core instincts
  */
 export function estimateSystemPromptTokens(): number {
     const instinctsTokens = Math.ceil(CORE_INSTINCTS.length / 4)
+    const toolManualTokens = Math.ceil(TOOL_MANUAL.length / 4)
     const knowledgeMasterTokens = 500 // ~500 tokens for master.md
     const toolIndexTokens = 300 // ~300 tokens for tool index
-    const contextBuffer = 2000 // Estimate for company context + memory
+    const contextBuffer = 100 // Minimal — just company type
 
-    return instinctsTokens + knowledgeMasterTokens + toolIndexTokens + contextBuffer
+    return instinctsTokens + toolManualTokens + knowledgeMasterTokens + toolIndexTokens + contextBuffer
 }

@@ -196,6 +196,15 @@
   font-feature-settings: "tnum" on;
 }
 
+/* iOS/Safari autofill fix — prevents yellow background from hiding text */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus {
+  -webkit-text-fill-color: inherit;
+  -webkit-box-shadow: 0 0 0px 1000px transparent inset;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
 /* Custom animations */
 @keyframes marquee {
   0% {
@@ -303,6 +312,30 @@
 
 .animate-wiggle {
   animation: pixel-wiggle 0.3s ease-in-out infinite;
+}
+
+/* Shimmer text effect for AI thinking/tool states */
+@keyframes text-shimmer {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
+.text-shimmer {
+  background: linear-gradient(
+    90deg,
+    hsl(var(--muted-foreground) / 0.4) 0%,
+    hsl(var(--foreground) / 0.8) 50%,
+    hsl(var(--muted-foreground) / 0.4) 100%
+  );
+  background-size: 200% auto;
+  background-clip: text;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: text-shimmer 2s ease-in-out infinite;
 }
 
 /* Hero title with flowing glow */
