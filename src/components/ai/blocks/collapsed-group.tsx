@@ -14,7 +14,7 @@ export function CollapsedGroup({ label, count, defaultOpen = false, children }: 
     <div className="rounded-lg border bg-card">
       <button
         onClick={() => setOpen(!open)}
-        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium hover:bg-muted/50 transition-colors"
+        className="flex w-full items-center gap-2 px-4 py-3 text-sm font-medium transition-colors"
       >
         <ChevronRight
           className={cn("h-4 w-4 text-muted-foreground transition-transform", open && "rotate-90")}

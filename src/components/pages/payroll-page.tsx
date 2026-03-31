@@ -61,7 +61,7 @@ function PayrollPageContent() {
                 />
 
                 {/* Tab Content */}
-                <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+                <main className="flex-1 flex flex-col p-4 md:p-6 min-w-0">
                     {currentTab === "lonebesked" && <LazyLonebesked />}
                     {currentTab === "team" && <LazyTeamTab />}
                     {currentTab === "formaner" && <LazyFormaner />}

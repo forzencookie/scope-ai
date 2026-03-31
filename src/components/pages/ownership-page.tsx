@@ -94,7 +94,7 @@ function ParterPageContent() {
                     />
                 )}
 
-                <main className="flex-1 flex flex-col p-4 md:p-6 overflow-hidden">
+                <main className="flex-1 flex flex-col p-4 md:p-6 min-w-0">
                     {currentTab === 'aktiebok' && <LazyAktiebok />}
                     {currentTab === 'delagare' && <LazyDelagare />}
                     {currentTab === 'agarinfo' && <EnskildFirmaOwnerInfo />}

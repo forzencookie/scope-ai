@@ -21,16 +21,25 @@ export interface StatCardItem {
   change?: string
   trend?: "up" | "down" | "neutral"
   icon?: string
+  iconColor?: "blue" | "violet" | "emerald" | "amber" | "red" | "muted"
+  valueColor?: "default" | "red" | "green"
 }
 export interface StatCardsProps {
   items: StatCardItem[]
 }
 
+export interface FinancialColumnDef {
+  label: string
+  icon?: string
+  color?: "default" | "red" | "green" | "muted"
+}
+
 export interface FinancialTableProps {
-  columns: string[]
+  columns: Array<string | FinancialColumnDef>
   rows: Array<Record<string, string | number>>
   totals?: Record<string, string | number>
   highlights?: string[]
+  variant?: "default" | "compact"
 }
 
 export interface DataTableProps {

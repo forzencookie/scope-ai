@@ -79,7 +79,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         // State 3: Page view
         if (!isDashboardRoot) {
             return (
-                <div className={cn("flex-1 flex flex-col min-h-0 relative", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
+                <div className={cn("flex-1 flex flex-col min-h-0 min-w-0 relative", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
                     {/* Header bar: Back button + page tabs portal */}
                     <div className="shrink-0 px-4 pt-3 pb-1 flex items-center">
                         <Button
@@ -94,7 +94,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                         <div className="ml-auto" id="page-tabs-portal" />
                     </div>
                     {/* Page content */}
-                    <div className="flex-1 overflow-x-hidden overflow-y-auto">
+                    <div className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto">
                         {children}
                     </div>
                 </div>
@@ -275,7 +275,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
             "flex-1 flex flex-row min-h-0 m-2 ml-0 rounded-2xl overflow-hidden bg-background",
             isIncognito && "bg-violet-500/[0.03] dark:bg-violet-500/[0.02]"
         )}>
-            <div className="flex-1 flex flex-col min-h-0 relative">
+            <div className="flex-1 flex flex-col min-h-0 min-w-0 relative">
                 {renderContent()}
 
                 {/* Render children (like SettingsOverlay) when on the dashboard root,
