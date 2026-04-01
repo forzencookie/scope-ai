@@ -179,6 +179,19 @@ export type ComparisonTable = z.infer<typeof ComparisonTableSchema>
 // 9. Company Settings Normalization
 // =============================================================================
 
+/**
+ * IMPORTANT — Scope boundary:
+ * This schema represents the COMPANY entity (the `companies` DB table).
+ * It has NOTHING to do with the user's own Konto (profile).
+ *
+ * - `email`         → The company's public contact email (e.g. info@bolaget.se),
+ *                     NOT the user's Supabase auth email.
+ * - `contactPerson` → A named contact person at the company (e.g. a CEO or
+ *                     office manager), NOT the authenticated user's name.
+ *
+ * If Scooby is answering questions about "the user's name/email", those fields
+ * live on `UserProfile` in settings-service.ts, not here.
+ */
 export const CompanySettingsSchema = z.object({
     name: z.string().min(1),
     orgNumber: z.string(),
@@ -187,8 +200,10 @@ export const CompanySettingsSchema = z.object({
     address: z.string().optional(),
     city: z.string().optional(),
     zipCode: z.string().optional(),
+    /** Company public contact email — NOT the user's auth/login email */
     email: z.string().email().optional().or(z.literal('')),
     phone: z.string().optional(),
+    /** Named contact person at the company — NOT the authenticated user */
     contactPerson: z.string().optional(),
     registrationDate: z.string().optional(),
     fiscalYearEnd: z.string().default("12-31"),
@@ -205,7 +220,7 @@ export const CompanySettingsSchema = z.object({
 export type CompanySettings = z.infer<typeof CompanySettingsSchema>
 
 // =============================================================================
-// 7. User Memory Normalization
+// 10. User Memory Normalization
 // =============================================================================
 
 export const MemoryCategorySchema = z.enum(['decision', 'preference', 'pending'])
@@ -276,6 +291,10 @@ export function normalizeAIDisplay(type: string, data: unknown): unknown {
                 return ComparisonTableSchema.parse(unwrapped);
             case 'DiscoveredTools':
                 return DiscoveredToolsSchema.parse(unwrapped);
+            // NOTE: CompanySettingsSchema is intentionally NOT registered here.
+            // It serves as a server-action input validator (updateCompanyAction),
+            // not as an AI display card. If a CompanySettings card is ever added
+            // to the chat UI, register it here as 'CompanySettingsCard'.
             default:
                 throw new Error(`[Normalization] Unknown display type: ${type}`);
         }
