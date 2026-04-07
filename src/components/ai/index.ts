@@ -1,12 +1,19 @@
-// AI Components
-// Components for AI chat display and interaction
+// AI Components — organized by surface
+//
+// cards/          → Inline chat cards (Layer 1 compact previews)
+// confirmations/  → User approval UI (AI prepares, Human approves)
+// documents/      → Downloadable formal documents (PDF/XML)
+// blocks/         → Block primitives for walkthrough rendering
 
-export { ConfirmationCard, ReceiptCard, TransactionCard } from './confirmation-card'
-export { TaskChecklist, createTaskItems } from './task-checklist'
+// Confirmations
+export { ConfirmationCard } from './confirmations/confirmation-card'
+export { ActivityCard, type ActivityCardProps, type ActivityChange } from './cards/ActivityCard'
+export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './confirmations/comparison-table'
+export { ActionTriggerChip, type ActionTriggerDisplay, type ActionTriggerIcon } from './confirmations/action-trigger-chip'
+
+// Cards
+export { ActivityFeedCard, type ActivityFeedCardProps, type FeedEvent, type FeedAction, type FeedEntity } from './cards/ActivityFeedCard'
 export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type MentionCategory } from './mention-popover'
-export { ActivityCard, type ActivityCardProps, type ActivityChange } from './activity-card'
-export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './comparison-table'
-export { ActionTriggerChip, type ActionTriggerDisplay, type ActionTriggerIcon } from './action-trigger-chip'
 
 // AI Overlay Experience
 export { AIOverlay } from './ai-overlay'

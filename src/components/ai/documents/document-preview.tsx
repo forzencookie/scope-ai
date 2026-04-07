@@ -1,0 +1,307 @@
+"use client"
+
+/**
+ * DocumentPreview - Base component for downloadable document previews
+ *
+ * Used for formal documents that will be downloaded as PDF:
+ * - Fakturor (customers)
+ * - Lönebesked (employees)
+ * - Styrelseprotokoll (board)
+ * - Aktiebok, utdelningsavi, etc.
+ *
+ * Flow: Scooby generates → walkthrough preview → user downloads.
+ * Download is the only export action (no send/print).
+ */
+
+import Image from "next/image"
+import { cn } from "@/lib/utils"
+import { Button } from "@/components/ui/button"
+import { Download, Check, X, Pencil } from "lucide-react"
+import { forwardRef } from "react"
+
+// =============================================================================
+// Types
+// =============================================================================
+
+export interface DocumentPreviewProps {
+    /** Document title shown in header */
+    title: string
+    /** Document subtitle/type */
+    subtitle?: string
+    /** Document reference number */
+    referenceNumber?: string
+    /** Document date */
+    date?: string
+    /** Company info to show in header */
+    companyInfo?: {
+        name: string
+        orgNumber?: string
+        address?: string
+        logo?: string
+    }
+    /** Recipient info (for invoices, payslips, etc.) */
+    recipientInfo?: {
+        name: string
+        address?: string
+        orgNumber?: string
+        email?: string
+    }
+    /** Main document content */
+    children: React.ReactNode
+    /** Additional footer content */
+    footer?: React.ReactNode
+    /** Actions configuration */
+    actions?: {
+        onConfirm?: () => void
+        onCancel?: () => void
+        onEdit?: () => void
+        onDownload?: () => void
+        isLoading?: boolean
+        confirmLabel?: string
+    }
+    /** Extra class names */
+    className?: string
+}
+
+// =============================================================================
+// Component
+// =============================================================================
+
+export const DocumentPreview = forwardRef<HTMLDivElement, DocumentPreviewProps>(
+    function DocumentPreview({
+        title,
+        subtitle,
+        referenceNumber,
+        date,
+        companyInfo,
+        recipientInfo,
+        children,
+        footer,
+        actions,
+        className,
+    }, ref) {
+        return (
+            <div ref={ref} className={cn("flex flex-col gap-4", className)}>
+                {/* Document Paper */}
+                <div className="bg-white border border-neutral-200 rounded-lg shadow-sm overflow-hidden text-neutral-900">
+                    {/* Document Header */}
+                    <div className="p-6 pb-4">
+                        <div className="flex justify-between items-start">
+                            {/* Left: Company info */}
+                            <div>
+                                {companyInfo?.logo ? (
+                                    <Image src={companyInfo.logo} alt="" width={120} height={40} className="h-10 w-auto mb-2" unoptimized />
+                                ) : companyInfo?.name && (
+                                    <h2 className="text-xl font-bold">{companyInfo.name}</h2>
+                                )}
+                                {companyInfo?.orgNumber && (
+                                    <p className="text-sm text-neutral-500">
+                                        Org.nr: {companyInfo.orgNumber}
+                                    </p>
+                                )}
+                                {companyInfo?.address && (
+                                    <p className="text-sm text-neutral-500">
+                                        {companyInfo.address}
+                                    </p>
+                                )}
+                            </div>
+
+                            {/* Right: Document info */}
+                            <div className="text-right">
+                                <h1 className="text-2xl font-bold">{title}</h1>
+                                {subtitle && (
+                                    <p className="text-sm text-neutral-500">{subtitle}</p>
+                                )}
+                                {referenceNumber && (
+                                    <p className="text-sm font-mono mt-1">{referenceNumber}</p>
+                                )}
+                                {date && (
+                                    <p className="text-sm text-neutral-500 mt-1">{date}</p>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Recipient info */}
+                        {recipientInfo && (
+                            <div className="mt-4 pt-0">
+                                <p className="text-xs font-medium text-neutral-500 mb-1">TILL</p>
+                                <p className="font-medium">{recipientInfo.name}</p>
+                                {recipientInfo.orgNumber && (
+                                    <p className="text-sm text-neutral-500">
+                                        Org.nr: {recipientInfo.orgNumber}
+                                    </p>
+                                )}
+                                {recipientInfo.address && (
+                                    <p className="text-sm text-neutral-500">
+                                        {recipientInfo.address}
+                                    </p>
+                                )}
+                                {recipientInfo.email && (
+                                    <p className="text-sm text-neutral-500">
+                                        {recipientInfo.email}
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                    </div>
+
+                    {/* Document Content */}
+                    <div className="p-6">
+                        {children}
+                    </div>
+
+                    {/* Document Footer */}
+                    {footer && (
+                        <div className="p-6 border-t border-neutral-200 bg-neutral-50">
+                            {footer}
+                        </div>
+                    )}
+                </div>
+
+                {/* Action Bar */}
+                {actions && (
+                    <div className="flex flex-wrap items-center gap-2">
+                        {actions.onConfirm && (
+                            <Button
+                                size="sm"
+                                onClick={actions.onConfirm}
+                                disabled={actions.isLoading}
+                            >
+                                {actions.isLoading ? (
+                                    <>
+                                        <span className="animate-spin mr-1">⏳</span>
+                                        Sparar...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check className="h-3.5 w-3.5 mr-1" />
+                                        {actions.confirmLabel || "Godkänn"}
+                                    </>
+                                )}
+                            </Button>
+                        )}
+
+                        {actions.onDownload && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={actions.onDownload}
+                                disabled={actions.isLoading}
+                            >
+                                <Download className="h-3.5 w-3.5 mr-1" />
+                                Ladda ner PDF
+                            </Button>
+                        )}
+
+                        {actions.onEdit && (
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={actions.onEdit}
+                                disabled={actions.isLoading}
+                            >
+                                <Pencil className="h-3.5 w-3.5 mr-1" />
+                                Redigera
+                            </Button>
+                        )}
+
+                        {actions.onCancel && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={actions.onCancel}
+                                disabled={actions.isLoading}
+                                className="ml-auto"
+                            >
+                                <X className="h-3.5 w-3.5 mr-1" />
+                                Avbryt
+                            </Button>
+                        )}
+                    </div>
+                )}
+            </div>
+        )
+    }
+)
+
+// =============================================================================
+// Sub-components for building document content
+// =============================================================================
+
+interface DocumentSectionProps {
+    title?: string
+    children: React.ReactNode
+    className?: string
+}
+
+export function DocumentSection({ title, children, className }: DocumentSectionProps) {
+    return (
+        <div className={cn("space-y-3", className)}>
+            {title && (
+                <h3 className="text-sm font-semibold text-neutral-500 uppercase tracking-wide">
+                    {title}
+                </h3>
+            )}
+            {children}
+        </div>
+    )
+}
+
+interface DocumentTableProps {
+    headers: string[]
+    rows: (string | number)[][]
+    className?: string
+}
+
+export function DocumentTable({ headers, rows, className }: DocumentTableProps) {
+    return (
+        <table className={cn("w-full text-sm", className)}>
+            <thead>
+                <tr className="border-b">
+                    {headers.map((header, i) => (
+                        <th key={i} className={cn(
+                            "py-2 font-medium text-left",
+                            i > 0 && "text-right"
+                        )}>
+                            {header}
+                        </th>
+                    ))}
+                </tr>
+            </thead>
+            <tbody>
+                {rows.map((row, i) => (
+                    <tr key={i} className="border-b border-dashed last:border-0">
+                        {row.map((cell, j) => (
+                            <td key={j} className={cn(
+                                "py-2",
+                                j > 0 && "text-right"
+                            )}>
+                                {cell}
+                            </td>
+                        ))}
+                    </tr>
+                ))}
+            </tbody>
+        </table>
+    )
+}
+
+interface DocumentSummaryRowProps {
+    label: string
+    value: string | number
+    highlight?: boolean
+    className?: string
+}
+
+export function DocumentSummaryRow({ label, value, highlight, className }: DocumentSummaryRowProps) {
+    return (
+        <div className={cn(
+            "flex justify-between",
+            highlight ? "font-bold text-lg pt-2 border-t" : "text-sm",
+            className
+        )}>
+            <span className={!highlight ? "text-neutral-500" : undefined}>{label}</span>
+            <span>{value}</span>
+        </div>
+    )
+}

@@ -11,7 +11,7 @@ import { useChatContext } from "@/providers/chat-provider"
 import { useRouter } from "next/navigation"
 import type { SceneType } from "./pixel-mascots"
 import { CardRenderer } from "./card-renderer"
-import { ConfirmationCard } from "./confirmation-card"
+import { ConfirmationCard } from "./confirmations/confirmation-card"
 import { WalkthroughRenderer } from "./blocks"
 import { WalkthroughOverlay } from "./walkthrough-overlay"
 import { Button } from "@/components/ui/button"
@@ -252,7 +252,6 @@ function CompleteState({ output, onAccept, onEdit, onCancel, returnTo }: {
                             isLoading={false}
                             onConfirm={onAccept}
                             onCancel={onCancel}
-                            onSuggestChange={onEdit}
                         />
                     </div>
                 </div>

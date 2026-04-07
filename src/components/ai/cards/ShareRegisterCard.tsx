@@ -4,7 +4,7 @@ import dynamic from "next/dynamic"
 import { z } from "zod"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
-const ShareRegisterPreview = dynamic(() => import("../previews/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
+const ShareRegisterPreview = dynamic(() => import("../documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
 
 export const ShareholderSchema = z.object({
     id: z.string(),

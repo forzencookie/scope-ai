@@ -4,7 +4,7 @@ import dynamic from "next/dynamic"
 import { z } from "zod"
 import { downloadElementAsPDF } from "@/lib/generators/pdf-generator"
 
-const BoardMinutesPreview = dynamic(() => import("../previews/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
+const BoardMinutesPreview = dynamic(() => import("../documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
 
 export const AttendeeSchema = z.object({
     name: z.string(),

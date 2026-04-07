@@ -5,31 +5,24 @@
  * These are complementary systems, not replacements.
  */
 import type { ComponentType } from "react"
-import { ActivityCard } from "./activity-card"
+import { ActivityCard } from "./cards/ActivityCard"
 import { ReceiptCard } from "./cards/ReceiptCard"
 import { TransactionCard } from "./cards/TransactionCard"
 import { InvoiceCard } from "./cards/InvoiceCard"
-import { TaskChecklist } from "./cards/TaskChecklist"
 import { SummaryCard } from "./cards/SummaryCard"
 import { SmartListCard } from "./cards/GenericListCard"
 
 // Preview Wrappers
-import { VATReportCard } from "./cards/VATReportCard"
-import { AGIReportCard } from "./cards/AGIReportCard"
 import { PayslipCard } from "./cards/PayslipCard"
 import { BoardMinutesCard } from "./cards/BoardMinutesCard"
-import { FinancialReportCard } from "./cards/FinancialReportCard"
 import { ShareRegisterCard } from "./cards/ShareRegisterCard"
-import { TaxDeclarationCard } from "./cards/TaxDeclarationCard"
-import { AnnualReportCard } from "./cards/AnnualReportCard"
-import { K10Card } from "./cards/K10Card"
-import { RoadmapCard } from "./cards/RoadmapCard"
 import { EmployeeCard } from "./cards/EmployeeCard"
 import { VerificationCard } from "./cards/VerificationCard"
 
-// Audit Cards
-import { BalanceAuditCard } from "./previews/bokforing/balance-audit-card"
-import { ResultatAuditCard } from "./previews/bokforing/resultat-audit-card"
+// Activity & Status Cards (ActivityFeedCard handles both timelines and status checklists)
+import { ActivityFeedCard } from "./cards/ActivityFeedCard"
+import { BalanceAuditCard } from "./cards/BalanceAuditCard"
+import { ResultatAuditCard } from "./cards/ResultatAuditCard"
 
 // Billing/Usage Cards
 import { AIUsageCard } from "./cards/AIUsageCard"
@@ -63,8 +56,8 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     invoicecard: card(InvoiceCard),
     invoice: card(InvoiceCard),
 
-    taskchecklist: card(TaskChecklist),
-    checklist: card(TaskChecklist),
+    taskchecklist: card(ActivityFeedCard),
+    checklist: card(ActivityFeedCard),
 
     activitycard: card(ActivityCard),
     activity: card(ActivityCard),
@@ -79,46 +72,15 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     payslippreview: card(PayslipCard),
     lonebesked: card(PayslipCard),
 
-    vatformpreview: card(VATReportCard),
-    momsredovisning: card(VATReportCard),
-    vat: card(VATReportCard),
-
-    agiformpreview: card(AGIReportCard),
-    agi: card(AGIReportCard),
-    arbetsgivardeklaration: card(AGIReportCard),
-
     boardminutespreview: card(BoardMinutesCard),
     styrelseprotokoll: card(BoardMinutesCard),
     protocol: card(BoardMinutesCard),
     meeting: card(BoardMinutesCard),
 
-    financialreportpreview: card(FinancialReportCard),
-    financialreport: card(FinancialReportCard),
-    resultat: card(FinancialReportCard),
-    balans: card(FinancialReportCard),
-    resultatbalans: card(FinancialReportCard),
-
     shareregisterpreview: card(ShareRegisterCard),
     shareregister: card(ShareRegisterCard),
     aktiebok: card(ShareRegisterCard),
     shares: card(ShareRegisterCard),
-
-    k10formpreview: card(K10Card),
-    k10: card(K10Card),
-
-    taxdeclarationpreview: card(TaxDeclarationCard),
-    taxdeclaration: card(TaxDeclarationCard),
-    inkomstdeklaration: card(TaxDeclarationCard),
-    ink2: card(TaxDeclarationCard),
-
-    annualreportpreview: card(AnnualReportCard),
-    annualreport: card(AnnualReportCard),
-    arsredovisning: card(AnnualReportCard),
-
-    roadmappreview: card(RoadmapCard),
-    roadmap: card(RoadmapCard),
-    plan: card(RoadmapCard),
-    planering: card(RoadmapCard),
 
     employeepreview: card(EmployeeCard),
     employee: card(EmployeeCard),
@@ -141,6 +103,17 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     deadlineslist: card(SmartListCard),
     benefitstable: card(SmartListCard),
     vatsummary: card(SmartListCard),
+
+    // Status Overview (now uses ActivityFeedCard with status badges)
+    statuslist: card(ActivityFeedCard),
+    statusoverview: card(ActivityFeedCard),
+    manadsavslut: card(ActivityFeedCard),
+    openitems: card(ActivityFeedCard),
+
+    // Activity Feed
+    activityfeed: card(ActivityFeedCard),
+    historik: card(ActivityFeedCard),
+    events: card(ActivityFeedCard),
 
     // Audit
     balanceauditcard: card(BalanceAuditCard),

@@ -1,13 +1,20 @@
 "use client"
 
 import Link from "next/link"
-import { Sparkles, Calculator, FileText, CheckCircle2, ArrowLeft, BarChart3, Receipt } from "lucide-react"
+import { Sparkles, Calculator, FileText, ArrowLeft, BarChart3, Receipt, LayoutGrid, ShieldCheck, FileStack, Users, PieChart, Building2, Play, BookOpen } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const walkthroughPages = [
+    { href: "/test-ui/walkthroughs/scenario", label: "Scenario: Månadsavslut", icon: Play, description: "Komplett konversation — balanskontroll → lönebesked → bokföring → AGI walkthrough", color: "from-green-500/20 to-green-500/5", iconColor: "text-green-600 dark:text-green-400", iconBg: "bg-green-100 dark:bg-green-900/40" },
+    { href: "/test-ui/walkthroughs/cards", label: "Alla kort (Layer 1)", icon: LayoutGrid, description: "Varje korttyp som Scooby visar inline i chatten — 22 display + 8 inline", color: "from-violet-500/20 to-violet-500/5", iconColor: "text-violet-600 dark:text-violet-400", iconBg: "bg-violet-100 dark:bg-violet-900/40" },
+    { href: "/test-ui/walkthroughs/confirmation", label: "Bekräftelse & Interaktion", icon: ShieldCheck, description: "Godkännande-UI, åtgärdskvitton och batchbekräftelser", color: "from-cyan-500/20 to-cyan-500/5", iconColor: "text-cyan-600 dark:text-cyan-400", iconBg: "bg-cyan-100 dark:bg-cyan-900/40" },
+    { href: "/test-ui/walkthroughs/documents", label: "Dokument & Audit", icon: FileStack, description: "Lönebesked, protokoll, aktiebok + balanskontroll, resultatkontroll", color: "from-teal-500/20 to-teal-500/5", iconColor: "text-teal-600 dark:text-teal-400", iconBg: "bg-teal-100 dark:bg-teal-900/40" },
+    { href: "/test-ui/walkthroughs/agi", label: "Arbetsgivardeklaration (AGI)", icon: Users, description: "Block Renderer — Individuppgifter med härledning från lönekörningar", color: "from-pink-500/20 to-pink-500/5", iconColor: "text-pink-600 dark:text-pink-400", iconBg: "bg-pink-100 dark:bg-pink-900/40" },
+    { href: "/test-ui/walkthroughs/k10", label: "K10 — Kvalificerade andelar", icon: PieChart, description: "Block Renderer — Gränsbelopp, 3:12-regler, härlett från aktiebok och löneregister", color: "from-orange-500/20 to-orange-500/5", iconColor: "text-orange-600 dark:text-orange-400", iconBg: "bg-orange-100 dark:bg-orange-900/40" },
+    { href: "/test-ui/walkthroughs/inkomstdeklaration", label: "Inkomstdeklaration 2 (INK2)", icon: Building2, description: "Block Renderer — Skattemässiga justeringar med verifikationer som källa", color: "from-slate-500/20 to-slate-500/5", iconColor: "text-slate-600 dark:text-slate-400", iconBg: "bg-slate-100 dark:bg-slate-900/40" },
+    { href: "/test-ui/walkthroughs/arsredovisning", label: "Årsredovisning", icon: BookOpen, description: "Block Renderer — Komplett K2-årsredovisning med provenance från bokföring, aktiebok, styrelseprotokoll", color: "from-sky-500/20 to-sky-500/5", iconColor: "text-sky-600 dark:text-sky-400", iconBg: "bg-sky-100 dark:bg-sky-900/40" },
     { href: "/test-ui/walkthroughs/egenavgifter", label: "Egenavgifter", icon: Calculator, description: "Block Renderer - Visar beräkning av preliminärskatt och egenavgifter", color: "from-blue-500/20 to-blue-500/5", iconColor: "text-blue-600 dark:text-blue-400", iconBg: "bg-blue-100 dark:bg-blue-900/40" },
     { href: "/test-ui/walkthroughs/momsdeklaration", label: "Momsdeklaration", icon: FileText, description: "Document Overlay - Deklaration och kontroll av transaktioner", color: "from-indigo-500/20 to-indigo-500/5", iconColor: "text-indigo-600 dark:text-indigo-400", iconBg: "bg-indigo-100 dark:bg-indigo-900/40" },
-    { href: "/test-ui/walkthroughs/balanskontroll", label: "Balanskontroll", icon: CheckCircle2, description: "Audit Overlay - Rimlighetsbedömning och avvikelser i bokföringen", color: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-900/40" },
     { href: "/test-ui/walkthroughs/resultatrakning", label: "Resultaträkning", icon: BarChart3, description: "Block Renderer - Interaktiv månatlig resultatöversikt", color: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-600 dark:text-amber-400", iconBg: "bg-amber-100 dark:bg-amber-900/40" },
     { href: "/test-ui/walkthroughs/balansrakning", label: "Balansräkning", icon: Receipt, description: "Block Renderer - Tillgångar, skulder och eget kapital över tid", color: "from-rose-500/20 to-rose-500/5", iconColor: "text-rose-600 dark:text-rose-400", iconBg: "bg-rose-100 dark:bg-rose-900/40" },
 ]

@@ -34,6 +34,7 @@ const PUBLIC_ROUTES = [
 const ADMIN_ROUTES = [
     '/admin',
     '/api/admin',
+    '/test-ui',
 ]
 
 /**

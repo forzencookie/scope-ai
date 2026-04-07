@@ -4,6 +4,7 @@ import { useState, useMemo } from "react"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
+import { ScoobyPresentation } from "@/components/ai/scooby-presentation"
 import type { WalkthroughResponse } from "@/components/ai/blocks/types"
 
 /**
@@ -81,42 +82,6 @@ function buildWalkthrough(annualProfit: number): WalkthroughResponse {
         title: "Egenavgifter 2026",
         subtitle: `Beräkning baserad på årsvinst ${fmt(annualProfit)} · Enskild firma`,
         blocks: [
-            // Top-level stats
-            {
-                type: "stat-cards",
-                props: {
-                    items: [
-                        {
-                            label: "Totala egenavgifter",
-                            value: fmt(avgifter),
-                            change: pct(effective) + " av vinsten",
-                            trend: "neutral" as const,
-                            icon: "calculator",
-                            iconColor: "blue" as const,
-                            valueColor: "red" as const,
-                        },
-                        {
-                            label: "Kvar efter avgifter",
-                            value: fmt(netto),
-                            change: "Före inkomstskatt",
-                            trend: "neutral" as const,
-                            icon: "wallet",
-                            iconColor: "emerald" as const,
-                            valueColor: "green" as const,
-                        },
-                        {
-                            label: "Månadsbelopp (F-skatt)",
-                            value: fmt(monthlyAvgifter),
-                            change: "Betalas den 12:e",
-                            trend: "neutral" as const,
-                            icon: "banknote",
-                            iconColor: "violet" as const,
-                            valueColor: "red" as const,
-                        },
-                    ],
-                },
-            },
-
             // Calculation breakdown
             {
                 type: "heading",
@@ -223,32 +188,51 @@ export default function TestEgenavgifterWalkthroughPage() {
     const [profit, setProfit] = useState(480000)
     const walkthrough = useMemo(() => buildWalkthrough(profit), [profit])
 
+    // Compute highlight values for ScoobyPresentation
+    const fullRate = Object.values(RATES).reduce((sum, r) => sum + r, 0)
+    const base = profit * 0.75
+    const avgifter = Math.round(base * fullRate)
+    const netto = profit - avgifter
+    const monthlyAvgifter = Math.round(avgifter / 12)
+    const effective = profit > 0 ? avgifter / profit : 0
+
     return (
         <div className="min-h-screen bg-background">
             {/* Test controls — not part of the walkthrough */}
-            <div className="max-w-3xl mx-auto px-6 pt-6 flex items-center justify-between">
-                <Link
-                    href="/test-ui"
-                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                >
-                    <ArrowLeft className="h-3.5 w-3.5" />
-                    Alla test-sidor
-                </Link>
-                <div className="flex items-center gap-3">
-                    <label className="text-xs text-muted-foreground">Årsvinst:</label>
-                    <input
-                        type="range"
-                        min={0}
-                        max={2000000}
-                        step={10000}
-                        value={profit}
-                        onChange={(e) => setProfit(Number(e.target.value))}
-                        className="w-40 accent-blue-500"
-                    />
-                    <span className="text-xs font-mono tabular-nums w-24 text-right">
-                        {fmt(profit)}
-                    </span>
+            <div className="max-w-3xl mx-auto px-6 pt-6 space-y-4">
+                <div className="flex items-center justify-between">
+                    <Link
+                        href="/test-ui/walkthroughs"
+                        className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                    >
+                        <ArrowLeft className="h-3.5 w-3.5" />
+                        Walkthroughs & Overlays
+                    </Link>
+                    <div className="flex items-center gap-3">
+                        <label className="text-xs text-muted-foreground">Årsvinst:</label>
+                        <input
+                            type="range"
+                            min={0}
+                            max={2000000}
+                            step={10000}
+                            value={profit}
+                            onChange={(e) => setProfit(Number(e.target.value))}
+                            className="w-40 accent-blue-500"
+                        />
+                        <span className="text-xs font-mono tabular-nums w-24 text-right">
+                            {fmt(profit)}
+                        </span>
+                    </div>
                 </div>
+
+                <ScoobyPresentation
+                    message="Här är beräkningen av dina egenavgifter baserat på årsvinsten. F-skatten betalas den 12:e varje månad."
+                    highlights={[
+                        { label: "Totala egenavgifter", value: fmt(avgifter), detail: pct(effective) + " av vinsten" },
+                        { label: "Kvar efter avgifter", value: fmt(netto), detail: "Före inkomstskatt" },
+                        { label: "Månadsbelopp (F-skatt)", value: fmt(monthlyAvgifter), detail: "Betalas den 12:e" },
+                    ]}
+                />
             </div>
 
             {/* Walkthrough rendered exactly as Scooby would show it */}

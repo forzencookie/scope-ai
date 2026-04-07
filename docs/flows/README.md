@@ -19,6 +19,7 @@
 | [Information Pages](information-pages.md) | Read-only data displays, table structure, page list |
 | [Tools](tools.md) | AI tool architecture, rule engine, service layer, tool categories |
 | [Walkthrough Overlays](walkthrough-overlays.md) | Card click → full preview, auto-rendered reports, block primitives |
+| [Scooby Streaming UI](scooby-streaming-ui.md) | Component catalog, rendering rules, WalkthroughOpenerCard mapping, test page reference |
 | [Page Overlays](page-overlays.md) | Table row click → detail view, replaces all dialogs |
 
 ## Supporting Flows

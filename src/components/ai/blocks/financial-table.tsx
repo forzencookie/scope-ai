@@ -1,4 +1,7 @@
-import { Calendar, Banknote, Receipt, TrendingUp, Percent, Hash, type LucideIcon } from "lucide-react"
+"use client"
+
+import Link from "next/link"
+import { Calendar, Banknote, Receipt, TrendingUp, Percent, Hash, FileText, Book, User, Tag, Gift, type LucideIcon, ExternalLink } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { FinancialTableProps, FinancialColumnDef } from "./types"
 
@@ -9,6 +12,11 @@ const ICON_MAP: Record<string, LucideIcon> = {
   "trending-up": TrendingUp,
   percent: Percent,
   hash: Hash,
+  "file-text": FileText,
+  book: Book,
+  user: User,
+  tag: Tag,
+  gift: Gift,
 }
 
 const COLOR_CLASSES = {
@@ -26,14 +34,18 @@ function resolveColumn(col: string | FinancialColumnDef): FinancialColumnDef {
 function formatValue(value: string | number, color?: FinancialColumnDef["color"]): string {
   const str = String(value)
   if (!color || color === "default" || color === "muted") return str
-  // Don't double-prefix if already has a sign
   if (str.startsWith("+") || str.startsWith("–") || str.startsWith("-")) return str
   if (color === "red") return "– " + str
   if (color === "green") return "+ " + str
   return str
 }
 
-export function FinancialTable({ columns, rows, totals, highlights, variant = "default" }: FinancialTableProps) {
+/** Inline style for proportional column widths */
+function colStyle(col: FinancialColumnDef) {
+  return { flex: col.width ?? 1 }
+}
+
+export function FinancialTable({ columns, rows, rowMeta, totals, highlights, variant = "default" }: FinancialTableProps) {
   const cols = columns.map(resolveColumn)
   const isCompact = variant === "compact"
 
@@ -49,7 +61,8 @@ export function FinancialTable({ columns, rows, totals, highlights, variant = "d
           return (
             <div
               key={col.label}
-              className={cn("flex-1", ci > 0 && "text-right")}
+              style={colStyle(col)}
+              className={cn(ci > 0 && "text-right")}
             >
               <span className={cn("inline-flex items-center gap-1.5", ci > 0 && "justify-end")}>
                 {Icon && <Icon className="h-3.5 w-3.5" />}
@@ -64,20 +77,17 @@ export function FinancialTable({ columns, rows, totals, highlights, variant = "d
       {rows.map((row, i) => {
         const rowKey = Object.values(row).join("-")
         const isHighlighted = highlights?.some((h) => Object.values(row).includes(h))
-        return (
-          <div
-            key={`${rowKey}-${i}`}
-            className={cn(
-              "flex px-4 py-2 rounded-lg",
-              !isCompact && "transition-colors hover:bg-muted/30",
-              isHighlighted && "bg-amber-50 dark:bg-amber-950/20"
-            )}
-          >
+        const meta = rowMeta?.[i]
+        const hasLink = meta?.href
+
+        const rowContent = (
+          <>
             {cols.map((col, ci) => (
               <div
                 key={col.label}
+                style={colStyle(col)}
                 className={cn(
-                  "flex-1 tabular-nums",
+                  "tabular-nums",
                   ci === 0 ? "font-medium" : "text-right",
                   col.color ? COLOR_CLASSES[col.color] : (ci > 0 ? "text-muted-foreground" : "")
                 )}
@@ -85,6 +95,40 @@ export function FinancialTable({ columns, rows, totals, highlights, variant = "d
                 {formatValue(row[col.label] ?? "", col.color)}
               </div>
             ))}
+            {hasLink && (
+              <div className="shrink-0 ml-2 opacity-0 group-hover/row:opacity-100 transition-opacity flex items-center">
+                <ExternalLink className="h-3 w-3 text-muted-foreground" />
+              </div>
+            )}
+          </>
+        )
+
+        if (hasLink) {
+          return (
+            <Link
+              key={`${rowKey}-${i}`}
+              href={meta.href!}
+              className={cn(
+                "flex px-4 py-2 rounded-lg group/row",
+                "transition-colors hover:bg-muted/40 cursor-pointer",
+                isHighlighted && "bg-amber-50 dark:bg-amber-950/20"
+              )}
+            >
+              {rowContent}
+            </Link>
+          )
+        }
+
+        return (
+          <div
+            key={`${rowKey}-${i}`}
+            className={cn(
+              "flex px-4 py-2 rounded-lg group/row",
+              !isCompact && "transition-colors hover:bg-muted/30",
+              isHighlighted && "bg-amber-50 dark:bg-amber-950/20"
+            )}
+          >
+            {rowContent}
           </div>
         )
       })}
@@ -95,8 +139,9 @@ export function FinancialTable({ columns, rows, totals, highlights, variant = "d
           {cols.map((col, ci) => (
             <div
               key={col.label}
+              style={colStyle(col)}
               className={cn(
-                "flex-1 tabular-nums",
+                "tabular-nums",
                 ci > 0 && "text-right",
                 col.color && COLOR_CLASSES[col.color]
               )}

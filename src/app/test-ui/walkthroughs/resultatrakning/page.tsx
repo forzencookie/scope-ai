@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
+import { ScoobyPresentation } from "@/components/ai/scooby-presentation"
 import type { WalkthroughResponse } from "@/components/ai/blocks/types"
 
 const resultatrakningScenario: WalkthroughResponse = {
@@ -10,16 +11,6 @@ const resultatrakningScenario: WalkthroughResponse = {
     title: "Resultaträkning",
     subtitle: "Rapport för Q1 2026",
     blocks: [
-        {
-            type: "stat-cards",
-            props: {
-                items: [
-                    { label: "Intäkter", value: "450 000 kr", change: "+15% från Q4", trend: "up", icon: "wallet", iconColor: "emerald", valueColor: "default" },
-                    { label: "Kostnader", value: "210 000 kr", change: "+2% från Q4", trend: "up", icon: "receipt", iconColor: "red", valueColor: "red" },
-                    { label: "Rörelseresultat", value: "240 000 kr", change: "+29% från Q4", trend: "up", icon: "banknote", iconColor: "blue", valueColor: "green" },
-                ]
-            }
-        },
         {
             type: "financial-table",
             props: {
@@ -53,7 +44,7 @@ const resultatrakningScenario: WalkthroughResponse = {
 export default function TestResultatrakningWalkthroughPage() {
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-3xl mx-auto px-6 pt-6 flex items-center justify-between z-10 relative">
+            <div className="max-w-3xl mx-auto px-6 pt-6 space-y-4">
                 <Link
                     href="/test-ui/walkthroughs"
                     className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -61,6 +52,15 @@ export default function TestResultatrakningWalkthroughPage() {
                     <ArrowLeft className="h-3.5 w-3.5" />
                     Alla Walkthroughs
                 </Link>
+
+                <ScoobyPresentation
+                    message="Här är resultaträkningen för Q1 2026. Intäkterna ökade 15% jämfört med förra kvartalet."
+                    highlights={[
+                        { label: "Intäkter", value: "450 000 kr", detail: "+15% från Q4" },
+                        { label: "Kostnader", value: "210 000 kr", detail: "+2% från Q4" },
+                        { label: "Rörelseresultat", value: "240 000 kr", detail: "+29% från Q4" },
+                    ]}
+                />
             </div>
 
             <WalkthroughRenderer

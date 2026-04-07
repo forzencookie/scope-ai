@@ -11,12 +11,12 @@ import Link from "next/link"
 import { ConfirmationCard } from "@/components/ai"
 import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
 import { TransactionCard } from "@/components/ai/cards/TransactionCard"
-import { TaskChecklist } from "@/components/ai/cards/TaskChecklist"
-import { ActivityCard } from "@/components/ai/activity-card"
-import { ComparisonTable } from "@/components/ai/comparison-table"
-import { ActionTriggerChip } from "@/components/ai/action-trigger-chip"
+import { ActivityFeedCard } from "@/components/ai/cards/ActivityFeedCard"
+import { ActivityCard } from "@/components/ai/cards/ActivityCard"
+import { ComparisonTable } from "@/components/ai/confirmations/comparison-table"
+import { ActionTriggerChip } from "@/components/ai/confirmations/action-trigger-chip"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
-import { BalanceAuditCard, type BalanceAuditCardProps } from "@/components/ai/previews/bokforing/balance-audit-card"
+import { BalanceAuditCard, type BalanceAuditCardProps } from "@/components/ai/cards/BalanceAuditCard"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import { normalizeAIDisplay } from "@/lib/ai-schema"
@@ -216,7 +216,15 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                                     return <TransactionCard transaction={txd} />
                                 case 'TaskChecklist':
                                     const t = normalized as TaskChecklistData
-                                    return <TaskChecklist title={t.title} tasks={t.tasks} />
+                                    return <ActivityFeedCard
+                                        title={t.title}
+                                        events={t.tasks.map(task => ({
+                                            id: task.id,
+                                            action: task.completed ? "done" as const : "pending" as const,
+                                            entityType: "check" as const,
+                                            title: task.label,
+                                        }))}
+                                    />
                                 case 'BenefitsTable':
                                     const b = normalized as BenefitsTableData
                                     return (

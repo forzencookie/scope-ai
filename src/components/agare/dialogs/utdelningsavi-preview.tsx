@@ -10,7 +10,7 @@ import {
     DocumentPreview,
     DocumentSection,
     DocumentSummaryRow,
-} from "@/components/ai/previews/document-preview"
+} from "@/components/ai/documents/document-preview"
 import { useCompany } from "@/providers/company-provider"
 import { formatCurrency, formatDateLong } from "@/lib/utils"
 import {

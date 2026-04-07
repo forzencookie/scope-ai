@@ -5,7 +5,7 @@ import Link from "next/link"
 import { ArrowLeft, User, Sparkles, Database, Code, CheckCircle2, Loader2, ChevronDown, ChevronUp } from "lucide-react"
 import { cn } from "@/lib/utils"
 
-function ToolCallSimulation({ icon: Icon, name, description, result, active, time }: { icon: any, name: string, description: string, result?: string, active?: boolean, time: string }) {
+function ToolCallSimulation({ icon: Icon, name, description, result, active, time }: { icon: React.ComponentType<{ className?: string }>, name: string, description: string, result?: string, active?: boolean, time: string }) {
     const [open, setOpen] = useState(false)
 
     return (
@@ -109,7 +109,7 @@ export default function TestToolCallStreamingPage() {
                                     icon={Code}
                                     name="Läser bokföringsregler" 
                                     description="Hämtar momsregler för IT-tjänster (Konto 5420)"
-                                    result={null}
+                                    result={undefined}
                                     active={true}
                                     time="..."
                                 />

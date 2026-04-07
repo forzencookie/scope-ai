@@ -14,7 +14,7 @@ import type {
 } from './ai-schema'
 
 // Import component prop types for compatibility where needed
-import type { BalanceAuditCardProps } from '@/components/ai/previews/bokforing/balance-audit-card'
+import type { BalanceAuditCardProps } from '@/components/ai/cards/BalanceAuditCard'
 import type { InlineCardData } from '@/components/ai/cards/inline'
 
 // Display card data types - strictly typed discriminated union

@@ -151,8 +151,6 @@ export function WalkthroughRenderer({ response, onClose, isThinking, onBlockEdit
           )}
         </header>
 
-        <hr className="border-border mb-6" />
-
         {/* Blocks */}
         <div className="space-y-6">
           {response.blocks.map((block, i) => (

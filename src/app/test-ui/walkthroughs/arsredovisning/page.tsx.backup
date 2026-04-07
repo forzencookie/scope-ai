@@ -1,0 +1,579 @@
+"use client"
+
+import { useMemo } from "react"
+import Link from "next/link"
+import { ArrowLeft } from "lucide-react"
+import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
+import type { WalkthroughResponse, BlockProps } from "@/components/ai/blocks/types"
+
+/**
+ * Test page: Årsredovisning (Annual Report) as a walkthrough overlay
+ *
+ * Shows provenance: every section of the annual report traces back to
+ * source data in the system — resultaträkning, balansräkning, verifikationer,
+ * styrelseprotokoll, aktiebok. The user sees exactly where each number
+ * and statement came from.
+ *
+ * This is what Scooby renders when a user asks:
+ * "Gör årsredovisningen" or "Förbered inlämning till Bolagsverket"
+ *
+ * Structure follows K2-regelverket (BFNAR 2016:10):
+ * 1. Förvaltningsberättelse
+ * 2. Resultaträkning
+ * 3. Balansräkning
+ * 4. Noter (tilläggsupplysningar)
+ * 5. Underskrifter
+ */
+
+function fmt(n: number): string {
+    return n.toLocaleString("sv-SE", { maximumFractionDigits: 0 }) + " kr"
+}
+
+function pct(n: number): string {
+    return (n * 100).toFixed(1) + "%"
+}
+
+// Source data types
+interface ResultatSource {
+    revenue: number
+    operatingCosts: number
+    personnelCosts: number
+    depreciations: number
+    otherCosts: number
+    financialIncome: number
+    financialCosts: number
+    taxCurrent: number
+    resultAfterTax: number
+    source: string
+}
+
+interface BalansSource {
+    assets: {
+        tangible: number
+        financial: number
+        inventory: number
+        receivables: number
+        cash: number
+        totalAssets: number
+    }
+    equity: {
+        shareCapital: number
+        reserves: number
+        retainedEarnings: number
+        yearResult: number
+        totalEquity: number
+    }
+    liabilities: {
+        longTerm: number
+        shortTerm: number
+        taxLiabilities: number
+        totalLiabilities: number
+    }
+    totalEquityAndLiabilities: number
+    source: string
+}
+
+interface BoardMember {
+    name: string
+    role: string
+    signed: boolean
+}
+
+interface KeyEvent {
+    date: string
+    description: string
+    source: string
+}
+
+function buildWalkthrough(
+    companyName: string,
+    orgNumber: string,
+    fiscalYear: string,
+    resultat: ResultatSource,
+    balans: BalansSource,
+    boardMembers: BoardMember[],
+    keyEvents: KeyEvent[],
+    previousYear: { revenue: number; result: number; equity: number; balanceTotal: number },
+): WalkthroughResponse {
+    const operatingResult = resultat.revenue - resultat.operatingCosts - resultat.personnelCosts - resultat.depreciations - resultat.otherCosts
+    const soliditet = balans.equity.totalEquity / balans.assets.totalAssets
+    const kassalikviditet = (balans.assets.receivables + balans.assets.cash) / balans.liabilities.shortTerm
+    const signed = boardMembers.filter(m => m.signed)
+    const unsigned = boardMembers.filter(m => !m.signed)
+
+    // Note sources — specific accounts that need tilläggsupplysningar
+    const noteBlocks: BlockProps[] = [
+        {
+            type: "heading",
+            props: { text: "Not 1 — Redovisningsprinciper", level: 3 },
+        },
+        {
+            type: "prose",
+            props: {
+                content: "Årsredovisningen har upprättats enligt årsredovisningslagen och BFNAR 2016:10 (K2). Tillgångar och skulder värderas till anskaffningsvärde om inget annat anges.",
+            },
+        },
+        {
+            type: "heading",
+            props: { text: "Not 2 — Medelantal anställda", level: 3 },
+        },
+        {
+            type: "annotation",
+            props: { text: "Källa: Löneregister 2025 — 3 anställda hela året", variant: "muted" },
+        },
+        {
+            type: "key-value",
+            props: {
+                items: [
+                    { label: "Medelantal anställda", value: "3" },
+                    { label: "Varav kvinnor", value: "2" },
+                    { label: "Varav män", value: "1" },
+                ],
+            },
+        },
+        {
+            type: "heading",
+            props: { text: "Not 3 — Materiella anläggningstillgångar", level: 3 },
+        },
+        {
+            type: "annotation",
+            props: { text: "Källa: Konto 1200-1299 + avskrivningsplan", variant: "muted" },
+        },
+        {
+            type: "key-value",
+            props: {
+                items: [
+                    { label: "Ingående anskaffningsvärde", value: fmt(180000) },
+                    { label: "Årets avskrivningar", value: `−${fmt(resultat.depreciations)}` },
+                    { label: "Utgående bokfört värde", value: fmt(balans.assets.tangible) },
+                ],
+            },
+        },
+        {
+            type: "heading",
+            props: { text: "Not 4 — Skulder till kreditinstitut", level: 3 },
+        },
+        {
+            type: "annotation",
+            props: { text: "Källa: Konto 2350 — Banklån SEB", variant: "muted" },
+        },
+        {
+            type: "key-value",
+            props: {
+                items: [
+                    { label: "Skuld vid årets ingång", value: fmt(250000) },
+                    { label: "Årets amortering", value: `−${fmt(50000)}` },
+                    { label: "Skuld vid årets utgång", value: fmt(balans.liabilities.longTerm) },
+                    { label: "Varav förfaller inom 1 år", value: fmt(50000) },
+                    { label: "Varav förfaller senare än 5 år", value: fmt(0) },
+                ],
+            },
+        },
+    ]
+
+    return {
+        mode: "fixed",
+        title: `Årsredovisning ${fiscalYear}`,
+        subtitle: `${companyName} (${orgNumber}) · K2-regelverket · Bolagsverket`,
+        blocks: [
+            // Top stats
+            {
+                type: "stat-cards",
+                props: {
+                    items: [
+                        {
+                            label: "Nettoomsättning",
+                            value: fmt(resultat.revenue),
+                            change: `Föreg. år: ${fmt(previousYear.revenue)}`,
+                            trend: resultat.revenue > previousYear.revenue ? "up" as const : "down" as const,
+                            icon: "trending-up",
+                            iconColor: "emerald" as const,
+                            valueColor: "default" as const,
+                        },
+                        {
+                            label: "Årets resultat",
+                            value: fmt(resultat.resultAfterTax),
+                            change: `Föreg. år: ${fmt(previousYear.result)}`,
+                            trend: resultat.resultAfterTax > previousYear.result ? "up" as const : "down" as const,
+                            icon: "bar-chart",
+                            iconColor: "blue" as const,
+                            valueColor: resultat.resultAfterTax >= 0 ? "green" as const : "red" as const,
+                        },
+                        {
+                            label: "Soliditet",
+                            value: pct(soliditet),
+                            change: `Eget kapital: ${fmt(balans.equity.totalEquity)}`,
+                            trend: "neutral" as const,
+                            icon: "shield",
+                            iconColor: "violet" as const,
+                            valueColor: "default" as const,
+                        },
+                    ],
+                },
+            },
+
+            // Completion status
+            {
+                type: "status-check",
+                props: {
+                    items: [
+                        { label: "Förvaltningsberättelse", status: "pass", detail: "Verksamhetsbeskrivning + väsentliga händelser" },
+                        { label: "Resultaträkning", status: "pass", detail: resultat.source },
+                        { label: "Balansräkning", status: "pass", detail: balans.source },
+                        { label: "Tilläggsupplysningar (noter)", status: "pass", detail: "4 noter" },
+                        {
+                            label: "Underskrifter",
+                            status: unsigned.length === 0 ? "pass" : "warning",
+                            detail: unsigned.length === 0
+                                ? `Alla ${signed.length} ledamöter har signerat`
+                                : `${unsigned.length} av ${boardMembers.length} saknar signatur`,
+                        },
+                    ],
+                },
+            },
+
+            // ═══════════════════════════════════════════════════════════════
+            // 1. FÖRVALTNINGSBERÄTTELSE
+            // ═══════════════════════════════════════════════════════════════
+            {
+                type: "separator",
+                props: { label: "1. Förvaltningsberättelse" },
+            },
+            {
+                type: "prose",
+                props: {
+                    content: `**Verksamhetens art och inriktning**\n\n${companyName} bedriver utveckling och försäljning av AI-baserade bokföringstjänster för svenska småföretag. Bolaget har sitt säte i Stockholm.`,
+                },
+            },
+            {
+                type: "heading",
+                props: { text: "Väsentliga händelser under räkenskapsåret", level: 3 },
+            },
+            {
+                type: "financial-table",
+                props: {
+                    columns: [
+                        { label: "Datum", icon: "calendar", color: "muted" as const },
+                        { label: "Händelse", icon: "file-text" },
+                        { label: "Källa", icon: "link", color: "muted" as const },
+                    ],
+                    variant: "compact",
+                    rows: keyEvents.map(e => ({
+                        Datum: e.date,
+                        Händelse: e.description,
+                        Källa: e.source,
+                    })),
+                },
+            },
+
+            // Flerårsöversikt
+            {
+                type: "heading",
+                props: { text: "Flerårsöversikt", level: 3 },
+            },
+            {
+                type: "financial-table",
+                props: {
+                    columns: [
+                        { label: "Nyckeltal", icon: "bar-chart" },
+                        { label: fiscalYear, icon: "calendar" },
+                        { label: String(parseInt(fiscalYear) - 1), icon: "calendar", color: "muted" as const },
+                    ],
+                    rows: [
+                        { Nyckeltal: "Nettoomsättning", [fiscalYear]: fmt(resultat.revenue), [String(parseInt(fiscalYear) - 1)]: fmt(previousYear.revenue) },
+                        { Nyckeltal: "Rörelseresultat", [fiscalYear]: fmt(operatingResult), [String(parseInt(fiscalYear) - 1)]: fmt(Math.round(previousYear.result * 1.15)) },
+                        { Nyckeltal: "Resultat efter skatt", [fiscalYear]: fmt(resultat.resultAfterTax), [String(parseInt(fiscalYear) - 1)]: fmt(previousYear.result) },
+                        { Nyckeltal: "Balansomslutning", [fiscalYear]: fmt(balans.assets.totalAssets), [String(parseInt(fiscalYear) - 1)]: fmt(previousYear.balanceTotal) },
+                        { Nyckeltal: "Soliditet", [fiscalYear]: pct(soliditet), [String(parseInt(fiscalYear) - 1)]: pct(previousYear.equity / previousYear.balanceTotal) },
+                        { Nyckeltal: "Kassalikviditet", [fiscalYear]: pct(kassalikviditet), [String(parseInt(fiscalYear) - 1)]: "—" },
+                    ],
+                },
+            },
+            {
+                type: "annotation",
+                props: { text: "Källa: Bokslut 2025 + jämförelsetal från föregående årsredovisning", variant: "muted" },
+            },
+
+            // Resultatdisposition
+            {
+                type: "heading",
+                props: { text: "Förslag till resultatdisposition", level: 3 },
+            },
+            {
+                type: "key-value",
+                props: {
+                    items: [
+                        { label: "Balanserat resultat", value: fmt(balans.equity.retainedEarnings) },
+                        { label: "Årets resultat", value: fmt(resultat.resultAfterTax) },
+                        { label: "Summa", value: fmt(balans.equity.retainedEarnings + resultat.resultAfterTax) },
+                        { label: "Föreslagen utdelning", value: fmt(0) },
+                        { label: "Balanseras i ny räkning", value: fmt(balans.equity.retainedEarnings + resultat.resultAfterTax) },
+                    ],
+                },
+            },
+            {
+                type: "annotation",
+                props: { text: "Källa: Balansräkning konto 2098 (balanserat) + årets resultat", variant: "muted" },
+            },
+
+            // ═══════════════════════════════════════════════════════════════
+            // 2. RESULTATRÄKNING
+            // ═══════════════════════════════════════════════════════════════
+            {
+                type: "separator",
+                props: { label: "2. Resultaträkning" },
+            },
+            {
+                type: "annotation",
+                props: { text: `Källa: ${resultat.source}`, variant: "muted" },
+            },
+            {
+                type: "financial-table",
+                props: {
+                    columns: [
+                        { label: "Post", icon: "file-text" },
+                        { label: fiscalYear, icon: "banknote" },
+                    ],
+                    rows: [
+                        { Post: "Nettoomsättning", [fiscalYear]: fmt(resultat.revenue) },
+                        { Post: "Övriga rörelseintäkter", [fiscalYear]: fmt(0) },
+                        { Post: "Rörelsens kostnader", [fiscalYear]: "" },
+                        { Post: "  Råvaror och förnödenheter", [fiscalYear]: `−${fmt(resultat.operatingCosts)}` },
+                        { Post: "  Personalkostnader", [fiscalYear]: `−${fmt(resultat.personnelCosts)}` },
+                        { Post: "  Avskrivningar", [fiscalYear]: `−${fmt(resultat.depreciations)}` },
+                        { Post: "  Övriga rörelsekostnader", [fiscalYear]: `−${fmt(resultat.otherCosts)}` },
+                        { Post: "Rörelseresultat", [fiscalYear]: fmt(operatingResult) },
+                        { Post: "Finansiella intäkter", [fiscalYear]: fmt(resultat.financialIncome) },
+                        { Post: "Finansiella kostnader", [fiscalYear]: `−${fmt(resultat.financialCosts)}` },
+                        { Post: "Resultat före skatt", [fiscalYear]: fmt(operatingResult + resultat.financialIncome - resultat.financialCosts) },
+                        { Post: "Skatt på årets resultat", [fiscalYear]: `−${fmt(resultat.taxCurrent)}` },
+                    ],
+                    totals: {
+                        Post: "Årets resultat",
+                        [fiscalYear]: fmt(resultat.resultAfterTax),
+                    },
+                },
+            },
+
+            // ═══════════════════════════════════════════════════════════════
+            // 3. BALANSRÄKNING
+            // ═══════════════════════════════════════════════════════════════
+            {
+                type: "separator",
+                props: { label: "3. Balansräkning" },
+            },
+            {
+                type: "annotation",
+                props: { text: `Källa: ${balans.source}`, variant: "muted" },
+            },
+            {
+                type: "heading",
+                props: { text: "Tillgångar", level: 3 },
+            },
+            {
+                type: "financial-table",
+                props: {
+                    columns: [
+                        { label: "Post", icon: "file-text" },
+                        { label: fiscalYear, icon: "banknote" },
+                    ],
+                    rows: [
+                        { Post: "Anläggningstillgångar", [fiscalYear]: "" },
+                        { Post: "  Materiella (not 3)", [fiscalYear]: fmt(balans.assets.tangible) },
+                        { Post: "  Finansiella", [fiscalYear]: fmt(balans.assets.financial) },
+                        { Post: "Omsättningstillgångar", [fiscalYear]: "" },
+                        { Post: "  Varulager", [fiscalYear]: fmt(balans.assets.inventory) },
+                        { Post: "  Kundfordringar", [fiscalYear]: fmt(balans.assets.receivables) },
+                        { Post: "  Kassa och bank", [fiscalYear]: fmt(balans.assets.cash) },
+                    ],
+                    totals: {
+                        Post: "Summa tillgångar",
+                        [fiscalYear]: fmt(balans.assets.totalAssets),
+                    },
+                },
+            },
+            {
+                type: "heading",
+                props: { text: "Eget kapital och skulder", level: 3 },
+            },
+            {
+                type: "financial-table",
+                props: {
+                    columns: [
+                        { label: "Post", icon: "file-text" },
+                        { label: fiscalYear, icon: "banknote" },
+                    ],
+                    rows: [
+                        { Post: "Eget kapital", [fiscalYear]: "" },
+                        { Post: "  Aktiekapital", [fiscalYear]: fmt(balans.equity.shareCapital) },
+                        { Post: "  Balanserat resultat", [fiscalYear]: fmt(balans.equity.retainedEarnings) },
+                        { Post: "  Årets resultat", [fiscalYear]: fmt(balans.equity.yearResult) },
+                        { Post: "Summa eget kapital", [fiscalYear]: fmt(balans.equity.totalEquity) },
+                        { Post: "Långfristiga skulder", [fiscalYear]: "" },
+                        { Post: "  Skulder till kreditinstitut (not 4)", [fiscalYear]: fmt(balans.liabilities.longTerm) },
+                        { Post: "Kortfristiga skulder", [fiscalYear]: "" },
+                        { Post: "  Leverantörsskulder m.m.", [fiscalYear]: fmt(balans.liabilities.shortTerm) },
+                        { Post: "  Skatteskulder", [fiscalYear]: fmt(balans.liabilities.taxLiabilities) },
+                    ],
+                    totals: {
+                        Post: "Summa eget kapital och skulder",
+                        [fiscalYear]: fmt(balans.totalEquityAndLiabilities),
+                    },
+                },
+            },
+
+            // ═══════════════════════════════════════════════════════════════
+            // 4. NOTER
+            // ═══════════════════════════════════════════════════════════════
+            {
+                type: "separator",
+                props: { label: "4. Tilläggsupplysningar (noter)" },
+            },
+            ...noteBlocks,
+
+            // ═══════════════════════════════════════════════════════════════
+            // 5. UNDERSKRIFTER
+            // ═══════════════════════════════════════════════════════════════
+            {
+                type: "separator",
+                props: { label: "5. Underskrifter" },
+            },
+            {
+                type: "annotation",
+                props: { text: "Källa: Aktiebok + styrelseregister", variant: "muted" },
+            },
+            {
+                type: "prose",
+                props: {
+                    content: `Styrelsen avger härmed följande årsredovisning för räkenskapsåret ${fiscalYear}.`,
+                },
+            },
+            {
+                type: "checklist",
+                props: {
+                    items: boardMembers.map(m => ({
+                        label: `${m.name} — ${m.role}`,
+                        checked: m.signed,
+                        detail: m.signed ? "Signerad" : "Inväntar signatur",
+                    })),
+                },
+            },
+
+            // ═══════════════════════════════════════════════════════════════
+            // SUBMISSION
+            // ═══════════════════════════════════════════════════════════════
+            {
+                type: "separator",
+                props: { label: "Inlämning" },
+            },
+            {
+                type: "info-card",
+                props: {
+                    title: "Digital inlämning till Bolagsverket",
+                    content: `Årsredovisningen är förberedd för digital inlämning enligt K2 (BFNAR 2016:10). Senaste inlämningsdag: 7 månader efter räkenskapsårets slut. Format: XBRL (iXBRL för digital inlämning).`,
+                    variant: unsigned.length === 0 ? "success" : "warning",
+                },
+            },
+            {
+                type: "action-bar",
+                props: {
+                    actions: [
+                        ...(unsigned.length === 0 ? [
+                            { label: "Skicka till Bolagsverket", variant: "default" as const, actionId: "submit-annual-report" },
+                        ] : []),
+                        { label: "Exportera PDF", variant: "outline" as const, actionId: "export-ar-pdf" },
+                        { label: "Exportera XBRL", variant: "outline" as const, actionId: "export-ar-xbrl" },
+                        { label: "Stäng", variant: "outline" as const },
+                    ],
+                },
+            },
+        ],
+    }
+}
+
+export default function TestArsredovisningWalkthroughPage() {
+    const walkthrough = useMemo(() => buildWalkthrough(
+        "Scope AI AB",
+        "559123-4567",
+        "2025",
+        // Resultaträkning
+        {
+            revenue: 1850000,
+            operatingCosts: 320000,
+            personnelCosts: 842000,
+            depreciations: 36000,
+            otherCosts: 228000,
+            financialIncome: 1200,
+            financialCosts: 8400,
+            taxCurrent: 85800,
+            resultAfterTax: 331000,
+            source: "Resultaträkning 2025-01-01 – 2025-12-31 (konto 3000–8999)",
+        },
+        // Balansräkning
+        {
+            assets: {
+                tangible: 144000,
+                financial: 0,
+                inventory: 0,
+                receivables: 185000,
+                cash: 1771000,
+                totalAssets: 2100000,
+            },
+            equity: {
+                shareCapital: 50000,
+                reserves: 0,
+                retainedEarnings: 1047000,
+                yearResult: 331000,
+                totalEquity: 1428000,
+            },
+            liabilities: {
+                longTerm: 200000,
+                shortTerm: 345000,
+                taxLiabilities: 127000,
+                totalLiabilities: 672000,
+            },
+            totalEquityAndLiabilities: 2100000,
+            source: "Balansräkning per 2025-12-31 (konto 1000–2999)",
+        },
+        // Board members
+        [
+            { name: "Erik Svensson", role: "Ordförande", signed: true },
+            { name: "Maria Johansson", role: "Ledamot", signed: true },
+            { name: "Johan Berg", role: "Ledamot", signed: false },
+        ],
+        // Key events
+        [
+            { date: "2025-03-15", description: "Nytt bankavtal med SEB — refinansiering av befintligt lån", source: "Styrelseprotokoll 2/2025" },
+            { date: "2025-06-20", description: "Lansering av AI-bokföringstjänst v2.0", source: "Styrelseprotokoll 4/2025" },
+            { date: "2025-09-01", description: "Tredje anställd — Maria Johansson, utvecklare", source: "Lönekörning LK-2025-09-01" },
+            { date: "2025-11-28", description: "Bolagsstämma — beslut att inte lämna utdelning", source: "Stämmoprotokoll 2025" },
+        ],
+        // Previous year
+        {
+            revenue: 1420000,
+            result: 248000,
+            equity: 1097000,
+            balanceTotal: 1750000,
+        },
+    ), [])
+
+    return (
+        <div className="min-h-screen bg-background">
+            <div className="max-w-3xl mx-auto px-6 pt-6">
+                <Link
+                    href="/test-ui/walkthroughs"
+                    className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    <ArrowLeft className="h-3.5 w-3.5" />
+                    Walkthroughs & Overlays
+                </Link>
+            </div>
+
+            <WalkthroughRenderer
+                response={walkthrough}
+                onClose={() => {}}
+                embedded
+            />
+        </div>
+    )
+}

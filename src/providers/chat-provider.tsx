@@ -24,7 +24,7 @@ import { useModel } from "@/providers/model-provider"
 import type { MentionItem } from "@/components/ai/mention-popover"
 import type { Conversation } from "@/lib/chat-types"
 import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
-import type { ActionTriggerDisplay } from "@/components/ai/action-trigger-chip"
+import type { ActionTriggerDisplay } from "@/components/ai/confirmations/action-trigger-chip"
 import { nullToUndefined } from "@/lib/utils"
 
 // =============================================================================

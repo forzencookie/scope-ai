@@ -32,11 +32,23 @@ export interface FinancialColumnDef {
   label: string
   icon?: string
   color?: "default" | "red" | "green" | "muted"
+  /** Relative column width. Columns without width get flex-1 (equal share).
+   *  Use small numbers for narrow columns (e.g. 0.5 for "Ver.nr") and
+   *  larger numbers for wide ones (e.g. 2 for "Beskrivning"). */
+  width?: number
+}
+
+export interface FinancialTableRow extends Record<string, string | number> {}
+
+export interface FinancialTableRowMeta {
+  href?: string
+  actionId?: string
 }
 
 export interface FinancialTableProps {
   columns: Array<string | FinancialColumnDef>
-  rows: Array<Record<string, string | number>>
+  rows: Array<FinancialTableRow>
+  rowMeta?: Array<FinancialTableRowMeta>
   totals?: Record<string, string | number>
   highlights?: string[]
   variant?: "default" | "compact"
@@ -110,8 +122,17 @@ export interface ProseProps {
   content: string
 }
 
+export interface StatusCheckItem {
+  label: string
+  status: "pass" | "warning" | "fail"
+  detail?: string
+  href?: string
+  actionId?: string
+  actionLabel?: string
+}
+
 export interface StatusCheckProps {
-  items: Array<{ label: string; status: "pass" | "warning" | "fail"; detail?: string }>
+  items: StatusCheckItem[]
 }
 
 export interface DocumentPreviewProps {

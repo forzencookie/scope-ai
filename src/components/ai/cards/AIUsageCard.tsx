@@ -29,11 +29,11 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
       case 'exceeded':
         return 'text-red-600 dark:text-red-400'
       case 'critical':
-        return 'text-orange-600 dark:text-orange-400'
+        return 'text-red-600 dark:text-red-400'
       case 'high':
-        return 'text-amber-600 dark:text-amber-400'
+        return 'text-blue-600 dark:text-blue-400'
       default:
-        return 'text-green-600 dark:text-green-400'
+        return 'text-blue-600 dark:text-blue-400'
     }
   }
 
@@ -42,11 +42,22 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
       case 'exceeded':
         return 'bg-red-500'
       case 'critical':
-        return 'bg-orange-500'
+        return 'bg-red-500'
       case 'high':
-        return 'bg-amber-500'
+        return 'bg-blue-500'
       default:
-        return 'bg-green-500'
+        return 'bg-blue-500'
+    }
+  }
+
+  const getAlertBg = () => {
+    switch (usage.thresholdLevel) {
+      case 'exceeded':
+        return 'bg-red-500/10'
+      case 'critical':
+        return 'bg-red-500/10'
+      default:
+        return 'bg-blue-500/10'
     }
   }
 
@@ -54,7 +65,7 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
     <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between">
         <h4 className="font-semibold flex items-center gap-2">
-          <Zap className="h-4 w-4 text-primary" />
+          <Zap className="h-4 w-4 text-blue-500" />
           AI-användning
         </h4>
         <span className={cn("text-sm font-medium", getStatusColor())}>
@@ -62,8 +73,8 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
         </span>
       </div>
 
-      <Progress 
-        value={Math.min(100, usage.usagePercent)} 
+      <Progress
+        value={Math.min(100, usage.usagePercent)}
         className={cn("h-2", getProgressColor())}
       />
 
@@ -94,9 +105,7 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
       {usage.thresholdLevel !== 'ok' && (
         <div className={cn(
           "flex items-start gap-2 p-2 rounded-md text-sm",
-          usage.thresholdLevel === 'exceeded' ? "bg-red-500/10" :
-          usage.thresholdLevel === 'critical' ? "bg-orange-500/10" :
-          "bg-amber-500/10"
+          getAlertBg()
         )}>
           <AlertTriangle className={cn("h-4 w-4 mt-0.5", getStatusColor())} />
           <span className={getStatusColor()}>

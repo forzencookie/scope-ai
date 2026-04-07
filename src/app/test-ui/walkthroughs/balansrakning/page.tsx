@@ -3,6 +3,7 @@
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
+import { ScoobyPresentation } from "@/components/ai/scooby-presentation"
 import type { WalkthroughResponse } from "@/components/ai/blocks/types"
 
 const balansrakningScenario: WalkthroughResponse = {
@@ -10,16 +11,6 @@ const balansrakningScenario: WalkthroughResponse = {
     title: "Balansräkning",
     subtitle: "Rapport per 2026-03-31",
     blocks: [
-        {
-            type: "stat-cards",
-            props: {
-                items: [
-                    { label: "Tillgångar", value: "850 000 kr", change: "Ingen märkbar förändring", trend: "neutral", icon: "plus-circle", iconColor: "emerald", valueColor: "default" },
-                    { label: "Skulder", value: "350 000 kr", change: "-10% amortering lån", trend: "down", icon: "minus-circle", iconColor: "amber", valueColor: "red" },
-                    { label: "Eget kapital", value: "500 000 kr", change: "+14 000 kr (Q1 vinst)", trend: "up", icon: "banknote", iconColor: "blue", valueColor: "green" },
-                ]
-            }
-        },
         {
             type: "heading",
             props: {
@@ -70,7 +61,7 @@ const balansrakningScenario: WalkthroughResponse = {
 export default function TestBalansrakningWalkthroughPage() {
     return (
         <div className="min-h-screen bg-background">
-            <div className="max-w-3xl mx-auto px-6 pt-6 flex items-center justify-between z-10 relative">
+            <div className="max-w-3xl mx-auto px-6 pt-6 space-y-4">
                 <Link
                     href="/test-ui/walkthroughs"
                     className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -78,6 +69,15 @@ export default function TestBalansrakningWalkthroughPage() {
                     <ArrowLeft className="h-3.5 w-3.5" />
                     Alla Walkthroughs
                 </Link>
+
+                <ScoobyPresentation
+                    message="Här är balansräkningen per 2026-03-31. Skulder minskade 10% efter amortering."
+                    highlights={[
+                        { label: "Tillgångar", value: "850 000 kr", detail: "Ingen märkbar förändring" },
+                        { label: "Skulder", value: "350 000 kr", detail: "-10% amortering lån" },
+                        { label: "Eget kapital", value: "500 000 kr", detail: "+14 000 kr (Q1 vinst)" },
+                    ]}
+                />
             </div>
 
             <WalkthroughRenderer

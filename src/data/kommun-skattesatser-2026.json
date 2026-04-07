@@ -1,0 +1,1742 @@
+{
+  "UPPLANDS VÄSBY": {
+    "kommunalskatt": 19.42,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.042
+  },
+  "VALLENTUNA": {
+    "kommunalskatt": 18.9,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.522
+  },
+  "ÖSTERÅKER": {
+    "kommunalskatt": 16.6,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 29.222
+  },
+  "VÄRMDÖ": {
+    "kommunalskatt": 18.98,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.602
+  },
+  "JÄRFÄLLA": {
+    "kommunalskatt": 19.19,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.812
+  },
+  "EKERÖ": {
+    "kommunalskatt": 19.12,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.742
+  },
+  "HUDDINGE": {
+    "kommunalskatt": 19.38,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.002
+  },
+  "BOTKYRKA": {
+    "kommunalskatt": 19.9,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.522
+  },
+  "SALEM": {
+    "kommunalskatt": 19.67,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.292
+  },
+  "HANINGE": {
+    "kommunalskatt": 18.95,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.572
+  },
+  "TYRESÖ": {
+    "kommunalskatt": 19.5,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.122
+  },
+  "UPPLANDS-BRO": {
+    "kommunalskatt": 19.4,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.022
+  },
+  "NYKVARN": {
+    "kommunalskatt": 19.97,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.592
+  },
+  "TÄBY": {
+    "kommunalskatt": 17.55,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 30.172
+  },
+  "DANDERYD": {
+    "kommunalskatt": 18.25,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 30.872
+  },
+  "SOLLENTUNA": {
+    "kommunalskatt": 18.12,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 30.742
+  },
+  "STOCKHOLM": {
+    "kommunalskatt": 18.22,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.07,
+    "total": 30.62
+  },
+  "SÖDERTÄLJE": {
+    "kommunalskatt": 20.05,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.672
+  },
+  "NACKA": {
+    "kommunalskatt": 17.78,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 30.402
+  },
+  "SUNDBYBERG": {
+    "kommunalskatt": 19.25,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.872
+  },
+  "SOLNA": {
+    "kommunalskatt": 17.37,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 29.992
+  },
+  "LIDINGÖ": {
+    "kommunalskatt": 17.34,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 29.962
+  },
+  "VAXHOLM": {
+    "kommunalskatt": 19.3,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 31.922
+  },
+  "NORRTÄLJE": {
+    "kommunalskatt": 19.72,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.342
+  },
+  "SIGTUNA": {
+    "kommunalskatt": 19.5,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.122
+  },
+  "NYNÄSHAMN": {
+    "kommunalskatt": 19.85,
+    "landstingsskatt": 12.33,
+    "begravningsavgift": 0.292,
+    "total": 32.472
+  },
+  "HÅBO": {
+    "kommunalskatt": 21.59,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 33.592
+  },
+  "ÄLVKARLEBY": {
+    "kommunalskatt": 22.69,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 34.692
+  },
+  "KNIVSTA": {
+    "kommunalskatt": 20.91,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 32.912
+  },
+  "HEBY": {
+    "kommunalskatt": 22.5,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 34.502
+  },
+  "TIERP": {
+    "kommunalskatt": 21.29,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 33.292
+  },
+  "UPPSALA": {
+    "kommunalskatt": 21.14,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 33.142
+  },
+  "ENKÖPING": {
+    "kommunalskatt": 21.34,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 33.342
+  },
+  "ÖSTHAMMAR": {
+    "kommunalskatt": 21.59,
+    "landstingsskatt": 11.71,
+    "begravningsavgift": 0.292,
+    "total": 33.592
+  },
+  "VINGÅKER": {
+    "kommunalskatt": 22.67,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 33.792
+  },
+  "GNESTA": {
+    "kommunalskatt": 22.12,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 33.242
+  },
+  "NYKÖPING": {
+    "kommunalskatt": 21.42,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 32.542
+  },
+  "OXELÖSUND": {
+    "kommunalskatt": 22.22,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 33.342
+  },
+  "FLEN": {
+    "kommunalskatt": 22.27,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 33.392
+  },
+  "KATRINEHOLM": {
+    "kommunalskatt": 22.12,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 33.242
+  },
+  "ESKILSTUNA": {
+    "kommunalskatt": 22.02,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 33.142
+  },
+  "STRÄNGNÄS": {
+    "kommunalskatt": 21.67,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 32.792
+  },
+  "TROSA": {
+    "kommunalskatt": 21.2,
+    "landstingsskatt": 10.83,
+    "begravningsavgift": 0.292,
+    "total": 32.322
+  },
+  "ÖDESHÖG": {
+    "kommunalskatt": 22.4,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 34.242
+  },
+  "YDRE": {
+    "kommunalskatt": 22.55,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 34.392
+  },
+  "KINDA": {
+    "kommunalskatt": 21.45,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.292
+  },
+  "BOXHOLM": {
+    "kommunalskatt": 21.82,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.662
+  },
+  "ÅTVIDABERG": {
+    "kommunalskatt": 22.39,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 34.232
+  },
+  "FINSPÅNG": {
+    "kommunalskatt": 22.15,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.992
+  },
+  "VALDEMARSVIK": {
+    "kommunalskatt": 22.48,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 34.322
+  },
+  "LINKÖPING": {
+    "kommunalskatt": 20.2,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 32.042
+  },
+  "NORRKÖPING": {
+    "kommunalskatt": 21.75,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.592
+  },
+  "SÖDERKÖPING": {
+    "kommunalskatt": 21.98,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.822
+  },
+  "MOTALA": {
+    "kommunalskatt": 21.7,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.542
+  },
+  "VADSTENA": {
+    "kommunalskatt": 22.8,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 34.642
+  },
+  "MJÖLBY": {
+    "kommunalskatt": 21.9,
+    "landstingsskatt": 11.55,
+    "begravningsavgift": 0.292,
+    "total": 33.742
+  },
+  "ANEBY": {
+    "kommunalskatt": 22.09,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.142
+  },
+  "GNOSJÖ": {
+    "kommunalskatt": 22.24,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.292
+  },
+  "MULLSJÖ": {
+    "kommunalskatt": 22.34,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.392
+  },
+  "HABO": {
+    "kommunalskatt": 22.17,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.222
+  },
+  "GISLAVED": {
+    "kommunalskatt": 21.99,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.042
+  },
+  "VAGGERYD": {
+    "kommunalskatt": 21.49,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 33.542
+  },
+  "JÖNKÖPING": {
+    "kommunalskatt": 21.64,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 33.692
+  },
+  "NÄSSJÖ": {
+    "kommunalskatt": 22.54,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "VÄRNAMO": {
+    "kommunalskatt": 21.52,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 33.572
+  },
+  "SÄVSJÖ": {
+    "kommunalskatt": 21.92,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 33.972
+  },
+  "VETLANDA": {
+    "kommunalskatt": 22.01,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.062
+  },
+  "EKSJÖ": {
+    "kommunalskatt": 22.26,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.292,
+    "total": 34.312
+  },
+  "TRANÅS": {
+    "kommunalskatt": 22.01,
+    "landstingsskatt": 11.76,
+    "begravningsavgift": 0.285,
+    "total": 34.055
+  },
+  "UPPVIDINGE": {
+    "kommunalskatt": 21.8,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 34.092
+  },
+  "LESSEBO": {
+    "kommunalskatt": 21.81,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 34.102
+  },
+  "TINGSRYD": {
+    "kommunalskatt": 22,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 34.292
+  },
+  "ALVESTA": {
+    "kommunalskatt": 21.42,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 33.712
+  },
+  "ÄLMHULT": {
+    "kommunalskatt": 21.86,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 34.152
+  },
+  "MARKARYD": {
+    "kommunalskatt": 21.31,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 33.602
+  },
+  "VÄXJÖ": {
+    "kommunalskatt": 20.19,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 32.482
+  },
+  "LJUNGBY": {
+    "kommunalskatt": 21.07,
+    "landstingsskatt": 12,
+    "begravningsavgift": 0.292,
+    "total": 33.362
+  },
+  "HÖGSBY": {
+    "kommunalskatt": 22.21,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.362
+  },
+  "TORSÅS": {
+    "kommunalskatt": 21.93,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.082
+  },
+  "MÖRBYLÅNGA": {
+    "kommunalskatt": 22.21,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.362
+  },
+  "HULTSFRED": {
+    "kommunalskatt": 21.91,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.062
+  },
+  "MÖNSTERÅS": {
+    "kommunalskatt": 22.21,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.362
+  },
+  "EMMABODA": {
+    "kommunalskatt": 21.96,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.112
+  },
+  "KALMAR": {
+    "kommunalskatt": 21.81,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 33.962
+  },
+  "NYBRO": {
+    "kommunalskatt": 22.33,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.482
+  },
+  "OSKARSHAMN": {
+    "kommunalskatt": 22.35,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.502
+  },
+  "VÄSTERVIK": {
+    "kommunalskatt": 21.16,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 33.312
+  },
+  "VIMMERBY": {
+    "kommunalskatt": 22.36,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 34.512
+  },
+  "BORGHOLM": {
+    "kommunalskatt": 21.58,
+    "landstingsskatt": 11.86,
+    "begravningsavgift": 0.292,
+    "total": 33.732
+  },
+  "GOTLAND": {
+    "kommunalskatt": 33.6,
+    "landstingsskatt": 0,
+    "begravningsavgift": 0.292,
+    "total": 33.892
+  },
+  "OLOFSTRÖM": {
+    "kommunalskatt": 21.71,
+    "landstingsskatt": 12.04,
+    "begravningsavgift": 0.292,
+    "total": 34.042
+  },
+  "KARLSKRONA": {
+    "kommunalskatt": 21.65,
+    "landstingsskatt": 12.04,
+    "begravningsavgift": 0.292,
+    "total": 33.982
+  },
+  "RONNEBY": {
+    "kommunalskatt": 21.64,
+    "landstingsskatt": 12.04,
+    "begravningsavgift": 0.292,
+    "total": 33.972
+  },
+  "KARLSHAMN": {
+    "kommunalskatt": 21.76,
+    "landstingsskatt": 12.04,
+    "begravningsavgift": 0.292,
+    "total": 34.092
+  },
+  "SÖLVESBORG": {
+    "kommunalskatt": 21.82,
+    "landstingsskatt": 12.04,
+    "begravningsavgift": 0.292,
+    "total": 34.152
+  },
+  "SVALÖV": {
+    "kommunalskatt": 20.74,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.212
+  },
+  "STAFFANSTORP": {
+    "kommunalskatt": 18.94,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 30.412
+  },
+  "BURLÖV": {
+    "kommunalskatt": 20.09,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.562
+  },
+  "VELLINGE": {
+    "kommunalskatt": 18.5,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 29.972
+  },
+  "ÖSTRA GÖINGE": {
+    "kommunalskatt": 20.99,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.462
+  },
+  "ÖRKELLJUNGA": {
+    "kommunalskatt": 19.06,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 30.532
+  },
+  "BJUV": {
+    "kommunalskatt": 20.99,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.462
+  },
+  "KÄVLINGE": {
+    "kommunalskatt": 18.41,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 29.882
+  },
+  "LOMMA": {
+    "kommunalskatt": 19.54,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.012
+  },
+  "SVEDALA": {
+    "kommunalskatt": 20.24,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.712
+  },
+  "SKURUP": {
+    "kommunalskatt": 20.42,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.892
+  },
+  "SJÖBO": {
+    "kommunalskatt": 20.92,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.392
+  },
+  "HÖRBY": {
+    "kommunalskatt": 21.08,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.552
+  },
+  "HÖÖR": {
+    "kommunalskatt": 21.45,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.922
+  },
+  "TOMELILLA": {
+    "kommunalskatt": 20.61,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.082
+  },
+  "BROMÖLLA": {
+    "kommunalskatt": 22.56,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 34.032
+  },
+  "OSBY": {
+    "kommunalskatt": 22.81,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 34.282
+  },
+  "PERSTORP": {
+    "kommunalskatt": 20.81,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.282
+  },
+  "KLIPPAN": {
+    "kommunalskatt": 20.75,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.222
+  },
+  "ÅSTORP": {
+    "kommunalskatt": 20.29,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.762
+  },
+  "BÅSTAD": {
+    "kommunalskatt": 20.23,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.702
+  },
+  "MALMÖ": {
+    "kommunalskatt": 21.24,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.712
+  },
+  "LUND": {
+    "kommunalskatt": 21.24,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.712
+  },
+  "LANDSKRONA": {
+    "kommunalskatt": 20.24,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.712
+  },
+  "HELSINGBORG": {
+    "kommunalskatt": 20.21,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.682
+  },
+  "HÖGANÄS": {
+    "kommunalskatt": 19.73,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.202
+  },
+  "ESLÖV": {
+    "kommunalskatt": 20.54,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.012
+  },
+  "YSTAD": {
+    "kommunalskatt": 20.11,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.582
+  },
+  "TRELLEBORG": {
+    "kommunalskatt": 20.4,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.872
+  },
+  "KRISTIANSTAD": {
+    "kommunalskatt": 21.46,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.932
+  },
+  "SIMRISHAMN": {
+    "kommunalskatt": 20.51,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.982
+  },
+  "ÄNGELHOLM": {
+    "kommunalskatt": 20.17,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 31.642
+  },
+  "HÄSSLEHOLM": {
+    "kommunalskatt": 21.2,
+    "landstingsskatt": 11.18,
+    "begravningsavgift": 0.292,
+    "total": 32.672
+  },
+  "HYLTE": {
+    "kommunalskatt": 22.45,
+    "landstingsskatt": 11.4,
+    "begravningsavgift": 0.292,
+    "total": 34.142
+  },
+  "HALMSTAD": {
+    "kommunalskatt": 20.98,
+    "landstingsskatt": 11.4,
+    "begravningsavgift": 0.292,
+    "total": 32.672
+  },
+  "LAHOLM": {
+    "kommunalskatt": 21.4,
+    "landstingsskatt": 11.4,
+    "begravningsavgift": 0.292,
+    "total": 33.092
+  },
+  "FALKENBERG": {
+    "kommunalskatt": 21.1,
+    "landstingsskatt": 11.4,
+    "begravningsavgift": 0.292,
+    "total": 32.792
+  },
+  "VARBERG": {
+    "kommunalskatt": 20.33,
+    "landstingsskatt": 11.4,
+    "begravningsavgift": 0.292,
+    "total": 32.022
+  },
+  "KUNGSBACKA": {
+    "kommunalskatt": 21.18,
+    "landstingsskatt": 11.4,
+    "begravningsavgift": 0.292,
+    "total": 32.872
+  },
+  "HÄRRYDA": {
+    "kommunalskatt": 20.5,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 32.272
+  },
+  "PARTILLE": {
+    "kommunalskatt": 19.88,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 31.652
+  },
+  "ÖCKERÖ": {
+    "kommunalskatt": 21.56,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.332
+  },
+  "STENUNGSUND": {
+    "kommunalskatt": 21.64,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.412
+  },
+  "TJÖRN": {
+    "kommunalskatt": 21.71,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.482
+  },
+  "ORUST": {
+    "kommunalskatt": 22.21,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.982
+  },
+  "SOTENÄS": {
+    "kommunalskatt": 21.99,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.762
+  },
+  "MUNKEDAL": {
+    "kommunalskatt": 23.38,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 35.152
+  },
+  "TANUM": {
+    "kommunalskatt": 21.56,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.332
+  },
+  "DALS-ED": {
+    "kommunalskatt": 23.21,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.982
+  },
+  "FÄRGELANDA": {
+    "kommunalskatt": 22.91,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.682
+  },
+  "ALE": {
+    "kommunalskatt": 21.32,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.092
+  },
+  "LERUM": {
+    "kommunalskatt": 20.55,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 32.322
+  },
+  "VÅRGÅRDA": {
+    "kommunalskatt": 21.61,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.382
+  },
+  "BOLLEBYGD": {
+    "kommunalskatt": 21.59,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.362
+  },
+  "GRÄSTORP": {
+    "kommunalskatt": 21.99,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.762
+  },
+  "ESSUNGA": {
+    "kommunalskatt": 21.57,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.342
+  },
+  "KARLSBORG": {
+    "kommunalskatt": 21.32,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.092
+  },
+  "GULLSPÅNG": {
+    "kommunalskatt": 22.49,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.262
+  },
+  "TRANEMO": {
+    "kommunalskatt": 21.5,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.272
+  },
+  "BENGTSFORS": {
+    "kommunalskatt": 22.92,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.692
+  },
+  "MELLERUD": {
+    "kommunalskatt": 22.6,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.372
+  },
+  "LILLA EDET": {
+    "kommunalskatt": 22.37,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.142
+  },
+  "MARK": {
+    "kommunalskatt": 21.51,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.282
+  },
+  "SVENLJUNGA": {
+    "kommunalskatt": 22.05,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.822
+  },
+  "HERRLJUNGA": {
+    "kommunalskatt": 22.14,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.912
+  },
+  "VARA": {
+    "kommunalskatt": 21.77,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.542
+  },
+  "GÖTENE": {
+    "kommunalskatt": 22.12,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.892
+  },
+  "TIBRO": {
+    "kommunalskatt": 21.71,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.482
+  },
+  "TÖREBODA": {
+    "kommunalskatt": 21.72,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.492
+  },
+  "GÖTEBORG": {
+    "kommunalskatt": 21.12,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 32.892
+  },
+  "MÖLNDAL": {
+    "kommunalskatt": 20.51,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 32.282
+  },
+  "KUNGÄLV": {
+    "kommunalskatt": 21.44,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.212
+  },
+  "LYSEKIL": {
+    "kommunalskatt": 22.46,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.232
+  },
+  "UDDEVALLA": {
+    "kommunalskatt": 22.16,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.932
+  },
+  "STRÖMSTAD": {
+    "kommunalskatt": 21.91,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.682
+  },
+  "VÄNERSBORG": {
+    "kommunalskatt": 22.21,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.982
+  },
+  "TROLLHÄTTAN": {
+    "kommunalskatt": 22.36,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.132
+  },
+  "ALINGSÅS": {
+    "kommunalskatt": 21.36,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.132
+  },
+  "BORÅS": {
+    "kommunalskatt": 21.31,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.082
+  },
+  "ULRICEHAMN": {
+    "kommunalskatt": 21.05,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 32.822
+  },
+  "ÅMÅL": {
+    "kommunalskatt": 22.46,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 34.232
+  },
+  "MARIESTAD": {
+    "kommunalskatt": 21.26,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.032
+  },
+  "LIDKÖPING": {
+    "kommunalskatt": 21.26,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.032
+  },
+  "SKARA": {
+    "kommunalskatt": 21.9,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.672
+  },
+  "SKÖVDE": {
+    "kommunalskatt": 21.61,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.382
+  },
+  "HJO": {
+    "kommunalskatt": 22,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.772
+  },
+  "TIDAHOLM": {
+    "kommunalskatt": 22.07,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.842
+  },
+  "FALKÖPING": {
+    "kommunalskatt": 21.95,
+    "landstingsskatt": 11.48,
+    "begravningsavgift": 0.292,
+    "total": 33.722
+  },
+  "KIL": {
+    "kommunalskatt": 22.35,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.922
+  },
+  "EDA": {
+    "kommunalskatt": 22.27,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.842
+  },
+  "TORSBY": {
+    "kommunalskatt": 22.02,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "STORFORS": {
+    "kommunalskatt": 22.7,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 35.272
+  },
+  "HAMMARÖ": {
+    "kommunalskatt": 22.77,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 35.342
+  },
+  "MUNKFORS": {
+    "kommunalskatt": 22.02,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "FORSHAGA": {
+    "kommunalskatt": 22.35,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.922
+  },
+  "GRUMS": {
+    "kommunalskatt": 22.5,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 35.072
+  },
+  "ÅRJÄNG": {
+    "kommunalskatt": 21.97,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.542
+  },
+  "SUNNE": {
+    "kommunalskatt": 21.47,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.042
+  },
+  "KARLSTAD": {
+    "kommunalskatt": 21.27,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 33.842
+  },
+  "KRISTINEHAMN": {
+    "kommunalskatt": 21.97,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.542
+  },
+  "FILIPSTAD": {
+    "kommunalskatt": 22.27,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.842
+  },
+  "HAGFORS": {
+    "kommunalskatt": 22.02,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "ARVIKA": {
+    "kommunalskatt": 21.75,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.322
+  },
+  "SÄFFLE": {
+    "kommunalskatt": 21.52,
+    "landstingsskatt": 12.28,
+    "begravningsavgift": 0.292,
+    "total": 34.092
+  },
+  "LEKEBERG": {
+    "kommunalskatt": 21.43,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.022
+  },
+  "LAXÅ": {
+    "kommunalskatt": 22.7,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 35.292
+  },
+  "HALLSBERG": {
+    "kommunalskatt": 21.55,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.142
+  },
+  "DEGERFORS": {
+    "kommunalskatt": 23,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 35.592
+  },
+  "HÄLLEFORS": {
+    "kommunalskatt": 22.05,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.642
+  },
+  "LJUSNARSBERG": {
+    "kommunalskatt": 21.5,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.092
+  },
+  "ÖREBRO": {
+    "kommunalskatt": 21.35,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 33.942
+  },
+  "KUMLA": {
+    "kommunalskatt": 21.54,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.132
+  },
+  "ASKERSUND": {
+    "kommunalskatt": 21.85,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.442
+  },
+  "KARLSKOGA": {
+    "kommunalskatt": 22,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "NORA": {
+    "kommunalskatt": 22.25,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.842
+  },
+  "LINDESBERG": {
+    "kommunalskatt": 22.3,
+    "landstingsskatt": 12.3,
+    "begravningsavgift": 0.292,
+    "total": 34.892
+  },
+  "SKINNSKATTEBERG": {
+    "kommunalskatt": 22.46,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.632
+  },
+  "SURAHAMMAR": {
+    "kommunalskatt": 22.31,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.482
+  },
+  "KUNGSÖR": {
+    "kommunalskatt": 22.03,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.202
+  },
+  "HALLSTAHAMMAR": {
+    "kommunalskatt": 21.81,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 32.982
+  },
+  "NORBERG": {
+    "kommunalskatt": 22.66,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.832
+  },
+  "VÄSTERÅS": {
+    "kommunalskatt": 20.36,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 31.532
+  },
+  "SALA": {
+    "kommunalskatt": 22.31,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.482
+  },
+  "FAGERSTA": {
+    "kommunalskatt": 22.11,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.282
+  },
+  "KÖPING": {
+    "kommunalskatt": 22.16,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.332
+  },
+  "ARBOGA": {
+    "kommunalskatt": 22.41,
+    "landstingsskatt": 10.88,
+    "begravningsavgift": 0.292,
+    "total": 33.582
+  },
+  "VANSBRO": {
+    "kommunalskatt": 22.29,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.572
+  },
+  "MALUNG-SÄLEN": {
+    "kommunalskatt": 22.46,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.742
+  },
+  "GAGNEF": {
+    "kommunalskatt": 22.28,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.562
+  },
+  "LEKSAND": {
+    "kommunalskatt": 21.81,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.092
+  },
+  "RÄTTVIK": {
+    "kommunalskatt": 21.81,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.092
+  },
+  "ORSA": {
+    "kommunalskatt": 22.31,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "ÄLVDALEN": {
+    "kommunalskatt": 22.78,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 35.062
+  },
+  "SMEDJEBACKEN": {
+    "kommunalskatt": 22.45,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.732
+  },
+  "MORA": {
+    "kommunalskatt": 22.33,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.612
+  },
+  "FALUN": {
+    "kommunalskatt": 22.06,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.342
+  },
+  "BORLÄNGE": {
+    "kommunalskatt": 22.41,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.692
+  },
+  "SÄTER": {
+    "kommunalskatt": 22.31,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.592
+  },
+  "HEDEMORA": {
+    "kommunalskatt": 22.16,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.442
+  },
+  "AVESTA": {
+    "kommunalskatt": 21.96,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.242
+  },
+  "LUDVIKA": {
+    "kommunalskatt": 22.06,
+    "landstingsskatt": 11.99,
+    "begravningsavgift": 0.292,
+    "total": 34.342
+  },
+  "OCKELBO": {
+    "kommunalskatt": 22.76,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 34.562
+  },
+  "HOFORS": {
+    "kommunalskatt": 22.86,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 34.662
+  },
+  "OVANÅKER": {
+    "kommunalskatt": 21.86,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 33.662
+  },
+  "NORDANSTIG": {
+    "kommunalskatt": 22.51,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 34.312
+  },
+  "LJUSDAL": {
+    "kommunalskatt": 22.36,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 34.162
+  },
+  "GÄVLE": {
+    "kommunalskatt": 22.26,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 34.062
+  },
+  "SANDVIKEN": {
+    "kommunalskatt": 21.61,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 33.412
+  },
+  "SÖDERHAMN": {
+    "kommunalskatt": 21.66,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 33.462
+  },
+  "BOLLNÄS": {
+    "kommunalskatt": 21.86,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 33.662
+  },
+  "HUDIKSVALL": {
+    "kommunalskatt": 21.61,
+    "landstingsskatt": 11.51,
+    "begravningsavgift": 0.292,
+    "total": 33.412
+  },
+  "ÅNGE": {
+    "kommunalskatt": 23.33,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.912
+  },
+  "TIMRÅ": {
+    "kommunalskatt": 23.09,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.672
+  },
+  "HÄRNÖSAND": {
+    "kommunalskatt": 23.34,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.922
+  },
+  "SUNDSVALL": {
+    "kommunalskatt": 22.59,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.172
+  },
+  "KRAMFORS": {
+    "kommunalskatt": 23.14,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.722
+  },
+  "SOLLEFTEÅ": {
+    "kommunalskatt": 23.39,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.972
+  },
+  "ÖRNSKÖLDSVIK": {
+    "kommunalskatt": 22.56,
+    "landstingsskatt": 11.29,
+    "begravningsavgift": 0.292,
+    "total": 34.142
+  },
+  "RAGUNDA": {
+    "kommunalskatt": 23.22,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 35.212
+  },
+  "BRÄCKE": {
+    "kommunalskatt": 23.39,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 35.382
+  },
+  "KROKOM": {
+    "kommunalskatt": 22.17,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 34.162
+  },
+  "STRÖMSUND": {
+    "kommunalskatt": 23.22,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 35.212
+  },
+  "ÅRE": {
+    "kommunalskatt": 22.22,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 34.212
+  },
+  "BERG": {
+    "kommunalskatt": 22.52,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 34.512
+  },
+  "HÄRJEDALEN": {
+    "kommunalskatt": 22.47,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 34.462
+  },
+  "ÖSTERSUND": {
+    "kommunalskatt": 22.02,
+    "landstingsskatt": 11.7,
+    "begravningsavgift": 0.292,
+    "total": 34.012
+  },
+  "NORDMALING": {
+    "kommunalskatt": 23.25,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.392
+  },
+  "BJURHOLM": {
+    "kommunalskatt": 23.15,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.292
+  },
+  "VINDELN": {
+    "kommunalskatt": 23.35,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.492
+  },
+  "ROBERTSFORS": {
+    "kommunalskatt": 23.15,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.292
+  },
+  "NORSJÖ": {
+    "kommunalskatt": 23.35,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.492
+  },
+  "MALÅ": {
+    "kommunalskatt": 23.35,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.492
+  },
+  "STORUMAN": {
+    "kommunalskatt": 23.1,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.242
+  },
+  "SORSELE": {
+    "kommunalskatt": 23.6,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.742
+  },
+  "DOROTEA": {
+    "kommunalskatt": 23.8,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.942
+  },
+  "VÄNNÄS": {
+    "kommunalskatt": 23.35,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.492
+  },
+  "VILHELMINA": {
+    "kommunalskatt": 23.65,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.792
+  },
+  "ÅSELE": {
+    "kommunalskatt": 23.6,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.742
+  },
+  "UMEÅ": {
+    "kommunalskatt": 22.8,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 34.942
+  },
+  "LYCKSELE": {
+    "kommunalskatt": 23.05,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 35.192
+  },
+  "SKELLEFTEÅ": {
+    "kommunalskatt": 22.6,
+    "landstingsskatt": 11.85,
+    "begravningsavgift": 0.292,
+    "total": 34.742
+  },
+  "ARVIDSJAUR": {
+    "kommunalskatt": 22.8,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.432
+  },
+  "ARJEPLOG": {
+    "kommunalskatt": 23.5,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 35.132
+  },
+  "JOKKMOKK": {
+    "kommunalskatt": 22.95,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.582
+  },
+  "ÖVERKALIX": {
+    "kommunalskatt": 22.8,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.432
+  },
+  "KALIX": {
+    "kommunalskatt": 22.55,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.182
+  },
+  "ÖVERTORNEÅ": {
+    "kommunalskatt": 22.5,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.132
+  },
+  "PAJALA": {
+    "kommunalskatt": 23.4,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 35.032
+  },
+  "GÄLLIVARE": {
+    "kommunalskatt": 22.55,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.182
+  },
+  "ÄLVSBYN": {
+    "kommunalskatt": 22.45,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.082
+  },
+  "LULEÅ": {
+    "kommunalskatt": 22.5,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.132
+  },
+  "PITEÅ": {
+    "kommunalskatt": 22.25,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 33.882
+  },
+  "BODEN": {
+    "kommunalskatt": 22.6,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.232
+  },
+  "HAPARANDA": {
+    "kommunalskatt": 22.5,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.132
+  },
+  "KIRUNA": {
+    "kommunalskatt": 23.05,
+    "landstingsskatt": 11.34,
+    "begravningsavgift": 0.292,
+    "total": 34.682
+  }
+}

@@ -244,6 +244,8 @@ The user selects a tier from the model selector in the chat input area. Each tie
 - Every other workflow passes through this chain
 - Memory system feeds context into system prompt
 - App manifest tells Scooby what tools exist for what purpose
+- `scooby-streaming-ui.md` — **component catalog and rendering rules** for everything Scooby renders in chat (cards, confirmations, walkthrough openers, inline data rows)
 - Walkthrough overlays render when user clicks cards
 - Page overlays render when user clicks table rows on information pages
 - Tasks in sidebar come from system, AI, and user — all feed back into chat when clicked
+- Test pages (`src/app/test-ui/ai-streaming/`) — visual specification for every conversation scenario

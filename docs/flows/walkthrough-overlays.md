@@ -62,9 +62,39 @@ Walkthroughs are composed from the block rendering system — 23 composable prim
 - Legal paragraphs, form fields, financial breakdowns
 - Confirmation buttons, navigation links
 
+## WalkthroughOpenerCard — The Chat Trigger
+
+When Scooby generates a report, the full walkthrough doesn't open automatically. Instead, a **WalkthroughOpenerCard** appears inline in chat — a compact clickable card with:
+- **Icon + color** — deterministic, mapped from `walkthroughType` (see table below)
+- **Title** — dynamic, set by Scooby (e.g., "Resultaträkning Q1 2026")
+- **Subtitle** — dynamic, key numbers (e.g., "Intäkter 485 000 kr · Resultat 173 000 kr")
+- **ChevronRight** — affordance indicating it's clickable
+
+User clicks → walkthrough overlay opens in main content area.
+
+### Deterministic Type Mapping
+
+| `walkthroughType` | Icon | Color | Walkthrough |
+|---|---|---|---|
+| `resultaträkning` | TrendingUp | Emerald | Income statement |
+| `balansräkning` | Scale | Blue | Balance sheet |
+| `momsdeklaration` | Receipt | Amber | VAT declaration |
+| `k10` | PieChart | Purple | K10 calculation |
+| `egenavgifter` | Calculator | Amber | Self-employment tax |
+| `agi` | Send | Blue | Employer declaration |
+| `inkomstdeklaration` | FileText | Red | Income tax return |
+| `årsredovisning` | BookOpen | Indigo | Annual report |
+| `lönespecifikation` | Users | Green | Payslip detail |
+
+**Rule:** The icon and color are fixed per type (deterministic plumbing). Only the title and subtitle text are dynamic (stochastic, set by Scooby).
+
+Full component specification: see [`scooby-streaming-ui.md`](scooby-streaming-ui.md).
+
 ## What Connects Here
 
 - AI interface generates compact cards in chat → user clicks → walkthrough opens
+- `scooby-streaming-ui.md` — component catalog and rendering rules for all chat UI
 - Deterministic rule tools compute the data → walkthrough renders it
 - Page overlays are the sibling pattern for table row detail views
 - "Gå till [sida]" button navigates to information pages
+- Test pages (`src/app/test-ui/ai-streaming/`) — visual specification for every scenario

@@ -3,7 +3,7 @@
 import dynamic from "next/dynamic"
 import { z } from "zod"
 
-const EmployeePreview = dynamic(() => import("../previews/employee-preview").then(m => ({ default: m.EmployeePreview })), { ssr: false })
+const EmployeePreview = dynamic(() => import("./EmployeeDetail").then(m => ({ default: m.EmployeeDetail })), { ssr: false })
 
 export const EmployeeSchema = z.object({
     name: z.string(),

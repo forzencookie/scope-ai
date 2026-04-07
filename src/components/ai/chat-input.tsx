@@ -23,7 +23,7 @@ import Image from "next/image"
 import Link from "next/link"
 import { QuickActionsMenu } from "@/components/ai/quick-actions-menu"
 import type { QuickAction } from "@/lib/ai/quick-actions"
-import type { ActionTriggerDisplay } from "@/components/ai/action-trigger-chip"
+import type { ActionTriggerDisplay } from "@/components/ai/confirmations/action-trigger-chip"
 
 interface ChatInputProps {
     /** Current textarea value */

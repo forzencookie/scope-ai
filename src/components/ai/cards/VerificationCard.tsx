@@ -1,7 +1,7 @@
 import dynamic from "next/dynamic"
 import { z } from "zod"
 
-const VerificationPreview = dynamic(() => import("../previews/bokforing/verification-preview").then(m => ({ default: m.VerificationPreview })), { ssr: false })
+const VerificationPreview = dynamic(() => import("./VerificationDetail").then(m => ({ default: m.VerificationDetail })), { ssr: false })
 
 export const VerificationRowSchema = z.object({
     account: z.string(),
