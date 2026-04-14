@@ -93,6 +93,8 @@ const makuleraVerifikation: SimScript = [
                         icon={AlertTriangle}
                         accent="amber"
                         isDone
+                        completedAction="deleted"
+                        completedTitle="Verifikation A-42 makulerad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -100,8 +102,15 @@ const makuleraVerifikation: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- **A-42** makulerad\n- **A-48** skapad (rättelsepost)\n- Originalet nollställt — kedjan intakt\n- BFL-kravet uppfyllt`,
+                text: `**A-42** makulerad — rättelsepost **A-48** skapad. Kedjan intakt, BFL-kravet uppfyllt.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-48", verificationNumber: "A-48", date: "2026-03-28", description: "Rättelsepost — makulering A-42", amount: 1250 } }} />
+                ),
             },
         ],
     },

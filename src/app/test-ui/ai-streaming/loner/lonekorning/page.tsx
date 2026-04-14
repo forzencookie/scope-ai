@@ -100,6 +100,8 @@ const korLonerAB: SimScript = [
                         icon={Coins}
                         accent="blue"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Lönekörning april bokförd"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -107,8 +109,17 @@ const korLonerAB: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- **3 verifikationer** skapade (A-51–A-53)\n- AGI april förberedd automatiskt\n- Deadline: 12 maj`,
+                text: `**3 verifikationer** skapade (A-51–A-53). AGI april förberedd automatiskt — deadline 12 maj.`,
                 speed: 11,
+            },
+            {
+                type: "card-list",
+                delay: 200,
+                items: [
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "paid" } }} />,
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "paid" } }} />,
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "paid" } }} />,
+                ],
             },
             {
                 type: "card",

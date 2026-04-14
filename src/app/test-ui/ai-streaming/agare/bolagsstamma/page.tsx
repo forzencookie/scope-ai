@@ -3,6 +3,7 @@
 import { Landmark, FileText } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 const forberedProtokoll: SimScript = [
     { role: "user", content: "Förbered bolagsstämmoprotokoll för ordinarie stämma 2026" },
@@ -49,6 +50,8 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                         icon={FileText}
                         accent="indigo"
                         isDone
+                        completedAction="prepared"
+                        completedTitle="Stämmoprotokoll genererat"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -56,8 +59,15 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
             },
             {
                 type: "stream",
-                text: `Klart!\n- PDF klar att granska\n- Behöver signeras av ordförande + justerare`,
+                text: `PDF klar att granska. Behöver signeras av ordförande + justerare.`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "report", data: { id: "r1", reportType: "Stämmoprotokoll", title: "Ordinarie bolagsstämma 2026", period: "Räkenskapsår 2025" } }} />
+                ),
             },
         ],
     },
@@ -105,6 +115,8 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                         icon={Landmark}
                         accent="purple"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Utdelningsbeslut registrerat"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -112,8 +124,15 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- **150 000 kr** beslutad utdelning\n- 2091 → 2898\n- Utbetalning sker när du bekräftar separat`,
+                text: `**150 000 kr** beslutad utdelning bokförd — 2091 → 2898. Utbetalning sker när du bekräftar separat.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "dividend", data: { id: "d1", name: "Anders Richnau", amount: 150000, year: 2025 } }} />
+                ),
             },
         ],
     },

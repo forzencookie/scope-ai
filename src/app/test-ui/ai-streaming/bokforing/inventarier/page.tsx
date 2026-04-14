@@ -12,6 +12,7 @@
 import { Package, TrendingDown } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa inventarier, user asks to run depreciation ───
 
@@ -61,6 +62,8 @@ const visaInventarier: SimScript = [
                         icon={TrendingDown}
                         accent="indigo"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Avskrivning bokförd"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -68,8 +71,15 @@ const visaInventarier: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n- Verifikation **A-54** skapad\n- 2 014 kr → debet 7832, kredit 1229`,
+                text: `Verifikation **A-54** skapad — 2 014 kr → debet 7832, kredit 1229.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-54", verificationNumber: "A-54", date: "2026-04-30", description: "Avskrivning april 2026", amount: 2014 } }} />
+                ),
             },
         ],
     },
@@ -112,6 +122,8 @@ const registreraInventarie: SimScript = [
                         icon={Package}
                         accent="indigo"
                         isDone
+                        completedAction="created"
+                        completedTitle="Inventarie registrerad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -119,8 +131,15 @@ const registreraInventarie: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- **Kontorsstol IKEA** tillagd\n- Avskrivning: 142 kr/mån\n- Verifikation **A-55** skapad\n- 8 500 kr → debet 1220, kredit 1930`,
+                text: `**Kontorsstol IKEA** tillagd — avskrivning 142 kr/mån. Verifikation **A-55** skapad.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "asset", data: { id: "ast-new", name: "Kontorsstol IKEA", acquisitionValue: 8500, bookValue: 8500, depreciationPerMonth: 142 } }} />
+                ),
             },
         ],
     },
@@ -162,6 +181,8 @@ const korAvskrivning: SimScript = [
                         icon={TrendingDown}
                         accent="indigo"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Avskrivning mars bokförd"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -176,8 +197,15 @@ const korAvskrivning: SimScript = [
             { type: "tool", name: "book_depreciation", duration: 1800, resultLabel: "Bokförde avskrivning" },
             {
                 type: "stream",
-                text: `Klart!\n\n- Verifikation **A-49** skapad\n- 2 083 kr → debet 7832, kredit 1229\n- Alla 3 inventarier uppdaterade`,
+                text: `Verifikation **A-49** skapad — 2 083 kr → debet 7832, kredit 1229. Alla 3 inventarier uppdaterade.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-31", description: "Avskrivning mars 2026", amount: 2083 } }} />
+                ),
             },
         ],
     },

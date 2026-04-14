@@ -7,7 +7,7 @@
 
 // Confirmations
 export { ConfirmationCard } from './confirmations/confirmation-card'
-export { ActivityCard, type ActivityCardProps, type ActivityChange } from './cards/ActivityCard'
+
 export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './confirmations/comparison-table'
 export { ActionTriggerChip, type ActionTriggerDisplay, type ActionTriggerIcon } from './confirmations/action-trigger-chip'
 

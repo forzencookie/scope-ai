@@ -35,6 +35,8 @@ const sparaPaminnelse: SimScript = [
                         icon={ListChecks}
                         accent="blue"
                         isDone
+                        completedAction="created"
+                        completedTitle="Påminnelse sparad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -42,7 +44,7 @@ const sparaPaminnelse: SimScript = [
             },
             {
                 type: "stream",
-                text: `Noterat! Jag påminner dig tisdag 8 april om att fakturera Acme.`,
+                text: `Jag påminner dig tisdag 8 april om att fakturera Acme.`,
                 speed: 12,
             },
         ],

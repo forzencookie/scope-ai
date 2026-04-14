@@ -12,7 +12,7 @@ import { ConfirmationCard } from "@/components/ai"
 import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
 import { TransactionCard } from "@/components/ai/cards/TransactionCard"
 import { ActivityFeedCard } from "@/components/ai/cards/ActivityFeedCard"
-import { ActivityCard } from "@/components/ai/cards/ActivityCard"
+
 import { ComparisonTable } from "@/components/ai/confirmations/comparison-table"
 import { ActionTriggerChip } from "@/components/ai/confirmations/action-trigger-chip"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
@@ -25,7 +25,7 @@ import type {
     Transaction, 
     TaskChecklist as TaskChecklistData, 
     BenefitsTable as BenefitsTableData,
-    ActivityCard as ActivityCardData,
+
     ComparisonTable as ComparisonTableData
 } from "@/lib/ai-schema"
 import type { Message, MessageDisplay } from "@/lib/chat-types"
@@ -239,19 +239,6 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                                                 ))}
                                             </ul>
                                         </div>
-                                    )
-                                case 'ActivityCard':
-                                    const a = normalized as ActivityCardData
-                                    return (
-                                        <ActivityCard
-                                            action={a.action}
-                                            entityType={a.entityType}
-                                            title={a.title}
-                                            subtitle={a.subtitle}
-                                            changes={a.changes}
-                                            link={a.link}
-                                            linkLabel={a.linkLabel}
-                                        />
                                     )
                                 case 'ComparisonTable':
                                     const c = normalized as ComparisonTableData

@@ -8,7 +8,7 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
-import { ActivityCard } from "@/components/ai/cards/ActivityCard"
+import { Calculator } from "lucide-react"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 import { BalanceAuditCard } from "@/components/ai/cards/BalanceAuditCard"
 import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
@@ -466,19 +466,30 @@ export default function TestScenarioPage() {
                             />
                         )}
 
-                        {/* Booked result */}
+                        {/* Booked result — post-confirm card + link card */}
                         {stepAtOrPast(step, "booked") && (
                             <div className="space-y-3">
-                                <ActivityCard
-                                    action="booked"
-                                    entityType="transaction"
-                                    title="Arbetsgivaravgifter mars 2026"
-                                    subtitle="3 anställda · 43 186 kr"
-                                    changes={[
-                                        { label: "Verifikation", value: "A48" },
-                                        { label: "Debet 7510", value: "43 186 kr" },
-                                        { label: "Kredit 2730", value: "43 186 kr" },
-                                    ]}
+                                <ConfirmationCard
+                                    confirmation={{
+                                        title: "Bokför arbetsgivaravgifter mars 2026",
+                                        description: "Arbetsgivaravgifter för 3 anställda baserat på lönekörning LK-2026-03-01",
+                                        summary: [
+                                            { label: "Underlag", value: "137 460 kr" },
+                                            { label: "Avgiftssats", value: "31,42%" },
+                                            { label: "Arbetsgivaravgifter", value: "43 186 kr" },
+                                            { label: "Konto debet", value: "7510 Arbetsgivaravgifter" },
+                                            { label: "Konto kredit", value: "2730 Lagstadgade sociala avgifter" },
+                                            { label: "Verifikation", value: "A48" },
+                                        ],
+                                        action: { toolName: "create_verification", params: {} },
+                                    }}
+                                    isDone
+                                    completedAction="booked"
+                                    completedTitle="Arbetsgivaravgifter bokförda"
+                                    icon={Calculator}
+                                    accent="emerald"
+                                    onConfirm={() => {}}
+                                    onCancel={() => {}}
                                 />
                                 <InlineCardRenderer
                                     card={{

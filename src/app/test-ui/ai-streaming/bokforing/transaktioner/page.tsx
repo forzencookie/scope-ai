@@ -150,6 +150,8 @@ const bokforKvitto: SimScript = [
                         icon={Receipt}
                         accent="blue"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Kvitto bokfört"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -157,8 +159,15 @@ const bokforKvitto: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- Verifikation **A-49** skapad\n- 2 499 kr → konto 5410\n- Ingående moms: 499,80 kr`,
+                text: `Verifikation **A-49** skapad — 2 499 kr → konto 5410, ingående moms 499,80 kr.`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company kontorsmaterial", amount: 2499 } }} />
+                ),
             },
         ],
     },

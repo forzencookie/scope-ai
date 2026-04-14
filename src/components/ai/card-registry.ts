@@ -5,7 +5,7 @@
  * These are complementary systems, not replacements.
  */
 import type { ComponentType } from "react"
-import { ActivityCard } from "./cards/ActivityCard"
+
 import { ReceiptCard } from "./cards/ReceiptCard"
 import { TransactionCard } from "./cards/TransactionCard"
 import { InvoiceCard } from "./cards/InvoiceCard"
@@ -56,9 +56,6 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
 
     taskchecklist: card(ActivityFeedCard),
     checklist: card(ActivityFeedCard),
-
-    activitycard: card(ActivityCard),
-    activity: card(ActivityCard),
 
     summarycard: card(SummaryCard),
     summary: card(SummaryCard),

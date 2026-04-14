@@ -13,6 +13,7 @@ import { Banknote, ChevronRight, PieChart } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Local component: walkthrough opener for K10 ---
 
@@ -149,6 +150,8 @@ const betalaUtdelning: SimScript = [
                         icon={Banknote}
                         accent="green"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Utdelning utbetald"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -164,8 +167,15 @@ const betalaUtdelning: SimScript = [
             { type: "tool", name: "book_transaction", duration: 1400, resultLabel: "Bokfört" },
             {
                 type: "stream",
-                text: `Klart!\n\n- **105 000 kr** till Anders Richnau\n- Verifikation **A-54** skapad\n- Preliminärskatt 45 000 kr → konto 2710\n- Slutskatt: 20% = 30 000 kr — 15 000 kr återfås vid deklaration`,
+                text: `**105 000 kr** betalat till Anders Richnau. Verifikation **A-54** skapad.\n- Preliminärskatt 45 000 kr → konto 2710\n- Slutskatt: 20% = 30 000 kr — 15 000 kr återfås vid deklaration`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "dividend", data: { id: "d-54", name: "Anders Richnau", amount: 150000, year: 2025 } }} />
+                ),
             },
         ],
     },

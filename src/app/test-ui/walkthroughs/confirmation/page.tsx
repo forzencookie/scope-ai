@@ -9,7 +9,7 @@ import {
     Gift, Gavel, Landmark, Package, TrendingDown, Send, RefreshCw, XCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ConfirmationCard, type ConfirmationAccent } from "@/components/ai/confirmations/confirmation-card"
+import { ConfirmationCard, type ConfirmationAccent, type CompletedAction } from "@/components/ai/confirmations/confirmation-card"
 import { BatchConfirmationCard } from "@/components/ai/confirmations/batch-confirmation-card"
 import { ActionTriggerChip } from "@/components/ai/confirmations/action-trigger-chip"
 import { ComparisonTable } from "@/components/ai/confirmations/comparison-table"
@@ -41,6 +41,8 @@ const genericConfirmations: Array<{
     confirmLabel: string
     icon: LucideIcon
     accent: ConfirmationAccent
+    completedAction: CompletedAction
+    completedTitle: string
     confirmation: {
         title: string
         description: string
@@ -57,6 +59,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Bokför",
         icon: Receipt,
         accent: "blue",
+        completedAction: "booked",
+        completedTitle: "Kvitto bokfört",
         confirmation: {
             title: "Ny verifikation",
             description: "Inköp kontorsmaterial",
@@ -78,6 +82,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Skapa faktura",
         icon: FileText,
         accent: "teal",
+        completedAction: "created",
+        completedTitle: "Faktura skapad",
         confirmation: {
             title: "Ny faktura",
             description: "Acme Consulting AB",
@@ -98,6 +104,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Bokför betalning",
         icon: FileText,
         accent: "teal",
+        completedAction: "booked",
+        completedTitle: "Betalning bokförd",
         confirmation: {
             title: "Registrera betalning",
             description: "Faktura #2026-042 · Acme Consulting AB",
@@ -120,6 +128,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Kör lönekörning",
         icon: Coins,
         accent: "emerald",
+        completedAction: "created",
+        completedTitle: "Lönekörning klar",
         confirmation: {
             title: "Lönekörning mars 2026",
             description: "1 anställd",
@@ -140,6 +150,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Bokför",
         icon: Calculator,
         accent: "emerald",
+        completedAction: "booked",
+        completedTitle: "Arbetsgivaravgifter bokförda",
         confirmation: {
             title: "Arbetsgivaravgifter mars 2026",
             description: "3 anställda · LK-2026-03-01",
@@ -160,6 +172,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Tilldela",
         icon: Gift,
         accent: "emerald",
+        completedAction: "created",
+        completedTitle: "Förmån tilldelad",
         confirmation: {
             title: "Tilldela förmån",
             description: "Anna Lindberg",
@@ -181,6 +195,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Bokför",
         icon: Calculator,
         accent: "amber",
+        completedAction: "booked",
+        completedTitle: "Egenavgifter bokförda",
         confirmation: {
             title: "Egenavgifter 2025",
             description: "Baserat på årsresultat",
@@ -202,6 +218,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Registrera",
         icon: Package,
         accent: "indigo",
+        completedAction: "created",
+        completedTitle: "Inventarie registrerad",
         confirmation: {
             title: "Ny inventarie",
             description: "Kontorsmöbler",
@@ -222,6 +240,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Bokför avskrivning",
         icon: TrendingDown,
         accent: "indigo",
+        completedAction: "booked",
+        completedTitle: "Avskrivning bokförd",
         confirmation: {
             title: "Avskrivning mars 2026",
             description: "3 inventarier",
@@ -243,6 +263,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Stäng mars",
         icon: Lock,
         accent: "amber",
+        completedAction: "updated",
+        completedTitle: "Mars 2026 stängd",
         confirmation: {
             title: "Stäng mars 2026",
             description: "Månadsavslut",
@@ -267,6 +289,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Uppdatera",
         icon: Settings,
         accent: "blue",
+        completedAction: "updated",
+        completedTitle: "Företagsinfo uppdaterad",
         confirmation: {
             title: "Uppdatera företagsinfo",
             description: "Scope AI AB",
@@ -286,6 +310,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Skicka AGI",
         icon: Send,
         accent: "blue",
+        completedAction: "created",
+        completedTitle: "AGI skickad",
         confirmation: {
             title: "Skicka AGI april 2026",
             description: "Arbetsgivardeklaration till Skatteverket",
@@ -307,6 +333,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Skicka till Skatteverket",
         icon: Send,
         accent: "amber",
+        completedAction: "created",
+        completedTitle: "Momsdeklaration skickad",
         confirmation: {
             title: "Momsdeklaration Q1 2026",
             description: "Skicka till Skatteverket",
@@ -329,6 +357,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Periodisera",
         icon: RefreshCw,
         accent: "blue",
+        completedAction: "booked",
+        completedTitle: "Periodisering bokförd",
         confirmation: {
             title: "Periodisera försäkring",
             description: "12 månader, 1 000 kr/mån",
@@ -350,6 +380,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Makulera",
         icon: XCircle,
         accent: "amber",
+        completedAction: "deleted",
+        completedTitle: "Faktura makulerad",
         confirmation: {
             title: "Makulera faktura",
             description: "Faktura #2026-040 — kreditnota skapas",
@@ -371,6 +403,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Uppdatera",
         icon: User,
         accent: "emerald",
+        completedAction: "updated",
+        completedTitle: "Anna Lindberg uppdaterad",
         confirmation: {
             title: "Uppdatera Anna Lindberg",
             description: "Ändrade uppgifter",
@@ -391,6 +425,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Generera protokoll",
         icon: Gavel,
         accent: "indigo",
+        completedAction: "prepared",
+        completedTitle: "Stämmoprotokoll genererat",
         confirmation: {
             title: "Generera stämmoprotokoll",
             description: "Ordinarie bolagsstämma 2026",
@@ -411,6 +447,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Registrera utbetalning",
         icon: Coins,
         accent: "purple",
+        completedAction: "booked",
+        completedTitle: "Utbetalning registrerad",
         confirmation: {
             title: "Registrera utbetalning av utdelning",
             description: "150 000 kr — Anders Richnau",
@@ -432,6 +470,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Uppdatera",
         icon: Users,
         accent: "purple",
+        completedAction: "updated",
+        completedTitle: "Ägarandelar uppdaterade",
         confirmation: {
             title: "Uppdatera ägarandelar",
             description: "Ny fördelning HB",
@@ -453,6 +493,8 @@ const genericConfirmations: Array<{
         confirmLabel: "Makulera",
         icon: Trash2,
         accent: "amber",
+        completedAction: "deleted",
+        completedTitle: "Verifikation makulerad",
         confirmation: {
             title: "Makulera verifikation",
             description: "A43 — Felaktig bokning",
@@ -616,11 +658,13 @@ export default function TestConfirmationPage() {
                                                 accent={item.accent}
                                                 isDone={state === "confirmed"}
                                                 isLoading={state === "loading"}
+                                                completedAction={item.completedAction}
+                                                completedTitle={item.completedTitle}
                                                 onConfirm={() => { setState(key, "loading"); setTimeout(() => setState(key, "confirmed"), 1200) }}
                                                 onCancel={() => setState(key, "cancelled")}
                                             />
                                             {state === "confirmed" && (
-                                                <button className="text-xs text-muted-foreground underline mt-1" onClick={() => setState(key, "idle")}>Återställ</button>
+                                                <button className="text-xs text-muted-foreground underline mt-2" onClick={() => setState(key, "idle")}>Återställ</button>
                                             )}
                                         </div>
                                     )}

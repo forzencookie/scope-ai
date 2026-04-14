@@ -11,6 +11,7 @@
 import { Users } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: Read -> user responds -> wrap up ---
 
@@ -87,6 +88,8 @@ const uppdateraAndelar: SimScript = [
                         icon={Users}
                         accent="purple"
                         isDone
+                        completedAction="updated"
+                        completedTitle="Ägarandelar uppdaterade"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -94,8 +97,16 @@ const uppdateraAndelar: SimScript = [
             },
             {
                 type: "stream",
-                text: `Agarandelar uppdaterade! Erik och Maria ager nu 50% var. Framtida resultat fordelas lika.`,
+                text: `Erik och Maria äger nu 50% var. Framtida resultat fördelas lika.`,
                 speed: 12,
+            },
+            {
+                type: "card-list",
+                delay: 200,
+                items: [
+                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "p1", name: "Erik Svensson", sharePercent: 50, equity: 195000, withdrawals: 110000 } }} />,
+                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "p2", name: "Maria Johansson", sharePercent: 50, equity: 130000, withdrawals: 45000 } }} />,
+                ],
             },
         ],
     },

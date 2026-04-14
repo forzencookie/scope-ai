@@ -4,13 +4,12 @@
  */
 
 import type { MentionItem } from '@/components/ai/mention-popover'
-import type { 
-    Receipt, 
-    Transaction, 
-    TaskChecklist, 
-    BenefitsTable, 
-    ActivityCard, 
-    ComparisonTable 
+import type {
+    Receipt,
+    Transaction,
+    TaskChecklist,
+    BenefitsTable,
+    ComparisonTable
 } from './ai-schema'
 
 // Import component prop types for compatibility where needed
@@ -23,7 +22,6 @@ export type MessageDisplay =
     | { type: 'TransactionCard'; data: Transaction }
     | { type: 'TaskChecklist'; data: TaskChecklist }
     | { type: 'ReceiptsTable'; data: Record<string, unknown> }
-    | { type: 'ActivityCard'; data: ActivityCard }
     | { type: 'ComparisonTable'; data: ComparisonTable }
     | { type: 'BenefitsTable'; data: BenefitsTable }
     | {

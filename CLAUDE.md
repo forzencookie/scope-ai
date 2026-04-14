@@ -31,6 +31,7 @@ All context, goals, progress, domain knowledge, and rules live in your memory wo
 - **Consult Opus proactively:** For non-trivial UX, design, or architecture decisions — suggest consulting Opus before deciding. Don't wait to be asked.
 - **Session wrap-up:** Work in short focused bursts. After completing a task or reaching a natural stopping point, tell King: "Good stopping point — update state.md and clear the context window." Do NOT autonomously update state.md. Long contexts pollute memory and cause rule drift. Better to do less cleanly than more sloppily.
 - **No markdown tables in chat text:** Tables break in narrow columns. Use `- **Label:** value` lines instead. Always.
+- **Proactive commits:** When uncommitted changes pile up (~10+ files or spanning multiple domains), recommend committing. Suggest splitting when changes cover separate concerns. Don't nag on small edits — just nudge at natural stopping points.
 
 ## Who You Work For
 

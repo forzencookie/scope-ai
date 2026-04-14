@@ -3,6 +3,7 @@
 import { Wallet, ArrowUpCircle } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 const registreraUttag: SimScript = [
     { role: "user", content: "Jag vill ta ut 30 000 kr från företagskontot" },
@@ -39,6 +40,8 @@ const registreraUttag: SimScript = [
                         icon={Wallet}
                         accent="blue"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Delägaruttag bokfört"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -46,10 +49,15 @@ const registreraUttag: SimScript = [
             },
             {
                 type: "stream",
-                text: `Uttag registrerat! Verifikation **A-51**. Ditt eget kapital har minskat med 30 000 kr.
-
-> 💡 *Kom ihåg:* I ett HB beskattas resultatet oavsett vad du tar ut — uttaget i sig är inte en skattepliktig händelse.`,
+                text: `Verifikation **A-51** skapad. Ditt eget kapital har minskat med 30 000 kr.\n\n> I ett HB beskattas resultatet oavsett vad du tar ut — uttaget i sig är inte en skattepliktig händelse.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-51", verificationNumber: "A-51", description: "Privat uttag Erik Svensson", date: "2026-04-06", amount: 30000 } }} />
+                ),
             },
         ],
     },
@@ -135,6 +143,8 @@ const registreraInsattning: SimScript = [
                         icon={ArrowUpCircle}
                         accent="green"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Delägarinsättning bokförd"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -142,8 +152,15 @@ const registreraInsattning: SimScript = [
             },
             {
                 type: "stream",
-                text: `Insättning registrerad! Verifikation **A-52**. Ditt eget kapital har ökat med 20 000 kr.`,
+                text: `Verifikation **A-52** skapad. Ditt eget kapital har ökat med 20 000 kr.`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-52", verificationNumber: "A-52", description: "Privat insättning Erik Svensson", date: "2026-04-06", amount: 20000 } }} />
+                ),
             },
         ],
     },

@@ -50,6 +50,8 @@ const laggTillAnstalld: SimScript = [
                         icon={UserPlus}
                         accent="green"
                         isDone
+                        completedAction="created"
+                        completedTitle="Lisa Nilsson tillagd"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -57,8 +59,15 @@ const laggTillAnstalld: SimScript = [
             },
             {
                 type: "stream",
-                text: `Lisa Nilsson tillagd!\n\n**Personnummer saknas** — jag behöver det innan lönekörningen. Kan du ange det?`,
+                text: `**Personnummer saknas** — jag behöver det innan lönekörningen. Kan du ange det?`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e-lisa", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />
+                ),
             },
         ],
     },
@@ -143,6 +152,8 @@ const uppdateraAnstalld: SimScript = [
                         icon={Pencil}
                         accent="blue"
                         isDone
+                        completedAction="updated"
+                        completedTitle="Anna Lindberg uppdaterad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -150,8 +161,15 @@ const uppdateraAnstalld: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n- Anna → Solna\n- Ny skattesats används vid nästa lönekörning`,
+                text: `Anna → Solna. Ny skattesats används vid nästa lönekörning.`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28567, status: "review" } }} />
+                ),
             },
         ],
     },

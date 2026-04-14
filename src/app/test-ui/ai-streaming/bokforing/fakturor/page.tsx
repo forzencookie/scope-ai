@@ -10,7 +10,7 @@
  * 4. WRITE: "Makulera faktura" → tool calls + confirmation (amber) → done
  */
 
-import { FileText, CreditCard, XCircle } from "lucide-react"
+import { FileText, CreditCard, XCircle, Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
@@ -98,6 +98,8 @@ const skapaFaktura: SimScript = [
                         icon={FileText}
                         accent="teal"
                         isDone
+                        completedAction="created"
+                        completedTitle="Faktura #2026-043 skapad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -105,8 +107,15 @@ const skapaFaktura: SimScript = [
             },
             {
                 type: "stream",
-                text: `**#2026-043** skapad — Acme AB.\n- Verifikation **A-52** bokförd automatiskt\n\nSkicka via e-post nu, eller granska PDF:en först?`,
+                text: `Fakturan är skapad och verifikation **A-52** bokförd automatiskt.\n\nSkicka via e-post nu, eller granska PDF:en först?`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i-new", invoiceNumber: "2026-043", customer: "Acme Consulting AB", amount: 62500, status: "draft" } }} />
+                ),
             },
         ],
     },
@@ -159,6 +168,8 @@ const registreraBetalning: SimScript = [
                         icon={CreditCard}
                         accent="teal"
                         isDone
+                        completedAction="booked"
+                        completedTitle="Betalning registrerad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -166,8 +177,15 @@ const registreraBetalning: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- **#2026-042** markerad som betald\n- Verifikation **A-53** skapad\n- 37 500 kr → debet 1930, kredit 1510`,
+                text: `**#2026-042** markerad som betald — verifikation **A-53** skapad.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-53", verificationNumber: "A-53", date: "2026-04-06", description: "Betalning faktura #2026-042", amount: 37500 } }} />
+                ),
             },
         ],
     },
@@ -208,6 +226,8 @@ const makuleraFaktura: SimScript = [
                         icon={XCircle}
                         accent="amber"
                         isDone
+                        completedAction="deleted"
+                        completedTitle="Faktura #2026-040 makulerad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -215,8 +235,15 @@ const makuleraFaktura: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart!\n\n- Kreditnota **#2026-K001** skapad\n- Rättelsepost bokförd\n- Verifikation A-38 nollställd\n\nInformera Nordic Design — kreditnotan ersätter den makulerade fakturan.`,
+                text: `Kreditnota **#2026-K001** skapad och rättelsepost bokförd. Verifikation A-38 nollställd.\n\nInformera Nordic Design — kreditnotan ersätter den makulerade fakturan.`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i-k001", invoiceNumber: "2026-K001", customer: "Nordic Design", amount: -25000, status: "paid" } }} />
+                ),
             },
         ],
     },

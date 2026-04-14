@@ -82,23 +82,6 @@ export type BenefitsTable = z.infer<typeof BenefitsTableSchema>
 // 5. Activity Normalization
 // =============================================================================
 
-export const ActivityChangeSchema = z.object({
-    label: z.string(),
-    value: z.string(),
-    previousValue: z.string().optional(),
-})
-
-export const ActivityCardSchema = z.object({
-    action: z.enum(['created', 'updated', 'deleted', 'calculated', 'prepared', 'booked']).default('created'),
-    entityType: z.enum(['receipt', 'transaction', 'invoice', 'payslip', 'report', 'shareholder', 'document']).default('transaction'),
-    title: z.string().default("Åtgärd utförd"),
-    subtitle: z.string().optional(),
-    changes: z.array(ActivityChangeSchema).default([]),
-    link: z.string().optional(),
-    linkLabel: z.string().optional(),
-})
-
-export type ActivityCard = z.infer<typeof ActivityCardSchema>
 
 export const ActivitySummarySchema = z.object({
     period: z.string().default("senaste månaden"),
@@ -285,8 +268,6 @@ export function normalizeAIDisplay(type: string, data: unknown): unknown {
                 return TaskChecklistSchema.parse(unwrapped);
             case 'BenefitsTable':
                 return BenefitsTableSchema.parse(unwrapped);
-            case 'ActivityCard':
-                return ActivityCardSchema.parse(unwrapped);
             case 'ComparisonTable':
                 return ComparisonTableSchema.parse(unwrapped);
             case 'DiscoveredTools':

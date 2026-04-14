@@ -3,6 +3,7 @@
 import { Gift, Car } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 const tilldelaFriskvard: SimScript = [
     { role: "user", content: "Ge Anna Lindberg friskvårdsbidrag på 5 000 kr per år" },
@@ -37,6 +38,8 @@ const tilldelaFriskvard: SimScript = [
                         icon={Gift}
                         accent="green"
                         isDone
+                        completedAction="created"
+                        completedTitle="Förmån tilldelad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -44,8 +47,15 @@ const tilldelaFriskvard: SimScript = [
             },
             {
                 type: "stream",
-                text: `Friskvårdsbidrag tilldelat! Anna kan nu nyttja upp till 5 000 kr per år.`,
+                text: `Anna kan nu nyttja upp till 5 000 kr per år.`,
                 speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "benefit", data: { id: "b1", employeeName: "Anna Lindberg", benefitType: "Friskvårdsbidrag", amount: 5000, amountUnit: "år", taxable: false } }} />
+                ),
             },
         ],
     },
@@ -127,6 +137,8 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
                         icon={Car}
                         accent="blue"
                         isDone
+                        completedAction="created"
+                        completedTitle="Tjänstebil tillagd"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -134,8 +146,15 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
             },
             {
                 type: "stream",
-                text: `Tjänstebil tillagd! Tesla Model 3 registrerad för Sara Ek. Förmånsvärdet (3 800 kr/mån) räknas in automatiskt vid nästa lönekörning.`,
+                text: `Tesla Model 3 registrerad för Sara Ek. Förmånsvärdet (3 800 kr/mån) räknas in automatiskt vid nästa lönekörning.`,
                 speed: 11,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <InlineCardRenderer card={{ cardType: "benefit", data: { id: "b2", employeeName: "Sara Ek", benefitType: "Tjänstebil (Tesla Model 3)", amount: 3800, amountUnit: "mån", taxable: true } }} />
+                ),
             },
         ],
     },

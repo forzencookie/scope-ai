@@ -11,6 +11,7 @@
 import { BookMarked } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: Read → show share register ---
 
@@ -87,6 +88,8 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                         icon={BookMarked}
                         accent="purple"
                         isDone
+                        completedAction="updated"
+                        completedTitle="Aktiebok uppdaterad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -101,8 +104,16 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
             { type: "tool", name: "register_share_transfer", duration: 1800, resultLabel: "Aktieboken uppdaterad" },
             {
                 type: "stream",
-                text: `Klart!\n\n- Lisa Nilsson: **100 A-aktier** (10%)\n- K10 påverkas — Lisa behöver en egen K10 vid utdelning`,
+                text: `Lisa Nilsson: **100 A-aktier** (10%). K10 påverkas — Lisa behöver en egen K10 vid utdelning.`,
                 speed: 11,
+            },
+            {
+                type: "card-list",
+                delay: 200,
+                items: [
+                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "sh1", name: "Anders Richnau — 700 A-aktier (70%)", sharePercent: 70 } }} />,
+                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "sh2", name: "Lisa Nilsson — 100 A-aktier (10%)", sharePercent: 10 } }} />,
+                ],
             },
         ],
     },

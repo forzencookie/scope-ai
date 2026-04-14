@@ -7,7 +7,6 @@ import { CardRenderer } from "@/components/ai/card-renderer"
 import { InlineCardRenderer, type InlineCardType } from "@/components/ai/cards/inline"
 import { BalanceAuditCard } from "@/components/ai/cards/BalanceAuditCard"
 import { ResultatAuditCard } from "@/components/ai/cards/ResultatAuditCard"
-import { ActivityCard } from "@/components/ai/cards/ActivityCard"
 import { BuyCreditsCheckout } from "@/components/ai/cards/BuyCreditsCard"
 import { cn } from "@/lib/utils"
 
@@ -25,9 +24,9 @@ import { cn } from "@/lib/utils"
  * 4. Billing cards — usage, credits
  * 5. Inline cards — compact clickable result rows
  *
- * NOT here (handled by ConfirmationCard isDone state):
- * - TransactionCard, InvoiceCard, ReceiptCard, ActivityCard (after-action display)
- *   These are replaced by the confirmation card staying visible with "Klart".
+ * NOT here (handled by ConfirmationCard post-confirm phase):
+ * - Post-action display is now part of ConfirmationCard (completedAction badge).
+ *   See confirmation test page for the full two-phase flow.
  */
 
 // =============================================================================
@@ -481,59 +480,7 @@ export default function TestCardsPage() {
                     </div>
                 </div>
 
-                {/* Section 4b: Activity cards */}
-                <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Aktivitetskort</h2>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Händelselogg efter en åtgärd. Visas i chatten efter att Scooby genomfört en mutation.
-                    </p>
-
-                    <div className="space-y-8">
-                        <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Aktivitetskort — skapad</h3>
-                                <span className="text-xs text-muted-foreground">Visar vad som gjordes + detaljändringar</span>
-                            </div>
-                            <div className="max-w-lg">
-                                <ActivityCard
-                                    action="created"
-                                    entityType="invoice"
-                                    title="Faktura #2026-043 skapad"
-                                    subtitle="Acme Consulting AB"
-                                    changes={[
-                                        { label: "Belopp", value: "62 500 kr" },
-                                        { label: "Förfallodatum", value: "2026-05-06" },
-                                        { label: "Konto", value: "1510 Kundfordringar" },
-                                    ]}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Aktivitetskort — bokförd</h3>
-                                <span className="text-xs text-muted-foreground">Verifikation skapad efter bokföring</span>
-                            </div>
-                            <div className="max-w-lg">
-                                <ActivityCard
-                                    action="booked"
-                                    entityType="receipt"
-                                    title="Kontorsmaterial bokfört"
-                                    subtitle="Kjell & Company — 2 499 kr"
-                                    changes={[
-                                        { label: "Verifikation", value: "A-47" },
-                                        { label: "Konto debet", value: "6110 Kontorsmaterial" },
-                                        { label: "Konto kredit", value: "1930 Företagskonto" },
-                                        { label: "Moms", value: "500 kr (25%)" },
-                                    ]}
-                                />
-                            </div>
-                        </div>
-
-                    </div>
-                </div>
-
-                {/* Section 4c: BuyCreditsCheckout */}
+                {/* Section 4b: BuyCreditsCheckout */}
                 <div className="border-t pt-12">
                     <h2 className="text-xl font-bold tracking-tight mb-1">Krediter — checkout</h2>
                     <p className="text-sm text-muted-foreground mb-8">

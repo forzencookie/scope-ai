@@ -73,6 +73,8 @@ const laggTillMedlem: SimScript = [
                         icon={UserPlus}
                         accent="green"
                         isDone
+                        completedAction="created"
+                        completedTitle="Sofia Andersson registrerad"
                         onConfirm={() => {}}
                         onCancel={() => {}}
                     />
@@ -80,7 +82,7 @@ const laggTillMedlem: SimScript = [
             },
             {
                 type: "stream",
-                text: `Klart — Sofia Andersson registrerad.\nFöreningen: **13 aktiva medlemmar**.`,
+                text: `Föreningen har nu **13 aktiva medlemmar**.`,
                 speed: 12,
             },
         ],
