@@ -6,11 +6,14 @@ import {
     ArrowLeft, Check, User, Briefcase, Coins, Mail, Building2, Share2,
     Vote, MapPin, ArrowRight, Percent, Calendar, Receipt, FileText,
     Lock, Trash2, Settings, Users, Calculator,
-    Gift, Gavel, Landmark, Package, TrendingDown
+    Gift, Gavel, Landmark, Package, TrendingDown, Send, RefreshCw, XCircle
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { ConfirmationCard, type ConfirmationAccent } from "@/components/ai/confirmations/confirmation-card"
 import { BatchConfirmationCard } from "@/components/ai/confirmations/batch-confirmation-card"
+import { ActionTriggerChip } from "@/components/ai/confirmations/action-trigger-chip"
+import { ComparisonTable } from "@/components/ai/confirmations/comparison-table"
+import { EmployeeCard } from "@/components/ai/cards/EmployeeCard"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
@@ -275,6 +278,173 @@ const genericConfirmations: Array<{
             action: { toolName: "update_company_info", params: {} },
         },
     },
+    // --- Rapporter / Deklarationer (blue/amber) ---
+    {
+        label: "Skicka AGI",
+        description: "Arbetsgivardeklaration till Skatteverket",
+        companyTypes: "AB, HB",
+        confirmLabel: "Skicka AGI",
+        icon: Send,
+        accent: "blue",
+        confirmation: {
+            title: "Skicka AGI april 2026",
+            description: "Arbetsgivardeklaration till Skatteverket",
+            summary: [
+                { label: "Period", value: "April 2026" },
+                { label: "Anställda", value: "3 st" },
+                { label: "Bruttolöner", value: "125 000 kr" },
+                { label: "Skatteavdrag", value: "40 250 kr" },
+                { label: "Arbetsgivaravgift", value: "39 275 kr" },
+                { label: "Deadline", value: "2026-05-12" },
+            ],
+            action: { toolName: "submit_agi", params: {} },
+        },
+    },
+    {
+        label: "Skicka momsdeklaration",
+        description: "Momsdeklaration till Skatteverket",
+        companyTypes: "Alla",
+        confirmLabel: "Skicka till Skatteverket",
+        icon: Send,
+        accent: "amber",
+        confirmation: {
+            title: "Momsdeklaration Q1 2026",
+            description: "Skicka till Skatteverket",
+            summary: [
+                { label: "Period", value: "Jan–Mar 2026" },
+                { label: "Utgående moms 25%", value: "18 750 kr" },
+                { label: "Utgående moms 12%", value: "4 500 kr" },
+                { label: "Ingående moms", value: "−11 800 kr" },
+                { label: "Att betala", value: "11 450 kr" },
+                { label: "Deadline", value: "2026-05-12" },
+            ],
+            action: { toolName: "submit_vat_declaration", params: {} },
+        },
+    },
+    // --- Händelser (blue) ---
+    {
+        label: "Periodisera",
+        description: "Periodisering av kostnad/intäkt över tid",
+        companyTypes: "Alla",
+        confirmLabel: "Periodisera",
+        icon: RefreshCw,
+        accent: "blue",
+        confirmation: {
+            title: "Periodisera försäkring",
+            description: "12 månader, 1 000 kr/mån",
+            summary: [
+                { label: "Kostnad", value: "12 000 kr" },
+                { label: "Period", value: "Apr 2026 – Mar 2027" },
+                { label: "Månadsbelopp", value: "1 000 kr/mån" },
+                { label: "Konto debet", value: "1720 Förutbetalda kostnader" },
+                { label: "Konto kredit", value: "6310 Försäkringspremier" },
+            ],
+            action: { toolName: "create_verification", params: {} },
+        },
+    },
+    // --- Fakturor (teal) ---
+    {
+        label: "Makulera faktura",
+        description: "Skapar kreditnota — ej samma som makulera verifikation",
+        companyTypes: "Alla",
+        confirmLabel: "Makulera",
+        icon: XCircle,
+        accent: "amber",
+        confirmation: {
+            title: "Makulera faktura",
+            description: "Faktura #2026-040 — kreditnota skapas",
+            summary: [
+                { label: "Faktura", value: "#2026-040 — Nordic Design" },
+                { label: "Belopp", value: "25 000 kr" },
+                { label: "Kreditnota", value: "#2026-K001" },
+                { label: "Rättelsepost", value: "Nollställer verifikation A-38" },
+            ],
+            warnings: ["Fakturan är redan skickad till kunden. Kreditnotan bör kommuniceras."],
+            action: { toolName: "void_invoice", params: {} },
+        },
+    },
+    // --- Löner / Anställda (emerald) ---
+    {
+        label: "Uppdatera anställd",
+        description: "Ändra uppgifter för befintlig anställd",
+        companyTypes: "AB, HB",
+        confirmLabel: "Uppdatera",
+        icon: User,
+        accent: "emerald",
+        confirmation: {
+            title: "Uppdatera Anna Lindberg",
+            description: "Ändrade uppgifter",
+            summary: [
+                { label: "Anställd", value: "Anna Lindberg" },
+                { label: "Ny titel", value: "Senior Frontend-utvecklare" },
+                { label: "Ny lön", value: "46 000 kr/mån" },
+                { label: "Gäller från", value: "2026-05-01" },
+            ],
+            action: { toolName: "update_employee", params: {} },
+        },
+    },
+    // --- Ägare (purple) ---
+    {
+        label: "Generera stämmoprotokoll",
+        description: "Ordinarie bolagsstämma",
+        companyTypes: "AB",
+        confirmLabel: "Generera protokoll",
+        icon: Gavel,
+        accent: "indigo",
+        confirmation: {
+            title: "Generera stämmoprotokoll",
+            description: "Ordinarie bolagsstämma 2026",
+            summary: [
+                { label: "Bolag", value: "Scope Consulting AB (559123-4567)" },
+                { label: "Räkenskapsår", value: "2025" },
+                { label: "Typ", value: "Ordinarie bolagsstämma" },
+                { label: "Punkter", value: "7 st (standard)" },
+                { label: "Format", value: "PDF" },
+            ],
+            action: { toolName: "generate_agm_protocol", params: {} },
+        },
+    },
+    {
+        label: "Registrera utbetalning av utdelning",
+        description: "Dokumenterar utbetalning — ingen banköverföring",
+        companyTypes: "AB",
+        confirmLabel: "Registrera utbetalning",
+        icon: Coins,
+        accent: "purple",
+        confirmation: {
+            title: "Registrera utbetalning av utdelning",
+            description: "150 000 kr — Anders Richnau",
+            summary: [
+                { label: "Mottagare", value: "Anders Richnau (80%)" },
+                { label: "Bruttobelopp", value: "150 000 kr" },
+                { label: "Preliminärskatt (30%)", value: "−45 000 kr" },
+                { label: "Netto", value: "105 000 kr" },
+                { label: "Konto debet", value: "2898 Outtagen utdelning" },
+                { label: "Konto kredit", value: "1930 Företagskonto" },
+            ],
+            action: { toolName: "register_dividend_payout", params: {} },
+        },
+    },
+    {
+        label: "Uppdatera ägarandelar",
+        description: "HB/KB — ny resultatfördelning",
+        companyTypes: "HB, KB",
+        confirmLabel: "Uppdatera",
+        icon: Users,
+        accent: "purple",
+        confirmation: {
+            title: "Uppdatera ägarandelar",
+            description: "Ny fördelning HB",
+            summary: [
+                { label: "Erik Svensson", value: "60% → 50%" },
+                { label: "Maria Johansson", value: "40% → 50%" },
+                { label: "Gäller från", value: "2026-04-14" },
+                { label: "Påverkar", value: "Resultatfördelning framåt" },
+            ],
+            warnings: ["Ägarandelar i HB/KB styr hur resultatet beskattas. Säkerställ att ändringen speglar bolagsavtalet."],
+            action: { toolName: "update_ownership", params: {} },
+        },
+    },
     // --- Makulera (amber) ---
     {
         label: "Makulera verifikation",
@@ -488,6 +658,23 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
+                        {/* EmployeeCard — card-registry version of the above */}
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Anställd (EmployeeCard)</h3>
+                                <span className="text-xs text-muted-foreground">Chat-kortregistrets version — levereras av Scooby</span>
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB, HB</span>
+                            </div>
+                            <div className="max-w-sm">
+                                <EmployeeCard
+                                    name="Anna Lindberg"
+                                    role="Frontend-utvecklare"
+                                    email="anna.lindberg@example.com"
+                                    salary={42000}
+                                />
+                            </div>
+                        </div>
+
                         {/* Owner / Shareholder (AB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
@@ -627,6 +814,42 @@ export default function TestConfirmationPage() {
                                     <IconRow icon={Share2}>100 aktier · Stamaktier A · Nr 501–600</IconRow>
                                     <IconRow icon={Coins}>Köpeskilling: {formatCurrency(250000)}</IconRow>
                                     <IconRow icon={Calendar}>Tillträde: 2026-04-01</IconRow>
+                                </DomainCard>
+                            </div>
+                        </div>
+
+                        {/* Delägarinsättning (HB, KB) */}
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Delägarinsättning</h3>
+                                <span className="text-xs text-muted-foreground">Kapitalinsättning i HB/KB</span>
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">HB, KB</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <DomainCard title="Registrera insättning" subtitle="Erik Svensson" icon={Coins} accent="purple" buttonLabel="Registrera insättning">
+                                    <SummaryRow label="Delägare" value="Erik Svensson (60%)" />
+                                    <SummaryRow label="Belopp" value={formatCurrency(50000)} />
+                                    <SummaryRow label="Konto debet" value="1930 Företagskonto" />
+                                    <SummaryRow label="Konto kredit" value="2010 Eget kapital" />
+                                    <SummaryRow label="Datum" value="2026-04-14" />
+                                </DomainCard>
+                            </div>
+                        </div>
+
+                        {/* Delägaruttag (HB, KB) */}
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Delägaruttag</h3>
+                                <span className="text-xs text-muted-foreground">Uttag ur HB/KB</span>
+                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">HB, KB</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <DomainCard title="Registrera uttag" subtitle="Maria Johansson" icon={Coins} accent="purple" buttonLabel="Registrera uttag">
+                                    <SummaryRow label="Delägare" value="Maria Johansson (40%)" />
+                                    <SummaryRow label="Belopp" value={formatCurrency(25000)} />
+                                    <SummaryRow label="Konto debet" value="2010 Eget kapital" />
+                                    <SummaryRow label="Konto kredit" value="1930 Företagskonto" />
+                                    <SummaryRow label="Datum" value="2026-04-14" />
                                 </DomainCard>
                             </div>
                         </div>
@@ -781,6 +1004,56 @@ export default function TestConfirmationPage() {
                                     confirmLabel="Uppdatera valda"
                                     onConfirm={(ids) => console.log("Update:", ids)}
                                     onCancel={() => console.log("Cancel")}
+                                />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* === SECTION 4: Supporting UI components === */}
+                <div className="border-t pt-12">
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Stödjande UI-komponenter</h2>
+                    <p className="text-sm text-muted-foreground mb-8">
+                        Hjälpkomponenter som används i och kring bekräftelseflöden.
+                    </p>
+
+                    <div className="space-y-8">
+                        {/* ActionTriggerChip */}
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">ActionTriggerChip</h3>
+                                <span className="text-xs text-muted-foreground">Visar användarens AI-åtgärd som stiliserat chip istället för råtext</span>
+                            </div>
+                            <div className="space-y-3">
+                                <ActionTriggerChip display={{ type: "action-trigger", icon: "invoice", title: "Skapa faktura", subtitle: "Acme Consulting AB · 50 000 kr", meta: "Konsultarbete mars 2026" }} />
+                                <ActionTriggerChip display={{ type: "action-trigger", icon: "meeting", title: "Förbered bolagsstämma", subtitle: "Ordinarie stämma 2026" }} />
+                                <ActionTriggerChip display={{ type: "action-trigger", icon: "decision", title: "Registrera utdelningsbeslut", subtitle: "187 550 kr · K10-gränsbelopp" }} />
+                                <ActionTriggerChip display={{ type: "action-trigger", icon: "audit", title: "Kör balanskontroll", subtitle: "Mars 2026" }} />
+                            </div>
+                        </div>
+
+                        {/* ComparisonTable */}
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">ComparisonTable</h3>
+                                <span className="text-xs text-muted-foreground">Före/efter-tabell — används när Scooby ändrar befintliga uppgifter</span>
+                            </div>
+                            <div className="max-w-md space-y-4">
+                                <ComparisonTable
+                                    title="Ägarandelar — uppdaterade"
+                                    rows={[
+                                        { label: "Erik Svensson", before: "60%", after: "50%" },
+                                        { label: "Maria Johansson", before: "40%", after: "50%" },
+                                        { label: "Gäller från", before: "—", after: "2026-04-14" },
+                                    ]}
+                                />
+                                <ComparisonTable
+                                    title="Anställd — uppdaterad"
+                                    rows={[
+                                        { label: "Titel", before: "Frontend-utvecklare", after: "Senior Frontend-utvecklare" },
+                                        { label: "Lön", before: "42 000 kr/mån", after: "46 000 kr/mån" },
+                                        { label: "Gäller från", before: "—", after: "2026-05-01" },
+                                    ]}
                                 />
                             </div>
                         </div>

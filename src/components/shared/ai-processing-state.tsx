@@ -62,6 +62,8 @@ interface AiProcessingStateProps {
     toolName?: string
     /** Completed state — shows checkmark instead of shimmer */
     completed?: boolean
+    /** Result label shown when completed — e.g. "Hämtade 12 verifikationer" */
+    resultLabel?: string
     /** Fallback messages for general thinking state (no specific tool) */
     messages?: string[]
     className?: string
@@ -70,28 +72,32 @@ interface AiProcessingStateProps {
 export function AiProcessingState({
     toolName,
     completed = false,
+    resultLabel,
     messages,
     className
 }: AiProcessingStateProps) {
-    const label = toolName
+    const activeLabel = toolName
         ? getToolLabel(toolName)
         : (messages?.[0] || 'Tänker')
 
-    if (completed) {
-        return (
-            <div className={cn("flex items-center gap-1.5 py-1", className)}>
-                <span className="text-xs text-muted-foreground/70 flex items-center gap-1.5">
-                    <span className="text-emerald-500">✓</span>
-                    {label}
-                </span>
-            </div>
-        )
-    }
+    const doneLabel = resultLabel ?? activeLabel
 
     return (
-        <div className={cn("flex items-center py-1", className)}>
-            <span className="text-sm text-shimmer">
-                {label}...
+        <div className={cn("relative min-h-[20px] flex items-center py-1", className)}>
+            {/* Active shimmer state */}
+            <span className={cn(
+                "text-xs text-shimmer transition-opacity duration-300",
+                completed ? "opacity-0 pointer-events-none" : "opacity-100"
+            )}>
+                {activeLabel}...
+            </span>
+            {/* Completed state — overlaid, fades in */}
+            <span className={cn(
+                "absolute inset-0 flex items-center text-xs text-muted-foreground/70 gap-1.5 transition-opacity duration-300",
+                completed ? "opacity-100" : "opacity-0 pointer-events-none"
+            )}>
+                <span className="text-emerald-500">✓</span>
+                {doneLabel}
             </span>
         </div>
     )

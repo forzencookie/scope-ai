@@ -1,12 +1,12 @@
 "use client"
 
 /**
- * AI Streaming: Loner -> Lonekörning
+ * AI Streaming: Löner → Lönekörning
  *
  * Complete conversations with simulated streaming:
- * 1. WRITE: "Kor lonerna" (AB) — tool calls + summary + batch confirmation + AGI cascade
- * 2. WRITE: "Kor lonerna" (HB) — blocker → user provides info → Scooby completes
- * 3. READ: "Visa loneberakning for Anna" — summary card with detail
+ * 1. WRITE: "Kör lönerna" (AB) — tool calls + summary + batch confirmation + AGI cascade
+ * 2. WRITE: "Kör lönerna" (HB) — blocker → user provides info → Scooby completes
+ * 3. READ: "Visa löneberäkning för Anna" — summary card with detail
  */
 
 import Link from "next/link"
@@ -37,17 +37,17 @@ function WalkthroughOpenerCard({ title, subtitle, href }: { title: string; subti
 // --- Scenario 1: WRITE — AB payroll ---
 
 const korLonerAB: SimScript = [
-    { role: "user", content: "Kor lonerna for april" },
+    { role: "user", content: "Kör lönerna för april" },
     {
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "calculate_salary", duration: 1800 },
-            { type: "tool", name: "run_payroll", duration: 2200 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "calculate_salary", duration: 1800, resultLabel: "Beräknade löner" },
+            { type: "tool", name: "run_payroll", duration: 2200, resultLabel: "Lönekörning klar" },
             {
                 type: "stream",
-                text: `Jag har beraknat loner for **3 anstallda** i april. Har ar resultatet:`,
+                text: `**3 anställda** — april. Resultat:`,
                 speed: 12,
             },
             {
@@ -58,9 +58,9 @@ const korLonerAB: SimScript = [
                         <CardRenderer display={{
                             type: "summary",
                             data: {
-                                title: "Lonekörning april 2026",
+                                title: "Lönekörning april 2026",
                                 items: [
-                                    { label: "Bruttoloner", value: 125000 },
+                                    { label: "Bruttolöner", value: 125000 },
                                     { label: "Skatteavdrag", value: -40250 },
                                     { label: "Netto att betala", value: 84750, highlight: true },
                                     { label: "Arbetsgivaravgift (31.42%)", value: 39275 },
@@ -72,15 +72,13 @@ const korLonerAB: SimScript = [
                 ),
             },
             {
-                type: "card",
+                type: "card-list",
                 delay: 200,
-                content: (
-                    <div className="space-y-1">
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "review" } }} />
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "review" } }} />
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "review" } }} />
-                    </div>
-                ),
+                items: [
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "review" } }} />,
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "review" } }} />,
+                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "review" } }} />,
+                ],
             },
             {
                 type: "card",
@@ -88,17 +86,17 @@ const korLonerAB: SimScript = [
                 content: (
                     <ConfirmationCard
                         confirmation={{
-                            title: "Godkann lonekörning",
-                            description: "April 2026 — 3 anstallda",
+                            title: "Godkänn lönekörning",
+                            description: "April 2026 — 3 anställda",
                             summary: [
-                                { label: "Bruttoloner", value: "125 000 kr" },
+                                { label: "Bruttolöner", value: "125 000 kr" },
                                 { label: "Netto att betala", value: "84 750 kr" },
                                 { label: "Arbetsgivaravgift", value: "39 275 kr" },
                                 { label: "Utbetalningsdatum", value: "2026-04-25" },
                             ],
                             action: { toolName: "run_payroll", params: {} },
                         }}
-                        confirmLabel="Godkann & bokfor"
+                        confirmLabel="Godkänn & bokför"
                         icon={Coins}
                         accent="blue"
                         isDone
@@ -109,7 +107,7 @@ const korLonerAB: SimScript = [
             },
             {
                 type: "stream",
-                text: `Loner godkanda! **3 verifikationer** skapade (A-51 till A-53).\n\n**Cascade:** AGI april forberedd automatiskt — arbetsgivardeklaration klar att skicka till Skatteverket senast 12 maj.`,
+                text: `Klart!\n\n- **3 verifikationer** skapade (A-51–A-53)\n- AGI april förberedd automatiskt\n- Deadline: 12 maj`,
                 speed: 11,
             },
             {
@@ -122,8 +120,8 @@ const korLonerAB: SimScript = [
                             description: "Arbetsgivardeklaration till Skatteverket",
                             summary: [
                                 { label: "Period", value: "April 2026" },
-                                { label: "Anstallda", value: "3 st" },
-                                { label: "Bruttoloner", value: "125 000 kr" },
+                                { label: "Anställda", value: "3 st" },
+                                { label: "Bruttolöner", value: "125 000 kr" },
                                 { label: "Arbetsgivaravgift", value: "39 275 kr" },
                                 { label: "Deadline", value: "12 maj 2026" },
                             ],
@@ -145,16 +143,16 @@ const korLonerAB: SimScript = [
 // --- Scenario 2: WRITE — HB payroll with blocker → user resolves → completion ---
 
 const korLonerHB: SimScript = [
-    { role: "user", content: "Kor lonerna for mars" },
+    { role: "user", content: "Kör lönerna för mars" },
     {
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "calculate_salary", duration: 1500 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "calculate_salary", duration: 1500, resultLabel: "Hittade blockerare" },
             {
                 type: "stream",
-                text: `Jag kan inte kora lonerna annu — det saknas information:`,
+                text: `Kan inte köra ännu — saknas info:`,
                 speed: 12,
             },
             {
@@ -165,11 +163,11 @@ const korLonerHB: SimScript = [
                         <CardRenderer display={{
                             type: "activityfeed",
                             data: {
-                                title: "Saknad information for lonekörning",
-                                description: "2 saker att losa",
+                                title: "Saknad information för lönekörning",
+                                description: "2 saker att lösa",
                                 events: [
-                                    { id: "a", action: "error", entityType: "check", title: "Erik Svensson — kommun saknas", description: "Skattesats kan inte beraknas utan kommun", timestamp: null },
-                                    { id: "b", action: "warning", entityType: "check", title: "Friskvardsbidrag — belopp ej satt", description: "Policy finns men beloppet ar tomt", timestamp: null },
+                                    { id: "a", action: "error", entityType: "check", title: "Erik Svensson — kommun saknas", description: "Skattesats kan inte beräknas utan kommun", timestamp: null },
+                                    { id: "b", action: "warning", entityType: "check", title: "Friskvårdsbidrag — belopp ej satt", description: "Policy finns men beloppet är tomt", timestamp: null },
                                 ],
                             },
                         }} />
@@ -178,21 +176,21 @@ const korLonerHB: SimScript = [
             },
             {
                 type: "stream",
-                text: `Kan du ange vilken **kommun** Erik ar skriven i? Da kan jag berakna ratt skattesats.`,
+                text: `Kan du ange vilken **kommun** Erik är skriven i? Då kan jag beräkna rätt skattesats.`,
                 speed: 13,
             },
         ],
     },
-    { role: "user", content: "Erik bor i Goteborg", delay: 2000 },
+    { role: "user", content: "Erik bor i Göteborg", delay: 2000 },
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "lookup_municipality_tax", duration: 800 },
-            { type: "tool", name: "update_employee", duration: 600 },
-            { type: "tool", name: "calculate_salary", duration: 1800 },
+            { type: "tool", name: "lookup_municipality_tax", duration: 800, resultLabel: "Göteborg — 32.32%" },
+            { type: "tool", name: "update_employee", duration: 600, resultLabel: "Erik uppdaterad" },
+            { type: "tool", name: "calculate_salary", duration: 1800, resultLabel: "Beräknade löner" },
             {
                 type: "stream",
-                text: `Tack! Goteborgs kommun har kommunalskatt **32.32%**. Erik ar uppdaterad.\n\nFriskvardsbidragspolicyn later jag vara tills vidare — det blockerar inte lonekörningen.\n\nHar ar resultatet for mars:`,
+                text: `Göteborgs kommunalskatt: **32.32%** — Erik uppdaterad.\nFriskvårdsbidrag låter jag vara — blockerar ej körningen.\n\nMars:`,
                 speed: 11,
             },
             {
@@ -203,9 +201,9 @@ const korLonerHB: SimScript = [
                         <CardRenderer display={{
                             type: "summary",
                             data: {
-                                title: "Lonekörning mars 2026",
+                                title: "Lönekörning mars 2026",
                                 items: [
-                                    { label: "Bruttoloner", value: 95000 },
+                                    { label: "Bruttolöner", value: 95000 },
                                     { label: "Skatteavdrag", value: -30736 },
                                     { label: "Netto att betala", value: 64264, highlight: true },
                                     { label: "Arbetsgivaravgift (31.42%)", value: 29849 },
@@ -217,19 +215,19 @@ const korLonerHB: SimScript = [
             },
             {
                 type: "stream",
-                text: `Vill du godkanna lonekörningen?`,
+                text: `Vill du godkänna lönekörningen?`,
                 speed: 12,
             },
         ],
     },
-    { role: "user", content: "Ja, godkann", delay: 1800 },
+    { role: "user", content: "Ja, godkänn", delay: 1800 },
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "run_payroll", duration: 2000 },
+            { type: "tool", name: "run_payroll", duration: 2000, resultLabel: "Lönekörning klar" },
             {
                 type: "stream",
-                text: `Lonekörning mars godkand! **2 verifikationer** skapade (A-47, A-48). Utbetalning satt till 25 mars.`,
+                text: `Klart!\n- **A-47, A-48** skapade\n- Utbetalning: 25 mars`,
                 speed: 11,
             },
         ],
@@ -239,15 +237,15 @@ const korLonerHB: SimScript = [
 // --- Scenario 3: READ — Salary calculation detail ---
 
 const visaLoneberakning: SimScript = [
-    { role: "user", content: "Visa loneberakning for Anna Lindberg" },
+    { role: "user", content: "Visa löneberäkning för Anna Lindberg" },
     {
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "calculate_salary", duration: 1400 },
+            { type: "tool", name: "calculate_salary", duration: 1400, resultLabel: "Beräknade Annas lön" },
             {
                 type: "stream",
-                text: `Har ar loneberakningen for **Anna Lindberg** i april:`,
+                text: `**Anna Lindberg** — april:`,
                 speed: 12,
             },
             {
@@ -258,14 +256,14 @@ const visaLoneberakning: SimScript = [
                         <CardRenderer display={{
                             type: "summary",
                             data: {
-                                title: "Loneberakning — Anna Lindberg, april 2026",
+                                title: "Löneberäkning — Anna Lindberg, april 2026",
                                 items: [
-                                    { label: "Grundlon", value: 42000 },
+                                    { label: "Grundlön", value: 42000 },
                                     { label: "Kommunalskatt (32.41%)", value: -13612 },
-                                    { label: "Nettolon", value: 28388, highlight: true },
-                                    { label: "Friskvardsbidrag", value: 5000 },
+                                    { label: "Nettolön", value: 28388, highlight: true },
+                                    { label: "Friskvårdsbidrag", value: 5000 },
                                     { label: "Arbetsgivaravgift (31.42%)", value: 13196 },
-                                    { label: "Semestertillagg (12%)", value: 5040 },
+                                    { label: "Semestertillägg (12%)", value: 5040 },
                                 ],
                             },
                         }} />
@@ -274,7 +272,7 @@ const visaLoneberakning: SimScript = [
             },
             {
                 type: "stream",
-                text: `Allt ser korrekt ut. Vill du godkanna eller andra nagot?`,
+                text: `Allt ser korrekt ut. Vill du godkänna eller ändra något?`,
                 speed: 13,
             },
         ],
@@ -285,7 +283,7 @@ const visaLoneberakning: SimScript = [
         elements: [
             {
                 type: "stream",
-                text: `Perfekt! Annas loneberakning ar klar for godkannande nar du kor lonerna. Sag till om du vill se nagon annans berakning.`,
+                text: `Annas beräkning klar — godkänns vid lönekörning.\nVill du se någon annans?`,
                 speed: 12,
             },
         ],
@@ -297,21 +295,21 @@ const visaLoneberakning: SimScript = [
 export default function LonekorningStreamingPage() {
     return (
         <ScenarioPage
-            title="Lonekörning"
-            subtitle="Hur Scooby kor loner, beraknar skatt och hanterar AGI-cascade."
+            title="Lönekörning"
+            subtitle="Hur Scooby kör löner, beräknar skatt och hanterar AGI-cascade."
             backHref="/test-ui/ai-streaming/loner"
-            backLabel="Loner"
+            backLabel="Löner"
         >
-            <Scenario title="Kor lonerna (AB)" description="Skriv-scenario — full lonekörning med AGI-cascade" badges={["AB"]}>
+            <Scenario title="Kör lönerna (AB)" description="Skriv-scenario — full lönekörning med AGI-cascade" badges={["AB"]}>
                 <SimulatedConversation script={korLonerAB} />
             </Scenario>
 
-            <Scenario title="Kor lonerna (HB)" description="Skriv-scenario — blockerande saknad data, user resolves" badges={["HB"]}>
-                <SimulatedConversation script={korLonerHB} autoPlayDelay={2000} />
+            <Scenario title="Kör lönerna (HB)" description="Skriv-scenario — blockerande saknad data, user resolves" badges={["HB"]}>
+                <SimulatedConversation script={korLonerHB} />
             </Scenario>
 
-            <Scenario title="Visa loneberakning" description="Las-scenario — detaljerad berakning med summakort" badges={["Alla"]}>
-                <SimulatedConversation script={visaLoneberakning} autoPlayDelay={4000} />
+            <Scenario title="Visa löneberäkning" description="Läs-scenario — detaljerad beräkning med summakort" badges={["Alla"]}>
+                <SimulatedConversation script={visaLoneberakning} />
             </Scenario>
         </ScenarioPage>
     )

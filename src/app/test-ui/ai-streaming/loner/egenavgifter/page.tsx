@@ -1,53 +1,9 @@
 "use client"
 
-/**
- * AI Streaming: Löner → Egenavgifter (EF only)
- *
- * Scenarios:
- * 1. READ: "Visa mina egenavgifter" — summary card + walkthrough opener
- * 2. WRITE: "Beräkna egenavgifter för 2026" — tool calls + detailed breakdown + walkthrough
- */
-
 import Link from "next/link"
-import { ArrowLeft, Calculator, ChevronRight } from "lucide-react"
-import ReactMarkdown from "react-markdown"
-import remarkGfm from "remark-gfm"
-import { AiProcessingState } from "@/components/shared/ai-processing-state"
+import { Calculator, ChevronRight } from "lucide-react"
+import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { cn } from "@/lib/utils"
-
-function UserMessage({ children }: { children: string }) {
-    return (
-        <div className="flex justify-end">
-            <div className="px-3.5 py-2 rounded-2xl rounded-tr-sm bg-primary text-primary-foreground text-sm max-w-[85%]">{children}</div>
-        </div>
-    )
-}
-
-function ScoobyMessage({ children }: { children: React.ReactNode }) {
-    return <div className="space-y-3 max-w-[90%]">{children}</div>
-}
-
-function Markdown({ text }: { text: string }) {
-    return (
-        <div className="prose prose-sm dark:prose-invert prose-p:my-1.5 prose-li:my-0.5 prose-headings:mb-2 prose-headings:mt-4 max-w-none text-sm">
-            <ReactMarkdown remarkPlugins={[remarkGfm]}>{text}</ReactMarkdown>
-        </div>
-    )
-}
-
-function Scenario({ title, description, badges, children }: { title: string; description: string; badges?: string[]; children: React.ReactNode }) {
-    return (
-        <div className="space-y-4">
-            <div className="flex items-baseline gap-2 flex-wrap">
-                <h3 className="text-sm font-semibold">{title}</h3>
-                <span className="text-xs text-muted-foreground">{description}</span>
-                {badges?.map(b => <span key={b} className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground">{b}</span>)}
-            </div>
-            <div className="rounded-xl border bg-card p-5 space-y-5">{children}</div>
-        </div>
-    )
-}
 
 function WalkthroughOpenerCard({ title, subtitle }: { title: string; subtitle: string }) {
     return (
@@ -67,86 +23,135 @@ function WalkthroughOpenerCard({ title, subtitle }: { title: string; subtitle: s
     )
 }
 
-export default function EgenavgifterStreamingPage() {
-    return (
-        <div className="min-h-screen bg-background pb-20">
-            <div className="max-w-3xl mx-auto px-6 py-8 space-y-12">
-                <div>
-                    <Link href="/test-ui/ai-streaming/loner" className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mb-6">
-                        <ArrowLeft className="h-3.5 w-3.5" />
-                        Löner
-                    </Link>
-                    <h1 className="text-2xl font-bold tracking-tight">Egenavgifter</h1>
-                    <p className="text-sm text-muted-foreground mt-1">Hur Scooby beräknar och visar egenavgifter för enskild firma.</p>
-                </div>
+const visaEgenavgifter: SimScript = [
+    { role: "user", content: "Visa mina egenavgifter" },
+    {
+        role: "scooby",
+        elements: [
+            { type: "thinking", duration: 800 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_income_statement", duration: 1200, resultLabel: "Hämtade resultat" },
+            { type: "tool", name: "calculate_tax", duration: 1800, resultLabel: "Egenavgifter beräknade" },
+            {
+                type: "stream",
+                text: `**Preliminär beräkning** baserat på årets resultat:`,
+                speed: 12,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <div className="max-w-lg">
+                        <CardRenderer display={{
+                            type: "summary",
+                            data: {
+                                title: "Egenavgifter 2026 (preliminärt)",
+                                items: [
+                                    { label: "Årsresultat (prognos)", value: 485000 },
+                                    { label: "Sjukpenninggrundande ink.", value: 485000 },
+                                    { label: "Egenavgifter (31.42%)", value: 152363, highlight: true },
+                                    { label: "Resultat efter avgifter", value: 332637 },
+                                ],
+                            },
+                        }} />
+                    </div>
+                ),
+            },
+            {
+                type: "stream",
+                text: `Klicka på kortet nedan för att se den fullständiga uppdelningen med alla delposter.`,
+                speed: 13,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Egenavgifter 2026"
+                        subtitle="Årsresultat 485 000 kr · Avgifter 152 363 kr · Sats 31.42%"
+                    />
+                ),
+            },
+        ],
+    },
+    { role: "user", content: "Kan jag sänka egenavgifterna på något sätt?", delay: 2500 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "thinking", duration: 600 },
+            {
+                type: "stream",
+                text: `De flesta egenavgifter är fasta, men det finns några sätt att påverka:
 
-                {/* Scenario 1: READ — Current state */}
-                <Scenario title="Visa egenavgifter" description="Läs-scenario — aktuell beräkning med summakort" badges={["EF"]}>
-                    <UserMessage>Visa mina egenavgifter</UserMessage>
-                    <ScoobyMessage>
-                        <AiProcessingState toolName="search_tools" completed />
-                        <AiProcessingState toolName="get_income_statement" completed />
-                        <AiProcessingState toolName="calculate_tax" completed />
+- **Sjukpenninggrundande inkomst** — om du sänker ditt resultat genom avdragsgilla kostnader minskar underlaget
+- **Nedsättning under 26 år** — reducerade satser om du är under 26
+- **Nedsättning över 65 år** — reducerad ålderspensionsavgift
+- **Schablonavdrag** — om du driver verksamhet från hemmet kan du ta schablonavdrag
 
-                        <Markdown text={`Baserat på ditt resultat hittills i år, här är en **preliminär beräkning** av dina egenavgifter:`} />
+I ditt fall är den mest effektiva strategin att **maximera avdragsgilla kostnader** som pensionsavsättning och inventarieinköp. Det sänker resultatet och därmed egenavgifterna.`,
+                speed: 10,
+            },
+        ],
+    },
+]
 
-                        <div className="max-w-lg">
-                            <CardRenderer display={{
-                                type: "summary",
-                                data: {
-                                    title: "Egenavgifter 2026 (preliminärt)",
-                                    items: [
-                                        { label: "Årsresultat (prognos)", value: 485000 },
-                                        { label: "Sjukpenninggrundande ink.", value: 485000 },
-                                        { label: "Egenavgifter (31.42%)", value: 152363, highlight: true },
-                                        { label: "Resultat efter avgifter", value: 332637 },
-                                    ],
-                                },
-                            }} />
-                        </div>
+const beraknaEgenavgifter: SimScript = [
+    { role: "user", content: "Beräkna mina egenavgifter för 2026 baserat på nuvarande resultat" },
+    {
+        role: "scooby",
+        elements: [
+            { type: "thinking", duration: 900 },
+            { type: "tool", name: "get_income_statement", duration: 1400, resultLabel: "Hämtade resultat" },
+            { type: "tool", name: "calculate_tax", duration: 2200, resultLabel: "Egenavgifter beräknade" },
+            { type: "tool", name: "get_knowledge", duration: 600, resultLabel: "Läste avgiftsregler" },
+            {
+                type: "stream",
+                text: `Egenavgifter baserat på resultat **485 000 kr** 2026.
 
-                        <Markdown text={`Klicka på kortet nedan för att se den fullständiga uppdelningen med alla delposter.`} />
+**Uppdelning:**
 
-                        <WalkthroughOpenerCard
-                            title="Egenavgifter 2026"
-                            subtitle="Årsresultat 485 000 kr · Avgifter 152 363 kr · Sats 31.42%"
-                        />
-                    </ScoobyMessage>
-                </Scenario>
-
-                {/* Scenario 2: WRITE — Full calculation */}
-                <Scenario title="Beräkna egenavgifter" description="Skriv-scenario — detaljerad beräkning med delpostförklaring" badges={["EF"]}>
-                    <UserMessage>Beräkna mina egenavgifter för 2026 baserat på nuvarande resultat</UserMessage>
-                    <ScoobyMessage>
-                        <AiProcessingState toolName="get_income_statement" completed />
-                        <AiProcessingState toolName="calculate_tax" completed />
-                        <AiProcessingState toolName="get_knowledge" completed />
-
-                        <Markdown text={`Jag har beräknat dina egenavgifter baserat på ditt resultat **485 000 kr** för 2026.
-
-**Uppdelning av egenavgifter:**
-
-| Delpost | Sats | Belopp |
-|---|---|---|
-| Sjukförsäkring | 3.64% | 17 654 kr |
-| Ålderspensionsavgift | 10.21% | 49 519 kr |
-| Efterlevandepensionsavgift | 0.60% | 2 910 kr |
-| Arbetsmarknadsavgift | 2.64% | 12 804 kr |
-| Arbetsskadeavgift | 0.20% | 970 kr |
-| Allmän löneavgift | 11.62% | 56 367 kr |
-| **Totalt** | **28.97%** | **140 224 kr** |
+- Sjukförsäkring: **3.64%** — 17 654 kr
+- Ålderspensionsavgift: **10.21%** — 49 519 kr
+- Efterlevandepensionsavgift: **0.60%** — 2 910 kr
+- Arbetsmarknadsavgift: **2.64%** — 12 804 kr
+- Arbetsskadeavgift: **0.20%** — 970 kr
+- Allmän löneavgift: **11.62%** — 56 367 kr
+- **Totalt: 28.97% — 140 224 kr**
 
 > 💡 *Nedsättning:* Om du är under 26 eller över 65 gäller reducerade satser. Din fulla sats är **31.42%** inklusive alla tillägg.
 
-Ska jag lägga av preliminärskatt baserat på detta, eller vill du justera resultatet?`} />
+Ska jag lägga av preliminärskatt baserat på detta, eller vill du justera resultatet?`,
+                speed: 10,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Egenavgifter 2026 — fullständig beräkning"
+                        subtitle="7 delposter · Total sats 31.42% · 152 363 kr"
+                    />
+                ),
+            },
+        ],
+    },
+]
 
-                        <WalkthroughOpenerCard
-                            title="Egenavgifter 2026 — fullständig beräkning"
-                            subtitle="7 delposter · Total sats 31.42% · 152 363 kr"
-                        />
-                    </ScoobyMessage>
-                </Scenario>
-            </div>
-        </div>
+export default function EgenavgifterStreamingPage() {
+    return (
+        <ScenarioPage
+            title="Egenavgifter"
+            subtitle="Hur Scooby beräknar och visar egenavgifter för enskild firma."
+            backHref="/test-ui/ai-streaming/loner"
+            backLabel="Löner"
+        >
+            <Scenario title="Visa egenavgifter" description="Läs-scenario — aktuell beräkning med summakort" badges={["EF"]}>
+                <SimulatedConversation script={visaEgenavgifter} />
+            </Scenario>
+
+            <Scenario title="Beräkna egenavgifter" description="Skriv-scenario — detaljerad beräkning med delpostförklaring" badges={["EF"]}>
+                <SimulatedConversation script={beraknaEgenavgifter} />
+            </Scenario>
+        </ScenarioPage>
     )
 }

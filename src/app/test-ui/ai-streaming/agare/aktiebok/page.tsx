@@ -1,18 +1,18 @@
 "use client"
 
 /**
- * AI Streaming: Agare -> Aktiebok (AB only)
+ * AI Streaming: Ägare → Aktiebok (AB only)
  *
  * Complete conversations with simulated streaming:
- * 1. READ: "Visa aktieboken" -> shareholder table
- * 2. WRITE: "Registrera aktieoverlatelse" -> clarification + confirmation -> done
+ * 1. READ: "Visa aktieboken" → shareholder table
+ * 2. WRITE: "Registrera aktieöverlåtelse" → clarification + confirmation → done
  */
 
 import { BookMarked } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
 
-// --- Scenario 1: Read -> show share register ---
+// --- Scenario 1: Read → show share register ---
 
 const visaAktiebok: SimScript = [
     { role: "user", content: "Visa aktieboken" },
@@ -20,47 +20,46 @@ const visaAktiebok: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_company_info", duration: 1400 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_company_info", duration: 1400, resultLabel: "Hämtade aktieboken" },
             {
                 type: "stream",
-                text: `**Aktiebok** for Scope Consulting AB (559123-4567):
+                text: `**Aktiebok** — Scope Consulting AB (559123-4567):
 
-| Aktieagare | Personnr/Orgnr | Aktier | Andel | Serie |
-|---|---|---|---|---|
-| Anders Richnau | 900101-1234 | 800 | 80% | A (10 roster/aktie) |
-| Invest Partner AB | 559987-6543 | 200 | 20% | B (1 rost/aktie) |
+**Anders Richnau** (900101-1234)
+- Aktier: **800 st A-aktier** (80%) · 10 röster/aktie
 
-**Totalt:** 1 000 aktier | **Kvotvarde:** 100 kr/aktie | **Aktiekapital:** 100 000 kr
+**Invest Partner AB** (559987-6543)
+- Aktier: **200 st B-aktier** (20%) · 1 röst/aktie
 
-Anders har **rostmajoritet** med 89% av rosterna (8 000 av 8 200 roster). Bolagsordningen tillater aktier i serie A och B.`,
+Totalt **1 000 aktier** · kvotvärde 100 kr · aktiekapital **100 000 kr**
+
+Anders har **röstmajoritet** med 89% av rösterna (8 000 av 8 200 röster).`,
                 speed: 11,
             },
         ],
     },
 ]
 
-// --- Scenario 2: Write -> share transfer with clarification ---
+// --- Scenario 2: Write → share transfer with clarification ---
 
 const aktieoverlatelse: SimScript = [
-    { role: "user", content: "Anders saljer 100 B-aktier till Lisa Nilsson" },
+    { role: "user", content: "Anders säljer 100 B-aktier till Lisa Nilsson" },
     {
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_company_info", duration: 1300 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_company_info", duration: 1300, resultLabel: "Hämtade aktieboken" },
             {
                 type: "stream",
-                text: `Jag registrerar overlatelsen. Anders har idag **800 A-aktier** — han har inga B-aktier. Menade du A-aktier, eller ska jag kontrollera om det finns en omvandlingsklausul?
+                text: `Jag registrerar överlåtelsen. Anders har idag **800 A-aktier** — han har inga B-aktier. Menade du A-aktier, eller ska jag kontrollera om det finns en omvandlingsklausul?
 
-Jag antar att 100 **A-aktier** ska overlatas. Resultatet:
+Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
 
-| Aktieagare | Fore | Efter |
-|---|---|---|
-| Anders Richnau | 800 A-aktier (80%) | 700 A-aktier (70%) |
-| Invest Partner AB | 200 B-aktier (20%) | 200 B-aktier (20%) |
-| Lisa Nilsson | — | 100 A-aktier (10%) |`,
+- **Anders Richnau:** 800 → **700 A-aktier** (70%)
+- **Invest Partner AB:** 200 B-aktier — oförändrat (20%)
+- **Lisa Nilsson:** ny — **100 A-aktier** (10%)`,
                 speed: 11,
             },
             {
@@ -69,22 +68,22 @@ Jag antar att 100 **A-aktier** ska overlatas. Resultatet:
                 content: (
                     <ConfirmationCard
                         confirmation={{
-                            title: "Registrera aktieoverlatelse",
-                            description: "100 A-aktier: Anders -> Lisa",
+                            title: "Registrera aktieöverlåtelse",
+                            description: "100 A-aktier: Anders → Lisa",
                             summary: [
-                                { label: "Overlatare", value: "Anders Richnau" },
-                                { label: "Forvarare", value: "Lisa Nilsson" },
+                                { label: "Överlåtare", value: "Anders Richnau" },
+                                { label: "Förvärvare", value: "Lisa Nilsson" },
                                 { label: "Antal", value: "100 st A-aktier" },
-                                { label: "Kvotvarde", value: "100 kr/aktie" },
-                                { label: "Overlatelsedatum", value: "2026-04-07" },
+                                { label: "Kvotvärde", value: "100 kr/aktie" },
+                                { label: "Överlåtelsedatum", value: "2026-04-07" },
                             ],
                             warnings: [
-                                "Kontrollera om bolagsordningen har forkopsklausul — ovriga aktieagare kan ha ratt att kopa aktierna forst.",
-                                "Overlatelsen ska anmalas till Bolagsverket om det ror kvalificerade innehav.",
+                                "Kontrollera om bolagsordningen har förköpsklausul — övriga aktieägare kan ha rätt att köpa aktierna först.",
+                                "Överlåtelsen ska anmälas till Bolagsverket om det rör kvalificerade innehav.",
                             ],
                             action: { toolName: "register_share_transfer", params: {} },
                         }}
-                        confirmLabel="Registrera overlatelse"
+                        confirmLabel="Registrera överlåtelse"
                         icon={BookMarked}
                         accent="purple"
                         isDone
@@ -95,16 +94,14 @@ Jag antar att 100 **A-aktier** ska overlatas. Resultatet:
             },
         ],
     },
-    { role: "user", content: "Ja, A-aktier stammer. Kor!", delay: 2500 },
+    { role: "user", content: "Ja, A-aktier stämmer. Kör!", delay: 2500 },
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "register_share_transfer", duration: 1800 },
+            { type: "tool", name: "register_share_transfer", duration: 1800, resultLabel: "Aktieboken uppdaterad" },
             {
                 type: "stream",
-                text: `Aktieoverlatelse registrerad! Aktieboken uppdaterad. Lisa Nilsson ager nu 100 A-aktier (10%).
-
-Kom ihag att **K10-blanketterna** paverkas — Lisa behover en egen K10 om hon tar utdelning.`,
+                text: `Klart!\n\n- Lisa Nilsson: **100 A-aktier** (10%)\n- K10 påverkas — Lisa behöver en egen K10 vid utdelning`,
                 speed: 11,
             },
         ],
@@ -117,16 +114,16 @@ export default function AktiebokStreamingPage() {
     return (
         <ScenarioPage
             title="Aktiebok"
-            subtitle="Hur Scooby visar aktieboken och registrerar overlatelser."
+            subtitle="Hur Scooby visar aktieboken och registrerar överlåtelser."
             backHref="/test-ui/ai-streaming/agare"
-            backLabel="Agare"
+            backLabel="Ägare"
         >
-            <Scenario title="Visa aktieboken" description="Las-scenario -> aktieagarlista med serier" badges={["AB"]}>
+            <Scenario title="Visa aktieboken" description="Läs-scenario → aktieägarlista med serier" badges={["AB"]}>
                 <SimulatedConversation script={visaAktiebok} />
             </Scenario>
 
-            <Scenario title="Registrera aktieoverlatelse" description="Skriv-scenario -> overlatelse mellan aktieagare" badges={["AB"]}>
-                <SimulatedConversation script={aktieoverlatelse} autoPlayDelay={2000} />
+            <Scenario title="Registrera aktieöverlåtelse" description="Skriv-scenario → överlåtelse mellan aktieägare" badges={["AB"]}>
+                <SimulatedConversation script={aktieoverlatelse} />
             </Scenario>
         </ScenarioPage>
     )

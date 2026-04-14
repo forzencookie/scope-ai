@@ -23,27 +23,25 @@ const visaFakturor: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_invoices", duration: 1400 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_invoices", duration: 1400, resultLabel: "Hämtade 3 obetalda fakturor" },
             {
                 type: "stream",
-                text: `Du har **3 obetalda fakturor** totalt **87 500 kr**. En har passerat förfallodatum.`,
+                text: `**3 obetalda** — totalt **87 500 kr**.\nEn har passerat förfallodatum.`,
                 speed: 12,
             },
             {
-                type: "card",
+                type: "card-list",
                 delay: 200,
-                content: (
-                    <div className="space-y-1">
-                        <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i1", invoiceNumber: "2026-042", customer: "Acme AB", amount: 37500, status: "sent" } }} />
-                        <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i2", invoiceNumber: "2026-041", customer: "TechCorp AB", amount: 25000, status: "overdue" } }} />
-                        <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i3", invoiceNumber: "2026-040", customer: "Nordic Design", amount: 25000, status: "sent" } }} />
-                    </div>
-                ),
+                items: [
+                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i1", invoiceNumber: "2026-042", customer: "Acme AB", amount: 37500, status: "sent" } }} />,
+                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i2", invoiceNumber: "2026-041", customer: "TechCorp AB", amount: 25000, status: "overdue" } }} />,
+                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i3", invoiceNumber: "2026-040", customer: "Nordic Design", amount: 25000, status: "sent" } }} />,
+                ],
             },
             {
                 type: "stream",
-                text: `Faktura **#2026-041** till TechCorp förföll den 28 mars. Ska jag skicka en påminnelse?`,
+                text: `**#2026-041** TechCorp — förföll 28 mars.\nSka jag skicka en påminnelse?`,
                 speed: 14,
             },
         ],
@@ -52,10 +50,10 @@ const visaFakturor: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "send_invoice_reminder", duration: 1200 },
+            { type: "tool", name: "send_invoice_reminder", duration: 1200, resultLabel: "Påminnelse skickad" },
             {
                 type: "stream",
-                text: `Påminnelse skickad till TechCorp AB angående faktura **#2026-041** på **25 000 kr**. Förfallodatum var 28 mars — påminnelsen nämner att betalning önskas inom 10 dagar.`,
+                text: `Klart!\n\n- **#2026-041** — TechCorp AB\n- Belopp: **25 000 kr**\n- Förföll: 28 mars\n- Betalning begärd inom 10 dagar`,
                 speed: 11,
             },
         ],
@@ -70,11 +68,11 @@ const skapaFaktura: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_company_info", duration: 1100 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_company_info", duration: 1100, resultLabel: "Hämtade företagsuppgifter" },
             {
                 type: "stream",
-                text: `Jag har dina företagsuppgifter och Acme AB:s kunddata. Här är fakturan — kontrollera att allt stämmer:`,
+                text: `Hämtade dina uppgifter och Acme AB:s kunddata.\nKontrollera:`,
                 speed: 12,
             },
             {
@@ -107,7 +105,7 @@ const skapaFaktura: SimScript = [
             },
             {
                 type: "stream",
-                text: `Faktura **#2026-043** skapad! Skickad till Acme AB. Verifikation **A-52** bokförd automatiskt.\n\nVill du att jag skickar den via e-post direkt, eller vill du granska PDF:en först?`,
+                text: `**#2026-043** skapad — Acme AB.\n- Verifikation **A-52** bokförd automatiskt\n\nSkicka via e-post nu, eller granska PDF:en först?`,
                 speed: 12,
             },
         ],
@@ -116,10 +114,10 @@ const skapaFaktura: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "send_invoice_email", duration: 1600 },
+            { type: "tool", name: "send_invoice_email", duration: 1600, resultLabel: "E-post skickad" },
             {
                 type: "stream",
-                text: `Faktura **#2026-043** skickad till Acme AB via e-post. Mottagare: fakturor@acme.se. Du får en notis när de öppnar den.`,
+                text: `Skickad!\n- **#2026-043** → fakturor@acme.se\n- Notis när de öppnar den`,
                 speed: 11,
             },
         ],
@@ -134,10 +132,10 @@ const registreraBetalning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "get_invoices", duration: 1200 },
+            { type: "tool", name: "get_invoices", duration: 1200, resultLabel: "Hämtade #2026-042" },
             {
                 type: "stream",
-                text: `Jag hittar faktura **#2026-042** till Acme AB på **37 500 kr**. Jag bokför betalningen på konto **1930** (företagskonto) mot **1510** (kundfordringar).`,
+                text: `Hittade **#2026-042** — Acme AB, **37 500 kr**.\n\nBokför:\n- Debet: **1930** Företagskonto\n- Kredit: **1510** Kundfordringar`,
                 speed: 12,
             },
             {
@@ -168,7 +166,7 @@ const registreraBetalning: SimScript = [
             },
             {
                 type: "stream",
-                text: `Betalning registrerad! Faktura **#2026-042** markerad som betald. Verifikation **A-53** skapad — 37 500 kr debet 1930, kredit 1510.`,
+                text: `Klart!\n\n- **#2026-042** markerad som betald\n- Verifikation **A-53** skapad\n- 37 500 kr → debet 1930, kredit 1510`,
                 speed: 11,
             },
         ],
@@ -183,10 +181,10 @@ const makuleraFaktura: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "get_invoices", duration: 1100 },
+            { type: "tool", name: "get_invoices", duration: 1100, resultLabel: "Hämtade #2026-040" },
             {
                 type: "stream",
-                text: `Faktura **#2026-040** till Nordic Design på **25 000 kr** (status: Skickad). Jag skapar en kreditnota som nollställer fakturan och bokför en rättelsepost.`,
+                text: `Hittade **#2026-040** — Nordic Design, **25 000 kr** (Skickad).\n\nSkapar kreditnota som nollställer fakturan + bokför rättelsepost.`,
                 speed: 12,
             },
             {
@@ -217,7 +215,7 @@ const makuleraFaktura: SimScript = [
             },
             {
                 type: "stream",
-                text: `Faktura makulerad! Kreditnota **#2026-K001** skapad. Rättelsepost bokförd.\n\nKom ihåg att informera Nordic Design om att fakturan är makulerad och att kreditnotan ersätter den.`,
+                text: `Klart!\n\n- Kreditnota **#2026-K001** skapad\n- Rättelsepost bokförd\n- Verifikation A-38 nollställd\n\nInformera Nordic Design — kreditnotan ersätter den makulerade fakturan.`,
                 speed: 12,
             },
         ],
@@ -239,15 +237,15 @@ export default function FakturorStreamingPage() {
             </Scenario>
 
             <Scenario title="Skapa faktura" description="Skriv-scenario — ny kundfaktura med bekräftelse" badges={["Alla"]}>
-                <SimulatedConversation script={skapaFaktura} autoPlayDelay={2000} />
+                <SimulatedConversation script={skapaFaktura} />
             </Scenario>
 
             <Scenario title="Registrera betalning" description="Skriv-scenario — markera faktura som betald" badges={["Alla"]}>
-                <SimulatedConversation script={registreraBetalning} autoPlayDelay={4000} />
+                <SimulatedConversation script={registreraBetalning} />
             </Scenario>
 
             <Scenario title="Makulera faktura" description="Skriv-scenario — kreditera och makulera" badges={["Alla"]}>
-                <SimulatedConversation script={makuleraFaktura} autoPlayDelay={6000} />
+                <SimulatedConversation script={makuleraFaktura} />
             </Scenario>
         </ScenarioPage>
     )

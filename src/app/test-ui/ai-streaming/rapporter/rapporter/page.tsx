@@ -44,23 +44,19 @@ const resultatrakning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_income_statement", duration: 1400 },
-            { type: "tool", name: "generate_report", duration: 2200 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_income_statement", duration: 1400, resultLabel: "Hämtade resultaträkning" },
+            { type: "tool", name: "generate_report", duration: 2200, resultLabel: "Rapporten klar" },
             {
                 type: "stream",
-                text: `Resultaträkning för **Q1 2026** (jan–mar):
+                text: `Resultaträkning **Q1 2026** (jan–mar):
 
-| Post | Belopp |
-|---|---|
-| **Nettoomsättning** | 485 000 kr |
-| Övriga rörelseintäkter | 12 000 kr |
-| Rörelsens kostnader | −312 000 kr |
-| Personalkostnader | −220 500 kr |
-| Avskrivningar | −6 249 kr |
-| **Rörelseresultat** | **173 000 kr** |
-
-Klicka på kortet nedan för den fullständiga rapporten med kontouppdelning.`,
+- Nettoomsättning: **485 000 kr**
+- Övriga rörelseintäkter: **12 000 kr**
+- Rörelsens kostnader: −312 000 kr
+- Personalkostnader: −220 500 kr
+- Avskrivningar: −6 249 kr
+- **Rörelseresultat: 173 000 kr**`,
                 speed: 11,
             },
             {
@@ -89,11 +85,11 @@ const balanskontroll: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "get_balance_sheet", duration: 1500 },
-            { type: "tool", name: "get_verifications", duration: 1200 },
+            { type: "tool", name: "get_balance_sheet", duration: 1500, resultLabel: "Hämtade balansräkning" },
+            { type: "tool", name: "get_verifications", duration: 1200, resultLabel: "Kontrollerade 51 verifikationer" },
             {
                 type: "stream",
-                text: `Balanskontroll klar. **4 av 5** kontroller godkända — en varning.`,
+                text: `**4 av 5** kontroller godkända — en varning.`,
                 speed: 12,
             },
             {
@@ -119,7 +115,7 @@ const balanskontroll: SimScript = [
             },
             {
                 type: "stream",
-                text: `Momsavstämningen har en differens på **340 kr** — det kan bero på avrundning eller en missbokad post. Vill du att jag utreder det?`,
+                text: `Momsavstämning — differens **340 kr**.\nKan vara avrundning eller missbokad post. Ska jag utreda?`,
                 speed: 12,
             },
             {
@@ -143,13 +139,11 @@ const balanskontroll: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "get_verifications", duration: 1400 },
-            { type: "tool", name: "search_account_entries", duration: 1100 },
+            { type: "tool", name: "get_verifications", duration: 1400, resultLabel: "Sökte i verifikationer" },
+            { type: "tool", name: "search_account_entries", duration: 1100, resultLabel: "Hittade felpost" },
             {
                 type: "stream",
-                text: `Jag hittade orsaken. Verifikation **A-37** (14 mars) har en momsrad på **340 kr** bokförd på fel konto — den hamnade på 2645 istället för 2641.
-
-Vill du att jag ombokar den? Det tar en kreditering av A-37 och en ny verifikation.`,
+                text: `Hittade orsaken — **A-37** (14 mars).\n\n- Momsrad: **340 kr**\n- Bokförd på: 2645 (fel)\n- Ska vara: 2641\n\nKan ombokas med kreditering + ny verifikation. Vill du det?`,
                 speed: 11,
             },
         ],
@@ -158,10 +152,10 @@ Vill du att jag ombokar den? Det tar en kreditering av A-37 och en ny verifikati
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "create_verification", duration: 1800 },
+            { type: "tool", name: "create_verification", duration: 1800, resultLabel: "Skapade A-52" },
             {
                 type: "stream",
-                text: `Klart! Verifikation **A-52** skapad — 340 kr ombokad från konto 2645 till 2641. Momsavstämningen bör nu stämma.`,
+                text: `Klart!\n- **A-52** skapad — 340 kr: 2645 → 2641\n- Momsavstämningen ska nu stämma`,
                 speed: 12,
             },
         ],
@@ -176,18 +170,16 @@ const momsdeklaration: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 1000 },
-            { type: "tool", name: "calculate_vat", duration: 1800 },
-            { type: "tool", name: "get_vat_report", duration: 2200 },
+            { type: "tool", name: "calculate_vat", duration: 1800, resultLabel: "Beräknade moms" },
+            { type: "tool", name: "get_vat_report", duration: 2200, resultLabel: "Momsdeklaration förberedd" },
             {
                 type: "stream",
                 text: `Momsdeklaration för **Q1 2026** förberedd:
 
-| Post | Belopp |
-|---|---|
-| Utgående moms 25% | 24 500 kr |
-| Utgående moms 12% | 3 600 kr |
-| Ingående moms | −12 050 kr |
-| **Moms att betala** | **16 050 kr** |
+- Utgående moms 25%: **24 500 kr**
+- Utgående moms 12%: **3 600 kr**
+- Ingående moms: −12 050 kr
+- **Moms att betala: 16 050 kr**
 
 Klicka nedan för fullständig deklaration med alla momsrutor.`,
                 speed: 12,
@@ -243,12 +235,10 @@ Klicka nedan för fullständig deklaration med alla momsrutor.`,
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "submit_vat_declaration", duration: 2500 },
+            { type: "tool", name: "submit_vat_declaration", duration: 2500, resultLabel: "Skickad till Skatteverket" },
             {
                 type: "stream",
-                text: `Momsdeklarationen för Q1 2026 är inskickad till Skatteverket. Referensnummer: **SKV-2026-04-Q1-4871**.
-
-Betalning på **16 050 kr** ska vara Skatteverket tillhanda senast **12 maj 2026**. Jag lägger in en påminnelse 5 dagar innan.`,
+                text: `Inskickad!\n\n- Ref: **SKV-2026-04-Q1-4871**\n- Belopp: **16 050 kr** — betala senast 12 maj\n- Påminnelse inlagd 5 dagar innan`,
                 speed: 11,
             },
         ],
@@ -263,23 +253,12 @@ const k10Berakning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 1100 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "calculate_tax", duration: 2000 },
-            { type: "tool", name: "get_knowledge", duration: 800 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "calculate_tax", duration: 2000, resultLabel: "K10 beräknad" },
+            { type: "tool", name: "get_knowledge", duration: 800, resultLabel: "Läste K10-regler" },
             {
                 type: "stream",
-                text: `K10-beräkning för **räkenskapsår 2025** klar.
-
-**Gränsbelopp:** 187 550 kr — utdelning upp till detta belopp beskattas som **kapitalinkomst (20%)** istället för tjänsteinkomst (~50%).
-
-| Post | Belopp |
-|---|---|
-| Omkostnadsbelopp | 50 000 kr |
-| Uppräkning (9%) | 4 500 kr |
-| Lönebaserat utrymme | 133 050 kr |
-| **Gränsbelopp** | **187 550 kr** |
-
-> Tips: Du kan ta ut upp till 187 550 kr i utdelning med 20% skatt. Allt över beskattas som lön.`,
+                text: `K10 **2025** klar — gränsbelopp **187 550 kr**.\nUtdelning upp till det: **20% skatt**. Över det: ~50% som lön.\n\n- Omkostnadsbelopp: **50 000 kr**\n- Uppräkning (9%): **4 500 kr**\n- Lönebaserat utrymme: **133 050 kr**\n- **Gränsbelopp: 187 550 kr**`,
                 speed: 11,
             },
             {
@@ -315,15 +294,15 @@ export default function RapporterStreamingPage() {
             </Scenario>
 
             <Scenario title="Kör balanskontroll" description="Läs-scenario — rimlighetskontroll med audit-kort" badges={["Alla"]}>
-                <SimulatedConversation script={balanskontroll} autoPlayDelay={2000} />
+                <SimulatedConversation script={balanskontroll} />
             </Scenario>
 
             <Scenario title="Förbered momsdeklaration" description="Skriv-scenario — rapport + walkthrough + bekräftelse att skicka" badges={["Alla"]}>
-                <SimulatedConversation script={momsdeklaration} autoPlayDelay={4000} />
+                <SimulatedConversation script={momsdeklaration} />
             </Scenario>
 
             <Scenario title="Generera K10" description="Läs-scenario — kvalificerad utdelning + walkthrough" badges={["AB"]}>
-                <SimulatedConversation script={k10Berakning} autoPlayDelay={6000} />
+                <SimulatedConversation script={k10Berakning} />
             </Scenario>
         </ScenarioPage>
     )

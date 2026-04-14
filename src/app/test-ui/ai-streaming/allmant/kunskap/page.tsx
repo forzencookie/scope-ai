@@ -270,19 +270,19 @@ export default function KunskapStreamingPage() {
             </Scenario>
 
             <Scenario title="Quick — kort förklaring" description="Ett stycke + bold nyckelord" badges={["Alla"]}>
-                <SimulatedConversation script={debetKredit} autoPlayDelay={2000} />
+                <SimulatedConversation script={debetKredit} />
             </Scenario>
 
             <Scenario title="Medium — strukturerad förklaring" description="Intro + numrerad lista + sammanfattning + tips" badges={["Alla"]}>
-                <SimulatedConversation script={utdelning} autoPlayDelay={4000} />
+                <SimulatedConversation script={utdelning} />
             </Scenario>
 
             <Scenario title="Big — systemöversikt" description="Intro + rubriker + tabell + konkret exempel" badges={["Alla"]}>
-                <SimulatedConversation script={basKontoplan} autoPlayDelay={6000} />
+                <SimulatedConversation script={basKontoplan} />
             </Scenario>
 
             <Scenario title="Big — koncept med räkneexempel" description="Kontext + rubriker + tabell + beräkning + tips" badges={["AB"]}>
-                <SimulatedConversation script={k10} autoPlayDelay={8000} />
+                <SimulatedConversation script={k10} />
             </Scenario>
         </ScenarioPage>
     )

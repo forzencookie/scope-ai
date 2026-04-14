@@ -20,20 +20,21 @@ const visaDelagare: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_company_info", duration: 1200 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_company_info", duration: 1200, resultLabel: "Hämtade delägarinfo" },
             {
                 type: "stream",
                 text: `Ert handelsbolag har **2 delagare**:
 
-| Delagare | Andel | Eget kapital | Uttag 2026 |
-|---|---|---|---|
-| Erik Svensson | 60% | 195 000 kr | 110 000 kr |
-| Maria Johansson | 40% | 130 000 kr | 45 000 kr |
+**Erik Svensson** — 60% ägarandel
+- Eget kapital: **195 000 kr** · Uttag 2026: 110 000 kr
 
-**Totalt eget kapital:** 325 000 kr
+**Maria Johansson** — 40% ägarandel
+- Eget kapital: **130 000 kr** · Uttag 2026: 45 000 kr
 
-Resultatet fordelas enligt agarandelarna vid arets slut. Vill du uppdatera andelarna?`,
+Totalt eget kapital: **325 000 kr**
+
+Resultatet fordelas enligt ägarandelarna vid årets slut. Vill du uppdatera andelarna?`,
                 speed: 11,
             },
         ],
@@ -59,7 +60,7 @@ const uppdateraAndelar: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             {
                 type: "stream",
                 text: `Jag andrar agarandelar: Erik **50%** och Maria **50%**. Det paverkar resultatfordelningen framat — befintligt eget kapital kvarstar som det ar.`,
@@ -115,7 +116,7 @@ export default function DelagareStreamingPage() {
             </Scenario>
 
             <Scenario title="Uppdatera agarandelar" description="Skriv-scenario -> andra fordelning" badges={["HB", "KB"]}>
-                <SimulatedConversation script={uppdateraAndelar} autoPlayDelay={2000} />
+                <SimulatedConversation script={uppdateraAndelar} />
             </Scenario>
         </ScenarioPage>
     )

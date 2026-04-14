@@ -18,6 +18,7 @@ import { useState, useEffect, useCallback, useRef, useMemo } from "react"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
+import { PixelDogStatic } from "@/components/ai/mascots/dog"
 import { cn } from "@/lib/utils"
 import { RotateCcw, Play } from "lucide-react"
 
@@ -27,9 +28,10 @@ import { RotateCcw, Play } from "lucide-react"
 
 export type SimElement =
     | { type: "thinking"; duration?: number }
-    | { type: "tool"; name: string; duration?: number }
+    | { type: "tool"; name: string; duration?: number; resultLabel?: string }
     | { type: "stream"; text: string; speed?: number }
     | { type: "card"; content: React.ReactNode; delay?: number }
+    | { type: "card-list"; items: React.ReactNode[]; staggerDelay?: number; delay?: number }
 
 export type SimTurn =
     | { role: "user"; content: string; delay?: number }
@@ -48,9 +50,32 @@ interface Atom {
     preDelay: number          // ms to wait BEFORE showing this atom
     activeDuration?: number   // ms this atom stays "active" (thinking, tool)
     name?: string             // tool name
+    resultLabel?: string      // label shown when tool call completes
     text?: string             // user message or stream text
     speed?: number            // typewriter speed (ms per char)
     content?: React.ReactNode // card JSX
+    isStaggered?: boolean     // card from a card-list — uses faster animation
+}
+
+// Brief auto-acknowledgment text injected between thinking and the first tool call.
+// Confirms intent ("I heard you and I'm on it") rather than just describing what Scooby is doing.
+// Rotates through a small set per category to avoid feeling scripted.
+const AUTO_ACKS = {
+    read:    ["Absolut, jag kollar!", "Hämtar det åt dig!", "Jag tittar på det!"],
+    compute: ["Jag räknar ihop det!", "Absolut, ett ögonblick!", "Ska kolla på det!"],
+    write:   ["Fixar det åt dig!", "Absolut, jag ordnar det!", "Jag fixar det!"],
+}
+
+function getAutoAck(firstToolName: string): string {
+    let options: string[]
+    if (firstToolName.startsWith("calculate_") || firstToolName.startsWith("generate_")) {
+        options = AUTO_ACKS.compute
+    } else if (firstToolName.startsWith("create_") || firstToolName.startsWith("run_") || firstToolName.startsWith("send_") || firstToolName.startsWith("submit_") || firstToolName.startsWith("update_")) {
+        options = AUTO_ACKS.write
+    } else {
+        options = AUTO_ACKS.read
+    }
+    return options[Math.floor(Math.random() * options.length)]
 }
 
 function flattenScript(script: SimScript): Atom[] {
@@ -70,8 +95,15 @@ function flattenScript(script: SimScript): Atom[] {
                 preDelay: ti === 0 ? 400 : (turn.delay ?? 1500),
             })
         } else {
-            for (let ei = 0; ei < turn.elements.length; ei++) {
-                const elem = turn.elements[ei]
+            // Detect thinking → tool pattern to auto-inject acknowledgment
+            const elems = turn.elements
+            const needsAutoAck =
+                elems.length >= 2 &&
+                elems[0].type === "thinking" &&
+                elems[1].type === "tool"
+
+            for (let ei = 0; ei < elems.length; ei++) {
+                const elem = elems[ei]
                 const isFirst = ei === 0
 
                 switch (elem.type) {
@@ -83,6 +115,19 @@ function flattenScript(script: SimScript): Atom[] {
                             preDelay: isFirst ? (turn.delay ?? 500) : 0,
                             activeDuration: elem.duration ?? 1200,
                         })
+                        // Auto-inject brief ack stream right after thinking, before first tool
+                        if (needsAutoAck) {
+                            const firstTool = elems[1]
+                            const ackText = firstTool.type === "tool" ? getAutoAck(firstTool.name) : getAutoAck("")
+                            atoms.push({
+                                id: id++,
+                                turnIndex: ti,
+                                type: "stream",
+                                text: ackText,
+                                speed: 18,
+                                preDelay: 80,
+                            })
+                        }
                         break
 
                     case "tool":
@@ -91,6 +136,7 @@ function flattenScript(script: SimScript): Atom[] {
                             turnIndex: ti,
                             type: "tool",
                             name: elem.name,
+                            resultLabel: elem.resultLabel,
                             // First tool after a gap needs more delay (Scooby is "deciding")
                             preDelay: isFirst ? (turn.delay ?? 600) : 200,
                             // Realistic latency: simple lookups fast, complex queries slow
@@ -119,6 +165,23 @@ function flattenScript(script: SimScript): Atom[] {
                             preDelay: isFirst ? (turn.delay ?? 500) : (elem.delay ?? 250),
                         })
                         break
+
+                    case "card-list": {
+                        const staggerDelay = elem.staggerDelay ?? 150
+                        for (let itemIdx = 0; itemIdx < elem.items.length; itemIdx++) {
+                            atoms.push({
+                                id: id++,
+                                turnIndex: ti,
+                                type: "card",
+                                content: elem.items[itemIdx],
+                                isStaggered: true,
+                                preDelay: itemIdx === 0
+                                    ? (isFirst ? (turn.delay ?? 500) : (elem.delay ?? staggerDelay))
+                                    : staggerDelay,
+                            })
+                        }
+                        break
+                    }
                 }
             }
         }
@@ -257,38 +320,16 @@ function useSimulation(atoms: Atom[]) {
 
 interface SimulatedConversationProps {
     script: SimScript
-    /** Extra delay before auto-play (for staggering multiple scenarios) */
-    autoPlayDelay?: number
     className?: string
 }
 
-export function SimulatedConversation({ script, autoPlayDelay = 0, className }: SimulatedConversationProps) {
+export function SimulatedConversation({ script, className }: SimulatedConversationProps) {
     const [atoms] = useState(() => flattenScript(script))
     const { cursor, phase, streamChars, isIdle, isDone, isPlaying, start, reset } = useSimulation(atoms)
 
-    // Auto-play when component scrolls into view
+    // Manual play — no auto-play on scroll
     const containerRef = useRef<HTMLDivElement>(null)
     const hasStartedRef = useRef(false)
-    const startRef = useRef(start)
-    startRef.current = start
-
-    useEffect(() => {
-        const el = containerRef.current
-        if (!el || hasStartedRef.current) return
-
-        const observer = new IntersectionObserver(
-            ([entry]) => {
-                if (entry.isIntersecting && !hasStartedRef.current) {
-                    hasStartedRef.current = true
-                    setTimeout(() => startRef.current(), Math.max(200, autoPlayDelay))
-                    observer.disconnect()
-                }
-            },
-            { threshold: 0.2 }
-        )
-        observer.observe(el)
-        return () => observer.disconnect()
-    }, [autoPlayDelay])
 
     const handleReplay = useCallback(() => {
         reset()
@@ -303,8 +344,8 @@ export function SimulatedConversation({ script, autoPlayDelay = 0, className }: 
 
     const isVisible = useCallback((atom: Atom): boolean => {
         if (atom.type === "thinking") {
-            // Thinking only shows while active — disappears once we move past it
-            return atom.id === cursor && phase === "active"
+            // Show while active AND after completion (transitions to "Tänkte i Xs")
+            return (atom.id === cursor && phase === "active") || atom.id < cursor
         }
         // Everything else: visible if active or past
         return atom.id < cursor || (atom.id === cursor && phase === "active")
@@ -366,16 +407,25 @@ export function SimulatedConversation({ script, autoPlayDelay = 0, className }: 
                 // Scooby turn
                 return (
                     <div key={`turn-${group.turnIndex}`} className="space-y-3 max-w-[90%] animate-in fade-in duration-200">
+                        <div className="flex items-center gap-1.5">
+                            <PixelDogStatic size={20} />
+                            <span className="text-[11px] font-semibold text-muted-foreground">Scooby</span>
+                        </div>
                         {group.atoms.map((atom) => {
                             if (!isVisible(atom)) return null
 
                             switch (atom.type) {
-                                case "thinking":
+                                case "thinking": {
+                                    const thinkSecs = Math.ceil((atom.activeDuration ?? 1200) / 1000)
                                     return (
                                         <div key={atom.id} className="animate-in fade-in duration-200">
-                                            <AiProcessingState />
+                                            <AiProcessingState
+                                                completed={isDoneAtom(atom)}
+                                                resultLabel={`Tänkte i ${thinkSecs}s`}
+                                            />
                                         </div>
                                     )
+                                }
 
                                 case "tool":
                                     return (
@@ -383,6 +433,7 @@ export function SimulatedConversation({ script, autoPlayDelay = 0, className }: 
                                             <AiProcessingState
                                                 toolName={atom.name}
                                                 completed={isDoneAtom(atom)}
+                                                resultLabel={atom.resultLabel}
                                             />
                                         </div>
                                     )
@@ -409,7 +460,7 @@ export function SimulatedConversation({ script, autoPlayDelay = 0, className }: 
 
                                 case "card":
                                     return (
-                                        <div key={atom.id} className="animate-in fade-in slide-in-from-bottom-1 duration-300">
+                                        <div key={atom.id} className={cn("animate-in fade-in slide-in-from-bottom-1", atom.isStaggered ? "duration-200" : "duration-300")}>
                                             {atom.content}
                                         </div>
                                     )
@@ -441,11 +492,6 @@ export function SimulatedConversation({ script, autoPlayDelay = 0, className }: 
                         <RotateCcw className="h-3 w-3" />
                         Spela igen
                     </button>
-                )}
-                {isPlaying && (
-                    <span className="text-[10px] text-muted-foreground/60 animate-pulse">
-                        Simulerar...
-                    </span>
                 )}
             </div>
         </div>

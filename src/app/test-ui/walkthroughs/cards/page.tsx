@@ -7,6 +7,8 @@ import { CardRenderer } from "@/components/ai/card-renderer"
 import { InlineCardRenderer, type InlineCardType } from "@/components/ai/cards/inline"
 import { BalanceAuditCard } from "@/components/ai/cards/BalanceAuditCard"
 import { ResultatAuditCard } from "@/components/ai/cards/ResultatAuditCard"
+import { ActivityCard } from "@/components/ai/cards/ActivityCard"
+import { BuyCreditsCheckout } from "@/components/ai/cards/BuyCreditsCard"
 import { cn } from "@/lib/utils"
 
 /**
@@ -281,6 +283,46 @@ const inlineCards: Array<{
             data: { name: "Erik Svensson", amount: 150000, year: 2025 },
         },
     },
+    {
+        label: "Inventarie (inline)",
+        description: "Kompakt rad — anläggningstillgång med bokfört värde",
+        card: {
+            cardType: "asset",
+            data: { id: "ast-1", name: "MacBook Pro 16\"", acquisitionValue: 32000, bookValue: 24000, depreciationPerMonth: 889 },
+        },
+    },
+    {
+        label: "Förmån (inline)",
+        description: "Kompakt rad — anställd + förmånstyp + skatteeffekt",
+        card: {
+            cardType: "benefit",
+            data: { id: "ben-1", employeeName: "Anna Lindberg", benefitType: "Friskvårdsbidrag", amount: 5000, amountUnit: "år", taxable: false },
+        },
+    },
+    {
+        label: "Förmån — förmånsvärde (inline)",
+        description: "Kompakt rad — tjänstebil med förmånsvärde",
+        card: {
+            cardType: "benefit",
+            data: { id: "ben-2", employeeName: "Johan Berg", benefitType: "Tjänstebil (Volvo XC40)", amount: 4200, amountUnit: "mån", taxable: true },
+        },
+    },
+    {
+        label: "Delägare (inline)",
+        description: "Kompakt rad — HB/KB-partner med ägarandel + eget kapital",
+        card: {
+            cardType: "partner",
+            data: { id: "ptr-1", name: "Erik Svensson", sharePercent: 60, equity: 195000, withdrawals: 110000 },
+        },
+    },
+    {
+        label: "Delägare 2 (inline)",
+        description: "Kompakt rad — minoritetspartner",
+        card: {
+            cardType: "partner",
+            data: { id: "ptr-2", name: "Maria Johansson", sharePercent: 40, equity: 130000, withdrawals: 45000 },
+        },
+    },
 ]
 
 export default function TestCardsPage() {
@@ -439,6 +481,69 @@ export default function TestCardsPage() {
                     </div>
                 </div>
 
+                {/* Section 4b: Activity cards */}
+                <div className="border-t pt-12">
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Aktivitetskort</h2>
+                    <p className="text-sm text-muted-foreground mb-8">
+                        Händelselogg efter en åtgärd. Visas i chatten efter att Scooby genomfört en mutation.
+                    </p>
+
+                    <div className="space-y-8">
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Aktivitetskort — skapad</h3>
+                                <span className="text-xs text-muted-foreground">Visar vad som gjordes + detaljändringar</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <ActivityCard
+                                    action="created"
+                                    entityType="invoice"
+                                    title="Faktura #2026-043 skapad"
+                                    subtitle="Acme Consulting AB"
+                                    changes={[
+                                        { label: "Belopp", value: "62 500 kr" },
+                                        { label: "Förfallodatum", value: "2026-05-06" },
+                                        { label: "Konto", value: "1510 Kundfordringar" },
+                                    ]}
+                                />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Aktivitetskort — bokförd</h3>
+                                <span className="text-xs text-muted-foreground">Verifikation skapad efter bokföring</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <ActivityCard
+                                    action="booked"
+                                    entityType="receipt"
+                                    title="Kontorsmaterial bokfört"
+                                    subtitle="Kjell & Company — 2 499 kr"
+                                    changes={[
+                                        { label: "Verifikation", value: "A-47" },
+                                        { label: "Konto debet", value: "6110 Kontorsmaterial" },
+                                        { label: "Konto kredit", value: "1930 Företagskonto" },
+                                        { label: "Moms", value: "500 kr (25%)" },
+                                    ]}
+                                />
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                {/* Section 4c: BuyCreditsCheckout */}
+                <div className="border-t pt-12">
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Krediter — checkout</h2>
+                    <p className="text-sm text-muted-foreground mb-8">
+                        Visas efter att användaren valt ett paket i BuyCreditsPrompt.
+                    </p>
+                    <div className="max-w-lg">
+                        <BuyCreditsCheckout selectedPackage={{ tokens: 2000000, price: 149, label: "2M tokens" }} tokens={2000000} />
+                    </div>
+                </div>
+
                 {/* Section 5: Inline Cards */}
                 <div className="border-t pt-12">
                     <h2 className="text-xl font-bold tracking-tight mb-1">Inline-kort (kompakta resultatrader)</h2>
@@ -461,6 +566,7 @@ export default function TestCardsPage() {
                         ))}
                     </div>
                 </div>
+
             </div>
         </div>
     )

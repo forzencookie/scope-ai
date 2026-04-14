@@ -22,11 +22,11 @@ const vadBehovs: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "get_events", duration: 1200 },
-            { type: "tool", name: "get_upcoming_deadlines", duration: 900 },
+            { type: "tool", name: "get_events", duration: 1200, resultLabel: "Hämtade händelser" },
+            { type: "tool", name: "get_upcoming_deadlines", duration: 900, resultLabel: "Kollade deadlines" },
             {
                 type: "stream",
-                text: `Här är en översikt av vad som behöver göras i **april 2026**:`,
+                text: `**April 2026** — att göra:`,
                 speed: 12,
             },
             {
@@ -63,18 +63,12 @@ const vadBehovs: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "get_transactions", duration: 1100 },
-            { type: "tool", name: "lookup_bas_account", duration: 900 },
-            { type: "tool", name: "book_transaction", duration: 1800 },
+            { type: "tool", name: "get_transactions", duration: 1100, resultLabel: "Hämtade 3 obokförda" },
+            { type: "tool", name: "lookup_bas_account", duration: 900, resultLabel: "Matchade BAS-konton" },
+            { type: "tool", name: "book_transaction", duration: 1800, resultLabel: "Bokförde 3 transaktioner" },
             {
                 type: "stream",
-                text: `Alla 3 bokförda:
-
-- **Kjell & Company** — 2 499 kr → Konto 5410 → Verifikation **A-49**
-- **Clas Ohlson** — 349 kr → Konto 6110 → Verifikation **A-50**
-- **Spotify Business** — 169 kr → Konto 5420 → Verifikation **A-51**
-
-Det var allt som var obokfört. Nu kan vi gå vidare med månadsavslutet när du är redo.`,
+                text: `Klart!\n\n- **Kjell & Company** → 5410 → **A-49**\n- **Clas Ohlson** → 6110 → **A-50**\n- **Spotify Business** → 5420 → **A-51**\n\nInget kvar obokfört — redo för månadsavslut.`,
                 speed: 11,
             },
         ],
@@ -89,12 +83,12 @@ const manadsavslut: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 1000 },
-            { type: "tool", name: "get_transactions", duration: 1300 },
-            { type: "tool", name: "get_verifications", duration: 1100 },
-            { type: "tool", name: "get_balance_sheet", duration: 1500 },
+            { type: "tool", name: "get_transactions", duration: 1300, resultLabel: "Kontrollerade transaktioner" },
+            { type: "tool", name: "get_verifications", duration: 1100, resultLabel: "Kontrollerade verifikationer" },
+            { type: "tool", name: "get_balance_sheet", duration: 1500, resultLabel: "Kontrollerade balansräkning" },
             {
                 type: "stream",
-                text: `Jag har granskat mars och hittar **4 punkter** att åtgärda innan vi stänger perioden:`,
+                text: `Granskat mars — **4 punkter** att åtgärda:`,
                 speed: 12,
             },
             {
@@ -155,12 +149,10 @@ const manadsavslut: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "create_verification", duration: 1600 },
+            { type: "tool", name: "create_verification", duration: 1600, resultLabel: "Periodisering bokförd" },
             {
                 type: "stream",
-                text: `Periodisering bokförd. Verifikation **A-50** skapad — 1 000 kr från konto 1790 till 6310.
-
-Mars är nu redo att stängas — alla poster är i ordning förutom momsdifferensen (340 kr) som du bör granska manuellt. Vill du att jag stänger perioden?`,
+                text: `Klart!\n- Verifikation **A-50** skapad — 1 000 kr: 1790 → 6310\n- Mars redo att stängas\n- OBS: momsdifferens 340 kr kvar att granska manuellt\n\nStäng perioden?`,
                 speed: 11,
             },
         ],
@@ -169,10 +161,10 @@ Mars är nu redo att stängas — alla poster är i ordning förutom momsdiffere
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "close_period", duration: 1200 },
+            { type: "tool", name: "close_period", duration: 1200, resultLabel: "Mars stängd" },
             {
                 type: "stream",
-                text: `Mars 2026 är nu stängd. Inga fler bokföringar kan göras i perioden utan att först öppna den igen. Bra jobbat!`,
+                text: `**Mars 2026 stängd.**\nInga bokföringar möjliga utan att öppna perioden igen.`,
                 speed: 12,
             },
         ],
@@ -187,18 +179,17 @@ const deadlines: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "get_upcoming_deadlines", duration: 800 },
+            { type: "stream", text: `Kollar dina kommande deadlines...`, speed: 20 },
+            { type: "tool", name: "get_upcoming_deadlines", duration: 800, resultLabel: "Hämtade 5 deadlines" },
             {
                 type: "stream",
-                text: `Här är dina **kommande deadlines**:
+                text: `Dina **5 kommande deadlines**:
 
-| Datum | Vad | Status |
-|---|---|---|
-| **12 apr** | AGI april (arbetsgivardeklaration) | Inte påbörjad |
-| **25 apr** | Löner april | Inte påbörjad |
-| **12 maj** | Momsdeklaration Q1 | Underlag behövs |
-| **30 jun** | Inkomstdeklaration 2025 | Inte påbörjad |
-| **30 jun** | Årsredovisning 2025 | Inte påbörjad |
+- **12 apr** — AGI april (arbetsgivardeklaration) · Inte påbörjad
+- **25 apr** — Löner april · Inte påbörjad
+- **12 maj** — Momsdeklaration Q1 · Underlag behövs
+- **30 jun** — Inkomstdeklaration 2025 · Inte påbörjad
+- **30 jun** — Årsredovisning 2025 · Inte påbörjad
 
 **Närmast:** AGI april om 6 dagar. Vill du att jag förbereder den?`,
                 speed: 11,
@@ -210,18 +201,16 @@ const deadlines: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "get_payroll_data", duration: 1300 },
-            { type: "tool", name: "calculate_employer_contributions", duration: 1500 },
+            { type: "tool", name: "get_payroll_data", duration: 1300, resultLabel: "Hämtade lönedata" },
+            { type: "tool", name: "calculate_employer_contributions", duration: 1500, resultLabel: "AGI förberedd" },
             {
                 type: "stream",
-                text: `AGI för april 2026 förberedd:
+                text: `AGI april 2026 — förberedd:
 
-| Post | Belopp |
-|---|---|
-| Bruttolöner | 45 000 kr |
-| Arbetsgivaravgifter (31,42%) | 14 139 kr |
-| Avdragen skatt | 10 350 kr |
-| **Totalt att betala** | **24 489 kr** |
+- Bruttolöner: **45 000 kr**
+- Arbetsgivaravgifter (31,42%): **14 139 kr**
+- Avdragen skatt: **10 350 kr**
+- **Totalt att betala: 24 489 kr**
 
 Underlaget är redo. Vill du att jag skickar in det till Skatteverket?`,
                 speed: 11,
@@ -245,11 +234,11 @@ export default function HandelserStreamingPage() {
             </Scenario>
 
             <Scenario title="Kör månadsavslut" description="Skriv-scenario — steg-för-steg checklist med bekräftelser" badges={["Alla"]}>
-                <SimulatedConversation script={manadsavslut} autoPlayDelay={2000} />
+                <SimulatedConversation script={manadsavslut} />
             </Scenario>
 
             <Scenario title="Kommande deadlines" description="Läs-scenario — tidslinje med viktiga datum" badges={["Alla"]}>
-                <SimulatedConversation script={deadlines} autoPlayDelay={4000} />
+                <SimulatedConversation script={deadlines} />
             </Scenario>
         </ScenarioPage>
     )

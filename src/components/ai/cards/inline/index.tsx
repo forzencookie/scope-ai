@@ -3,7 +3,8 @@
 import { useRouter } from "next/navigation"
 import {
     FileText, Receipt, BookOpen, Users, PieChart,
-    ArrowRight, CheckCircle2, Clock, AlertCircle
+    ArrowRight, CheckCircle2, Clock, AlertCircle,
+    Package, Gift, Percent
 } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 
@@ -320,16 +321,121 @@ export function InlineDividendCard({ data }: { data: InlineDividendData }) {
     )
 }
 
+// --- Asset Card (inventarie) ---
+export interface InlineAssetData {
+    id?: string
+    name?: string
+    acquisitionValue?: number
+    bookValue?: number
+    depreciationPerMonth?: number
+}
+
+export function InlineAssetCard({ data }: { data: InlineAssetData }) {
+    return (
+        <CardShell
+            icon={Package}
+            iconColor="text-indigo-600 dark:text-indigo-400"
+            iconBg="bg-indigo-500/10"
+        >
+            <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                    <p className="font-medium truncate">{data.name || "Inventarie"}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {data.bookValue != null && `Bokfört ${formatCurrency(data.bookValue)}`}
+                        {data.depreciationPerMonth != null && ` · ${formatCurrency(data.depreciationPerMonth)}/mån`}
+                    </p>
+                </div>
+                {data.acquisitionValue != null && (
+                    <span className="text-xs text-muted-foreground shrink-0 tabular-nums">
+                        {formatCurrency(data.acquisitionValue)}
+                    </span>
+                )}
+            </div>
+        </CardShell>
+    )
+}
+
+// --- Benefit Card (förmån) ---
+export interface InlineBenefitData {
+    id?: string
+    employeeName?: string
+    benefitType?: string
+    amount?: number
+    amountUnit?: string
+    taxable?: boolean
+}
+
+export function InlineBenefitCard({ data }: { data: InlineBenefitData }) {
+    const taxLabel = data.taxable === false ? "Skattefritt" : data.taxable === true ? "Förmånsvärde" : undefined
+    const taxVariant: "success" | "warning" = data.taxable === false ? "success" : "warning"
+
+    return (
+        <CardShell
+            icon={Gift}
+            iconColor="text-green-600 dark:text-green-400"
+            iconBg="bg-green-500/10"
+        >
+            <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                    <p className="font-medium truncate">{data.employeeName || "Anställd"}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {data.benefitType}
+                        {data.amount != null && ` · ${formatCurrency(data.amount)}${data.amountUnit ? `/${data.amountUnit}` : ""}`}
+                    </p>
+                </div>
+                {taxLabel && <StatusBadge status={taxLabel} variant={taxVariant} />}
+            </div>
+        </CardShell>
+    )
+}
+
+// --- Partner Card (delägare HB/KB) ---
+export interface InlinePartnerData {
+    id?: string
+    name?: string
+    sharePercent?: number
+    equity?: number
+    withdrawals?: number
+}
+
+export function InlinePartnerCard({ data }: { data: InlinePartnerData }) {
+    return (
+        <CardShell
+            icon={Percent}
+            iconColor="text-purple-600 dark:text-purple-400"
+            iconBg="bg-purple-500/10"
+        >
+            <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                    <p className="font-medium truncate">{data.name || "Delägare"}</p>
+                    <p className="text-xs text-muted-foreground">
+                        {data.equity != null && `EK ${formatCurrency(data.equity)}`}
+                        {data.withdrawals != null && ` · Uttag ${formatCurrency(data.withdrawals)}`}
+                    </p>
+                </div>
+                {data.sharePercent != null && (
+                    <span className="text-sm font-semibold tabular-nums shrink-0 text-purple-600 dark:text-purple-400">
+                        {data.sharePercent}%
+                    </span>
+                )}
+            </div>
+        </CardShell>
+    )
+}
+
 // --- Card type map for dynamic rendering ---
-export type InlineCardType = 
-    | "invoice" 
-    | "transaction" 
-    | "verification" 
-    | "payroll" 
-    | "report" 
-    | "receipt" 
-    | "vat" 
+export type InlineCardType =
+    | "invoice"
+    | "transaction"
+    | "verification"
+    | "payroll"
+    | "report"
+    | "receipt"
+    | "vat"
     | "dividend"
+    | "asset"
+    | "benefit"
+    | "partner"
     | "task_completed"
     | "BuyCreditsPrompt"
     | "budget_limit"
@@ -357,6 +463,12 @@ export function InlineCardRenderer({ card }: { card: InlineCardData }) {
             return <InlineVATCard data={card.data as InlineVATData} />
         case "dividend":
             return <InlineDividendCard data={card.data as InlineDividendData} />
+        case "asset":
+            return <InlineAssetCard data={card.data as InlineAssetData} />
+        case "benefit":
+            return <InlineBenefitCard data={card.data as InlineBenefitData} />
+        case "partner":
+            return <InlinePartnerCard data={card.data as InlinePartnerData} />
         default:
             return null
     }

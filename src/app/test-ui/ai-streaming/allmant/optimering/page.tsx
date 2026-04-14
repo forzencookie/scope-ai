@@ -23,24 +23,19 @@ const lonVsUtdelning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "get_income_statement", duration: 1200 },
-            { type: "tool", name: "calculate_tax", duration: 1800 },
+            { type: "tool", name: "get_income_statement", duration: 1200, resultLabel: "Hämtade bolagets resultat" },
+            { type: "tool", name: "calculate_tax", duration: 1800, resultLabel: "Beräknade skatteoptimering" },
             {
                 type: "stream",
                 text: `Bra fråga — svaret beror på **dina siffror**. Jag har räknat på tre scenarier baserat på ditt bolags resultat på **600 000 kr**:
 
-### Jämförelse: 400 000 kr uttag
+**Jämförelse — 400 000 kr uttag:**
 
-| | Lön | Utdelning | Mix (optimal) |
-|---|---|---|---|
-| **Brutto** | 400 000 kr | 400 000 kr | 400 000 kr |
-| Arbetsgivaravgift | −125 680 kr | — | −62 840 kr |
-| Inkomstskatt | −128 000 kr | −80 000 kr | −104 000 kr |
-| Bolagsskatt (20.6%) | — | −82 400 kr | −41 200 kr |
-| **Netto i fickan** | **272 000 kr** | **237 600 kr** | **296 160 kr** |
-| **Total skattekostnad** | 253 680 kr | 162 400 kr | 208 040 kr |
+- **Lön** → netto 272 000 kr · skatt 253 680 kr
+- **Utdelning** → netto 237 600 kr · skatt 162 400 kr
+- **Mix (optimal)** → netto **296 160 kr** · skatt 208 040 kr ✓
 
-### Min rekommendation
+**Min rekommendation:**
 
 **Mixstrategin** ger dig mest i fickan — ta ut **lön upp till brytpunkten** (≈614 000 kr för 2026) och resten som **utdelning inom K10-gränsbeloppet**.
 
@@ -55,19 +50,17 @@ Det finns dock en viktig detalj: **lön ger pensionsrätter**, utdelning gör de
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "calculate_tax", duration: 2200 },
+            { type: "tool", name: "calculate_tax", duration: 2200, resultLabel: "Optimal fördelning beräknad" },
             {
                 type: "stream",
-                text: `Baserat på ditt resultat på 600 000 kr och K10-gränsbelopp på **204 325 kr**:
+                text: `Resultat **600 000 kr** — K10 **204 325 kr**:
 
-| Post | Belopp |
-|---|---|
-| **Lön** (inkl. semestertillägg) | 396 000 kr |
-| **Utdelning** (inom gränsbelopp) | 204 325 kr |
-| Arbetsgivaravgift på lön | −124 420 kr |
-| Inkomstskatt lön (kommunal) | −126 720 kr |
-| Kapitalskatt utdelning (20%) | −40 865 kr |
-| **Totalt netto** | **428 740 kr** |
+- Lön (inkl. semestertillägg): **396 000 kr**
+- Utdelning (inom gränsbelopp): **204 325 kr**
+- Arbetsgivaravgift på lön: −124 420 kr
+- Inkomstskatt lön (kommunal): −126 720 kr
+- Kapitalskatt utdelning (20%): −40 865 kr
+- **Totalt netto: 428 740 kr**
 
 Det är **36 740 kr mer** i fickan jämfört med att ta allt som lön. Vill du att jag skapar ett styrelsebeslut för utdelningen?`,
                 speed: 11,
@@ -84,12 +77,12 @@ const momsregistrering: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "get_company_info", duration: 800 },
+            { type: "tool", name: "get_company_info", duration: 800, resultLabel: "Hämtade omsättning" },
             {
                 type: "stream",
                 text: `Ditt bolag omsätter **485 000 kr** hittills i år — det betyder att du **måste** vara momsregistrerad.
 
-### Reglerna i korthet
+**Reglerna i korthet:**
 
 Momsregistrering är **obligatorisk** om din omsättning överstiger **80 000 kr** per räkenskapsår (gränsen höjdes 2025, var tidigare 30 000 kr).
 
@@ -138,32 +131,26 @@ const minskaSkatten: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 1000 },
-            { type: "tool", name: "get_income_statement", duration: 1400 },
-            { type: "tool", name: "calculate_tax", duration: 1800 },
-            { type: "tool", name: "get_knowledge", duration: 600 },
+            { type: "tool", name: "get_income_statement", duration: 1400, resultLabel: "Hämtade bolagets resultat" },
+            { type: "tool", name: "calculate_tax", duration: 1800, resultLabel: "Beräknade skatteåtgärder" },
+            { type: "tool", name: "get_knowledge", duration: 600, resultLabel: "Läste skatteregler" },
             {
                 type: "stream",
                 text: `Baserat på ditt bolags resultat (**600 000 kr**) och din nuvarande lön (**42 000 kr/mån**) ser jag tre konkreta åtgärder:
 
-### 1. Maximera pensionsavsättning
+**1. Maximera pensionsavsättning**
 
-Du kan avsätta upp till **35% av lönen** i tjänstepension — det är en avdragsgill kostnad för bolaget och skattefritt för dig tills du tar ut den.
+Du kan avsätta upp till **35% av lönen** i tjänstepension — avdragsgill för bolaget, skattefritt för dig tills uttag. Pensionsavsättning 15 000 kr/mån sänker bolagsskatten med **~37 000 kr/år**.
 
-| Åtgärd | Effekt |
-|---|---|
-| Pensionsavsättning 15 000 kr/mån | Sänker bolagsskatten med ~37 000 kr/år |
+**2. Använda hela K10-gränsbeloppet**
 
-### 2. Använda hela K10-gränsbeloppet
+Ditt gränsbelopp är **187 550 kr**. Utdelning upp till det beskattas med **20%** istället för ~50% som lön. Du har inte tagit ut någon utdelning i år. Besparing: **ca 56 000 kr** jämfört med lön.
 
-Ditt gränsbelopp är **187 550 kr**. Utdelning upp till det beloppet beskattas med **20%** istället för ~50% som lön. Du har inte tagit ut någon utdelning i år.
+**3. Periodisera intäkter**
 
-**Besparing:** ca 56 000 kr jämfört med att ta ut samma belopp som lön.
+Om du kan fakturera i januari istället för december skjuts resultat till nästa räkenskapsår. Ger **likviditetsvinst** — inte permanent skattebesparing.
 
-### 3. Periodisera intäkter
-
-Om du har möjlighet att fakturera i januari istället för december kan du skjuta resultat till nästa räkenskapsår. Det ger **likviditetsvinst** (inte permanent skattebesparing).
-
-**Sammanfattning:** Pensionsavsättning + utdelning inom K10 kan spara dig uppemot **93 000 kr** i skatt jämfört med att ta ut allt som lön. Ska jag räkna på den optimala fördelningen?`,
+Pensionsavsättning + utdelning inom K10 kan spara dig uppemot **93 000 kr** i skatt. Ska jag räkna på den optimala fördelningen?`,
                 speed: 12,
             },
         ],
@@ -172,16 +159,14 @@ Om du har möjlighet att fakturera i januari istället för december kan du skju
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "calculate_tax", duration: 2500 },
+            { type: "tool", name: "calculate_tax", duration: 2500, resultLabel: "Optimerad plan klar" },
             {
                 type: "stream",
-                text: `Här är din optimerade plan:
+                text: `Din optimerade plan:
 
-| Åtgärd | Belopp | Skattebesparing |
-|---|---|---|
-| Tjänstepension | 180 000 kr/år | 37 080 kr |
-| Utdelning (inom K10) | 187 550 kr | 56 265 kr |
-| **Total besparing** | | **93 345 kr** |
+- Tjänstepension: **180 000 kr/år** → skattebespar 37 080 kr
+- Utdelning (inom K10): **187 550 kr** → skattebespar 56 265 kr
+- **Total besparing: 93 345 kr**
 
 Jag rekommenderar att du:
 1. **Höjer pensionsavsättningen** från nästa månad — jag kan bokföra det
@@ -209,11 +194,11 @@ export default function OptimeringStreamingPage() {
             </Scenario>
 
             <Scenario title="Ska jag momsregistrera mig?" description="Kunskapsfråga med kontextberoende svar" badges={["Alla"]}>
-                <SimulatedConversation script={momsregistrering} autoPlayDelay={2000} />
+                <SimulatedConversation script={momsregistrering} />
             </Scenario>
 
             <Scenario title="Minska skatten" description="Personlig rådgivning — baserat på företagets data" badges={["AB"]}>
-                <SimulatedConversation script={minskaSkatten} autoPlayDelay={4000} />
+                <SimulatedConversation script={minskaSkatten} />
             </Scenario>
         </ScenarioPage>
     )

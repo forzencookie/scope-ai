@@ -317,25 +317,25 @@ input:-webkit-autofill:focus {
 /* Shimmer text effect for AI thinking/tool states */
 @keyframes text-shimmer {
   0% {
-    background-position: -200% center;
+    background-position: 200% center;
   }
   100% {
-    background-position: 200% center;
+    background-position: -200% center;
   }
 }
 
 .text-shimmer {
   background: linear-gradient(
     90deg,
-    hsl(var(--muted-foreground) / 0.4) 0%,
-    hsl(var(--foreground) / 0.8) 50%,
-    hsl(var(--muted-foreground) / 0.4) 100%
+    color-mix(in oklch, var(--muted-foreground) 60%, transparent) 0%,
+    var(--foreground) 50%,
+    color-mix(in oklch, var(--muted-foreground) 60%, transparent) 100%
   );
   background-size: 200% auto;
   background-clip: text;
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: text-shimmer 2s ease-in-out infinite;
+  animation: text-shimmer 3s ease-in-out infinite;
 }
 
 /* Hero title with flowing glow */

@@ -21,11 +21,11 @@ const visaInventarier: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_transactions", duration: 1400 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_transactions", duration: 1400, resultLabel: "Hämtade 3 inventarier" },
             {
                 type: "stream",
-                text: `Du har **3 inventarier** med ett totalt bokfört värde på **142 500 kr**:\n\n| Inventarie | Anskaffning | Bokfört värde | Avskrivning/mån |\n|---|---|---|---|\n| MacBook Pro 16" | 32 000 kr | 24 000 kr | 889 kr |\n| Kontorsmöbler | 45 000 kr | 37 500 kr | 625 kr |\n| Projektorbild | 18 000 kr | 12 000 kr | 500 kr |\n\n**Ackumulerade avskrivningar:** 52 500 kr. Nästa avskrivning körs i april.\n\nSka jag köra avskrivningen nu, eller vill du registrera en ny inventarie?`,
+                text: `**3 inventarier** — bokfört värde totalt **142 500 kr**.\n\n- MacBook Pro 16" — anskaffning 32 000 kr · bokfört **24 000 kr** · 889 kr/mån\n- Kontorsmöbler — anskaffning 45 000 kr · bokfört **37 500 kr** · 625 kr/mån\n- Projektorbild — anskaffning 18 000 kr · bokfört **12 000 kr** · 500 kr/mån\n\n- Ackumulerade avskrivningar: **52 500 kr**\n- Nästa avskrivning: april\n\nKör nu, eller registrera ny inventarie?`,
                 speed: 10,
             },
         ],
@@ -34,10 +34,10 @@ const visaInventarier: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "calculate_depreciation", duration: 1200 },
+            { type: "tool", name: "calculate_depreciation", duration: 1200, resultLabel: "Beräknade avskrivningar" },
             {
                 type: "stream",
-                text: `Beräknat avskrivning för **3 inventarier** i april. Totalt **2 014 kr**.`,
+                text: `April — **3 inventarier**, totalt **2 014 kr**.`,
                 speed: 12,
             },
             {
@@ -68,7 +68,7 @@ const visaInventarier: SimScript = [
             },
             {
                 type: "stream",
-                text: `Avskrivning bokförd! Verifikation **A-54** skapad — 2 014 kr debet 7832, kredit 1229.`,
+                text: `Klart!\n- Verifikation **A-54** skapad\n- 2 014 kr → debet 7832, kredit 1229`,
                 speed: 11,
             },
         ],
@@ -83,11 +83,11 @@ const registreraInventarie: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "lookup_bas_account", duration: 1100 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "lookup_bas_account", duration: 1100, resultLabel: "Hittade konto 1220" },
             {
                 type: "stream",
-                text: `Kontorsmöbler avskrivs över **5 år** (60 månader) enligt huvudregeln. Konto **1220** (Inventarier) med avskrivning på **7832** (Avskrivningar inventarier).`,
+                text: `Kontorsmöbler — avskrivs **5 år** (60 mån), huvudregeln.\n\n- Konto: **1220** Inventarier\n- Avskrivning: **7832**\n- Månatlig: **142 kr**`,
                 speed: 12,
             },
             {
@@ -119,7 +119,7 @@ const registreraInventarie: SimScript = [
             },
             {
                 type: "stream",
-                text: `Inventarie registrerad! **Kontorsstol IKEA** tillagd med avskrivning 142 kr/månad. Verifikation **A-55** skapad — 8 500 kr debet 1220, kredit 1930.`,
+                text: `Klart!\n\n- **Kontorsstol IKEA** tillagd\n- Avskrivning: 142 kr/mån\n- Verifikation **A-55** skapad\n- 8 500 kr → debet 1220, kredit 1930`,
                 speed: 11,
             },
         ],
@@ -134,11 +134,11 @@ const korAvskrivning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 500 },
-            { type: "tool", name: "get_transactions", duration: 1300 },
+            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
+            { type: "tool", name: "get_transactions", duration: 1300, resultLabel: "Hämtade 3 inventarier" },
             {
                 type: "stream",
-                text: `Jag har beräknat avskrivning för **3 inventarier** i mars. Totalt **2 083 kr**.`,
+                text: `Mars — **3 inventarier**, totalt **2 083 kr**.`,
                 speed: 12,
             },
             {
@@ -173,10 +173,10 @@ const korAvskrivning: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "book_depreciation", duration: 1800 },
+            { type: "tool", name: "book_depreciation", duration: 1800, resultLabel: "Bokförde avskrivning" },
             {
                 type: "stream",
-                text: `Avskrivning bokförd! Verifikation **A-49** skapad — 2 083 kr debet 7832, kredit 1229. Alla 3 inventarier uppdaterade med nya restvärden.`,
+                text: `Klart!\n\n- Verifikation **A-49** skapad\n- 2 083 kr → debet 7832, kredit 1229\n- Alla 3 inventarier uppdaterade`,
                 speed: 11,
             },
         ],
@@ -198,11 +198,11 @@ export default function InventarierStreamingPage() {
             </Scenario>
 
             <Scenario title="Registrera inventarie" description="Skriv-scenario — ny inventarie med avskrivningsplan" badges={["Alla"]}>
-                <SimulatedConversation script={registreraInventarie} autoPlayDelay={2000} />
+                <SimulatedConversation script={registreraInventarie} />
             </Scenario>
 
             <Scenario title="Kör avskrivning" description="Skriv-scenario — periodisk avskrivning med bekräftelse" badges={["Alla"]}>
-                <SimulatedConversation script={korAvskrivning} autoPlayDelay={4000} />
+                <SimulatedConversation script={korAvskrivning} />
             </Scenario>
         </ScenarioPage>
     )

@@ -17,8 +17,6 @@ import { PayslipCard } from "./cards/PayslipCard"
 import { BoardMinutesCard } from "./cards/BoardMinutesCard"
 import { ShareRegisterCard } from "./cards/ShareRegisterCard"
 import { EmployeeCard } from "./cards/EmployeeCard"
-import { VerificationCard } from "./cards/VerificationCard"
-
 // Activity & Status Cards (ActivityFeedCard handles both timelines and status checklists)
 import { ActivityFeedCard } from "./cards/ActivityFeedCard"
 import { BalanceAuditCard } from "./cards/BalanceAuditCard"
@@ -85,9 +83,6 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     employeepreview: card(EmployeeCard),
     employee: card(EmployeeCard),
     newemployee: card(EmployeeCard),
-
-    verificationpreview: card(VerificationCard),
-    verification: card(VerificationCard),
 
     // Lists (use SmartListCard to handle raw array data)
     genericlist: card(SmartListCard),

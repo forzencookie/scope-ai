@@ -21,27 +21,25 @@ const visaVerifikationer: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "get_verifications", duration: 1400 },
+            { type: "tool", name: "get_verifications", duration: 1400, resultLabel: "Hämtade 12 verifikationer" },
             {
                 type: "stream",
-                text: `Mars hade **12 verifikationer** (A-36 till A-47). Alla balanserar. Här är de senaste:`,
+                text: `Mars — **12 verifikationer** (A-36 till A-47). Alla balanserar.\n\nSenaste fyra:`,
                 speed: 12,
             },
             {
-                type: "card",
+                type: "card-list",
                 delay: 200,
-                content: (
-                    <div className="space-y-1">
-                        <InlineCardRenderer card={{ cardType: "verification", data: { id: "v1", verificationNumber: "A-47", date: "2026-03-28", description: "Kontorshyra april", amount: 8500 } }} />
-                        <InlineCardRenderer card={{ cardType: "verification", data: { id: "v2", verificationNumber: "A-46", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />
-                        <InlineCardRenderer card={{ cardType: "verification", data: { id: "v3", verificationNumber: "A-45", date: "2026-03-22", description: "Postnord — Porto", amount: 89 } }} />
-                        <InlineCardRenderer card={{ cardType: "verification", data: { id: "v4", verificationNumber: "A-44", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />
-                    </div>
-                ),
+                items: [
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v1", verificationNumber: "A-47", date: "2026-03-28", description: "Kontorshyra april", amount: 8500 } }} />,
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v2", verificationNumber: "A-46", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v3", verificationNumber: "A-45", date: "2026-03-22", description: "Postnord — Porto", amount: 89 } }} />,
+                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v4", verificationNumber: "A-44", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
+                ],
             },
             {
                 type: "stream",
-                text: `Vill du se hela listan, eller ska jag kolla en specifik verifikation?`,
+                text: `Vill du se hela listan, eller kolla en specifik?`,
                 speed: 14,
             },
         ],
@@ -50,10 +48,10 @@ const visaVerifikationer: SimScript = [
     {
         role: "scooby",
         elements: [
-            { type: "tool", name: "get_verification_detail", duration: 900 },
+            { type: "tool", name: "get_verification_detail", duration: 900, resultLabel: "Hämtade A-46" },
             {
                 type: "stream",
-                text: `Verifikation **A-46** — Kjell & Company, bokförd 2026-03-25:\n\n| Konto | Beskrivning | Debet | Kredit |\n|---|---|---|---|\n| 5410 | Förbrukningsinventarier | 1 999,20 kr | — |\n| 2640 | Ingående moms | 499,80 kr | — |\n| 1930 | Företagskonto | — | 2 499 kr |\n\nSumma debet = Summa kredit = **2 499 kr**. Allt balanserar.`,
+                text: `**A-46** — Kjell & Company\n- Datum: 2026-03-25\n\n- **5410** Förbrukningsinventarier — debet 1 999,20 kr\n- **2640** Ingående moms — debet 499,80 kr\n- **1930** Företagskonto — kredit 2 499 kr\n\nDebet = Kredit = **2 499 kr** — balanserar.`,
                 speed: 10,
             },
         ],
@@ -68,10 +66,10 @@ const makuleraVerifikation: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "get_verifications", duration: 1200 },
+            { type: "tool", name: "get_verifications", duration: 1200, resultLabel: "Hämtade A-42" },
             {
                 type: "stream",
-                text: `Jag hittar verifikation **A-42** — Clas Ohlson, **1 250 kr** bokförd på konto **5410** (2026-03-15). Perioden mars är fortfarande öppen, så makulering är möjlig.\n\nJag skapar en **rättelsepost** som nollställer originalet — verifikationskedjan behålls intakt.`,
+                text: `Hittade **A-42** — Clas Ohlson.\n\n- Belopp: **1 250 kr**\n- Konto: **5410**\n- Datum: 2026-03-15\n- Period: Mars — öppen, makulering möjlig\n\nSkapar en **rättelsepost** som nollställer originalet. Verifikationskedjan behålls intakt.`,
                 speed: 12,
             },
             {
@@ -102,7 +100,7 @@ const makuleraVerifikation: SimScript = [
             },
             {
                 type: "stream",
-                text: `Verifikation **A-42** makulerad! Rättelsepost **A-48** skapad.\n\nOriginalet finns kvar i verifikationskedjan men är nollställt. BFL-kravet på löpande numrering uppfyllt.`,
+                text: `Klart!\n\n- **A-42** makulerad\n- **A-48** skapad (rättelsepost)\n- Originalet nollställt — kedjan intakt\n- BFL-kravet uppfyllt`,
                 speed: 11,
             },
         ],
@@ -124,7 +122,7 @@ export default function VerifikationerStreamingPage() {
             </Scenario>
 
             <Scenario title="Makulera verifikation" description="Skriv-scenario — rättelsepost (inte radering)" badges={["Alla"]}>
-                <SimulatedConversation script={makuleraVerifikation} autoPlayDelay={2000} />
+                <SimulatedConversation script={makuleraVerifikation} />
             </Scenario>
         </ScenarioPage>
     )
