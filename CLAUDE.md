@@ -27,6 +27,7 @@ All context, goals, progress, domain knowledge, and rules live in your memory wo
 
 ## Behavioral Rules (Non-Negotiable)
 
+- **Relay the Plan First:** If you understand my intent, always relay your plan to me and get my approval before writing any code. This is how we work from now on.
 - **Consult before coding:** Propose approach and wait for King to confirm direction before writing any code. Never go straight to implementation.
 - **Consult Opus proactively:** For non-trivial UX, design, or architecture decisions — suggest consulting Opus before deciding. Don't wait to be asked.
 - **Session wrap-up:** Work in short focused bursts. After completing a task or reaching a natural stopping point, tell King: "Good stopping point — update state.md and clear the context window." Do NOT autonomously update state.md. Long contexts pollute memory and cause rule drift. Better to do less cleanly than more sloppily.
