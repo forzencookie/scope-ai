@@ -2,37 +2,46 @@
 
 import Link from "next/link"
 import {
-    Sparkles, LayoutTemplate, MessageSquareText
+    Sparkles, LayoutTemplate, MessageSquareText, MessageCircle, Layers
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 
 const testCategories = [
-    { 
-        href: "/test-ui/read-only", 
-        label: "Read Only UIs", 
-        icon: LayoutTemplate, 
-        description: "Registersidor, tabeller och konfiguration (ex. Aktiebok, Utdelning)", 
-        color: "from-blue-500/20 to-blue-500/5", 
-        iconColor: "text-blue-600 dark:text-blue-400", 
-        iconBg: "bg-blue-100 dark:bg-blue-900/40" 
+    {
+        href: "/test-ui/streaming",
+        label: "Streaming",
+        icon: MessageSquareText,
+        description: "Scooby-konversationer — hur text och verktyg strömmar in i chatten",
+        color: "from-indigo-500/20 to-indigo-500/5",
+        iconColor: "text-indigo-600 dark:text-indigo-400",
+        iconBg: "bg-indigo-100 dark:bg-indigo-900/40"
     },
-    { 
-        href: "/test-ui/walkthroughs", 
-        label: "Walkthroughs & Overlays", 
-        icon: Sparkles, 
-        description: "Godkännandedesign, AI Block Renderers och interaktiva vyer", 
-        color: "from-amber-500/20 to-amber-500/5", 
-        iconColor: "text-amber-600 dark:text-amber-400", 
-        iconBg: "bg-amber-100 dark:bg-amber-900/40" 
+    {
+        href: "/test-ui/chat-tools",
+        label: "Chat Tools",
+        icon: MessageCircle,
+        description: "Inline-kort, informationskort och bekräftelseflöden i chatten",
+        color: "from-amber-500/20 to-amber-500/5",
+        iconColor: "text-amber-600 dark:text-amber-400",
+        iconBg: "bg-amber-100 dark:bg-amber-900/40"
     },
-    { 
-        href: "/test-ui/ai-streaming", 
-        label: "AI Streaming UIs", 
-        icon: MessageSquareText, 
-        description: "Scenarier för hur text och verktyg strömmar in i konversationen", 
-        color: "from-indigo-500/20 to-indigo-500/5", 
-        iconColor: "text-indigo-600 dark:text-indigo-400", 
-        iconBg: "bg-indigo-100 dark:bg-indigo-900/40" 
+    {
+        href: "/test-ui/ai-overlays",
+        label: "AI Overlays",
+        icon: Layers,
+        description: "Walkthrough-rapporter och nedladdningsbara dokument (PDF)",
+        color: "from-emerald-500/20 to-emerald-500/5",
+        iconColor: "text-emerald-600 dark:text-emerald-400",
+        iconBg: "bg-emerald-100 dark:bg-emerald-900/40"
+    },
+    {
+        href: "/test-ui/read-only",
+        label: "Read Only",
+        icon: LayoutTemplate,
+        description: "Registersidor, tabeller och konfiguration (ex. Aktiebok, Utdelning)",
+        color: "from-blue-500/20 to-blue-500/5",
+        iconColor: "text-blue-600 dark:text-blue-400",
+        iconBg: "bg-blue-100 dark:bg-blue-900/40"
     },
 ]
 
