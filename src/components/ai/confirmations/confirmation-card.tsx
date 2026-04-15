@@ -20,7 +20,7 @@ const accentStyles: Record<ConfirmationAccent, { iconColor: string; iconBg: stri
     teal:    { iconColor: "text-teal-600 dark:text-teal-500",       iconBg: "bg-teal-500/10" },
 }
 
-const completedActionConfig: Record<CompletedAction, { icon: LucideIcon; color: string; bg: string; label: string }> = {
+export const completedActionConfig: Record<CompletedAction, { icon: LucideIcon; color: string; bg: string; label: string }> = {
     created:    { icon: Plus,       color: "text-green-600 dark:text-green-500",   bg: "bg-green-500/10",   label: "skapad" },
     updated:    { icon: Pencil,     color: "text-blue-600 dark:text-blue-500",     bg: "bg-blue-500/10",    label: "uppdaterad" },
     deleted:    { icon: Trash2,     color: "text-red-600 dark:text-red-500",       bg: "bg-red-500/10",     label: "borttagen" },

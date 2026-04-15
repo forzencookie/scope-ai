@@ -14,28 +14,37 @@ function CardShell({
     onClick,
     icon: Icon,
     iconColor = "text-muted-foreground",
-    iconBg = "bg-muted"
+    iconBg = "bg-muted",
+    isNew = false,
 }: {
     children: React.ReactNode
     onClick?: () => void
     icon: React.ElementType
     iconColor?: string
     iconBg?: string
+    isNew?: boolean
 }) {
     return (
-        <button
-            onClick={onClick}
-            className={cn(
-                "w-full flex items-center gap-3 rounded-lg border bg-card/50 px-3 py-2.5 text-left text-sm transition-colors",
-                onClick && "hover:bg-accent/50 cursor-pointer"
+        <div className="relative">
+            {isNew && (
+                <span className="absolute -top-2 right-3 z-10 bg-background px-1.5 py-0.5 rounded-full text-[10px] font-medium text-blue-600 dark:text-blue-400">
+                    Ny
+                </span>
             )}
-        >
-            <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", iconBg)}>
-                <Icon className={cn("h-4 w-4", iconColor)} />
-            </div>
-            <div className="flex-1 min-w-0">{children}</div>
-            {onClick && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
-        </button>
+            <button
+                onClick={onClick}
+                className={cn(
+                    "w-full flex items-center gap-3 rounded-lg border bg-card/50 px-3 py-2.5 text-left text-sm transition-colors",
+                    onClick && "hover:bg-accent/50 cursor-pointer",
+                )}
+            >
+                <div className={cn("flex h-8 w-8 shrink-0 items-center justify-center rounded-lg", iconBg)}>
+                    <Icon className={cn("h-4 w-4", iconColor)} />
+                </div>
+                <div className="flex-1 min-w-0">{children}</div>
+                {onClick && <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />}
+            </button>
+        </div>
     )
 }
 
@@ -63,7 +72,7 @@ export interface InlineInvoiceData {
     status?: string
 }
 
-export function InlineInvoiceCard({ data }: { data: InlineInvoiceData }) {
+export function InlineInvoiceCard({ data, isNew }: { data: InlineInvoiceData; isNew?: boolean }) {
     const router = useRouter()
     const statusVariant = data.status === "paid" ? "success" : data.status === "overdue" ? "error" : "warning"
     const statusLabel = data.status === "paid" ? "Betald" : data.status === "sent" ? "Skickad" : "Utkast"
@@ -73,6 +82,7 @@ export function InlineInvoiceCard({ data }: { data: InlineInvoiceData }) {
             icon={FileText}
             iconColor="text-blue-600 dark:text-blue-400"
             iconBg="bg-blue-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/bokforing?tab=fakturor&highlight=${data.id}`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -98,7 +108,7 @@ export interface InlineTransactionData {
     status?: string
 }
 
-export function InlineTransactionCard({ data }: { data: InlineTransactionData }) {
+export function InlineTransactionCard({ data, isNew }: { data: InlineTransactionData; isNew?: boolean }) {
     const router = useRouter()
     const isBooked = data.status === "Bokförd"
 
@@ -107,6 +117,7 @@ export function InlineTransactionCard({ data }: { data: InlineTransactionData })
             icon={Receipt}
             iconColor="text-emerald-600 dark:text-emerald-400"
             iconBg="bg-emerald-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/bokforing?tab=transaktioner&highlight=${data.id}`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -135,7 +146,7 @@ export interface InlineVerificationData {
     amount?: number
 }
 
-export function InlineVerificationCard({ data }: { data: InlineVerificationData }) {
+export function InlineVerificationCard({ data, isNew }: { data: InlineVerificationData; isNew?: boolean }) {
     const router = useRouter()
 
     return (
@@ -143,6 +154,7 @@ export function InlineVerificationCard({ data }: { data: InlineVerificationData 
             icon={BookOpen}
             iconColor="text-violet-600 dark:text-violet-400"
             iconBg="bg-violet-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/bokforing?tab=verifikationer&highlight=${data.id}`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -171,7 +183,7 @@ export interface InlinePayrollData {
     status?: string
 }
 
-export function InlinePayrollCard({ data }: { data: InlinePayrollData }) {
+export function InlinePayrollCard({ data, isNew }: { data: InlinePayrollData; isNew?: boolean }) {
     const router = useRouter()
     const statusVariant = data.status === "paid" ? "success" : data.status === "review" ? "warning" : "neutral"
     const statusLabel = data.status === "paid" ? "Utbetald" : data.status === "review" ? "Granskas" : "Utkast"
@@ -181,6 +193,7 @@ export function InlinePayrollCard({ data }: { data: InlinePayrollData }) {
             icon={Users}
             iconColor="text-green-600 dark:text-green-400"
             iconBg="bg-green-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/loner?tab=lonebesked&highlight=${data.id}`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -205,7 +218,7 @@ export interface InlineReportData {
     title?: string
 }
 
-export function InlineReportCard({ data }: { data: InlineReportData }) {
+export function InlineReportCard({ data, isNew }: { data: InlineReportData; isNew?: boolean }) {
     const router = useRouter()
 
     return (
@@ -213,6 +226,7 @@ export function InlineReportCard({ data }: { data: InlineReportData }) {
             icon={PieChart}
             iconColor="text-amber-600 dark:text-amber-400"
             iconBg="bg-amber-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/rapporter`)}
         >
             <div className="min-w-0">
@@ -234,7 +248,7 @@ export interface InlineReceiptData {
     status?: string
 }
 
-export function InlineReceiptCard({ data }: { data: InlineReceiptData }) {
+export function InlineReceiptCard({ data, isNew }: { data: InlineReceiptData; isNew?: boolean }) {
     const router = useRouter()
 
     return (
@@ -242,6 +256,7 @@ export function InlineReceiptCard({ data }: { data: InlineReceiptData }) {
             icon={Receipt}
             iconColor="text-rose-600 dark:text-rose-400"
             iconBg="bg-rose-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/bokforing?tab=kvitton&highlight=${data.id}`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -266,7 +281,7 @@ export interface InlineVATData {
     status?: string
 }
 
-export function InlineVATCard({ data }: { data: InlineVATData }) {
+export function InlineVATCard({ data, isNew }: { data: InlineVATData; isNew?: boolean }) {
     const router = useRouter()
 
     return (
@@ -274,6 +289,7 @@ export function InlineVATCard({ data }: { data: InlineVATData }) {
             icon={PieChart}
             iconColor="text-purple-600 dark:text-purple-400"
             iconBg="bg-purple-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/rapporter`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -297,7 +313,7 @@ export interface InlineDividendData {
     year?: number
 }
 
-export function InlineDividendCard({ data }: { data: InlineDividendData }) {
+export function InlineDividendCard({ data, isNew }: { data: InlineDividendData; isNew?: boolean }) {
     const router = useRouter()
 
     return (
@@ -305,6 +321,7 @@ export function InlineDividendCard({ data }: { data: InlineDividendData }) {
             icon={Users}
             iconColor="text-indigo-600 dark:text-indigo-400"
             iconBg="bg-indigo-500/10"
+            isNew={isNew}
             onClick={() => router.push(`/dashboard/agare?tab=utdelning`)}
         >
             <div className="flex items-center justify-between gap-2">
@@ -330,12 +347,13 @@ export interface InlineAssetData {
     depreciationPerMonth?: number
 }
 
-export function InlineAssetCard({ data }: { data: InlineAssetData }) {
+export function InlineAssetCard({ data, isNew }: { data: InlineAssetData; isNew?: boolean }) {
     return (
         <CardShell
             icon={Package}
             iconColor="text-indigo-600 dark:text-indigo-400"
             iconBg="bg-indigo-500/10"
+            isNew={isNew}
         >
             <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -365,7 +383,7 @@ export interface InlineBenefitData {
     taxable?: boolean
 }
 
-export function InlineBenefitCard({ data }: { data: InlineBenefitData }) {
+export function InlineBenefitCard({ data, isNew }: { data: InlineBenefitData; isNew?: boolean }) {
     const taxLabel = data.taxable === false ? "Skattefritt" : data.taxable === true ? "Förmånsvärde" : undefined
     const taxVariant: "success" | "warning" = data.taxable === false ? "success" : "warning"
 
@@ -374,6 +392,7 @@ export function InlineBenefitCard({ data }: { data: InlineBenefitData }) {
             icon={Gift}
             iconColor="text-green-600 dark:text-green-400"
             iconBg="bg-green-500/10"
+            isNew={isNew}
         >
             <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -398,12 +417,13 @@ export interface InlinePartnerData {
     withdrawals?: number
 }
 
-export function InlinePartnerCard({ data }: { data: InlinePartnerData }) {
+export function InlinePartnerCard({ data, isNew }: { data: InlinePartnerData; isNew?: boolean }) {
     return (
         <CardShell
             icon={Percent}
             iconColor="text-purple-600 dark:text-purple-400"
             iconBg="bg-purple-500/10"
+            isNew={isNew}
         >
             <div className="flex items-center justify-between gap-2">
                 <div className="min-w-0">
@@ -443,32 +463,33 @@ export type InlineCardType =
 export interface InlineCardData {
     cardType: InlineCardType
     data: Record<string, unknown>
+    isNew?: boolean
 }
 
 export function InlineCardRenderer({ card }: { card: InlineCardData }) {
     switch (card.cardType) {
         case "invoice":
-            return <InlineInvoiceCard data={card.data as InlineInvoiceData} />
+            return <InlineInvoiceCard data={card.data as InlineInvoiceData} isNew={card.isNew} />
         case "transaction":
-            return <InlineTransactionCard data={card.data as InlineTransactionData} />
+            return <InlineTransactionCard data={card.data as InlineTransactionData} isNew={card.isNew} />
         case "verification":
-            return <InlineVerificationCard data={card.data as InlineVerificationData} />
+            return <InlineVerificationCard data={card.data as InlineVerificationData} isNew={card.isNew} />
         case "payroll":
-            return <InlinePayrollCard data={card.data as InlinePayrollData} />
+            return <InlinePayrollCard data={card.data as InlinePayrollData} isNew={card.isNew} />
         case "report":
-            return <InlineReportCard data={card.data as InlineReportData} />
+            return <InlineReportCard data={card.data as InlineReportData} isNew={card.isNew} />
         case "receipt":
-            return <InlineReceiptCard data={card.data as InlineReceiptData} />
+            return <InlineReceiptCard data={card.data as InlineReceiptData} isNew={card.isNew} />
         case "vat":
-            return <InlineVATCard data={card.data as InlineVATData} />
+            return <InlineVATCard data={card.data as InlineVATData} isNew={card.isNew} />
         case "dividend":
-            return <InlineDividendCard data={card.data as InlineDividendData} />
+            return <InlineDividendCard data={card.data as InlineDividendData} isNew={card.isNew} />
         case "asset":
-            return <InlineAssetCard data={card.data as InlineAssetData} />
+            return <InlineAssetCard data={card.data as InlineAssetData} isNew={card.isNew} />
         case "benefit":
-            return <InlineBenefitCard data={card.data as InlineBenefitData} />
+            return <InlineBenefitCard data={card.data as InlineBenefitData} isNew={card.isNew} />
         case "partner":
-            return <InlinePartnerCard data={card.data as InlinePartnerData} />
+            return <InlinePartnerCard data={card.data as InlinePartnerData} isNew={card.isNew} />
         default:
             return null
     }

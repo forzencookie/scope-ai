@@ -4,7 +4,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Check, type LucideIcon } from "lucide-react"
 import { useState } from "react"
-import type { ConfirmationAccent } from "./confirmation-card"
+import { completedActionConfig } from "./confirmation-card"
+import type { ConfirmationAccent, CompletedAction } from "./confirmation-card"
 
 const accentIconStyles: Record<ConfirmationAccent, { color: string; bg: string }> = {
     blue:    { color: "text-blue-600 dark:text-blue-500",       bg: "bg-blue-500/10" },
@@ -44,6 +45,10 @@ interface BatchConfirmationCardProps {
     onConfirm: (selectedIds: string[]) => void
     onCancel: () => void
     isLoading?: boolean
+    isDone?: boolean
+    completedAction?: CompletedAction
+    completedTitle?: string
+    onReset?: () => void
     className?: string
 }
 
@@ -63,6 +68,10 @@ export function BatchConfirmationCard({
     onConfirm,
     onCancel,
     isLoading = false,
+    isDone = false,
+    completedAction,
+    completedTitle,
+    onReset,
     className,
 }: BatchConfirmationCardProps) {
     const [items, setItems] = useState(initialItems)
@@ -81,95 +90,138 @@ export function BatchConfirmationCard({
 
     const selectedCount = items.filter(i => i.checked).length
 
+    const actionConfig = completedAction ? completedActionConfig[completedAction] : null
+    const ActionIcon = actionConfig?.icon
+    const displayTitle = isDone && completedTitle ? completedTitle : title
+
     return (
         <div className={cn("w-full max-w-md space-y-1 py-1", className)}>
-            {/* Header with icon badge */}
-            <div className="flex items-center gap-2.5 mb-3">
-                {HeaderIcon && (
-                    <div className={cn("flex h-7 w-7 items-center justify-center rounded-lg shrink-0", iconStyles.bg)}>
-                        <HeaderIcon className={cn("h-3.5 w-3.5", iconStyles.color)} />
-                    </div>
-                )}
-                <div>
-                    <p className="text-sm font-semibold">{title}</p>
-                    {description && (
-                        <p className="text-xs text-muted-foreground">{description}</p>
+            {/* Header with icon badge + optional action badge */}
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                    {HeaderIcon && (
+                        <div className={cn("flex h-7 w-7 items-center justify-center rounded-lg shrink-0", iconStyles.bg)}>
+                            <HeaderIcon className={cn("h-3.5 w-3.5", iconStyles.color)} />
+                        </div>
                     )}
+                    <div>
+                        <p className="text-sm font-semibold">{displayTitle}</p>
+                        {description && (
+                            <p className="text-xs text-muted-foreground">{description}</p>
+                        )}
+                    </div>
                 </div>
+                {isDone && actionConfig && ActionIcon && (
+                    <span className={cn(
+                        "text-xs font-medium px-2 py-0.5 rounded-md flex items-center gap-1 shrink-0 animate-in fade-in slide-in-from-right-2 duration-300",
+                        actionConfig.bg, actionConfig.color,
+                    )}>
+                        <ActionIcon className="h-3 w-3" />
+                        {actionConfig.label}
+                    </span>
+                )}
             </div>
 
-            {/* Select all */}
-            <button
-                onClick={toggleAll}
-                className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-1"
-            >
-                {items.every(i => i.checked) ? "Avmarkera alla" : "Markera alla"}
-            </button>
-
-            {/* Items */}
-            <div className="space-y-0.5">
-                {items.map((item) => {
-                    return (
-                        <button
-                            key={item.id}
-                            onClick={() => toggle(item.id)}
-                            disabled={isLoading}
-                            className={cn(
-                                "w-full flex items-start gap-3 px-2 py-2 rounded-lg text-left transition-colors",
-                                "hover:bg-muted/50",
-                                item.checked && "bg-muted/30"
-                            )}
-                        >
-                            <div className={cn(
-                                "flex h-5 w-5 items-center justify-center rounded border mt-0.5 shrink-0 transition-colors",
-                                item.checked
-                                    ? "bg-foreground border-foreground"
-                                    : "border-border"
-                            )}>
-                                {item.checked && <Check className="h-3 w-3 text-background" />}
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                    <span className="text-sm font-medium">{item.label}</span>
-                                    {/* State transition: fromBadge → badge */}
-                                    {item.fromBadge && item.badge ? (
-                                        <div className="flex items-center gap-1.5">
-                                            <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full", item.fromBadge.className)}>
-                                                {item.fromBadge.label}
-                                            </span>
-                                            <span className="text-[10px] text-muted-foreground">→</span>
+            {isDone ? (
+                /* Post-confirm: read-only list of confirmed items */
+                <>
+                    <div className="space-y-0.5">
+                        {items.filter(i => i.checked).map((item) => (
+                            <div key={item.id} className="flex items-start gap-3 px-2 py-2">
+                                <div className="flex h-5 w-5 items-center justify-center rounded border mt-0.5 shrink-0 bg-foreground border-foreground">
+                                    <Check className="h-3 w-3 text-background" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                        {item.badge && (
                                             <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full", item.badge.className)}>
                                                 {item.badge.label}
                                             </span>
-                                        </div>
-                                    ) : item.badge ? (
-                                        <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full", item.badge.className)}>
-                                            {item.badge.label}
-                                        </span>
-                                    ) : (
-                                        <div className={cn("h-2 w-2 rounded-full shrink-0", statusDot[item.status])} />
-                                    )}
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{item.description}</p>
                                 </div>
-                                <p className="text-xs text-muted-foreground">{item.description}</p>
                             </div>
+                        ))}
+                    </div>
+                    {onReset && (
+                        <button className="text-xs text-muted-foreground underline pt-2 block" onClick={onReset}>
+                            Återställ
                         </button>
-                    )
-                })}
-            </div>
+                    )}
+                </>
+            ) : (
+                /* Pre-confirm: interactive checklist */
+                <>
+                    <button
+                        onClick={toggleAll}
+                        className="text-xs text-muted-foreground hover:text-foreground transition-colors mb-1"
+                    >
+                        {items.every(i => i.checked) ? "Avmarkera alla" : "Markera alla"}
+                    </button>
 
-            {/* Actions */}
-            <div className="flex items-center gap-2 pt-3">
-                <Button
-                    size="sm"
-                    onClick={() => onConfirm(items.filter(i => i.checked).map(i => i.id))}
-                    disabled={isLoading || selectedCount === 0}
-                >
-                    {isLoading ? "Bearbetar..." : `${confirmLabel} (${selectedCount})`}
-                </Button>
-                <Button variant="ghost" size="sm" onClick={onCancel} disabled={isLoading}>
-                    Avbryt
-                </Button>
-            </div>
+                    <div className="space-y-0.5">
+                        {items.map((item) => (
+                            <button
+                                key={item.id}
+                                onClick={() => toggle(item.id)}
+                                disabled={isLoading}
+                                className={cn(
+                                    "w-full flex items-start gap-3 px-2 py-2 rounded-lg text-left transition-colors",
+                                    "hover:bg-muted/50",
+                                    item.checked && "bg-muted/30"
+                                )}
+                            >
+                                <div className={cn(
+                                    "flex h-5 w-5 items-center justify-center rounded border mt-0.5 shrink-0 transition-colors",
+                                    item.checked
+                                        ? "bg-foreground border-foreground"
+                                        : "border-border"
+                                )}>
+                                    {item.checked && <Check className="h-3 w-3 text-background" />}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-sm font-medium">{item.label}</span>
+                                        {item.fromBadge && item.badge ? (
+                                            <div className="flex items-center gap-1.5">
+                                                <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full", item.fromBadge.className)}>
+                                                    {item.fromBadge.label}
+                                                </span>
+                                                <span className="text-[10px] text-muted-foreground">→</span>
+                                                <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full", item.badge.className)}>
+                                                    {item.badge.label}
+                                                </span>
+                                            </div>
+                                        ) : item.badge ? (
+                                            <span className={cn("text-[9px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full", item.badge.className)}>
+                                                {item.badge.label}
+                                            </span>
+                                        ) : (
+                                            <div className={cn("h-2 w-2 rounded-full shrink-0", statusDot[item.status])} />
+                                        )}
+                                    </div>
+                                    <p className="text-xs text-muted-foreground">{item.description}</p>
+                                </div>
+                            </button>
+                        ))}
+                    </div>
+
+                    <div className="flex items-center gap-2 pt-3">
+                        <Button
+                            size="sm"
+                            onClick={() => onConfirm(items.filter(i => i.checked).map(i => i.id))}
+                            disabled={isLoading || selectedCount === 0}
+                        >
+                            {isLoading ? "Bearbetar..." : `${confirmLabel} (${selectedCount})`}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={onCancel} disabled={isLoading}>
+                            Avbryt
+                        </Button>
+                    </div>
+                </>
+            )}
         </div>
     )
 }
