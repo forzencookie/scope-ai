@@ -28,6 +28,8 @@ export interface MeetingDecision {
     description: string
     decision: string
     type: "decision" | "info" | "election"
+    /** Formal dissenting opinion (reservation) if a board member requested one on record */
+    reservation?: string
 }
 
 export interface BoardMinutesData {
@@ -179,6 +181,18 @@ export function BoardMinutesPreview({
                                 {decision.decision}
                             </p>
                         </div>
+
+                        {/* Reservation — formal dissenting opinion, legally must be noted if requested */}
+                        {decision.reservation && (
+                            <div className="mt-3 pl-4 border-l-2 border-amber-400/40">
+                                <p className="text-[10px] font-semibold text-amber-700 uppercase tracking-wider mb-1">
+                                    Reservation
+                                </p>
+                                <p className="text-sm text-neutral-600 italic">
+                                    {decision.reservation}
+                                </p>
+                            </div>
+                        )}
                     </div>
                 ))}
             </div>

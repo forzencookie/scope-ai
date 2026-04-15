@@ -5,26 +5,22 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 
 /**
- * Test page: Document previews & audit cards
+ * Test page: Document PDF overlays
  *
- * Only documents that produce downloadable/printable output for
- * external parties. Form previews (VAT, AGI, K10, INK2) are NOT
- * here — they overlap with the walkthrough system and should
- * become walkthroughs instead.
+ * These are formal documents Scooby generates — rendered as overlays
+ * with a white background, suitable for PDF download and printing.
+ * They are NOT rendered inline in chat. Scooby responds in text;
+ * the user opens the overlay to view and download the document.
  *
- * Same for FinancialReportPreview — covered by resultaträkning
- * and balansräkning walkthroughs.
+ * Form previews (VAT, AGI, K10, INK2) are NOT here — those are
+ * walkthroughs. FinancialReportPreview is covered by resultat-
+ * räkning and balansräkning walkthroughs.
  */
 
 const PayslipPreview = dynamic(() => import("@/components/ai/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })), { ssr: false })
 const BoardMinutesPreview = dynamic(() => import("@/components/ai/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
 const ShareRegisterPreview = dynamic(() => import("@/components/ai/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
 const AgmPreparationPreview = dynamic(() => import("@/components/ai/documents/agm-preparation-preview").then(m => ({ default: m.AgmPreparationPreview })), { ssr: false })
-
-// Card-registry wrappers — same documents but delivered via chat (include PDF download action)
-const ShareRegisterCard = dynamic(() => import("@/components/ai/cards/ShareRegisterCard").then(m => ({ default: m.ShareRegisterCard })), { ssr: false })
-const PayslipCard = dynamic(() => import("@/components/ai/cards/PayslipCard").then(m => ({ default: m.PayslipCard })), { ssr: false })
-const BoardMinutesCard = dynamic(() => import("@/components/ai/cards/BoardMinutesCard").then(m => ({ default: m.BoardMinutesCard })), { ssr: false })
 
 function Section({ label, description, children }: { label: string; description: string; children: React.ReactNode }) {
     return (
@@ -137,7 +133,7 @@ export default function TestDocumentsPage() {
                             />
                         </Section>
 
-                        <Section label="Aktiebok (ShareRegisterPreview)" description="Utdrag ur aktieboken enligt ABL">
+                        <Section label="Aktiebok (ShareRegisterPreview)" description="Utdrag ur aktieboken enligt ABL 5 kap. — aktienummer, kvotvärde, rösträtter, förbehåll">
                             <ShareRegisterPreview
                                 data={{
                                     companyName: "Scope AI AB",
@@ -146,9 +142,40 @@ export default function TestDocumentsPage() {
                                     totalShares: 1000,
                                     totalCapital: 50000,
                                     shareholders: [
-                                        { id: "1", name: "Erik Svensson", personalOrOrgNumber: "850101-1234", shareCount: 600, shareClass: "Stamaktier A", votingRights: 600, acquisitionDate: "2024-01-15" },
-                                        { id: "2", name: "Maria Johansson", personalOrOrgNumber: "900515-5678", shareCount: 250, shareClass: "Stamaktier A", votingRights: 250, acquisitionDate: "2024-06-01" },
-                                        { id: "3", name: "Tech Invest AB", personalOrOrgNumber: "556789-0123", shareCount: 150, shareClass: "Stamaktier B", votingRights: 15, acquisitionDate: "2025-03-10" },
+                                        {
+                                            id: "1",
+                                            name: "Erik Svensson",
+                                            personalOrOrgNumber: "850101-1234",
+                                            shareNumbers: { from: 1, to: 600 },
+                                            shareCount: 600,
+                                            shareClass: "Stamaktier A",
+                                            votingRights: 600,
+                                            acquisitionDate: "2024-01-15",
+                                        },
+                                        {
+                                            id: "2",
+                                            name: "Maria Johansson",
+                                            personalOrOrgNumber: "900515-5678",
+                                            shareNumbers: { from: 601, to: 850 },
+                                            shareCount: 250,
+                                            shareClass: "Stamaktier A",
+                                            votingRights: 250,
+                                            acquisitionDate: "2024-06-01",
+                                        },
+                                        {
+                                            id: "3",
+                                            name: "Tech Invest AB",
+                                            personalOrOrgNumber: "556789-0123",
+                                            shareNumbers: { from: 851, to: 1000 },
+                                            shareCount: 150,
+                                            shareClass: "Stamaktier B",
+                                            votingRights: 15,
+                                            acquisitionDate: "2025-03-10",
+                                        },
+                                    ],
+                                    restrictions: [
+                                        { type: "hembud", description: "Aktier som överlåts ska först erbjudas övriga aktieägare." },
+                                        { type: "samtycke", description: "Överlåtelse av aktier kräver styrelsens samtycke." },
                                     ],
                                 }}
                                 actions={noopActions}
@@ -181,85 +208,6 @@ export default function TestDocumentsPage() {
                             />
                         </Section>
 
-                    </div>
-                </div>
-
-                {/* === DOKUMENTKORT (chat-levererade) === */}
-                <div className="border-t pt-12">
-                    <h1 className="text-2xl font-bold tracking-tight mb-1">Dokumentkort via chatten</h1>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Samma dokument, men levererade av Scooby i chat via kortregistret.
-                        Inkluderar PDF-nedladdning. Dessa är vad användaren ser inline i konversationen.
-                    </p>
-
-                    <div className="space-y-12">
-                        <Section label="Aktiebok (ShareRegisterCard)" description="Chat-version med PDF-nedladdning">
-                            <ShareRegisterCard
-                                data={{
-                                    companyName: "Scope Consulting AB",
-                                    orgNumber: "559123-4567",
-                                    date: "2026-04-14",
-                                    totalShares: 1000,
-                                    totalCapital: 100000,
-                                    shareholders: [
-                                        { id: "sh1", name: "Anders Richnau", personalOrOrgNumber: "900101-1234", shareCount: 800, shareClass: "A", votingRights: 10, acquisitionDate: "2022-01-01" },
-                                        { id: "sh2", name: "Invest Partner AB", personalOrOrgNumber: "559987-6543", shareCount: 200, shareClass: "B", votingRights: 1, acquisitionDate: "2023-06-15" },
-                                    ],
-                                }}
-                            />
-                        </Section>
-
-                        <Section label="Lönebesked (PayslipCard)" description="Chat-version med PDF-nedladdning">
-                            <PayslipCard
-                                company={{ name: "Scope Consulting AB", orgNumber: "559123-4567", address: "Kungsgatan 12, 111 35 Stockholm" }}
-                                employee={{ name: "Anna Lindberg", personalNumber: "900101-1234", role: "Frontend-utvecklare" }}
-                                period="April 2026"
-                                grossSalary={42000}
-                                adjustments={[
-                                    { label: "Kommunalskatt (30,62%)", amount: 12860, type: "deduction" },
-                                    { label: "Friskvårdsbidrag", amount: 416, type: "addition" },
-                                ]}
-                                taxRate={30.62}
-                                taxAmount={12860}
-                                netSalary={29556}
-                                paymentDate="2026-04-25"
-                                employerContributions={13196}
-                                benefits={[{ name: "Friskvårdsbidrag", value: 5000 }]}
-                            />
-                        </Section>
-
-                        <Section label="Styrelseprotokoll (BoardMinutesCard)" description="Chat-version med PDF-nedladdning">
-                            <BoardMinutesCard
-                                data={{
-                                    companyName: "Scope Consulting AB",
-                                    meetingType: "Styrelsemöte",
-                                    meetingNumber: "4/2026",
-                                    date: "2026-04-14",
-                                    time: "14:00",
-                                    location: "Kungsgatan 12, Stockholm",
-                                    attendees: [
-                                        { name: "Anders Richnau", role: "Chairman", present: true },
-                                        { name: "Lisa Nilsson", role: "Member", present: true },
-                                        { name: "Johan Berg", role: "Member", present: false },
-                                    ],
-                                    agenda: [
-                                        "Val av ordförande och sekreterare",
-                                        "Godkännande av föregående protokoll",
-                                        "Beslut om utdelning 2025",
-                                        "Övriga frågor",
-                                    ],
-                                    decisions: [
-                                        { id: "d1", paragraph: "§1", title: "Val av ordförande", description: "Valet av ordförande för mötet.", decision: "Anders Richnau valdes till ordförande.", type: "election" },
-                                        { id: "d2", paragraph: "§3", title: "Utdelning 2025", description: "Styrelsen beslutade om utdelning för räkenskapsåret 2025.", decision: "Utdelning fastställd till 150 000 kr totalt. Betalas ut 2026-05-01.", type: "decision" },
-                                    ],
-                                    nextMeeting: "2026-07-15",
-                                    signatures: [
-                                        { role: "Ordförande", name: "Anders Richnau" },
-                                        { role: "Justerare", name: "Lisa Nilsson" },
-                                    ],
-                                }}
-                            />
-                        </Section>
                     </div>
                 </div>
 

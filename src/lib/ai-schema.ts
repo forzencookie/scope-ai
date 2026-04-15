@@ -141,22 +141,7 @@ export const IncomeAuditSchema = z.object({
 
 export type IncomeAudit = z.infer<typeof IncomeAuditSchema>
 
-// =============================================================================
-// 8. Comparison Normalization
-// =============================================================================
 
-export const ComparisonRowSchema = z.object({
-    label: z.string(),
-    before: z.string().default('—'),
-    after: z.string().default('—'),
-})
-
-export const ComparisonTableSchema = z.object({
-    title: z.string().default("Jämförelse"),
-    rows: z.array(ComparisonRowSchema).default([]),
-})
-
-export type ComparisonTable = z.infer<typeof ComparisonTableSchema>
 
 // =============================================================================
 // 9. Company Settings Normalization
@@ -268,8 +253,7 @@ export function normalizeAIDisplay(type: string, data: unknown): unknown {
                 return TaskChecklistSchema.parse(unwrapped);
             case 'BenefitsTable':
                 return BenefitsTableSchema.parse(unwrapped);
-            case 'ComparisonTable':
-                return ComparisonTableSchema.parse(unwrapped);
+
             case 'DiscoveredTools':
                 return DiscoveredToolsSchema.parse(unwrapped);
             // NOTE: CompanySettingsSchema is intentionally NOT registered here.

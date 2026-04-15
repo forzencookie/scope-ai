@@ -8,8 +8,7 @@
 // Confirmations
 export { ConfirmationCard } from './confirmations/confirmation-card'
 
-export { ComparisonTable, type ComparisonTableProps, type ComparisonRow } from './confirmations/comparison-table'
-export { ActionTriggerChip, type ActionTriggerDisplay, type ActionTriggerIcon } from './confirmations/action-trigger-chip'
+
 
 // Cards
 export { ActivityFeedCard, type ActivityFeedCardProps, type FeedEvent, type FeedAction, type FeedEntity } from './cards/ActivityFeedCard'

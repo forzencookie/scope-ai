@@ -143,7 +143,6 @@ export function useSendMessage({
                     content: messageContent,
                     attachments: messageAttachments.length > 0 ? messageAttachments : undefined,
                     mentions: mentions.length > 0 ? mentions : undefined,
-                    actionTrigger: actionTrigger
                 }
                 updatedMessages = [...updatedMessages, userMessage]
             }

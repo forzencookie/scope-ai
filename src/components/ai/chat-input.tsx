@@ -21,9 +21,16 @@ import {
 } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
-import { QuickActionsMenu } from "@/components/ai/quick-actions-menu"
-import type { QuickAction } from "@/lib/ai/quick-actions"
-import type { ActionTriggerDisplay } from "@/components/ai/confirmations/action-trigger-chip"
+
+
+/** Quick action trigger metadata — displayed as badge in input area */
+interface ActionTriggerDisplay {
+    type: 'action-trigger'
+    icon: string
+    title: string
+    subtitle?: string
+    meta?: string
+}
 
 interface ChatInputProps {
     /** Current textarea value */
@@ -84,8 +91,6 @@ export function ChatInput({
     const [isDragging, setIsDragging] = useState(false)
     const [isListening, setIsListening] = useState(false)
     const [isTranscribing, setIsTranscribing] = useState(false)
-    const [isQuickActionsOpen, setIsQuickActionsOpen] = useState(false)
-    const [quickActionSearch, setQuickActionSearch] = useState("")
 
     // Audio recording for Whisper
     const mediaRecorderRef = useRef<MediaRecorder | null>(null)
@@ -189,21 +194,6 @@ export function ChatInput({
         const newValue = e.target.value
         onChange(newValue)
 
-        if (newValue.startsWith("/")) {
-            if (!isQuickActionsOpen) {
-                setIsQuickActionsOpen(true)
-            }
-            setQuickActionSearch(newValue.slice(1))
-        } else if (isQuickActionsOpen) {
-            // If they had a slash and deleted it, close the menu
-            if (value.startsWith("/") && newValue === "") {
-                setIsQuickActionsOpen(false)
-                setQuickActionSearch("")
-            } else {
-                // If opened via lightning bolt, use the full text to search
-                setQuickActionSearch(newValue)
-            }
-        }
 
         const textarea = textareaRef.current
         if (!textarea) return
@@ -226,38 +216,11 @@ export function ChatInput({
     const handleKeyDown = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault()
-            // Don't send if the Quick Actions menu is open and the user is trying to select an item
-            if (isQuickActionsOpen) return
             onSend()
         }
     }
 
-    // Handle quick action selection
-    const handleQuickActionSelect = useCallback((action: QuickAction) => {
-        setIsQuickActionsOpen(false)
-        setQuickActionSearch("")
-        
-        const trigger: ActionTriggerDisplay = {
-            type: 'action-trigger',
-            icon: action.icon.name || 'zap', // Default to zap if icon name is unavailable
-            title: action.label,
-            meta: action.prompt
-        }
 
-        if (onActionTriggerChange) {
-            onActionTriggerChange(trigger)
-            onChange("") // Clear the slash command
-        } else {
-            onChange(action.prompt)
-        }
-
-        if (action.autoSend) {
-            // Small delay to let onChange propagate
-            setTimeout(() => onSend(), 50)
-        } else {
-            textareaRef.current?.focus()
-        }
-    }, [onChange, onSend, onActionTriggerChange])
 
     // File upload handlers
     const handleFileSelect = useCallback((fileList: FileList | null) => {
@@ -300,23 +263,7 @@ export function ChatInput({
 
     return (
         <div className={cn("w-full max-w-2xl mx-auto relative", landing && "mt-4")}>
-            {/* QuickActions menu (anchored to the input) */}
-            <div className="absolute bottom-full left-0 w-full z-50 px-2 pb-2 pointer-events-none">
-                <div className="pointer-events-auto">
-                    <QuickActionsMenu
-                        open={isQuickActionsOpen}
-                        onClose={() => {
-                            setIsQuickActionsOpen(false)
-                            setQuickActionSearch("")
-                            // Clear any "/" prefix only if we're explicitly closing it without selection
-                            // and the text is ONLY a slash
-                            if (value === "/") onChange("")
-                        }}
-                        onSelect={handleQuickActionSelect}
-                        searchQuery={quickActionSearch}
-                    />
-                </div>
-            </div>
+
 
             {/* Hidden file input - key ensures it re-initializes properly */}
             <input
@@ -479,23 +426,7 @@ export function ChatInput({
                         >
                             <AtSign className="h-4 w-4" />
                         </Button>
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            className={cn(
-                                "h-7 w-7 rounded-md hover:bg-muted/60",
-                                isQuickActionsOpen
-                                    ? "bg-primary/10 text-primary"
-                                    : "text-muted-foreground hover:text-foreground"
-                            )}
-                            aria-label="Snabbåtgärder"
-                            onClick={() => {
-                                setIsQuickActionsOpen(!isQuickActionsOpen)
-                                setQuickActionSearch("")
-                            }}
-                        >
-                            <Zap className="h-4 w-4" />
-                        </Button>
+
                         <span ref={mentionAnchorRef} className="hidden" />
                         <div className="w-px h-4 bg-border/60 mx-1" />
                         <ModelSelector />

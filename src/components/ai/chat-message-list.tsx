@@ -13,8 +13,7 @@ import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
 import { TransactionCard } from "@/components/ai/cards/TransactionCard"
 import { ActivityFeedCard } from "@/components/ai/cards/ActivityFeedCard"
 
-import { ComparisonTable } from "@/components/ai/confirmations/comparison-table"
-import { ActionTriggerChip } from "@/components/ai/confirmations/action-trigger-chip"
+
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { BalanceAuditCard, type BalanceAuditCardProps } from "@/components/ai/cards/BalanceAuditCard"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
@@ -25,8 +24,6 @@ import type {
     Transaction, 
     TaskChecklist as TaskChecklistData, 
     BenefitsTable as BenefitsTableData,
-
-    ComparisonTable as ComparisonTableData
 } from "@/lib/ai-schema"
 import type { Message, MessageDisplay } from "@/lib/chat-types"
 import type { InlineCardData } from "@/components/ai/cards/inline"
@@ -240,14 +237,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                                             </ul>
                                         </div>
                                     )
-                                case 'ComparisonTable':
-                                    const c = normalized as ComparisonTableData
-                                    return (
-                                        <ComparisonTable
-                                            title={c.title}
-                                            rows={c.rows}
-                                        />
-                                    )
+
                                 default:
                                     return null
                             }
@@ -329,26 +319,10 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 >
                     {message.role === 'user' ? (
                         <div className="max-w-[85%] flex flex-col gap-2 items-end">
-                            {/* Action Trigger Chip - shown instead of text for action triggers */}
-                            {message.actionTrigger ? (
-                                <ActionTriggerChip
-                                    display={{
-                                        type: 'action-trigger',
-                                        icon: message.actionTrigger.icon,
-                                        title: message.actionTrigger.title,
-                                        subtitle: message.actionTrigger.subtitle,
-                                        meta: message.actionTrigger.meta
-                                    }}
-                                />
-                            ) : (
-                                <>
-                                    {/* Text message */}
-                                    {message.content && (
-                                        <div className="rounded-lg px-3 py-1.5 bg-primary text-primary-foreground">
-                                            <p className="text-sm whitespace-pre-wrap">{message.content}</p>
-                                        </div>
-                                    )}
-                                </>
+                            {message.content && (
+                                <div className="rounded-lg px-3 py-1.5 bg-primary text-primary-foreground">
+                                    <p className="text-sm whitespace-pre-wrap">{message.content}</p>
+                                </div>
                             )}
                             {/* Mentions */}
                             {message.mentions && message.mentions.length > 0 && (

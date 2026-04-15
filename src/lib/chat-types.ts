@@ -9,7 +9,6 @@ import type {
     Transaction,
     TaskChecklist,
     BenefitsTable,
-    ComparisonTable
 } from './ai-schema'
 
 // Import component prop types for compatibility where needed
@@ -22,7 +21,6 @@ export type MessageDisplay =
     | { type: 'TransactionCard'; data: Transaction }
     | { type: 'TaskChecklist'; data: TaskChecklist }
     | { type: 'ReceiptsTable'; data: Record<string, unknown> }
-    | { type: 'ComparisonTable'; data: ComparisonTable }
     | { type: 'BenefitsTable'; data: BenefitsTable }
     | {
         type: 'BalanceAuditCard'
@@ -30,15 +28,6 @@ export type MessageDisplay =
         data: {
             audit?: BalanceAuditCardProps['audit']
         } & Record<string, unknown>
-    }
-    | {
-        type: 'ActionTrigger'
-        data: {
-            icon: string
-            title: string
-            subtitle?: string
-            meta?: string
-        }
     }
     | { type: 'InlineCard'; data: InlineCardData }
     | { type: 'InlineCards'; data: { cards: InlineCardData[] } }
@@ -54,13 +43,7 @@ export interface Message {
     mentions?: MentionItem[]
     // Structured data for AI cards (assistant) or action triggers (user)
     display?: MessageDisplay
-    // Display text for action triggers (shown instead of raw prompt)
-    actionTrigger?: {
-        icon: string
-        title: string
-        subtitle?: string
-        meta?: string
-    }
+
     confirmationRequired?: {
         id: string
         type: string

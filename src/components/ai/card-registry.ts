@@ -12,10 +12,6 @@ import { InvoiceCard } from "./cards/InvoiceCard"
 import { SummaryCard } from "./cards/SummaryCard"
 import { SmartListCard } from "./cards/GenericListCard"
 
-// Preview Wrappers
-import { PayslipCard } from "./cards/PayslipCard"
-import { BoardMinutesCard } from "./cards/BoardMinutesCard"
-import { ShareRegisterCard } from "./cards/ShareRegisterCard"
 import { EmployeeCard } from "./cards/EmployeeCard"
 // Activity & Status Cards (ActivityFeedCard handles both timelines and status checklists)
 import { ActivityFeedCard } from "./cards/ActivityFeedCard"
@@ -63,19 +59,8 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     salarycalculation: card(SummaryCard),
     k10summary: card(SummaryCard),
 
-    // Document Previews
-    payslippreview: card(PayslipCard),
-    lonebesked: card(PayslipCard),
-
-    boardminutespreview: card(BoardMinutesCard),
-    styrelseprotokoll: card(BoardMinutesCard),
-    protocol: card(BoardMinutesCard),
-    meeting: card(BoardMinutesCard),
-
-    shareregisterpreview: card(ShareRegisterCard),
-    shareregister: card(ShareRegisterCard),
-    aktiebok: card(ShareRegisterCard),
-    shares: card(ShareRegisterCard),
+    // Document types (aktiebok, lönebesked, styrelseprotokoll) render as PDF overlays,
+    // not inline cards. Scooby responds in text and the user opens the overlay to download.
 
     employeepreview: card(EmployeeCard),
     employee: card(EmployeeCard),
