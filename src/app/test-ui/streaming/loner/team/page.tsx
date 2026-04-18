@@ -11,7 +11,7 @@
 
 import { UserPlus, Pencil } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: WRITE — Add employee ---
@@ -22,7 +22,6 @@ const laggTillAnstalld: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             {
                 type: "stream",
                 text: `Skapar Lisa Nilsson.\n- Kommun: **Stockholm** — kommunalskatt 30.455%`,
@@ -32,20 +31,17 @@ const laggTillAnstalld: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Lägg till anställd",
-                            description: "Lisa Nilsson — ny medarbetare",
-                            summary: [
-                                { label: "Namn", value: "Lisa Nilsson" },
-                                { label: "Personnummer", value: "Behöver anges" },
-                                { label: "Grundlön", value: "38 000 kr/mån" },
-                                { label: "Kommun", value: "Stockholm (30.455%)" },
-                                { label: "Skattetabell", value: "Kolumn 1" },
-                                { label: "Anställningsdatum", value: "2026-04-07" },
-                            ],
-                            action: { toolName: "create_employee", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Lägg till anställd"
+                        description="Lisa Nilsson — ny medarbetare"
+                        properties={[
+                            { label: "Namn", value: "Lisa Nilsson" },
+                            { label: "Personnummer", value: "Behöver anges" },
+                            { label: "Grundlön", value: "38 000 kr/mån" },
+                            { label: "Kommun", value: "Stockholm (30.455%)" },
+                            { label: "Skattetabell", value: "Kolumn 1" },
+                            { label: "Anställningsdatum", value: "2026-04-07" },
+                        ]}
                         confirmLabel="Lägg till"
                         icon={UserPlus}
                         accent="green"
@@ -93,7 +89,6 @@ const visaTeamet: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 400, resultLabel: "Hämtade teamet" },
             {
                 type: "stream",
                 text: `**4 anställda**:`,
@@ -126,7 +121,6 @@ const uppdateraAnstalld: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 600 },
-            { type: "tool", name: "search_tools", duration: 400, resultLabel: "Sökte bland verktyg" },
             {
                 type: "stream",
                 text: `Ändrar **Anna Lindberg**:\n- Från: Stockholm (30.455%)\n- Till: **Solna** (30.04%)\n- Effekt: nettolön +175 kr/mån`,
@@ -136,18 +130,15 @@ const uppdateraAnstalld: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Uppdatera anställd",
-                            description: "Anna Lindberg — kommun",
-                            summary: [
-                                { label: "Anställd", value: "Anna Lindberg" },
-                                { label: "Tidigare kommun", value: "Stockholm (30.455%)" },
-                                { label: "Ny kommun", value: "Solna (30.04%)" },
-                                { label: "Effekt", value: "Nettolönen ökar ~175 kr/mån" },
-                            ],
-                            action: { toolName: "update_employee", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Uppdatera anställd"
+                        description="Anna Lindberg — kommun"
+                        properties={[
+                            { label: "Anställd", value: "Anna Lindberg" },
+                            { label: "Tidigare kommun", value: "Stockholm (30.455%)" },
+                            { label: "Ny kommun", value: "Solna (30.04%)" },
+                            { label: "Effekt", value: "Nettolönen ökar ~175 kr/mån" },
+                        ]}
                         confirmLabel="Uppdatera"
                         icon={Pencil}
                         accent="blue"

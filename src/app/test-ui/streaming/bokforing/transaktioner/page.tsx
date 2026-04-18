@@ -18,15 +18,15 @@
 import { useState, type ComponentProps } from "react"
 import { Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
-import { BatchConfirmationCard } from "@/components/ai/confirmations/batch-confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
+import { BatchBookingCard } from "@/components/ai/confirmations/batch-booking-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Interactive confirmation card — holds isDone state internally.
 //     Transitions to post-confirm either on button click OR when the simulation
 //     fires a named event via the SimEvent bus (triggerEvent prop). ───
-function InteractiveConfirmationCard(
-    props: Omit<ComponentProps<typeof ConfirmationCard>, "isDone" | "onConfirm"> & {
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & {
         triggerEvent?: string
     }
 ) {
@@ -38,7 +38,7 @@ function InteractiveConfirmationCard(
     const isDone = clickedDone || eventTriggered
 
     return (
-        <ConfirmationCard
+        <ActionConfirmCard
             {...rest}
             isDone={isDone}
             completedAction={isDone ? rest.completedAction : undefined}
@@ -48,8 +48,8 @@ function InteractiveConfirmationCard(
     )
 }
 
-function InteractiveBatchConfirmationCard(
-    props: Omit<ComponentProps<typeof BatchConfirmationCard>, "isDone" | "onConfirm"> & {
+function InteractiveBatchBookingCard(
+    props: Omit<ComponentProps<typeof BatchBookingCard>, "isDone" | "onConfirm"> & {
         triggerEvent?: string
     }
 ) {
@@ -59,7 +59,7 @@ function InteractiveBatchConfirmationCard(
     const isDone = clickedDone || eventTriggered
 
     return (
-        <BatchConfirmationCard
+        <BatchBookingCard
             {...rest}
             isDone={isDone}
             completedAction={isDone ? rest.completedAction : undefined}
@@ -116,13 +116,15 @@ const visaTransaktioner: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <InteractiveBatchConfirmationCard
+                    <InteractiveBatchBookingCard
                         title="Bokför 2 transaktioner"
                         description="Kjell & Company · Clas Ohlson"
                         items={[
-                            { id: "t1", label: "Kjell & Company", description: "5410 · 2 499 kr · 25% moms", status: "pending", checked: true },
-                            { id: "t2", label: "Clas Ohlson", description: "6110 · 349 kr · 25% moms", status: "pending", checked: true },
+                            { id: "t1", title: "Kjell & Company", subtitle: "5410 · Moms 25%", rightValue: "2 499 kr" },
+                            { id: "t2", title: "Clas Ohlson", subtitle: "6110 · Moms 25%", rightValue: "349 kr" },
                         ]}
+                        totalLabel="Totalt att bokföra"
+                        totalAmount="2 848 kr"
                         confirmLabel="Bokför båda"
                         icon={Receipt}
                         accent="blue"
@@ -171,7 +173,6 @@ const bokforKvitto: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 600 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "lookup_bas_account", duration: 1100, resultLabel: "Hittade konto 5410" },
             {
                 type: "stream",
@@ -182,19 +183,16 @@ const bokforKvitto: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <InteractiveConfirmationCard
-                        confirmation={{
-                            title: "Bokför kvitto",
-                            description: "Kjell & Company — kontorsmaterial",
-                            summary: [
-                                { label: "Leverantör", value: "Kjell & Company" },
-                                { label: "Belopp", value: "2 499 kr" },
-                                { label: "Konto", value: "5410 Förbrukningsinventarier" },
-                                { label: "Moms", value: "25% (499,80 kr)" },
-                                { label: "Datum", value: "2026-03-25" },
-                            ],
-                            action: { toolName: "book_receipt_with_verification", params: {} },
-                        }}
+                    <InteractiveActionConfirmCard
+                        title="Bokför kvitto"
+                        description="Kjell & Company — kontorsmaterial"
+                        properties={[
+                            { label: "Leverantör", value: "Kjell & Company" },
+                            { label: "Belopp", value: "2 499 kr" },
+                            { label: "Konto", value: "5410 Förbrukningsinventarier" },
+                            { label: "Moms", value: "25% (499,80 kr)" },
+                            { label: "Datum", value: "2026-03-25" },
+                        ]}
                         confirmLabel="Bokför"
                         icon={Receipt}
                         accent="blue"
@@ -248,7 +246,7 @@ const batchBokforing: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <InteractiveBatchConfirmationCard
+                    <InteractiveBatchBookingCard
                         title="Bokför 3 transaktioner"
                         description="Verifikation A-49 till A-51"
                         icon={Receipt}
@@ -256,10 +254,12 @@ const batchBokforing: SimScript = [
                         completedAction="booked"
                         completedTitle="3 transaktioner bokförda"
                         items={[
-                            { id: "t1", label: "Kjell & Company — Kontorsmaterial", description: "5410 · Moms 25% · 2026-03-25", status: "pending", checked: true },
-                            { id: "t2", label: "Clas Ohlson — Förbrukningsinventarier", description: "5410 · Moms 25% · 2026-03-20", status: "pending", checked: true },
-                            { id: "t3", label: "Spotify Business — Programvara", description: "5420 · Moms 25% · 2026-03-18", status: "pending", checked: true },
+                            { id: "t1", title: "Kjell & Company — Kontorsmaterial", subtitle: "5410 · Moms 25% · 2026-03-25", rightValue: "2 499 kr" },
+                            { id: "t2", title: "Clas Ohlson — Förbrukningsinventarier", subtitle: "5410 · Moms 25% · 2026-03-20", rightValue: "349 kr" },
+                            { id: "t3", title: "Spotify Business — Programvara", subtitle: "5420 · Moms 25% · 2026-03-18", rightValue: "169 kr" },
                         ]}
+                        totalLabel="Totalt belopp"
+                        totalAmount="3 017 kr"
                         confirmLabel="Bokför alla"
                         triggerEvent="sim:batch-bokforing-confirm"
                         onCancel={() => {}}

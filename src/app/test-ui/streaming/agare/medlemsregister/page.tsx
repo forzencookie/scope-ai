@@ -2,7 +2,7 @@
 
 import { UserPlus } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 
 const visaMedlemmar: SimScript = [
     { role: "user", content: "Visa våra medlemmar" },
@@ -10,7 +10,6 @@ const visaMedlemmar: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_members", duration: 1300, resultLabel: "Hämtade 12 medlemmar" },
             {
                 type: "stream",
@@ -47,7 +46,6 @@ const laggTillMedlem: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 600 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             {
                 type: "stream",
                 text: `Jag lägger till Sofia Andersson i medlemsregistret. Årsavgiften är **500 kr** enligt stadgarna.`,
@@ -57,18 +55,15 @@ const laggTillMedlem: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Lägg till medlem",
-                            description: "Sofia Andersson",
-                            summary: [
-                                { label: "Namn", value: "Sofia Andersson" },
-                                { label: "Inträdesdatum", value: "2026-04-07" },
-                                { label: "Årsavgift", value: "500 kr" },
-                                { label: "Status", value: "Ej betald (ny)" },
-                            ],
-                            action: { toolName: "add_member", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Lägg till medlem"
+                        description="Sofia Andersson"
+                        properties={[
+                            { label: "Namn", value: "Sofia Andersson" },
+                            { label: "Inträdesdatum", value: "2026-04-07" },
+                            { label: "Årsavgift", value: "500 kr" },
+                            { label: "Status", value: "Ej betald (ny)" },
+                        ]}
                         confirmLabel="Lägg till"
                         icon={UserPlus}
                         accent="green"

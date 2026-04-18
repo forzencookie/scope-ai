@@ -2,7 +2,7 @@
 
 import { Landmark, FileText } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 const forberedProtokoll: SimScript = [
@@ -11,7 +11,6 @@ const forberedProtokoll: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_company_info", duration: 1100, resultLabel: "Hämtade företagsuppgifter" },
             { type: "tool", name: "get_income_statement", duration: 1400, resultLabel: "Hämtade årsredovisning 2025" },
             {
@@ -33,19 +32,16 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Generera stämmoprotokoll",
-                            description: "Ordinarie bolagsstämma 2026",
-                            summary: [
-                                { label: "Bolag", value: "Scope Consulting AB (559123-4567)" },
-                                { label: "Räkenskapsår", value: "2025" },
-                                { label: "Typ", value: "Ordinarie bolagsstämma" },
-                                { label: "Punkter", value: "7 st (standard)" },
-                                { label: "Format", value: "PDF + digital signering" },
-                            ],
-                            action: { toolName: "generate_agm_protocol", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Generera stämmoprotokoll"
+                        description="Ordinarie bolagsstämma 2026"
+                        properties={[
+                            { label: "Bolag", value: "Scope Consulting AB (559123-4567)" },
+                            { label: "Räkenskapsår", value: "2025" },
+                            { label: "Typ", value: "Ordinarie bolagsstämma" },
+                            { label: "Punkter", value: "7 st (standard)" },
+                            { label: "Format", value: "PDF + digital signering" },
+                        ]}
                         confirmLabel="Generera protokoll"
                         icon={FileText}
                         accent="indigo"
@@ -79,9 +75,7 @@ const utdelningsbeslut: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "calculate_tax", duration: 1800, resultLabel: "K10 beräknad" },
-            { type: "tool", name: "get_knowledge", duration: 900, resultLabel: "Läste K10-regler" },
             {
                 type: "stream",
                 text: `K10-gränsbelopp: **187 550 kr** — 150 000 kr ryms, beskattas som kapital (20%).
@@ -98,19 +92,16 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Registrera utdelningsbeslut",
-                            description: "150 000 kr — inom K10-gränsbelopp",
-                            summary: [
-                                { label: "Utdelning", value: "150 000 kr" },
-                                { label: "Skatt", value: "30 000 kr (20% kapital)" },
-                                { label: "Netto", value: "120 000 kr" },
-                                { label: "Typ", value: "Stämmobeslut" },
-                                { label: "Bokföring", value: "Konto 2091 → 2898" },
-                            ],
-                            action: { toolName: "register_dividend_decision", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Registrera utdelningsbeslut"
+                        description="150 000 kr — inom K10-gränsbelopp"
+                        properties={[
+                            { label: "Utdelning", value: "150 000 kr" },
+                            { label: "Skatt", value: "30 000 kr (20% kapital)" },
+                            { label: "Netto", value: "120 000 kr" },
+                            { label: "Typ", value: "Stämmobeslut" },
+                            { label: "Bokföring", value: "Konto 2091 → 2898" },
+                        ]}
                         confirmLabel="Registrera beslut"
                         icon={Landmark}
                         accent="purple"

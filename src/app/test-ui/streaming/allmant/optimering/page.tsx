@@ -133,7 +133,6 @@ const minskaSkatten: SimScript = [
             { type: "thinking", duration: 1000 },
             { type: "tool", name: "get_income_statement", duration: 1400, resultLabel: "Hämtade bolagets resultat" },
             { type: "tool", name: "calculate_tax", duration: 1800, resultLabel: "Beräknade skatteåtgärder" },
-            { type: "tool", name: "get_knowledge", duration: 600, resultLabel: "Läste skatteregler" },
             {
                 type: "stream",
                 text: `Baserat på ditt bolags resultat (**600 000 kr**) och din nuvarande lön (**42 000 kr/mån**) ser jag tre konkreta åtgärder:

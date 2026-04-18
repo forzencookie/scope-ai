@@ -44,8 +44,6 @@ const TOOL_LABELS: Record<string, string> = {
     search_conversations: 'Söker i historiken',
     read_conversation: 'Läser konversation',
     // Common
-    search_tools: 'Söker bland verktyg',
-    get_knowledge: 'Läser kunskapsdokument',
     navigate_to: 'Navigerar',
 }
 

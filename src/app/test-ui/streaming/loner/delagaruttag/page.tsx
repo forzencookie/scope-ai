@@ -2,7 +2,7 @@
 
 import { Wallet, ArrowUpCircle } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 const registreraUttag: SimScript = [
@@ -11,7 +11,6 @@ const registreraUttag: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_company_info", duration: 1100, resultLabel: "Hämtade kontouppgifter" },
             {
                 type: "stream",
@@ -22,20 +21,17 @@ const registreraUttag: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Registrera privat uttag",
-                            description: "Från företagskonto till privat",
-                            summary: [
-                                { label: "Delägare", value: "Erik Svensson" },
-                                { label: "Belopp", value: "30 000 kr" },
-                                { label: "Konto debet", value: "2013 Egna uttag" },
-                                { label: "Konto kredit", value: "1930 Företagskonto" },
-                                { label: "Datum", value: "2026-04-06" },
-                                { label: "Saldo efter uttag", value: "145 200 kr" },
-                            ],
-                            action: { toolName: "book_partner_withdrawal", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Registrera privat uttag"
+                        description="Från företagskonto till privat"
+                        properties={[
+                            { label: "Delägare", value: "Erik Svensson" },
+                            { label: "Belopp", value: "30 000 kr" },
+                            { label: "Konto debet", value: "2013 Egna uttag" },
+                            { label: "Konto kredit", value: "1930 Företagskonto" },
+                            { label: "Datum", value: "2026-04-06" },
+                            { label: "Saldo efter uttag", value: "145 200 kr" },
+                        ]}
                         confirmLabel="Registrera uttag"
                         icon={Wallet}
                         accent="blue"
@@ -69,7 +65,6 @@ const visaUttag: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 400, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_transactions", duration: 1400, resultLabel: "Hämtade uttag 2026" },
             {
                 type: "stream",
@@ -116,7 +111,6 @@ const registreraInsattning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 600 },
-            { type: "tool", name: "search_tools", duration: 400, resultLabel: "Sökte bland verktyg" },
             {
                 type: "stream",
                 text: `Jag registrerar det som en **privat insättning** — det ökar ditt eget kapital. Bokföring sker på konto **2018** (Egna insättningar).`,
@@ -126,19 +120,16 @@ const registreraInsattning: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Registrera privat insättning",
-                            description: "Från privat till företagskonto",
-                            summary: [
-                                { label: "Delägare", value: "Erik Svensson" },
-                                { label: "Belopp", value: "20 000 kr" },
-                                { label: "Konto debet", value: "1930 Företagskonto" },
-                                { label: "Konto kredit", value: "2018 Egna insättningar" },
-                                { label: "Datum", value: "2026-04-06" },
-                            ],
-                            action: { toolName: "book_partner_deposit", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Registrera privat insättning"
+                        description="Från privat till företagskonto"
+                        properties={[
+                            { label: "Delägare", value: "Erik Svensson" },
+                            { label: "Belopp", value: "20 000 kr" },
+                            { label: "Konto debet", value: "1930 Företagskonto" },
+                            { label: "Konto kredit", value: "2018 Egna insättningar" },
+                            { label: "Datum", value: "2026-04-06" },
+                        ]}
                         confirmLabel="Registrera insättning"
                         icon={ArrowUpCircle}
                         accent="green"

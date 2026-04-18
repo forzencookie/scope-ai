@@ -10,7 +10,7 @@
 
 import { BookMarked } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: Read → show share register ---
@@ -21,7 +21,6 @@ const visaAktiebok: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_company_info", duration: 1400, resultLabel: "Hämtade aktieboken" },
             {
                 type: "stream",
@@ -50,7 +49,6 @@ const aktieoverlatelse: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_company_info", duration: 1300, resultLabel: "Hämtade aktieboken" },
             {
                 type: "stream",
@@ -67,23 +65,16 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Registrera aktieöverlåtelse",
-                            description: "100 A-aktier: Anders → Lisa",
-                            summary: [
-                                { label: "Överlåtare", value: "Anders Richnau" },
-                                { label: "Förvärvare", value: "Lisa Nilsson" },
-                                { label: "Antal", value: "100 st A-aktier" },
-                                { label: "Kvotvärde", value: "100 kr/aktie" },
-                                { label: "Överlåtelsedatum", value: "2026-04-07" },
-                            ],
-                            warnings: [
-                                "Kontrollera om bolagsordningen har förköpsklausul — övriga aktieägare kan ha rätt att köpa aktierna först.",
-                                "Överlåtelsen ska anmälas till Bolagsverket om det rör kvalificerade innehav.",
-                            ],
-                            action: { toolName: "register_share_transfer", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Registrera aktieöverlåtelse"
+                        description="100 A-aktier: Anders → Lisa"
+                        properties={[
+                            { label: "Överlåtare", value: "Anders Richnau" },
+                            { label: "Förvärvare", value: "Lisa Nilsson" },
+                            { label: "Antal", value: "100 st A-aktier" },
+                            { label: "Kvotvärde", value: "100 kr/aktie" },
+                            { label: "Överlåtelsedatum", value: "2026-04-07" },
+                        ]}
                         confirmLabel="Registrera överlåtelse"
                         icon={BookMarked}
                         accent="purple"

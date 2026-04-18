@@ -10,7 +10,7 @@
 
 import { AlertTriangle } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa verifikationer, user asks for detail ───
@@ -76,19 +76,15 @@ const makuleraVerifikation: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Makulera verifikation",
-                            description: "Rättelsepost nollställer A-42",
-                            summary: [
-                                { label: "Original", value: "A-42 — Clas Ohlson (1 250 kr)" },
-                                { label: "Rättelsepost", value: "A-48 (ny verifikation)" },
-                                { label: "Effekt", value: "Debet och kredit reverseras" },
-                                { label: "Period", value: "Mars 2026 (öppen)" },
-                            ],
-                            warnings: ["En rättelsepost skapas som nollställer originalet — verifikationskedjan behålls intakt."],
-                            action: { toolName: "reverse_verification", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Makulera verifikation"
+                        description="Rättelsepost nollställer A-42"
+                        properties={[
+                            { label: "Original", value: "A-42 — Clas Ohlson (1 250 kr)" },
+                            { label: "Rättelsepost", value: "A-48 (ny verifikation)" },
+                            { label: "Effekt", value: "Debet och kredit reverseras" },
+                            { label: "Period", value: "Mars 2026 (öppen)" },
+                        ]}
                         confirmLabel="Makulera"
                         icon={AlertTriangle}
                         accent="amber"

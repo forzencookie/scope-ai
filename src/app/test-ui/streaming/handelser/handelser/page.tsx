@@ -11,7 +11,7 @@
 
 import { CalendarCheck } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
 
 // ─── Scenario 1: READ — "Vad behöver jag göra?" ───
@@ -121,18 +121,15 @@ const manadsavslut: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Periodisera försäkring",
-                            description: "Fördela 12 000 kr över 12 månader",
-                            summary: [
-                                { label: "Belopp/mån", value: "1 000 kr" },
-                                { label: "Konto debet", value: "6310 Försäkringar" },
-                                { label: "Konto kredit", value: "1790 Förutbet. kostnader" },
-                                { label: "Period", value: "Mars 2026" },
-                            ],
-                            action: { toolName: "create_verification", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Periodisera försäkring"
+                        description="Fördela 12 000 kr över 12 månader"
+                        properties={[
+                            { label: "Belopp/mån", value: "1 000 kr" },
+                            { label: "Konto debet", value: "6310 Försäkringar" },
+                            { label: "Konto kredit", value: "1790 Förutbet. kostnader" },
+                            { label: "Period", value: "Mars 2026" },
+                        ]}
                         confirmLabel="Periodisera"
                         icon={CalendarCheck}
                         accent="indigo"

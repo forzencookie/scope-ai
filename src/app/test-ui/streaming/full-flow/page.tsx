@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { Receipt } from "lucide-react"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
@@ -239,19 +239,16 @@ function FlowSimulation() {
 
                     {/* 4. Confirmation card */}
                     {(step === "confirming" || step === "confirm-loading") && (
-                        <ConfirmationCard
-                            confirmation={{
-                                title: "Bokför betalning",
-                                description: "Scooby vill bokföra faktura #10243 som betald",
-                                summary: [
-                                    { label: "Leverantör", value: "Svea Hosting" },
-                                    { label: "Belopp", value: "1 499 kr" },
-                                    { label: "Konto", value: "5420 IT-tjänster" },
-                                    { label: "Moms (25%)", value: "300 kr" },
-                                    { label: "Verifikation", value: "A48" },
-                                ],
-                                action: { toolName: "create_verification", params: {} },
-                            }}
+                        <ActionConfirmCard
+                            title="Bokför betalning"
+                            description="Scooby vill bokföra faktura #10243 som betald"
+                            properties={[
+                                { label: "Leverantör", value: "Svea Hosting" },
+                                { label: "Belopp", value: "1 499 kr" },
+                                { label: "Konto", value: "5420 IT-tjänster" },
+                                { label: "Moms (25%)", value: "300 kr" },
+                                { label: "Verifikation", value: "A48" },
+                            ]}
                             isLoading={step === "confirm-loading"}
                             onConfirm={handleConfirm}
                             onCancel={handleReset}
@@ -261,19 +258,16 @@ function FlowSimulation() {
                     {/* 5. Result — Post-confirm card + Inline link card */}
                     {step === "result" && (
                         <div className="space-y-3">
-                            <ConfirmationCard
-                                confirmation={{
-                                    title: "Bokför betalning",
-                                    description: "Scooby vill bokföra faktura #10243 som betald",
-                                    summary: [
-                                        { label: "Leverantör", value: "Svea Hosting" },
-                                        { label: "Belopp", value: "1 499 kr" },
-                                        { label: "Konto", value: "5420 IT-tjänster" },
-                                        { label: "Moms (25%)", value: "300 kr" },
-                                        { label: "Verifikation", value: "A48" },
-                                    ],
-                                    action: { toolName: "create_verification", params: {} },
-                                }}
+                            <ActionConfirmCard
+                                title="Bokför betalning"
+                                description="Scooby vill bokföra faktura #10243 som betald"
+                                properties={[
+                                    { label: "Leverantör", value: "Svea Hosting" },
+                                    { label: "Belopp", value: "1 499 kr" },
+                                    { label: "Konto", value: "5420 IT-tjänster" },
+                                    { label: "Moms (25%)", value: "300 kr" },
+                                    { label: "Verifikation", value: "A48" },
+                                ]}
                                 isDone
                                 completedAction="booked"
                                 completedTitle="Svea Hosting bokförd"
@@ -345,7 +339,7 @@ function FlowDocumentation() {
             <div className="grid gap-3">
                 {[
                     { step: "1", label: "Markdown-text", desc: "ReactMarkdown med remarkGfm. Renderas löpande medan streamen pågår." },
-                    { step: "2", label: "ConfirmationCard", desc: "Visas under texten om message.confirmationRequired finns. Mobil: inline. Desktop: dialog-overlay." },
+                    { step: "2", label: "ActionConfirmCard", desc: "Visas under texten om message.confirmationRequired finns. Mobil: inline. Desktop: dialog-overlay." },
                     { step: "3", label: "Display-kort", desc: "ReceiptCard, TransactionCard, TaskChecklist, ComparisonTable. Mobil: inline. Desktop: dialog." },
                     { step: "4", label: "BalanceAuditCard", desc: "Alltid inline (aldrig i dialog). Visas om display.type === 'BalanceAuditCard'." },
                     { step: "5", label: "InlineCard / InlineCards", desc: "Kompakta klickbara resultatrader. Alltid inline. Navigerar vid klick." },

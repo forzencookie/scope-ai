@@ -2,7 +2,7 @@
 
 import { Gift, Car } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 const tilldelaFriskvard: SimScript = [
@@ -11,7 +11,6 @@ const tilldelaFriskvard: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             {
                 type: "stream",
                 text: `Friskvårdsbidrag upp till **5 000 kr** är skattefritt för den anställde. Det bokförs som personalvårdskostnad på konto **7690**.`,
@@ -21,19 +20,16 @@ const tilldelaFriskvard: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Tilldela friskvårdsbidrag",
-                            description: "Anna Lindberg — 5 000 kr/år",
-                            summary: [
-                                { label: "Anställd", value: "Anna Lindberg" },
-                                { label: "Förmån", value: "Friskvårdsbidrag" },
-                                { label: "Belopp", value: "5 000 kr/år" },
-                                { label: "Skatteeffekt", value: "Skattefritt (≤ 5 000 kr)" },
-                                { label: "Konto", value: "7690 Personalvård" },
-                            ],
-                            action: { toolName: "assign_benefit", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Tilldela friskvårdsbidrag"
+                        description="Anna Lindberg — 5 000 kr/år"
+                        properties={[
+                            { label: "Anställd", value: "Anna Lindberg" },
+                            { label: "Förmån", value: "Friskvårdsbidrag" },
+                            { label: "Belopp", value: "5 000 kr/år" },
+                            { label: "Skatteeffekt", value: "Skattefritt (≤ 5 000 kr)" },
+                            { label: "Konto", value: "7690 Personalvård" },
+                        ]}
                         confirmLabel="Tilldela"
                         icon={Gift}
                         accent="green"
@@ -67,7 +63,6 @@ const visaFormaner: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 600 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Hämtade förmåner" },
             {
                 type: "stream",
                 text: `Ni har **3 aktiva förmåner** i företaget:
@@ -103,8 +98,6 @@ const tjanstebil: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
-            { type: "tool", name: "get_knowledge", duration: 1200, resultLabel: "Hämtade förmånsvärde" },
             {
                 type: "stream",
                 text: `Tesla Model 3 har ett förmånsvärde baserat på Skatteverkets beräkning. Jag behöver nybilspriset och om den är miljöbil (nedsättning).
@@ -118,21 +111,17 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Lägg till tjänstebil",
-                            description: "Sara Ek — Tesla Model 3",
-                            summary: [
-                                { label: "Anställd", value: "Sara Ek" },
-                                { label: "Bil", value: "Tesla Model 3" },
-                                { label: "Nybilspris", value: "480 000 kr" },
-                                { label: "Miljöbil", value: "Ja (nedsättning 40%)" },
-                                { label: "Förmånsvärde", value: "3 800 kr/mån" },
-                                { label: "Skatteeffekt", value: "Nettolön −1 200 kr/mån" },
-                            ],
-                            warnings: ["Förmånsvärdet beskattas som inkomst. Saras nettolön påverkas vid nästa lönekörning."],
-                            action: { toolName: "assign_benefit", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Lägg till tjänstebil"
+                        description="Sara Ek — Tesla Model 3"
+                        properties={[
+                            { label: "Anställd", value: "Sara Ek" },
+                            { label: "Bil", value: "Tesla Model 3" },
+                            { label: "Nybilspris", value: "480 000 kr" },
+                            { label: "Miljöbil", value: "Ja (nedsättning 40%)" },
+                            { label: "Förmånsvärde", value: "3 800 kr/mån" },
+                            { label: "Skatteeffekt", value: "Nettolön −1 200 kr/mån" },
+                        ]}
                         confirmLabel="Lägg till"
                         icon={Car}
                         accent="blue"

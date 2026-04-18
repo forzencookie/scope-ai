@@ -2,7 +2,7 @@
 
 import { ListChecks } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
 
 const sparaPaminnelse: SimScript = [
@@ -20,17 +20,14 @@ const sparaPaminnelse: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Spara påminnelse",
-                            description: "Fakturera Acme AB",
-                            summary: [
-                                { label: "Uppgift", value: "Fakturera Acme AB" },
-                                { label: "Datum", value: "Tisdag 8 april 2026" },
-                                { label: "Typ", value: "Påminnelse" },
-                            ],
-                            action: { toolName: "save_memory", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Spara påminnelse"
+                        description="Fakturera Acme AB"
+                        properties={[
+                            { label: "Uppgift", value: "Fakturera Acme AB" },
+                            { label: "Datum", value: "Tisdag 8 april 2026" },
+                            { label: "Typ", value: "Påminnelse" },
+                        ]}
                         confirmLabel="Spara"
                         icon={ListChecks}
                         accent="blue"
@@ -117,7 +114,6 @@ const onboarding: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 1000 },
-            { type: "tool", name: "get_knowledge", duration: 800, resultLabel: "Hämtade onboarding-guide" },
             {
                 type: "stream",
                 text: `Grattis! Här är vad som behövs för att komma igång:

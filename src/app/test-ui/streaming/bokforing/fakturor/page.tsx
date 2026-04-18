@@ -12,7 +12,7 @@
 
 import { FileText, CreditCard, XCircle, Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa obetalda fakturor, then user asks to send reminder ───
@@ -23,7 +23,6 @@ const visaFakturor: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_invoices", duration: 1400, resultLabel: "Hämtade 3 obetalda fakturor" },
             {
                 type: "stream",
@@ -68,7 +67,6 @@ const skapaFaktura: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_company_info", duration: 1100, resultLabel: "Hämtade företagsuppgifter" },
             {
                 type: "stream",
@@ -79,21 +77,18 @@ const skapaFaktura: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Skapa faktura",
-                            description: "Kundfaktura till Acme AB",
-                            summary: [
-                                { label: "Kund", value: "Acme Consulting AB (559123-4567)" },
-                                { label: "Beskrivning", value: "Konsultarbete mars 2026" },
-                                { label: "Belopp exkl. moms", value: "50 000 kr" },
-                                { label: "Moms 25%", value: "12 500 kr" },
-                                { label: "Totalbelopp", value: "62 500 kr" },
-                                { label: "Förfallodatum", value: "2026-05-06 (30 dagar)" },
-                                { label: "Fakturanummer", value: "#2026-043" },
-                            ],
-                            action: { toolName: "create_invoice", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Skapa faktura"
+                        description="Kundfaktura till Acme AB"
+                        properties={[
+                            { label: "Kund", value: "Acme Consulting AB (559123-4567)" },
+                            { label: "Beskrivning", value: "Konsultarbete mars 2026" },
+                            { label: "Belopp exkl. moms", value: "50 000 kr" },
+                            { label: "Moms 25%", value: "12 500 kr" },
+                            { label: "Totalbelopp", value: "62 500 kr" },
+                            { label: "Förfallodatum", value: "2026-05-06 (30 dagar)" },
+                            { label: "Fakturanummer", value: "#2026-043" },
+                        ]}
                         confirmLabel="Skapa faktura"
                         icon={FileText}
                         accent="teal"
@@ -151,19 +146,16 @@ const registreraBetalning: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Registrera betalning",
-                            description: "Faktura #2026-042 → Betald",
-                            summary: [
-                                { label: "Faktura", value: "#2026-042 — Acme AB" },
-                                { label: "Belopp", value: "37 500 kr" },
-                                { label: "Konto debet", value: "1930 Företagskonto" },
-                                { label: "Konto kredit", value: "1510 Kundfordringar" },
-                                { label: "Betaldatum", value: "2026-04-06" },
-                            ],
-                            action: { toolName: "book_invoice_payment", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Registrera betalning"
+                        description="Faktura #2026-042 → Betald"
+                        properties={[
+                            { label: "Faktura", value: "#2026-042 — Acme AB" },
+                            { label: "Belopp", value: "37 500 kr" },
+                            { label: "Konto debet", value: "1930 Företagskonto" },
+                            { label: "Konto kredit", value: "1510 Kundfordringar" },
+                            { label: "Betaldatum", value: "2026-04-06" },
+                        ]}
                         confirmLabel="Registrera betalning"
                         icon={CreditCard}
                         accent="teal"
@@ -209,19 +201,15 @@ const makuleraFaktura: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Makulera faktura",
-                            description: "Faktura #2026-040 — kreditnota skapas",
-                            summary: [
-                                { label: "Faktura", value: "#2026-040 — Nordic Design" },
-                                { label: "Belopp", value: "25 000 kr" },
-                                { label: "Kreditnota", value: "#2026-K001" },
-                                { label: "Rättelsepost", value: "Nollställer verifikation A-38" },
-                            ],
-                            warnings: ["Fakturan är redan skickad till kunden. Kreditnotan bör kommuniceras."],
-                            action: { toolName: "void_invoice", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Makulera faktura"
+                        description="Faktura #2026-040 — kreditnota skapas"
+                        properties={[
+                            { label: "Faktura", value: "#2026-040 — Nordic Design" },
+                            { label: "Belopp", value: "25 000 kr" },
+                            { label: "Kreditnota", value: "#2026-K001" },
+                            { label: "Rättelsepost", value: "Nollställer verifikation A-38" },
+                        ]}
                         confirmLabel="Makulera"
                         icon={XCircle}
                         accent="amber"

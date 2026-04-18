@@ -11,7 +11,7 @@
 
 import { Package, TrendingDown } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa inventarier, user asks to run depreciation ───
@@ -22,7 +22,6 @@ const visaInventarier: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 900 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_transactions", duration: 1400, resultLabel: "Hämtade 3 inventarier" },
             {
                 type: "stream",
@@ -45,19 +44,16 @@ const visaInventarier: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Bokför avskrivning",
-                            description: "Periodisk avskrivning april 2026",
-                            summary: [
-                                { label: "Inventarier", value: "3 st" },
-                                { label: "Månatlig avskrivning", value: "2 014 kr" },
-                                { label: "Konto debet", value: "7832 Avskrivningar inventarier" },
-                                { label: "Konto kredit", value: "1229 Ack. avskrivningar" },
-                                { label: "Restvärde efter", value: "140 486 kr" },
-                            ],
-                            action: { toolName: "book_depreciation", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Bokför avskrivning"
+                        description="Periodisk avskrivning april 2026"
+                        properties={[
+                            { label: "Inventarier", value: "3 st" },
+                            { label: "Månatlig avskrivning", value: "2 014 kr" },
+                            { label: "Konto debet", value: "7832 Avskrivningar inventarier" },
+                            { label: "Konto kredit", value: "1229 Ack. avskrivningar" },
+                            { label: "Restvärde efter", value: "140 486 kr" },
+                        ]}
                         confirmLabel="Bokför avskrivning"
                         icon={TrendingDown}
                         accent="indigo"
@@ -93,7 +89,6 @@ const registreraInventarie: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 800 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "lookup_bas_account", duration: 1100, resultLabel: "Hittade konto 1220" },
             {
                 type: "stream",
@@ -104,20 +99,17 @@ const registreraInventarie: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Registrera inventarie",
-                            description: "Kontorsstol — IKEA",
-                            summary: [
-                                { label: "Benämning", value: "Kontorsstol IKEA" },
-                                { label: "Anskaffningsvärde", value: "8 500 kr" },
-                                { label: "Konto", value: "1220 Inventarier" },
-                                { label: "Avskrivningstid", value: "5 år (60 månader)" },
-                                { label: "Månatlig avskrivning", value: "142 kr" },
-                                { label: "Inköpsdatum", value: "2026-04-06" },
-                            ],
-                            action: { toolName: "create_asset", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Registrera inventarie"
+                        description="Kontorsstol — IKEA"
+                        properties={[
+                            { label: "Benämning", value: "Kontorsstol IKEA" },
+                            { label: "Anskaffningsvärde", value: "8 500 kr" },
+                            { label: "Konto", value: "1220 Inventarier" },
+                            { label: "Avskrivningstid", value: "5 år (60 månader)" },
+                            { label: "Månatlig avskrivning", value: "142 kr" },
+                            { label: "Inköpsdatum", value: "2026-04-06" },
+                        ]}
                         confirmLabel="Registrera"
                         icon={Package}
                         accent="indigo"
@@ -153,7 +145,6 @@ const korAvskrivning: SimScript = [
         role: "scooby",
         elements: [
             { type: "thinking", duration: 700 },
-            { type: "tool", name: "search_tools", duration: 500, resultLabel: "Sökte bland verktyg" },
             { type: "tool", name: "get_transactions", duration: 1300, resultLabel: "Hämtade 3 inventarier" },
             {
                 type: "stream",
@@ -164,19 +155,16 @@ const korAvskrivning: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ConfirmationCard
-                        confirmation={{
-                            title: "Bokför avskrivning",
-                            description: "Periodisk avskrivning mars 2026",
-                            summary: [
-                                { label: "Inventarier", value: "3 st" },
-                                { label: "Månatlig avskrivning", value: "2 083 kr" },
-                                { label: "Konto debet", value: "7832 Avskrivningar inventarier" },
-                                { label: "Konto kredit", value: "1229 Ack. avskrivningar" },
-                                { label: "Restvärde efter", value: "142 500 kr" },
-                            ],
-                            action: { toolName: "book_depreciation", params: {} },
-                        }}
+                    <ActionConfirmCard
+                        title="Bokför avskrivning"
+                        description="Periodisk avskrivning mars 2026"
+                        properties={[
+                            { label: "Inventarier", value: "3 st" },
+                            { label: "Månatlig avskrivning", value: "2 083 kr" },
+                            { label: "Konto debet", value: "7832 Avskrivningar inventarier" },
+                            { label: "Konto kredit", value: "1229 Ack. avskrivningar" },
+                            { label: "Restvärde efter", value: "142 500 kr" },
+                        ]}
                         confirmLabel="Bokför avskrivning"
                         icon={TrendingDown}
                         accent="indigo"

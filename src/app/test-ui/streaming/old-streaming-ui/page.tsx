@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils"
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { Calculator } from "lucide-react"
 import { InlineCardRenderer } from "@/components/ai/cards/inline"
 import { BalanceAuditCard } from "@/components/ai/cards/BalanceAuditCard"
@@ -446,20 +446,17 @@ export default function TestScenarioPage() {
 
                         {/* Confirmation card */}
                         {(step === "confirmation" || step === "confirm-loading") && (
-                            <ConfirmationCard
-                                confirmation={{
-                                    title: "Bokför arbetsgivaravgifter mars 2026",
-                                    description: "Arbetsgivaravgifter för 3 anställda baserat på lönekörning LK-2026-03-01",
-                                    summary: [
-                                        { label: "Underlag", value: "137 460 kr" },
-                                        { label: "Avgiftssats", value: "31,42%" },
-                                        { label: "Arbetsgivaravgifter", value: "43 186 kr" },
-                                        { label: "Konto debet", value: "7510 Arbetsgivaravgifter" },
-                                        { label: "Konto kredit", value: "2730 Lagstadgade sociala avgifter" },
-                                        { label: "Verifikation", value: "A48" },
-                                    ],
-                                    action: { toolName: "create_verification", params: {} },
-                                }}
+                            <ActionConfirmCard
+                                title="Bokför arbetsgivaravgifter mars 2026"
+                                description="Arbetsgivaravgifter för 3 anställda baserat på lönekörning LK-2026-03-01"
+                                properties={[
+                                    { label: "Underlag", value: "137 460 kr" },
+                                    { label: "Avgiftssats", value: "31,42%" },
+                                    { label: "Arbetsgivaravgifter", value: "43 186 kr" },
+                                    { label: "Konto debet", value: "7510 Arbetsgivaravgifter" },
+                                    { label: "Konto kredit", value: "2730 Lagstadgade sociala avgifter" },
+                                    { label: "Verifikation", value: "A48" },
+                                ]}
                                 isLoading={step === "confirm-loading"}
                                 onConfirm={handleConfirm}
                                 onCancel={handleReset}
@@ -469,20 +466,17 @@ export default function TestScenarioPage() {
                         {/* Booked result — post-confirm card + link card */}
                         {stepAtOrPast(step, "booked") && (
                             <div className="space-y-3">
-                                <ConfirmationCard
-                                    confirmation={{
-                                        title: "Bokför arbetsgivaravgifter mars 2026",
-                                        description: "Arbetsgivaravgifter för 3 anställda baserat på lönekörning LK-2026-03-01",
-                                        summary: [
-                                            { label: "Underlag", value: "137 460 kr" },
-                                            { label: "Avgiftssats", value: "31,42%" },
-                                            { label: "Arbetsgivaravgifter", value: "43 186 kr" },
-                                            { label: "Konto debet", value: "7510 Arbetsgivaravgifter" },
-                                            { label: "Konto kredit", value: "2730 Lagstadgade sociala avgifter" },
-                                            { label: "Verifikation", value: "A48" },
-                                        ],
-                                        action: { toolName: "create_verification", params: {} },
-                                    }}
+                                <ActionConfirmCard
+                                    title="Bokför arbetsgivaravgifter mars 2026"
+                                    description="Arbetsgivaravgifter för 3 anställda baserat på lönekörning LK-2026-03-01"
+                                    properties={[
+                                        { label: "Underlag", value: "137 460 kr" },
+                                        { label: "Avgiftssats", value: "31,42%" },
+                                        { label: "Arbetsgivaravgifter", value: "43 186 kr" },
+                                        { label: "Konto debet", value: "7510 Arbetsgivaravgifter" },
+                                        { label: "Konto kredit", value: "2730 Lagstadgade sociala avgifter" },
+                                        { label: "Verifikation", value: "A48" },
+                                    ]}
                                     isDone
                                     completedAction="booked"
                                     completedTitle="Arbetsgivaravgifter bokförda"
