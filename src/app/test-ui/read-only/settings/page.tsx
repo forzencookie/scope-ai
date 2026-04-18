@@ -21,13 +21,14 @@ import {
     ExternalLink,
     Shield,
     Smartphone,
+    Bot,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
 
-type SettingsTab = "konto" | "foretag" | "integrationer" | "fakturering" | "utseende" | "sakerhet" | "notiser" | "sprak"
+type SettingsTab = "konto" | "scooby" | "foretag" | "integrationer" | "fakturering" | "utseende" | "sakerhet" | "notiser" | "sprak"
 
 interface NavItem {
     id: SettingsTab
@@ -38,6 +39,7 @@ interface NavItem {
 
 const navItems: NavItem[] = [
     { id: "konto", label: "Konto", icon: User },
+    { id: "scooby", label: "Scooby", icon: Bot },
     { id: "foretag", label: "Foretagsinfo", icon: Building2 },
     { id: "utseende", label: "Utseende", icon: Paintbrush },
     { id: "notiser", label: "Notiser", icon: Bell },
@@ -108,6 +110,63 @@ function SectionDivider() {
 }
 
 // Tab content components
+function ScoobyTab() {
+    const [value, setValue] = useState("")
+    const MAX = 500
+    const examples = [
+        "Svara på engelska",
+        "Jag är revisor, hoppa över grundförklaringar",
+        "Påminn mig alltid innan period stängs",
+    ]
+
+    return (
+        <div className="space-y-6">
+            <div>
+                <h2 className="text-lg font-bold">Scooby — AI-assistent</h2>
+                <p className="text-sm text-muted-foreground">Anpassa hur Scooby arbetar med dig.</p>
+            </div>
+
+            <div className="space-y-2">
+                <SectionTitle>Dina instruktioner</SectionTitle>
+                <p className="text-[11px] text-muted-foreground -mt-2 mb-3">Skriv fritt vad Scooby ska tänka på. Gäller alla konversationer.</p>
+                <textarea
+                    rows={6}
+                    maxLength={MAX}
+                    value={value}
+                    onChange={e => setValue(e.target.value)}
+                    placeholder={"T.ex:\n- Svara alltid på engelska\n- Jag är revisor — hoppa över grundläggande förklaringar\n- Påminn mig alltid innan du stänger en period\n- Mitt bolag bokför alltid i SEK"}
+                    className={cn(
+                        "w-full rounded-md border-2 border-border/60 bg-background px-3 py-2 text-sm resize-none transition-colors",
+                        "focus:outline-none focus:border-primary/50"
+                    )}
+                />
+                <p className="text-[10px] text-muted-foreground text-right">{value.length} / {MAX} tecken</p>
+            </div>
+
+            <div className="space-y-2">
+                <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Exempel</p>
+                <div className="flex flex-wrap gap-2">
+                    {examples.map(ex => (
+                        <button
+                            key={ex}
+                            onClick={() => setValue(v => v ? `${v}\n- ${ex}` : `- ${ex}`)}
+                            className="rounded-full border border-border/60 px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-foreground transition-colors"
+                        >
+                            {ex}
+                        </button>
+                    ))}
+                </div>
+            </div>
+
+            <SectionDivider />
+
+            <div className="flex justify-end">
+                <Button size="sm">Spara</Button>
+            </div>
+        </div>
+    )
+}
+
 function KontoTab() {
     return (
         <div className="space-y-6">
@@ -555,6 +614,7 @@ export default function TestSettingsPage() {
 
     const tabContent: Record<SettingsTab, React.ReactNode> = {
         konto: <KontoTab />,
+        scooby: <ScoobyTab />,
         foretag: <ForetagTab />,
         utseende: <UtseendeTab />,
         notiser: <NotiserTab />,

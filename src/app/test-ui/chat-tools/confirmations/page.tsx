@@ -8,10 +8,10 @@ import {
     Lock, Trash2, Settings, Users, Calculator,
     Gift, Gavel, Landmark, Package, TrendingDown, Send, RefreshCw, XCircle, Check
 } from "lucide-react"
-import { GenericConfirmationCard, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "@/components/ai/confirmations/generic-confirmation-card"
-import { DomainConfirmationCard } from "@/components/ai/confirmations/domain-confirmation-card"
-import { BatchSelectionCard } from "@/components/ai/confirmations/batch-selection-card"
-import { BatchSummaryCard } from "@/components/ai/confirmations/batch-summary-card"
+import { ActionConfirmCard, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "@/components/ai/confirmations/action-confirm-card"
+import { EntityUpdateCard } from "@/components/ai/confirmations/entity-update-card"
+import { ChecklistConfirmCard } from "@/components/ai/confirmations/checklist-confirm-card"
+import { BatchBookingCard } from "@/components/ai/confirmations/batch-booking-card"
 import { EmployeeCard } from "@/components/ai/cards/EmployeeCard"
 import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
@@ -24,9 +24,9 @@ import type { LucideIcon } from "lucide-react"
  * Every mutation Scooby performs requires user confirmation.
  *
  * Sections:
- * 1. Generic confirmations — GenericConfirmationCard (key-value grid)
- * 2. Domain-specific — DomainConfirmationCard (icon rows) + GenericConfirmationCard
- * 3. Batch confirmations — BatchSummaryCard + BatchSelectionCard
+ * 1. Generic confirmations — ActionConfirmCard (key-value grid)
+ * 2. Domain-specific — EntityUpdateCard (icon rows) + ActionConfirmCard
+ * 3. Batch confirmations — BatchBookingCard + ChecklistConfirmCard
  */
 
 // =============================================================================
@@ -497,7 +497,7 @@ export default function TestConfirmationPage() {
                                         </div>
                                     ) : (
                                         <div className="max-w-lg">
-                                            <GenericConfirmationCard
+                                            <ActionConfirmCard
                                                 title={item.title}
                                                 description={item.subtitle}
                                                 icon={item.icon}
@@ -537,7 +537,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB, HB</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Ny anställd"
                                     subtitle="Registrera i systemet"
                                     headerIcon={User}
@@ -586,7 +586,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Ny ägare"
                                     subtitle="Registrera i aktiebok"
                                     headerIcon={Landmark}
@@ -618,7 +618,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">HB, KB</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Ny delägare"
                                     subtitle="Registrera i bolagsavtal"
                                     headerIcon={Users}
@@ -650,7 +650,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Förening</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Ny medlem"
                                     subtitle="Registrera i medlemsregister"
                                     headerIcon={Users}
@@ -681,7 +681,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">Alla</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Ny kund"
                                     subtitle="Lägg till i kundregister"
                                     headerIcon={Building2}
@@ -712,7 +712,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB</span>
                             </div>
                             <div className="max-w-lg">
-                                <GenericConfirmationCard
+                                <ActionConfirmCard
                                     title="Utdelningsbeslut 2025"
                                     description="Scope AI AB"
                                     icon={Coins}
@@ -750,7 +750,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB</span>
                             </div>
                             <div className="max-w-lg">
-                                <GenericConfirmationCard
+                                <ActionConfirmCard
                                     title="Bokför utdelning 2025"
                                     description="Scope AI AB"
                                     icon={Coins}
@@ -782,7 +782,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Aktieöverlåtelse"
                                     subtitle="Scope AI AB"
                                     headerIcon={ArrowRight}
@@ -814,7 +814,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">HB, KB</span>
                             </div>
                             <div className="max-w-lg">
-                                <GenericConfirmationCard
+                                <ActionConfirmCard
                                     title="Registrera insättning"
                                     description="Erik Svensson"
                                     icon={Coins}
@@ -846,7 +846,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">HB, KB</span>
                             </div>
                             <div className="max-w-lg">
-                                <GenericConfirmationCard
+                                <ActionConfirmCard
                                     title="Registrera uttag"
                                     description="Maria Johansson"
                                     icon={Coins}
@@ -878,7 +878,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">EF</span>
                             </div>
                             <div className="max-w-lg">
-                                <GenericConfirmationCard
+                                <ActionConfirmCard
                                     title="Eget uttag"
                                     description="2026-03-28"
                                     icon={Coins}
@@ -909,7 +909,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB, Förening</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Tilldela roll"
                                     subtitle="Styrelsepost"
                                     headerIcon={Gavel}
@@ -940,7 +940,7 @@ export default function TestConfirmationPage() {
                                 <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB, Förening</span>
                             </div>
                             <div className="max-w-lg">
-                                <DomainConfirmationCard
+                                <EntityUpdateCard
                                     title="Nytt styrelsemöte"
                                     subtitle="Möte 4/2026"
                                     headerIcon={Calendar}
@@ -976,14 +976,14 @@ export default function TestConfirmationPage() {
 
                     <div className="space-y-12">
 
-                        {/* Batchbokföring — BatchSummaryCard */}
+                        {/* Batchbokföring — BatchBookingCard */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Batchbokföring</h3>
                                 <span className="text-xs text-muted-foreground">Alla, t.ex. efter kvittouppladdning</span>
                             </div>
                             <div className="max-w-lg">
-                                <BatchSummaryCard
+                                <BatchBookingCard
                                     title="Bokför 4 kvitton"
                                     description="Granska innan bokföring"
                                     icon={Receipt}
@@ -1007,14 +1007,14 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Statusändring anställda — BatchSelectionCard */}
+                        {/* Statusändring anställda — ChecklistConfirmCard */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Statusändring — anställda</h3>
                                 <span className="text-xs text-muted-foreground">Alla, efter diskussion i chatten</span>
                             </div>
                             <div className="max-w-lg">
-                                <BatchSelectionCard
+                                <ChecklistConfirmCard
                                     title="Uppdatera 3 anställda"
                                     description="Ändra status enligt vad vi diskuterade"
                                     icon={Users}
