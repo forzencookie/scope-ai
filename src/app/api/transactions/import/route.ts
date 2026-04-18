@@ -33,7 +33,7 @@ async function parseZRapport(base64Data: string): Promise<ZRapportData | null> {
     try {
         const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-5-mini',
             messages: [
                 {
                     role: 'system',
@@ -86,7 +86,7 @@ async function parseGenericDocument(base64Data: string, mimeType: string): Promi
     try {
         const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-5-mini',
             messages: [
                 {
                     role: 'system',
@@ -306,7 +306,7 @@ export const POST = withAuth(async (request, { supabase, userId, companyId }) =>
                     if (tx) createdTransactions.push(tx)
                 }
             } else {
-                // Image or PDF -> GPT-4o-mini OCR
+                // Image or PDF -> OCR
                 const buffer = await file.arrayBuffer()
                 const base64 = Buffer.from(buffer).toString('base64')
                 const mimeType = file.type || getFileMimeType(fileName)

@@ -108,7 +108,7 @@ export const POST = withAuth(async (request, { supabase, userId }) => {
         const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
 
         const completion = await openai.chat.completions.create({
-            model: 'gpt-4o-mini',
+            model: 'gpt-5-mini',
             temperature: 0.3,
             messages: [
                 { role: 'system', content: EXTRACTION_PROMPT },
@@ -168,7 +168,7 @@ export const POST = withAuth(async (request, { supabase, userId }) => {
                 ).join('\n')
 
                 const consolidationResult = await openai.chat.completions.create({
-                    model: 'gpt-4o-mini',
+                    model: 'gpt-5-mini',
                     temperature: 0.2,
                     messages: [
                         { role: 'system', content: CONSOLIDATION_PROMPT },

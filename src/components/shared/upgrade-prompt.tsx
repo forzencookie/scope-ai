@@ -32,7 +32,7 @@ interface UpgradePromptProps {
 }
 
 const PRO_FEATURES = [
-  "Riktig AI med GPT-4 och Claude",
+  "Riktig AI med GPT-5",
   "Automatisk dokumentanalys",
   "Bankintegration",
   "Skicka in till Skatteverket",

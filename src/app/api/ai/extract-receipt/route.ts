@@ -8,7 +8,7 @@
  * - Category suggestion
  * - Per-field confidence scores
  * 
- * SECURITY: Requires authentication (GPT-4o Vision is expensive)
+ * SECURITY: Requires authentication (Vision API is expensive)
  */
 
 import { NextRequest, NextResponse } from 'next/server'
@@ -45,7 +45,7 @@ export interface ExtractedReceiptData {
  * SECURITY: Requires authentication
  */
 export async function POST(request: NextRequest) {
-    // Verify authentication - this endpoint uses expensive GPT-4o Vision API
+    // Verify authentication - this endpoint uses expensive Vision API
     const auth = await verifyAuth(request)
     if (!auth) {
         return ApiResponse.unauthorized('Authentication required for AI extraction')
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
         // Call OpenAI Vision API
         const openai = getOpenAIClient()
         const response = await openai.chat.completions.create({
-            model: 'gpt-4o',
+            model: 'gpt-5',
             messages: [
                 {
                     role: 'system',

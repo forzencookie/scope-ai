@@ -79,7 +79,7 @@ export const usageService = {
         if (usageRes.data) {
             for (const row of usageRes.data) {
                 const tokens = row.tokens_used || 0
-                const multiplier = getModelMultiplier(row.model_id || 'gpt-4o-mini')
+                const multiplier = getModelMultiplier(row.model_id || 'gpt-5-mini')
                 rawTokensUsed += tokens
                 tokensUsed += tokens * multiplier
                 requestsCount += row.requests_count || 0

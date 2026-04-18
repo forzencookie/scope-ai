@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
 
     const openai = getOpenAIClient()
     const stream = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-5-mini',
       messages: chatMessages,
       stream: true,
       temperature: 0.3, // Lower temperature for more consistent bookkeeping

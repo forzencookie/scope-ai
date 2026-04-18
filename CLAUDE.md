@@ -11,9 +11,61 @@ AI-first Swedish accounting platform. Users talk to Scooby (AI assistant), Scoob
 
 ## Your Workspace
 
-All context, goals, progress, domain knowledge, and rules live in your memory workspace. `MEMORY.md` is the index. `state.md` is the handoff document. Domain files describe each area of the codebase based on actual code, not assumptions.
+**Path:** `/Users/rice/.claude/projects/-Users-rice-Development-startups-scope-ai/memory/`
 
-**This is your workspace. You maintain it. You keep it fresh.**
+This is your workspace. You maintain it. You keep it fresh. Everything that matters lives here — not in your context window.
+
+### The Index
+- `MEMORY.md` — auto-loaded into every conversation. Pointers only. Never put content here. Lines after 200 are truncated so keep entries to one line each.
+
+### Session Files
+- `state.md` — handoff context. What was done, what's next, blockers, open questions. Written from the notepad when context is cleared. No code, no fixes here — those live in domain files and improvements/.
+- `notepad.md` — running notes during the session. Updated continuously as work happens. When context gets long, ping King → write state.md + domain files from notepad → King clears context. Wipe at the start of every new session.
+
+### Foundation Files
+- `agent_rules.md` — how you operate: session protocol, agentic behaviours, what makes you useful
+- `founder.md` — King: solo founder, expectations, how to work with him
+- `philosophy.md` — AI-first product philosophy
+- `architecture.md` — stack, codebase map, key files, layout decisions
+
+### Domain Files (`domain_*.md`)
+One file per product area. Always describes the current state of that area — not what it used to be. Update immediately when you change code in that domain. Overwrite stale content, don't append to it.
+- `domain_bookkeeping.md` — accounting engine, verifications, invoices, SIE, two-phase tool flow
+- `domain_chat_scooby.md` — chat interface, Scooby engine, streaming, tools
+- `domain_pages_overlays.md` — read-only pages, overlays, walkthrough overlay gap
+- `domain_tools_services.md` — AI tools layer, service layer, isConfirmed pattern, schema gaps
+- `domain_ownership.md` — aktiebok, meetings, dividends, partners, members
+- `domain_payroll.md` — löner, payslips, employer contributions, benefits
+- `domain_tax_reports.md` — K10, AGI, moms, INK2, årsredovisning, balansräkning
+- `domain_funnel.md` — landing page, Stripe, onboarding, pre-launch gate
+- `domain_settings.md` — configuration overlay, company info, billing
+- `domain_test_ui.md` — four test surfaces: streaming, chat-tools, ai-overlays, read-only
+
+### Improvements (`improvements/`)
+Known issues found during scans. One file per area. Check before working in that area. `README.md` is the index.
+**When a fix is implemented:** remove the item from the improvements file and update the relevant domain file to reflect the new reality. Files are never static — they always describe the current state of the codebase, not what it used to be.
+
+### Specs & Planning
+- `flows/` — how each feature should work (target spec)
+- `pre-production/` — pre-production UI and system prompt specs
+- `production/` — architecture of features actually built (reality)
+- `progress.md` — workstream status and backlog
+- `workstream_*.md` — per-workstream detail
+- `pre-launch-strategy.md` — gate logic, launch checklist
+- `scooby_behavior_spec.md` — how Scooby should feel and respond
+
+### Feedback Files (`feedback_*.md`)
+Behavioural rules from King — what to do, what not to do, and why. Read these when you're unsure how to approach something.
+
+### What Goes Where
+| Information type | Where it goes |
+|---|---|
+| What happened this session, what's next | `state.md` |
+| Scratch notes during a session | `notepad.md` |
+| Permanent knowledge about a domain | `domain_*.md` |
+| Known bugs and issues | `improvements/` |
+| How a feature should work | `flows/` |
+| King's behavioural guidance | `feedback_*.md` |
 
 ## Code Rules (Non-Negotiable)
 
@@ -30,7 +82,7 @@ All context, goals, progress, domain knowledge, and rules live in your memory wo
 - **Relay the Plan First:** If you understand my intent, always relay your plan to me and get my approval before writing any code. This is how we work from now on.
 - **Consult before coding:** Propose approach and wait for King to confirm direction before writing any code. Never go straight to implementation.
 - **Consult Opus proactively:** For non-trivial UX, design, or architecture decisions — suggest consulting Opus before deciding. Don't wait to be asked.
-- **Session wrap-up:** Work in short focused bursts. After completing a task or reaching a natural stopping point, tell King: "Good stopping point — update state.md and clear the context window." Do NOT autonomously update state.md. Long contexts pollute memory and cause rule drift. Better to do less cleanly than more sloppily.
+- **Session wrap-up:** Take notes in `notepad.md` continuously during the session. When the context window is getting long, ping King. Then write `state.md` and any domain/improvements files from the notepad. King clears context. Next session: wipe notepad, read state.md, start fresh. Do NOT wait until asked — proactively flag when context is getting polluted.
 - **No markdown tables in chat text:** Tables break in narrow columns. Use `- **Label:** value` lines instead. Always.
 - **Proactive commits:** When uncommitted changes pile up (~10+ files or spanning multiple domains), recommend committing. Suggest splitting when changes cover separate concerns. Don't nag on small edits — just nudge at natural stopping points.
 
