@@ -16,7 +16,6 @@ import { aiToolRegistry } from '../../ai-tools/registry'
 import { selectModel, getModelId, type ModelConfig } from './model-selector'
 import { buildSystemPrompt } from './system-prompt'
 import { nullToUndefined } from '@/lib/utils'
-import { DiscoveredToolsSchema } from '@/lib/ai-schema'
 import type OpenAI from 'openai'
 
 // =============================================================================
@@ -46,7 +45,6 @@ export interface StreamChunk {
 
 export class ScopeBrain {
     private options: ScopeBrainOptions
-    /** Tool names currently available to the LLM (starts with core tools) */
     private activeToolNames: Set<string>
 
     constructor(options: ScopeBrainOptions = {}) {
@@ -55,9 +53,9 @@ export class ScopeBrain {
             temperature: 0.7,
             ...options,
         }
-        // Seed with core tools only
+        // Activate all tools upfront — no search_tools discovery needed
         this.activeToolNames = new Set(
-            aiToolRegistry.getCoreTools().map(t => t.name)
+            aiToolRegistry.getAll().map(t => t.name)
         )
     }
 
@@ -173,14 +171,6 @@ export class ScopeBrain {
                 })
             )
             allToolResults.push(...toolResults)
-
-            // If search_tools was called, activate discovered tools and refresh tool list
-            for (let i = 0; i < toolCalls.length; i++) {
-                if (toolCalls[i].function.name === 'search_tools') {
-                    this.activateDiscoveredTools(toolResults[i])
-                }
-            }
-            // Refresh tool definitions to include any newly discovered tools
             currentTools = this.getActiveToolDefinitions()
 
             currentMessages.push({ role: 'assistant', content: textContent })
@@ -271,11 +261,6 @@ export class ScopeBrain {
                 const result = await this.executeTool(tc.name, params, context)
                 toolResults.push(result)
                 yield { type: 'tool_result', toolName: tc.name, toolResult: result }
-
-                // If search_tools was called, activate discovered tools
-                if (tc.name === 'search_tools') {
-                    this.activateDiscoveredTools(result)
-                }
             }
             // Refresh tool definitions to include any newly discovered tools
             currentTools = this.getActiveToolDefinitions()
@@ -351,10 +336,6 @@ export class ScopeBrain {
         return messages
     }
 
-    /**
-     * Get tool definitions for only the currently active tools.
-     * Starts with core tools (~3), expands as search_tools discovers more.
-     */
     private getActiveToolDefinitions(): LLMToolDefinition[] {
         return aiToolRegistry.getByNames([...this.activeToolNames]).map(tool => ({
             type: 'function' as const,
@@ -364,25 +345,6 @@ export class ScopeBrain {
                 parameters: tool.parameters as Record<string, unknown>,
             },
         }))
-    }
-
-    /**
-     * After search_tools executes, extract discovered tool names and activate them.
-     */
-    private activateDiscoveredTools(toolResult: AgentToolResult): void {
-        if (!toolResult.success || !toolResult.result) return
-
-        try {
-            // Validate and normalize the discovered tools using Zod
-            const tools = DiscoveredToolsSchema.parse(toolResult.result)
-            
-            for (const tool of tools) {
-                this.activeToolNames.add(tool.name)
-            }
-        } catch (error) {
-            console.error('[ScopeBrain] Failed to parse discovered tools:', error)
-            // Mandate: Never allow unvalidated data to bypass the normalization layer
-        }
     }
 
     // =========================================================================

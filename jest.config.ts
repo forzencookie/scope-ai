@@ -20,7 +20,8 @@ const config: Config = {
     ],
     testPathIgnorePatterns: [
         "/node_modules/",
-        "src/components/loner/dialogs/spec.tsx", // Component file, not a test
+        "/.claude/",
+        "src/components/loner/dialogs/spec.tsx",
     ],
     collectCoverageFrom: [
         "src/**/*.{js,jsx,ts,tsx}",

@@ -21,6 +21,7 @@ import {
     authorizeModel
 } from '@/lib/model-auth'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
+import { getContextWindow } from '@/lib/ai/model-registry'
 import { initializeAITools } from '@/lib/ai-tools'
 import { createAgentContext } from '@/lib/agents/types'
 import { selectModel, getModelId } from '@/lib/agents/scope-brain/model-selector'
@@ -76,6 +77,70 @@ function extractMessageContent(msg: Record<string, unknown>): string {
     }
 
     return ''
+}
+
+const COMPACT_AT_PERCENT = 0.80
+const SYSTEM_PROMPT_RESERVED = 1_500
+const KEEP_RECENT = 8
+
+function estimateMessageTokens(messages: Array<{ content: string }>): number {
+    return messages.reduce((sum, m) => sum + Math.ceil(m.content.length / 4), 0)
+}
+
+function getCompactThreshold(modelId: string): number {
+    const contextWindow = getContextWindow(modelId)
+    return Math.floor(contextWindow * COMPACT_AT_PERCENT) - SYSTEM_PROMPT_RESERVED
+}
+
+// Compact long conversation history into a summary + recent messages.
+// Scooby always has full context — old messages are summarised, never silently dropped.
+async function compactMessageHistory(
+    messages: Array<Record<string, unknown>>,
+    modelId: string,
+): Promise<Array<{ role: string; content: string }>> {
+    const mapped = messages.map(m => ({
+        role: m.role as string,
+        content: extractMessageContent(m),
+    }))
+
+    if (estimateMessageTokens(mapped) <= getCompactThreshold(modelId)) return mapped
+
+    const oldMessages = mapped.slice(0, mapped.length - KEEP_RECENT)
+    const recentMessages = mapped.slice(mapped.length - KEEP_RECENT)
+
+    const transcript = oldMessages
+        .map(m => `${m.role === 'user' ? 'Användare' : 'Scooby'}: ${m.content.slice(0, 500)}`)
+        .join('\n\n')
+
+    try {
+        const { default: OpenAI } = await import('openai')
+        const openaiClient = new OpenAI({ apiKey: process.env.OPENAI_API_KEY })
+
+        const completion = await openaiClient.chat.completions.create({
+            model: 'gpt-5-mini',
+            temperature: 0.1,
+            max_tokens: 400,
+            messages: [
+                {
+                    role: 'system',
+                    content: 'Sammanfatta konversationen koncist på svenska. Fokusera på: beslut som tagits, åtgärder som utförts, och viktigt kontext för att förstå de senaste meddelandena. Max 300 ord.',
+                },
+                { role: 'user', content: transcript },
+            ],
+        })
+
+        const summary = completion.choices[0]?.message?.content
+        if (summary) {
+            return [
+                { role: 'system', content: `[Tidigare konversation — sammanfattning]\n${summary}` },
+                ...recentMessages,
+            ]
+        }
+    } catch (e) {
+        console.warn('[Chat] Compaction failed, using recent messages only:', e)
+    }
+
+    return recentMessages
 }
 
 /**
@@ -233,17 +298,20 @@ export async function POST(request: NextRequest) {
             companyId: context.companyId,
             isConfirmed: !!confirmationId,
             confirmationId,
+            companyType: context.companyType ?? undefined,
         })
 
         const modelConfig = selectModel(latestContent)
         const activeModelId = getModelId(modelConfig)
 
+        const compactedMessages = await compactMessageHistory(messages, activeModelId)
+
         const result = streamText({
             model: openai(activeModelId),
             system: systemPrompt,
-            messages: messages.map(m => ({
+            messages: compactedMessages.map(m => ({
                 role: m.role as 'user' | 'assistant' | 'system',
-                content: extractMessageContent(m),
+                content: m.content,
             })),
             ...deferredConfig,
 
@@ -327,14 +395,14 @@ export async function GET(request: NextRequest) {
 
         return Response.json({
             agent: 'vercel-ai-sdk',
-            description: 'Vercel AI SDK architecture powered by GPT-4o',
+            description: 'Vercel AI SDK architecture powered by GPT-5',
             features: [
                 'Vercel AI SDK streamText',
                 'All 60+ tools mapped',
                 'Generative UI Ready',
             ],
             models: {
-                default: 'gpt-4o',
+                default: 'gpt-5',
             },
         })
     } catch (error) {

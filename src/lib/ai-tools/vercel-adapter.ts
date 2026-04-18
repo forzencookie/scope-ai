@@ -14,9 +14,6 @@ interface ToolExecuteResult {
     walkthrough?: unknown
 }
 
-/**
- * Build the execute function for a tool.
- */
 function makeExecute(t: AITool, context: InteractionContext) {
     return async (args: Record<string, unknown>): Promise<ToolExecuteResult> => {
         const result = await aiToolRegistry.execute(t.name, args, {
@@ -40,14 +37,6 @@ function makeExecute(t: AITool, context: InteractionContext) {
     }
 }
 
-/**
- * Convert an array of AITools into Vercel AI SDK tool format.
- *
- * streamText reads `inputSchema` (not `parameters`) from each tool entry.
- * We build tool objects directly with the correct shape instead of using
- * the `tool()` helper which sets `parameters` (a passthrough that doesn't
- * set `inputSchema`).
- */
 function convertToVercelTools(tools: AITool[], context: InteractionContext): ToolSet {
     const vercelTools: ToolSet = {}
 
@@ -63,51 +52,47 @@ function convertToVercelTools(tools: AITool[], context: InteractionContext): Too
     return vercelTools
 }
 
-/**
- * Get all tools in Vercel AI SDK format.
- */
 export function getVercelAITools(context: InteractionContext): ToolSet {
     return convertToVercelTools(aiToolRegistry.getAll(), context)
 }
 
 /**
- * Create a deferred tool loading config for streamText().
+ * Build the active tool set for a session.
  *
- * Registers ALL tools in the `tools` ToolSet (schemas available for validation)
- * but only exposes core tools via `activeTools` initially (~5 tools, ~2K tokens).
- * When `search_tools` executes in step N, `prepareStep` for step N+1 reads
- * discovered tool names and expands `activeTools` to include them.
+ * Activates tools relevant to the company type upfront — no search_tools discovery needed.
+ * - Common tools (domain: 'common' OR allowedCompanyTypes: []) are always active.
+ * - Domain tools are activated when allowedCompanyTypes includes the company type, or is empty.
  *
- * Token savings: ~85-90% reduction (from ~40-50K to ~4-6K in tool schemas).
+ * The company type string from AgentContext ('AB', 'EF', 'HB', 'KB', 'FORENING') is lowercased
+ * to match the allowedCompanyTypes values ('ab', 'ef', 'hb', 'kb', 'forening').
  */
-export function createDeferredToolConfig(context: InteractionContext) {
+export function createDeferredToolConfig(context: InteractionContext & { companyType?: string }) {
     const allTools = getVercelAITools(context)
-    const coreNames = aiToolRegistry.getCoreTools().map(t => t.name) as Array<keyof typeof allTools>
-    const discoveredTools = new Set<string>()
+
+    const companyTypeLower = context.companyType?.toLowerCase() ?? null
+
+    // Activate all tools that are relevant to this company type.
+    // A tool is relevant if:
+    //   - It has no allowedCompanyTypes restriction (empty array = universal)
+    //   - Or allowedCompanyTypes includes the current company type
+    const activeToolNames = aiToolRegistry.getAll()
+        .filter(t => {
+            const allowed = t.allowedCompanyTypes
+            if (!allowed || allowed.length === 0) return true
+            if (!companyTypeLower) return false
+            return allowed.includes(companyTypeLower as 'ab' | 'ef' | 'hb' | 'kb' | 'forening')
+        })
+        .map(t => t.name) as Array<keyof typeof allTools>
 
     return {
         tools: allTools,
-        activeTools: coreNames,
+        activeTools: activeToolNames,
         stopWhen: stepCountIs(10),
+        // prepareStep is kept for chained tool flows (tool B depends on tool A result).
+        // It no longer needs to handle search_tools discovery — all tools are active upfront.
         prepareStep({ steps }: { steps: Array<{ toolResults: Array<{ toolName: string; output: unknown }> }> }) {
-            const lastStep = steps[steps.length - 1]
-            if (lastStep?.toolResults) {
-                for (const tr of lastStep.toolResults) {
-                    if (tr.toolName === 'search_tools') {
-                        const output = tr.output as { success?: boolean; data?: Array<{ name: string }> }
-                        if (output?.success && Array.isArray(output?.data)) {
-                            for (const item of output.data) {
-                                if (item?.name && aiToolRegistry.has(item.name)) {
-                                    discoveredTools.add(item.name)
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            return {
-                activeTools: [...coreNames, ...discoveredTools] as Array<keyof typeof allTools>,
-            }
+            // No expansion needed — return same active set each step.
+            return { activeTools: activeToolNames }
         },
     }
 }

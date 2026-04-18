@@ -41,6 +41,5 @@ export {
 // System prompt
 export {
     buildSystemPrompt,
-    SYSTEM_PROMPT,
-    BLOCK_GUIDANCE,
+    estimateSystemPromptTokens,
 } from './system-prompt'
