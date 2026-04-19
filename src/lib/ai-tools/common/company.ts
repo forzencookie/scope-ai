@@ -28,7 +28,6 @@ export const getCompanyInfoTool = defineTool<{ userId?: string }, CompanyInfo | 
         }
     },
     requiresConfirmation: false,
-    coreTool: true,
     allowedCompanyTypes: [],
     category: 'read',
     domain: 'common',

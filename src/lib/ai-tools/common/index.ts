@@ -4,6 +4,9 @@
  * Re-exports all common/cross-cutting tools.
  */
 
+export * from './request-tools'
+export * from './read-skill'
+export * from './open-overlay'
 export * from './navigation'
 export * from './company'
 export * from './usage'
@@ -16,6 +19,9 @@ export * from './summary'
 export * from './date-events'
 export * from './conversations'
 
+import { requestToolsTools } from './request-tools'
+import { readSkillTools } from './read-skill'
+import { openOverlayTools } from './open-overlay'
 import { navigationTools } from './navigation'
 import { companyTools } from './company'
 import { usageTools } from './usage'
@@ -29,6 +35,9 @@ import { dateEventTools } from './date-events'
 import { conversationTools } from './conversations'
 
 export const commonTools = [
+    ...requestToolsTools,
+    ...readSkillTools,
+    ...openOverlayTools,
     ...navigationTools,
     ...companyTools,
     ...usageTools,

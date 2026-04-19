@@ -56,43 +56,48 @@ export function getVercelAITools(context: InteractionContext): ToolSet {
     return convertToVercelTools(aiToolRegistry.getAll(), context)
 }
 
-/**
- * Build the active tool set for a session.
- *
- * Activates tools relevant to the company type upfront — no search_tools discovery needed.
- * - Common tools (domain: 'common' OR allowedCompanyTypes: []) are always active.
- * - Domain tools are activated when allowedCompanyTypes includes the company type, or is empty.
- *
- * The company type string from AgentContext ('AB', 'EF', 'HB', 'KB', 'FORENING') is lowercased
- * to match the allowedCompanyTypes values ('ab', 'ef', 'hb', 'kb', 'forening').
- */
 export function createDeferredToolConfig(context: InteractionContext & { companyType?: string }) {
+    const allToolInstances = aiToolRegistry.getAll()
+
+    // Full registry — stays constant, used by SDK for arg validation on execution
     const allTools = getVercelAITools(context)
 
-    const companyTypeLower = context.companyType?.toLowerCase() ?? null
-
-    // Activate all tools that are relevant to this company type.
-    // A tool is relevant if:
-    //   - It has no allowedCompanyTypes restriction (empty array = universal)
-    //   - Or allowedCompanyTypes includes the current company type
-    const activeToolNames = aiToolRegistry.getAll()
-        .filter(t => {
-            const allowed = t.allowedCompanyTypes
-            if (!allowed || allowed.length === 0) return true
-            if (!companyTypeLower) return false
-            return allowed.includes(companyTypeLower as 'ab' | 'ef' | 'hb' | 'kb' | 'forening')
-        })
+    // Core tools: navigate_to + request_tools only — the 2 schemas the model sees by default
+    const coreNames = allToolInstances
+        .filter(t => t.coreTool)
         .map(t => t.name) as Array<keyof typeof allTools>
+
+    // Group tool names by domain for on-demand activeTools expansion
+    const namesByDomain = new Map<string, Array<keyof typeof allTools>>()
+    for (const tool of allToolInstances) {
+        const d = tool.domain ?? 'common'
+        if (!namesByDomain.has(d)) namesByDomain.set(d, [])
+        namesByDomain.get(d)!.push(tool.name as keyof typeof allTools)
+    }
+
+    function collectDomains(steps: Array<{ toolResults?: Array<{ toolName: string; output: unknown }> }>) {
+        const domains = new Set<string>()
+        for (const step of steps) {
+            for (const result of step.toolResults ?? []) {
+                if (result.toolName === 'request_tools') {
+                    const out = result.output as { domains?: string[] }
+                    out.domains?.forEach(d => domains.add(d))
+                }
+            }
+        }
+        return [...domains]
+    }
 
     return {
         tools: allTools,
-        activeTools: activeToolNames,
-        stopWhen: stepCountIs(10),
-        // prepareStep is kept for chained tool flows (tool B depends on tool A result).
-        // It no longer needs to handle search_tools discovery — all tools are active upfront.
-        prepareStep({ steps }: { steps: Array<{ toolResults: Array<{ toolName: string; output: unknown }> }> }) {
-            // No expansion needed — return same active set each step.
-            return { activeTools: activeToolNames }
+        activeTools: coreNames,
+        stopWhen: stepCountIs(15),
+        prepareStep({ steps }: { steps: Array<{ toolResults?: Array<{ toolName: string; output: unknown }> }> }) {
+            const loadedDomains = collectDomains(steps)
+            if (loadedDomains.length === 0) return { activeTools: coreNames }
+
+            const domainNames = loadedDomains.flatMap(d => namesByDomain.get(d) ?? [])
+            return { activeTools: [...coreNames, ...domainNames] }
         },
     }
 }

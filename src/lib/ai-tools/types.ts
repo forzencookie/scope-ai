@@ -18,6 +18,7 @@ export type FunctionParameters = {
         format?: string
         items?: {
             type: string
+            enum?: string[]
             properties?: Record<string, {
                 type: string
                 description?: string
