@@ -3,7 +3,7 @@
 import { Wallet, ArrowUpCircle } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 const registreraUttag: SimScript = [
     { role: "user", content: "Jag vill ta ut 30 000 kr från företagskontot" },
@@ -52,7 +52,7 @@ const registreraUttag: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-51", verificationNumber: "A-51", description: "Privat uttag Erik Svensson", date: "2026-04-06", amount: 30000 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-51", verificationNumber: "A-51", description: "Privat uttag Erik Svensson", date: "2026-04-06", amount: 30000 } }} />
                 ),
             },
         ],
@@ -150,7 +150,7 @@ const registreraInsattning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-52", verificationNumber: "A-52", description: "Privat insättning Erik Svensson", date: "2026-04-06", amount: 20000 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-52", verificationNumber: "A-52", description: "Privat insättning Erik Svensson", date: "2026-04-06", amount: 20000 } }} />
                 ),
             },
         ],

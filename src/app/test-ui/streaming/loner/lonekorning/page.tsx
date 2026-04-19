@@ -14,7 +14,7 @@ import { Coins, Send, TrendingUp } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 import { WalkthroughOpenerCard } from "@/components/ai/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/walkthrough-overlay"
 
@@ -59,9 +59,9 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
                     type: "card-list",
                     delay: 200,
                     items: [
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "review" } }} />,
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "review" } }} />,
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "review" } }} />,
+                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "review" } }} />,
+                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "review" } }} />,
+                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "review" } }} />,
                     ],
                 },
                 {
@@ -97,9 +97,9 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
                     type: "card-list",
                     delay: 200,
                     items: [
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "paid" } }} />,
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "paid" } }} />,
-                        <InlineCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "paid" } }} />,
+                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "paid" } }} />,
+                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "paid" } }} />,
+                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "paid" } }} />,
                     ],
                 },
                 {

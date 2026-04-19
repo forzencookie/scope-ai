@@ -444,7 +444,7 @@ export function InlinePartnerCard({ data, isNew }: { data: InlinePartnerData; is
 }
 
 // --- Card type map for dynamic rendering ---
-export type InlineCardType =
+export type InfoCardType =
     | "invoice"
     | "transaction"
     | "verification"
@@ -460,13 +460,13 @@ export type InlineCardType =
     | "BuyCreditsPrompt"
     | "budget_limit"
 
-export interface InlineCardData {
-    cardType: InlineCardType
+export interface InfoCardData {
+    cardType: InfoCardType
     data: Record<string, unknown>
     isNew?: boolean
 }
 
-export function InlineCardRenderer({ card }: { card: InlineCardData }) {
+export function InfoCardRenderer({ card }: { card: InfoCardData }) {
     switch (card.cardType) {
         case "invoice":
             return <InlineInvoiceCard data={card.data as InlineInvoiceData} isNew={card.isNew} />

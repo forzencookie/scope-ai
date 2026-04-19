@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Check, type LucideIcon } from "lucide-react"
 import { useState } from "react"
-import { completedActionConfig } from "./confirmation-card"
-import type { ConfirmationAccent, CompletedAction } from "./confirmation-card"
+import { completedActionConfig } from "./action-card"
+import type { ConfirmationAccent, CompletedAction } from "./action-card"
 
 const accentIconStyles: Record<ConfirmationAccent, { color: string; bg: string }> = {
     blue:    { color: "text-blue-600 dark:text-blue-500",       bg: "bg-blue-500/10" },
@@ -35,7 +35,7 @@ export interface BatchItem {
     fromBadge?: BatchItemBadge
 }
 
-interface BatchConfirmationCardProps {
+interface BatchActionCardProps {
     title: string
     description?: string
     icon?: LucideIcon
@@ -58,7 +58,7 @@ const statusDot: Record<BatchItem["status"], string> = {
     error:   "bg-red-500",
 }
 
-export function BatchConfirmationCard({
+export function BatchActionCard({
     title,
     description,
     icon: HeaderIcon,
@@ -73,7 +73,7 @@ export function BatchConfirmationCard({
     completedTitle,
     onReset,
     className,
-}: BatchConfirmationCardProps) {
+}: BatchActionCardProps) {
     const [items, setItems] = useState(initialItems)
     const iconStyles = accentIconStyles[accent]
 

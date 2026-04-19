@@ -11,7 +11,7 @@
 import { AlertTriangle } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa verifikationer, user asks for detail ───
 
@@ -31,10 +31,10 @@ const visaVerifikationer: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v1", verificationNumber: "A-47", date: "2026-03-28", description: "Kontorshyra april", amount: 8500 } }} />,
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v2", verificationNumber: "A-46", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v3", verificationNumber: "A-45", date: "2026-03-22", description: "Postnord — Porto", amount: 89 } }} />,
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v4", verificationNumber: "A-44", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v1", verificationNumber: "A-47", date: "2026-03-28", description: "Kontorshyra april", amount: 8500 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v2", verificationNumber: "A-46", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v3", verificationNumber: "A-45", date: "2026-03-22", description: "Postnord — Porto", amount: 89 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v4", verificationNumber: "A-44", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
                 ],
             },
             {
@@ -105,7 +105,7 @@ const makuleraVerifikation: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-48", verificationNumber: "A-48", date: "2026-03-28", description: "Rättelsepost — makulering A-42", amount: 1250 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-48", verificationNumber: "A-48", date: "2026-03-28", description: "Rättelsepost — makulering A-42", amount: 1250 } }} />
                 ),
             },
         ],

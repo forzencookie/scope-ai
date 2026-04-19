@@ -11,7 +11,7 @@
 import { BookMarked } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: Read → show share register ---
 
@@ -102,8 +102,8 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "sh1", name: "Anders Richnau — 700 A-aktier (70%)", sharePercent: 70 } }} />,
-                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "sh2", name: "Lisa Nilsson — 100 A-aktier (10%)", sharePercent: 10 } }} />,
+                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "sh1", name: "Anders Richnau — 700 A-aktier (70%)", sharePercent: 70 } }} />,
+                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "sh2", name: "Lisa Nilsson — 100 A-aktier (10%)", sharePercent: 10 } }} />,
                 ],
             },
         ],

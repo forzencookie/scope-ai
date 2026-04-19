@@ -12,7 +12,7 @@
 import { UserPlus, Pencil } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: WRITE — Add employee ---
 
@@ -62,7 +62,7 @@ const laggTillAnstalld: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e-lisa", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />
+                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e-lisa", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />
                 ),
             },
         ],
@@ -98,10 +98,10 @@ const visaTeamet: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28392, status: "paid" } }} />,
-                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e2", employeeName: "Johan Berg", period: "Sedan mar 2024", netAmount: 31250, status: "paid" } }} />,
-                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e3", employeeName: "Sara Ek", period: "Sedan aug 2025", netAmount: 25108, status: "paid" } }} />,
-                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e4", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />,
+                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28392, status: "paid" } }} />,
+                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e2", employeeName: "Johan Berg", period: "Sedan mar 2024", netAmount: 31250, status: "paid" } }} />,
+                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e3", employeeName: "Sara Ek", period: "Sedan aug 2025", netAmount: 25108, status: "paid" } }} />,
+                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e4", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />,
                 ],
             },
             {
@@ -159,7 +159,7 @@ const uppdateraAnstalld: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28567, status: "review" } }} />
+                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28567, status: "review" } }} />
                 ),
             },
         ],

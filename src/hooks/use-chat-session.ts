@@ -16,7 +16,7 @@ import { DefaultChatTransport, type UIMessage, type UIDataTypes, type UITools, t
 import type { Message as AppMessage } from '@/lib/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import { fileToBase64 } from '@/lib/chat-utils'
-import { type InlineCardType } from '@/components/ai/cards/inline'
+import { type InfoCardType } from '@/components/ai/cards/inline'
 
 // =============================================================================
 // Helpers (moved from use-chat.ts)
@@ -39,7 +39,7 @@ function extractToolInvocations(parts: UIMessagePart<UIDataTypes, UITools>[] | u
         .filter((t): t is ToolInvocationData => t != null)
 }
 
-function deriveCardType(toolName: string): InlineCardType {
+function deriveCardType(toolName: string): InfoCardType {
     const name = toolName.toLowerCase()
     if (name.includes('invoice') || name.includes('faktura')) return 'invoice'
     if (name.includes('transaction') || name.includes('transaktion')) return 'transaction'
@@ -254,7 +254,7 @@ export function useChatSession({
                 const completed = toolInvocations.filter(t => t.state === 'result')
                 if (completed.length > 0) {
                     appMsg.display = {
-                        type: 'InlineCards',
+                        type: 'InfoCards',
                         data: {
                             cards: completed.map(t => ({
                                 cardType: deriveCardType(t.toolName),

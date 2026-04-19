@@ -4,7 +4,7 @@ import { Check, ArrowRight, User, Briefcase, Coins, Mail } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { useState } from "react"
 import { useToast } from "@/components/ui/toast"
-import { ConfirmationCard } from "@/components/ai/confirmations/confirmation-card"
+import { ActionCard } from "@/components/ai/confirmations/action-card"
 
 interface EmployeeDetailProps {
     data: {
@@ -52,7 +52,7 @@ export function EmployeeDetail({ data }: EmployeeDetailProps) {
     }
 
     return (
-        <ConfirmationCard
+        <ActionCard
             confirmation={{
                 title: "Ny anställd",
                 description: "Registrera i systemet",

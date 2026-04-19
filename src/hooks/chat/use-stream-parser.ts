@@ -122,7 +122,7 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
                         let displayData = data.display as Record<string, unknown> | null
                         if (data.type === 'inline_card') {
                             displayData = {
-                                type: 'InlineCard',
+                                type: 'InfoCard',
                                 data: {
                                     cardType: data.cardType,
                                     data: data.data
@@ -217,8 +217,8 @@ export function useStreamParser({ setConversations }: UseStreamParserOptions) {
 
         // Display-only components that should render inline in chat, not in the overlay dialog
         const inlineOnlyComponents = new Set<string>([
-            'InlineCard',
-            'InlineCards',
+            'InfoCard',
+            'InfoCards',
         ])
 
         // Check all data chunks for inline-only display components

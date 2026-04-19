@@ -4,7 +4,7 @@
  * Generic Confirmation Card — Key-Value grid layout
  *
  * For standalone transactions: invoices, verifications, asset registrations, etc.
- * Matches ConfirmationCard visual style: bare container, icon badge, accent color, post-confirm phase.
+ * Matches ActionCard visual style: bare container, icon badge, accent color, post-confirm phase.
  */
 
 import { AlertCircle, type LucideIcon } from "lucide-react"

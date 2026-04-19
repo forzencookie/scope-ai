@@ -17,20 +17,8 @@ import { Button } from "@/components/ui/button"
 import { formatCurrency } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
 
-/**
- * Test page: Confirmation & Interaction UI
- *
- * Complete confirmation catalog across all company types.
- * Every mutation Scooby performs requires user confirmation.
- *
- * Sections:
- * 1. Generic confirmations — ActionConfirmCard (key-value grid)
- * 2. Domain-specific — EntityUpdateCard (icon rows) + ActionConfirmCard
- * 3. Batch confirmations — BatchBookingCard + ChecklistConfirmCard
- */
-
 // =============================================================================
-// Section 1: Generic confirmations
+// Section 1: Generic action cards
 // =============================================================================
 
 const genericConfirmations: Array<{
@@ -431,11 +419,7 @@ const genericConfirmations: Array<{
     },
 ]
 
-// =============================================================================
-// Page
-// =============================================================================
-
-export default function TestConfirmationPage() {
+export default function ActionCardsPage() {
     const [genericStates, setGenericStates] = useState<Record<string, "idle" | "loading" | "confirmed" | "cancelled">>({})
     const [domainStates, setDomainStates] = useState<Record<string, "idle" | "loading" | "confirmed">>({})
     const [batchBookingDone, setBatchBookingDone] = useState(false)
@@ -470,11 +454,11 @@ export default function TestConfirmationPage() {
 
             <div className="max-w-3xl mx-auto px-6 py-8 space-y-12">
 
-                {/* === SECTION 1: Generic confirmations === */}
+                {/* === SECTION 1: Generic action cards === */}
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight mb-1">Bekräftelse-UI</h1>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1">Action Cards</h1>
                     <p className="text-sm text-muted-foreground mb-8">
-                        Varje mutation som Scooby gör kräver bekräftelse. Färgkodade ikoner och knappar per domän.
+                        Kort som ändrar data — bokföring, lön, fakturor, ägare. Alla kräver bekräftelse i fas 1, visar kvitto i fas 2.
                     </p>
 
                     <div className="space-y-8">
@@ -520,16 +504,15 @@ export default function TestConfirmationPage() {
                     </div>
                 </div>
 
-                {/* === SECTION 2: Domain-specific confirmations === */}
+                {/* === SECTION 2: Entity registration cards === */}
                 <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Domänspecifika bekräftelser</h2>
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Entitetsregistrering</h2>
                     <p className="text-sm text-muted-foreground mb-8">
-                        Entitetsregistreringar med ikonrader — anställda, ägare, partners, kunder, möten.
+                        Anställda, ägare, partners, kunder, möten — ikonrader med bekräftelse.
                     </p>
 
                     <div className="space-y-8">
 
-                        {/* Anställd — icon rows */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Anställd</h3>
@@ -561,7 +544,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* EmployeeCard — chat-registry version */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Anställd (EmployeeCard)</h3>
@@ -578,7 +560,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Ägare / Aktieägare (AB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Ägare / Aktieägare</h3>
@@ -610,7 +591,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Delägare (HB, KB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Delägare (HB/KB)</h3>
@@ -642,7 +622,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Medlem (Förening) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Medlem</h3>
@@ -673,7 +652,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Kund */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Kund</h3>
@@ -704,7 +682,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Utdelningsbeslut (AB) — key-value with equity check */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Utdelningsbeslut</h3>
@@ -742,7 +719,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Bokför utdelning (AB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Bokför utdelning</h3>
@@ -774,7 +750,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Aktieöverlåtelse (AB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Aktieöverlåtelse</h3>
@@ -806,7 +781,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Delägarinsättning (HB, KB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Delägarinsättning</h3>
@@ -838,7 +812,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Delägaruttag (HB, KB) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Delägaruttag</h3>
@@ -870,7 +843,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Ägaruttag (EF) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Ägaruttag</h3>
@@ -901,7 +873,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Tilldela roll (AB, Förening) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Tilldela roll</h3>
@@ -932,7 +903,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Planera möte (AB, Förening) */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Planera möte</h3>
@@ -966,9 +936,9 @@ export default function TestConfirmationPage() {
                     </div>
                 </div>
 
-                {/* === SECTION 3: Batch confirmations === */}
+                {/* === SECTION 3: Batch action cards === */}
                 <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Batchbekräftelse</h2>
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Batchåtgärder</h2>
                     <p className="text-sm text-muted-foreground mb-8">
                         Scooby och användaren diskuterar först i chatten. När allt är klart
                         skickar Scooby en slutgiltig lista — användaren bekräftar, sedan utförs ändringarna.
@@ -976,7 +946,6 @@ export default function TestConfirmationPage() {
 
                     <div className="space-y-12">
 
-                        {/* Batchbokföring — BatchBookingCard */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Batchbokföring</h3>
@@ -1007,7 +976,6 @@ export default function TestConfirmationPage() {
                             </div>
                         </div>
 
-                        {/* Statusändring anställda — ChecklistConfirmCard */}
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Statusändring — anställda</h3>

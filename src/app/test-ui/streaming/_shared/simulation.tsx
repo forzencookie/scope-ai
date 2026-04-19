@@ -347,7 +347,7 @@ interface SimulatedConversationProps {
 
 // ── Simulation event bus ──
 // Maps event names to sets of subscriber callbacks.
-// Used by InteractiveConfirmationCard (via useSimEvent) to react to fire-event
+// Used by InteractiveActionCard (via useSimEvent) to react to fire-event
 // atoms without relying on window CustomEvents, which have race conditions in
 // React 19's concurrent renderer.
 type SimEventBus = Map<string, Set<() => void>>
@@ -366,7 +366,7 @@ function simSubscribe(bus: SimEventBus, eventName: string, fn: () => void): () =
     return () => bus.get(eventName)?.delete(fn)
 }
 
-// Context through which InteractiveConfirmationCard (or any card component) can
+// Context through which InteractiveActionCard (or any card component) can
 // subscribe to simulation events fired by fire-event atoms.
 const SimEventContext = createContext<SimEventBus | null>(null)
 
@@ -396,7 +396,7 @@ export function SimulatedConversation({ script, className }: SimulatedConversati
     const hasStartedRef = useRef(false)
 
     // Incremented on each replay — used as part of card keys to force remount
-    // (ensures interactive card components like InteractiveConfirmationCard reset their state)
+    // (ensures interactive card components like InteractiveActionCard reset their state)
     const [replayCount, setReplayCount] = useState(0)
 
     const handleReplay = useCallback(() => {

@@ -11,7 +11,7 @@
 import { Users } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // --- Scenario 1: Read → user responds → wrap up ---
 
@@ -98,8 +98,8 @@ const uppdateraAndelar: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "p1", name: "Erik Svensson", sharePercent: 50, equity: 195000, withdrawals: 110000 } }} />,
-                    <InlineCardRenderer card={{ cardType: "partner", data: { id: "p2", name: "Maria Johansson", sharePercent: 50, equity: 130000, withdrawals: 45000 } }} />,
+                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "p1", name: "Erik Svensson", sharePercent: 50, equity: 195000, withdrawals: 110000 } }} />,
+                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "p2", name: "Maria Johansson", sharePercent: 50, equity: 130000, withdrawals: 45000 } }} />,
                 ],
             },
         ],

@@ -13,7 +13,7 @@
 import { FileText, CreditCard, XCircle, Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa obetalda fakturor, then user asks to send reminder ───
 
@@ -33,9 +33,9 @@ const visaFakturor: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i1", invoiceNumber: "2026-042", customer: "Acme AB", amount: 37500, status: "sent" } }} />,
-                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i2", invoiceNumber: "2026-041", customer: "TechCorp AB", amount: 25000, status: "overdue" } }} />,
-                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i3", invoiceNumber: "2026-040", customer: "Nordic Design", amount: 25000, status: "sent" } }} />,
+                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i1", invoiceNumber: "2026-042", customer: "Acme AB", amount: 37500, status: "sent" } }} />,
+                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i2", invoiceNumber: "2026-041", customer: "TechCorp AB", amount: 25000, status: "overdue" } }} />,
+                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i3", invoiceNumber: "2026-040", customer: "Nordic Design", amount: 25000, status: "sent" } }} />,
                 ],
             },
             {
@@ -109,7 +109,7 @@ const skapaFaktura: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i-new", invoiceNumber: "2026-043", customer: "Acme Consulting AB", amount: 62500, status: "draft" } }} />
+                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i-new", invoiceNumber: "2026-043", customer: "Acme Consulting AB", amount: 62500, status: "draft" } }} />
                 ),
             },
         ],
@@ -176,7 +176,7 @@ const registreraBetalning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-53", verificationNumber: "A-53", date: "2026-04-06", description: "Betalning faktura #2026-042", amount: 37500 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-53", verificationNumber: "A-53", date: "2026-04-06", description: "Betalning faktura #2026-042", amount: 37500 } }} />
                 ),
             },
         ],
@@ -230,7 +230,7 @@ const makuleraFaktura: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "invoice", data: { id: "i-k001", invoiceNumber: "2026-K001", customer: "Nordic Design", amount: -25000, status: "paid" } }} />
+                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i-k001", invoiceNumber: "2026-K001", customer: "Nordic Design", amount: -25000, status: "paid" } }} />
                 ),
             },
         ],

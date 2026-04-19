@@ -1,79 +1,15 @@
 "use client"
 
-import { useState } from "react"
 import Link from "next/link"
-import { ArrowLeft, ChevronRight, FileText, type LucideIcon, TrendingUp, Scale, Receipt, PieChart, Calculator, BookOpen, Send, FileBarChart } from "lucide-react"
+import { ArrowLeft } from "lucide-react"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { InlineCardRenderer, type InlineCardType } from "@/components/ai/cards/inline"
+import { InfoCardRenderer, type InfoCardType } from "@/components/ai/cards/inline"
 import { BalanceAuditCard } from "@/components/ai/cards/BalanceAuditCard"
 import { ResultatAuditCard } from "@/components/ai/cards/ResultatAuditCard"
 import { BuyCreditsCheckout } from "@/components/ai/cards/BuyCreditsCard"
-import { cn } from "@/lib/utils"
-
-/**
- * Test page: All Layer 1 card types
- *
- * Shows every card type that Scooby can render inline in chat.
- * These are compact preview cards — the first thing a user sees
- * after Scooby executes a tool.
- *
- * Split into sections:
- * 1. Walkthrough opener cards — clickable, opens full walkthrough overlay
- * 2. Data display cards — activity feed, status checklist, summary, lists
- * 3. Audit cards — balanskontroll, resultatkontroll
- * 4. Billing cards — usage, credits
- * 5. Inline cards — compact clickable result rows
- *
- * NOT here (handled by ConfirmationCard post-confirm phase):
- * - Post-action display is now part of ConfirmationCard (completedAction badge).
- *   See confirmation test page for the full two-phase flow.
- */
 
 // =============================================================================
-// Section 1: Walkthrough opener cards
-// =============================================================================
-
-interface WalkthroughOpener {
-    title: string
-    subtitle: string
-    icon: LucideIcon
-    iconBg: string
-    iconColor: string
-    href: string
-}
-
-const walkthroughOpeners: WalkthroughOpener[] = [
-    { title: "Resultaträkning Q1 2026", subtitle: "Intäkter 485 000 kr · Kostnader 312 000 kr · Resultat 173 000 kr", icon: TrendingUp, iconBg: "bg-emerald-500/10", iconColor: "text-emerald-600 dark:text-emerald-500", href: "/test-ui/ai-overlays/walkthroughs/resultatrakning" },
-    { title: "Balansräkning 2026-03-31", subtitle: "Tillgångar 1 245 000 kr · Skulder 892 000 kr · EK 353 000 kr", icon: Scale, iconBg: "bg-blue-500/10", iconColor: "text-blue-600 dark:text-blue-500", href: "/test-ui/ai-overlays/walkthroughs/balansrakning" },
-    { title: "Momsdeklaration mars 2026", subtitle: "Utgående 24 500 kr · Ingående 12 050 kr · Att betala 12 450 kr", icon: Receipt, iconBg: "bg-amber-500/10", iconColor: "text-amber-600 dark:text-amber-500", href: "/test-ui/ai-overlays/walkthroughs/momsdeklaration" },
-    { title: "K10-beräkning 2025", subtitle: "Gränsbelopp 187 550 kr · Utdelningsutrymme 187 550 kr", icon: PieChart, iconBg: "bg-purple-500/10", iconColor: "text-purple-600 dark:text-purple-500", href: "/test-ui/ai-overlays/walkthroughs/k10" },
-    { title: "Egenavgifter 2026", subtitle: "Årsresultat 485 000 kr · Avgifter 152 163 kr · Sats 31,42%", icon: Calculator, iconBg: "bg-amber-500/10", iconColor: "text-amber-600 dark:text-amber-500", href: "/test-ui/ai-overlays/walkthroughs/egenavgifter" },
-    { title: "AGI mars 2026", subtitle: "3 anställda · Bruttolön 125 000 kr · Arbetsgivaravgift 39 275 kr", icon: Send, iconBg: "bg-blue-500/10", iconColor: "text-blue-600 dark:text-blue-500", href: "/test-ui/ai-overlays/walkthroughs/agi" },
-    { title: "Inkomstdeklaration 2025", subtitle: "Skattepliktig inkomst 612 000 kr · Slutlig skatt 198 400 kr", icon: FileText, iconBg: "bg-red-500/10", iconColor: "text-red-600 dark:text-red-500", href: "/test-ui/ai-overlays/walkthroughs/inkomstdeklaration" },
-    { title: "Årsredovisning 2025", subtitle: "K2 · Förvaltningsberättelse + Resultat + Balans + Noter", icon: BookOpen, iconBg: "bg-indigo-500/10", iconColor: "text-indigo-600 dark:text-indigo-500", href: "/test-ui/ai-overlays/walkthroughs/arsredovisning" },
-]
-
-function WalkthroughOpenerCard({ opener }: { opener: WalkthroughOpener }) {
-    const Icon = opener.icon
-    return (
-        <Link
-            href={opener.href}
-            className="w-full max-w-md flex items-center gap-3 px-3 py-3 rounded-xl hover:bg-muted/50 transition-colors group border border-border/60"
-        >
-            <div className={cn("flex h-9 w-9 items-center justify-center rounded-lg shrink-0", opener.iconBg)}>
-                <Icon className={cn("h-4 w-4", opener.iconColor)} />
-            </div>
-            <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold">{opener.title}</p>
-                <p className="text-xs text-muted-foreground truncate">{opener.subtitle}</p>
-            </div>
-            <ChevronRight className="h-4 w-4 text-muted-foreground/40 group-hover:text-foreground shrink-0 transition-colors" />
-        </Link>
-    )
-}
-
-// =============================================================================
-// Section 2: Data display cards (CardRenderer)
+// Data display cards
 // =============================================================================
 
 const displayCards: Array<{
@@ -83,7 +19,7 @@ const displayCards: Array<{
 }> = [
     {
         label: "Aktivitetsflöde",
-        description: "Visar vad som hänt under en vald period — hämtas på fråga",
+        description: "Vad som hänt under en vald period — hämtas på fråga",
         display: {
             type: "activityfeed",
             data: {
@@ -100,7 +36,7 @@ const displayCards: Array<{
     },
     {
         label: "Statusöversikt — Månadsavslut",
-        description: "Samma kort som aktivitetsflöde, med statusbadges istället för action-badges",
+        description: "Statusbadges per punkt att granska",
         display: {
             type: "activityfeed",
             data: {
@@ -118,7 +54,7 @@ const displayCards: Array<{
     },
     {
         label: "Statusöversikt — Saknad data",
-        description: "Samma kort — blockerande checklist innan lönekörning",
+        description: "Blockerande checklist innan lönekörning",
         display: {
             type: "activityfeed",
             data: {
@@ -133,7 +69,7 @@ const displayCards: Array<{
         },
     },
     {
-        label: "Sammanfattning (Summary)",
+        label: "Sammanfattning",
         description: "Beräkningsresultat, t.ex. lön eller K10",
         display: {
             type: "summary",
@@ -166,7 +102,7 @@ const displayCards: Array<{
 ]
 
 // =============================================================================
-// Section 4: Billing cards
+// Billing cards
 // =============================================================================
 
 const billingCards: Array<{
@@ -175,7 +111,7 @@ const billingCards: Array<{
     display: { type: string; data: Record<string, unknown> }
 }> = [
     {
-        label: "AI-användning (Usage)",
+        label: "AI-användning",
         description: "Hur mycket AI-budget som förbrukats",
         display: {
             type: "aiusagecard",
@@ -210,16 +146,16 @@ const billingCards: Array<{
 ]
 
 // =============================================================================
-// Section 5: Inline cards (compact result rows)
+// Compact data rows
 // =============================================================================
 
-const inlineCards: Array<{
+const dataRows: Array<{
     label: string
     description: string
-    card: { cardType: InlineCardType; data: Record<string, unknown> }
+    card: { cardType: InfoCardType; data: Record<string, unknown> }
 }> = [
     {
-        label: "Faktura (inline)",
+        label: "Faktura",
         description: "Kompakt rad — klickbar, navigerar till fakturasidan",
         card: {
             cardType: "invoice",
@@ -227,7 +163,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Transaktion (inline)",
+        label: "Transaktion",
         description: "Kompakt rad — visar bokförd/obokförd status",
         card: {
             cardType: "transaction",
@@ -235,7 +171,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Verifikation (inline)",
+        label: "Verifikation",
         description: "Kompakt rad — visar verifikationsnummer",
         card: {
             cardType: "verification",
@@ -243,7 +179,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Lönebesked (inline)",
+        label: "Lönebesked",
         description: "Kompakt rad — anställd + nettobelopp",
         card: {
             cardType: "payroll",
@@ -251,7 +187,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Rapport (inline)",
+        label: "Rapport",
         description: "Kompakt rad — navigerar till rapportsidan",
         card: {
             cardType: "report",
@@ -259,7 +195,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Kvitto (inline)",
+        label: "Kvitto",
         description: "Kompakt rad — leverantör + belopp",
         card: {
             cardType: "receipt",
@@ -267,7 +203,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Moms (inline)",
+        label: "Moms",
         description: "Kompakt rad — period + att betala/få tillbaka",
         card: {
             cardType: "vat",
@@ -275,7 +211,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Utdelning (inline)",
+        label: "Utdelning",
         description: "Kompakt rad — planerad utdelning",
         card: {
             cardType: "dividend",
@@ -283,7 +219,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Inventarie (inline)",
+        label: "Inventarie",
         description: "Kompakt rad — anläggningstillgång med bokfört värde",
         card: {
             cardType: "asset",
@@ -291,7 +227,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Förmån (inline)",
+        label: "Förmån",
         description: "Kompakt rad — anställd + förmånstyp + skatteeffekt",
         card: {
             cardType: "benefit",
@@ -299,7 +235,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Förmån — förmånsvärde (inline)",
+        label: "Förmån — förmånsvärde",
         description: "Kompakt rad — tjänstebil med förmånsvärde",
         card: {
             cardType: "benefit",
@@ -307,7 +243,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Delägare (inline)",
+        label: "Delägare",
         description: "Kompakt rad — HB/KB-partner med ägarandel + eget kapital",
         card: {
             cardType: "partner",
@@ -315,7 +251,7 @@ const inlineCards: Array<{
         },
     },
     {
-        label: "Delägare 2 (inline)",
+        label: "Delägare 2",
         description: "Kompakt rad — minoritetspartner",
         card: {
             cardType: "partner",
@@ -324,7 +260,7 @@ const inlineCards: Array<{
     },
 ]
 
-export default function TestCardsPage() {
+export default function InformationCardsPage() {
     return (
         <div className="min-h-screen bg-background pb-20">
             <div className="max-w-3xl mx-auto px-6 pt-6">
@@ -333,40 +269,17 @@ export default function TestCardsPage() {
                     className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
                 >
                     <ArrowLeft className="h-3.5 w-3.5" />
-                    Walkthroughs & Overlays
+                    Chat Tools
                 </Link>
             </div>
 
             <div className="max-w-3xl mx-auto px-6 py-8 space-y-12">
-                {/* Section 1: Walkthrough Openers */}
+
+                {/* Data display cards */}
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight mb-1">Alla kort (Layer 1)</h1>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1">Information Cards</h1>
                     <p className="text-sm text-muted-foreground mb-8">
-                        Varje kort som Scooby kan visa inline i chatten.
-                        Klickbara kort öppnar walkthrough-overlay med fullständig data.
-                    </p>
-
-                    <h2 className="text-lg font-bold tracking-tight mb-1">Walkthrough-kort</h2>
-                    <p className="text-sm text-muted-foreground mb-6">
-                        Klickbara kort som öppnar detaljerad walkthrough.
-                        Titeln sätts dynamiskt av AI baserat på innehållet — Scooby namnger kortet efter vad det visar.
-                    </p>
-
-                    <div className="space-y-2">
-                        {walkthroughOpeners.map((opener, i) => (
-                            <div key={i}>
-                                <WalkthroughOpenerCard opener={opener} />
-                            </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* Section 2: Data Display Cards */}
-                <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Datakort</h2>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Kort för tidslinjer, statusöversikter, beräkningar och listor.
-                        Visas direkt i chatten efter att Scooby hämtat data.
+                        Kort som visar data — tidslinjer, statusöversikter, beräkningar, listor. Ingen mutation.
                     </p>
 
                     <div className="space-y-8">
@@ -384,11 +297,11 @@ export default function TestCardsPage() {
                     </div>
                 </div>
 
-                {/* Section 3: Audit Cards */}
+                {/* Audit cards */}
                 <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Balanskontroll & Resultatkontroll</h2>
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Granskningskort</h2>
                     <p className="text-sm text-muted-foreground mb-8">
-                        Inline audit checks som Scooby visar i chatten — pass/warning/fail.
+                        Balanskontroll och resultatkontroll — pass/warning/fail visas direkt i chatten.
                     </p>
 
                     <div className="space-y-8">
@@ -458,7 +371,7 @@ export default function TestCardsPage() {
                     </div>
                 </div>
 
-                {/* Section 4: Billing Cards */}
+                {/* Billing cards */}
                 <div className="border-t pt-12">
                     <h2 className="text-xl font-bold tracking-tight mb-1">Fakturering & Krediter</h2>
                     <p className="text-sm text-muted-foreground mb-8">
@@ -477,37 +390,34 @@ export default function TestCardsPage() {
                                 </div>
                             </div>
                         ))}
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Krediter — checkout</h3>
+                                <span className="text-xs text-muted-foreground">Visas efter att användaren valt ett paket</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <BuyCreditsCheckout selectedPackage={{ tokens: 2000000, price: 149, label: "2M tokens" }} tokens={2000000} />
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                {/* Section 4b: BuyCreditsCheckout */}
+                {/* Compact data rows */}
                 <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Krediter — checkout</h2>
+                    <h2 className="text-xl font-bold tracking-tight mb-1">Kompakta datarader</h2>
                     <p className="text-sm text-muted-foreground mb-8">
-                        Visas efter att användaren valt ett paket i BuyCreditsPrompt.
-                    </p>
-                    <div className="max-w-lg">
-                        <BuyCreditsCheckout selectedPackage={{ tokens: 2000000, price: 149, label: "2M tokens" }} tokens={2000000} />
-                    </div>
-                </div>
-
-                {/* Section 5: Inline Cards */}
-                <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Inline-kort (kompakta resultatrader)</h2>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Klickbara rader som alltid visas i chatten (aldrig i overlay).
-                        Navigerar till relevant sida vid klick.
+                        Klickbara rader som visar en entitet — faktura, transaktion, lön m.fl. Navigerar till relevant sida vid klick.
                     </p>
 
                     <div className="space-y-6">
-                        {inlineCards.map((item, i) => (
+                        {dataRows.map((item, i) => (
                             <div key={i} className="space-y-2">
                                 <div className="flex items-baseline gap-2">
                                     <h3 className="text-sm font-semibold">{item.label}</h3>
                                     <span className="text-xs text-muted-foreground">{item.description}</span>
                                 </div>
                                 <div className="max-w-lg">
-                                    <InlineCardRenderer card={item.card} />
+                                    <InfoCardRenderer card={item.card} />
                                 </div>
                             </div>
                         ))}

@@ -3,7 +3,7 @@
 import { Landmark, FileText } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 const forberedProtokoll: SimScript = [
     { role: "user", content: "Förbered bolagsstämmoprotokoll för ordinarie stämma 2026" },
@@ -62,7 +62,7 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "report", data: { id: "r1", reportType: "Stämmoprotokoll", title: "Ordinarie bolagsstämma 2026", period: "Räkenskapsår 2025" } }} />
+                    <InfoCardRenderer card={{ cardType: "report", data: { id: "r1", reportType: "Stämmoprotokoll", title: "Ordinarie bolagsstämma 2026", period: "Räkenskapsår 2025" } }} />
                 ),
             },
         ],
@@ -122,7 +122,7 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "dividend", data: { id: "d1", name: "Anders Richnau", amount: 150000, year: 2025 } }} />
+                    <InfoCardRenderer card={{ cardType: "dividend", data: { id: "d1", name: "Anders Richnau", amount: 150000, year: 2025 } }} />
                 ),
             },
         ],

@@ -20,7 +20,7 @@ import { Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
 import { BatchBookingCard } from "@/components/ai/confirmations/batch-booking-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Interactive confirmation card — holds isDone state internally.
 //     Transitions to post-confirm either on button click OR when the simulation
@@ -87,11 +87,11 @@ const visaTransaktioner: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "transaction", data: { id: "t1", description: "Kontorshyra april", amount: 8500, date: "2026-04-01", status: "Bokförd" } }} />,
-                    <InlineCardRenderer card={{ cardType: "transaction", data: { id: "t2", description: "Svea Hosting — webbhotell", amount: 1499, date: "2026-03-28", status: "Bokförd" } }} />,
-                    <InlineCardRenderer card={{ cardType: "transaction", data: { id: "t3", description: "Kjell & Company", amount: 2499, date: "2026-03-25", status: "Obokförd" } }} />,
-                    <InlineCardRenderer card={{ cardType: "transaction", data: { id: "t4", description: "Postnord — Porto", amount: 89, date: "2026-03-22", status: "Bokförd" } }} />,
-                    <InlineCardRenderer card={{ cardType: "transaction", data: { id: "t5", description: "Clas Ohlson — kontorsmaterial", amount: 349, date: "2026-03-20", status: "Obokförd" } }} />,
+                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t1", description: "Kontorshyra april", amount: 8500, date: "2026-04-01", status: "Bokförd" } }} />,
+                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t2", description: "Svea Hosting — webbhotell", amount: 1499, date: "2026-03-28", status: "Bokförd" } }} />,
+                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t3", description: "Kjell & Company", amount: 2499, date: "2026-03-25", status: "Obokförd" } }} />,
+                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t4", description: "Postnord — Porto", amount: 89, date: "2026-03-22", status: "Bokförd" } }} />,
+                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t5", description: "Clas Ohlson — kontorsmaterial", amount: 349, date: "2026-03-20", status: "Obokförd" } }} />,
                 ],
             },
             {
@@ -153,8 +153,8 @@ const visaTransaktioner: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company förbrukningsinventarier", amount: 2499 } }} />,
-                    <InlineCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-50", verificationNumber: "A-50", date: "2026-03-20", description: "Clas Ohlson kontorsmaterial", amount: 349 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company förbrukningsinventarier", amount: 2499 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-50", verificationNumber: "A-50", date: "2026-03-20", description: "Clas Ohlson kontorsmaterial", amount: 349 } }} />,
                 ],
             },
         ],
@@ -220,7 +220,7 @@ const bokforKvitto: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company kontorsmaterial", amount: 2499 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company kontorsmaterial", amount: 2499 } }} />
                 ),
             },
         ],
@@ -284,9 +284,9 @@ const batchBokforing: SimScript = [
                 type: "card-list",
                 delay: 200,
                 items: [
-                    <InlineCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
-                    <InlineCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-50", verificationNumber: "A-50", date: "2026-03-20", description: "Clas Ohlson", amount: 349 } }} />,
-                    <InlineCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-51", verificationNumber: "A-51", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-50", verificationNumber: "A-50", date: "2026-03-20", description: "Clas Ohlson", amount: 349 } }} />,
+                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-51", verificationNumber: "A-51", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
                 ],
             },
         ],

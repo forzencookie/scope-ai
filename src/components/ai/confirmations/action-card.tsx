@@ -29,7 +29,7 @@ export const completedActionConfig: Record<CompletedAction, { icon: LucideIcon; 
     booked:     { icon: Check,      color: "text-emerald-600 dark:text-emerald-500", bg: "bg-emerald-500/10", label: "bokförd" },
 }
 
-interface ConfirmationCardProps {
+interface ActionCardProps {
     confirmation: AIConfirmationRequest
     onConfirm: () => void
     onCancel: () => void
@@ -55,7 +55,7 @@ interface ConfirmationCardProps {
  *
  * Philosophy: AI prepares, Human approves, Card transforms.
  */
-export function ConfirmationCard({
+export function ActionCard({
     confirmation,
     onConfirm,
     onCancel,
@@ -67,7 +67,7 @@ export function ConfirmationCard({
     icon: Icon,
     accent = "blue",
     className,
-}: ConfirmationCardProps) {
+}: ActionCardProps) {
     const styles = accentStyles[accent]
     const actionLabel = confirmLabel ?? "Godkänn"
     const isPostConfirm = isDone && completedAction

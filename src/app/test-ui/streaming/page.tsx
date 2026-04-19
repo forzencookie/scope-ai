@@ -40,6 +40,7 @@ export default function AIStreamingIndex() {
                     </p>
                 </div>
 
+                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Domäner</p>
                 <div className="grid gap-2">
                     {categories.map((cat) => {
                         const Icon = cat.icon

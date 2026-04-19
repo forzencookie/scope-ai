@@ -11,7 +11,7 @@ import { useChatContext } from "@/providers/chat-provider"
 import { useRouter } from "next/navigation"
 import type { SceneType } from "./pixel-mascots"
 import { CardRenderer } from "./card-renderer"
-import { ConfirmationCard } from "./confirmations/confirmation-card"
+import { ActionCard } from "./confirmations/action-card"
 import { WalkthroughRenderer } from "./blocks"
 import { WalkthroughOverlay } from "./walkthrough-overlay"
 import { Button } from "@/components/ui/button"
@@ -242,7 +242,7 @@ function CompleteState({ output, onAccept, onEdit, onCancel, returnTo }: {
             {hasConfirmation ? (
                 <div className="pt-8 border-t">
                     <div className="max-w-2xl">
-                        <ConfirmationCard
+                        <ActionCard
                             confirmation={{
                                 title: output.confirmationRequired!.title,
                                 description: output.confirmationRequired!.description || '',

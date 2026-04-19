@@ -6,7 +6,7 @@
 // blocks/         → Block primitives for walkthrough rendering
 
 // Confirmations
-export { ConfirmationCard } from './confirmations/confirmation-card'
+export { ActionCard } from './confirmations/action-card'
 
 
 

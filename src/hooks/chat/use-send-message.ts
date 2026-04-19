@@ -271,7 +271,7 @@ async function handleErrorResponse(
                                 ...msg,
                                 content: '⚠️ Du har förbrukat din AI-budget för denna månad. Köp fler credits för att fortsätta använda AI.',
                                 display: {
-                                    type: 'InlineCard',
+                                    type: 'InfoCard',
                                     data: {
                                         cardType: 'BuyCreditsPrompt',
                                         data: {

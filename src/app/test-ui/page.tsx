@@ -20,7 +20,7 @@ const testCategories = [
         href: "/test-ui/chat-tools",
         label: "Chat Tools",
         icon: MessageCircle,
-        description: "Inline-kort, informationskort och bekräftelseflöden i chatten",
+        description: "Action cards, information cards och link cards i chatten",
         color: "from-amber-500/20 to-amber-500/5",
         iconColor: "text-amber-600 dark:text-amber-400",
         iconBg: "bg-amber-100 dark:bg-amber-900/40"

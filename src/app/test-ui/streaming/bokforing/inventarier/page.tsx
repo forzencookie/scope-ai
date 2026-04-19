@@ -12,7 +12,7 @@
 import { Package, TrendingDown } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 
 // ─── Scenario 1: READ — visa inventarier, user asks to run depreciation ───
 
@@ -74,7 +74,7 @@ const visaInventarier: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-54", verificationNumber: "A-54", date: "2026-04-30", description: "Avskrivning april 2026", amount: 2014 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-54", verificationNumber: "A-54", date: "2026-04-30", description: "Avskrivning april 2026", amount: 2014 } }} />
                 ),
             },
         ],
@@ -130,7 +130,7 @@ const registreraInventarie: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "asset", data: { id: "ast-new", name: "Kontorsstol IKEA", acquisitionValue: 8500, bookValue: 8500, depreciationPerMonth: 142 } }} />
+                    <InfoCardRenderer card={{ cardType: "asset", data: { id: "ast-new", name: "Kontorsstol IKEA", acquisitionValue: 8500, bookValue: 8500, depreciationPerMonth: 142 } }} />
                 ),
             },
         ],
@@ -192,7 +192,7 @@ const korAvskrivning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InlineCardRenderer card={{ cardType: "verification", data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-31", description: "Avskrivning mars 2026", amount: 2083 } }} />
+                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-31", description: "Avskrivning mars 2026", amount: 2083 } }} />
                 ),
             },
         ],

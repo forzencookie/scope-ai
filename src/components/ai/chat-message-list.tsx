@@ -8,7 +8,7 @@ import { AlertCircle, RefreshCw, FileText, Image as ImageIcon } from "lucide-rea
 import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import Link from "next/link"
-import { ConfirmationCard } from "@/components/ai"
+import { ActionCard } from "@/components/ai"
 import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
 import { TransactionCard } from "@/components/ai/cards/TransactionCard"
 import { ActivityFeedCard } from "@/components/ai/cards/ActivityFeedCard"
@@ -16,7 +16,7 @@ import { ActivityFeedCard } from "@/components/ai/cards/ActivityFeedCard"
 
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { BalanceAuditCard, type BalanceAuditCardProps } from "@/components/ai/cards/BalanceAuditCard"
-import { InlineCardRenderer } from "@/components/ai/cards/inline"
+import { InfoCardRenderer } from "@/components/ai/cards/inline"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import { normalizeAIDisplay } from "@/lib/ai-schema"
 import type { 
@@ -26,7 +26,7 @@ import type {
     BenefitsTable as BenefitsTableData,
 } from "@/lib/ai-schema"
 import type { Message, MessageDisplay } from "@/lib/chat-types"
-import type { InlineCardData } from "@/components/ai/cards/inline"
+import type { InfoCardData } from "@/components/ai/cards/inline"
 import { useState } from "react"
 
 // Attachment preview with image error fallback
@@ -177,7 +177,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {/* Confirmation Card - Only show on mobile, desktop uses dialog overlay */}
                 {message.confirmationRequired && (
                     <div className="md:hidden">
-                        <ConfirmationCard
+                        <ActionCard
                             confirmation={{
                                 title: message.confirmationRequired.type,
                                 description: message.confirmationRequired.action,
@@ -255,15 +255,15 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 )}
 
                 {/* Inline result cards — compact cards for AI action results */}
-                {message.display?.type === 'InlineCard' && (
+                {message.display?.type === 'InfoCard' && (
                     <div className="my-2">
-                        <InlineCardRenderer card={message.display.data} />
+                        <InfoCardRenderer card={message.display.data} />
                     </div>
                 )}
-                {message.display?.type === 'InlineCards' && (
+                {message.display?.type === 'InfoCards' && (
                     <div className="my-2 space-y-1.5">
                         {(message.display.data.cards || []).map((card, i) => (
-                            <InlineCardRenderer key={i} card={card} />
+                            <InfoCardRenderer key={i} card={card} />
                         ))}
                     </div>
                 )}

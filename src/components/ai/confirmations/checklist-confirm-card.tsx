@@ -4,7 +4,7 @@
  * Batch Selection Card — Interactive checklist
  *
  * For bulk entity mutations after chat discussion: employee status changes,
- * bulk role assignments, etc. Matches BatchConfirmationCard visual style:
+ * bulk role assignments, etc. Matches BatchActionCard visual style:
  * bare container, accent header, fromBadge→toBadge transitions, post-confirm phase.
  */
 

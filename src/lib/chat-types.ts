@@ -13,7 +13,7 @@ import type {
 
 // Import component prop types for compatibility where needed
 import type { BalanceAuditCardProps } from '@/components/ai/cards/BalanceAuditCard'
-import type { InlineCardData } from '@/components/ai/cards/inline'
+import type { InfoCardData } from '@/components/ai/cards/inline'
 
 // Display card data types - strictly typed discriminated union
 export type MessageDisplay =
@@ -29,8 +29,8 @@ export type MessageDisplay =
             audit?: BalanceAuditCardProps['audit']
         } & Record<string, unknown>
     }
-    | { type: 'InlineCard'; data: InlineCardData }
-    | { type: 'InlineCards'; data: { cards: InlineCardData[] } }
+    | { type: 'InfoCard'; data: InfoCardData }
+    | { type: 'InfoCards'; data: { cards: InfoCardData[] } }
 
 export interface Message {
     id: string
