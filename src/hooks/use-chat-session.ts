@@ -201,6 +201,10 @@ export function useChatSession({
                             data: result.data
                         }
                     }))
+                } else if (result.navigation && typeof result.navigation === 'object') {
+                    window.dispatchEvent(new CustomEvent('ai-navigate', {
+                        detail: result.navigation
+                    }))
                 }
             }
         }

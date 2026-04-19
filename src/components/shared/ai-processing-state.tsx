@@ -43,8 +43,11 @@ const TOOL_LABELS: Record<string, string> = {
     query_memories: 'Kollar minnet',
     search_conversations: 'Söker i historiken',
     read_conversation: 'Läser konversation',
-    // Common
-    navigate_to: 'Navigerar',
+    // Core tools
+    read_skill: 'Laddar regler',
+    request_tools: 'Laddar verktyg',
+    open_settings: 'Öppnar inställningar',
+    open_documents: 'Öppnar dokument',
 }
 
 function getToolLabel(toolName: string): string {

@@ -68,3 +68,41 @@ FIFO-ordning. Max **6 aktiva** fonder. Återförs senast år 6.
 Schablonränta: **72% av statslåneräntan** (bokförs som intäkt).
 - **AB**: max 25% av årets överskott per år
 - **EF**: max 30% av årets överskott per år
+
+---
+
+## UI-beteende — kort referens
+
+### ConfirmationCard
+Triggas automatiskt av pipeline när ett verktyg har `requiresConfirmation: true`. Du bygger eller injicerar inget manuellt.
+
+**Innan anropet:** en eller två rader som förklarar vad som ska hända.
+**Efter bekräftelse:** bekräfta vad som gjordes, erbjud ett konkret nästa steg.
+
+Verktyg som triggar ConfirmationCard:
+`create_verification`, `run_payroll`, `submit_vat_declaration`, `submit_agi_declaration`, `register_dividend`, `create_invoice`, `create_asset`, `add_shareholder`, `transfer_shares`, `book_invoice_payment`, `bulk_categorize_transactions`, `close_fiscal_year`, `export_sie`, `void_invoice`, `send_invoice_reminder`
+
+Använd aldrig ConfirmationCard för läsoperationer — hämta, sammanfatta och förklara kräver aldrig bekräftelse.
+
+### WalkthroughOpener
+Använd när användaren vill slutföra en komplex flerstegsprocess som spänner över flera verktyg och beslut i sekvens.
+
+Vanliga triggers:
+- "kör lönerna" → full lönekörningsflöde
+- "gör momsdeklarationen" → momsdeklarationsflöde
+- "bokslut" → årsbokslutflöde
+- "stäm av bokföringen" → avstämningsflöde
+
+En walkthrough öppnar ett helskärmsöverlägg med steg-för-steg UI — det är inte ett kort. Använd `show_walkthrough` och namnge rätt walkthrough. Använd inte för enkla verktygsoperationer.
+
+### Dokument
+Aktiebok, lönebesked, styrelseprotokoll och årsredovisning är dokument. De öppnas som PDF-överlägg — aldrig renderade inuti en chattbubbla.
+
+När ett dokument är klart: svara med en kort textsammanfattning och meddela att det är klart att visa eller ladda ner.
+
+### Standardläge — ren text
+Allt som inte är en skrivoperation eller ett flerstegssflöde får ett textssvar i ren text.
+- "Vad är moms?" → textförklaring, inga verktyg, inget kort
+- "Visa mina transaktioner" → anropa `get_transactions`, presentera fynd som strukturerad lista
+- "god morgon" → vänligt svar, inga verktyg
+- Vid tvivel: välj ren text.

@@ -22,13 +22,67 @@ import {
 } from '@/lib/model-auth'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { getContextWindow } from '@/lib/ai/model-registry'
+import fs from 'fs'
+import path from 'path'
 import { initializeAITools } from '@/lib/ai-tools'
 import { createAgentContext } from '@/lib/agents/types'
+import type { AgentContext } from '@/lib/agents/types'
 import { selectModel, getModelId } from '@/lib/agents/scope-brain/model-selector'
-import { buildSystemPrompt } from '@/lib/agents/scope-brain/system-prompt'
 import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
+
+// =============================================================================
+// System Prompt — cold load only (main.md + context block)
+// Skills load on demand via read_skill. Domain tools via request_tools.
+// =============================================================================
+
+const PROMPT_DIR = path.join(process.cwd(), 'src', 'lib', 'agents', 'scope-brain', 'prompt')
+
+const COMPANY_TYPE_NAMES: Record<string, string> = {
+    AB: 'Aktiebolag (AB)',
+    EF: 'Enskild firma (EF)',
+    HB: 'Handelsbolag (HB)',
+    KB: 'Kommanditbolag (KB)',
+    FORENING: 'Förening',
+}
+
+function buildSystemPrompt(context: AgentContext): string {
+    const parts: string[] = []
+
+    const mainPath = path.join(PROMPT_DIR, 'main.md')
+    const main = fs.existsSync(mainPath) ? fs.readFileSync(mainPath, 'utf-8').trim() : ''
+    if (main) parts.push(main)
+
+    const today = new Date().toISOString().slice(0, 10)
+    if (!context.companyId || !context.companyType) {
+        parts.push(
+            `## Context\n\nDatum: **${today}**\n\n⚠️ Ingen företagsprofil kopplad. Du kan svara på allmänna frågor men inte bokföra, fakturera eller köra löner. När användaren vill göra något som kräver företagsuppgifter — fråga efter företagsnamn, organisationsnummer och företagsform och spara med update_company_info.`
+        )
+    } else {
+        const typeName = COMPANY_TYPE_NAMES[context.companyType] ?? context.companyType
+        parts.push(
+            `## Context\n\nDatum: **${today}**\nFöretagstyp: **${typeName}**\n\nAnvänd get_company_info när du behöver specifika företagsuppgifter.`
+        )
+    }
+
+    const msgLines: string[] = []
+    if (context.sharedMemory?.currentPage) {
+        msgLines.push(`**Aktuell sida:** ${context.sharedMemory.currentPage}`)
+    }
+    if (context.sharedMemory?.mentions && Array.isArray(context.sharedMemory.mentions)) {
+        const pageContexts = (context.sharedMemory.mentions as Array<{ type: string; label: string; aiContext?: string }>)
+            .filter(m => m.type === 'page' && m.aiContext)
+            .map(m => m.aiContext as string)
+        if (pageContexts.length > 0) msgLines.push(`**Siddata:**\n${pageContexts.join('\n\n')}`)
+    }
+    if (context.sharedMemory?.attachments) {
+        msgLines.push(`**Bilagor:** ${JSON.stringify(context.sharedMemory.attachments)}`)
+    }
+    if (msgLines.length > 0) parts.push(`## Message Context\n\n${msgLines.join('\n')}`)
+
+    return parts.join('\n\n---\n\n')
+}
 
 const RATE_LIMIT_CONFIG = {
     maxRequests: 30,

@@ -13,9 +13,31 @@ import type {
     LLMToolDefinition,
 } from '../types'
 import { aiToolRegistry } from '../../ai-tools/registry'
+import fs from 'fs'
+import path from 'path'
 import { selectModel, getModelId, type ModelConfig } from './model-selector'
-import { buildSystemPrompt } from './system-prompt'
 import { nullToUndefined } from '@/lib/utils'
+
+const _PROMPT_DIR = path.join(process.cwd(), 'src', 'lib', 'agents', 'scope-brain', 'prompt')
+const _COMPANY_TYPE_NAMES: Record<string, string> = {
+    AB: 'Aktiebolag (AB)', EF: 'Enskild firma (EF)',
+    HB: 'Handelsbolag (HB)', KB: 'Kommanditbolag (KB)', FORENING: 'Förening',
+}
+
+function buildSystemPrompt(context: AgentContext): string {
+    const parts: string[] = []
+    const mainPath = path.join(_PROMPT_DIR, 'main.md')
+    const main = fs.existsSync(mainPath) ? fs.readFileSync(mainPath, 'utf-8').trim() : ''
+    if (main) parts.push(main)
+    const today = new Date().toISOString().slice(0, 10)
+    if (!context.companyId || !context.companyType) {
+        parts.push(`## Context\n\nDatum: **${today}**\n\n⚠️ Ingen företagsprofil kopplad.`)
+    } else {
+        const typeName = _COMPANY_TYPE_NAMES[context.companyType] ?? context.companyType
+        parts.push(`## Context\n\nDatum: **${today}**\nFöretagstyp: **${typeName}**\n\nAnvänd get_company_info när du behöver specifika företagsuppgifter.`)
+    }
+    return parts.join('\n\n---\n\n')
+}
 import type OpenAI from 'openai'
 
 // =============================================================================
