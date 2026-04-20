@@ -6,19 +6,19 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 export type DocumentType = "payslip" | "board-minutes" | "share-register" | "agm"
 
 const PayslipPreview = dynamic(
-    () => import("@/components/ai/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })),
+    () => import("@/components/ai/overlays/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })),
     { ssr: false }
 )
 const BoardMinutesPreview = dynamic(
-    () => import("@/components/ai/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })),
+    () => import("@/components/ai/overlays/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })),
     { ssr: false }
 )
 const ShareRegisterPreview = dynamic(
-    () => import("@/components/ai/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })),
+    () => import("@/components/ai/overlays/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })),
     { ssr: false }
 )
 const AgmPreparationPreview = dynamic(
-    () => import("@/components/ai/documents/agm-preparation-preview").then(m => ({ default: m.AgmPreparationPreview })),
+    () => import("@/components/ai/overlays/documents/agm-preparation-preview").then(m => ({ default: m.AgmPreparationPreview })),
     { ssr: false }
 )
 

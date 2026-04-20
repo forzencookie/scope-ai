@@ -3,9 +3,9 @@
 import { useState, useMemo } from "react"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
-import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
+import { WalkthroughRenderer } from "@/components/ai/overlays/blocks/block-renderer"
 import { ScoobyPresentation } from "@/components/ai/scooby-presentation"
-import type { WalkthroughResponse } from "@/components/ai/blocks/types"
+import type { WalkthroughResponse } from "@/components/ai/overlays/blocks/types"
 
 /**
  * Test page: Egenavgifter as a walkthrough overlay

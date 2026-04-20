@@ -3,30 +3,20 @@
 import { useRef, useEffect } from "react"
 import { usePathname, useRouter } from "next/navigation"
 import { useChatContext, useChatSessionContext } from "@/providers/chat-provider"
-import { useAIDialog } from "@/providers/ai-overlay-provider"
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { BuyCreditsDialog } from "@/components/billing"
 import { getGreeting } from "@/lib/chat-utils"
 import { Button } from "@/components/ui/button"
-import { ArrowLeft, BookOpen, Users, PieChart, Building2, CalendarDays, PawPrint } from "lucide-react"
+import { ArrowLeft, PawPrint } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { AIOverlay } from "@/components/ai"
 import { SuggestionChips } from "@/components/ai/suggestion-chips"
 import { ConversationHeader } from "@/components/ai/conversation-header"
 
-const pageButtons = [
-    { label: "Händelser", icon: CalendarDays, href: "/dashboard/handelser", color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/25" },
-    { label: "Bokföring", icon: BookOpen, href: "/dashboard/bokforing", color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 hover:bg-blue-500/25" },
-    { label: "Löner", icon: Users, href: "/dashboard/loner", color: "bg-violet-500/15 text-violet-600 dark:text-violet-400 hover:bg-violet-500/25" },
-    { label: "Rapporter", icon: PieChart, href: "/dashboard/rapporter", color: "bg-amber-500/15 text-amber-600 dark:text-amber-400 hover:bg-amber-500/25" },
-    { label: "Ägare", icon: Building2, href: "/dashboard/agare", color: "bg-rose-500/15 text-rose-600 dark:text-rose-400 hover:bg-rose-500/25" },
-]
 
 export function MainContentArea({ children }: { children?: React.ReactNode }) {
     const pathname = usePathname()
     const router = useRouter()
-    const { isAIOverlayOpen } = useAIDialog()
     // Session-level state (fresh per conversation)
     const { messages, isLoading, sendMessage, regenerateResponse } = useChatSessionContext()
     // Folder-level state (persists across conversations)
@@ -79,7 +69,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         // State 3: Page view
         if (!isDashboardRoot) {
             return (
-                <div className={cn("flex-1 flex flex-col min-h-0 min-w-0 relative", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
+                <div className={cn("flex-1 flex flex-col min-h-0 min-w-0 relative", false)}>
                     {/* Header bar: Back button + page tabs portal */}
                     <div className="shrink-0 px-4 pt-3 pb-1 flex items-center">
                         <Button
@@ -104,7 +94,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         // State 1: Empty chat — greeting + inline chat input
         if (messages.length === 0) {
             return (
-                <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
+                <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", false)}>
                     {ghostButton}
                     <div className="flex-1 flex flex-col items-center justify-center px-4">
                         {/* Pixel Dog Mascot */}
@@ -187,26 +177,6 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                             />
                         </div>
 
-                        {/* Static page navigation — smaller, secondary */}
-                        {!isIncognito && (
-                            <div className="mt-5 lg:mt-6 px-2">
-                                <div className="flex flex-wrap justify-center gap-2">
-                                    {pageButtons.map((btn) => (
-                                        <button
-                                            key={btn.href}
-                                            onClick={() => router.push(btn.href)}
-                                            className={cn(
-                                                "inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors",
-                                                btn.color
-                                            )}
-                                        >
-                                            <btn.icon className="h-3.5 w-3.5" />
-                                            {btn.label}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
                     </div>
 
                     {/* Disclaimer */}
@@ -223,7 +193,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
 
         // State 2: Active chat
         return (
-            <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", isAIOverlayOpen && "hidden lg:flex border-r border-border")}>
+            <div className={cn("flex-1 flex flex-col min-h-0 relative overflow-hidden", false)}>
                 {/* Messages area */}
                 <div className="flex-1 overflow-y-auto px-4">
                     <div className="max-w-3xl mx-auto w-full space-y-4 py-4">
@@ -282,9 +252,6 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                     since they are not rendered within renderContent() in that state. */}
                 {isDashboardRoot && children}
 
-                {isAIOverlayOpen && (
-                    <AIOverlay />
-                )}
             </div>
 
             <BuyCreditsDialog

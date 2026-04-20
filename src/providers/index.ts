@@ -14,20 +14,5 @@ export {
     useCompanyType,
 } from "./company-provider"
 
-// AI overlay provider (Scooby dialog state)
-export {
-    AIDialogProvider,
-    useAIDialog,
-    useAIDialogOptional,
-} from "./ai-overlay-provider"
-
 // Model provider (AI model selection)
 export { ModelProvider, useModel } from "./model-provider"
-
-// Types
-export type {
-    AIDialogStatus,
-    AIDialogOutput,
-    AIDialogNavigation,
-    AIDialogDisplay,
-} from "./ai-overlay-provider"

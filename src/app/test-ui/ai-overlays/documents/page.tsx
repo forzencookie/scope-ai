@@ -17,10 +17,10 @@ import { ArrowLeft } from "lucide-react"
  * räkning and balansräkning walkthroughs.
  */
 
-const PayslipPreview = dynamic(() => import("@/components/ai/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })), { ssr: false })
-const BoardMinutesPreview = dynamic(() => import("@/components/ai/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
-const ShareRegisterPreview = dynamic(() => import("@/components/ai/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
-const AgmPreparationPreview = dynamic(() => import("@/components/ai/documents/agm-preparation-preview").then(m => ({ default: m.AgmPreparationPreview })), { ssr: false })
+const PayslipPreview = dynamic(() => import("@/components/ai/overlays/documents/payslip-preview").then(m => ({ default: m.PayslipPreview })), { ssr: false })
+const BoardMinutesPreview = dynamic(() => import("@/components/ai/overlays/documents/board-minutes-preview").then(m => ({ default: m.BoardMinutesPreview })), { ssr: false })
+const ShareRegisterPreview = dynamic(() => import("@/components/ai/overlays/documents/share-register-preview").then(m => ({ default: m.ShareRegisterPreview })), { ssr: false })
+const AgmPreparationPreview = dynamic(() => import("@/components/ai/overlays/documents/agm-preparation-preview").then(m => ({ default: m.AgmPreparationPreview })), { ssr: false })
 
 function Section({ label, description, children }: { label: string; description: string; children: React.ReactNode }) {
     return (

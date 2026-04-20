@@ -21,7 +21,6 @@ import { BlockSeparator } from "./separator"
 import { Heading } from "./heading"
 import { Prose } from "./prose"
 import { StatusCheck } from "./status-check"
-import { DocumentPreview } from "./document-preview"
 import { FormFields } from "./form-fields"
 import { ProgressBar } from "./progress-bar"
 import { ConfirmationBlock } from "./confirmation"
@@ -57,7 +56,6 @@ const BLOCK_MAP: Record<string, BlockComponent> = {
   "heading": block(Heading),
   "prose": block(Prose),
   "status-check": block(StatusCheck),
-  "document-preview": block(DocumentPreview),
   "form-fields": block(FormFields),
   "progress-bar": block(ProgressBar),
   "confirmation": block(ConfirmationBlock),

@@ -11,7 +11,7 @@ import {
     DocumentSection,
     DocumentTable,
     DocumentSummaryRow,
-} from "@/components/ai/documents/document-preview"
+} from "@/components/ai/overlays/documents/document-preview"
 import { nullToUndefined } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
 import {

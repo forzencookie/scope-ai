@@ -3,8 +3,8 @@
 import { useMemo } from "react"
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
-import { WalkthroughRenderer } from "@/components/ai/blocks/block-renderer"
-import type { WalkthroughResponse, BlockProps } from "@/components/ai/blocks/types"
+import { WalkthroughRenderer } from "@/components/ai/overlays/blocks/block-renderer"
+import type { WalkthroughResponse, BlockProps } from "@/components/ai/overlays/blocks/types"
 import { ScoobyPresentation } from "@/components/ai/scooby-presentation"
 
 /**

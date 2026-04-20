@@ -135,12 +135,6 @@ export interface StatusCheckProps {
   items: StatusCheckItem[]
 }
 
-export interface DocumentPreviewProps {
-  title: string
-  meta: Array<{ label: string; value: string }>
-  body: string
-}
-
 export interface FormFieldsProps {
   fields: Array<{ label: string; value: string; type?: string }>
 }

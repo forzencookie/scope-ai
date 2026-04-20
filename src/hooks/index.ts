@@ -16,9 +16,6 @@ export type { AIUsageStats } from "./use-ai-usage"
 export { useDynamicTasks } from "./use-dynamic-tasks"
 export type { DynamicTask, DynamicGoal } from "./use-dynamic-tasks"
 
-// Highlight hook (for highlighting AI-created content)
-export { useHighlight, useHighlightState } from "./use-highlight"
-
 // Table hooks (consolidated)
 export {
     useTableFilter,

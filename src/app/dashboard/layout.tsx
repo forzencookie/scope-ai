@@ -4,7 +4,6 @@ import { ToastProvider } from "@/components/ui/toast"
 import { useOnboarding } from "@/components/onboarding/onboarding-wizard"
 import { CompanyProvider } from "@/providers/company-provider"
 import { ModelProvider } from "@/providers/model-provider"
-import { AIDialogProvider } from "@/providers/ai-overlay-provider"
 import { AuthGuard } from "@/components/auth/auth-guard"
 import { useState } from "react"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
@@ -135,13 +134,11 @@ export default function DashboardLayout({
             <QueryProvider>
                 <ModelProvider>
                     <CompanyProvider>
-                        <AIDialogProvider>
-                            <ToastProvider>
-                                <DashboardContent>
-                                    {children}
-                                </DashboardContent>
-                            </ToastProvider>
-                        </AIDialogProvider>
+                        <ToastProvider>
+                            <DashboardContent>
+                                {children}
+                            </DashboardContent>
+                        </ToastProvider>
                     </CompanyProvider>
                 </ModelProvider>
             </QueryProvider>
