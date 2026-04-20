@@ -18,7 +18,6 @@ import { AppStatusBadge } from "@/components/ui/status-badge"
 import { text } from "@/lib/translations"
 import { TransactionWithAI } from "@/types"
 import { ActionEmptyState } from "@/components/shared"
-import { useHighlight } from "@/hooks"
 
 const UNBOOKED_STATUSES = ["Obokförd"]
 
@@ -158,15 +157,12 @@ function TransactionRow({
     onTransactionClick: (transaction: TransactionWithAI) => void
     hasReceipt: boolean
 }) {
-    const { highlightClass } = useHighlight(transaction.id)
-
     return (
         <GridTableRow
             onClick={() => onTransactionClick(transaction)}
             selected={selection.isSelected(transaction.id)}
             className={cn(
-                highlightClass,
-                isUnbooked && !highlightClass && "border-l-2 border-l-amber-400 dark:border-l-amber-500 pl-1",
+                isUnbooked && "border-l-2 border-l-amber-400 dark:border-l-amber-500 pl-1",
                 !isUnbooked && "opacity-80 hover:opacity-100"
             )}
         >

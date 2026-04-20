@@ -1,9 +1,30 @@
 "use client"
 
+import { useState, type ComponentProps } from "react"
 import { Wallet, ArrowUpCircle } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 const registreraUttag: SimScript = [
     { role: "user", content: "Jag vill ta ut 30 000 kr från företagskontot" },
@@ -21,7 +42,7 @@ const registreraUttag: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Registrera privat uttag"
                         description="Från företagskonto till privat"
                         properties={[
@@ -35,14 +56,21 @@ const registreraUttag: SimScript = [
                         confirmLabel="Registrera uttag"
                         icon={Wallet}
                         accent="blue"
-                        isDone
                         completedAction="booked"
                         completedTitle="Delägaruttag bokfört"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:registrera-uttag-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, registrera", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:registrera-uttag-confirm" },
+            { type: "tool", name: "book_withdrawal", duration: 1400, resultLabel: "Uttag bokfört" },
             {
                 type: "stream",
                 text: `Verifikation **A-51** skapad. Ditt eget kapital har minskat med 30 000 kr.\n\n> I ett HB beskattas resultatet oavsett vad du tar ut — uttaget i sig är inte en skattepliktig händelse.`,
@@ -59,7 +87,7 @@ const registreraUttag: SimScript = [
     },
 ]
 
-const visaUttag: SimScript = [
+function buildVisaUttagScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa mina uttag i år" },
     {
         role: "scooby",
@@ -80,6 +108,20 @@ Totalt uttag **110 000 kr** · insättningar **50 000 kr** · netto **−60 000 
 
 Ditt eget kapital har minskat med 60 000 kr i år. Vill du se hur det påverkar balansräkningen?`,
                 speed: 10,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Delägaruttag 2026"
+                        subtitle="Netto −60 000 kr · Uttag 110 000 kr · Insättningar 50 000 kr"
+                        icon={Wallet}
+                        iconBg="bg-blue-500/10"
+                        iconColor="text-blue-600 dark:text-blue-500"
+                        onOpen={() => onOpen("delagaruttag")}
+                    />
+                ),
             },
         ],
     },
@@ -103,7 +145,7 @@ Trots uttagen på 60 000 kr netto har ditt eget kapital ökat tack vare årets r
             },
         ],
     },
-]
+]}
 
 const registreraInsattning: SimScript = [
     { role: "user", content: "Jag har satt in 20 000 kr av egna pengar på företagskontot" },
@@ -120,7 +162,7 @@ const registreraInsattning: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Registrera privat insättning"
                         description="Från privat till företagskonto"
                         properties={[
@@ -133,14 +175,21 @@ const registreraInsattning: SimScript = [
                         confirmLabel="Registrera insättning"
                         icon={ArrowUpCircle}
                         accent="green"
-                        isDone
                         completedAction="booked"
                         completedTitle="Delägarinsättning bokförd"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:registrera-insattning-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, registrera", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:registrera-insattning-confirm" },
+            { type: "tool", name: "book_deposit", duration: 1200, resultLabel: "Insättning bokförd" },
             {
                 type: "stream",
                 text: `Verifikation **A-52** skapad. Ditt eget kapital har ökat med 20 000 kr.`,
@@ -158,6 +207,9 @@ const registreraInsattning: SimScript = [
 ]
 
 export default function DelagaruttagStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaUttagScript = buildVisaUttagScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Delägaruttag"
@@ -170,12 +222,14 @@ export default function DelagaruttagStreamingPage() {
             </Scenario>
 
             <Scenario title="Visa uttag" description="Läs-scenario — årsöversikt + balansräkning" badges={["HB", "KB"]}>
-                <SimulatedConversation script={visaUttag} />
+                <SimulatedConversation script={visaUttagScript} />
             </Scenario>
 
             <Scenario title="Registrera insättning" description="Skriv-scenario — privat insättning (omvänt flöde)" badges={["HB", "KB"]}>
                 <SimulatedConversation script={registreraInsattning} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

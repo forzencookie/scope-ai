@@ -16,7 +16,7 @@ import { DefaultChatTransport, type UIMessage, type UIDataTypes, type UITools, t
 import type { Message as AppMessage } from '@/lib/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import { fileToBase64 } from '@/lib/chat-utils'
-import { type InfoCardType } from '@/components/ai/cards/inline'
+import { type InfoCardType } from '@/components/ai/chat-tools/information-cards'
 
 // =============================================================================
 // Helpers (moved from use-chat.ts)

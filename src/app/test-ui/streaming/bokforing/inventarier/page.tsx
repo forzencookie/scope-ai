@@ -4,19 +4,40 @@
  * AI Streaming: Bokföring → Inventarier
  *
  * Complete conversations with simulated streaming:
- * 1. READ: "Visa mina inventarier" → tool calls + markdown table + user asks to run depreciation
- * 2. WRITE: "Registrera ny inventarie" → tool calls + confirmation → done
- * 3. WRITE: "Kör avskrivning" → tool calls + confirmation → done
+ * 1. READ: "Visa mina inventarier" → list + opener → user asks to run depreciation → pending confirmation → confirm → done
+ * 2. WRITE: "Registrera ny inventarie" → pending confirmation → user confirms → done
+ * 3. WRITE: "Kör avskrivning" → pending confirmation → user confirms → done
  */
 
+import { useState, type ComponentProps } from "react"
 import { Package, TrendingDown } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // ─── Scenario 1: READ — visa inventarier, user asks to run depreciation ───
 
-const visaInventarier: SimScript = [
+function buildVisaInventarierScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Vad har jag för inventarier?" },
     {
         role: "scooby",
@@ -27,6 +48,20 @@ const visaInventarier: SimScript = [
                 type: "stream",
                 text: `**3 inventarier** — bokfört värde totalt **142 500 kr**.\n\n- MacBook Pro 16" — anskaffning 32 000 kr · bokfört **24 000 kr** · 889 kr/mån\n- Kontorsmöbler — anskaffning 45 000 kr · bokfört **37 500 kr** · 625 kr/mån\n- Projektorbild — anskaffning 18 000 kr · bokfört **12 000 kr** · 500 kr/mån\n\n- Ackumulerade avskrivningar: **52 500 kr**\n- Nästa avskrivning: april\n\nKör nu, eller registrera ny inventarie?`,
                 speed: 10,
+            },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Inventarier"
+                        subtitle="3 inventarier · Bokfört värde 142 500 kr · Nästa avskrivning apr"
+                        icon={Package}
+                        iconBg="bg-indigo-500/10"
+                        iconColor="text-indigo-600 dark:text-indigo-500"
+                        onOpen={() => onOpen("tillgangar")}
+                    />
+                ),
             },
         ],
     },
@@ -44,7 +79,7 @@ const visaInventarier: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Bokför avskrivning"
                         description="Periodisk avskrivning april 2026"
                         properties={[
@@ -57,14 +92,21 @@ const visaInventarier: SimScript = [
                         confirmLabel="Bokför avskrivning"
                         icon={TrendingDown}
                         accent="indigo"
-                        isDone
                         completedAction="booked"
                         completedTitle="Avskrivning bokförd"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:visa-inventarier-avskrivning-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, bokför", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:visa-inventarier-avskrivning-confirm" },
+            { type: "tool", name: "book_depreciation", duration: 1400, resultLabel: "Avskrivning bokförd" },
             {
                 type: "stream",
                 text: `Verifikation **A-54** skapad — 2 014 kr → debet 7832, kredit 1229.`,
@@ -79,7 +121,7 @@ const visaInventarier: SimScript = [
             },
         ],
     },
-]
+]}
 
 // ─── Scenario 2: WRITE — registrera ny inventarie ───
 
@@ -99,7 +141,7 @@ const registreraInventarie: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Registrera inventarie"
                         description="Kontorsstol — IKEA"
                         properties={[
@@ -113,14 +155,20 @@ const registreraInventarie: SimScript = [
                         confirmLabel="Registrera"
                         icon={Package}
                         accent="indigo"
-                        isDone
                         completedAction="created"
                         completedTitle="Inventarie registrerad"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:registrera-inventarie-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, registrera", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:registrera-inventarie-confirm" },
             {
                 type: "stream",
                 text: `**Kontorsstol IKEA** tillagd — avskrivning 142 kr/mån. Verifikation **A-55** skapad.`,
@@ -155,7 +203,7 @@ const korAvskrivning: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Bokför avskrivning"
                         description="Periodisk avskrivning mars 2026"
                         properties={[
@@ -168,11 +216,10 @@ const korAvskrivning: SimScript = [
                         confirmLabel="Bokför avskrivning"
                         icon={TrendingDown}
                         accent="indigo"
-                        isDone
                         completedAction="booked"
                         completedTitle="Avskrivning mars bokförd"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:kor-avskrivning-confirm"
                     />
                 ),
             },
@@ -182,6 +229,7 @@ const korAvskrivning: SimScript = [
     {
         role: "scooby",
         elements: [
+            { type: "fire-event", eventName: "sim:kor-avskrivning-confirm" },
             { type: "tool", name: "book_depreciation", duration: 1800, resultLabel: "Bokförde avskrivning" },
             {
                 type: "stream",
@@ -202,6 +250,9 @@ const korAvskrivning: SimScript = [
 // ─── Page ───
 
 export default function InventarierStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaInventarierScript = buildVisaInventarierScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Inventarier"
@@ -210,7 +261,7 @@ export default function InventarierStreamingPage() {
             backLabel="Bokföring"
         >
             <Scenario title="Visa inventarier" description="Läs-scenario — inventarielista + avskrivning" badges={["Alla"]}>
-                <SimulatedConversation script={visaInventarier} />
+                <SimulatedConversation script={visaInventarierScript} />
             </Scenario>
 
             <Scenario title="Registrera inventarie" description="Skriv-scenario — ny inventarie med avskrivningsplan" badges={["Alla"]}>
@@ -220,6 +271,8 @@ export default function InventarierStreamingPage() {
             <Scenario title="Kör avskrivning" description="Skriv-scenario — periodisk avskrivning med bekräftelse" badges={["Alla"]}>
                 <SimulatedConversation script={korAvskrivning} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

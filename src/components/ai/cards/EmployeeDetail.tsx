@@ -4,7 +4,7 @@ import { Check, ArrowRight, User, Briefcase, Coins, Mail } from "lucide-react"
 import { formatCurrency } from "@/lib/utils"
 import { useState } from "react"
 import { useToast } from "@/components/ui/toast"
-import { ActionCard } from "@/components/ai/confirmations/action-card"
+import { ActionCard } from "@/components/ai/chat-tools/action-cards/action-card"
 
 interface EmployeeDetailProps {
     data: {

@@ -6,16 +6,14 @@
 // blocks/         → Block primitives for walkthrough rendering
 
 // Confirmations
-export { ActionCard } from './confirmations/action-card'
+export { ActionCard } from './chat-tools/action-cards/action-card'
 
 
 
 // Cards
-export { ActivityFeedCard, type ActivityFeedCardProps, type FeedEvent, type FeedAction, type FeedEntity } from './cards/ActivityFeedCard'
+export { ActivityFeedCard, type ActivityFeedCardProps, type FeedEvent, type FeedAction, type FeedEntity } from './chat-tools/information-cards/activity-feed-card'
 export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type MentionCategory } from './mention-popover'
 
-// AI Overlay Experience
-export { AIOverlay } from './ai-overlay'
 export {
     PixelDog,
     PixelBear,
@@ -23,4 +21,3 @@ export {
     type SceneType,
 } from './pixel-mascots'
 export { CardRenderer, type CardRendererProps } from './card-renderer'
-export { AIHighlight, useAIHighlight } from './ai-highlight'

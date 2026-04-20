@@ -5,30 +5,18 @@
 
 import type { MentionItem } from '@/components/ai/mention-popover'
 import type {
-    Receipt,
-    Transaction,
     TaskChecklist,
     BenefitsTable,
 } from './ai-schema'
 
-// Import component prop types for compatibility where needed
-import type { BalanceAuditCardProps } from '@/components/ai/cards/BalanceAuditCard'
-import type { InfoCardData } from '@/components/ai/cards/inline'
+import type { AuditResult } from '@/components/ai/chat-tools/information-cards/audit-card'
+import type { InfoCardData } from '@/components/ai/chat-tools/information-cards'
 
 // Display card data types - strictly typed discriminated union
 export type MessageDisplay =
-    | { type: 'ReceiptCard'; data: Receipt }
-    | { type: 'TransactionCard'; data: Transaction }
     | { type: 'TaskChecklist'; data: TaskChecklist }
-    | { type: 'ReceiptsTable'; data: Record<string, unknown> }
     | { type: 'BenefitsTable'; data: BenefitsTable }
-    | {
-        type: 'BalanceAuditCard'
-        component?: string
-        data: {
-            audit?: BalanceAuditCardProps['audit']
-        } & Record<string, unknown>
-    }
+    | { type: 'BalanceAuditCard'; component?: string; data: { audit?: AuditResult } & Record<string, unknown> }
     | { type: 'InfoCard'; data: InfoCardData }
     | { type: 'InfoCards'; data: { cards: InfoCardData[] } }
 

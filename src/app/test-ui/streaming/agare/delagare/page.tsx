@@ -4,18 +4,39 @@
  * AI Streaming: Ägare → Delägare (HB/KB)
  *
  * Complete conversations with simulated streaming:
- * 1. READ: "Visa delägare" → partner overview → user confirms all good → Scooby wraps up
- * 2. WRITE: "Uppdatera ägarandelar" → confirmation → done
+ * 1. READ: "Visa delägare" → partner overview + opener → user confirms all good → Scooby wraps up
+ * 2. WRITE: "Uppdatera ägarandelar" → pending confirmation → user confirms → done
  */
 
+import { useState, type ComponentProps } from "react"
 import { Users } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // --- Scenario 1: Read → user responds → wrap up ---
 
-const visaDelagare: SimScript = [
+function buildVisaDelagareScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa våra delägare" },
     {
         role: "scooby",
@@ -37,6 +58,20 @@ Totalt eget kapital: **325 000 kr**
 Resultatet fördelas enligt ägarandelarna vid årets slut. Vill du uppdatera andelarna?`,
                 speed: 11,
             },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Delägare — Handelsbolaget"
+                        subtitle="2 delägare · Erik 60% · Maria 40% · Eget kapital 325 000 kr"
+                        icon={Users}
+                        iconBg="bg-purple-500/10"
+                        iconColor="text-purple-600 dark:text-purple-500"
+                        onOpen={() => onOpen("delagare")}
+                    />
+                ),
+            },
         ],
     },
     { role: "user", content: "Nej, det ser bra ut", delay: 2000 },
@@ -50,7 +85,7 @@ Resultatet fördelas enligt ägarandelarna vid årets slut. Vill du uppdatera an
             },
         ],
     },
-]
+]}
 
 // --- Scenario 2: Write → update ownership ---
 
@@ -69,7 +104,7 @@ const uppdateraAndelar: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Uppdatera ägarandelar"
                         description="Ny fördelning"
                         properties={[
@@ -81,14 +116,20 @@ const uppdateraAndelar: SimScript = [
                         confirmLabel="Uppdatera"
                         icon={Users}
                         accent="purple"
-                        isDone
                         completedAction="updated"
                         completedTitle="Ägarandelar uppdaterade"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:uppdatera-andelar-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, uppdatera", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:uppdatera-andelar-confirm" },
             {
                 type: "stream",
                 text: `Erik och Maria äger nu 50% var. Framtida resultat fördelas lika.`,
@@ -109,6 +150,9 @@ const uppdateraAndelar: SimScript = [
 // --- Page ---
 
 export default function DelagareStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaDelagareScript = buildVisaDelagareScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Delägare"
@@ -117,12 +161,14 @@ export default function DelagareStreamingPage() {
             backLabel="Ägare"
         >
             <Scenario title="Visa delägare" description="Läs-scenario → ägaröversikt → avslut" badges={["HB", "KB"]}>
-                <SimulatedConversation script={visaDelagare} />
+                <SimulatedConversation script={visaDelagareScript} />
             </Scenario>
 
             <Scenario title="Uppdatera ägarandelar" description="Skriv-scenario → ändra fördelning" badges={["HB", "KB"]}>
                 <SimulatedConversation script={uppdateraAndelar} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

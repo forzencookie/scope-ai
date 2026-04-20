@@ -4,15 +4,36 @@
  * AI Streaming: Löner → Team
  *
  * Complete conversations with simulated streaming:
- * 1. WRITE: "Lägg till en anställd" — tool calls + confirmation + missing info follow-up
- * 2. READ: "Visa mitt team" — inline payroll cards
- * 3. WRITE: "Ändra Annas kommun" — tool call + confirmation
+ * 1. WRITE: "Lägg till en anställd" — pending confirmation → user confirms → follow-up for personnummer
+ * 2. READ: "Visa mitt team" — inline payroll cards + opener
+ * 3. WRITE: "Ändra Annas kommun" — pending confirmation → user confirms → done
  */
 
-import { UserPlus, Pencil } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { useState, type ComponentProps } from "react"
+import { UserPlus, Pencil, Users } from "lucide-react"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // --- Scenario 1: WRITE — Add employee ---
 
@@ -31,7 +52,7 @@ const laggTillAnstalld: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Lägg till anställd"
                         description="Lisa Nilsson — ny medarbetare"
                         properties={[
@@ -45,14 +66,20 @@ const laggTillAnstalld: SimScript = [
                         confirmLabel="Lägg till"
                         icon={UserPlus}
                         accent="green"
-                        isDone
                         completedAction="created"
                         completedTitle="Lisa Nilsson tillagd"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:lagg-till-anstalld-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, lägg till", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:lagg-till-anstalld-confirm" },
             {
                 type: "stream",
                 text: `**Personnummer saknas** — jag behöver det innan lönekörningen. Kan du ange det?`,
@@ -83,7 +110,7 @@ const laggTillAnstalld: SimScript = [
 
 // --- Scenario 2: READ — Show team ---
 
-const visaTeamet: SimScript = [
+function buildVisaTeametScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa mitt team" },
     {
         role: "scooby",
@@ -109,9 +136,23 @@ const visaTeamet: SimScript = [
                 text: `Lisa markeras "Granskas" — personnummer saknas.\nÖvriga tre: lönen betald i mars.`,
                 speed: 13,
             },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Teamet"
+                        subtitle="4 anställda · Lönekörning mars klar · 1 kräver granskning"
+                        icon={Users}
+                        iconBg="bg-blue-500/10"
+                        iconColor="text-blue-600 dark:text-blue-500"
+                        onOpen={() => onOpen("team")}
+                    />
+                ),
+            },
         ],
     },
-]
+]}
 
 // --- Scenario 3: WRITE — Update employee ---
 
@@ -130,7 +171,7 @@ const uppdateraAnstalld: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Uppdatera anställd"
                         description="Anna Lindberg — kommun"
                         properties={[
@@ -142,14 +183,21 @@ const uppdateraAnstalld: SimScript = [
                         confirmLabel="Uppdatera"
                         icon={Pencil}
                         accent="blue"
-                        isDone
                         completedAction="updated"
                         completedTitle="Anna Lindberg uppdaterad"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:uppdatera-anstalld-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, uppdatera", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:uppdatera-anstalld-confirm" },
+            { type: "tool", name: "update_employee", duration: 900, resultLabel: "Anna uppdaterad" },
             {
                 type: "stream",
                 text: `Anna → Solna. Ny skattesats används vid nästa lönekörning.`,
@@ -169,6 +217,9 @@ const uppdateraAnstalld: SimScript = [
 // --- Page ---
 
 export default function TeamStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaTeametScript = buildVisaTeametScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Team"
@@ -181,12 +232,14 @@ export default function TeamStreamingPage() {
             </Scenario>
 
             <Scenario title="Visa teamet" description="Läs-scenario — lista alla anställda" badges={["Alla"]}>
-                <SimulatedConversation script={visaTeamet} />
+                <SimulatedConversation script={visaTeametScript} />
             </Scenario>
 
             <Scenario title="Uppdatera anställd" description="Skriv-scenario — ändra kommun/uppgifter" badges={["Alla"]}>
                 <SimulatedConversation script={uppdateraAnstalld} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

@@ -1,113 +1,56 @@
-/**
- * Card registry — maps card type strings to React components.
- * Cards are Layer 1 (compact inline previews in chat).
- * Blocks are Layer 2 (detailed walkthrough overlay content).
- * These are complementary systems, not replacements.
- */
 import type { ComponentType } from "react"
 
-import { ReceiptCard } from "./cards/ReceiptCard"
-import { TransactionCard } from "./cards/TransactionCard"
 import { InvoiceCard } from "./cards/InvoiceCard"
-import { SummaryCard } from "./cards/SummaryCard"
-import { SmartListCard } from "./cards/GenericListCard"
-
 import { EmployeeCard } from "./cards/EmployeeCard"
-// Activity & Status Cards (ActivityFeedCard handles both timelines and status checklists)
-import { ActivityFeedCard } from "./cards/ActivityFeedCard"
-import { BalanceAuditCard } from "./cards/BalanceAuditCard"
-import { ResultatAuditCard } from "./cards/ResultatAuditCard"
-
-// Billing/Usage Cards
+import { ActivityFeedCard } from "./chat-tools/information-cards/activity-feed-card"
+import { SummaryCard } from "./chat-tools/information-cards/summary-card"
+import { AuditCard } from "./chat-tools/information-cards/audit-card"
 import { AIUsageCard } from "./cards/AIUsageCard"
 import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
 
-// Each card component has its own specific props interface. The registry stores
-// them heterogeneously — callers spread parsed JSON data as props at runtime.
-// We use a permissive function signature so diverse components can coexist.
-//
-// At the call site (card-renderer.tsx), props are always Record<string, unknown>
-// built from parsed AI output, so the loose typing here is accurate.
 type CardComponent = ComponentType<Record<string, unknown>>
 
-// Widening helper — accepts any React component and returns CardComponent.
-// This is safe because the renderer always passes Record<string, unknown> props.
-// Widening helper — bridges specific component prop types to the generic registry type.
-// This uses `unknown` for the input and returns CardComponent for the map.
-// Safe because the card-renderer always passes Record<string, unknown> props at runtime.
 function card(c: ComponentType<never>): CardComponent {
     return c as unknown as CardComponent
 }
 
 export const CARD_REGISTRY: Record<string, CardComponent> = {
-    // Basic Cards
-    receiptcard: card(ReceiptCard),
-    receipt: card(ReceiptCard),
-
-    transactioncard: card(TransactionCard),
-    transaction: card(TransactionCard),
-
     invoicecard: card(InvoiceCard),
-    invoice: card(InvoiceCard),
+    invoice:     card(InvoiceCard),
 
-    taskchecklist: card(ActivityFeedCard),
-    checklist: card(ActivityFeedCard),
-
-    summarycard: card(SummaryCard),
-    summary: card(SummaryCard),
-    calculation: card(SummaryCard),
+    summarycard:       card(SummaryCard),
+    summary:           card(SummaryCard),
+    calculation:       card(SummaryCard),
     salarycalculation: card(SummaryCard),
-    k10summary: card(SummaryCard),
-
-    // Document types (aktiebok, lönebesked, styrelseprotokoll) render as PDF overlays,
-    // not inline cards. Scooby responds in text and the user opens the overlay to download.
+    k10summary:        card(SummaryCard),
+    genericlist:       card(SummaryCard),
+    list:              card(SummaryCard),
 
     employeepreview: card(EmployeeCard),
-    employee: card(EmployeeCard),
-    newemployee: card(EmployeeCard),
+    employee:        card(EmployeeCard),
+    newemployee:     card(EmployeeCard),
 
-    // Lists (use SmartListCard to handle raw array data)
-    genericlist: card(SmartListCard),
-    list: card(SmartListCard),
-    transactionstable: card(SmartListCard),
-    receiptstable: card(SmartListCard),
-    invoicestable: card(SmartListCard),
-    employeelist: card(SmartListCard),
-    payslipstable: card(SmartListCard),
-    shareholderlist: card(SmartListCard),
-    partnerlist: card(SmartListCard),
-    memberlist: card(SmartListCard),
-    deadlineslist: card(SmartListCard),
-    benefitstable: card(SmartListCard),
-    vatsummary: card(SmartListCard),
-
-    // Status Overview (now uses ActivityFeedCard with status badges)
-    statuslist: card(ActivityFeedCard),
+    taskchecklist:  card(ActivityFeedCard),
+    checklist:      card(ActivityFeedCard),
+    statuslist:     card(ActivityFeedCard),
     statusoverview: card(ActivityFeedCard),
-    manadsavslut: card(ActivityFeedCard),
-    openitems: card(ActivityFeedCard),
+    manadsavslut:   card(ActivityFeedCard),
+    openitems:      card(ActivityFeedCard),
+    activityfeed:   card(ActivityFeedCard),
+    historik:       card(ActivityFeedCard),
+    events:         card(ActivityFeedCard),
 
-    // Activity Feed
-    activityfeed: card(ActivityFeedCard),
-    historik: card(ActivityFeedCard),
-    events: card(ActivityFeedCard),
+    balanceauditcard:  card(AuditCard),
+    balanskontroll:    card(AuditCard),
+    audit:             card(AuditCard),
+    resultatauditcard: card(AuditCard),
+    resultatkontroll:  card(AuditCard),
 
-    // Audit
-    balanceauditcard: card(BalanceAuditCard),
-    balanskontroll: card(BalanceAuditCard),
-    audit: card(BalanceAuditCard),
-
-    resultatauditcard: card(ResultatAuditCard),
-    resultatkontroll: card(ResultatAuditCard),
-
-    // Billing/Usage
-    aiusagecard: card(AIUsageCard),
-    usage: card(AIUsageCard),
-
-    buycreditsprompt: card(BuyCreditsPrompt),
-    creditsprompt: card(BuyCreditsPrompt),
-
+    aiusagecard:        card(AIUsageCard),
+    usage:              card(AIUsageCard),
+    buycreditsprompt:   card(BuyCreditsPrompt),
+    creditsprompt:      card(BuyCreditsPrompt),
     buycreditscheckout: card(BuyCreditsCheckout),
-    creditscheckout: card(BuyCreditsCheckout),
-    buyconfirm: card(BuyCreditsCheckout),
+    creditscheckout:    card(BuyCreditsCheckout),
+    buyconfirm:         card(BuyCreditsCheckout),
 }

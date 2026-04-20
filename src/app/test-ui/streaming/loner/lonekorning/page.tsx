@@ -4,19 +4,37 @@
  * AI Streaming: Löner → Lönekörning
  *
  * Complete conversations with simulated streaming:
- * 1. WRITE: "Kör lönerna" (AB) — tool calls + summary + batch confirmation + AGI cascade
+ * 1. WRITE: "Kör lönerna" (AB) — calculate → summary → pending confirmation → user confirms → run + AGI cascade
  * 2. WRITE: "Kör lönerna" (HB) — blocker → user provides info → Scooby completes
  * 3. READ: "Visa löneberäkning för Anna" — summary card with detail
  */
 
-import { useState } from "react"
+import { useState, type ComponentProps } from "react"
 import { Coins, Send, TrendingUp } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
-import { WalkthroughOpenerCard } from "@/components/ai/walkthrough-opener-card"
-import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/walkthrough-overlay"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // --- Script builders ---
 
@@ -28,7 +46,6 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
             elements: [
                 { type: "thinking", duration: 900 },
                 { type: "tool", name: "calculate_salary", duration: 1800, resultLabel: "Beräknade löner" },
-                { type: "tool", name: "run_payroll", duration: 2200, resultLabel: "Lönekörning klar" },
                 {
                     type: "stream",
                     text: `**3 anställda** — april. Resultat:`,
@@ -68,7 +85,7 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
                     type: "card",
                     delay: 300,
                     content: (
-                        <ActionConfirmCard
+                        <InteractiveActionConfirmCard
                             title="Godkänn lönekörning"
                             description="April 2026 — 3 anställda"
                             properties={[
@@ -80,14 +97,21 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
                             confirmLabel="Godkänn & bokför"
                             icon={Coins}
                             accent="blue"
-                            isDone
                             completedAction="booked"
                             completedTitle="Lönekörning april bokförd"
-                            onConfirm={() => {}}
                             onCancel={() => {}}
+                            triggerEvent="sim:lonekörning-ab-confirm"
                         />
                     ),
                 },
+            ],
+        },
+        { role: "user", content: "Ja, godkänn & bokför!", delay: 2500 },
+        {
+            role: "scooby",
+            elements: [
+                { type: "fire-event", eventName: "sim:lonekörning-ab-confirm" },
+                { type: "tool", name: "run_payroll", duration: 2200, resultLabel: "Lönekörning klar" },
                 {
                     type: "stream",
                     text: `**3 verifikationer** skapade (A-51–A-53). AGI april förberedd automatiskt — deadline 12 maj.`,

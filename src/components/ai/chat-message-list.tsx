@@ -9,24 +9,18 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import Link from "next/link"
 import { ActionCard } from "@/components/ai"
-import { ReceiptCard } from "@/components/ai/cards/ReceiptCard"
-import { TransactionCard } from "@/components/ai/cards/TransactionCard"
-import { ActivityFeedCard } from "@/components/ai/cards/ActivityFeedCard"
-
-
+import { ActivityFeedCard } from "@/components/ai/chat-tools/information-cards/activity-feed-card"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
-import { BalanceAuditCard, type BalanceAuditCardProps } from "@/components/ai/cards/BalanceAuditCard"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
 import { MentionBadge } from "@/components/ai/mention-popover"
 import { normalizeAIDisplay } from "@/lib/ai-schema"
-import type { 
-    Receipt, 
-    Transaction, 
-    TaskChecklist as TaskChecklistData, 
+import type {
+    TaskChecklist as TaskChecklistData,
     BenefitsTable as BenefitsTableData,
 } from "@/lib/ai-schema"
 import type { Message, MessageDisplay } from "@/lib/chat-types"
-import type { InfoCardData } from "@/components/ai/cards/inline"
+import type { InfoCardData } from "@/components/ai/chat-tools/information-cards"
 import { useState } from "react"
 
 // Attachment preview with image error fallback
@@ -205,12 +199,6 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                             if (!normalized) return null
 
                             switch (message.display.type) {
-                                case 'ReceiptCard':
-                                    const r = normalized as Receipt
-                                    return <ReceiptCard receipt={r} />
-                                case 'TransactionCard':
-                                    const txd = normalized as Transaction
-                                    return <TransactionCard transaction={txd} />
                                 case 'TaskChecklist':
                                     const t = normalized as TaskChecklistData
                                     return <ActivityFeedCard
@@ -248,9 +236,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                 {/* Inline-only cards (always visible, no overlay) */}
                 {message.display?.type === 'BalanceAuditCard' && (
                     <div className="my-2">
-                        <BalanceAuditCard
-                            audit={message.display.type === 'BalanceAuditCard' ? message.display.data.audit : undefined}
-                        />
+                        <AuditCard audit={message.display.data.audit} />
                     </div>
                 )}
 

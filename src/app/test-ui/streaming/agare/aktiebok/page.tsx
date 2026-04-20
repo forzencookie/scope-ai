@@ -4,18 +4,39 @@
  * AI Streaming: Ägare → Aktiebok (AB only)
  *
  * Complete conversations with simulated streaming:
- * 1. READ: "Visa aktieboken" → shareholder table
- * 2. WRITE: "Registrera aktieöverlåtelse" → clarification + confirmation → done
+ * 1. READ: "Visa aktieboken" → shareholder table → opener card
+ * 2. WRITE: "Registrera aktieöverlåtelse" → clarification + pending confirmation → user confirms → done
  */
 
+import { useState, type ComponentProps } from "react"
 import { BookMarked } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // --- Scenario 1: Read → show share register ---
 
-const visaAktiebok: SimScript = [
+function buildVisaAktiebokScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa aktieboken" },
     {
         role: "scooby",
@@ -37,9 +58,23 @@ Totalt **1 000 aktier** · kvotvärde 100 kr · aktiekapital **100 000 kr**
 Anders har **röstmajoritet** med 89% av rösterna (8 000 av 8 200 röster).`,
                 speed: 11,
             },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Aktiebok — Scope Consulting AB"
+                        subtitle="1 000 aktier · 2 aktieägare · A- och B-aktier"
+                        icon={BookMarked}
+                        iconBg="bg-purple-500/10"
+                        iconColor="text-purple-600 dark:text-purple-500"
+                        onOpen={() => onOpen("aktiebok")}
+                    />
+                ),
+            },
         ],
     },
-]
+]}
 
 // --- Scenario 2: Write → share transfer with clarification ---
 
@@ -65,7 +100,7 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Registrera aktieöverlåtelse"
                         description="100 A-aktier: Anders → Lisa"
                         properties={[
@@ -78,11 +113,10 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                         confirmLabel="Registrera överlåtelse"
                         icon={BookMarked}
                         accent="purple"
-                        isDone
                         completedAction="updated"
                         completedTitle="Aktiebok uppdaterad"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:aktieoverlatelse-confirm"
                     />
                 ),
             },
@@ -92,6 +126,7 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
     {
         role: "scooby",
         elements: [
+            { type: "fire-event", eventName: "sim:aktieoverlatelse-confirm" },
             { type: "tool", name: "register_share_transfer", duration: 1800, resultLabel: "Aktieboken uppdaterad" },
             {
                 type: "stream",
@@ -113,6 +148,9 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
 // --- Page ---
 
 export default function AktiebokStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaAktiebokScript = buildVisaAktiebokScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Aktiebok"
@@ -121,12 +159,14 @@ export default function AktiebokStreamingPage() {
             backLabel="Ägare"
         >
             <Scenario title="Visa aktieboken" description="Läs-scenario → aktieägarlista med serier" badges={["AB"]}>
-                <SimulatedConversation script={visaAktiebok} />
+                <SimulatedConversation script={visaAktiebokScript} />
             </Scenario>
 
             <Scenario title="Registrera aktieöverlåtelse" description="Skriv-scenario → överlåtelse mellan aktieägare" badges={["AB"]}>
                 <SimulatedConversation script={aktieoverlatelse} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

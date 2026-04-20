@@ -18,9 +18,11 @@
 import { useState, type ComponentProps } from "react"
 import { Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { BatchBookingCard } from "@/components/ai/confirmations/batch-booking-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { BatchBookingCard } from "@/components/ai/chat-tools/action-cards/batch-booking-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
 // ─── Interactive confirmation card — holds isDone state internally.
 //     Transitions to post-confirm either on button click OR when the simulation
@@ -71,7 +73,7 @@ function InteractiveBatchBookingCard(
 
 // ─── Scenario 1: Read → then write ───
 
-const visaTransaktioner: SimScript = [
+function buildVisaTransaktionerScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa mina senaste transaktioner" },
     {
         role: "scooby",
@@ -98,6 +100,20 @@ const visaTransaktioner: SimScript = [
                 type: "stream",
                 text: `Förslag på de obokförda:\n- **Kjell & Company** → konto 5410, 25% moms\n- **Clas Ohlson** → konto 6110, 25% moms\n\nSkal jag köra dem?`,
                 speed: 14,
+            },
+            {
+                type: "card",
+                delay: 300,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Transaktioner april 2026"
+                        subtitle="8 transaktioner · 3 obokförda · Klicka för att se alla"
+                        icon={Receipt}
+                        iconBg="bg-blue-500/10"
+                        iconColor="text-blue-600 dark:text-blue-500"
+                        onOpen={() => onOpen("transaktioner" as WalkthroughType)}
+                    />
+                ),
             },
         ],
     },
@@ -159,7 +175,7 @@ const visaTransaktioner: SimScript = [
             },
         ],
     },
-]
+]}
 
 // ─── Scenario 2: Single booking with confirmation ───
 
@@ -296,6 +312,10 @@ const batchBokforing: SimScript = [
 // ─── Page ───
 
 export default function TransaktionerStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+
+    const visaTransaktionerScript = buildVisaTransaktionerScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Transaktioner"
@@ -304,7 +324,7 @@ export default function TransaktionerStreamingPage() {
             backLabel="Bokföring"
         >
             <Scenario title="Visa transaktioner" description="Läs-scenario → skrivscenario — hämtar data, sedan bokför" badges={["Alla"]}>
-                <SimulatedConversation script={visaTransaktioner} />
+                <SimulatedConversation script={visaTransaktionerScript} />
             </Scenario>
 
             <Scenario title="Bokför kvitto" description="Skriv-scenario — single booking med bekräftelse" badges={["Alla"]}>
@@ -314,6 +334,8 @@ export default function TransaktionerStreamingPage() {
             <Scenario title="Batch-bokföring" description="Skriv-scenario — flera transaktioner på en gång" badges={["Alla"]}>
                 <SimulatedConversation script={batchBokforing} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

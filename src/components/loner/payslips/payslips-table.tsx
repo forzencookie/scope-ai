@@ -14,7 +14,6 @@ import type { Payslip } from "./use-payslips-logic"
 import type { AppStatus } from "@/lib/status-types"
 import { Calendar, User, Wallet, Banknote, CheckCircle2, FileText, Plus } from "lucide-react"
 import { ActionEmptyState } from "@/components/shared"
-import { useHighlight } from "@/hooks"
 
 interface PayslipsTableProps {
     data: Payslip[]
@@ -89,13 +88,11 @@ function PayslipRow({
     onRowClick: (p: Payslip) => void, 
     onToggleSelection: (id: string) => void 
 }) {
-    const { highlightClass } = useHighlight(String(slip.id))
-
     return (
         <GridTableRow
             onClick={() => onRowClick(slip)}
             selected={selected}
-            className={highlightClass}
+            className=""
         >
             <div className="col-span-3 font-medium truncate flex items-center gap-2">
                 <div className="h-7 w-7 rounded-full bg-primary/10 flex items-center justify-center text-primary text-xs font-bold shrink-0">

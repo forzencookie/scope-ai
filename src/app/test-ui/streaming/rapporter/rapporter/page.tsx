@@ -13,10 +13,10 @@
 import { useState } from "react"
 import { TrendingUp, Scale, Receipt, PieChart, Send } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { BalanceAuditCard } from "@/components/ai/cards/BalanceAuditCard"
-import { WalkthroughOpenerCard } from "@/components/ai/walkthrough-opener-card"
-import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/walkthrough-overlay"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
 // ─── Script builders ─────────────────────────────────────────────────────────
 
@@ -79,7 +79,7 @@ function buildBalanskontrollScript(onOpen: (type: WalkthroughType) => void): Sim
                     delay: 200,
                     content: (
                         <div className="max-w-lg">
-                            <BalanceAuditCard
+                            <AuditCard
                                 audit={{
                                     date: "2026-04-06",
                                     checks: [

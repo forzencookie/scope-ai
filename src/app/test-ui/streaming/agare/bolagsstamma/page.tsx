@@ -1,11 +1,32 @@
 "use client"
 
+import { useState, type ComponentProps } from "react"
 import { Landmark, FileText } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
-const forberedProtokoll: SimScript = [
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
+
+function buildForberedProtokollScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Förbered bolagsstämmoprotokoll för ordinarie stämma 2026" },
     {
         role: "scooby",
@@ -32,7 +53,7 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Generera stämmoprotokoll"
                         description="Ordinarie bolagsstämma 2026"
                         properties={[
@@ -45,14 +66,20 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                         confirmLabel="Generera protokoll"
                         icon={FileText}
                         accent="indigo"
-                        isDone
                         completedAction="prepared"
                         completedTitle="Stämmoprotokoll genererat"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:forbered-protokoll-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, generera protokollet", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:forbered-protokoll-confirm" },
             {
                 type: "stream",
                 text: `PDF klar att granska. Behöver signeras av ordförande + justerare.`,
@@ -65,9 +92,23 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                     <InfoCardRenderer card={{ cardType: "report", data: { id: "r1", reportType: "Stämmoprotokoll", title: "Ordinarie bolagsstämma 2026", period: "Räkenskapsår 2025" } }} />
                 ),
             },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Bolagsstämmoprotokoll 2026"
+                        subtitle="Ordinarie stämma · PDF genererad · Signering återstår"
+                        icon={FileText}
+                        iconBg="bg-indigo-500/10"
+                        iconColor="text-indigo-600 dark:text-indigo-500"
+                        onOpen={() => onOpen("moten")}
+                    />
+                ),
+            },
         ],
     },
-]
+]}
 
 const utdelningsbeslut: SimScript = [
     { role: "user", content: "Vi vill besluta om utdelning på 150 000 kr" },
@@ -92,7 +133,7 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Registrera utdelningsbeslut"
                         description="150 000 kr — inom K10-gränsbelopp"
                         properties={[
@@ -105,14 +146,20 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                         confirmLabel="Registrera beslut"
                         icon={Landmark}
                         accent="purple"
-                        isDone
                         completedAction="booked"
                         completedTitle="Utdelningsbeslut registrerat"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:utdelningsbeslut-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, registrera beslutet", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:utdelningsbeslut-confirm" },
             {
                 type: "stream",
                 text: `**150 000 kr** beslutad utdelning bokförd — 2091 → 2898. Utbetalning sker när du bekräftar separat.`,
@@ -130,6 +177,9 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
 ]
 
 export default function BolagsstammaStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const forberedProtokollScript = buildForberedProtokollScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Bolagsstämma"
@@ -138,12 +188,14 @@ export default function BolagsstammaStreamingPage() {
             backLabel="Ägare"
         >
             <Scenario title="Förbered stämmoprotokoll" description="Skriv-scenario — generera dokument" badges={["AB"]}>
-                <SimulatedConversation script={forberedProtokoll} />
+                <SimulatedConversation script={forberedProtokollScript} />
             </Scenario>
 
             <Scenario title="Utdelningsbeslut på stämman" description="Skriv-scenario — beslut kopplat till K10-gränsbelopp" badges={["AB"]}>
                 <SimulatedConversation script={utdelningsbeslut} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

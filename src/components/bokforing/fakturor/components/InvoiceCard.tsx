@@ -15,7 +15,6 @@ import {
     DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu"
 import { UnifiedInvoice } from "../types"
-import { useHighlight } from "@/hooks"
 import { useChatNavigation } from "@/hooks/use-chat-navigation"
 
 interface InvoiceCardProps {
@@ -31,12 +30,10 @@ export const InvoiceCard = React.memo(function InvoiceCard({
 }: InvoiceCardProps) {
     const isCustomer = invoice.direction === "in"
     const DirectionIcon = isCustomer ? ArrowDownLeft : ArrowUpRight
-    const { highlightClass } = useHighlight(invoice.id)
     const { navigateToAI } = useChatNavigation()
 
     return (
         <KanbanCard
-            highlightClass={highlightClass}
             title={
                 <span className="flex items-center gap-1.5">
                     <DirectionIcon className={cn(

@@ -12,18 +12,9 @@ import { useState } from "react"
 import { AlertCircle, Check, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { completedActionConfig, type ConfirmationAccent, type CompletedAction } from "./action-confirm-card"
-
-const accentStyles: Record<ConfirmationAccent, { iconColor: string; iconBg: string }> = {
-    blue:    { iconColor: "text-blue-600 dark:text-blue-500",       iconBg: "bg-blue-500/10" },
-    green:   { iconColor: "text-green-600 dark:text-green-500",     iconBg: "bg-green-500/10" },
-    emerald: { iconColor: "text-emerald-600 dark:text-emerald-500", iconBg: "bg-emerald-500/10" },
-    purple:  { iconColor: "text-purple-600 dark:text-purple-500",   iconBg: "bg-purple-500/10" },
-    amber:   { iconColor: "text-amber-600 dark:text-amber-500",     iconBg: "bg-amber-500/10" },
-    red:     { iconColor: "text-red-600 dark:text-red-500",         iconBg: "bg-red-500/10" },
-    indigo:  { iconColor: "text-indigo-600 dark:text-indigo-500",   iconBg: "bg-indigo-500/10" },
-    teal:    { iconColor: "text-teal-600 dark:text-teal-500",       iconBg: "bg-teal-500/10" },
-}
+import { accentStyles, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "./tokens"
+import { BlockRenderer } from "@/components/ai/overlays/blocks/block-renderer"
+import type { BlockProps } from "@/components/ai/overlays/blocks/types"
 
 export interface BatchSelectionItem {
     id: string
@@ -40,7 +31,8 @@ export interface ChecklistConfirmCardProps {
     description?: string | null
     icon?: LucideIcon
     accent?: ConfirmationAccent
-    items: BatchSelectionItem[]
+    items?: BatchSelectionItem[]
+    blocks?: BlockProps[]
     confirmLabel?: string
     onConfirm: (selectedIds: string[]) => void
     onCancel: () => void
@@ -57,7 +49,8 @@ export function ChecklistConfirmCard({
     description,
     icon: HeaderIcon,
     accent = "blue",
-    items: initialItems,
+    items: initialItems = [],
+    blocks,
     confirmLabel = "Uppdatera valda",
     onConfirm,
     onCancel,
@@ -70,7 +63,7 @@ export function ChecklistConfirmCard({
 }: ChecklistConfirmCardProps) {
     const [checked, setChecked] = useState<Set<string>>(new Set(initialItems.map(i => i.id)))
 
-    if (!title || initialItems.length === 0) {
+    if (!title || (initialItems.length === 0 && (!blocks || blocks.length === 0))) {
         return (
             <div className="flex items-center gap-2 p-3 text-sm text-red-600 bg-red-50 rounded-lg dark:bg-red-950/20 dark:text-red-400">
                 <AlertCircle className="h-4 w-4 shrink-0" />
@@ -124,7 +117,26 @@ export function ChecklistConfirmCard({
                 )}
             </div>
 
-            {isDone ? (
+            {blocks && blocks.length > 0 && !isDone ? (
+                /* Blocks mode: render block content instead of interactive checklist */
+                <>
+                    <div className="space-y-2">
+                        {blocks.map((block, i) => <BlockRenderer key={i} block={block} />)}
+                    </div>
+                    <div className="flex items-center gap-2 pt-3">
+                        <Button
+                            size="sm"
+                            onClick={() => onConfirm([])}
+                            disabled={isLoading}
+                        >
+                            {isLoading ? "Bearbetar..." : confirmLabel}
+                        </Button>
+                        <Button variant="ghost" size="sm" onClick={onCancel} disabled={isLoading}>
+                            Avbryt
+                        </Button>
+                    </div>
+                </>
+            ) : isDone ? (
                 /* Post-confirm: read-only list of confirmed items */
                 <>
                     <div className="space-y-0.5">

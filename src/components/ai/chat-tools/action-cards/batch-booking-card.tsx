@@ -12,18 +12,7 @@
 import { AlertCircle, Check, type LucideIcon } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
-import { completedActionConfig, type ConfirmationAccent, type CompletedAction } from "./action-confirm-card"
-
-const accentStyles: Record<ConfirmationAccent, { iconColor: string; iconBg: string }> = {
-    blue:    { iconColor: "text-blue-600 dark:text-blue-500",       iconBg: "bg-blue-500/10" },
-    green:   { iconColor: "text-green-600 dark:text-green-500",     iconBg: "bg-green-500/10" },
-    emerald: { iconColor: "text-emerald-600 dark:text-emerald-500", iconBg: "bg-emerald-500/10" },
-    purple:  { iconColor: "text-purple-600 dark:text-purple-500",   iconBg: "bg-purple-500/10" },
-    amber:   { iconColor: "text-amber-600 dark:text-amber-500",     iconBg: "bg-amber-500/10" },
-    red:     { iconColor: "text-red-600 dark:text-red-500",         iconBg: "bg-red-500/10" },
-    indigo:  { iconColor: "text-indigo-600 dark:text-indigo-500",   iconBg: "bg-indigo-500/10" },
-    teal:    { iconColor: "text-teal-600 dark:text-teal-500",       iconBg: "bg-teal-500/10" },
-}
+import { accentStyles, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "./tokens"
 
 export interface BatchSummaryItem {
     id: string

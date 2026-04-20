@@ -8,14 +8,32 @@
  * 2. WRITE: "Betala ut utdelning" → confirmation with tax breakdown + booking
  */
 
-import { useState } from "react"
+import { useState, type ComponentProps } from "react"
 import { Banknote, PieChart } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
-import { WalkthroughOpenerCard } from "@/components/ai/walkthrough-opener-card"
-import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/walkthrough-overlay"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // --- Script builders ---
 
@@ -116,7 +134,7 @@ const betalaUtdelning: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Betala ut utdelning"
                         description="150 000 kr till Anders Richnau"
                         properties={[
@@ -130,11 +148,10 @@ const betalaUtdelning: SimScript = [
                         confirmLabel="Betala ut"
                         icon={Banknote}
                         accent="green"
-                        isDone
                         completedAction="booked"
                         completedTitle="Utdelning utbetald"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:betala-utdelning-confirm"
                     />
                 ),
             },
@@ -144,6 +161,7 @@ const betalaUtdelning: SimScript = [
     {
         role: "scooby",
         elements: [
+            { type: "fire-event", eventName: "sim:betala-utdelning-confirm" },
             { type: "tool", name: "pay_dividend", duration: 2000, resultLabel: "Utbetalning gjord" },
             { type: "tool", name: "book_transaction", duration: 1400, resultLabel: "Bokfört" },
             {

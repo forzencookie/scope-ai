@@ -1,9 +1,30 @@
 "use client"
 
+import { useState, type ComponentProps } from "react"
 import { Gift, Car } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 const tilldelaFriskvard: SimScript = [
     { role: "user", content: "Ge Anna Lindberg friskvårdsbidrag på 5 000 kr per år" },
@@ -20,7 +41,7 @@ const tilldelaFriskvard: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Tilldela friskvårdsbidrag"
                         description="Anna Lindberg — 5 000 kr/år"
                         properties={[
@@ -33,14 +54,21 @@ const tilldelaFriskvard: SimScript = [
                         confirmLabel="Tilldela"
                         icon={Gift}
                         accent="green"
-                        isDone
                         completedAction="created"
                         completedTitle="Förmån tilldelad"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:tilldela-friskvard-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, tilldela", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:tilldela-friskvard-confirm" },
+            { type: "tool", name: "assign_benefit", duration: 900, resultLabel: "Friskvård tilldelad" },
             {
                 type: "stream",
                 text: `Anna kan nu nyttja upp till 5 000 kr per år.`,
@@ -57,7 +85,7 @@ const tilldelaFriskvard: SimScript = [
     },
 ]
 
-const visaFormaner: SimScript = [
+function buildVisaFormanerScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Vilka förmåner har vi i företaget?" },
     {
         role: "scooby",
@@ -76,6 +104,20 @@ Johans tjänstebil beskattas som förmån — **4 200 kr/mån** läggs på hans 
 Vill du lägga till eller ändra en förmån?`,
                 speed: 11,
             },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Förmåner"
+                        subtitle="3 aktiva förmåner · Friskvård + Tjänstebil (Volvo XC40)"
+                        icon={Gift}
+                        iconBg="bg-green-500/10"
+                        iconColor="text-green-600 dark:text-green-500"
+                        onOpen={() => onOpen("formaner")}
+                    />
+                ),
+            },
         ],
     },
     { role: "user", content: "Ge Sara friskvårdsbidrag också, 5 000 kr", delay: 2000 },
@@ -90,7 +132,7 @@ Vill du lägga till eller ändra en förmån?`,
             },
         ],
     },
-]
+]}
 
 const tjanstebil: SimScript = [
     { role: "user", content: "Ge Sara en tjänstebil, det är en Tesla Model 3" },
@@ -111,7 +153,7 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Lägg till tjänstebil"
                         description="Sara Ek — Tesla Model 3"
                         properties={[
@@ -125,14 +167,21 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
                         confirmLabel="Lägg till"
                         icon={Car}
                         accent="blue"
-                        isDone
                         completedAction="created"
                         completedTitle="Tjänstebil tillagd"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:tjanstebil-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, lägg till", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:tjanstebil-confirm" },
+            { type: "tool", name: "assign_benefit", duration: 1100, resultLabel: "Tjänstebil tillagd" },
             {
                 type: "stream",
                 text: `Tesla Model 3 registrerad för Sara Ek. Förmånsvärdet (3 800 kr/mån) räknas in automatiskt vid nästa lönekörning.`,
@@ -150,6 +199,9 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
 ]
 
 export default function FormanerStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaFormanerScript = buildVisaFormanerScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Förmåner"
@@ -162,12 +214,14 @@ export default function FormanerStreamingPage() {
             </Scenario>
 
             <Scenario title="Visa förmåner" description="Läs-scenario — översikt + lägga till ny" badges={["Alla"]}>
-                <SimulatedConversation script={visaFormaner} />
+                <SimulatedConversation script={visaFormanerScript} />
             </Scenario>
 
             <Scenario title="Lägg till tjänstebil" description="Skriv-scenario — förmån med förmånsvärde och skatteeffekt" badges={["Alla"]}>
                 <SimulatedConversation script={tjanstebil} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

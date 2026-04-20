@@ -10,14 +10,17 @@
  * 4. WRITE: "Makulera faktura" → tool calls + confirmation (amber) → done
  */
 
+import { useState } from "react"
 import { FileText, CreditCard, XCircle, Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
 // ─── Scenario 1: READ — visa obetalda fakturor, then user asks to send reminder ───
 
-const visaFakturor: SimScript = [
+function buildVisaFakturorScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa mina obetalda fakturor" },
     {
         role: "scooby",
@@ -43,6 +46,20 @@ const visaFakturor: SimScript = [
                 text: `**#2026-041** TechCorp — förföll 28 mars.\nSka jag skicka en påminnelse?`,
                 speed: 14,
             },
+            {
+                type: "card",
+                delay: 300,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Fakturor"
+                        subtitle="5 kundfakturor · 4 leverantörsfakturor · 2 förfallna"
+                        icon={FileText}
+                        iconBg="bg-amber-500/10"
+                        iconColor="text-amber-600 dark:text-amber-500"
+                        onOpen={() => onOpen("fakturor" as WalkthroughType)}
+                    />
+                ),
+            },
         ],
     },
     { role: "user", content: "Ja, skicka en påminnelse till TechCorp", delay: 2000 },
@@ -57,7 +74,7 @@ const visaFakturor: SimScript = [
             },
         ],
     },
-]
+]}
 
 // ─── Scenario 2: WRITE — skapa faktura med bekräftelse, user confirms ───
 
@@ -240,6 +257,10 @@ const makuleraFaktura: SimScript = [
 // ─── Page ───
 
 export default function FakturorStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+
+    const visaFakturorScript = buildVisaFakturorScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Fakturor"
@@ -248,7 +269,7 @@ export default function FakturorStreamingPage() {
             backLabel="Bokföring"
         >
             <Scenario title="Visa fakturor" description="Läs-scenario — lista över fakturor + påminnelse" badges={["Alla"]}>
-                <SimulatedConversation script={visaFakturor} />
+                <SimulatedConversation script={visaFakturorScript} />
             </Scenario>
 
             <Scenario title="Skapa faktura" description="Skriv-scenario — ny kundfaktura med bekräftelse" badges={["Alla"]}>
@@ -262,6 +283,8 @@ export default function FakturorStreamingPage() {
             <Scenario title="Makulera faktura" description="Skriv-scenario — kreditera och makulera" badges={["Alla"]}>
                 <SimulatedConversation script={makuleraFaktura} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

@@ -4,18 +4,39 @@
  * AI Streaming: Bokföring → Verifikationer
  *
  * Complete conversations with simulated streaming:
- * 1. READ: "Visa verifikationer för mars" → tool call + inline cards + user drills into one
- * 2. WRITE: "Makulera verifikation A-42" → tool calls + confirmation (amber) → done
+ * 1. READ: "Visa verifikationer för mars" → tool call + inline cards + opener + user drills into one
+ * 2. WRITE: "Makulera verifikation A-42" → pending confirmation → user confirms → done
  */
 
-import { AlertTriangle } from "lucide-react"
-import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/confirmations/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/cards/inline"
+import { useState, type ComponentProps } from "react"
+import { AlertTriangle, FileText } from "lucide-react"
+import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
+import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
+
+function InteractiveActionConfirmCard(
+    props: Omit<ComponentProps<typeof ActionConfirmCard>, "isDone" | "onConfirm"> & { triggerEvent?: string }
+) {
+    const { triggerEvent, ...rest } = props
+    const [clickedDone, setClickedDone] = useState(false)
+    const eventTriggered = useSimEvent(triggerEvent)
+    const isDone = clickedDone || eventTriggered
+    return (
+        <ActionConfirmCard
+            {...rest}
+            isDone={isDone}
+            completedAction={isDone ? rest.completedAction : undefined}
+            completedTitle={isDone ? rest.completedTitle : undefined}
+            onConfirm={() => setClickedDone(true)}
+        />
+    )
+}
 
 // ─── Scenario 1: READ — visa verifikationer, user asks for detail ───
 
-const visaVerifikationer: SimScript = [
+function buildVisaVerifikationerScript(onOpen: (type: WalkthroughType) => void): SimScript { return [
     { role: "user", content: "Visa verifikationer för mars" },
     {
         role: "scooby",
@@ -42,6 +63,20 @@ const visaVerifikationer: SimScript = [
                 text: `Vill du se hela listan, eller kolla en specifik?`,
                 speed: 14,
             },
+            {
+                type: "card",
+                delay: 200,
+                content: (
+                    <WalkthroughOpenerCard
+                        title="Verifikationer mars 2026"
+                        subtitle="12 verifikationer · A-36 till A-47 · Alla balanserar"
+                        icon={FileText}
+                        iconBg="bg-blue-500/10"
+                        iconColor="text-blue-600 dark:text-blue-500"
+                        onOpen={() => onOpen("verifikationer")}
+                    />
+                ),
+            },
         ],
     },
     { role: "user", content: "Visa detaljer för A-46", delay: 2000 },
@@ -56,7 +91,7 @@ const visaVerifikationer: SimScript = [
             },
         ],
     },
-]
+]}
 
 // ─── Scenario 2: WRITE — makulera verifikation (amber) ───
 
@@ -76,7 +111,7 @@ const makuleraVerifikation: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <ActionConfirmCard
+                    <InteractiveActionConfirmCard
                         title="Makulera verifikation"
                         description="Rättelsepost nollställer A-42"
                         properties={[
@@ -88,14 +123,21 @@ const makuleraVerifikation: SimScript = [
                         confirmLabel="Makulera"
                         icon={AlertTriangle}
                         accent="amber"
-                        isDone
                         completedAction="deleted"
                         completedTitle="Verifikation A-42 makulerad"
-                        onConfirm={() => {}}
                         onCancel={() => {}}
+                        triggerEvent="sim:makulera-verifikation-confirm"
                     />
                 ),
             },
+        ],
+    },
+    { role: "user", content: "Ja, makulera", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:makulera-verifikation-confirm" },
+            { type: "tool", name: "void_verification", duration: 1400, resultLabel: "A-42 makulerad" },
             {
                 type: "stream",
                 text: `**A-42** makulerad — rättelsepost **A-48** skapad. Kedjan intakt, BFL-kravet uppfyllt.`,
@@ -115,6 +157,9 @@ const makuleraVerifikation: SimScript = [
 // ─── Page ───
 
 export default function VerifikationerStreamingPage() {
+    const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
+    const visaVerifikationerScript = buildVisaVerifikationerScript(setOpenWalkthrough)
+
     return (
         <ScenarioPage
             title="Verifikationer"
@@ -123,12 +168,14 @@ export default function VerifikationerStreamingPage() {
             backLabel="Bokföring"
         >
             <Scenario title="Visa verifikationer" description="Läs-scenario — verifikationslista + detaljvy" badges={["Alla"]}>
-                <SimulatedConversation script={visaVerifikationer} />
+                <SimulatedConversation script={visaVerifikationerScript} />
             </Scenario>
 
             <Scenario title="Makulera verifikation" description="Skriv-scenario — rättelsepost (inte radering)" badges={["Alla"]}>
                 <SimulatedConversation script={makuleraVerifikation} />
             </Scenario>
+
+            <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
         </ScenarioPage>
     )
 }

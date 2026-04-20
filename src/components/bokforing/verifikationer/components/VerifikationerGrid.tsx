@@ -4,7 +4,6 @@ import { Checkbox } from "@/components/ui/checkbox"
 import { Hash, Calendar, CreditCard, FileText, Banknote, ChevronRight } from "lucide-react"
 import { cn, formatCurrency } from "@/lib/utils"
 import { Verification } from "../types"
-import { useHighlight } from "@/hooks"
 import { ActionEmptyState } from "@/components/shared"
 
 interface VerifikationerGridProps {
@@ -103,7 +102,6 @@ function VerificationRow({
     onRowClick,
     onAccountFilter
 }: VerificationRowProps) {
-    const { highlightClass } = useHighlight(String(v.id))
     const hasEntries = v.entries && v.entries.length > 0
     const contentRef = useRef<HTMLDivElement>(null)
     const [height, setHeight] = useState(0)
@@ -121,7 +119,7 @@ function VerificationRow({
             <GridTableRow
                 onClick={() => onRowClick(v)}
                 selected={selection.isSelected(String(v.id))}
-                className={cn("cursor-pointer group", highlightClass)}
+                className="cursor-pointer group"
             >
                 <div className="col-span-1 flex items-center justify-center">
                     {hasEntries && (
