@@ -3,7 +3,7 @@
  * Calculates VAT reports from various data sources using canonical vat-boxes mapping.
  */
 
-import type { Verification } from "@/hooks/use-verifications"
+import type { Verification } from "@/types/verification"
 import type { VatReport } from './types'
 import {
   createEmptyVatReport,

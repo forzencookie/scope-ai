@@ -10,7 +10,7 @@
  * - INK2S Skattemässiga justeringar (4.1-4.22): Tax Adjustments
  */
 
-import { Verification } from "@/hooks/use-verifications"
+import { Verification } from "@/types/verification"
 
 // =============================================================================
 // Types

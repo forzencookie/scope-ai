@@ -71,10 +71,12 @@ function buildSystemPrompt(context: AgentContext): string {
         msgLines.push(`**Aktuell sida:** ${context.sharedMemory.currentPage}`)
     }
     if (context.sharedMemory?.mentions && Array.isArray(context.sharedMemory.mentions)) {
-        const pageContexts = (context.sharedMemory.mentions as Array<{ type: string; label: string; aiContext?: string }>)
-            .filter(m => m.type === 'page' && m.aiContext)
+        const mentionContexts = (context.sharedMemory.mentions as Array<{ type: string; label: string; aiContext?: string; walkthroughType?: string }>)
+            .filter(m => m.aiContext)
             .map(m => m.aiContext as string)
-        if (pageContexts.length > 0) msgLines.push(`**Siddata:**\n${pageContexts.join('\n\n')}`)
+        if (mentionContexts.length > 0) {
+            msgLines.push(`**Förvalt intent (mention):**\n${mentionContexts.join('\n\n')}`)
+        }
     }
     if (context.sharedMemory?.attachments) {
         msgLines.push(`**Bilagor:** ${JSON.stringify(context.sharedMemory.attachments)}`)

@@ -3,7 +3,7 @@
  * Calculates complete INK2/INK2R/INK2S declarations
  */
 
-import type { Verification } from "@/hooks/use-verifications"
+import type { Verification } from "@/types/verification"
 import type { SRUDeclaration, SRUField, TaxPeriod } from "@/types/sru"
 import type { CompanyInfo, INK2CalculationResult, AccountBalance } from './types'
 import { calculateAccountBalances } from './types'

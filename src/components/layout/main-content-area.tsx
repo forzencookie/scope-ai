@@ -170,7 +170,6 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                                 onMentionsChange={setMentionItems}
                                 actionTrigger={actionTrigger}
                                 onActionTriggerChange={setActionTrigger}
-                                showNavLinks={false}
                                 landing
                                 onFocus={() => setIsInputFocused(true)}
                                 onBlur={() => setIsInputFocused(false)}
@@ -223,7 +222,6 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                         onMentionsChange={setMentionItems}
                         actionTrigger={actionTrigger}
                         onActionTriggerChange={setActionTrigger}
-                        showNavLinks={false}
                         onFocus={() => setIsInputFocused(true)}
                         onBlur={() => setIsInputFocused(false)}
                     />

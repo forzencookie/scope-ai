@@ -3,7 +3,7 @@
  * For Swedish INK2/SRU tax declarations
  */
 
-import type { Verification } from "@/hooks/use-verifications"
+import type { Verification } from "@/types/verification"
 import type { SRUField, TaxPeriod } from "@/types/sru"
 
 /**

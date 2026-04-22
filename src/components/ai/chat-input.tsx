@@ -15,8 +15,6 @@ import {
     FileText,
     ZoomIn,
     Loader2,
-    Inbox,
-    LayoutGrid,
     Zap,
 } from "lucide-react"
 import Image from "next/image"
@@ -55,8 +53,6 @@ interface ChatInputProps {
     onActionTriggerChange?: (trigger: ActionTriggerDisplay | null) => void
     /** Called when a file preview should be shown */
     onPreviewFile?: (file: { url: string; name: string }) => void
-    /** Whether to show navigation links below input */
-    showNavLinks?: boolean
     /** Called when textarea receives focus */
     onFocus?: () => void
     /** Called when textarea loses focus */
@@ -77,7 +73,6 @@ export function ChatInput({
     actionTrigger,
     onActionTriggerChange,
     onPreviewFile,
-    showNavLinks = true,
     onFocus,
     onBlur,
     landing = false
@@ -485,26 +480,6 @@ export function ChatInput({
                     anchorRef={mentionAnchorRef}
                 />
             </div>
-
-            {/* Navigation links - Desktop (Below) */}
-            {showNavLinks && (
-                <div className="hidden md:flex items-center gap-4 mt-2 px-1">
-                    <Link
-                        href="/dashboard"
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <LayoutGrid className="h-3.5 w-3.5" />
-                        <span>Öppna Dashboard</span>
-                    </Link>
-                    <Link
-                        href="/dashboard/konversationer"
-                        className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
-                    >
-                        <Inbox className="h-3.5 w-3.5" />
-                        <span>Visa konversationer</span>
-                    </Link>
-                </div>
-            )}
         </div>
     )
 }

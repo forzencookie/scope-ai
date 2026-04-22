@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo } from "react"
-import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { PageOverlay } from "@/components/shared/page-overlay"
 import { WalkthroughRenderer } from "@/components/ai/overlays/blocks/block-renderer"
 import { ScoobyPresentation } from "@/components/ai/scooby-presentation"
 import type { WalkthroughResponse } from "@/components/ai/overlays/blocks/types"
@@ -1846,29 +1846,28 @@ export function WalkthroughOverlay({ type, onClose }: WalkthroughOverlayProps) {
     const content = useMemo(() => (type ? getWalkthroughContent(type) : null), [type])
 
     return (
-        <Sheet open={type !== null} onOpenChange={(open) => { if (!open) onClose() }}>
-            <SheetContent
-                side="right"
-                className="w-[90vw] max-w-4xl p-0 flex flex-col overflow-hidden"
-            >
-                <div className="flex-1 overflow-y-auto">
-                    {content && (
-                        <>
-                            <div className="px-6 pt-6 pb-4">
-                                <ScoobyPresentation
-                                    message={content.presentation.message}
-                                    highlights={content.presentation.highlights}
-                                />
-                            </div>
-                            <WalkthroughRenderer
-                                response={content.response}
-                                onClose={onClose}
-                                embedded
-                            />
-                        </>
-                    )}
-                </div>
-            </SheetContent>
-        </Sheet>
+        <PageOverlay
+            isOpen={type !== null}
+            onClose={onClose}
+            title={content?.response.title ?? ""}
+            subtitle={content?.response.subtitle}
+            fullContent
+        >
+            {content && (
+                <>
+                    <div className="px-6 pt-4 pb-4">
+                        <ScoobyPresentation
+                            message={content.presentation.message}
+                            highlights={content.presentation.highlights}
+                        />
+                    </div>
+                    <WalkthroughRenderer
+                        response={content.response}
+                        onClose={onClose}
+                        embedded
+                    />
+                </>
+            )}
+        </PageOverlay>
     )
 }

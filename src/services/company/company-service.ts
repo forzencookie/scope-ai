@@ -35,8 +35,8 @@ export interface CompanyInfo {
     hasFskatt: boolean
     hasEmployees: boolean
     hasMomsRegistration: boolean
-    shareCapital: number
     totalShares: number
+    scoobyInstructions?: string | null
     createdAt: string
     updatedAt: string
 }
@@ -62,6 +62,7 @@ export interface CompanyUpdate {
     hasMomsRegistration?: boolean
     shareCapital?: number
     totalShares?: number
+    scoobyInstructions?: string | null
 }
 
 // =============================================================================
@@ -91,6 +92,7 @@ export interface CompanyRow {
     share_capital: number | null
     total_shares: number | null
     settings: Record<string, unknown> | null
+    scooby_instructions: string | null
     created_at: string
     updated_at: string
     user_id: string
@@ -119,6 +121,7 @@ export function mapRowToCompany(row: CompanyRow): CompanyInfo {
         hasMomsRegistration: row.has_moms_registration ?? true,
         shareCapital: row.share_capital ?? 0,
         totalShares: row.total_shares ?? 0,
+        scoobyInstructions: row.scooby_instructions,
         createdAt: row.created_at,
         updatedAt: row.updated_at,
     }
