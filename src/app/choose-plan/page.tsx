@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation"
 import { motion } from "framer-motion"
 import { Check, Sparkles, Zap, Crown, Loader2 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { ScopeAILogo } from "@/components/ui"
 
 const plans = [
   {

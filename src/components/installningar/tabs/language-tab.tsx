@@ -1,18 +1,18 @@
 "use client"
 
-import { Label } from "@/components/ui/label"
+import { Label } from "@/components/ui"
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
+} from "@/components/ui"
 import { usePreferences } from "@/hooks/use-preferences"
 import { text } from "@/lib/translations"
 import {
     SettingsPageHeader,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function LanguageTab() {
     const { preferences, updatePreference, isLoading } = usePreferences()

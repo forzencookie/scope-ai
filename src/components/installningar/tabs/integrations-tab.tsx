@@ -2,7 +2,7 @@ import { text } from "@/lib/translations"
 import {
     SettingsPageHeader,
     IntegrationCard,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function IntegrationsTab() {
     return (

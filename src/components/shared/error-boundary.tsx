@@ -2,8 +2,8 @@
 
 import React, { Component, type ReactNode, type ErrorInfo } from "react"
 import { AlertCircle, RefreshCw } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { AlertMessage } from "@/components/ui/alert-message"
+import { Button } from "@/components/ui"
+import { AlertMessage } from "@/components/ui"
 
 // ============================================
 // Types

@@ -1,13 +1,13 @@
 "use client"
 
 import { ChevronDown, Check } from "lucide-react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui"
 import {
     DropdownMenu,
     DropdownMenuContent,
     DropdownMenuItem,
     DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui"
 import { useModel } from "@/providers/model-provider"
 import { ASSISTANT_TIERS, getAssistantTierByModelId } from "@/lib/ai/models"
 import { cn } from "@/lib/utils"

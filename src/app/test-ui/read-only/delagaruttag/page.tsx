@@ -12,7 +12,7 @@ import {
     ChartLegend,
     ChartLegendContent,
     type ChartConfig,
-} from "@/components/ui/chart"
+} from "@/components/ui"
 
 function fmt(n: number) {
     return n.toLocaleString("sv-SE", { maximumFractionDigits: 0 }) + " kr"

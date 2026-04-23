@@ -1,7 +1,5 @@
 import type { ComponentType } from "react"
 
-import { InvoiceCard } from "./cards/InvoiceCard"
-import { EmployeeCard } from "./cards/EmployeeCard"
 import { ActivityFeedCard } from "./chat-tools/information-cards/activity-feed-card"
 import { SummaryCard } from "./chat-tools/information-cards/summary-card"
 import { AuditCard } from "./chat-tools/information-cards/audit-card"
@@ -15,8 +13,7 @@ function card(c: ComponentType<never>): CardComponent {
 }
 
 export const CARD_REGISTRY: Record<string, CardComponent> = {
-    invoicecard: card(InvoiceCard),
-    invoice:     card(InvoiceCard),
+    // Removed legacy cards: invoicecard, invoice
 
     summarycard:       card(SummaryCard),
     summary:           card(SummaryCard),
@@ -26,9 +23,7 @@ export const CARD_REGISTRY: Record<string, CardComponent> = {
     genericlist:       card(SummaryCard),
     list:              card(SummaryCard),
 
-    employeepreview: card(EmployeeCard),
-    employee:        card(EmployeeCard),
-    newemployee:     card(EmployeeCard),
+    // Removed legacy cards: employeepreview, employee, newemployee
 
     taskchecklist:  card(ActivityFeedCard),
     checklist:      card(ActivityFeedCard),

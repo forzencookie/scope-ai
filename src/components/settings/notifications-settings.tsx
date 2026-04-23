@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Switch } from "@/components/ui/switch"
+import { Switch } from "@/components/ui"
 import type { LucideIcon } from "lucide-react"
 
 /**

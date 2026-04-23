@@ -24,9 +24,9 @@ import {
     Bot,
 } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Badge } from "@/components/ui"
+import { Button } from "@/components/ui"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui"
 
 type SettingsTab = "konto" | "scooby" | "foretag" | "integrationer" | "fakturering" | "utseende" | "sakerhet" | "notiser" | "sprak"
 

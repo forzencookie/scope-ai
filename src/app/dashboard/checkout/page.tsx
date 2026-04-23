@@ -4,7 +4,7 @@ import { useCallback, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
 import { ArrowLeft, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
+import { Button } from '@/components/ui'
 import { getStripeClient } from '@/lib/stripe-client'
 
 function CheckoutContent() {

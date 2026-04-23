@@ -257,9 +257,7 @@ export default function InformationCardsPage() {
                             </div>
                         ))}
                     </div>
-                </div>
-
-            </div>
+                </div>            </div>
         </div>
     )
 }

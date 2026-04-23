@@ -2,10 +2,10 @@
 
 import { useState } from "react"
 import { Mail, Globe, Send, Loader2 } from "lucide-react"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { useToast } from "@/components/ui/toast"
-import { Separator } from "@/components/ui/separator"
+import { Input } from "@/components/ui"
+import { Button } from "@/components/ui"
+import { useToast } from "@/components/ui"
+import { Separator } from "@/components/ui"
 import { text } from "@/lib/translations"
 import { usePreferences } from "@/hooks/use-preferences"
 import {
@@ -13,7 +13,7 @@ import {
     SettingsSection,
     SettingsToggleItem,
     KeyboardShortcut,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function EmailTab() {
     const { preferences, updatePreference, isLoading } = usePreferences()

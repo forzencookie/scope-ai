@@ -1,17 +1,17 @@
 "use client"
 
 import { useRef, useState, useEffect, useCallback } from "react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui"
+import { Button } from "@/components/ui"
+import { Separator } from "@/components/ui"
 import { text } from "@/lib/translations"
-import { useToast } from "@/components/ui/toast"
+import { useToast } from "@/components/ui"
 import { Loader2 } from "lucide-react"
 import {
     SettingsPageHeader,
     SettingsFormField,
     SettingsSaveButton,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 interface ProfileData {
     name: string

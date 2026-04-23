@@ -1,6 +1,6 @@
 "use client"
 
-import { ToastProvider } from "@/components/ui/toast"
+import { ToastProvider } from "@/components/ui"
 import { useOnboarding } from "@/components/onboarding/onboarding-wizard"
 import { CompanyProvider } from "@/providers/company-provider"
 import { ModelProvider } from "@/providers/model-provider"
@@ -14,7 +14,7 @@ import { ChatProvider, ChatSessionGate } from "@/providers/chat-provider"
 import { ChatHistorySidebar } from "@/components/layout/chat-history-sidebar"
 import { MainContentArea } from "@/components/layout/main-content-area"
 import { SettingsOverlay } from "@/components/installningar/settings-overlay"
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { ScopeAILogo } from "@/components/ui"
 import { nullToUndefined } from "@/lib/utils"
 
 function DashboardContentInner({ children }: { children: React.ReactNode }) {

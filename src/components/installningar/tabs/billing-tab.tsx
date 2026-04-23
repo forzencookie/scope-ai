@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from "react"
 import { CreditCard, Zap, AlertCircle, TrendingUp, Loader2, ExternalLink } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Separator } from "@/components/ui/separator"
-import { Progress } from "@/components/ui/progress"
+import { Button } from "@/components/ui"
+import { Separator } from "@/components/ui"
+import { Progress } from "@/components/ui"
 import { text } from "@/lib/translations"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useAIUsage } from "@/hooks/use-ai-usage"
@@ -13,7 +13,7 @@ import {
     SettingsPageHeader,
     SettingsSection,
     BillingHistoryRow,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 import { cn } from "@/lib/utils"
 
 function UsageBar() {

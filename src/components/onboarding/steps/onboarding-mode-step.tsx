@@ -1,7 +1,7 @@
 "use client"
 
 import { UploadCloud } from "lucide-react"
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { ScopeAILogo } from "@/components/ui"
 
 // ============================================================================
 // OnboardingModeStep - Choose between new or existing company

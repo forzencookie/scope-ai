@@ -15,7 +15,7 @@
 
 import Image from "next/image"
 import { cn } from "@/lib/utils"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui"
 import { Download, Check, X, Pencil } from "lucide-react"
 import { forwardRef } from "react"
 

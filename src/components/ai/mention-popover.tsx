@@ -1,8 +1,8 @@
 "use client"
 
 import * as React from "react"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui/popover"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui"
+import { Popover, PopoverContent, PopoverAnchor } from "@/components/ui"
 import {
     FileText,
     Receipt,

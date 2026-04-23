@@ -3,7 +3,7 @@
 import { useState, useRef, useEffect } from "react"
 import { useTheme } from "next-themes"
 import { Camera, Loader2, Sun, Moon, Monitor } from "lucide-react"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui"
 import { cn } from "@/lib/utils"
 
 // ============================================================================

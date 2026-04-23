@@ -301,35 +301,35 @@ export const invoiceService = {
      * Get supplier invoices that are unpaid and overdue
      */
     /**
-     * Count customer invoices with DRAFT status
+     * Get IDs of customer invoices with DRAFT status
      */
-    async getDraftCount(): Promise<number> {
+    async getDraftIds(): Promise<string[]> {
         const supabase = createBrowserClient()
 
-        const { count, error } = await supabase
+        const { data, error } = await supabase
             .from('customer_invoices')
-            .select('id', { count: 'exact', head: true })
+            .select('id')
             .eq('status', 'DRAFT')
 
         if (error) throw error
-        return count || 0
+        return (data || []).map(r => r.id as string)
     },
 
     /**
-     * Count customer invoices that are overdue (due_date < today, not PAID or CANCELLED)
+     * Get IDs of customer invoices that are overdue (due_date < today, not PAID or CANCELLED)
      */
-    async getOverdueCount(): Promise<number> {
+    async getOverdueIds(): Promise<string[]> {
         const supabase = createBrowserClient()
         const today = new Date().toISOString().split('T')[0]
 
-        const { count, error } = await supabase
+        const { data, error } = await supabase
             .from('customer_invoices')
-            .select('id', { count: 'exact', head: true })
+            .select('id')
             .lt('due_date', today)
             .not('status', 'in', '("PAID","CANCELLED")')
 
         if (error) throw error
-        return count || 0
+        return (data || []).map(r => r.id as string)
     },
 
     /**

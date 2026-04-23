@@ -11,12 +11,12 @@ import * as React from "react"
 import { Crown } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { useSubscription, type SubscriptionTier } from "@/hooks/use-subscription"
-import { Badge } from "@/components/ui/badge"
+import { Badge } from "@/components/ui"
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
-} from "@/components/ui/tooltip"
+} from "@/components/ui"
 
 interface TierBadgeProps {
   tier?: SubscriptionTier

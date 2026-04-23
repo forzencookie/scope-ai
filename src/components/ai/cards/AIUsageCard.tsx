@@ -2,7 +2,7 @@
 
 import { Zap, TrendingUp, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { Progress } from "@/components/ui/progress"
+import { Progress } from "@/components/ui"
 
 export interface AIUsageCardProps {
   usage: {

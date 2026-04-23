@@ -14,8 +14,8 @@ import {
     Collapsible,
     CollapsibleContent,
     CollapsibleTrigger,
-} from "@/components/ui/collapsible"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui"
+import { Button } from "@/components/ui"
 
 // =============================================================================
 // Types

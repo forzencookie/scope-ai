@@ -6,7 +6,7 @@ import {
   UploadCloud,
   UserCircle,
 } from "lucide-react"
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { ScopeAILogo } from "@/components/ui"
 import type { OnboardingStep } from "./types"
 
 // ============================================================================

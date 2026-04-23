@@ -252,21 +252,18 @@ export const payrollService = {
     },
 
     /**
-     * Get payslips that are not yet sent/paid
+     * Get IDs of payslips with draft status (pending approval)
      */
-    /**
-     * Count payslips with draft status (pending approval)
-     */
-    async getPendingPayslipCount(): Promise<number> {
+    async getPendingPayslipIds(): Promise<string[]> {
         const supabase = createBrowserClient()
 
-        const { count, error } = await supabase
+        const { data, error } = await supabase
             .from('payslips')
-            .select('id', { count: 'exact', head: true })
+            .select('id')
             .eq('status', 'draft')
 
         if (error) throw error
-        return count || 0
+        return (data || []).map(r => r.id as string)
     },
 
     /**

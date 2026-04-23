@@ -2,9 +2,9 @@
 
 import * as React from "react"
 import { cn } from "@/lib/utils"
-import { Label } from "@/components/ui/label"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
+import { Label } from "@/components/ui"
+import { Input } from "@/components/ui"
+import { Button } from "@/components/ui"
 
 /**
  * SettingsPageHeader - Page header with title and description

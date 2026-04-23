@@ -7,8 +7,8 @@ import {
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui"
+import { Separator } from "@/components/ui"
 import { text } from "@/lib/translations"
 import { usePreferences } from "@/hooks/use-preferences"
 import { useTheme } from "next-themes"
@@ -17,7 +17,7 @@ import {
     SettingsSection,
     SettingsToggle,
     ThemeButton,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function AppearanceTab() {
     const { preferences, updatePreference, isLoading } = usePreferences()

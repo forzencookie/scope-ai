@@ -1,5 +1,5 @@
 // Types for withdrawals
-import { AppStatus } from "@/components/ui/status-badge"
+import { AppStatus } from "@/components/ui"
 import { GENERAL_STATUS_LABELS } from "@/lib/localization"
 import { ArrowUpRight, ArrowDownRight, Wallet } from "lucide-react"
 

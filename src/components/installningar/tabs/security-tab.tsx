@@ -1,14 +1,14 @@
 "use client"
 
 import { Lock } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui"
 import { text } from "@/lib/translations"
 import {
     SettingsPageHeader,
     SettingsSection,
     SettingsToggle,
     SessionCard,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function SecurityTab() {
     return (

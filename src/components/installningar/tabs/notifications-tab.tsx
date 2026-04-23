@@ -1,14 +1,14 @@
 "use client"
 
 import { FileText, AlertCircle, TrendingUp, Calendar, Smartphone } from "lucide-react"
-import { Separator } from "@/components/ui/separator"
+import { Separator } from "@/components/ui"
 import { text } from "@/lib/translations"
 import { usePreferences } from "@/hooks/use-preferences"
 import {
     SettingsPageHeader,
     SettingsSection,
     SettingsToggleItem,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function NotificationsTab() {
     const { preferences, updatePreference, isLoading } = usePreferences()

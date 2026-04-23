@@ -1,8 +1,8 @@
 "use client"
 
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { ScopeAILogo } from "@/components/ui"
 import { ArrowRight, Paperclip, AtSign, Mic, ChevronDown, Search, TrendingDown, CheckCircle2, Plus, Building2, Calendar, Banknote, AlertCircle, UploadCloud, FileText, Tag, Hash, CreditCard, Loader2, FileCheck, Download, Clock, ArrowUpRight, Check, Pencil, X, BookOpen, Play, Pause } from "lucide-react"
-import { AppStatusBadge } from "@/components/ui/status-badge"
+import { AppStatusBadge } from "@/components/ui"
 import type { AppStatus } from "@/lib/status-types"
 import { useRef, useEffect, useState } from "react"
 import ReactMarkdown from "react-markdown"

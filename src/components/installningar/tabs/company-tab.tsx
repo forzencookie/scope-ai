@@ -3,18 +3,18 @@
 import { useState, useEffect, useRef } from "react"
 import Image from "next/image"
 import { Download, Upload, Building2, Loader2 } from "lucide-react"
-import { Button } from "@/components/ui/button"
-import { Label } from "@/components/ui/label"
+import { Button } from "@/components/ui"
+import { Label } from "@/components/ui"
 import {
     Select,
     SelectContent,
     SelectItem,
     SelectTrigger,
     SelectValue,
-} from "@/components/ui/select"
-import { Separator } from "@/components/ui/separator"
+} from "@/components/ui"
+import { Separator } from "@/components/ui"
 import { useCompany } from "@/providers/company-provider"
-import { useToast } from "@/components/ui/toast"
+import { useToast } from "@/components/ui"
 import { text } from "@/lib/translations"
 import { CompanyTypeSelector } from "@/components/onboarding/company-type-selector"
 import {
@@ -23,7 +23,7 @@ import {
     SettingsSaveButton,
     SettingsSection,
     SettingsActionCard,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function CompanyTab() {
     const { company, isLoading, updateCompany, saveChanges } = useCompany()

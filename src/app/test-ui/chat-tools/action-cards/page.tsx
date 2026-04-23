@@ -12,8 +12,7 @@ import { ActionConfirmCard, completedActionConfig, type ConfirmationAccent, type
 import { EntityUpdateCard } from "@/components/ai/chat-tools/action-cards/entity-update-card"
 import { ChecklistConfirmCard } from "@/components/ai/chat-tools/action-cards/checklist-confirm-card"
 import { BatchBookingCard } from "@/components/ai/chat-tools/action-cards/batch-booking-card"
-import { EmployeeCard } from "@/components/ai/cards/EmployeeCard"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui"
 import { formatCurrency } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"
 
@@ -544,21 +543,7 @@ export default function ActionCardsPage() {
                             </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Anställd (EmployeeCard)</h3>
-                                <span className="text-xs text-muted-foreground">Chat-kortregistrets version — levereras av Scooby</span>
-                                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">AB, HB</span>
-                            </div>
-                            <div className="max-w-sm">
-                                <EmployeeCard
-                                    name="Anna Lindberg"
-                                    role="Frontend-utvecklare"
-                                    email="anna.lindberg@example.com"
-                                    salary={42000}
-                                />
-                            </div>
-                        </div>
+                        {/* Removed legacy EmployeeCard section */}
 
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">

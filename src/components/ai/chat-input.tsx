@@ -1,8 +1,8 @@
 "use client"
 
 import { useRef, useState, useMemo, useEffect, useCallback } from "react"
-import { Button } from "@/components/ui/button"
-import { Textarea } from "@/components/ui/textarea"
+import { Button } from "@/components/ui"
+import { Textarea } from "@/components/ui"
 import { cn } from "@/lib/utils"
 import { MentionPopover, MentionBadge, type MentionItem } from "@/components/ai/mention-popover"
 import { ModelSelector } from "@/components/ai/model-selector"

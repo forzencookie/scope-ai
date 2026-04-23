@@ -5,8 +5,8 @@ import { Building2, Briefcase, Users, UsersRound, Heart, Check } from "lucide-re
 import { cn } from "@/lib/utils"
 import { useCompany } from "@/providers/company-provider"
 import { companyTypes, type CompanyType } from "@/lib/company-types"
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui"
+import { Badge } from "@/components/ui"
 
 // Consistent icons for company types across the app
 // AB: Building2 (corporate structure)

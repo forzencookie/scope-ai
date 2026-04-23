@@ -1,6 +1,6 @@
 "use client"
 
-import { PixelDog } from "@/components/ai/pixel-mascots"
+import { PixelDog } from "@/components/ai/mascots"
 
 // ============================================================================
 // WelcomeStep - Dog mascot greeting

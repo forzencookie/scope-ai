@@ -5,7 +5,7 @@ import { ChevronsUpDown, Plus, BadgeCheck, Palette, CreditCard, LogOut, Settings
 import type { LucideIcon } from "lucide-react"
 import { useTheme } from "next-themes"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui"
 import {
     DropdownMenu,
     DropdownMenuContent,
@@ -18,7 +18,7 @@ import {
     DropdownMenuSubTrigger,
     DropdownMenuSubContent,
     DropdownMenuPortal,
-} from "@/components/ui/dropdown-menu"
+} from "@/components/ui"
 import { useRouter, usePathname, useSearchParams } from "next/navigation"
 import { useAuth } from "@/hooks/use-auth"
 import { useSubscription } from "@/hooks/use-subscription"

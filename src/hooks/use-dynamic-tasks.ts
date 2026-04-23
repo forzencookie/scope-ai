@@ -1,21 +1,18 @@
-
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useTransactions } from '@/hooks/use-transactions-query'
-import { TRANSACTION_STATUS_LABELS } from '@/lib/localization'
 import { useCompany } from '@/providers/company-provider'
 import { invoiceService } from '@/services/invoicing/invoice-service'
 import { payrollService } from '@/services/payroll/payroll-service'
+import { createBrowserClient } from '@/lib/database/client'
 
 export interface DynamicTask {
     id: string
     title: string
     completed: boolean
     recurring?: boolean
-    href?: string
     category: 'bokforing' | 'rapporter' | 'loner' | 'agare'
-    /** Rich prompt for Scooby — tells it what data to fetch, not just a label */
-    prompt?: string
+    /** Rich prompt for Scooby — tells it exactly what data IDs to act on */
+    prompt: string
 }
 
 export interface DynamicGoal {
@@ -26,53 +23,66 @@ export interface DynamicGoal {
     tasks: DynamicTask[]
 }
 
-interface StatCounts {
-    draftInvoices: number
-    overdueInvoices: number
-    pendingPayslips: number
-    totalTransactions: number
-    totalVerifications: number
+interface TaskData {
+    draftInvoiceIds: string[]
+    overdueInvoiceIds: string[]
+    pendingPayslipIds: string[]
+    unbookedTransactionIds: string[]
+    totalTransactionsCount: number
 }
 
 export const dynamicTaskQueryKeys = {
     all: ["dynamic-tasks"] as const,
-    statCounts: () => [...dynamicTaskQueryKeys.all, "stat-counts"] as const,
+    taskData: () => [...dynamicTaskQueryKeys.all, "task-data"] as const,
 }
 
-function useStatCounts(): StatCounts & { isLoading: boolean } {
-    const { data, isLoading } = useQuery<StatCounts>({
-        queryKey: dynamicTaskQueryKeys.statCounts(),
+function useTaskData(): TaskData & { isLoading: boolean } {
+    const { data, isLoading } = useQuery<TaskData>({
+        queryKey: dynamicTaskQueryKeys.taskData(),
         queryFn: async () => {
-            const [draftRes, overdueRes, payslipRes] = await Promise.all([
-                invoiceService.getDraftCount(),
-                invoiceService.getOverdueCount(),
-                payrollService.getPendingPayslipCount(),
+            const supabase = createBrowserClient()
+            
+            // Fetch unbooked transactions directly manually since useTransactions is dead
+            const txPromise = supabase
+                .from('transactions')
+                .select('id')
+                .eq('status', 'obokförd')
+
+            const txCountPromise = supabase
+                .from('transactions')
+                .select('id', { count: 'exact', head: true })
+
+            const [draftRes, overdueRes, payslipRes, txRes, txCountRes] = await Promise.all([
+                invoiceService.getDraftIds(),
+                invoiceService.getOverdueIds(),
+                payrollService.getPendingPayslipIds(),
+                txPromise,
+                txCountPromise
             ])
 
             return {
-                draftInvoices: draftRes,
-                overdueInvoices: overdueRes,
-                pendingPayslips: payslipRes,
-                totalTransactions: 0,
-                totalVerifications: 0,
+                draftInvoiceIds: draftRes || [],
+                overdueInvoiceIds: overdueRes || [],
+                pendingPayslipIds: payslipRes || [],
+                unbookedTransactionIds: (txRes.data || []).map(r => r.id as string),
+                totalTransactionsCount: txCountRes.count || 0,
             }
         },
         staleTime: 5 * 60 * 1000,
     })
 
     return {
-        draftInvoices: data?.draftInvoices || 0,
-        overdueInvoices: data?.overdueInvoices || 0,
-        pendingPayslips: data?.pendingPayslips || 0,
-        totalTransactions: data?.totalTransactions || 0,
-        totalVerifications: data?.totalVerifications || 0,
+        draftInvoiceIds: data?.draftInvoiceIds || [],
+        overdueInvoiceIds: data?.overdueInvoiceIds || [],
+        pendingPayslipIds: data?.pendingPayslipIds || [],
+        unbookedTransactionIds: data?.unbookedTransactionIds || [],
+        totalTransactionsCount: data?.totalTransactionsCount || 0,
         isLoading,
     }
 }
 
 export function useDynamicTasks() {
-    const { transactions, isLoading: isLoadingTransactions } = useTransactions()
-    const { draftInvoices, overdueInvoices, pendingPayslips, isLoading: isLoadingCounts } = useStatCounts()
+    const { draftInvoiceIds, overdueInvoiceIds, pendingPayslipIds, unbookedTransactionIds, totalTransactionsCount, isLoading: isLoadingCounts } = useTaskData()
     const { company, companyType } = useCompany()
 
     const goals = useMemo<DynamicGoal[]>(() => {
@@ -85,43 +95,36 @@ export function useDynamicTasks() {
         // =====================================================================
         // 1. Bokföring — only if there are actual transactions to work with
         // =====================================================================
-        const pendingTransactions = transactions
-            ? transactions.filter(t => t.status === TRANSACTION_STATUS_LABELS.UNBOOKED).length
-            : 0
-
-        if (pendingTransactions > 0 || draftInvoices > 0 || overdueInvoices > 0) {
+        if (unbookedTransactionIds.length > 0 || draftInvoiceIds.length > 0 || overdueInvoiceIds.length > 0) {
             const bokforingTasks: DynamicTask[] = []
 
-            if (pendingTransactions > 0) {
+            if (unbookedTransactionIds.length > 0) {
                 bokforingTasks.push({
                     id: 'bok-1',
-                    title: `${pendingTransactions} transaktioner väntar på bokföring`,
+                    title: `${unbookedTransactionIds.length} transaktioner väntar på bokföring`,
                     completed: false,
-                    href: '/dashboard/bokforing?tab=transaktioner',
                     category: 'bokforing',
-                    prompt: `Jag har ${pendingTransactions} obokförda transaktioner. Hämta dem och hjälp mig bokföra dem en efter en.`,
+                    prompt: `Hjälp mig bokföra följande obokförda transaktioner: [${unbookedTransactionIds.join(', ')}]`,
                 })
             }
 
-            if (draftInvoices > 0) {
+            if (draftInvoiceIds.length > 0) {
                 bokforingTasks.push({
                     id: 'bok-2',
-                    title: `${draftInvoices} kundfakturor att skicka`,
+                    title: `${draftInvoiceIds.length} kundfakturor att skicka`,
                     completed: false,
-                    href: '/dashboard/bokforing?tab=kundfakturor',
                     category: 'bokforing',
-                    prompt: `Jag har ${draftInvoices} utkast-fakturor. Visa dem och hjälp mig granska och skicka dem.`,
+                    prompt: `Hjälp mig granska och skicka följande utkast till kundfakturor: [${draftInvoiceIds.join(', ')}]`,
                 })
             }
 
-            if (overdueInvoices > 0) {
+            if (overdueInvoiceIds.length > 0) {
                 bokforingTasks.push({
                     id: 'bok-3',
-                    title: `${overdueInvoices} förfallna fakturor att följa upp`,
+                    title: `${overdueInvoiceIds.length} förfallna fakturor att följa upp`,
                     completed: false,
-                    href: '/dashboard/bokforing?tab=kundfakturor',
                     category: 'bokforing',
-                    prompt: `Jag har ${overdueInvoices} förfallna fakturor. Visa vilka kunder som är sena med betalningen och föreslå uppföljning.`,
+                    prompt: `Hjälp mig följa upp följande förfallna kundfakturor: [${overdueInvoiceIds.join(', ')}]`,
                 })
             }
 
@@ -201,7 +204,6 @@ export function useDynamicTasks() {
                         id: 'rap-1',
                         title: 'Kontrollera momssaldo',
                         completed: false,
-                        href: '/dashboard/rapporter',
                         category: 'rapporter',
                         prompt: `Hämta min momsrapport för perioden ${vatPeriod}. Visa ingående och utgående moms, beräkna saldot, och flagga eventuella avvikelser.`,
                     },
@@ -209,7 +211,6 @@ export function useDynamicTasks() {
                         id: 'rap-2',
                         title: 'Granska avdragsposter',
                         completed: false,
-                        href: '/dashboard/rapporter',
                         category: 'rapporter',
                         prompt: `Hämta alla bokförda transaktioner med ingående moms för perioden ${vatPeriod}. Visa en sammanställning per kostnadskonto och flagga poster som kan vara privata utgifter eller saknar underlag.`,
                     },
@@ -220,7 +221,7 @@ export function useDynamicTasks() {
         // =====================================================================
         // 3. Löner — only for companies with employees and pending work
         // =====================================================================
-        if (company?.hasEmployees && pendingPayslips > 0) {
+        if (company?.hasEmployees && pendingPayslipIds.length > 0) {
             newGoals.push({
                 id: 'goal-loner',
                 name: 'Löneadministration',
@@ -229,11 +230,10 @@ export function useDynamicTasks() {
                 tasks: [
                     {
                         id: 'lon-1',
-                        title: `Godkänn ${pendingPayslips} lönebesked`,
+                        title: `Godkänn ${pendingPayslipIds.length} lönebesked`,
                         completed: false,
-                        href: '/dashboard/loner?tab=lonebesked',
                         category: 'loner',
-                        prompt: `Jag har ${pendingPayslips} lönebesked som väntar på godkännande. Visa dem och hjälp mig granska bruttolön, skatteavdrag och arbetsgivaravgifter.`,
+                        prompt: `Hjälp mig granska och godkänna följande lönebesked: [${pendingPayslipIds.join(', ')}]`,
                     },
                 ],
             })
@@ -253,7 +253,6 @@ export function useDynamicTasks() {
                         id: 'ega-1',
                         title: 'Beräkna preliminär F-skatt',
                         completed: false,
-                        href: '/dashboard/loner?tab=egenavgifter',
                         category: 'loner',
                         prompt: 'Hämta min resultaträkning hittills i år och beräkna preliminär F-skatt och egenavgifter baserat på nuvarande vinst.',
                     },
@@ -284,7 +283,6 @@ export function useDynamicTasks() {
                             id: 'stamma-1',
                             title: 'Förbered årsredovisning',
                             completed: false,
-                            href: '/dashboard/rapporter',
                             category: 'agare',
                             prompt: 'Hjälp mig förbereda årsredovisningen. Hämta resultaträkning och balansräkning för senaste räkenskapsåret och identifiera vad som saknas.',
                         },
@@ -295,11 +293,11 @@ export function useDynamicTasks() {
 
         return newGoals
 
-    }, [transactions, draftInvoices, overdueInvoices, pendingPayslips, company, companyType])
+    }, [totalTransactionsCount, draftInvoiceIds, overdueInvoiceIds, pendingPayslipIds, unbookedTransactionIds, company, companyType])
 
     return {
         goals,
-        isLoading: isLoadingTransactions || isLoadingCounts,
+        isLoading: isLoadingCounts,
         refresh: () => { }
     }
 }

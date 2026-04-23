@@ -1,7 +1,7 @@
 import { ReactElement, ReactNode } from "react"
 import { render, RenderOptions } from "@testing-library/react"
 import { QueryProvider } from "@/providers/query-provider"
-import { ToastProvider } from "@/components/ui/toast"
+import { ToastProvider } from "@/components/ui"
 import type { Transaction, Invoice, Receipt, QuickStat, PendingTask } from "@/types"
 import { TRANSACTION_STATUS_LABELS, INVOICE_STATUS_LABELS, RECEIPT_STATUS_LABELS } from "@/lib/localization"
 

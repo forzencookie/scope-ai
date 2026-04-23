@@ -4,8 +4,8 @@ import { useMemo, useState } from "react"
 import Image from "next/image"
 import { useChatContext } from "@/providers/chat-provider"
 import { useAuth } from "@/hooks/use-auth"
-import { Button } from "@/components/ui/button"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@/components/ui"
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui"
 import {
     Plus,
     Search,
@@ -19,7 +19,7 @@ import { UserTeamSwitcher } from "@/components/layout/user-team-switcher"
 import { Box } from "lucide-react"
 import { cn } from "@/lib/utils"
 import type { Conversation } from "@/lib/chat-types"
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui"
 import { SearchDialog } from "@/components/layout/search-dialog"
 import { useDynamicTasks, type DynamicTask } from "@/hooks/use-dynamic-tasks"
 import { useChatNavigation } from "@/hooks/use-chat-navigation"
@@ -48,9 +48,9 @@ function groupConversationsByDate(conversations: Conversation[]) {
     return groups.filter(g => g.convs.length > 0)
 }
 
-/** Build a Scooby prompt from a task. Uses the task's rich prompt if available. */
+/** Build a Scooby prompt from a task. Uses the task's rich prompt. */
 function taskToPrompt(task: DynamicTask): string {
-    return task.prompt || `Hjälp mig med: ${task.title}`
+    return task.prompt
 }
 
 interface ChatHistorySidebarProps {

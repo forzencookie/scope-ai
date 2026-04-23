@@ -6,7 +6,7 @@ import {
     SettingsPageHeader,
     SettingsSection,
     SettingsToggle,
-} from "@/components/ui/settings-items"
+} from "@/components/ui"
 
 export function AccessibilityTab() {
     const { preferences, updatePreference, isLoading } = usePreferences()

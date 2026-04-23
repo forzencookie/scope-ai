@@ -14,10 +14,5 @@ export { ActionCard } from './chat-tools/action-cards/action-card'
 export { ActivityFeedCard, type ActivityFeedCardProps, type FeedEvent, type FeedAction, type FeedEntity } from './chat-tools/information-cards/activity-feed-card'
 export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type MentionCategory } from './mention-popover'
 
-export {
-    PixelDog,
-    PixelBear,
-    PixelGiraffe,
-    type SceneType,
-} from './pixel-mascots'
+export * from './mascots'
 export { CardRenderer, type CardRendererProps } from './card-renderer'

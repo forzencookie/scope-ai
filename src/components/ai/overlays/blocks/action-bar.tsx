@@ -1,4 +1,4 @@
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui"
 import type { ActionBarProps } from "./types"
 
 export function ActionBar({ actions }: ActionBarProps) {

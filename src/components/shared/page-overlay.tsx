@@ -7,7 +7,7 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { Button } from "@/components/ui/button"
+import { Button } from "@/components/ui"
 import { ArrowLeft, Sparkles, X } from "lucide-react"
 import { useChatNavigation } from "@/hooks/use-chat-navigation"
 import { cn } from "@/lib/utils"

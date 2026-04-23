@@ -4,7 +4,7 @@ import { useState, useCallback, useRef } from "react"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronRight, ChevronLeft, CheckCircle2, ArrowRight } from "lucide-react"
 import { cn } from "@/lib/utils"
-import { ScopeAILogo } from "@/components/ui/icons/scope-ai-logo"
+import { ScopeAILogo } from "@/components/ui"
 import { useCompany } from "@/providers/company-provider"
 import { onboardingSteps } from "./step-config"
 

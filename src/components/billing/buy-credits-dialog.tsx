@@ -9,8 +9,8 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog"
-import { Button } from "@/components/ui/button"
+} from "@/components/ui"
+import { Button } from "@/components/ui"
 import { CREDIT_PACKAGES } from "@/lib/subscription"
 import { formatTokens } from "@/hooks/use-ai-usage"
 import { cn } from "@/lib/utils"
