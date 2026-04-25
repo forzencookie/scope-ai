@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/server'
 import { nullToUndefined } from '@/lib/utils'
 import type { Database } from '@/types/database'
 
@@ -70,7 +70,7 @@ export type IncomeDeclaration = {
 }
 
 export async function getIncomeDeclarations(taxYear?: number): Promise<IncomeDeclaration[]> {
-    const supabase = createBrowserClient()
+    const supabase = await createServerClient()
     let query = supabase.from('income_declarations').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
@@ -105,7 +105,7 @@ export type NEAppendix = {
 }
 
 export async function getNEAppendix(taxYear?: number): Promise<NEAppendix[]> {
-    const supabase = createBrowserClient()
+    const supabase = await createServerClient()
     let query = supabase.from('ne_appendices').select('*').order('tax_year', { ascending: false })
     if (taxYear) query = query.eq('tax_year', taxYear)
     const { data, error } = await query
@@ -143,7 +143,7 @@ export type AnnualClosing = {
 }
 
 export async function getAnnualClosings(fiscalYear?: number): Promise<AnnualClosing[]> {
-    const supabase = createBrowserClient()
+    const supabase = await createServerClient()
     let query = supabase.from('annual_closings').select('*').order('fiscal_year', { ascending: false })
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query
@@ -183,7 +183,7 @@ export type AnnualReport = {
 }
 
 export async function getAnnualReports(fiscalYear?: number): Promise<AnnualReport[]> {
-    const supabase = createBrowserClient()
+    const supabase = await createServerClient()
     let query = supabase.from('annual_reports').select('*').order('fiscal_year', { ascending: false })
     if (fiscalYear) query = query.eq('fiscal_year', fiscalYear)
     const { data, error } = await query

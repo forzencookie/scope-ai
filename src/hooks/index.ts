@@ -16,9 +16,6 @@ export type { AIUsageStats } from "./use-ai-usage"
 export { useSubscription } from "./use-subscription"
 export type { SubscriptionTier, GatedFeature } from "./use-subscription"
 
-// Real-time collaboration
-export { useRealtime, usePagePresence, useEditLock } from "./use-realtime"
-export type { PresenceUser, RealtimeEvent } from "./use-realtime"
 
 // User preferences (settings persistence)
 export { usePreferences } from "./use-preferences"

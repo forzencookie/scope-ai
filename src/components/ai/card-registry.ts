@@ -1,6 +1,5 @@
 import type { ComponentType } from "react"
 
-import { ActivityFeedCard } from "./chat-tools/information-cards/activity-feed-card"
 import { AuditCard } from "./chat-tools/information-cards/audit-card"
 import { AIUsageCard } from "./cards/AIUsageCard"
 import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
@@ -12,21 +11,6 @@ function card(c: ComponentType<never>): CardComponent {
 }
 
 export const CARD_REGISTRY: Record<string, CardComponent> = {
-    // Removed legacy cards: invoicecard, invoice
-
-    // Removed: SummaryCard — superseded by Block/DataRow system
-    // Removed legacy cards: employeepreview, employee, newemployee
-
-    taskchecklist:  card(ActivityFeedCard),
-    checklist:      card(ActivityFeedCard),
-    statuslist:     card(ActivityFeedCard),
-    statusoverview: card(ActivityFeedCard),
-    manadsavslut:   card(ActivityFeedCard),
-    openitems:      card(ActivityFeedCard),
-    activityfeed:   card(ActivityFeedCard),
-    historik:       card(ActivityFeedCard),
-    events:         card(ActivityFeedCard),
-
     balanceauditcard:  card(AuditCard),
     balanskontroll:    card(AuditCard),
     audit:             card(AuditCard),

@@ -6,6 +6,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll/payroll-service'
+import type { Block } from '@/lib/ai/schema'
 import { companyService } from '@/services/company/company-service.server'
 import { taxService } from '@/services/tax/tax-service'
 import { getEmployeeBenefits } from '@/lib/bookkeeping/formaner'
@@ -266,9 +267,23 @@ export const runPayrollTool = defineTool<RunPayrollParams, Payslip[]>({
                 }
             }
 
+            const payrollBlock: Block = {
+                title: `Lönekörning ${params.period}`,
+                description: `${savedPayslips.length} lönebesked · Netto totalt ${totalNet.toLocaleString('sv-SE')} kr`,
+                rows: savedPayslips.map(p => ({
+                    icon: "payslip" as const,
+                    title: p.employeeName,
+                    description: p.period,
+                    amount: p.netSalary,
+                    status: "Betald",
+                    isNew: true,
+                })),
+            }
+
             return {
                 success: errors.length === 0,
                 data: savedPayslips,
+                display: payrollBlock,
                 message: errors.length === 0
                     ? `Lönekörning klar! ${savedPayslips.length} lönebesked sparade.${vacationNote}`
                     : `${savedPayslips.length} av ${payslips.length} lönebesked sparade. Fel: ${errors.join('; ')}`,

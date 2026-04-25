@@ -13,7 +13,7 @@ import { useState, type ComponentProps } from "react"
 import { Package, TrendingDown } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -116,7 +116,7 @@ function buildVisaInventarierScript(onOpen: (type: WalkthroughType) => void): Si
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-54", verificationNumber: "A-54", date: "2026-04-30", description: "Avskrivning april 2026", amount: 2014 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Avskrivning april 2026", description: "A-54", amount: 2014, timestamp: "2026-04-30", isNew: true }] }} />
                 ),
             },
         ],
@@ -178,7 +178,7 @@ const registreraInventarie: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "asset", data: { id: "ast-new", name: "Kontorsstol IKEA", acquisitionValue: 8500, bookValue: 8500, depreciationPerMonth: 142 } }} />
+                    <Block block={{ rows: [{ icon: "asset", title: "Kontorsstol IKEA", description: "142 kr/mån · 60 mån", amount: 8500, isNew: true }] }} />
                 ),
             },
         ],
@@ -240,7 +240,7 @@ const korAvskrivning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-31", description: "Avskrivning mars 2026", amount: 2083 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Avskrivning mars 2026", description: "A-49", amount: 2083, timestamp: "2026-03-31", isNew: true }] }} />
                 ),
             },
         ],

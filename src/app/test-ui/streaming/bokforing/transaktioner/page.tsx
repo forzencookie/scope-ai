@@ -20,7 +20,7 @@ import { Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
 import { BatchBookingCard } from "@/components/ai/chat-tools/action-cards/batch-booking-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -86,15 +86,17 @@ function buildVisaTransaktionerScript(onOpen: (type: WalkthroughType) => void): 
                 speed: 12,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t1", description: "Kontorshyra april", amount: 8500, date: "2026-04-01", status: "Bokförd" } }} />,
-                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t2", description: "Svea Hosting — webbhotell", amount: 1499, date: "2026-03-28", status: "Bokförd" } }} />,
-                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t3", description: "Kjell & Company", amount: 2499, date: "2026-03-25", status: "Obokförd" } }} />,
-                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t4", description: "Postnord — Porto", amount: 89, date: "2026-03-22", status: "Bokförd" } }} />,
-                    <InfoCardRenderer card={{ cardType: "transaction", data: { id: "t5", description: "Clas Ohlson — kontorsmaterial", amount: 349, date: "2026-03-20", status: "Obokförd" } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "transaction", title: "Kontorshyra april",             amount: 8500, timestamp: "2026-04-01", status: "Bokförd" },
+                        { icon: "transaction", title: "Svea Hosting — webbhotell",     amount: 1499, timestamp: "2026-03-28", status: "Bokförd" },
+                        { icon: "transaction", title: "Kjell & Company",               amount: 2499, timestamp: "2026-03-25", status: "Obokförd" },
+                        { icon: "transaction", title: "Postnord — Porto",              amount: 89,   timestamp: "2026-03-22", status: "Bokförd" },
+                        { icon: "transaction", title: "Clas Ohlson — kontorsmaterial", amount: 349,  timestamp: "2026-03-20", status: "Obokförd" },
+                    ]}} />
+                ),
             },
             {
                 type: "stream",
@@ -166,12 +168,14 @@ function buildVisaTransaktionerScript(onOpen: (type: WalkthroughType) => void): 
                 speed: 12,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company förbrukningsinventarier", amount: 2499 } }} />,
-                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-50", verificationNumber: "A-50", date: "2026-03-20", description: "Clas Ohlson kontorsmaterial", amount: 349 } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "verification", title: "Kjell & Company förbrukningsinventarier", description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true },
+                        { icon: "verification", title: "Clas Ohlson kontorsmaterial",             description: "A-50", amount: 349,  timestamp: "2026-03-20", isNew: true },
+                    ]}} />
+                ),
             },
         ],
     },
@@ -236,7 +240,7 @@ const bokforKvitto: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company kontorsmaterial", amount: 2499 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Kjell & Company kontorsmaterial", description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true }] }} />
                 ),
             },
         ],
@@ -297,13 +301,15 @@ const batchBokforing: SimScript = [
                 speed: 11,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-49", verificationNumber: "A-49", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
-                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-50", verificationNumber: "A-50", date: "2026-03-20", description: "Clas Ohlson", amount: 349 } }} />,
-                    <InfoCardRenderer card={{ cardType: "verification", isNew: true, data: { id: "v-51", verificationNumber: "A-51", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "verification", title: "Kjell & Company",  description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true },
+                        { icon: "verification", title: "Clas Ohlson",      description: "A-50", amount: 349,  timestamp: "2026-03-20", isNew: true },
+                        { icon: "verification", title: "Spotify Business", description: "A-51", amount: 169,  timestamp: "2026-03-18", isNew: true },
+                    ]}} />
+                ),
             },
         ],
     },

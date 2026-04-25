@@ -16,7 +16,7 @@ import { DefaultChatTransport, type UIMessage, type UIDataTypes, type UITools, t
 import type { Message as AppMessage } from '@/lib/agents/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
 import { fileToBase64 } from '@/lib/agents/chat-utils'
-import { type InfoCardType } from '@/components/ai/chat-tools/information-cards'
+import { BlockSchema } from '@/lib/ai/schema'
 
 // =============================================================================
 // Helpers (moved from use-chat.ts)
@@ -39,18 +39,6 @@ function extractToolInvocations(parts: UIMessagePart<UIDataTypes, UITools>[] | u
         .filter((t): t is ToolInvocationData => t != null)
 }
 
-function deriveCardType(toolName: string): InfoCardType {
-    const name = toolName.toLowerCase()
-    if (name.includes('invoice') || name.includes('faktura')) return 'invoice'
-    if (name.includes('transaction') || name.includes('transaktion')) return 'transaction'
-    if (name.includes('verification') || name.includes('verifikation') || name.includes('bokför')) return 'verification'
-    if (name.includes('payroll') || name.includes('lön') || name.includes('payslip')) return 'payroll'
-    if (name.includes('vat') || name.includes('moms')) return 'vat'
-    if (name.includes('dividend') || name.includes('utdelning')) return 'dividend'
-    if (name.includes('receipt') || name.includes('kvitto')) return 'receipt'
-    if (name.includes('task') || name.includes('uppgift')) return 'task_completed'
-    return 'report'
-}
 
 /** Convert stored AppMessages to Vercel UIMessage format for initialMessages */
 function appMessagesToUIMessages(messages: AppMessage[]) {
@@ -154,60 +142,11 @@ export function useChatSession({
     const onErrorLogicRef = useRef<(error: Error) => void>(() => {})
     onErrorLogicRef.current = (error: Error) => {
         console.error('[useChatSession] Stream error:', error)
-        window.dispatchEvent(new CustomEvent('ai-dialog-error', {
-            detail: {
-                message: 'Något gick fel med AI-assistenten. Försök igen.',
-                error: error instanceof Error ? error.message : String(error),
-            }
-        }))
     }
 
     const onFinishLogicRef = useRef<(opts: { message: UIMessage }) => void>(() => {})
-    onFinishLogicRef.current = ({ message }: { message: UIMessage }) => {
+    onFinishLogicRef.current = (_: { message: UIMessage }) => {
         window.dispatchEvent(new Event('ai-stream-complete'))
-
-        const toolInvocations = extractToolInvocations(message.parts)
-
-        if (toolInvocations.length > 0) {
-            const firstTool = toolInvocations[0]
-            const result = firstTool?.result as Record<string, unknown> | undefined
-
-            if (result) {
-                const walkthrough = result.walkthrough || (result.data as Record<string, unknown>)?.walkthrough
-
-                if (walkthrough) {
-                    window.dispatchEvent(new CustomEvent('ai-dialog-walkthrough-blocks', {
-                        detail: walkthrough
-                    }))
-                } else if (result.confirmationRequired) {
-                    const confirmationRequired = result.confirmationRequired as Record<string, unknown>
-                    window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
-                        detail: {
-                            contentType: 'action',
-                            title: confirmationRequired.title || 'Bekräftelse krävs',
-                            content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
-                            confirmationRequired: result.confirmationRequired,
-                            data: result.data
-                        }
-                    }))
-                } else if (result.display && typeof result.display === 'object' && 'fullViewRoute' in result.display) {
-                    const display = result.display as Record<string, unknown>
-                    window.dispatchEvent(new CustomEvent('ai-dialog-complete', {
-                        detail: {
-                            contentType: 'document',
-                            title: display.title || 'Resultat',
-                            content: (result.message as string) || message.parts?.find(p => p.type === 'text')?.text || '',
-                            display: result.display,
-                            data: result.data
-                        }
-                    }))
-                } else if (result.navigation && typeof result.navigation === 'object') {
-                    window.dispatchEvent(new CustomEvent('ai-navigate', {
-                        detail: result.navigation
-                    }))
-                }
-            }
-        }
     }
 
     // Stable wrappers: created once ([] deps), always call the latest ref logic.
@@ -252,14 +191,15 @@ export function useChatSession({
                 }))
 
                 const completed = toolInvocations.filter(t => t.state === 'result')
-                if (completed.length > 0) {
-                    appMsg.display = {
-                        type: 'InfoCards',
-                        data: {
-                            cards: completed.map(t => ({
-                                cardType: deriveCardType(t.toolName),
-                                data: t.result as Record<string, unknown>
-                            }))
+                // Use the last tool result that carries a valid Block display
+                for (let i = completed.length - 1; i >= 0; i--) {
+                    const result = completed[i].result as Record<string, unknown> | undefined
+                    const raw = result?.display
+                    if (raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).rows)) {
+                        const parsed = BlockSchema.safeParse(raw)
+                        if (parsed.success) {
+                            appMsg.display = { type: 'Block', data: parsed.data }
+                            break
                         }
                     }
                 }

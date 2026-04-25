@@ -25,7 +25,6 @@ import { getContextWindow } from '@/lib/ai/model-registry'
 import fs from 'fs'
 import path from 'path'
 import { initializeAITools } from '@/lib/ai-tools'
-import { selectModel, getModelId } from '@/lib/agents/scope-brain/model-selector'
 import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
@@ -342,10 +341,10 @@ export async function POST(request: NextRequest) {
             isConfirmed: !!confirmationId,
             confirmationId,
             companyType: companyType ?? undefined,
+            supabase,
         })
 
-        const modelConfig = selectModel(latestContent)
-        const activeModelId = getModelId(modelConfig)
+        const activeModelId = authResult.modelId || DEFAULT_MODEL_ID
 
         const compactedMessages = await compactMessageHistory(messages, activeModelId)
 

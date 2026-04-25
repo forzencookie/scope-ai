@@ -223,6 +223,36 @@ export const DiscoveredToolsSchema = z.array(DiscoveredToolSchema)
 export type DiscoveredTool = z.infer<typeof DiscoveredToolSchema>
 
 // =============================================================================
+// 11. Block / DataRow — universal inline chat display primitive
+// =============================================================================
+
+export const DataRowIconSchema = z.enum([
+    "invoice", "transaction", "receipt", "verification",
+    "payslip", "report", "shareholder", "employee",
+    "asset", "benefit", "partner", "check",
+])
+export type DataRowIcon = z.infer<typeof DataRowIconSchema>
+
+export const DataRowSchema = z.object({
+    icon: DataRowIconSchema,
+    title: z.string(),
+    description: z.string().optional(),
+    timestamp: z.string().optional(),
+    status: z.string().optional(),
+    amount: z.coerce.number().optional(),
+    isNew: z.boolean().optional(),
+    highlight: z.boolean().optional(),
+})
+export type DataRow = z.infer<typeof DataRowSchema>
+
+export const BlockSchema = z.object({
+    title: z.string().optional(),
+    description: z.string().optional(),
+    rows: z.array(DataRowSchema).default([]),
+})
+export type Block = z.infer<typeof BlockSchema>
+
+// =============================================================================
 // Global Normalizer
 // =============================================================================
 
@@ -253,6 +283,8 @@ export function normalizeAIDisplay(type: string, data: unknown): unknown {
                 return TaskChecklistSchema.parse(unwrapped);
             case 'BenefitsTable':
                 return BenefitsTableSchema.parse(unwrapped);
+            case 'Block':
+                return BlockSchema.parse(unwrapped);
 
             case 'DiscoveredTools':
                 return DiscoveredToolsSchema.parse(unwrapped);

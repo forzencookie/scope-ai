@@ -2,15 +2,10 @@
 
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
-import { InfoCardRenderer, type InfoCardType } from "@/components/ai/chat-tools/information-cards"
-import { ActivityFeedCard } from "@/components/ai/chat-tools/information-cards/activity-feed-card"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
 import { BuyCreditsCheckout } from "@/components/ai/cards/BuyCreditsCard"
 import { AIUsageCard } from "@/components/ai/cards/AIUsageCard"
-
-// =============================================================================
-// Feed & status cards
-// =============================================================================
 
 export default function InformationCardsPage() {
     return (
@@ -27,50 +22,169 @@ export default function InformationCardsPage() {
 
             <div className="max-w-3xl mx-auto px-6 py-8 space-y-12">
 
-                {/* Feed cards */}
+                {/* Block / DataRow */}
                 <div>
-                    <h1 className="text-2xl font-bold tracking-tight mb-1">Information Cards</h1>
+                    <h1 className="text-2xl font-bold tracking-tight mb-1">Block / DataRow</h1>
                     <p className="text-sm text-muted-foreground mb-8">
-                        Kort som visar data — tidslinjer, statusöversikter, beräkningar, listor. Ingen mutation.
+                        Universellt inline-format — en rad per entitet. Scooby returnerar ett Block med varje tool result.
                     </p>
 
                     <div className="space-y-8">
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Aktivitetsflöde</h3>
-                                <span className="text-xs text-muted-foreground">Vad som hänt under en vald period</span>
+                                <h3 className="text-sm font-semibold">Transaktioner</h3>
+                                <span className="text-xs text-muted-foreground">Bokförda / obokförda</span>
                             </div>
                             <div className="max-w-lg">
-                                <ActivityFeedCard
-                                    title="Aktivitet igår"
-                                    description="4 händelser den 4 april 2026"
-                                    events={[
-                                        { id: "1", action: "booked",  entityType: "transaction", title: "Kontorshyra april",           description: "8 500 kr → 5010 Lokalhyra. Ver A-47.", timestamp: "09:14" },
-                                        { id: "2", action: "created", entityType: "invoice",     title: "Faktura #2026-042 till Acme AB", description: "37 500 kr inkl. moms",              timestamp: "11:30" },
-                                        { id: "3", action: "updated", entityType: "employee",    title: "Anna Lindberg",                 description: "Kommun ändrad: Solna → Stockholm",   timestamp: "14:02" },
-                                        { id: "4", action: "booked",  entityType: "receipt",     title: "Postnord — Porto",              description: "89 kr → 6250 Porto. Ver A-48.",      timestamp: "16:45" },
-                                    ]}
-                                />
+                                <Block block={{
+                                    title: "Transaktioner",
+                                    description: "5 transaktioner · 2 obokförda",
+                                    rows: [
+                                        { icon: "transaction", title: "Kontorshyra april",             amount: 8500, timestamp: "2026-04-01", status: "Bokförd" },
+                                        { icon: "transaction", title: "Svea Hosting — webbhotell",     amount: 1499, timestamp: "2026-03-28", status: "Bokförd" },
+                                        { icon: "transaction", title: "Kjell & Company",               amount: 2499, timestamp: "2026-03-25", status: "Obokförd" },
+                                        { icon: "transaction", title: "Postnord — Porto",              amount: 89,   timestamp: "2026-03-22", status: "Bokförd" },
+                                        { icon: "transaction", title: "Clas Ohlson — kontorsmaterial", amount: 349,  timestamp: "2026-03-20", status: "Obokförd" },
+                                    ],
+                                }} />
                             </div>
                         </div>
 
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Statusöversikt — Månadsavslut</h3>
-                                <span className="text-xs text-muted-foreground">Statusbadges per punkt att granska</span>
+                                <h3 className="text-sm font-semibold">Fakturor</h3>
+                                <span className="text-xs text-muted-foreground">Skickad / förfallen</span>
                             </div>
                             <div className="max-w-lg">
-                                <ActivityFeedCard
-                                    title="Månadsavslut mars 2026"
-                                    description="5 punkter att granska"
-                                    events={[
-                                        { id: "1", action: "done",    entityType: "check", title: "Alla kvitton bokförda",       description: null, timestamp: null },
-                                        { id: "2", action: "warning", entityType: "check", title: "Momsavstämning",              description: "Differens 340 kr mellan konto 2641 och beräknad moms", timestamp: null },
-                                        { id: "3", action: "error",   entityType: "check", title: "Faktura #2026-039 ej bokförd", description: "15 000 kr. Skickad men saknar verifikation.", timestamp: null },
-                                        { id: "4", action: "pending", entityType: "check", title: "Periodisering försäkring",    description: "9 månader kvar att periodisera av 12 000 kr", timestamp: null },
-                                        { id: "5", action: "done",    entityType: "check", title: "Semesterskuld uppdaterad",    description: null, timestamp: null },
-                                    ]}
-                                />
+                                <Block block={{
+                                    title: "Fakturor",
+                                    description: "3 obetalda · totalt 87 500 kr",
+                                    rows: [
+                                        { icon: "invoice", title: "Acme AB",       description: "#2026-042", amount: 37500, status: "Skickad" },
+                                        { icon: "invoice", title: "TechCorp AB",   description: "#2026-041", amount: 25000, status: "Förfallen" },
+                                        { icon: "invoice", title: "Nordic Design", description: "#2026-040", amount: 25000, status: "Skickad" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Verifikationer</h3>
+                                <span className="text-xs text-muted-foreground">Nyligen skapade (isNew)</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    rows: [
+                                        { icon: "verification", title: "Kjell & Company kontorsmaterial", description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true },
+                                        { icon: "verification", title: "Clas Ohlson kontorsmaterial",     description: "A-50", amount: 349,  timestamp: "2026-03-20", isNew: true },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Lönebesked</h3>
+                                <span className="text-xs text-muted-foreground">Anställda + nettolön</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Lönekörning april 2026",
+                                    rows: [
+                                        { icon: "payslip", title: "Anna Lindberg", description: "April 2026", amount: 28392, status: "Betald" },
+                                        { icon: "payslip", title: "Johan Berg",    description: "April 2026", amount: 31250, status: "Betald" },
+                                        { icon: "payslip", title: "Sara Ek",       description: "April 2026", amount: 25108, status: "Betald" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Beräkningsrader (highlight)</h3>
+                                <span className="text-xs text-muted-foreground">Nettolön och summor markerade</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Löneberäkning — Anna Lindberg, april 2026",
+                                    rows: [
+                                        { icon: "payslip", title: "Grundlön",                  amount: 42000 },
+                                        { icon: "payslip", title: "Kommunalskatt (32.41%)",     amount: -13612 },
+                                        { icon: "payslip", title: "Nettolön",                   amount: 28388, highlight: true },
+                                        { icon: "payslip", title: "Friskvårdsbidrag",           amount: 5000 },
+                                        { icon: "payslip", title: "Arbetsgivaravgift (31.42%)", amount: 13196 },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Aktieägare / Delägare</h3>
+                                <span className="text-xs text-muted-foreground">Andel som status</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Aktiebok — Scope Consulting AB",
+                                    rows: [
+                                        { icon: "shareholder", title: "Anders Richnau",     description: "800 A-aktier · 8 000 röster", status: "80%" },
+                                        { icon: "shareholder", title: "Invest Partner AB",  description: "200 B-aktier · 200 röster",   status: "20%" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Team</h3>
+                                <span className="text-xs text-muted-foreground">Anställda med status</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Teamet",
+                                    description: "4 anställda",
+                                    rows: [
+                                        { icon: "employee", title: "Anna Lindberg", description: "Sedan jan 2024", amount: 28392, status: "Betald" },
+                                        { icon: "employee", title: "Johan Berg",    description: "Sedan mar 2024", amount: 31250, status: "Betald" },
+                                        { icon: "employee", title: "Sara Ek",       description: "Sedan aug 2025", amount: 25108, status: "Betald" },
+                                        { icon: "employee", title: "Lisa Nilsson",  description: "Sedan apr 2026", amount: 26427, status: "Granskning" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Inventarier</h3>
+                                <span className="text-xs text-muted-foreground">Anläggningstillgångar</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Inventarier",
+                                    description: "3 st · bokfört värde 142 500 kr",
+                                    rows: [
+                                        { icon: "asset", title: "MacBook Pro 16\"",   description: "889 kr/mån · 36 mån kvar",  amount: 24000 },
+                                        { icon: "asset", title: "Kontorsmöbler",      description: "625 kr/mån · 60 mån kvar",  amount: 37500 },
+                                        { icon: "asset", title: "Projektorbild",      description: "500 kr/mån · 24 mån kvar",  amount: 12000 },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Förmåner</h3>
+                                <span className="text-xs text-muted-foreground">Skattefria och skattepliktiga</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    rows: [
+                                        { icon: "benefit", title: "Anna Lindberg", description: "Friskvårdsbidrag · Skattefritt", amount: 5000,  status: "OK" },
+                                        { icon: "benefit", title: "Johan Berg",    description: "Friskvårdsbidrag · Skattefritt", amount: 5000,  status: "OK" },
+                                        { icon: "benefit", title: "Johan Berg",    description: "Tjänstebil Volvo XC40",          amount: 4200,  status: "Förmånsvärde" },
+                                    ],
+                                }} />
                             </div>
                         </div>
                     </div>
@@ -122,25 +236,6 @@ export default function InformationCardsPage() {
                                 }} />
                             </div>
                         </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Resultatkontroll</h3>
-                                <span className="text-xs text-muted-foreground">Rimlighetskontroll av resultaträkningen</span>
-                            </div>
-                            <div className="max-w-lg">
-                                <AuditCard audit={{
-                                    date: "2026-03-28",
-                                    checks: [
-                                        { name: "Bruttomarginal",       status: "pass",    description: "33.7% — inom förväntat intervall (25-45%)" },
-                                        { name: "Personalkostnader",    status: "pass",    description: "45.5% av omsättning — rimligt för tjänsteföretag" },
-                                        { name: "Övriga kostnader",     status: "warning", description: "18.4% av omsättning — något högt", details: "Förväntat intervall: 10-15%. Kontrollera konto 6070 och 6210." },
-                                        { name: "Rörelseresultat",      status: "pass",    description: "Positivt rörelseresultat: 152 000 kr" },
-                                    ],
-                                    summary: { total: 4, passed: 3, warnings: 1, failed: 0 },
-                                }} />
-                            </div>
-                        </div>
                     </div>
                 </div>
 
@@ -176,40 +271,7 @@ export default function InformationCardsPage() {
                         </div>
                     </div>
                 </div>
-
-                {/* Compact data rows */}
-                <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Kompakta datarader</h2>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Klickbara rader som visar en entitet — faktura, transaktion, lön m.fl.
-                    </p>
-
-                    <div className="space-y-6">
-                        {([
-                            { label: "Faktura",      description: "Kompakt rad — klickbar",                  card: { cardType: "invoice"      as InfoCardType, data: { id: "inv-1", invoiceNumber: "2026-042", customer: "Acme AB", amount: 37500, status: "sent" } } },
-                            { label: "Transaktion",  description: "Kompakt rad — bokförd/obokförd status",   card: { cardType: "transaction"  as InfoCardType, data: { id: "tx-1", description: "Webbhotell mars", amount: 1499, date: "2026-03-01", status: "Bokförd" } } },
-                            { label: "Verifikation", description: "Kompakt rad — verifikationsnummer",       card: { cardType: "verification" as InfoCardType, data: { id: "ver-1", verificationNumber: "A47", date: "2026-03-28", description: "Kontorsmaterial", amount: 2499 } } },
-                            { label: "Lönebesked",   description: "Kompakt rad — anställd + nettobelopp",    card: { cardType: "payroll"      as InfoCardType, data: { id: "pay-1", employeeName: "Anna Lindberg", period: "Mars 2026", netAmount: 28392, status: "paid" } } },
-                            { label: "Rapport",      description: "Kompakt rad — navigerar till rapportsidan", card: { cardType: "report"     as InfoCardType, data: { reportType: "Resultaträkning", period: "Jan-Mar 2026", title: "Resultaträkning Q1" } } },
-                            { label: "Kvitto",       description: "Kompakt rad — leverantör + belopp",       card: { cardType: "receipt"     as InfoCardType, data: { id: "rec-1", supplier: "Kjell & Company", amount: 2499, date: "2026-03-28" } } },
-                            { label: "Moms",         description: "Kompakt rad — period + att betala",       card: { cardType: "vat"         as InfoCardType, data: { period: "Mars 2026", amount: -3200, status: "Utkast" } } },
-                            { label: "Utdelning",    description: "Kompakt rad — planerad utdelning",        card: { cardType: "dividend"    as InfoCardType, data: { name: "Erik Svensson", amount: 150000, year: 2025 } } },
-                            { label: "Inventarie",   description: "Kompakt rad — anläggningstillgång",       card: { cardType: "asset"       as InfoCardType, data: { id: "ast-1", name: "MacBook Pro 16\"", acquisitionValue: 32000, bookValue: 24000, depreciationPerMonth: 889 } } },
-                            { label: "Förmån",       description: "Kompakt rad — friskvård",                 card: { cardType: "benefit"     as InfoCardType, data: { id: "ben-1", employeeName: "Anna Lindberg", benefitType: "Friskvårdsbidrag", amount: 5000, amountUnit: "år", taxable: false } } },
-                            { label: "Delägare",     description: "Kompakt rad — HB/KB-partner",             card: { cardType: "partner"     as InfoCardType, data: { id: "ptr-1", name: "Erik Svensson", sharePercent: 60, equity: 195000, withdrawals: 110000 } } },
-                        ] as const).map((item, i) => (
-                            <div key={i} className="space-y-2">
-                                <div className="flex items-baseline gap-2">
-                                    <h3 className="text-sm font-semibold">{item.label}</h3>
-                                    <span className="text-xs text-muted-foreground">{item.description}</span>
-                                </div>
-                                <div className="max-w-lg">
-                                    <InfoCardRenderer card={item.card} />
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>            </div>
+            </div>
         </div>
     )
 }

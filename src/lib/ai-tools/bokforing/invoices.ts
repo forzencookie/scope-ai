@@ -7,6 +7,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoicing/invoice-service'
+import type { Block, DataRow } from '@/lib/ai/schema'
 
 function getBaseUrl() {
     return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
@@ -147,18 +148,30 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
                 }
 
                 const data = await res.json()
+                const createdInvoice = {
+                    id: data.invoice?.dbId || data.invoice?.id,
+                    customerName: params.customerName,
+                    amount: params.amount,
+                    vatAmount,
+                    totalAmount,
+                    description: params.description,
+                    dueDate,
+                    status: 'Utkast' as const,
+                }
+                const invoiceBlock: Block = {
+                    rows: [{
+                        icon: "invoice" as const,
+                        title: params.customerName,
+                        description: params.description,
+                        amount: totalAmount,
+                        status: "Utkast",
+                        isNew: true,
+                    }],
+                }
                 return {
                     success: true,
-                    data: {
-                        id: data.invoice?.dbId || data.invoice?.id,
-                        customerName: params.customerName,
-                        amount: params.amount,
-                        vatAmount,
-                        totalAmount,
-                        description: params.description,
-                        dueDate,
-                        status: 'Utkast' as const,
-                    },
+                    data: createdInvoice,
+                    display: invoiceBlock,
                     message: `Faktura skapad för ${params.customerName}. Totalt: ${totalAmount.toLocaleString('sv-SE')} kr. Sparad som utkast.`,
                 }
             } catch (error) {
@@ -255,9 +268,23 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
 
             const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
 
+            const overdue = invoices.filter(i => i.status === 'Förfallen').length
+            const block: Block = {
+                title: "Kundfakturor",
+                description: invoices.length > 0 ? `${invoices.length} fakturor${overdue > 0 ? ` · ${overdue} förfallna` : ''} · totalt ${totalAmount.toLocaleString('sv-SE')} kr` : undefined,
+                rows: invoices.map((i): DataRow => ({
+                    icon: "invoice",
+                    title: i.customerName || "Kund",
+                    description: i.invoiceNumber ? `#${i.invoiceNumber}` : undefined,
+                    amount: i.totalAmount,
+                    status: i.status,
+                })),
+            }
+
             return {
                 success: true,
                 data: invoices,
+                display: block,
                 message: invoices.length > 0
                     ? `Hittade ${invoices.length} kundfakturor${totalCount > invoices.length ? ` (av ${totalCount})` : ''} på totalt ${totalAmount.toLocaleString('sv-SE')} kr.`
                     : 'Inga kundfakturor hittades.',

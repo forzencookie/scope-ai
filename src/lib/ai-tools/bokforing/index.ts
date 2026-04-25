@@ -1,7 +1,5 @@
 /**
  * Bokföring AI Tools - Index
- *
- * Re-exports all bokföring-related tools.
  */
 
 export * from './transactions'
@@ -14,6 +12,8 @@ export * from './verifications'
 export * from './accounts'
 export * from './audit'
 export * from './resultat-audit'
+export * from './year-end'
+export * from './period'
 
 import { transactionTools } from './transactions'
 import { invoiceTools } from './invoices'
@@ -25,6 +25,8 @@ import { verificationExtendedTools } from './verifications'
 import { accountTools } from './accounts'
 import { auditTools } from './audit'
 import { resultatAuditTools } from './resultat-audit'
+import { yearEndTools } from './year-end'
+import { periodTools } from './period'
 
 export const bokforingTools = [
     ...transactionTools,
@@ -37,4 +39,6 @@ export const bokforingTools = [
     ...accountTools,
     ...auditTools,
     ...resultatAuditTools,
+    ...yearEndTools,
+    ...periodTools,
 ]

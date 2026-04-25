@@ -13,7 +13,7 @@ import { Banknote, PieChart } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -173,7 +173,7 @@ const betalaUtdelning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "dividend", data: { id: "d-54", name: "Anders Richnau", amount: 150000, year: 2025 } }} />
+                    <Block block={{ rows: [{ icon: "shareholder", title: "Anders Richnau", description: "Utdelning 2025 · Netto 105 000 kr", amount: 150000, status: "Betald", isNew: true }] }} />
                 ),
             },
         ],

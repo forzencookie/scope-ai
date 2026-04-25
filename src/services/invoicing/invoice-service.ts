@@ -1,6 +1,5 @@
 import { createBrowserClient } from '@/lib/database/client'
 import { nullToUndefined } from '@/lib/utils'
-import { generateOCR } from '@/lib/parsers/ocr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
@@ -42,7 +41,7 @@ export type CreateInvoiceParams = {
 
 export type CreatedInvoice = {
     id: string
-    ocrReference: string
+    ocrReference: string | null
     customer: string | null
     email: string | null
     address: string | null
@@ -377,12 +376,9 @@ export const invoiceService = {
         const finalVatAmount = params.vatAmount ?? vatAmount
         const finalTotal = params.amount ?? (finalSubtotal + finalVatAmount)
 
-        // Generate OCR reference (Luhn check digit)
-        const ocrReference = generateOCR(invoiceNumber)
-
         const invoiceData = {
             invoice_number: invoiceNumber,
-            ocr_reference: ocrReference,
+            ocr_reference: null,
             customer_name: params.customer,
             customer_email: params.email || null,
             customer_address: params.address || null,
@@ -422,7 +418,7 @@ export const invoiceService = {
 
         return {
             id: created.invoice_number ?? invoiceNumber,
-            ocrReference,
+            ocrReference: null,
             customer: created.customer_name,
             email: created.customer_email,
             address: created.customer_address,

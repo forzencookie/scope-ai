@@ -7,6 +7,7 @@
 
 import { defineTool } from '../registry'
 import type { Transaction } from '@/types'
+import type { Block, DataRow } from '@/lib/ai/schema'
 
 // Helper to get base URL for API calls
 function getBaseUrl() {
@@ -137,9 +138,25 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
             console.error('[AI Tool] Failed to fetch transactions:', error)
         }
 
+        const booked = transactions.filter(t => t.status === 'Bokförd').length
+        const unbooked = transactions.length - booked
+
+        const block: Block = {
+            title: "Transaktioner",
+            description: transactions.length > 0 ? `${transactions.length} transaktioner${unbooked > 0 ? ` · ${unbooked} obokförda` : ''}` : undefined,
+            rows: transactions.map((t): DataRow => ({
+                icon: "transaction",
+                title: (t as Transaction & { name?: string }).name || (t as Transaction & { description?: string }).description || "Transaktion",
+                amount: Math.abs(Number(t.amount || 0)),
+                timestamp: (t as Transaction & { date?: string; transaction_date?: string }).date || (t as Transaction & { transaction_date?: string }).transaction_date,
+                status: t.status,
+            })),
+        }
+
         return {
             success: true,
             data: transactions,
+            display: block,
             message: transactions.length > 0
                 ? `Hittade ${transactions.length} transaktioner.`
                 : 'Inga transaktioner hittades för den valda perioden.',

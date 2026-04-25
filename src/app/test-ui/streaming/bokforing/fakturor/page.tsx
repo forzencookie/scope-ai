@@ -14,7 +14,7 @@ import { useState } from "react"
 import { FileText, CreditCard, XCircle, Receipt } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -33,13 +33,15 @@ function buildVisaFakturorScript(onOpen: (type: WalkthroughType) => void): SimSc
                 speed: 12,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i1", invoiceNumber: "2026-042", customer: "Acme AB", amount: 37500, status: "sent" } }} />,
-                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i2", invoiceNumber: "2026-041", customer: "TechCorp AB", amount: 25000, status: "overdue" } }} />,
-                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i3", invoiceNumber: "2026-040", customer: "Nordic Design", amount: 25000, status: "sent" } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "invoice", title: "Acme AB",        description: "#2026-042", amount: 37500, status: "Skickad" },
+                        { icon: "invoice", title: "TechCorp AB",    description: "#2026-041", amount: 25000, status: "Förfallen" },
+                        { icon: "invoice", title: "Nordic Design",  description: "#2026-040", amount: 25000, status: "Skickad" },
+                    ]}} />
+                ),
             },
             {
                 type: "stream",
@@ -126,7 +128,7 @@ const skapaFaktura: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i-new", invoiceNumber: "2026-043", customer: "Acme Consulting AB", amount: 62500, status: "draft" } }} />
+                    <Block block={{ rows: [{ icon: "invoice", title: "Acme Consulting AB", description: "#2026-043", amount: 62500, status: "Utkast", isNew: true }] }} />
                 ),
             },
         ],
@@ -193,7 +195,7 @@ const registreraBetalning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-53", verificationNumber: "A-53", date: "2026-04-06", description: "Betalning faktura #2026-042", amount: 37500 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Betalning faktura #2026-042", description: "A-53", amount: 37500, timestamp: "2026-04-06", isNew: true }] }} />
                 ),
             },
         ],
@@ -247,7 +249,7 @@ const makuleraFaktura: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "invoice", data: { id: "i-k001", invoiceNumber: "2026-K001", customer: "Nordic Design", amount: -25000, status: "paid" } }} />
+                    <Block block={{ rows: [{ icon: "invoice", title: "Nordic Design — Kreditnota", description: "#2026-K001", amount: -25000, status: "Makulerad", isNew: true }] }} />
                 ),
             },
         ],

@@ -1,4 +1,3 @@
-import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { accountService } from '../accounting/account-service'

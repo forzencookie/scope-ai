@@ -6,6 +6,9 @@
  */
 
 import { ZodTypeAny } from 'zod'
+import type { Block } from '@/lib/ai/schema'
+import type { SupabaseClient } from '@supabase/supabase-js'
+import type { Database } from '@/types/database'
 
 // Use OpenAI-compatible parameter type instead of JSONSchema7
 // This matches OpenAI's FunctionParameters type
@@ -34,6 +37,8 @@ export interface InteractionContext {
     companyId: string | null
     isConfirmed: boolean
     confirmationId?: string
+    /** Authenticated server Supabase client. Pass to services so they never fall back to browser client. */
+    supabase?: SupabaseClient<Database>
 }
 
 // =============================================================================
@@ -107,12 +112,11 @@ export interface AIToolResult<T = unknown> {
     /** Error message if success is false */
     error?: string
 
-    /** 
-     * @deprecated Use walkthrough blocks (W: protocol) instead.
-     * Display instructions for the frontend.
-     * If present, the AI workspace should render this component.
+    /**
+     * Block to render inline in chat.
+     * If present, the stream parser renders it directly below Scooby's text.
      */
-    display?: AIDisplayInstruction
+    display?: Block | AIDisplayInstruction
 
     /**
      * Navigation instruction.

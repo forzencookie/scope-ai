@@ -15,7 +15,6 @@ export function useChatNavigation() {
             
             navigateToAI({
                 pageName: "Assistent",
-                pageType: "resultatrakning", // fallback
                 initialPrompt: options.prompt,
                 autoSend: true,
                 returnTo: options.returnTo || pathname

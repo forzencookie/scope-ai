@@ -8,11 +8,11 @@
 // Confirmations
 export { ActionCard } from './chat-tools/action-cards/action-card'
 
+// Rows / Blocks
+export { DataRow, type DataRowProps } from './chat-tools/rows/data-row'
+export { Block, type BlockProps } from './chat-tools/rows/block'
 
-
-// Cards
-export { ActivityFeedCard, type ActivityFeedCardProps, type FeedEvent, type FeedAction, type FeedEntity } from './chat-tools/information-cards/activity-feed-card'
-export { MentionPopover, MentionBadge, useMentionItems, type MentionItem, type MentionCategory } from './mention-popover'
+export { MentionPopover, MentionBadge, type MentionItem, type MentionCategory } from './mention-popover'
 
 export * from './mascots'
 export { CardRenderer, type CardRendererProps } from './card-renderer'

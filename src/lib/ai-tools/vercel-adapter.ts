@@ -20,6 +20,7 @@ function makeExecute(t: AITool, context: InteractionContext) {
             userId: context.userId,
             companyId: nullToUndefined(context.companyId),
             confirmationId: context.confirmationId,
+            supabase: context.supabase,
         })
 
         return {

@@ -12,7 +12,7 @@ import { useState, type ComponentProps } from "react"
 import { AlertTriangle, FileText } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -49,14 +49,16 @@ function buildVisaVerifikationerScript(onOpen: (type: WalkthroughType) => void):
                 speed: 12,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v1", verificationNumber: "A-47", date: "2026-03-28", description: "Kontorshyra april", amount: 8500 } }} />,
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v2", verificationNumber: "A-46", date: "2026-03-25", description: "Kjell & Company", amount: 2499 } }} />,
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v3", verificationNumber: "A-45", date: "2026-03-22", description: "Postnord — Porto", amount: 89 } }} />,
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v4", verificationNumber: "A-44", date: "2026-03-18", description: "Spotify Business", amount: 169 } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "verification", title: "Kontorshyra april", description: "A-47", amount: 8500, timestamp: "2026-03-28" },
+                        { icon: "verification", title: "Kjell & Company",   description: "A-46", amount: 2499, timestamp: "2026-03-25" },
+                        { icon: "verification", title: "Postnord — Porto",  description: "A-45", amount: 89,   timestamp: "2026-03-22" },
+                        { icon: "verification", title: "Spotify Business",  description: "A-44", amount: 169,  timestamp: "2026-03-18" },
+                    ]}} />
+                ),
             },
             {
                 type: "stream",
@@ -147,7 +149,7 @@ const makuleraVerifikation: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-48", verificationNumber: "A-48", date: "2026-03-28", description: "Rättelsepost — makulering A-42", amount: 1250 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Rättelsepost — makulering A-42", description: "A-48", amount: 1250, timestamp: "2026-03-28", isNew: true }] }} />
                 ),
             },
         ],

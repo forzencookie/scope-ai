@@ -14,7 +14,7 @@ import { Coins, Send, TrendingUp } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -73,13 +73,15 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
                     ),
                 },
                 {
-                    type: "card-list",
+                    type: "card",
                     delay: 200,
-                    items: [
-                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "review" } }} />,
-                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "review" } }} />,
-                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "review" } }} />,
-                    ],
+                    content: (
+                        <Block block={{ rows: [
+                            { icon: "payslip", title: "Anna Lindberg", description: "April 2026", amount: 28392, status: "Granskning" },
+                            { icon: "payslip", title: "Johan Berg",    description: "April 2026", amount: 31250, status: "Granskning" },
+                            { icon: "payslip", title: "Sara Ek",       description: "April 2026", amount: 25108, status: "Granskning" },
+                        ]}} />
+                    ),
                 },
                 {
                     type: "card",
@@ -118,13 +120,15 @@ function buildKorLonerABScript(onOpen: (type: WalkthroughType) => void): SimScri
                     speed: 11,
                 },
                 {
-                    type: "card-list",
+                    type: "card",
                     delay: 200,
-                    items: [
-                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p1", employeeName: "Anna Lindberg", period: "April 2026", netAmount: 28392, status: "paid" } }} />,
-                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p2", employeeName: "Johan Berg", period: "April 2026", netAmount: 31250, status: "paid" } }} />,
-                        <InfoCardRenderer card={{ cardType: "payroll", data: { id: "p3", employeeName: "Sara Ek", period: "April 2026", netAmount: 25108, status: "paid" } }} />,
-                    ],
+                    content: (
+                        <Block block={{ rows: [
+                            { icon: "payslip", title: "Anna Lindberg", description: "April 2026", amount: 28392, status: "Betald" },
+                            { icon: "payslip", title: "Johan Berg",    description: "April 2026", amount: 31250, status: "Betald" },
+                            { icon: "payslip", title: "Sara Ek",       description: "April 2026", amount: 25108, status: "Betald" },
+                        ]}} />
+                    ),
                 },
                 {
                     type: "card",

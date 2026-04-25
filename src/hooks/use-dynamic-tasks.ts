@@ -90,7 +90,7 @@ export function useDynamicTasks() {
         if (!company?.name || !companyType) return []
 
         const newGoals: DynamicGoal[] = []
-        const totalTransactions = transactions?.length || 0
+        const totalTransactions = totalTransactionsCount || 0
 
         // =====================================================================
         // 1. Bokföring — only if there are actual transactions to work with

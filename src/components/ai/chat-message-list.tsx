@@ -9,18 +9,12 @@ import ReactMarkdown from "react-markdown"
 import remarkGfm from "remark-gfm"
 import Link from "next/link"
 import { ActionCard } from "@/components/ai"
-import { ActivityFeedCard } from "@/components/ai/chat-tools/information-cards/activity-feed-card"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
+import { BuyCreditsPrompt, type BuyCreditsPromptProps } from "@/components/ai/cards/BuyCreditsCard"
 import { MentionBadge } from "@/components/ai/mention-popover"
-import { normalizeAIDisplay } from "@/lib/ai/schema"
-import type {
-    TaskChecklist as TaskChecklistData,
-    BenefitsTable as BenefitsTableData,
-} from "@/lib/ai/schema"
-import type { Message, MessageDisplay } from "@/lib/agents/chat-types"
-import type { InfoCardData } from "@/components/ai/chat-tools/information-cards"
+import type { Message } from "@/lib/agents/chat-types"
 import { useState } from "react"
 
 // Attachment preview with image error fallback
@@ -191,66 +185,24 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                     </div>
                 )}
 
-                {/* Display Cards - Only show on mobile, desktop uses dialog overlay */}
-                {message.display && (
-                    <div className="my-2 md:hidden">
-                        {(() => {
-                            const normalized = normalizeAIDisplay(message.display.type, message.display.data)
-                            if (!normalized) return null
-
-                            switch (message.display.type) {
-                                case 'TaskChecklist':
-                                    const t = normalized as TaskChecklistData
-                                    return <ActivityFeedCard
-                                        title={t.title}
-                                        events={t.tasks.map(task => ({
-                                            id: task.id,
-                                            action: task.completed ? "done" as const : "pending" as const,
-                                            entityType: "check" as const,
-                                            title: task.label,
-                                        }))}
-                                    />
-                                case 'BenefitsTable':
-                                    const b = normalized as BenefitsTableData
-                                    return (
-                                        <div className="rounded-lg border border-border p-4 bg-muted/30">
-                                            <h4 className="text-sm font-medium mb-2">Tillgängliga Förmåner</h4>
-                                            <ul className="space-y-2">
-                                                {b.benefits.map((bi) => (
-                                                    <li key={bi.id || Math.random()} className="text-xs flex justify-between items-center">
-                                                        <span>{bi.name}</span>
-                                                        <span className="text-muted-foreground">{bi.category}</span>
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        </div>
-                                    )
-
-                                default:
-                                    return null
-                            }
-                        })()}
+                {/* Block — universal inline data rows, always visible */}
+                {message.display?.type === 'Block' && (
+                    <div className="my-2">
+                        <Block block={message.display.data} />
                     </div>
                 )}
 
-                {/* Inline-only cards (always visible, no overlay) */}
+                {/* Audit card — always visible, no overlay */}
                 {message.display?.type === 'BalanceAuditCard' && (
                     <div className="my-2">
                         <AuditCard audit={message.display.data.audit} />
                     </div>
                 )}
 
-                {/* Inline result cards — compact cards for AI action results */}
-                {message.display?.type === 'InfoCard' && (
+                {/* Credits prompt — shown when user hits budget limit */}
+                {message.display?.type === 'BuyCreditsPrompt' && (
                     <div className="my-2">
-                        <InfoCardRenderer card={message.display.data} />
-                    </div>
-                )}
-                {message.display?.type === 'InfoCards' && (
-                    <div className="my-2 space-y-1.5">
-                        {(message.display.data.cards || []).map((card, i) => (
-                            <InfoCardRenderer key={i} card={card} />
-                        ))}
+                        <BuyCreditsPrompt packages={(message.display.data.packages as BuyCreditsPromptProps['packages']) ?? []} />
                     </div>
                 )}
 

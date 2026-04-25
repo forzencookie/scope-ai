@@ -1,4 +1,4 @@
-import { createBrowserClient } from "@/lib/database/client"
+import { createServerClient } from "@/lib/database/server"
 
 export interface TaxCalendarItem {
   id: string
@@ -10,7 +10,7 @@ export interface TaxCalendarItem {
 
 export const taxCalendarService = {
   async getPendingDeadlines(limit = 10): Promise<TaxCalendarItem[]> {
-    const supabase = createBrowserClient()
+    const supabase = await createServerClient()
     const { data, error } = await supabase
       .from("tax_calendar")
       .select("id, title, due_date, deadline_type, status")

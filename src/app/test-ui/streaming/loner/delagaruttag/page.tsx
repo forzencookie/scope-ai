@@ -4,7 +4,7 @@ import { useState, type ComponentProps } from "react"
 import { Wallet, ArrowUpCircle } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -80,7 +80,7 @@ const registreraUttag: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-51", verificationNumber: "A-51", description: "Privat uttag Erik Svensson", date: "2026-04-06", amount: 30000 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Privat uttag Erik Svensson", description: "A-51", amount: 30000, timestamp: "2026-04-06", isNew: true }] }} />
                 ),
             },
         ],
@@ -199,7 +199,7 @@ const registreraInsattning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "verification", data: { id: "v-52", verificationNumber: "A-52", description: "Privat insättning Erik Svensson", date: "2026-04-06", amount: 20000 } }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Privat insättning Erik Svensson", description: "A-52", amount: 20000, timestamp: "2026-04-06", isNew: true }] }} />
                 ),
             },
         ],

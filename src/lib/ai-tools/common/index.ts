@@ -12,7 +12,6 @@ export * from './company'
 export * from './usage'
 export * from './settings'
 export * from './events'
-export * from './statistics'
 export * from './memory'
 export * from './reconcile-status'
 export * from './summary'
@@ -27,7 +26,6 @@ import { companyTools } from './company'
 import { usageTools } from './usage'
 import { settingsTools } from './settings'
 import { eventTools } from './events'
-import { companyStatisticsTools } from './statistics'
 import { memoryTools } from './memory'
 import { reconcileTools } from './reconcile-status'
 import { summaryTools } from './summary'
@@ -43,7 +41,6 @@ export const commonTools = [
     ...usageTools,
     ...settingsTools,
     ...eventTools,
-    ...companyStatisticsTools,
     ...memoryTools,
     ...reconcileTools,
     ...summaryTools,

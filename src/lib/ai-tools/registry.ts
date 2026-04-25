@@ -144,12 +144,14 @@ class AIToolRegistry {
             companyId?: string
             skipConfirmation?: boolean
             confirmationId?: string
+            supabase?: InteractionContext['supabase']
         }
     ): Promise<AIToolResult<T>> {
         const context: InteractionContext = {
             userId: options?.userId || 'system',
             companyId: options?.companyId || '',
-            isConfirmed: false
+            isConfirmed: false,
+            supabase: options?.supabase,
         }
         const tool = this.get(name)
 

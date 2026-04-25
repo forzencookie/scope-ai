@@ -1,11 +1,10 @@
 /**
- * Server-side audit logging utility.
- *
- * Inserts into the events table for server-side operations
- * (API routes, services) where the client-side hooks are unavailable.
+ * Server-side audit logging — inserts into the events table.
+ * Called from services (verification-service, correction-service, etc.)
+ * which run in server context inside API route handlers.
  */
 
-import { createBrowserClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/server'
 import type { Json } from '@/types/database'
 
 export type AuditAction =
@@ -33,13 +32,11 @@ export async function logAuditEntry(params: {
     metadata?: Record<string, unknown>
 }): Promise<void> {
     try {
-        const supabase = createBrowserClient()
-        const [{ data: { user } }, { data: company }] = await Promise.all([
-            supabase.auth.getUser(),
-            supabase.from('companies').select('id').single(),
-        ])
+        const supabase = await createServerClient()
+        const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 
+        const { data: company } = await supabase.from('companies').select('id').single()
         const userName = user.user_metadata?.full_name || user.email?.split('@')[0] || 'System'
 
         await supabase.from('events').insert({
@@ -62,7 +59,7 @@ export async function logAuditEntry(params: {
                 : null,
         })
     } catch (error) {
-        // Audit logging should never break the main operation
+        // Audit logging must never break the main operation
         console.error('[audit] Failed to log event:', error)
     }
 }

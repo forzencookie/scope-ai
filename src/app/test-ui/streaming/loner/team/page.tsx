@@ -13,7 +13,7 @@ import { useState, type ComponentProps } from "react"
 import { UserPlus, Pencil, Users } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -89,7 +89,7 @@ const laggTillAnstalld: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e-lisa", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />
+                    <Block block={{ rows: [{ icon: "payslip", title: "Lisa Nilsson", description: "Sedan apr 2026", amount: 26427, status: "Granskning", isNew: true }] }} />
                 ),
             },
         ],
@@ -122,14 +122,16 @@ function buildVisaTeametScript(onOpen: (type: WalkthroughType) => void): SimScri
                 speed: 12,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28392, status: "paid" } }} />,
-                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e2", employeeName: "Johan Berg", period: "Sedan mar 2024", netAmount: 31250, status: "paid" } }} />,
-                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e3", employeeName: "Sara Ek", period: "Sedan aug 2025", netAmount: 25108, status: "paid" } }} />,
-                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e4", employeeName: "Lisa Nilsson", period: "Sedan apr 2026", netAmount: 26427, status: "review" } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "employee", title: "Anna Lindberg", description: "Sedan jan 2024", amount: 28392, status: "Betald" },
+                        { icon: "employee", title: "Johan Berg",    description: "Sedan mar 2024", amount: 31250, status: "Betald" },
+                        { icon: "employee", title: "Sara Ek",       description: "Sedan aug 2025", amount: 25108, status: "Betald" },
+                        { icon: "employee", title: "Lisa Nilsson",  description: "Sedan apr 2026", amount: 26427, status: "Granskning" },
+                    ]}} />
+                ),
             },
             {
                 type: "stream",
@@ -207,7 +209,7 @@ const uppdateraAnstalld: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "payroll", data: { id: "e1", employeeName: "Anna Lindberg", period: "Sedan jan 2024", netAmount: 28567, status: "review" } }} />
+                    <Block block={{ rows: [{ icon: "employee", title: "Anna Lindberg", description: "Sedan jan 2024 · Solna", amount: 28567, status: "Granskning" }] }} />
                 ),
             },
         ],

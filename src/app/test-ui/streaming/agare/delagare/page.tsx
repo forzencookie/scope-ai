@@ -12,7 +12,7 @@ import { useState, type ComponentProps } from "react"
 import { Users } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -136,12 +136,14 @@ const uppdateraAndelar: SimScript = [
                 speed: 12,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "p1", name: "Erik Svensson", sharePercent: 50, equity: 195000, withdrawals: 110000 } }} />,
-                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "p2", name: "Maria Johansson", sharePercent: 50, equity: 130000, withdrawals: 45000 } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "partner", title: "Erik Svensson",    description: "EK 195 000 kr · Uttag 110 000 kr", status: "50%" },
+                        { icon: "partner", title: "Maria Johansson",  description: "EK 130 000 kr · Uttag 45 000 kr",  status: "50%" },
+                    ]}} />
+                ),
             },
         ],
     },

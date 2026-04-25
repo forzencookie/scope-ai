@@ -12,7 +12,7 @@ import { useState, type ComponentProps } from "react"
 import { BookMarked } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -134,12 +134,14 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                 speed: 11,
             },
             {
-                type: "card-list",
+                type: "card",
                 delay: 200,
-                items: [
-                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "sh1", name: "Anders Richnau — 700 A-aktier (70%)", sharePercent: 70 } }} />,
-                    <InfoCardRenderer card={{ cardType: "partner", data: { id: "sh2", name: "Lisa Nilsson — 100 A-aktier (10%)", sharePercent: 10 } }} />,
-                ],
+                content: (
+                    <Block block={{ rows: [
+                        { icon: "shareholder", title: "Anders Richnau",  description: "700 A-aktier · 8 000 röster", status: "70%" },
+                        { icon: "shareholder", title: "Lisa Nilsson",    description: "100 A-aktier · 1 000 röster", status: "10%", isNew: true },
+                    ]}} />
+                ),
             },
         ],
     },

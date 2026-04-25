@@ -4,7 +4,7 @@ import { useState, type ComponentProps } from "react"
 import { Landmark, FileText } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -89,7 +89,7 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "report", data: { id: "r1", reportType: "Stämmoprotokoll", title: "Ordinarie bolagsstämma 2026", period: "Räkenskapsår 2025" } }} />
+                    <Block block={{ rows: [{ icon: "report", title: "Ordinarie bolagsstämma 2026", description: "Räkenskapsår 2025 · PDF genererad", status: "Signering", isNew: true }] }} />
                 ),
             },
             {
@@ -169,7 +169,7 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "dividend", data: { id: "d1", name: "Anders Richnau", amount: 150000, year: 2025 } }} />
+                    <Block block={{ rows: [{ icon: "shareholder", title: "Anders Richnau", description: "Utdelning 2025 · Konto 2091 → 2898", amount: 150000, status: "Beslutad", isNew: true }] }} />
                 ),
             },
         ],

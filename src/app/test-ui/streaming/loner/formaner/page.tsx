@@ -4,7 +4,7 @@ import { useState, type ComponentProps } from "react"
 import { Gift, Car } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
+import { Block } from "@/components/ai/chat-tools/rows/block"
 import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
@@ -78,7 +78,7 @@ const tilldelaFriskvard: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "benefit", data: { id: "b1", employeeName: "Anna Lindberg", benefitType: "Friskvårdsbidrag", amount: 5000, amountUnit: "år", taxable: false } }} />
+                    <Block block={{ rows: [{ icon: "benefit", title: "Anna Lindberg", description: "Friskvårdsbidrag · Skattefritt", amount: 5000, status: "OK", isNew: true }] }} />
                 ),
             },
         ],
@@ -191,7 +191,7 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <InfoCardRenderer card={{ cardType: "benefit", data: { id: "b2", employeeName: "Sara Ek", benefitType: "Tjänstebil (Tesla Model 3)", amount: 3800, amountUnit: "mån", taxable: true } }} />
+                    <Block block={{ rows: [{ icon: "benefit", title: "Sara Ek", description: "Tjänstebil Tesla Model 3 · Förmånsvärde", amount: 3800, status: "Förmånsvärde", isNew: true }] }} />
                 ),
             },
         ],

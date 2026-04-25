@@ -4,21 +4,14 @@
  */
 
 import type { MentionItem } from '@/components/ai/mention-popover'
-import type {
-    TaskChecklist,
-    BenefitsTable,
-} from '@/lib/ai/schema'
-
+import type { Block } from '@/lib/ai/schema'
 import type { AuditResult } from '@/components/ai/chat-tools/information-cards/audit-card'
-import type { InfoCardData } from '@/components/ai/chat-tools/information-cards'
 
 // Display card data types - strictly typed discriminated union
 export type MessageDisplay =
-    | { type: 'TaskChecklist'; data: TaskChecklist }
-    | { type: 'BenefitsTable'; data: BenefitsTable }
+    | { type: 'Block'; data: Block }
     | { type: 'BalanceAuditCard'; component?: string; data: { audit?: AuditResult } & Record<string, unknown> }
-    | { type: 'InfoCard'; data: InfoCardData }
-    | { type: 'InfoCards'; data: { cards: InfoCardData[] } }
+    | { type: 'BuyCreditsPrompt'; data: Record<string, unknown> }
 
 export interface Message {
     id: string
