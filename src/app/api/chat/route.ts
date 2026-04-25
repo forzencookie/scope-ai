@@ -25,8 +25,6 @@ import { getContextWindow } from '@/lib/ai/model-registry'
 import fs from 'fs'
 import path from 'path'
 import { initializeAITools } from '@/lib/ai-tools'
-import { createAgentContext } from '@/lib/agents/types'
-import type { AgentContext } from '@/lib/agents/types'
 import { selectModel, getModelId } from '@/lib/agents/scope-brain/model-selector'
 import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
 import { streamText } from 'ai'
@@ -47,7 +45,15 @@ const COMPANY_TYPE_NAMES: Record<string, string> = {
     FORENING: 'Förening',
 }
 
-function buildSystemPrompt(context: AgentContext): string {
+interface PromptContext {
+    companyId: string | null
+    companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' | null
+    hasEmployees?: boolean
+    mentions?: Array<{ type: string; label: string; aiContext?: string }>
+    attachments?: Array<{ name: string; type: string; hasImage: boolean }>
+}
+
+function buildSystemPrompt(ctx: PromptContext): string {
     const parts: string[] = []
 
     const mainPath = path.join(PROMPT_DIR, 'main.md')
@@ -55,14 +61,14 @@ function buildSystemPrompt(context: AgentContext): string {
     if (main) parts.push(main)
 
     const today = new Date().toISOString().slice(0, 10)
-    if (!context.companyId || !context.companyType) {
+    if (!ctx.companyId || !ctx.companyType) {
         parts.push(
             `## Context\n\nDatum: **${today}**\n\n⚠️ Ingen företagsprofil kopplad. Du kan svara på allmänna frågor men inte bokföra, fakturera eller köra löner. När användaren vill göra något som kräver företagsuppgifter — fråga efter företagsnamn, organisationsnummer och företagsform och spara med update_company_info.`
         )
     } else {
-        const typeName = COMPANY_TYPE_NAMES[context.companyType] ?? context.companyType
-        const employeeLine = context.hasEmployees !== undefined
-            ? `\nHar anställda: **${context.hasEmployees ? 'Ja' : 'Nej'}**`
+        const typeName = COMPANY_TYPE_NAMES[ctx.companyType] ?? ctx.companyType
+        const employeeLine = ctx.hasEmployees !== undefined
+            ? `\nHar anställda: **${ctx.hasEmployees ? 'Ja' : 'Nej'}**`
             : ''
         parts.push(
             `## Context\n\nDatum: **${today}**\nFöretagstyp: **${typeName}**${employeeLine}\n\nAnvänd get_company_info när du behöver specifika företagsuppgifter.`
@@ -70,16 +76,14 @@ function buildSystemPrompt(context: AgentContext): string {
     }
 
     const msgLines: string[] = []
-    if (context.sharedMemory?.mentions && Array.isArray(context.sharedMemory.mentions)) {
-        const mentionContexts = (context.sharedMemory.mentions as Array<{ type: string; label: string; aiContext?: string; walkthroughType?: string }>)
-            .filter(m => m.aiContext)
-            .map(m => m.aiContext as string)
+    if (ctx.mentions && ctx.mentions.length > 0) {
+        const mentionContexts = ctx.mentions.filter(m => m.aiContext).map(m => m.aiContext as string)
         if (mentionContexts.length > 0) {
             msgLines.push(`**Förvalt intent (mention):**\n${mentionContexts.join('\n\n')}`)
         }
     }
-    if (context.sharedMemory?.attachments) {
-        msgLines.push(`**Bilagor:** ${JSON.stringify(context.sharedMemory.attachments)}`)
+    if (ctx.attachments && ctx.attachments.length > 0) {
+        msgLines.push(`**Bilagor:** ${JSON.stringify(ctx.attachments)}`)
     }
     if (msgLines.length > 0) parts.push(`## Message Context\n\n${msgLines.join('\n')}`)
 
@@ -320,44 +324,24 @@ export async function POST(request: NextRequest) {
 
         ensureToolsInitialized()
 
-        const context = createAgentContext({
-            userId,
+        const systemPrompt = buildSystemPrompt({
             companyId,
             companyType,
             hasEmployees,
-            locale: 'sv',
-            conversationId,
-            messages: messages.map(m => {
-                const role: 'user' | 'assistant' = m.role === 'user' ? 'user' : 'assistant'
-                return {
-                    id: crypto.randomUUID(),
-                    role,
-                    content: extractMessageContent(m),
-                    timestamp: new Date(),
-                }
-            }),
-        })
-
-        // Lightweight per-message context (no DB calls)
-        if (attachments && attachments.length > 0) {
-            context.sharedMemory.attachments = attachments.map(a => ({
+            mentions: mentions ?? undefined,
+            attachments: attachments?.map(a => ({
                 name: a.name,
                 type: a.type,
                 hasImage: a.type.startsWith('image/'),
-            }))
-        }
+            })),
+        })
 
-        if (mentions && mentions.length > 0) {
-            context.sharedMemory.mentions = mentions
-        }
-
-        const systemPrompt = buildSystemPrompt(context)
         const deferredConfig = createDeferredToolConfig({
-            userId: context.userId,
-            companyId: context.companyId,
+            userId,
+            companyId,
             isConfirmed: !!confirmationId,
             confirmationId,
-            companyType: context.companyType ?? undefined,
+            companyType: companyType ?? undefined,
         })
 
         const modelConfig = selectModel(latestContent)
