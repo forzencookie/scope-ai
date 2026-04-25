@@ -304,7 +304,7 @@ export function CompanyProvider({
     if (feature === "momsdeklaration" && current && !current.hasMomsRegistration) {
       return false
     }
-    if ((feature === "lonebesked" || feature === "agi") && current && !current.hasEmployees) {
+    if ((feature === "lonebesked" || feature === "agi" || feature === "formaner") && current && !current.hasEmployees) {
       if (companyType !== "ab") return false
     }
     return hasFeature(companyType, feature)
