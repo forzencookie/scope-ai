@@ -12,8 +12,8 @@ import type {
     AssignBenefitInput,
     BenefitTaxImpact,
     BenefitCategory,
-} from '@/lib/ai/tool-types'
-import { formanerCatalog } from '@/lib/ai/reference-data'
+} from '@/types/benefits'
+import { formanerCatalog } from '@/data/formaner-catalog'
 import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================

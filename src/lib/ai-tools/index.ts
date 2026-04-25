@@ -52,10 +52,6 @@ export * from './common/settings'
 export * from './common/events'
 export * from './common/statistics'
 
-// Planning (Roadmaps)
-export { planningTools } from './planning'
-export * from './planning/roadmap'
-
 // ============================================================================
 // Registration
 // ============================================================================
@@ -67,7 +63,6 @@ import { lonerTools } from './loner'
 import { skattTools } from './skatt'
 import { parterTools } from './parter'
 import { commonTools } from './common'
-import { planningTools } from './planning'
 
 /**
  * Initialize all tools by registering them with the registry.
@@ -80,7 +75,6 @@ export function initializeAITools(): void {
         ...skattTools,
         ...parterTools,
         ...commonTools,
-        ...planningTools,
     ]
 
     for (const tool of allTools as AITool[]) {
@@ -93,7 +87,6 @@ export function initializeAITools(): void {
     console.log(`  - Skatt: ${skattTools.length} tools`)
     console.log(`  - Parter: ${parterTools.length} tools`)
     console.log(`  - Common: ${commonTools.length} tools`)
-    console.log(`  - Planning: ${planningTools.length} tools`)
 }
 
 

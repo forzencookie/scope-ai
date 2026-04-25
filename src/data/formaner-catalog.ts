@@ -7,7 +7,7 @@
 
 import type {
     FormanCatalogItem,
-} from '@/lib/ai/tool-types'
+} from '@/types/benefits'
 
 // =============================================================================
 // Förmåner Catalog (All Swedish Employee Benefits)

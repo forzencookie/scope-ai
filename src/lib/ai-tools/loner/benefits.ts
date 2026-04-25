@@ -5,7 +5,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import type { FormanCatalogItem } from '../../ai/tool-types'
+import type { FormanCatalogItem } from '@/types/benefits'
 import {
     listAvailableBenefits,
     getBenefitDetails,
