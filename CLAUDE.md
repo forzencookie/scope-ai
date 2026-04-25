@@ -4,10 +4,10 @@ AI-first Swedish accounting platform. Users talk to Scooby (AI assistant), Scoob
 
 ## Session Protocol
 
-1. Read your workspace — your memory folder is your workspace. Start with `state.md`.
-2. Run `git log --oneline -20` — see what changed since last session.
-3. Cross-reference workspace claims against actual codebase — workspace is context, code is truth.
-4. Brief King: what was done, what's next, any observations or ideas. Don't wait to be asked.
+1. Run `git log --oneline -20` — this is the source of truth for what happened. Not notes, not memory.
+2. Run `git status` — see what's uncommitted. Flag it immediately.
+3. Read MEMORY.md and relevant domain files — cross-reference against code. Code wins.
+4. Brief King: what was done, what's uncommitted, what's next. Don't wait to be asked.
 
 ## Your Workspace
 
@@ -17,10 +17,6 @@ This is your workspace. You maintain it. You keep it fresh. Everything that matt
 
 ### The Index
 - `MEMORY.md` — auto-loaded into every conversation. Pointers only. Never put content here. Lines after 200 are truncated so keep entries to one line each.
-
-### Session Files
-- `state.md` — handoff context. What was done, what's next, blockers, open questions. Written from the notepad when context is cleared. No code, no fixes here — those live in domain files and improvements/.
-- `notepad.md` — running notes during the session. Updated continuously as work happens. When context gets long, ping King → write state.md + domain files from notepad → King clears context. Wipe at the start of every new session.
 
 ### Foundation Files
 - `agent_rules.md` — how you operate: session protocol, agentic behaviours, what makes you useful
@@ -58,14 +54,11 @@ Known issues found during scans. One file per area. Check before working in that
 Behavioural rules from King — what to do, what not to do, and why. Read these when you're unsure how to approach something.
 
 ### What Goes Where
-| Information type | Where it goes |
-|---|---|
-| What happened this session, what's next | `state.md` |
-| Scratch notes during a session | `notepad.md` |
-| Permanent knowledge about a domain | `domain_*.md` |
-| Known bugs and issues | `improvements/` |
-| How a feature should work | `flows/` |
-| King's behavioural guidance | `feedback_*.md` |
+- **What happened / what's next** — `git log` is the record. Domain files describe current state.
+- **Permanent knowledge about a domain** — `domain_*.md`
+- **Known bugs and issues** — `improvements/`
+- **How a feature should work** — `flows/`
+- **King's behavioural guidance** — `feedback_*.md`
 
 ## Code Rules (Non-Negotiable)
 
@@ -79,11 +72,9 @@ Behavioural rules from King — what to do, what not to do, and why. Read these 
 
 ## Behavioral Rules (Non-Negotiable)
 
-- **Relay the Plan First:** If you understand my intent, always relay your plan to me and get my approval before writing any code. This is how we work from now on.
-- **Consult before coding:** Propose approach and wait for King to confirm direction before writing any code. Never go straight to implementation.
-- **Consult Opus proactively:** For non-trivial UX, design, or architecture decisions — suggest consulting Opus before deciding. Don't wait to be asked.
-- **Session wrap-up:** Take notes in `notepad.md` continuously during the session. When the context window is getting long, ping King. Then write `state.md` and any domain/improvements files from the notepad. King clears context. Next session: wipe notepad, read state.md, start fresh. Do NOT wait until asked — proactively flag when context is getting polluted.
-- **No markdown tables in chat text:** Tables break in narrow columns. Use `- **Label:** value` lines instead. Always.
+- **Propose before coding:** Relay the plan, get King's approval, then write code. Never go straight to implementation.
+- **Git as session memory:** Run `git log` + `git status` at session start and end. Mid-session: recommend checking git whenever context feels stale or work has been ongoing for a while.
+- **Proactive wrap-up:** When context gets long, ping King — suggest clearing. Update domain files before clearing. Don't wait to be asked.
 - **Proactive commits:** When uncommitted changes pile up (~10+ files or spanning multiple domains), recommend committing. Suggest splitting when changes cover separate concerns. Don't nag on small edits — just nudge at natural stopping points.
 
 ## Who You Work For
