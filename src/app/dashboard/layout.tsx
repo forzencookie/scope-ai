@@ -73,11 +73,8 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
     if (isLoading || shouldRedirect) {
         return (
             <div className="h-screen w-screen flex items-center justify-center bg-background">
-                <div className="flex flex-col items-center gap-4">
-                    <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center animate-pulse">
-                        <ScopeAILogo className="h-8 w-8 text-primary" />
-                    </div>
-                    <p className="text-sm text-muted-foreground animate-pulse">Säkrar din session...</p>
+                <div className="h-12 w-12 rounded-xl bg-primary/10 flex items-center justify-center animate-pulse">
+                    <ScopeAILogo className="h-8 w-8 text-primary" />
                 </div>
             </div>
         )
