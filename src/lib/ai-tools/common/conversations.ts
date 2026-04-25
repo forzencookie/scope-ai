@@ -10,7 +10,7 @@
  */
 
 import { defineTool } from '../registry'
-import { createBrowserClient } from '@/lib/database/client'
+import { createServerClient } from '@/lib/database/server'
 
 // =============================================================================
 // Search Conversations Tool
@@ -68,7 +68,7 @@ export const searchConversationsTool = defineTool<SearchConversationsParams, Con
             }
         }
 
-        const supabase = createBrowserClient()
+        const supabase = await createServerClient()
         const limit = Math.min(params.limit ?? 10, 20)
 
         let query = supabase
@@ -180,7 +180,7 @@ export const readConversationTool = defineTool<ReadConversationParams, Conversat
             }
         }
 
-        const supabase = createBrowserClient()
+        const supabase = await createServerClient()
 
         // Verify ownership
         const { data: conv } = await supabase
