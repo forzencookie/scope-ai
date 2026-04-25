@@ -61,8 +61,11 @@ function buildSystemPrompt(context: AgentContext): string {
         )
     } else {
         const typeName = COMPANY_TYPE_NAMES[context.companyType] ?? context.companyType
+        const employeeLine = context.hasEmployees !== undefined
+            ? `\nHar anställda: **${context.hasEmployees ? 'Ja' : 'Nej'}**`
+            : ''
         parts.push(
-            `## Context\n\nDatum: **${today}**\nFöretagstyp: **${typeName}**\n\nAnvänd get_company_info när du behöver specifika företagsuppgifter.`
+            `## Context\n\nDatum: **${today}**\nFöretagstyp: **${typeName}**${employeeLine}\n\nAnvänd get_company_info när du behöver specifika företagsuppgifter.`
         )
     }
 
@@ -295,19 +298,21 @@ export async function POST(request: NextRequest) {
             })
         }
 
-        // Company type — fast path, one field only.
+        // Fetch minimal company fields for context injection.
         // All other company data is fetched via get_company_info tool on demand.
         let companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' | null = null
+        let hasEmployees: boolean | undefined
 
         if (companyId) {
             const { data: company } = await supabase
                 .from('companies')
-                .select('company_type')
+                .select('company_type, has_employees')
                 .eq('id', companyId)
                 .single()
 
             if (company) {
                 companyType = parseCompanyType(company.company_type)
+                hasEmployees = company.has_employees ?? false
             }
         }
 
@@ -322,6 +327,7 @@ export async function POST(request: NextRequest) {
             userId,
             companyId,
             companyType,
+            hasEmployees,
             locale: 'sv',
             conversationId,
             messages: messages.map(m => {

@@ -105,6 +105,7 @@ export interface AgentContext {
     companyId: string | null
     companyType: 'AB' | 'EF' | 'HB' | 'KB' | 'FORENING' | null
     companyName?: string
+    hasEmployees?: boolean
     
     // Conversation
     conversationId: string
@@ -134,6 +135,7 @@ export function createAgentContext(config: {
     companyId: string | null
     companyType: AgentContext['companyType']
     companyName?: string
+    hasEmployees?: boolean
     locale?: 'sv' | 'en'
     conversationId?: string
     messages?: Array<{ id: string; role: 'user' | 'assistant'; content: string; timestamp: Date }>
@@ -154,6 +156,7 @@ export function createAgentContext(config: {
         companyId: config.companyId,
         companyType: config.companyType,
         companyName: config.companyName,
+        hasEmployees: config.hasEmployees,
         conversationId: config.conversationId || crypto.randomUUID(),
         conversationHistory,
         originalMessage: config.messages?.[config.messages.length - 1]?.content || '',
