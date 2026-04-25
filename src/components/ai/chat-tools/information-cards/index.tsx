@@ -74,8 +74,8 @@ export interface InlineInvoiceData {
 
 export function InlineInvoiceCard({ data, isNew }: { data: InlineInvoiceData; isNew?: boolean }) {
     const router = useRouter()
-    const statusVariant = data.status === "paid" ? "success" : data.status === "overdue" ? "error" : "warning"
-    const statusLabel = data.status === "paid" ? "Betald" : data.status === "sent" ? "Skickad" : "Utkast"
+    const statusVariant = data.status === "Betald" ? "success" : data.status === "Förfallen" ? "error" : data.status === "Skickad" ? "warning" : "neutral"
+    const statusLabel = data.status || "Utkast"
 
     return (
         <CardShell
@@ -144,6 +144,7 @@ export interface InlineVerificationData {
     date?: string
     description?: string
     amount?: number
+    status?: string
 }
 
 export function InlineVerificationCard({ data, isNew }: { data: InlineVerificationData; isNew?: boolean }) {
@@ -168,7 +169,7 @@ export function InlineVerificationCard({ data, isNew }: { data: InlineVerificati
                         {data.amount != null && ` · ${formatCurrency(data.amount)}`}
                     </p>
                 </div>
-                <StatusBadge status="Bokförd" variant="success" />
+                <StatusBadge status={data.status || "Bokförd"} variant="success" />
             </div>
         </CardShell>
     )
@@ -185,8 +186,8 @@ export interface InlinePayrollData {
 
 export function InlinePayrollCard({ data, isNew }: { data: InlinePayrollData; isNew?: boolean }) {
     const router = useRouter()
-    const statusVariant = data.status === "paid" ? "success" : data.status === "review" ? "warning" : "neutral"
-    const statusLabel = data.status === "paid" ? "Utbetald" : data.status === "review" ? "Granskas" : "Utkast"
+    const statusVariant = data.status === "Skickad" ? "success" : data.status === "Godkänd" ? "warning" : "neutral"
+    const statusLabel = data.status || "Utkast"
 
     return (
         <CardShell
@@ -267,7 +268,7 @@ export function InlineReceiptCard({ data, isNew }: { data: InlineReceiptData; is
                         {data.amount != null && ` · ${formatCurrency(data.amount)}`}
                     </p>
                 </div>
-                <StatusBadge status="Mottaget" variant="success" />
+                <StatusBadge status={data.status || "Mottaget"} variant={data.status === "Bokförd" ? "success" : data.status === "Avvisad" ? "error" : "warning"} />
             </div>
         </CardShell>
     )

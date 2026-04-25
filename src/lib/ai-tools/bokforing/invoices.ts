@@ -8,9 +8,31 @@
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoicing/invoice-service'
 
-// Helper to get base URL for API calls
 function getBaseUrl() {
     return process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'
+}
+
+// Normalize whatever the DB stores (English/Swedish/mixed) to Swedish display strings
+function normalizeInvoiceStatus(raw: string | null | undefined): string {
+    switch ((raw ?? '').toLowerCase()) {
+        case 'draft':       return 'Utkast'
+        case 'sent':        return 'Skickad'
+        case 'paid':        return 'Betald'
+        case 'overdue':     return 'Förfallen'
+        case 'cancelled':   return 'Makulerad'
+        default:            return raw || 'Utkast'
+    }
+}
+
+function normalizeSupplierStatus(raw: string | null | undefined): string {
+    switch ((raw ?? '').toLowerCase()) {
+        case 'mottagen':    return 'Mottagen'
+        case 'attesterad':
+        case 'godkänd':     return 'Godkänd'
+        case 'betald':      return 'Betald'
+        case 'förfallen':   return 'Förfallen'
+        default:            return raw || 'Mottagen'
+    }
 }
 
 // =============================================================================
@@ -51,7 +73,7 @@ export interface CreatedInvoice {
     totalAmount: number
     description: string
     dueDate: string
-    status: 'draft'
+    status: 'Utkast'
 }
 
 export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>({
@@ -135,7 +157,7 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
                         totalAmount,
                         description: params.description,
                         dueDate,
-                        status: 'draft' as const,
+                        status: 'Utkast' as const,
                     },
                     message: `Faktura skapad för ${params.customerName}. Totalt: ${totalAmount.toLocaleString('sv-SE')} kr. Sparad som utkast.`,
                 }
@@ -153,7 +175,7 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
             totalAmount,
             description: params.description,
             dueDate,
-            status: 'draft',
+            status: 'Utkast' as const,
         }
 
         const confirmationRequest: AIConfirmationRequest = {
@@ -180,7 +202,7 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
 
 export interface GetInvoicesParams {
     limit?: number
-    status?: 'draft' | 'sent' | 'paid' | 'overdue'
+    status?: 'Utkast' | 'Skickad' | 'Betald' | 'Förfallen'
     customer?: string
 }
 
@@ -196,16 +218,17 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
         type: 'object',
         properties: {
             limit: { type: 'number', description: 'Max antal fakturor (standard: 10)' },
-            status: { type: 'string', enum: ['draft', 'sent', 'paid', 'overdue'], description: 'Filtrera på status' },
+            status: { type: 'string', enum: ['Utkast', 'Skickad', 'Betald', 'Förfallen'], description: 'Filtrera på status' },
             customer: { type: 'string', description: 'Filtrera på kundnamn' },
         },
     },
     execute: async (params) => {
         try {
-            // Fetch real data from invoice-service
+            // Map Swedish UI status back to DB format for querying
+            const statusMap: Record<string, string> = { 'Utkast': 'draft', 'Skickad': 'sent', 'Betald': 'paid', 'Förfallen': 'overdue' }
             const { invoices: customerInvoices, totalCount } = await invoiceService.getCustomerInvoices({
                 limit: params.limit || 10,
-                status: params.status,
+                status: params.status ? statusMap[params.status] : undefined,
             })
 
             // Filter by customer name if provided
@@ -227,7 +250,7 @@ export const getCustomerInvoicesTool = defineTool<GetInvoicesParams, Invoice[]>(
                 totalAmount: i.totalAmount,
                 issueDate: i.issueDate,
                 dueDate: i.dueDate,
-                status: i.status,
+                status: normalizeInvoiceStatus(i.status),
             }))
 
             const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
@@ -295,7 +318,7 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Inv
                 totalAmount: i.totalAmount,
                 issueDate: i.invoiceDate,
                 dueDate: i.dueDate,
-                status: i.status,
+                status: normalizeSupplierStatus(i.status),
             }))
 
             const totalAmount = invoices.reduce((sum, i) => sum + (i.totalAmount || 0), 0)
