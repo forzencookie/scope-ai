@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { createCheckoutSession, PRICE_IDS, getOrCreateCustomer, getStripe } from '@/lib/stripe'
+import { createCheckoutSession, PRICE_IDS, getOrCreateCustomer, getStripe } from '@/lib/payments/stripe'
 
 /**
  * POST /api/stripe/checkout

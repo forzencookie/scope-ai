@@ -19,7 +19,7 @@ import {
     checkUsageLimits,
     consumeTokens,
     authorizeModel
-} from '@/lib/model-auth'
+} from '@/lib/ai/model-auth'
 import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { getContextWindow } from '@/lib/ai/model-registry'
 import fs from 'fs'
@@ -70,9 +70,6 @@ function buildSystemPrompt(context: AgentContext): string {
     }
 
     const msgLines: string[] = []
-    if (context.sharedMemory?.currentPage) {
-        msgLines.push(`**Aktuell sida:** ${context.sharedMemory.currentPage}`)
-    }
     if (context.sharedMemory?.mentions && Array.isArray(context.sharedMemory.mentions)) {
         const mentionContexts = (context.sharedMemory.mentions as Array<{ type: string; label: string; aiContext?: string; walkthroughType?: string }>)
             .filter(m => m.aiContext)

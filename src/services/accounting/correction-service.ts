@@ -11,7 +11,7 @@
 
 import { verificationService } from './verification-service'
 import type { VerificationEntry, Verification } from '@/types'
-import { logAuditEntry } from '@/lib/audit'
+import { logAuditEntry } from '@/lib/database/audit'
 
 // =============================================================================
 // Types

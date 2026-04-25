@@ -7,7 +7,7 @@
 
 import { defineTool } from '../registry'
 import { usageService } from '@/services/common/usage-service'
-import type { AIUsageStatus } from '@/lib/ai-schema'
+import type { AIUsageStatus } from '@/lib/ai/schema'
 
 // =============================================================================
 // Check Usage Tool
@@ -151,7 +151,7 @@ Om användaren valt ett paket, returnera checkout-länken.`,
   allowedCompanyTypes: [],
   category: 'read',
   execute: async (params, _context) => {
-    const { CREDIT_PACKAGES } = await import('@/lib/subscription')
+    const { CREDIT_PACKAGES } = await import('@/lib/payments/subscription')
 
     const packages = CREDIT_PACKAGES.map(pkg => ({
       tokens: pkg.tokens,

@@ -5,7 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { EmbeddedCheckoutProvider, EmbeddedCheckout } from '@stripe/react-stripe-js'
 import { ArrowLeft, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui'
-import { getStripeClient } from '@/lib/stripe-client'
+import { getStripeClient } from '@/lib/payments/stripe-client'
 
 function CheckoutContent() {
     const searchParams = useSearchParams()

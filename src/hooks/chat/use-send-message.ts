@@ -5,9 +5,9 @@
  */
 
 import { useState, useCallback } from 'react'
-import type { Message, Conversation, MessageDisplay } from '@/lib/chat-types'
+import type { Message, Conversation, MessageDisplay } from '@/lib/agents/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
-import { generateTitle, fileToBase64, fileToDataUrl } from '@/lib/chat-utils'
+import { generateTitle, fileToBase64, fileToDataUrl } from '@/lib/agents/chat-utils'
 import { useModel } from '@/providers/model-provider'
 import { useStreamParser } from './use-stream-parser'
 

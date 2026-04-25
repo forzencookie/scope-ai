@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { getStripe } from '@/lib/stripe'
+import { getStripe } from '@/lib/payments/stripe'
 import { nullToUndefined } from '@/lib/utils'
 import { createServerClient } from '@/lib/database/server'
 

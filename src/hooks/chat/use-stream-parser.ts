@@ -6,8 +6,8 @@
 
 import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { Message, Conversation, type MessageDisplay } from '@/lib/chat-types'
-import { normalizeAIDisplay } from '@/lib/ai-schema'
+import { Message, Conversation, type MessageDisplay } from '@/lib/agents/chat-types'
+import { normalizeAIDisplay } from '@/lib/ai/schema'
 
 
 /** Extract the AI's prose comment, stripping markdown/emoji formatting from tool output */

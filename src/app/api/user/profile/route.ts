@@ -9,7 +9,7 @@
 import { NextRequest } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
 import { createServerClient } from '@/lib/database/server'
-import { isPaidTier, type SubscriptionTier } from '@/lib/subscription'
+import { isPaidTier, type SubscriptionTier } from '@/lib/payments/subscription'
 import type { Database } from '@/types/database'
 
 const ALLOWED_UPDATES = ['full_name', 'avatar_emoji'] as const

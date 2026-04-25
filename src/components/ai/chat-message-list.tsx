@@ -14,12 +14,12 @@ import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
 import { InfoCardRenderer } from "@/components/ai/chat-tools/information-cards"
 import { MentionBadge } from "@/components/ai/mention-popover"
-import { normalizeAIDisplay } from "@/lib/ai-schema"
+import { normalizeAIDisplay } from "@/lib/ai/schema"
 import type {
     TaskChecklist as TaskChecklistData,
     BenefitsTable as BenefitsTableData,
-} from "@/lib/ai-schema"
-import type { Message, MessageDisplay } from "@/lib/chat-types"
+} from "@/lib/ai/schema"
+import type { Message, MessageDisplay } from "@/lib/agents/chat-types"
 import type { InfoCardData } from "@/components/ai/chat-tools/information-cards"
 import { useState } from "react"
 

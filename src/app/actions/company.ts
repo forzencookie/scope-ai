@@ -2,7 +2,7 @@
 
 import { requireAuthContext } from "@/lib/database/auth-server"
 import { updateCompany as updateCompanyInDb } from "@/services/company/company-service.server"
-import { CompanySettingsSchema } from "@/lib/ai-schema"
+import { CompanySettingsSchema } from "@/lib/ai/schema"
 import { revalidatePath } from "next/cache"
 
 /**

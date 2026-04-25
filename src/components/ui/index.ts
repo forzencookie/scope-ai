@@ -35,6 +35,8 @@ export * from "./display/status-badge"
 export * from "./display/alert-message"
 export { ScopeAILogo } from "./display/logo"
 
+// Settings components
+export * from "@/components/settings"
+
 // App
-export * from "./app/settings-items"
 export * from "./app/cookie-banner"

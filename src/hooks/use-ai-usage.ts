@@ -11,7 +11,7 @@ import { useCallback, useMemo } from "react"
 import { useQuery, useQueryClient } from "@tanstack/react-query"
 import { useAuth } from "./use-auth"
 import { useSubscription } from "./use-subscription"
-import { getModelMultiplier } from "@/lib/subscription"
+import { getModelMultiplier } from "@/lib/payments/subscription"
 import { usageService, type UsageDetails } from "@/services/common/usage-service"
 
 // Query key for AI usage - shared across all useAIUsage calls

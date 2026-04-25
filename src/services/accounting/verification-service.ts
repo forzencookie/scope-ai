@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@/lib/database/client'
 import type { Json, Database } from '@/types/database'
 import type { Verification, VerificationEntry, VerificationAttachment } from '@/types'
-import { logAuditEntry } from '@/lib/audit'
+import { logAuditEntry } from '@/lib/database/audit'
 import { nullToUndefined } from '@/lib/utils'
 import { isValidAccount } from '@/lib/bookkeeping/utils'
 import type { SupabaseClient } from '@supabase/supabase-js'

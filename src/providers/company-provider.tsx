@@ -9,7 +9,7 @@ import { createContext, useContext, useState, useEffect, useCallback, useMemo, u
 import type { ReactNode } from "react"
 import type { CompanyType, FeatureKey } from "@/lib/company-types"
 import { hasFeature, companyTypes, getCompanyTypeFullName } from "@/lib/company-types"
-import type { SubscriptionTier } from "@/lib/subscription"
+import type { SubscriptionTier } from "@/lib/payments/subscription"
 import { getMyCompany } from "@/services/company/company-service"
 import { updateCompanyAction } from "@/app/actions/company"
 import { nullToUndefined } from "@/lib/utils"

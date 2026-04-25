@@ -11,7 +11,7 @@ import {
   DialogTitle,
 } from "@/components/ui"
 import { Button } from "@/components/ui"
-import { CREDIT_PACKAGES } from "@/lib/subscription"
+import { CREDIT_PACKAGES } from "@/lib/payments/subscription"
 import { formatTokens } from "@/hooks/use-ai-usage"
 import { cn } from "@/lib/utils"
 

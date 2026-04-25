@@ -6,7 +6,7 @@ import { useChatContext, useChatSessionContext } from "@/providers/chat-provider
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { BuyCreditsDialog } from "@/components/billing"
-import { getGreeting } from "@/lib/chat-utils"
+import { getGreeting } from "@/lib/agents/chat-utils"
 import { Button } from "@/components/ui"
 import { ArrowLeft, PawPrint } from "lucide-react"
 import { cn } from "@/lib/utils"

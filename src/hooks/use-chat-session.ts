@@ -13,9 +13,9 @@
 import { useRef, useMemo, useCallback } from 'react'
 import { useChat as useVercelChat } from '@ai-sdk/react'
 import { DefaultChatTransport, type UIMessage, type UIDataTypes, type UITools, type UIMessagePart } from 'ai'
-import type { Message as AppMessage } from '@/lib/chat-types'
+import type { Message as AppMessage } from '@/lib/agents/chat-types'
 import type { MentionItem } from '@/components/ai/mention-popover'
-import { fileToBase64 } from '@/lib/chat-utils'
+import { fileToBase64 } from '@/lib/agents/chat-utils'
 import { type InfoCardType } from '@/components/ai/chat-tools/information-cards'
 
 // =============================================================================

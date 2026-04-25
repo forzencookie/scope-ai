@@ -18,7 +18,7 @@ import {
 import { UserTeamSwitcher } from "@/components/layout/user-team-switcher"
 import { Box } from "lucide-react"
 import { cn } from "@/lib/utils"
-import type { Conversation } from "@/lib/chat-types"
+import type { Conversation } from "@/lib/agents/chat-types"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui"
 import { SearchDialog } from "@/components/layout/search-dialog"
 import { useDynamicTasks, type DynamicTask } from "@/hooks/use-dynamic-tasks"

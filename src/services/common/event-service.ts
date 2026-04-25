@@ -302,7 +302,7 @@ export async function emitAuthorityEvent(
 // Activity Summary (merged from activity-service)
 // ============================================
 
-import type { ActivitySummary } from '@/lib/ai-schema'
+import type { ActivitySummary } from '@/lib/ai/schema'
 
 export async function getActivitySummary(companyId: string, days: number = 30): Promise<ActivitySummary> {
     const supabase = createBrowserClient()

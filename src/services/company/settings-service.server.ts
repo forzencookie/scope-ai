@@ -7,7 +7,7 @@
 
 import 'server-only'
 import { createServerClient } from '@/lib/database/server'
-import { getMonthlyUsage, checkUsageLimits } from '@/lib/model-auth'
+import { getMonthlyUsage, checkUsageLimits } from '@/lib/ai/model-auth'
 import { 
     UserProfile, 
     SubscriptionStatus 

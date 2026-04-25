@@ -7,7 +7,7 @@
 
 import { defineTool } from '../registry'
 import { accountService } from '@/services/accounting/account-service'
-import type { IncomeAudit } from '@/lib/ai-schema'
+import type { IncomeAudit } from '@/lib/ai/schema'
 
 // =============================================================================
 // Income Statement Audit Tool

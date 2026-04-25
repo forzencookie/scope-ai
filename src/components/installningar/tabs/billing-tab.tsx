@@ -8,7 +8,7 @@ import { Progress } from "@/components/ui"
 import { text } from "@/lib/translations"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useAIUsage } from "@/hooks/use-ai-usage"
-import { CREDIT_PACKAGES } from "@/lib/subscription"
+import { CREDIT_PACKAGES } from "@/lib/payments/subscription"
 import {
     SettingsPageHeader,
     SettingsSection,

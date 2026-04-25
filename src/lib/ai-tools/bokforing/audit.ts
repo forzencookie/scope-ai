@@ -7,7 +7,7 @@
 
 import { defineTool } from '../registry'
 import { accountService } from '@/services/accounting/account-service'
-import type { BalanceAudit } from '@/lib/ai-schema'
+import type { BalanceAudit } from '@/lib/ai/schema'
 
 // =============================================================================
 // Balance Sheet Audit Tool

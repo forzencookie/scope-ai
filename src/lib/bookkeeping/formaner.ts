@@ -5,15 +5,15 @@
  * Includes catalog of all Swedish benefits and assignment tracking.
  */
 
-import { createBrowserClient, isSupabaseConfigured } from './database/client'
+import { createBrowserClient, isSupabaseConfigured } from '@/lib/database/client'
 import type {
     FormanCatalogItem,
     EmployeeBenefit,
     AssignBenefitInput,
     BenefitTaxImpact,
     BenefitCategory,
-} from './ai/tool-types'
-import { formanerCatalog } from './ai/reference-data'
+} from '@/lib/ai/tool-types'
+import { formanerCatalog } from '@/lib/ai/reference-data'
 import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================

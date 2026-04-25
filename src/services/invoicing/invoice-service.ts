@@ -1,6 +1,6 @@
 import { createBrowserClient } from '@/lib/database/client'
 import { nullToUndefined } from '@/lib/utils'
-import { generateOCR } from '@/lib/ocr'
+import { generateOCR } from '@/lib/parsers/ocr'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 

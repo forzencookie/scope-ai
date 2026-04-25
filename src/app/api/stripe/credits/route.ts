@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { getOrCreateCustomer, getStripe } from '@/lib/stripe'
-import { CREDIT_PACKAGES } from '@/lib/subscription'
+import { getOrCreateCustomer, getStripe } from '@/lib/payments/stripe'
+import { CREDIT_PACKAGES } from '@/lib/payments/subscription'
 
 /**
  * POST /api/stripe/credits

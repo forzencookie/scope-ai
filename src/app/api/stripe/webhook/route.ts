@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { headers } from 'next/headers'
-import { stripe, getTierFromPriceId, updateUserTier, getUserIdFromCustomer, addUserCredits } from '@/lib/stripe'
+import { stripe, getTierFromPriceId, updateUserTier, getUserIdFromCustomer, addUserCredits } from '@/lib/payments/stripe'
 import Stripe from 'stripe'
 
 /**

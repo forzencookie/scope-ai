@@ -22,7 +22,7 @@ import { useAIUsage } from "@/hooks/use-ai-usage"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useModel } from "@/providers/model-provider"
 import type { MentionItem } from "@/components/ai/mention-popover"
-import type { Conversation } from "@/lib/chat-types"
+import type { Conversation } from "@/lib/agents/chat-types"
 import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
 
 /** Quick action trigger metadata */

@@ -22,7 +22,7 @@ import {
   TIER_DISPLAY_NAMES,
   TIER_COLORS,
   getUpgradePrompt,
-} from "@/lib/subscription"
+} from "@/lib/payments/subscription"
 
 // Query key for subscription data - shared across all useSubscription calls
 export const subscriptionQueryKey = ["subscription", "profile"] as const

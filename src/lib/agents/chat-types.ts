@@ -7,7 +7,7 @@ import type { MentionItem } from '@/components/ai/mention-popover'
 import type {
     TaskChecklist,
     BenefitsTable,
-} from './ai-schema'
+} from '@/lib/ai/schema'
 
 import type { AuditResult } from '@/components/ai/chat-tools/information-cards/audit-card'
 import type { InfoCardData } from '@/components/ai/chat-tools/information-cards'

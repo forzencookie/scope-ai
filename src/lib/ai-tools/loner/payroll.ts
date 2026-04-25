@@ -8,7 +8,7 @@ import { defineTool, AIConfirmationRequest } from '../registry'
 import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll/payroll-service'
 import { companyService } from '@/services/company/company-service.server'
 import { taxService } from '@/services/tax/tax-service'
-import { getEmployeeBenefits } from '@/lib/formaner'
+import { getEmployeeBenefits } from '@/lib/bookkeeping/formaner'
 import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '@/lib/bookkeeping'
 import { verificationService } from '@/services/accounting/verification-service'
 

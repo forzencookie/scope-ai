@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { createPortalSession } from '@/lib/stripe'
+import { createPortalSession } from '@/lib/payments/stripe'
 import { createServerClient } from '@/lib/database/server'
 
 /**

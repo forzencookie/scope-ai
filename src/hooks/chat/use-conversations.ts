@@ -13,7 +13,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import type { Conversation, Message } from '@/lib/chat-types'
+import type { Conversation, Message } from '@/lib/agents/chat-types'
 
 // Query key for conversations - shared across all useConversations calls
 export const conversationsQueryKey = ["chat", "conversations"] as const

@@ -1,6 +1,6 @@
 import { createBrowserClient } from '@/lib/database/client'
-import { TIER_TOKEN_LIMITS, getModelMultiplier } from '@/lib/subscription'
-import type { AIUsageStatus } from '@/lib/ai-schema'
+import { TIER_TOKEN_LIMITS, getModelMultiplier } from '@/lib/payments/subscription'
+import type { AIUsageStatus } from '@/lib/ai/schema'
 
 export const USAGE_THRESHOLDS = {
     moderate: 50,

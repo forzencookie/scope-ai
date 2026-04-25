@@ -8,8 +8,8 @@
 
 // TODO: Run `npx supabase gen types typescript` after applying migration
 
-import { createServerClient } from './database/server'
-import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './ai/models'
+import { createServerClient } from '@/lib/database/server'
+import { getModelById, DEFAULT_MODEL_ID, AI_MODELS, type ModelTier, type AIModel } from './models'
 
 // ============================================================================
 // Types
@@ -283,7 +283,7 @@ export async function consumeTokens(
     const limits = await checkUsageLimits(userId)
     
     // Apply model multiplier for effective cost
-    const { getModelMultiplier } = await import('./subscription')
+    const { getModelMultiplier } = await import('@/lib/payments/subscription')
     const multiplier = getModelMultiplier(modelId)
     const effectiveTokens = Math.ceil(tokensToConsume * multiplier)
 

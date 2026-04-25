@@ -12,7 +12,7 @@
 
 import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
-import { UserMemorySchema, type UserMemory, type MemoryCategory } from '@/lib/ai-schema'
+import { UserMemorySchema, type UserMemory, type MemoryCategory } from '@/lib/ai/schema'
 
 // =============================================================================
 // Types
