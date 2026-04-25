@@ -4,7 +4,6 @@ import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
 import { InfoCardRenderer, type InfoCardType } from "@/components/ai/chat-tools/information-cards"
 import { ActivityFeedCard } from "@/components/ai/chat-tools/information-cards/activity-feed-card"
-import { SummaryCard } from "@/components/ai/chat-tools/information-cards/summary-card"
 import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
 import { BuyCreditsCheckout } from "@/components/ai/cards/BuyCreditsCard"
 import { AIUsageCard } from "@/components/ai/cards/AIUsageCard"
@@ -70,53 +69,6 @@ export default function InformationCardsPage() {
                                         { id: "3", action: "error",   entityType: "check", title: "Faktura #2026-039 ej bokförd", description: "15 000 kr. Skickad men saknar verifikation.", timestamp: null },
                                         { id: "4", action: "pending", entityType: "check", title: "Periodisering försäkring",    description: "9 månader kvar att periodisera av 12 000 kr", timestamp: null },
                                         { id: "5", action: "done",    entityType: "check", title: "Semesterskuld uppdaterad",    description: null, timestamp: null },
-                                    ]}
-                                />
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Summary cards */}
-                <div className="border-t pt-12">
-                    <h2 className="text-xl font-bold tracking-tight mb-1">Sammanfattning</h2>
-                    <p className="text-sm text-muted-foreground mb-8">
-                        Beräkningsresultat och kompakta listor.
-                    </p>
-
-                    <div className="space-y-8">
-                        <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Beräkning — Lön</h3>
-                                <span className="text-xs text-muted-foreground">Nyckeltal med markerat resultat</span>
-                            </div>
-                            <div className="max-w-lg">
-                                <SummaryCard
-                                    title="Löneberäkning — mars 2026"
-                                    variant="calculation"
-                                    items={[
-                                        { label: "Bruttolön",             value: 42000 },
-                                        { label: "Kommunalskatt (32.4%)", value: -13608 },
-                                        { label: "Nettolön",              value: 28392, highlight: true },
-                                        { label: "Arbetsgivaravgift (31.42%)", value: 13196 },
-                                    ]}
-                                />
-                            </div>
-                        </div>
-
-                        <div className="space-y-2">
-                            <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Lista — Senaste kvitton</h3>
-                                <span className="text-xs text-muted-foreground">Kompakt entitetslista</span>
-                            </div>
-                            <div className="max-w-lg">
-                                <SummaryCard
-                                    title="Senaste kvitton"
-                                    variant="list"
-                                    items={[
-                                        { label: "Clas Ohlson",  secondary: "2026-03-25", value: 349 },
-                                        { label: "Postnord",     secondary: "2026-03-22", value: 89 },
-                                        { label: "Webhallen",    secondary: "2026-03-18", value: 4999 },
                                     ]}
                                 />
                             </div>

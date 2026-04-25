@@ -1,7 +1,6 @@
 import type { ComponentType } from "react"
 
 import { ActivityFeedCard } from "./chat-tools/information-cards/activity-feed-card"
-import { SummaryCard } from "./chat-tools/information-cards/summary-card"
 import { AuditCard } from "./chat-tools/information-cards/audit-card"
 import { AIUsageCard } from "./cards/AIUsageCard"
 import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
@@ -15,14 +14,7 @@ function card(c: ComponentType<never>): CardComponent {
 export const CARD_REGISTRY: Record<string, CardComponent> = {
     // Removed legacy cards: invoicecard, invoice
 
-    summarycard:       card(SummaryCard),
-    summary:           card(SummaryCard),
-    calculation:       card(SummaryCard),
-    salarycalculation: card(SummaryCard),
-    k10summary:        card(SummaryCard),
-    genericlist:       card(SummaryCard),
-    list:              card(SummaryCard),
-
+    // Removed: SummaryCard — superseded by Block/DataRow system
     // Removed legacy cards: employeepreview, employee, newemployee
 
     taskchecklist:  card(ActivityFeedCard),
