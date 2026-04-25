@@ -33,7 +33,7 @@ export * from "./display/card"
 export * from "./display/chart"
 export * from "./display/status-badge"
 export * from "./display/alert-message"
-export * from "./display/scope-ai-logo"
+export { ScopeAILogo } from "./display/logo"
 
 // App
 export * from "./app/settings-items"
