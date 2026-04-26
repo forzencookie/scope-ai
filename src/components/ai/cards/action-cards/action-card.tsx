@@ -3,7 +3,7 @@
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui"
 import { AlertTriangle, Check, type LucideIcon } from "lucide-react"
-import type { AIConfirmationRequest } from "@/lib/ai-tools/types"
+import type { AIConfirmationRequest } from "@/lib/ai/tools/types"
 import { accentStyles, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "./tokens"
 
 export type { ConfirmationAccent, CompletedAction }

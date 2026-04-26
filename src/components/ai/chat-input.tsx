@@ -4,7 +4,7 @@ import { useRef, useState, useMemo, useEffect, useCallback } from "react"
 import { Button } from "@/components/ui"
 import { Textarea } from "@/components/ui"
 import { cn } from "@/lib/utils"
-import { MentionPopover, MentionBadge, type MentionItem } from "@/components/ai/mention-popover"
+import { SkillPicker, SkillBadge, type SkillItem } from "@/components/ai/skill-picker"
 import { ModelSelector } from "@/components/ai/model-selector"
 import {
     Paperclip,
@@ -43,10 +43,10 @@ interface ChatInputProps {
     files: File[]
     /** Called when files are added/removed */
     onFilesChange: (files: File[]) => void
-    /** Current mentions */
-    mentions: MentionItem[]
-    /** Called when mentions change */
-    onMentionsChange: (mentions: MentionItem[]) => void
+    /** Current skill selections */
+    mentions: SkillItem[]
+    /** Called when skill selections change */
+    onMentionsChange: (mentions: SkillItem[]) => void
     /** Optional action trigger */
     actionTrigger?: ActionTriggerDisplay | null
     /** Called when action trigger changes */
@@ -357,7 +357,7 @@ export function ChatInput({
                         )}
                         
                         {mentions.map((item, index) => (
-                            <MentionBadge
+                            <SkillBadge
                                 key={item.id}
                                 item={item}
                                 onRemove={() => onMentionsChange(mentions.filter((_, i) => i !== index))}
@@ -466,17 +466,15 @@ export function ChatInput({
                     </div>
                 </div>
 
-                {/* Mention popover */}
-                <MentionPopover
+                {/* Skill picker */}
+                <SkillPicker
                     open={isMentionOpen}
                     onOpenChange={setIsMentionOpen}
                     onSelect={(item) => {
-                        // Add page mention with context
                         onMentionsChange([...mentions, item])
                         setIsMentionOpen(false)
                         textareaRef.current?.focus()
                     }}
-                    searchQuery=""
                     anchorRef={mentionAnchorRef}
                 />
             </div>

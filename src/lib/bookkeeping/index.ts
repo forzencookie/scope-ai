@@ -28,12 +28,6 @@
  *   console.error('Validation errors:', result.errors)
  * }
  * 
- * @example
- * // Find matching template for AI categorization
- * import { findMatchingTemplate } from '@/lib/bookkeeping'
- * 
- * const template = findMatchingTemplate('Spotify subscription', -99)
- * // Returns the 'software' template
  */
 
 // ============================================================================
@@ -44,7 +38,6 @@ export type {
   JournalEntry,
   JournalEntryLine,
   ValidationResult,
-  TransactionTemplate,
   SwedishVatRate,
 } from './types'
 
@@ -110,18 +103,6 @@ export {
   type SalaryEntryParams,
   type SalaryComponents,
 } from './entries'
-
-// ============================================================================
-// Templates
-// ============================================================================
-
-export {
-  transactionTemplates,
-  findMatchingTemplate,
-  getTemplatesByCategory,
-  getExpenseTemplates,
-  getIncomeTemplates,
-} from './templates'
 
 // ============================================================================
 // Utilities

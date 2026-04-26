@@ -24,8 +24,8 @@ import { DEFAULT_MODEL_ID } from '@/lib/ai/models'
 import { getContextWindow } from '@/lib/ai/model-registry'
 import fs from 'fs'
 import path from 'path'
-import { initializeAITools } from '@/lib/ai-tools'
-import { createDeferredToolConfig } from '@/lib/ai-tools/vercel-adapter'
+import { initializeAITools } from '@/lib/ai/tools'
+import { createDeferredToolConfig } from '@/lib/ai/tools/vercel-adapter'
 import { streamText } from 'ai'
 import { openai } from '@ai-sdk/openai'
 
@@ -34,7 +34,7 @@ import { openai } from '@ai-sdk/openai'
 // Skills load on demand via read_skill. Domain tools via request_tools.
 // =============================================================================
 
-const PROMPT_DIR = path.join(process.cwd(), 'src', 'lib', 'agents', 'scope-brain', 'prompt')
+const PROMPT_DIR = path.join(process.cwd(), 'src', 'prompts')
 
 const COMPANY_TYPE_NAMES: Record<string, string> = {
     AB: 'Aktiebolag (AB)',

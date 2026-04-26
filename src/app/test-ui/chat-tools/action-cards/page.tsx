@@ -8,10 +8,10 @@ import {
     Lock, Trash2, Settings, Users, Calculator,
     Gift, Gavel, Landmark, Package, TrendingDown, Send, RefreshCw, XCircle, Check
 } from "lucide-react"
-import { ActionConfirmCard, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { EntityUpdateCard } from "@/components/ai/chat-tools/action-cards/entity-update-card"
-import { ChecklistConfirmCard } from "@/components/ai/chat-tools/action-cards/checklist-confirm-card"
-import { BatchBookingCard } from "@/components/ai/chat-tools/action-cards/batch-booking-card"
+import { ActionConfirmCard, completedActionConfig, type ConfirmationAccent, type CompletedAction } from "@/components/ai/cards/action-cards/action-confirm-card"
+import { EntityUpdateCard } from "@/components/ai/cards/action-cards/entity-update-card"
+import { ChecklistConfirmCard } from "@/components/ai/cards/action-cards/checklist-confirm-card"
+import { BatchBookingCard } from "@/components/ai/cards/action-cards/batch-booking-card"
 import { Button } from "@/components/ui"
 import { formatCurrency } from "@/lib/utils"
 import type { LucideIcon } from "lucide-react"

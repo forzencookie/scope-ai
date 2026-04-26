@@ -14,35 +14,35 @@ export { aiToolRegistry, defineTool } from './registry'
 // Domain Exports
 // ============================================================================
 
-// Bokföring (Accounting)
-export { bokforingTools } from './bokforing'
-export * from './bokforing/transactions'
-export * from './bokforing/invoices'
-export * from './bokforing/receipts'
-export * from './bokforing/reports'
-export * from './bokforing/inventarier'
-export * from './bokforing/verifications'
-export * from './bokforing/accounts'
+// Bookkeeping (Accounting)
+export { bokforingTools } from './bookkeeping'
+export * from './bookkeeping/transactions'
+export * from './bookkeeping/invoices'
+export * from './bookkeeping/receipts'
+export * from './bookkeeping/reports'
+export * from './bookkeeping/inventarier'
+export * from './bookkeeping/verifications'
+export * from './bookkeeping/accounts'
 
-// Löner (Payroll)
-export { lonerTools } from './loner'
-export * from './loner/payroll'
-export * from './loner/benefits'
-export * from './loner/owner-payroll'
+// Payroll
+export { lonerTools } from './payroll'
+export * from './payroll/payroll'
+export * from './payroll/benefits'
+export * from './payroll/owner-payroll'
 
-// Skatt (Tax)
-export { skattTools } from './skatt'
-export * from './skatt/vat'
-export * from './skatt/k10'
-export * from './skatt/periodiseringsfonder'
-export * from './skatt/investments'
+// Tax
+export { skattTools } from './tax'
+export * from './tax/vat'
+export * from './tax/k10'
+export * from './tax/periodiseringsfonder'
+export * from './tax/investments'
 
-// Parter (Partners/Shareholders)
-export { parterTools } from './parter'
-export * from './parter/shareholders'
-export * from './parter/partners'
-export * from './parter/compliance'
-export * from './parter/board'
+// Ownership (Partners/Shareholders)
+export { parterTools } from './ownership'
+export * from './ownership/shareholders'
+export * from './ownership/partners'
+export * from './ownership/compliance'
+export * from './ownership/board'
 
 // Common (Navigation, Company, Settings, Events, Statistics)
 export { commonTools } from './common'
@@ -57,10 +57,10 @@ export * from './common/events'
 
 import { aiToolRegistry } from './registry'
 import type { AITool } from './types'
-import { bokforingTools } from './bokforing'
-import { lonerTools } from './loner'
-import { skattTools } from './skatt'
-import { parterTools } from './parter'
+import { bokforingTools } from './bookkeeping'
+import { lonerTools } from './payroll'
+import { skattTools } from './tax'
+import { parterTools } from './ownership'
 import { commonTools } from './common'
 
 /**
@@ -81,11 +81,9 @@ export function initializeAITools(): void {
     }
 
     console.log(`[AI Tools] Registered ${aiToolRegistry.getAll().length} tools`)
-    console.log(`  - Bokföring: ${bokforingTools.length} tools`)
-    console.log(`  - Löner: ${lonerTools.length} tools`)
-    console.log(`  - Skatt: ${skattTools.length} tools`)
-    console.log(`  - Parter: ${parterTools.length} tools`)
+    console.log(`  - Bookkeeping: ${bokforingTools.length} tools`)
+    console.log(`  - Payroll: ${lonerTools.length} tools`)
+    console.log(`  - Tax: ${skattTools.length} tools`)
+    console.log(`  - Ownership: ${parterTools.length} tools`)
     console.log(`  - Common: ${commonTools.length} tools`)
 }
-
-

@@ -10,11 +10,11 @@ import remarkGfm from "remark-gfm"
 import Link from "next/link"
 import { ActionCard } from "@/components/ai"
 import { AiProcessingState } from "@/components/shared/ai-processing-state"
-import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
-import { Block } from "@/components/ai/chat-tools/rows/block"
+import { AuditCard } from "@/components/ai/cards/information-cards/audit-card"
+import { Block } from "@/components/ai/cards/rows/block"
 import { BuyCreditsPrompt, type BuyCreditsPromptProps } from "@/components/ai/cards/BuyCreditsCard"
-import { MentionBadge } from "@/components/ai/mention-popover"
-import type { Message } from "@/lib/agents/chat-types"
+import { SkillBadge } from "@/components/ai/skill-picker"
+import type { Message } from "@/lib/chat/chat-types"
 import { useState } from "react"
 
 // Attachment preview with image error fallback
@@ -266,7 +266,7 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                             {message.mentions && message.mentions.length > 0 && (
                                 <div className="flex flex-wrap gap-2 justify-end">
                                     {message.mentions.map((mention) => (
-                                        <MentionBadge
+                                        <SkillBadge
                                             key={mention.id || mention.label}
                                             item={mention}
                                         />

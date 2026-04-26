@@ -1,5 +1,5 @@
 
-import { AITool, InteractionContext } from "@/lib/ai-tools/types"
+import { AITool, InteractionContext } from "@/lib/ai/tools/types"
 import { taxService } from '@/services/tax/tax-service'
 
 export const registerEmployeeTool: AITool = {

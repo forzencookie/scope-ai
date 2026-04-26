@@ -486,8 +486,96 @@ export const shareholderService = {
             .from('partners')
             .select('*')
             .order('created_at', { ascending: false })
-        
+
         if (error) throw error
         return data || []
-    }
+    },
+
+    /**
+     * Add a new partner to an HB/KB company
+     */
+    async addPartner({
+        name,
+        personalNumber,
+        ownershipPercent,
+        capitalContribution,
+        email,
+        partnerType = 'general',
+    }: {
+        name: string
+        personalNumber: string
+        ownershipPercent: number
+        capitalContribution: number
+        email?: string
+        partnerType?: string
+    }) {
+        const supabase = createBrowserClient()
+
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single()
+        ])
+
+        if (!user || !company) throw new Error('Ej inloggad eller företag saknas.')
+
+        const { data, error } = await supabase
+            .from('partners')
+            .insert({
+                company_id: company.id,
+                user_id: user.id,
+                name,
+                personal_number: personalNumber,
+                ownership_percentage: ownershipPercent,
+                capital_contribution: capitalContribution,
+                current_capital_balance: capitalContribution,
+                email: email ?? null,
+                type: partnerType,
+            })
+            .select()
+            .single()
+
+        if (error) throw error
+        return data
+    },
+
+    /**
+     * Add a new member to a förening
+     */
+    async addMember({
+        name,
+        email,
+        membershipType,
+        joinDate,
+    }: {
+        name: string
+        email?: string
+        membershipType?: string
+        joinDate: string
+    }) {
+        const supabase = createBrowserClient()
+
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single()
+        ])
+
+        if (!user || !company) throw new Error('Ej inloggad eller företag saknas.')
+
+        const { data, error } = await supabase
+            .from('members')
+            .insert({
+                company_id: company.id,
+                user_id: user.id,
+                name,
+                email: email ?? null,
+                membership_type: membershipType ?? null,
+                join_date: joinDate,
+                status: 'active',
+            })
+            .select()
+            .single()
+
+        if (error) throw error
+        return data
+    },
 }

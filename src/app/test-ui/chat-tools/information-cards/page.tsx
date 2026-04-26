@@ -2,8 +2,8 @@
 
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
-import { Block } from "@/components/ai/chat-tools/rows/block"
-import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
+import { Block } from "@/components/ai/cards/rows/block"
+import { AuditCard } from "@/components/ai/cards/information-cards/audit-card"
 import { BuyCreditsCheckout } from "@/components/ai/cards/BuyCreditsCard"
 import { AIUsageCard } from "@/components/ai/cards/AIUsageCard"
 

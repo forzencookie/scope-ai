@@ -21,8 +21,8 @@ import { useChatSession, type SendMessageOptions, type ChatSession } from "@/hoo
 import { useAIUsage } from "@/hooks/use-ai-usage"
 import { useSubscription } from "@/hooks/use-subscription"
 import { useModel } from "@/providers/model-provider"
-import type { MentionItem } from "@/components/ai/mention-popover"
-import type { Conversation } from "@/lib/agents/chat-types"
+import type { SkillItem } from "@/components/ai/skill-picker"
+import type { Conversation } from "@/lib/chat/chat-types"
 import { AI_CHAT_EVENT, type PageContext, consumePendingAIContext } from "@/lib/ai/context"
 
 /** Quick action trigger metadata */
@@ -51,8 +51,8 @@ interface ChatContextValue {
     // Input state (shared between components)
     textareaValue: string
     setTextareaValue: (v: string) => void
-    mentionItems: MentionItem[]
-    setMentionItems: (v: MentionItem[]) => void
+    mentionItems: SkillItem[]
+    setSkillItems: (v: SkillItem[]) => void
     attachedFiles: File[]
     setAttachedFiles: (v: File[]) => void
     actionTrigger: ActionTriggerDisplay | null
@@ -208,7 +208,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     } = useConversations()
 
     const [textareaValue, setTextareaValue] = useState("")
-    const [mentionItems, setMentionItems] = useState<MentionItem[]>([])
+    const [mentionItems, setSkillItems] = useState<SkillItem[]>([])
     const [attachedFiles, setAttachedFiles] = useState<File[]>([])
     const [actionTrigger, setActionTrigger] = useState<ActionTriggerDisplay | null>(null)
     const [isInputFocused, setIsInputFocused] = useState(false)
@@ -252,7 +252,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
     // Clear input state helper
     const clearInputState = useCallback(() => {
         setTextareaValue("")
-        setMentionItems([])
+        setSkillItems([])
         setAttachedFiles([])
         setActionTrigger(null)
     }, [])
@@ -440,7 +440,7 @@ export function ChatProvider({ children }: { children: React.ReactNode }) {
             textareaValue,
             setTextareaValue,
             mentionItems,
-            setMentionItems,
+            setSkillItems,
             attachedFiles,
             setAttachedFiles,
             actionTrigger,

@@ -3,9 +3,9 @@
  * Shared types for chat functionality
  */
 
-import type { MentionItem } from '@/components/ai/mention-popover'
+import type { SkillItem } from '@/components/ai/skill-picker'
 import type { Block } from '@/lib/ai/schema'
-import type { AuditResult } from '@/components/ai/chat-tools/information-cards/audit-card'
+import type { AuditResult } from '@/components/ai/cards/information-cards/audit-card'
 
 // Display card data types - strictly typed discriminated union
 export type MessageDisplay =
@@ -21,7 +21,7 @@ export interface Message {
     // Attachments for user messages
     attachments?: Array<{ name: string; type: string; dataUrl: string }>
     // Mentions for user messages
-    mentions?: MentionItem[]
+    mentions?: SkillItem[]
     // Structured data for AI cards (assistant) or action triggers (user)
     display?: MessageDisplay
 

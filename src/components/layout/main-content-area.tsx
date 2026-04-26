@@ -6,7 +6,7 @@ import { useChatContext, useChatSessionContext } from "@/providers/chat-provider
 import { ChatInput } from "@/components/ai/chat-input"
 import { ChatMessageList } from "@/components/ai/chat-message-list"
 import { BuyCreditsDialog } from "@/components/billing"
-import { getGreeting } from "@/lib/agents/chat-utils"
+import { getGreeting } from "@/lib/chat/chat-utils"
 import { Button } from "@/components/ui"
 import { ArrowLeft, PawPrint } from "lucide-react"
 import { cn } from "@/lib/utils"
@@ -26,7 +26,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
         attachedFiles,
         setAttachedFiles,
         mentionItems,
-        setMentionItems,
+        setSkillItems,
         actionTrigger,
         setActionTrigger,
         isInputFocused,
@@ -167,7 +167,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                                 files={attachedFiles}
                                 onFilesChange={setAttachedFiles}
                                 mentions={mentionItems}
-                                onMentionsChange={setMentionItems}
+                                onMentionsChange={setSkillItems}
                                 actionTrigger={actionTrigger}
                                 onActionTriggerChange={setActionTrigger}
                                 landing
@@ -219,7 +219,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                         files={attachedFiles}
                         onFilesChange={setAttachedFiles}
                         mentions={mentionItems}
-                        onMentionsChange={setMentionItems}
+                        onMentionsChange={setSkillItems}
                         actionTrigger={actionTrigger}
                         onActionTriggerChange={setActionTrigger}
                         onFocus={() => setIsInputFocused(true)}

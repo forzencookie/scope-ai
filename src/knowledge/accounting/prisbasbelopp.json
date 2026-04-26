@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "source": "Försäkringskassan / Regeringen — fastställs varje år enligt Socialförsäkringsbalken (SFB) 2 kap 6-7§",
+    "description": "Prisbasbelopp (PBB) and inkomstbasbelopp (IBB) per year. Used for calculating thresholds in Swedish law — inventarie limits, K10 salary basis, income ceilings etc.",
+    "verified": "2025-01-01"
+  },
+  "prisbasbelopp": {
+    "2021": 47600,
+    "2022": 48300,
+    "2023": 52500,
+    "2024": 57300,
+    "2025": 58800,
+    "2026": 58800
+  },
+  "inkomstbasbelopp": {
+    "2021": 68200,
+    "2022": 71000,
+    "2023": 74300,
+    "2024": 76200,
+    "2025": 79800,
+    "2026": 82300
+  },
+  "usage": {
+    "inventarie_threshold": "Inventarier under halvt prisbasbelopp (PBB/2) may be expensed directly instead of capitalised — K2 rule (BFN). At 2026 PBB 58 800: threshold = 29 400 kr excl. VAT.",
+    "k10_salary_basis": "IBB used in K10 salary-based dividend calculation — see k10.md",
+    "social_insurance_ceiling": "7.5 × PBB is the ceiling for sjukpenninggrundande inkomst (SGI)"
+  }
+}

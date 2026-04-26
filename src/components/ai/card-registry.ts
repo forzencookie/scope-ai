@@ -1,6 +1,6 @@
 import type { ComponentType } from "react"
 
-import { AuditCard } from "./chat-tools/information-cards/audit-card"
+import { AuditCard } from "./cards/information-cards/audit-card"
 import { AIUsageCard } from "./cards/AIUsageCard"
 import { BuyCreditsPrompt, BuyCreditsCheckout } from "./cards/BuyCreditsCard"
 
