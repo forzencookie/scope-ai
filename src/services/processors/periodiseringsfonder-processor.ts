@@ -7,7 +7,7 @@
 
 import { createBrowserClient, isSupabaseConfigured } from '@/lib/database/client'
 import type { Periodiseringsfond, CreatePeriodiseringsfondInput, TaxSavingsCalculation } from './ai-tool-types'
-import { taxService } from '@/services/tax'
+import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================
 // Database Row Types

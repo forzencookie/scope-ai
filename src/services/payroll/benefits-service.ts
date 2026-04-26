@@ -13,7 +13,7 @@ import type {
     BenefitTaxImpact,
     BenefitCategory,
 } from '@/types/benefits'
-import { taxService } from '@/services/tax'
+import { taxService } from '@/services/tax/tax-service'
 
 // =============================================================================
 // Database Row Types
