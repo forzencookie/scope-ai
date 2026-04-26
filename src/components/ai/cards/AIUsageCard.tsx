@@ -81,7 +81,9 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
         </div>
         <div>
           <div className="text-muted-foreground">Kvar</div>
-          <div className="font-medium">{formatTokens(Math.max(0, usage.totalAvailable - usage.tokensUsed))}</div>
+          <div className={cn("font-medium", usage.thresholdLevel === 'exceeded' || usage.thresholdLevel === 'critical' ? 'text-red-500' : 'text-blue-500')}>
+            {formatTokens(Math.max(0, usage.totalAvailable - usage.tokensUsed))}
+          </div>
         </div>
       </div>
 
