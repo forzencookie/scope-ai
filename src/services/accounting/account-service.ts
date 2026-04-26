@@ -1,7 +1,7 @@
 import { createBrowserClient } from '@/lib/database/client'
 import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { AccountBalance } from '@/services/processors/reports/types'
+import type { AccountBalance } from '@/services/processors/reports'
 
 /**
  * Internal helper to get the correct Supabase client (passed in or default browser).

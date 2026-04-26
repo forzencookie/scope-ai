@@ -9,7 +9,7 @@ import type { AITool } from '../types'
 import {
     listShareHoldings,
     getInvestmentSummary,
-} from '@/services/processors/investments-processor'
+} from '@/services/processors'
 
 // =============================================================================
 // Investment Tools

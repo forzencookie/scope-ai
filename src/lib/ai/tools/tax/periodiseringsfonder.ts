@@ -7,11 +7,10 @@
 import { defineTool } from '../registry'
 import {
     listPeriodiseringsfonder,
-    // createPeriodiseringsfond,
     dissolvePeriodiseringsfond,
     getExpiringFonder,
     calculateTaxSavings,
-} from '@/services/processors/periodiseringsfonder-processor'
+} from '@/services/processors'
 
 // =============================================================================
 // Periodiseringsfonder Tools

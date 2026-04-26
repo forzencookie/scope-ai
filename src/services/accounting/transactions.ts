@@ -17,7 +17,7 @@ import { createBrowserClient } from "@/lib/database/client"
 import type { Database, Tables } from "@/types/database"
 import type { SupabaseClient } from "@supabase/supabase-js"
 import { verificationService } from "./verification-service"
-import { createSimpleEntry, type SwedishVatRate } from "@/lib/bookkeeping"
+import { createSimpleEntry, type SwedishVatRate } from "@/services/accounting"
 import type { VerificationEntry } from "@/types"
 import { nullToUndefined } from "@/lib/utils"
 
