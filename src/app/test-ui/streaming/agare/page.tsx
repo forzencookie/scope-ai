@@ -1,12 +1,13 @@
 "use client"
 
 import Link from "next/link"
-import { ArrowLeft, Users, BookOpen, Landmark, BookMarked, Banknote } from "lucide-react"
+import { ArrowLeft, Users, BookOpen, Landmark, BookMarked, Banknote, Gavel } from "lucide-react"
 
 const pages = [
     { href: "/test-ui/streaming/agare/delagare", label: "Delägare", icon: Users, description: "Visa delägare · Uppdatera andel", badges: ["HB", "KB"] },
     { href: "/test-ui/streaming/agare/medlemsregister", label: "Medlemsregister", icon: BookOpen, description: "Visa medlemmar · Lägg till medlem", badges: ["Förening"] },
-    { href: "/test-ui/streaming/agare/bolagsstamma", label: "Bolagsstämma", icon: Landmark, description: "Protokoll · Beslut · Utdelningsbeslut", badges: ["AB"] },
+    { href: "/test-ui/streaming/agare/bolagsstamma", label: "Bolagsstämma", icon: Landmark, description: "Protokoll · Utdelningsbeslut · Nybörjarflöde", badges: ["AB"] },
+    { href: "/test-ui/streaming/agare/styrelsemote", label: "Styrelsemöte", icon: Gavel, description: "Årsredovisning · Utse VD · Godkänn avtal", badges: ["AB"] },
     { href: "/test-ui/streaming/agare/aktiebok", label: "Aktiebok", icon: BookMarked, description: "Visa aktiebok · Registrera överlåtelse", badges: ["AB"] },
     { href: "/test-ui/streaming/agare/utdelning", label: "Utdelning", icon: Banknote, description: "Beräkna utdelning · Registrera beslut", badges: ["AB"] },
 ]

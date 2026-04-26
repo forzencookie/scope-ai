@@ -1,5 +1,5 @@
 import { defineTool } from '../registry'
-import { closingEntryService, type ClosingEntryPreview } from '@/services/accounting/closing-entry-service'
+import { closingEntryService, type ClosingEntryPreview } from '@/services/accounting'
 import { formatCurrency } from '@/lib/utils'
 
 export interface YearEndParams {

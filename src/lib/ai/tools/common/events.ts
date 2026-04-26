@@ -6,8 +6,8 @@
  */
 
 import { defineTool } from '../registry'
-import { getEvents as getEventsFromDB, emitEvent, getActivitySummary } from '@/services/common/event-service'
-import { taxService } from '@/services/tax/tax-service'
+import { getEvents as getEventsFromDB, emitEvent, getActivitySummary } from '@/services/common'
+import { taxService } from '@/services/tax'
 import type { EventSource, EventCategory } from '@/types/events'
 
 // =============================================================================

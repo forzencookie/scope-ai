@@ -1,5 +1,5 @@
 import { defineTool } from '../registry'
-import { taxCalendarService, type TaxCalendarItem } from '@/services/tax/tax-calendar-service'
+import { taxCalendarService, type TaxCalendarItem } from '@/services/tax'
 
 export interface GetTaxDeadlinesParams {
     limit?: number

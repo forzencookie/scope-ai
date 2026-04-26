@@ -1,5 +1,5 @@
 import { defineTool } from '../registry'
-import { taxCalculationService } from '@/services/tax/tax-calculation-service'
+import { taxCalculationService } from '@/services/tax'
 import { formatCurrency } from '@/lib/utils'
 
 export interface CalculateEgenavgifterParams {

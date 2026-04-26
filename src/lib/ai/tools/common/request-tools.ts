@@ -1,6 +1,6 @@
 import { defineTool } from '../registry'
 
-type Domain = 'bokforing' | 'loner' | 'skatt' | 'parter' | 'common' | 'planning'
+type Domain = 'bokforing' | 'loner' | 'skatt' | 'parter' | 'common'
 
 export const requestToolsTool = defineTool<{ domains: Domain[] }, { acknowledged: boolean; domains: Domain[] }>({
     name: 'request_tools',
@@ -18,7 +18,7 @@ export const requestToolsTool = defineTool<{ domains: Domain[] }, { acknowledged
                 type: 'array',
                 items: {
                     type: 'string',
-                    enum: ['bokforing', 'loner', 'skatt', 'parter', 'common', 'planning'],
+                    enum: ['bokforing', 'loner', 'skatt', 'parter', 'common'],
                 },
                 description: 'Domäner att ladda. Du kan begära flera samtidigt.',
             },

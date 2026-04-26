@@ -7,28 +7,35 @@
 
 import { ZodTypeAny } from 'zod'
 import type { Block } from '@/lib/ai/schema'
+import type { BatchSummaryItem } from '@/components/ai/cards/action-cards/batch-booking-card'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 
+export interface BatchBookingDisplay {
+    type: 'BatchBookingCard'
+    data: {
+        title: string
+        description?: string
+        items: BatchSummaryItem[]
+        totalAmount: string
+    }
+}
+
 // Use OpenAI-compatible parameter type instead of JSONSchema7
 // This matches OpenAI's FunctionParameters type
+export type JSONSchemaProperty = {
+    type: string
+    description?: string
+    enum?: string[]
+    format?: string
+    items?: JSONSchemaProperty & { properties?: Record<string, JSONSchemaProperty>; required?: string[] }
+    properties?: Record<string, JSONSchemaProperty>
+    required?: string[]
+}
+
 export type FunctionParameters = {
     type: 'object'
-    properties: Record<string, {
-        type: string
-        description?: string
-        enum?: string[]
-        format?: string
-        items?: {
-            type: string
-            enum?: string[]
-            properties?: Record<string, {
-                type: string
-                description?: string
-            }>
-            required?: string[]
-        }
-    }>
+    properties: Record<string, JSONSchemaProperty>
     required?: string[]
 } | ZodTypeAny // Allow Zod schemas
 
@@ -50,7 +57,7 @@ export interface InteractionContext {
  * Maps to OpenAI function calling format.
  */
 /** Tool domain — maps to folder structure */
-export type AIToolDomain = 'bokforing' | 'loner' | 'skatt' | 'parter' | 'common' | 'planning'
+export type AIToolDomain = 'bokforing' | 'loner' | 'skatt' | 'parter' | 'common'
 
 export interface AITool<TParams = unknown, TResult = unknown> {
     /** Unique identifier for the tool */
@@ -116,7 +123,7 @@ export interface AIToolResult<T = unknown> {
      * Block to render inline in chat.
      * If present, the stream parser renders it directly below Scooby's text.
      */
-    display?: Block | AIDisplayInstruction
+    display?: Block | AIDisplayInstruction | BatchBookingDisplay
 
     /**
      * Navigation instruction.

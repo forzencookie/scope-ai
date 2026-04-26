@@ -2,7 +2,7 @@ import { defineTool } from '../registry'
 import { VatCalculator } from '@/services/processors/vat'
 import type { VatReport } from '@/services/processors/vat'
 import type { Verification as ProcessorVerification } from '@/types/verification'
-import { verificationService } from '@/services/accounting/verification-service'
+import { verificationService } from '@/services/accounting'
 import type { Verification } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 

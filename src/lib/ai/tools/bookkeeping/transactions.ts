@@ -164,75 +164,6 @@ export const getTransactionsTool = defineTool<GetTransactionsParams, Transaction
     },
 })
 
-export interface CategorizeTransactionParams {
-    transactionId: string
-    category: string
-    account?: string
-}
-
-export const categorizeTransactionTool = defineTool<CategorizeTransactionParams, { success: boolean }>({
-    name: 'categorize_transaction',
-    description: 'Kategorisera en enskild banktransaktion till ett BAS-konto. Använd efter att ha identifierat vilken typ av kostnad/intäkt transaktionen representerar. T.ex. "Spotify 169 kr" → konto 6993 (IT-tjänster).',
-    category: 'write',
-    requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  domain: 'bokforing',
-    keywords: ['kategorisera', 'bokföra', 'konto', 'transaktion'],
-    parameters: {
-        type: 'object',
-        properties: {
-            transactionId: {
-                type: 'string',
-                description: 'ID för transaktionen',
-            },
-            category: {
-                type: 'string',
-                description: 'Kategori (t.ex. "kontorsmaterial", "resor")',
-            },
-            account: {
-                type: 'string',
-                description: 'Kontonummer i BAS-kontoplanen',
-            },
-        },
-        required: ['transactionId', 'category'],
-    },
-    execute: async (params) => {
-        try {
-            const baseUrl = getBaseUrl()
-            const res = await fetch(`${baseUrl}/api/transactions/${params.transactionId}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    category: params.category,
-                    account: params.account,
-                }),
-            })
-
-            if (!res.ok) {
-                // Fallback: try PUT if PATCH is not supported
-                const res2 = await fetch(`${baseUrl}/api/transactions/${params.transactionId}`, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        category: params.category,
-                        account: params.account,
-                    }),
-                })
-                if (!res2.ok) {
-                    return { success: false, error: 'Kunde inte kategorisera transaktion.' }
-                }
-            }
-
-            return {
-                success: true,
-                data: { success: true },
-                message: `Transaktion kategoriserad som "${params.category}"${params.account ? ` (konto ${params.account})` : ''}.`,
-            }
-        } catch {
-            return { success: false, error: 'Kunde inte kategorisera transaktion.' }
-        }
-    },
-})
 
 export interface CreateTransactionParams {
     amount: number
@@ -356,121 +287,199 @@ export const createTransactionTool = defineTool<CreateTransactionParams, Created
 })
 
 // =============================================================================
-// Bulk Categorize Transactions Tool
+// Audit Unbooked Tool
 // =============================================================================
 
-export interface BulkCategorizeParams {
-    /** Either provide transaction IDs, or use filters to select */
-    transactionIds?: string[]
-    /** Auto-categorize all uncategorized transactions */
-    uncategorizedOnly?: boolean
-    /** Apply a specific category/account to matching transactions */
-    pattern?: string
-    account?: string
+export interface AuditUnbookedParams {
+    month?: string
+    year?: number
+    limit?: number
 }
 
-export interface BulkCategorizeResult {
-    categorized: number
-    skipped: number
-    errors: number
-    totalBooked: number
+export interface AuditUnbookedResult {
+    unbooked: Transaction[]
+    receipts: Array<{ id: string; supplier: string; date: string; amount: string; status: string }>
+    unbookedCount: number
 }
 
-export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, BulkCategorizeResult>({
-    name: 'bulk_categorize_transactions',
-    description: 'Kategorisera flera transaktioner på en gång. Använd när användaren säger "kontera januari", "bokför allt", eller vill snabbt hantera återkommande transaktioner som hyra, löner, eller prenumerationer. Föreslår konton baserat på leverantörsnamn. Kräver bekräftelse.',
-    category: 'write',
-    requiresConfirmation: true,
-  allowedCompanyTypes: [],
-  domain: 'bokforing',
-    keywords: ['bulk', 'kategorisera', 'flera', 'transaktioner'],
+export const auditUnbookedTool = defineTool<AuditUnbookedParams, AuditUnbookedResult>({
+    name: 'audit_unbooked',
+    description: 'Hämta obokförda transaktioner, kvitton och verifikationer för en period. Använd när användaren vill se vad som behöver bokföras, eller när du ska förbereda masskontering. Returnerar rådata — resonera om troliga konton och sammanhang baserat på beskrivningar och belopp.',
+    category: 'read',
+    requiresConfirmation: false,
+    allowedCompanyTypes: [],
+    domain: 'bokforing',
+    keywords: ['obokförd', 'saknas', 'kontera', 'avstämning', 'granska', 'audit'],
     parameters: {
         type: 'object',
         properties: {
-            transactionIds: {
-                type: 'array',
-                items: { type: 'string' },
-                description: 'Lista med transaktions-ID att kategorisera',
-            },
-            uncategorizedOnly: {
-                type: 'boolean',
-                description: 'Kategorisera endast okonerade transaktioner (standard: true)',
-            },
-            pattern: {
-                type: 'string',
-                description: 'Textmönster att matcha (t.ex. "Spotify" → alla Spotify-transaktioner)',
-            },
-            account: {
-                type: 'string',
-                description: 'Kontonummer att använda för matchade transaktioner',
-            },
+            month: { type: 'string', description: 'Månad (t.ex. "januari", "2024-03")' },
+            year: { type: 'number', description: 'År (standard: innevarande år)' },
+            limit: { type: 'number', description: 'Max antal transaktioner (standard: 50)' },
         },
     },
-    execute: async (params, context) => {
+    execute: async (params) => {
         const baseUrl = getBaseUrl()
-        let transactions: Transaction[] = []
+        const limit = params.limit ?? 50
 
-        try {
-            const queryParams = new URLSearchParams()
-            queryParams.set('status', 'pending')
-            queryParams.set('limit', '100')
-            const res = await fetch(`${baseUrl}/api/transactions?${queryParams}`, {
-                cache: 'no-store',
-                headers: { 'Content-Type': 'application/json' }
-            })
-            if (res.ok) {
-                const data = await res.json()
-                transactions = data.transactions || []
-                if (params.pattern) {
-                    const pattern = params.pattern.toLowerCase()
-                    transactions = transactions.filter(t =>
-                        t.name?.toLowerCase().includes(pattern) ||
-                        (t as Transaction & { description?: string }).description?.toLowerCase().includes(pattern)
-                    )
-                }
-                if (params.transactionIds && params.transactionIds.length > 0) {
-                    transactions = transactions.filter(t => params.transactionIds!.includes(t.id))
-                }
+        let startDate: string | undefined
+        let endDate: string | undefined
+        const year = params.year || new Date().getFullYear()
+
+        if (params.month) {
+            const monthMap: Record<string, number> = {
+                'januari': 0, 'jan': 0, 'februari': 1, 'feb': 1, 'mars': 2, 'mar': 2,
+                'april': 3, 'apr': 3, 'maj': 4, 'juni': 5, 'jun': 5, 'juli': 6, 'jul': 6,
+                'augusti': 7, 'aug': 7, 'september': 8, 'sep': 8, 'oktober': 9, 'okt': 9,
+                'november': 10, 'nov': 10, 'december': 11, 'dec': 11,
             }
-        } catch (error) {
-            console.error('[AI Tool] Failed to fetch transactions for bulk categorize:', error)
+            const monthIndex = monthMap[params.month.toLowerCase()] ?? (parseInt(params.month) - 1)
+            if (!isNaN(monthIndex)) {
+                startDate = new Date(year, monthIndex, 1).toISOString().split('T')[0]
+                endDate = new Date(year, monthIndex + 1, 0).toISOString().split('T')[0]
+            }
+        } else if (params.year) {
+            startDate = `${year}-01-01`
+            endDate = `${year}-12-31`
         }
 
-        const count = transactions.length
+        let unbooked: Transaction[] = []
+        let receipts: AuditUnbookedResult['receipts'] = []
+
+        try {
+            const qp = new URLSearchParams({ status: 'pending', limit: String(limit) })
+            if (startDate) qp.set('startDate', startDate)
+            if (endDate) qp.set('endDate', endDate)
+
+            const [txRes, rcRes] = await Promise.all([
+                fetch(`${baseUrl}/api/transactions?${qp}`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } }),
+                fetch(`${baseUrl}/api/receipts?status=pending&limit=50`, { cache: 'no-store', headers: { 'Content-Type': 'application/json' } }),
+            ])
+
+            if (txRes.ok) {
+                const data = await txRes.json()
+                unbooked = data.transactions || []
+            }
+            if (rcRes.ok) {
+                const data = await rcRes.json()
+                receipts = (data.receipts || []).map((r: { id: string; supplier: string; date: string; amount: string; status: string }) => ({
+                    id: r.id,
+                    supplier: r.supplier,
+                    date: r.date,
+                    amount: r.amount,
+                    status: r.status,
+                }))
+            }
+        } catch (error) {
+            console.error('[AI Tool] audit_unbooked fetch error:', error)
+        }
+
+        const periodLabel = startDate ? `${startDate} – ${endDate}` : 'alla perioder'
+
+        return {
+            success: true,
+            data: { unbooked, receipts, unbookedCount: unbooked.length },
+            message: `${unbooked.length} obokförda transaktioner${receipts.length > 0 ? `, ${receipts.length} ohanterade kvitton` : ''} (${periodLabel}). Resonera om troliga konton baserat på beskrivning och belopp.`,
+        }
+    },
+})
+
+// =============================================================================
+// Bulk Book Transactions Tool
+// =============================================================================
+
+export interface BulkBookEntry {
+    account: string
+    debit: number
+    credit: number
+    description?: string
+}
+
+export interface BulkBookTransaction {
+    transactionId: string
+    description: string
+    amount: number
+    date: string
+    entries: BulkBookEntry[]
+}
+
+export interface BulkBookParams {
+    transactions: BulkBookTransaction[]
+}
+
+export interface BulkBookResult {
+    booked: number
+    skipped: number
+    errors: number
+}
+
+export const bulkBookTransactionsTool = defineTool<BulkBookParams, BulkBookResult>({
+    name: 'bulk_book_transactions',
+    description: 'Masskontera obokförda transaktioner. Anropa audit_unbooked + read_skill(accounting/bas-accounts) först för att bestämma rätt konton. Skicka sedan en lista med transaktioner och deras verifikationsrader. Kräver bekräftelse — visar BatchBookingCard innan något sparas.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: [],
+    domain: 'bokforing',
+    keywords: ['masskontera', 'bulk', 'bokföra', 'transaktioner', 'kontera'],
+    parameters: {
+        type: 'object',
+        properties: {
+            transactions: {
+                type: 'array',
+                description: 'Lista med transaktioner att bokföra',
+                items: {
+                    type: 'object',
+                    properties: {
+                        transactionId: { type: 'string', description: 'ID för transaktionen' },
+                        description: { type: 'string', description: 'Beskrivning (visas i verifikationen)' },
+                        amount: { type: 'number', description: 'Belopp i kronor (absolut värde)' },
+                        date: { type: 'string', description: 'Bokföringsdatum (YYYY-MM-DD)' },
+                        entries: {
+                            type: 'array',
+                            description: 'Konteringsrader (debet/kredit måste balansera)',
+                            items: {
+                                type: 'object',
+                                properties: {
+                                    account: { type: 'string', description: 'BAS-kontonummer' },
+                                    debit: { type: 'number' },
+                                    credit: { type: 'number' },
+                                    description: { type: 'string' },
+                                },
+                                required: ['account', 'debit', 'credit'],
+                            },
+                        },
+                    },
+                    required: ['transactionId', 'description', 'amount', 'date', 'entries'],
+                },
+            },
+        },
+        required: ['transactions'],
+    },
+    execute: async (params, context) => {
+        const { verificationService } = await import('@/services/accounting/verification-service')
+        const baseUrl = getBaseUrl()
 
         if (context?.isConfirmed) {
-            let categorized = 0
             let booked = 0
             let errors = 0
 
-            for (const tx of transactions) {
+            for (const tx of params.transactions) {
                 try {
-                    const patchRes = await fetch(`${baseUrl}/api/transactions/${tx.id}`, {
+                    await verificationService.createVerification({
+                        date: tx.date,
+                        description: tx.description,
+                        entries: tx.entries,
+                        sourceType: 'bulk_book',
+                        sourceId: tx.transactionId,
+                    })
+
+                    await fetch(`${baseUrl}/api/transactions/${tx.transactionId}`, {
                         method: 'PATCH',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ category: params.pattern ?? 'Kategoriserad', account: params.account ?? null, status: 'review' }),
+                        body: JSON.stringify({ status: 'Bokförd' }),
                     })
-                    if (!patchRes.ok) { errors++; continue }
-                    categorized++
 
-                    if (params.account) {
-                        const txAmount = Math.abs(Number(tx.amount || 0))
-                        const txDate = (tx as Transaction & { date?: string; transaction_date?: string }).date
-                            ?? (tx as Transaction & { transaction_date?: string }).transaction_date
-                            ?? new Date().toISOString().split('T')[0]
-                        const txDesc = tx.name ?? (tx as Transaction & { description?: string }).description ?? `Transaktion ${tx.id}`
-                        const isExpense = Number(tx.amount || 0) < 0
-                        const entries = isExpense
-                            ? [{ account: params.account, debit: txAmount, credit: 0, description: txDesc }, { account: '1930', debit: 0, credit: txAmount, description: 'Bank' }]
-                            : [{ account: '1930', debit: txAmount, credit: 0, description: 'Bank' }, { account: params.account, debit: 0, credit: txAmount, description: txDesc }]
-                        try {
-                            const { verificationService } = await import('@/services/accounting/verification-service')
-                            await verificationService.createVerification({ date: txDate, description: txDesc, entries, sourceType: 'bulk_categorize' })
-                            booked++
-                        } catch {
-                            // categorization still counted, booking failed silently
-                        }
-                    }
+                    booked++
                 } catch {
                     errors++
                 }
@@ -478,202 +487,41 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
 
             return {
                 success: true,
-                data: { categorized, skipped: count - categorized - errors, errors, totalBooked: booked },
-                message: `${categorized} transaktioner konterade${booked > 0 ? `, ${booked} bokförda` : ''}${errors > 0 ? `, ${errors} fel` : ''}.`,
+                data: { booked, skipped: 0, errors },
+                message: `${booked} transaktioner bokförda${errors > 0 ? `, ${errors} misslyckades` : ''}.`,
             }
         }
 
-        const confirmationSummary = [{ label: 'Antal transaktioner', value: String(count) }]
-        if (params.pattern) confirmationSummary.push({ label: 'Mönster', value: params.pattern })
-        if (params.account) confirmationSummary.push({ label: 'Konto', value: params.account })
+        // Preflight — return BatchBookingCard display
+        const totalAmount = params.transactions.reduce((sum, tx) => sum + tx.amount, 0)
+
+        const items = params.transactions.map(tx => ({
+            id: tx.transactionId,
+            title: tx.description,
+            subtitle: tx.entries.map(e => e.account).join(' / '),
+            rightValue: `${tx.amount.toLocaleString('sv-SE')} kr`,
+        }))
 
         return {
             success: true,
-            data: { categorized: count, skipped: 0, errors: 0, totalBooked: 0 },
-            message: `${count} transaktioner förberedda för kontering.`,
-            confirmationRequired: {
-                title: 'Masskontering av transaktioner',
-                description: `Kontera ${count} transaktioner${params.pattern ? ` som matchar "${params.pattern}"` : ''}`,
-                summary: confirmationSummary,
-                action: { toolName: 'bulk_categorize_transactions', params },
-                requireCheckbox: true,
+            data: { booked: 0, skipped: 0, errors: 0 },
+            display: {
+                type: 'BatchBookingCard' as const,
+                data: {
+                    title: 'Masskontering',
+                    description: `${params.transactions.length} transaktioner`,
+                    items,
+                    totalAmount: `${totalAmount.toLocaleString('sv-SE')} kr`,
+                },
             },
-        }
-    },
-})
-
-// =============================================================================
-// Get Transactions Missing Receipts Tool
-// =============================================================================
-
-export interface GetTransactionsMissingReceiptsParams {
-    minAmount?: number
-    limit?: number
-}
-
-export const getTransactionsMissingReceiptsTool = defineTool<GetTransactionsMissingReceiptsParams, Transaction[]>({
-    name: 'get_transactions_missing_receipts',
-    description: 'Lista transaktioner över 500 kr som saknar bifogat kvitto. Använd för att följa upp dokumentation inför bokslut eller revision. Vanliga frågor: "vilka kvitton saknas", "vad måste jag ladda upp".',
-    category: 'read',
-    requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  domain: 'bokforing',
-    keywords: ['saknas', 'kvitto', 'transaktion', 'underlag'],
-    parameters: {
-        type: 'object',
-        properties: {
-            minAmount: {
-                type: 'number',
-                description: 'Minsta belopp för att inkluderas (standard: 500 kr)',
-            },
-            limit: {
-                type: 'number',
-                description: 'Max antal att visa (standard: 20)',
-            },
-        },
-    },
-    execute: async (params) => {
-        const minAmount = params.minAmount ?? 500
-        const limit = params.limit ?? 20
-
-        let transactions: Transaction[] = []
-
-        try {
-            const baseUrl = getBaseUrl()
-            const res = await fetch(`${baseUrl}/api/transactions?limit=100&missingReceipt=true`, {
-                cache: 'no-store',
-                headers: { 'Content-Type': 'application/json' }
-            })
-
-            if (res.ok) {
-                const data = await res.json()
-                transactions = (data.transactions || [])
-                    .filter((t: Transaction) => Math.abs(Number(t.amount || 0)) >= minAmount)
-                    .slice(0, limit)
-            }
-        } catch (error) {
-            console.error('[AI Tool] Failed to fetch transactions missing receipts:', error)
-        }
-
-        const totalMissing = transactions.length
-
-        return {
-            success: true,
-            data: transactions,
-            message: totalMissing > 0
-                ? `Hittade ${totalMissing} transaktioner över ${minAmount} kr som saknar kvitto.`
-                : `Inga transaktioner över ${minAmount} kr saknar kvitto. 🎉`,
-        }
-    },
-})
-
-// =============================================================================
-// Match Payment to Invoice Tool
-// =============================================================================
-
-export interface MatchPaymentToInvoiceParams {
-    transactionId: string
-    invoiceId: string
-}
-
-export interface PaymentMatchResult {
-    matched: boolean
-    transactionId: string
-    invoiceId: string
-    amount: number
-}
-
-export const matchPaymentToInvoiceTool = defineTool<MatchPaymentToInvoiceParams, PaymentMatchResult>({
-    name: 'match_payment_to_invoice',
-    description: 'Koppla en inbetalning till en kundfaktura för att markera fakturan som betald och bokföra betalningen korrekt. Använd när du ser en betalning på kontot och vill stänga motsvarande faktura. Kräver bekräftelse.',
-    category: 'write',
-    requiresConfirmation: true,
-  allowedCompanyTypes: [],
-  domain: 'bokforing',
-    keywords: ['matcha', 'betalning', 'faktura', 'koppling'],
-    parameters: {
-        type: 'object',
-        properties: {
-            transactionId: {
-                type: 'string',
-                description: 'ID för betalningen/transaktionen',
-            },
-            invoiceId: {
-                type: 'string',
-                description: 'ID för fakturan att matcha mot',
-            },
-        },
-        required: ['transactionId', 'invoiceId'],
-    },
-    execute: async (params, context) => {
-        // If confirmed, call the payment API and update transaction status
-        if (context?.isConfirmed) {
-            try {
-                const baseUrl = getBaseUrl()
-
-                // 1. Call invoice payment endpoint (creates verification + marks invoice as Betald)
-                const payRes = await fetch(`${baseUrl}/api/invoices/${params.invoiceId}/pay`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ transactionId: params.transactionId }),
-                })
-
-                if (!payRes.ok) {
-                    const err = await payRes.json().catch(() => ({}))
-                    return { success: false, error: err.error || 'Kunde inte registrera betalning.' }
-                }
-
-                // 2. Update transaction status to booked
-                await fetch(`${baseUrl}/api/transactions/${params.transactionId}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ status: 'Bokförd' }),
-                })
-
-                return {
-                    success: true,
-                    data: {
-                        matched: true,
-                        transactionId: params.transactionId,
-                        invoiceId: params.invoiceId,
-                        amount: 0,
-                    },
-                    message: `Betalning matchad mot faktura och markerad som betald.`,
-                }
-            } catch {
-                return { success: false, error: 'Kunde inte matcha betalning mot faktura.' }
-            }
-        }
-
-        // Preflight: return confirmation request
-        return {
-            success: true,
-            data: {
-                matched: false,
-                transactionId: params.transactionId,
-                invoiceId: params.invoiceId,
-                amount: 0,
-            },
-            message: `Betalning förberedd för matchning mot faktura.`,
-            confirmationRequired: {
-                title: 'Matcha betalning',
-                description: 'Koppla betalningen till fakturan och markera som betald',
-                summary: [
-                    { label: 'Transaktion', value: params.transactionId },
-                    { label: 'Faktura', value: params.invoiceId },
-                ],
-                action: { toolName: 'match_payment_to_invoice', params },
-                requireCheckbox: false,
-            },
+            message: `${params.transactions.length} transaktioner förberedda för bokföring (totalt ${totalAmount.toLocaleString('sv-SE')} kr). Bekräfta för att bokföra alla.`,
         }
     },
 })
 
 export const transactionTools = [
     getTransactionsTool,
-    categorizeTransactionTool,
     createTransactionTool,
-    bulkCategorizeTransactionsTool,
-    getTransactionsMissingReceiptsTool,
-    matchPaymentToInvoiceTool,
+    auditUnbookedTool,
+    bulkBookTransactionsTool,
 ]

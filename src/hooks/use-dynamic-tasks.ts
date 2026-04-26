@@ -1,8 +1,8 @@
 import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useCompany } from '@/providers/company-provider'
-import { invoiceService } from '@/services/invoicing/invoice-service'
-import { payrollService } from '@/services/payroll/payroll-service'
+import { invoiceService } from '@/services/invoicing'
+import { payrollService } from '@/services/payroll'
 import { createBrowserClient } from '@/lib/database/client'
 
 export interface DynamicTask {

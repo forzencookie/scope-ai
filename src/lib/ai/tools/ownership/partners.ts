@@ -5,7 +5,7 @@
  */
 
 import { defineTool } from '../registry'
-import { shareholderService } from '@/services/corporate/shareholder-service'
+import { shareholderService } from '@/services/corporate'
 
 // =============================================================================
 // Partner Tools
@@ -414,6 +414,89 @@ export const registerMemberTool = defineTool<RegisterMemberParams, MemberRecord>
     },
 })
 
+// =============================================================================
+// Update Partner Shares Tool
+// =============================================================================
+
+export interface PartnerShareChange {
+    partnerId: string
+    ownershipPercentage?: number
+    profitSharePercentage?: number
+    partnerName?: string
+}
+
+export interface UpdatePartnerSharesParams {
+    changes: PartnerShareChange[]
+    effectiveDate?: string
+}
+
+export const updatePartnerSharesTool = defineTool<UpdatePartnerSharesParams, { updated: number }>({
+    name: 'update_partner_shares',
+    description: 'Uppdatera ägarandelar och/eller resultatfördelning för delägare i HB/KB. Kräver bekräftelse. Procentandelarna behöver summera till 100 — kontrollera detta innan du anropar. Endast HB/KB.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: ['hb', 'kb'],
+    domain: 'parter',
+    keywords: ['ägarandelar', 'delägare', 'fördelning', 'HB', 'KB', 'resultatfördelning'],
+    parameters: {
+        type: 'object',
+        properties: {
+            changes: {
+                type: 'array',
+                description: 'Ändringar per delägare',
+                items: {
+                    type: 'object',
+                    properties: {
+                        partnerId: { type: 'string', description: 'ID för delägaren' },
+                        ownershipPercentage: { type: 'number', description: 'Ny ägarandel i procent (0–100)' },
+                        profitSharePercentage: { type: 'number', description: 'Ny resultatandel i procent (0–100)' },
+                        partnerName: { type: 'string', description: 'Namn (visas i bekräftelsen)' },
+                    },
+                    required: ['partnerId'],
+                },
+            },
+            effectiveDate: { type: 'string', description: 'Gäller från (YYYY-MM-DD)' },
+        },
+        required: ['changes'],
+    },
+    execute: async (params, context) => {
+        if (context?.isConfirmed) {
+            try {
+                await shareholderService.updatePartnerShares(params.changes)
+                return {
+                    success: true,
+                    data: { updated: params.changes.length },
+                    message: `Ägarandelar uppdaterade för ${params.changes.length} delägare.`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte uppdatera ägarandelar.' }
+            }
+        }
+
+        const summary: Array<{ label: string; value: string }> = []
+        if (params.effectiveDate) summary.push({ label: 'Gäller från', value: params.effectiveDate })
+        for (const c of params.changes) {
+            const name = c.partnerName ?? c.partnerId
+            if (c.ownershipPercentage !== undefined) summary.push({ label: name, value: `Ägarandel: ${c.ownershipPercentage}%` })
+            if (c.profitSharePercentage !== undefined) summary.push({ label: name, value: `Resultatandel: ${c.profitSharePercentage}%` })
+        }
+
+        return {
+            success: true,
+            data: { updated: 0 },
+            message: `Ägarandelar förberedda för ${params.changes.length} delägare. Bekräfta för att spara.`,
+            confirmationRequired: {
+                title: 'Uppdatera ägarandelar',
+                description: 'Ny fördelning för HB/KB',
+                summary,
+                action: { toolName: 'update_partner_shares', params },
+                warnings: ['Ägarandelar styr hur resultatet beskattas. Säkerställ att ändringen speglar bolagsavtalet.'],
+                requireCheckbox: true,
+            },
+        }
+    },
+})
+
 export const partnerTools = [
     getPartnersTool,
     getMembersTool,
@@ -421,4 +504,5 @@ export const partnerTools = [
     createPartnershipContributionTool,
     createPartnershipWithdrawalTool,
     registerMemberTool,
+    updatePartnerSharesTool,
 ]

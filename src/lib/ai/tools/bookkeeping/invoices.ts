@@ -6,7 +6,7 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoicing/invoice-service'
+import { invoiceService, type CustomerInvoice, type SupplierInvoice } from '@/services/invoicing'
 import type { Block, DataRow } from '@/lib/ai/schema'
 
 function getBaseUrl() {
@@ -363,77 +363,6 @@ export const getSupplierInvoicesTool = defineTool<GetSupplierInvoicesParams, Inv
     },
 })
 
-// =============================================================================
-// Send Invoice Reminder Tool
-// =============================================================================
-
-export interface SendInvoiceReminderParams {
-    invoiceId: string
-    reminderLevel?: 1 | 2 | 3
-    addLateFee?: boolean
-}
-
-export interface InvoiceReminderResult {
-    sent: boolean
-    invoiceId: string
-    reminderNumber: number
-    newDueDate: string
-    lateFee?: number
-}
-
-export const sendInvoiceReminderTool = defineTool<SendInvoiceReminderParams, InvoiceReminderResult>({
-    name: 'send_invoice_reminder',
-    description: 'Skicka betalningspåminnelse på förfallen kundfaktura. Stödjer tre nivåer: första påminnelse, andra påminnelse, och inkassokrav. Kan lägga till dröjsmålsavgift (60 kr). Använd när kunden inte betalat i tid.',
-    category: 'write',
-    requiresConfirmation: true,
-    allowedCompanyTypes: [],
-    domain: 'bokforing',
-    keywords: ['påminnelse', 'faktura', 'skicka', 'betalning'],
-    parameters: {
-        type: 'object',
-        properties: {
-            invoiceId: { type: 'string', description: 'ID för fakturan' },
-            reminderLevel: { type: 'number', description: 'Påminnelsenivå (1=första, 2=andra, 3=inkassokrav)' },
-            addLateFee: { type: 'boolean', description: 'Lägg till dröjsmålsavgift (60 kr standard)' },
-        },
-        required: ['invoiceId'],
-    },
-    execute: async (params) => {
-        const reminderLevel = params.reminderLevel ?? 1
-        const lateFee = params.addLateFee ? 60 : 0
-        const newDueDate = new Date(Date.now() + 10 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-
-        const reminderLabels = {
-            1: 'Betalningspåminnelse',
-            2: 'Andra påminnelse',
-            3: 'Inkassokrav'
-        }
-
-        return {
-            success: true,
-            data: {
-                sent: false,
-                invoiceId: params.invoiceId,
-                reminderNumber: reminderLevel,
-                newDueDate,
-                lateFee: lateFee > 0 ? lateFee : undefined,
-            },
-            message: `${reminderLabels[reminderLevel]} förberedd${lateFee > 0 ? ` med ${lateFee} kr i avgift` : ''}.`,
-            confirmationRequired: {
-                title: reminderLabels[reminderLevel],
-                description: `Skicka påminnelse på faktura ${params.invoiceId}`,
-                summary: [
-                    { label: 'Faktura', value: params.invoiceId },
-                    { label: 'Nivå', value: reminderLabels[reminderLevel] },
-                    { label: 'Ny förfallodag', value: newDueDate },
-                    ...(lateFee > 0 ? [{ label: 'Avgift', value: `${lateFee} kr` }] : []),
-                ],
-                action: { toolName: 'send_invoice_reminder', params },
-                requireCheckbox: true,
-            },
-        }
-    },
-})
 
 // =============================================================================
 // Void Invoice Tool
@@ -674,7 +603,6 @@ export const invoiceTools = [
     createInvoiceTool,
     getCustomerInvoicesTool,
     getSupplierInvoicesTool,
-    sendInvoiceReminderTool,
     voidInvoiceTool,
     bookInvoicePaymentTool,
     getOverdueInvoicesTool,

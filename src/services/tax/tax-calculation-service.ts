@@ -1,7 +1,7 @@
 import type { Database } from '@/types/database'
 import type { SupabaseClient } from '@supabase/supabase-js'
 import { accountService } from '../accounting/account-service'
-import { calculateEgenavgifter, type EgenavgifterRates } from '@/lib/bookkeeping/egenavgifter'
+import { calculateEgenavgifter, type EgenavgifterRates } from '@/services/accounting'
 import { taxService, type TaxRates } from './tax-service'
 
 /**

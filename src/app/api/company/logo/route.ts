@@ -6,7 +6,7 @@
 
 import { NextRequest } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { uploadCompanyLogo } from '@/services/common/upload-service'
+import { uploadCompanyLogo } from '@/services/common'
 import { createBrowserClient } from '@/lib/database/client'
 
 const MAX_SIZE = 2 * 1024 * 1024 // 2MB

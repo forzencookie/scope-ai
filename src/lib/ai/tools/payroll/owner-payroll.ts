@@ -8,9 +8,9 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { taxService } from '@/services/tax/tax-service'
-import { companyService } from '@/services/company/company-service.server'
-import { shareholderService } from '@/services/corporate/shareholder-service'
+import { taxService } from '@/services/tax'
+import { companyService } from '@/services/company'
+import { shareholderService } from '@/services/corporate'
 import { OWNER_ACCOUNTS, EQUITY_ACCOUNTS } from '@/data/account-constants'
 
 /**
@@ -262,136 +262,7 @@ export const registerOwnerWithdrawalTool = defineTool<RegisterOwnerWithdrawalPar
     },
 })
 
-// =============================================================================
-// Optimize 3:12 Tool
-// =============================================================================
-
-export interface Optimize312Params {
-    ownerName: string
-    annualSalary?: number
-    companyProfit?: number
-    ownershipPercent?: number
-    currentYear?: number
-}
-
-export interface Optimization312Result {
-    recommendation: 'salary' | 'dividend' | 'mix'
-    optimalSalary: number
-    optimalDividend: number
-    gransbelopp: number
-    taxOnSalary: number
-    taxOnDividend: number
-    totalTax: number
-    savings: number
-    explanation: string
-}
-
-export const optimize312Tool = defineTool<Optimize312Params, Optimization312Result>({
-    name: 'optimize_312',
-    description: 'Beräkna optimal fördelning mellan lön och utdelning enligt 3:12-reglerna för fåmansbolag.',
-    category: 'read',
-    requiresConfirmation: false,
-  allowedCompanyTypes: ["ab"],
-  domain: 'loner',
-    keywords: ['3:12', 'optimera', 'utdelning', 'lön'],
-    parameters: {
-        type: 'object',
-        properties: {
-            ownerName: { type: 'string', description: 'Namn på delägaren' },
-            annualSalary: { type: 'number', description: 'Nuvarande årslön' },
-            companyProfit: { type: 'number', description: 'Bolagets resultat före skatt' },
-            ownershipPercent: { type: 'number', description: 'Ägarandel i procent (0-100)' },
-            currentYear: { type: 'number', description: 'Inkomstår' },
-        },
-        required: ['ownerName'],
-    },
-    execute: async (params) => {
-        const year = params.currentYear || new Date().getFullYear()
-        if (!params.ownershipPercent) {
-            return { success: false, error: 'Ägarandel (%) måste anges för 3:12-optimering. Kontrollera aktieboken.' }
-        }
-        if (!params.companyProfit) {
-            return { success: false, error: 'Bolagets resultat före skatt måste anges för 3:12-optimering.' }
-        }
-        const ownershipPercent = params.ownershipPercent
-        const companyProfit = params.companyProfit
-        const currentSalary = params.annualSalary || 0
-
-        const taxRates = await taxService.getAllTaxRates(year)
-        if (!taxRates) {
-            return { success: false, error: `Skattesatser för ${year} saknas i databasen — kan inte beräkna 3:12-optimering.` }
-        }
-        const IBB = taxRates.ibb
-
-        // Förenklingsregeln: 2.75 × IBB
-        const forenklingsbelopp = Math.round(2.75 * IBB * (ownershipPercent / 100))
-
-        // Salary requirement for lönebaserat utrymme: 6 × IBB + 5% of company salaries
-        const minSalaryForLoneutrymme = 6 * IBB
-
-        // Check if current salary qualifies for löneunderlag
-        const qualifiesForLoneutrymme = currentSalary >= minSalaryForLoneutrymme
-
-        // Calculate optimal salary (just above 6 × IBB threshold)
-        const optimalSalary = Math.max(currentSalary, Math.round(minSalaryForLoneutrymme * 1.05))
-
-        // Gränsbelopp (simplified)
-        const gransbelopp = qualifiesForLoneutrymme
-            ? Math.round(optimalSalary * 0.5 * (ownershipPercent / 100))
-            : forenklingsbelopp
-
-        // Take the higher of förenkling or lönebaserat
-        const effectiveGransbelopp = Math.max(forenklingsbelopp, gransbelopp)
-
-        // Calculate optimal dividend (up to gränsbelopp is taxed at kapitalskatt rate)
-        const afterCorpTax = 1 - taxRates.corporateTaxRate
-        const optimalDividend = Math.min(effectiveGransbelopp, companyProfit * afterCorpTax * (ownershipPercent / 100))
-
-        // Tax calculations
-        const dividendTax = Math.round(optimalDividend * taxRates.dividendTaxKapital)
-        const salaryTax = Math.round(optimalSalary * taxRates.marginalTaxRateApprox)
-        const totalTax = dividendTax + salaryTax
-
-        // Compare to all salary (top marginal rate for high earners)
-        const allSalaryTax = Math.round((optimalSalary + optimalDividend) * taxRates.topMarginalTaxRate)
-        const savings = allSalaryTax - totalTax
-
-        const recommendation = optimalDividend > optimalSalary ? 'dividend' :
-            optimalDividend > 0 ? 'mix' : 'salary'
-
-        const explanation = `
-Med ${ownershipPercent}% ägande är ditt gränsbelopp ${effectiveGransbelopp.toLocaleString('sv-SE')} kr.
-
-**Rekommendation:**
-- Ta ut ${optimalSalary.toLocaleString('sv-SE')} kr i lön (kvalificerar för löneunderlag)
-- Ta ut ${optimalDividend.toLocaleString('sv-SE')} kr i utdelning (beskattas med 20%)
-
-**Skattejämförelse:**
-- Optimerad strategi: ${totalTax.toLocaleString('sv-SE')} kr i skatt
-- Allt som lön: ${allSalaryTax.toLocaleString('sv-SE')} kr i skatt
-- **Besparing: ${savings.toLocaleString('sv-SE')} kr**
-        `.trim()
-
-        return {
-            success: true,
-            data: {
-                recommendation,
-                optimalSalary,
-                optimalDividend,
-                gransbelopp: effectiveGransbelopp,
-                taxOnSalary: salaryTax,
-                taxOnDividend: dividendTax,
-                totalTax,
-                savings,
-                explanation,
-            },
-            message: `3:12-optimering för ${params.ownerName}: Gränsbelopp ${effectiveGransbelopp.toLocaleString('sv-SE')} kr. Besparing: ${savings.toLocaleString('sv-SE')} kr.`,
-        }
-    },
-})
-
 export const ownerPayrollTools = [
     calculateSelfEmploymentFeesTool,
     registerOwnerWithdrawalTool,
-    optimize312Tool,
 ]

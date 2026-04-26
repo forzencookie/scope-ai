@@ -1,5 +1,5 @@
 import { defineTool } from '../registry'
-import { periodClosingService, type MonthlySummary } from '@/services/accounting/period-closing-service'
+import { periodClosingService, type MonthlySummary } from '@/services/accounting'
 import { formatCurrency } from '@/lib/utils'
 
 export interface GetPeriodSummariesParams {

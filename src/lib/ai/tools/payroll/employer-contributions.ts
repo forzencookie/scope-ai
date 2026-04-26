@@ -1,7 +1,7 @@
 import { defineTool } from '../registry'
-import { payrollService, type Employee } from '@/services/payroll/payroll-service'
-import { taxService } from '@/services/tax/tax-service'
-import { calculateEmployerContributions } from '@/lib/bookkeeping'
+import { payrollService, type Employee } from '@/services/payroll'
+import { taxService } from '@/services/tax'
+import { calculateEmployerContributions } from '@/services/accounting'
 
 export interface EmployerContributionsParams {
     month?: string

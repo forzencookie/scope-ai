@@ -7,8 +7,8 @@
 
 import { NextRequest } from 'next/server'
 import { verifyAuth, ApiResponse } from "@/lib/database/auth-server"
-import { companyService } from '@/services/company/company-service.server'
-import { CompanyUpdate } from '@/services/company/company-service'
+import { companyService } from '@/services/company'
+import { CompanyUpdate } from '@/services/company'
 
 /**
  * GET /api/company

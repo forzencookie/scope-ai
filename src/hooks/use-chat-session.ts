@@ -191,11 +191,27 @@ export function useChatSession({
                 }))
 
                 const completed = toolInvocations.filter(t => t.state === 'result')
-                // Use the last tool result that carries a valid Block display
+                // Use the last tool result that carries a renderable display
                 for (let i = completed.length - 1; i >= 0; i--) {
                     const result = completed[i].result as Record<string, unknown> | undefined
-                    const raw = result?.display
-                    if (raw && typeof raw === 'object' && Array.isArray((raw as Record<string, unknown>).rows)) {
+                    const raw = result?.display as Record<string, unknown> | undefined
+                    if (!raw || typeof raw !== 'object') continue
+
+                    if (raw.type === 'BatchBookingCard' && raw.data && typeof raw.data === 'object') {
+                        const d = raw.data as Record<string, unknown>
+                        appMsg.display = {
+                            type: 'BatchBookingCard',
+                            data: {
+                                title: String(d.title ?? ''),
+                                description: d.description != null ? String(d.description) : undefined,
+                                items: Array.isArray(d.items) ? d.items : [],
+                                totalAmount: String(d.totalAmount ?? ''),
+                            },
+                        }
+                        break
+                    }
+
+                    if (Array.isArray(raw.rows)) {
                         const parsed = BlockSchema.safeParse(raw)
                         if (parsed.success) {
                             appMsg.display = { type: 'Block', data: parsed.data }

@@ -5,13 +5,13 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll/payroll-service'
+import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll'
 import type { Block } from '@/lib/ai/schema'
-import { companyService } from '@/services/company/company-service.server'
-import { taxService } from '@/services/tax/tax-service'
-import { getEmployeeBenefits } from '@/lib/bookkeeping/formaner'
-import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '@/lib/bookkeeping'
-import { verificationService } from '@/services/accounting/verification-service'
+import { companyService } from '@/services/company'
+import { taxService } from '@/services/tax'
+import { getEmployeeBenefits } from '@/services/payroll'
+import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '@/services/accounting'
+import { verificationService } from '@/services/accounting'
 
 // =============================================================================
 // Helpers

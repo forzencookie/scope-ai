@@ -6,12 +6,14 @@
 import type { SkillItem } from '@/components/ai/skill-picker'
 import type { Block } from '@/lib/ai/schema'
 import type { AuditResult } from '@/components/ai/cards/information-cards/audit-card'
+import type { BatchSummaryItem } from '@/components/ai/cards/action-cards/batch-booking-card'
 
 // Display card data types - strictly typed discriminated union
 export type MessageDisplay =
     | { type: 'Block'; data: Block }
     | { type: 'BalanceAuditCard'; component?: string; data: { audit?: AuditResult } & Record<string, unknown> }
     | { type: 'BuyCreditsPrompt'; data: Record<string, unknown> }
+    | { type: 'BatchBookingCard'; data: { title: string; description?: string; items: BatchSummaryItem[]; totalAmount: string } }
 
 export interface Message {
     id: string

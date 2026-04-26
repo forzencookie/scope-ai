@@ -578,4 +578,61 @@ export const shareholderService = {
         if (error) throw error
         return data
     },
+
+    async updatePartnerShares(changes: Array<{
+        partnerId: string
+        ownershipPercentage?: number
+        profitSharePercentage?: number
+    }>): Promise<void> {
+        const supabase = createBrowserClient()
+
+        for (const change of changes) {
+            const patch: Record<string, unknown> = {}
+            if (change.ownershipPercentage !== undefined) patch.ownership_percentage = change.ownershipPercentage
+            if (change.profitSharePercentage !== undefined) patch.profit_share_percentage = change.profitSharePercentage
+
+            const { error } = await supabase
+                .from('partners')
+                .update(patch)
+                .eq('id', change.partnerId)
+
+            if (error) throw error
+        }
+    },
+
+    async recordDividendDecision(params: {
+        totalDividend: number
+        dividendPerShare: number
+        fiscalYear: number
+        decidedDate: string
+        availableEquity: number
+    }): Promise<{ id: string }> {
+        const supabase = createBrowserClient()
+
+        const [{ data: { user } }, { data: company }] = await Promise.all([
+            supabase.auth.getUser(),
+            supabase.from('companies').select('id').single()
+        ])
+
+        if (!user || !company) throw new Error('Ej inloggad eller företag saknas.')
+
+        const { data, error } = await supabase
+            .from('dividends')
+            .insert({
+                user_id: user.id,
+                company_id: company.id,
+                amount: params.totalDividend,
+                net_payout: params.totalDividend,
+                withholding_tax: 0,
+                date: params.decidedDate,
+                year: params.fiscalYear,
+                status: 'beslutad',
+                recipient_name: null,
+            })
+            .select('id')
+            .single()
+
+        if (error) throw error
+        return { id: data.id }
+    },
 }

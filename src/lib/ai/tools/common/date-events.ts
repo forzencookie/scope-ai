@@ -6,10 +6,10 @@
  */
 
 import { defineTool } from '../registry'
-import { verificationService } from '@/services/accounting/verification-service'
-import { invoiceService } from '@/services/invoicing/invoice-service'
-import { receiptService } from '@/services/accounting/receipt-service'
-import { boardService } from '@/services/corporate/board-service'
+import { verificationService } from '@/services/accounting'
+import { invoiceService } from '@/services/invoicing'
+import { receiptService } from '@/services/accounting'
+import { boardService } from '@/services/corporate'
 
 // =============================================================================
 // Types

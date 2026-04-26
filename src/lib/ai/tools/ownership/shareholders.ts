@@ -6,7 +6,7 @@
  */
 
 import { defineTool } from '../registry'
-import { shareholderService, Shareholder } from '@/services/corporate/shareholder-service'
+import { shareholderService, Shareholder } from '@/services/corporate'
 
 // =============================================================================
 // Shareholder Read Tools
@@ -344,9 +344,92 @@ export const transferSharesTool = defineTool<TransferSharesParams, ShareTransfer
     },
 })
 
+// =============================================================================
+// Record Dividend Decision Tool
+// =============================================================================
+
+export interface RecordDividendDecisionParams {
+    totalDividend: number
+    dividendPerShare: number
+    fiscalYear: number
+    availableEquity: number
+    decidedDate?: string
+}
+
+export const recordDividendDecisionTool = defineTool<RecordDividendDecisionParams, { id: string }>({
+    name: 'record_dividend_decision',
+    description: 'Dokumentera ett utdelningsbeslut — fritt eget kapital kontrolleras mot utdelningsbeloppet (försiktighetsregeln). Skapar ett utdelningsunderlag med status "beslutad". Kräver bekräftelse. Använd register_dividend för att sedan bokföra utbetalningen. Endast AB.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: ['ab'],
+    domain: 'parter',
+    keywords: ['utdelning', 'beslut', 'utdelningsbeslut', 'bolagsstämma', 'fritt eget kapital'],
+    parameters: {
+        type: 'object',
+        properties: {
+            totalDividend: { type: 'number', description: 'Total utdelning i kronor' },
+            dividendPerShare: { type: 'number', description: 'Utdelning per aktie i kronor' },
+            fiscalYear: { type: 'number', description: 'Räkenskapsår utdelningen avser' },
+            availableEquity: { type: 'number', description: 'Fritt eget kapital (för försiktighetsregeln)' },
+            decidedDate: { type: 'string', description: 'Beslutsdatum (YYYY-MM-DD, standard: idag)' },
+        },
+        required: ['totalDividend', 'dividendPerShare', 'fiscalYear', 'availableEquity'],
+    },
+    execute: async (params, context) => {
+        const date = params.decidedDate ?? new Date().toISOString().split('T')[0]
+        const remainingEquity = params.availableEquity - params.totalDividend
+        const forsiktighetsOk = remainingEquity >= 0
+
+        if (!forsiktighetsOk) {
+            return {
+                success: false,
+                error: `Försiktighetsregeln ej uppfylld — utdelning (${params.totalDividend.toLocaleString('sv-SE')} kr) överstiger fritt eget kapital (${params.availableEquity.toLocaleString('sv-SE')} kr).`,
+            }
+        }
+
+        if (context?.isConfirmed) {
+            try {
+                const result = await shareholderService.recordDividendDecision({
+                    totalDividend: params.totalDividend,
+                    dividendPerShare: params.dividendPerShare,
+                    fiscalYear: params.fiscalYear,
+                    decidedDate: date,
+                    availableEquity: params.availableEquity,
+                })
+                return {
+                    success: true,
+                    data: result,
+                    message: `Utdelningsbeslut fattat: ${params.totalDividend.toLocaleString('sv-SE')} kr (${params.dividendPerShare} kr/aktie) för räkenskapsår ${params.fiscalYear}. Kvarvarande fritt eget kapital: ${remainingEquity.toLocaleString('sv-SE')} kr.`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte spara utdelningsbeslut.' }
+            }
+        }
+
+        return {
+            success: true,
+            data: { id: '' },
+            message: `Utdelningsbeslut förberett. Försiktighetsregeln uppfylld — ${remainingEquity.toLocaleString('sv-SE')} kr kvarblir. Bekräfta för att dokumentera beslutet.`,
+            confirmationRequired: {
+                title: 'Utdelningsbeslut',
+                description: `Räkenskapsår ${params.fiscalYear}`,
+                summary: [
+                    { label: 'Total utdelning', value: `${params.totalDividend.toLocaleString('sv-SE')} kr` },
+                    { label: 'Per aktie', value: `${params.dividendPerShare} kr` },
+                    { label: 'Fritt eget kapital', value: `${params.availableEquity.toLocaleString('sv-SE')} kr` },
+                    { label: 'Kvarblir', value: `${remainingEquity.toLocaleString('sv-SE')} kr` },
+                    { label: 'Beslutsdatum', value: date },
+                ],
+                action: { toolName: 'record_dividend_decision', params },
+            },
+        }
+    },
+})
+
 export const shareholderTools = [
     getShareholdersTool,
     getShareRegisterSummaryTool,
     addShareholderTool,
     transferSharesTool,
+    recordDividendDecisionTool,
 ]

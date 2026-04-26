@@ -2,20 +2,20 @@
  * Tests for the bookkeeping module
  * Covers validation, entry creators, and VAT calculations
  */
-import { isValidAccount, getAccountClass, getFiscalYearRange } from '../bookkeeping/utils'
+import { isValidAccount, getAccountClass, getFiscalYearRange } from '@/services/accounting'
 import {
   validateJournalEntry,
   validateLine,
   isBalanced,
   roundToOre,
-} from '../bookkeeping/validation'
-import { createSimpleEntry } from '../bookkeeping/entries/simple'
-import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions, createPayrollTaxPayment, createSalaryAccrual } from '../bookkeeping/entries/salary'
-import { createSalesEntry, createMultiVatSalesEntry, createPaymentReceivedEntry, createCreditNoteEntry } from '../bookkeeping/entries/sales'
-import { createPurchaseEntry, createSupplierPayment } from '../bookkeeping/entries/purchase'
-import { calculateVat, extractVat, splitGrossAmount } from '../bookkeeping/vat'
-import { DEFAULT_ACCOUNTS, PAYMENT_ACCOUNTS } from '../bookkeeping/types'
-import type { JournalEntry, JournalEntryLine } from '../bookkeeping/types'
+} from '@/services/accounting'
+import { createSimpleEntry } from '@/services/accounting'
+import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions, createPayrollTaxPayment, createSalaryAccrual } from '@/services/accounting'
+import { createSalesEntry, createMultiVatSalesEntry, createPaymentReceivedEntry, createCreditNoteEntry } from '@/services/accounting'
+import { createPurchaseEntry, createSupplierPayment } from '@/services/accounting'
+import { calculateVat, extractVat, splitGrossAmount } from '@/services/accounting'
+import { DEFAULT_ACCOUNTS, PAYMENT_ACCOUNTS } from '@/services/accounting'
+import type { JournalEntry, JournalEntryLine } from '@/services/accounting'
 
 // =============================================================================
 // isValidAccount

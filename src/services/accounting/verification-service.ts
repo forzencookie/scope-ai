@@ -3,7 +3,7 @@ import type { Json, Database } from '@/types/database'
 import type { Verification, VerificationEntry, VerificationAttachment } from '@/types'
 import { logAuditEntry } from '@/lib/database/audit'
 import { nullToUndefined } from '@/lib/utils'
-import { isValidAccount } from '@/lib/bookkeeping/utils'
+import { isValidAccount } from '@/services/accounting'
 import type { SupabaseClient } from '@supabase/supabase-js'
 
 /**

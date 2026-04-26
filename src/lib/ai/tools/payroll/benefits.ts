@@ -2,114 +2,34 @@
  * Löner AI Tools - Benefits (Förmåner)
  *
  * Tools for managing employee benefits.
+ * Benefit catalog rules live in knowledge/accounting/formaner.md — read via read_skill.
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import type { FormanCatalogItem } from '@/types/benefits'
 import {
-    listAvailableBenefits,
-    getBenefitDetails,
     assignBenefit,
     suggestUnusedBenefits,
-} from '../../../bookkeeping/formaner'
+    getBenefitDetails,
+} from '@/services/payroll'
 
 // =============================================================================
-// Benefits Read Tools
+// Suggest Unused Benefits
 // =============================================================================
-
-export interface GetBenefitsParams {
-    category?: 'tax_free' | 'taxable' | 'deduction'
-}
-
-export const getAvailableBenefitsTool = defineTool<GetBenefitsParams, FormanCatalogItem[]>({
-    name: 'get_available_benefits',
-    description: 'Hämta tillgängliga personalförmåner (t.ex. friskvård, bilförmån).',
-    category: 'read',
-    requiresConfirmation: false,
-  allowedCompanyTypes: [],
-  domain: 'loner',
-    keywords: ['förmåner', 'friskvård', 'tillgängliga'],
-    parameters: {
-        type: 'object',
-        properties: {
-            category: { type: 'string', enum: ['tax_free', 'taxable', 'deduction'], description: 'Filtrera på kategori' },
-        },
-    },
-    execute: async (params) => {
-        const benefits = await listAvailableBenefits('AB')
-        let filtered = benefits
-        if (params.category) {
-            filtered = benefits.filter(b => b.category === params.category)
-        }
-
-        return {
-            success: true,
-            data: filtered,
-            message: `Hittade ${filtered.length} tillgängliga förmåner.`,
-        }
-    },
-})
-
-export const listBenefitsTool = defineTool({
-    name: 'list_benefits',
-    description: 'List all available employee benefits (förmåner). Filter by company type if needed.',
-    parameters: {
-        type: 'object' as const,
-        properties: {
-            companyType: { type: 'string', enum: ['AB', 'EF', 'EnskildFirma'], description: 'Company type filter' },
-        },
-    },
-    requiresConfirmation: false,
-    domain: 'loner',
-    keywords: ['förmåner', 'lista', 'aktiva'],
-    category: 'read',
-    execute: async (params: { companyType?: 'AB' | 'EF' | 'EnskildFirma' }) => {
-        const benefits = await listAvailableBenefits(params.companyType)
-        return {
-            success: true,
-            data: benefits,
-            message: `Found ${benefits.length} available benefits`,
-        }
-    },
-})
-
-export const getBenefitDetailsTool = defineTool({
-    name: 'get_benefit_details',
-    description: 'Get detailed information about a specific benefit type, including tax rules and limits.',
-    parameters: {
-        type: 'object' as const,
-        properties: {
-            benefitId: { type: 'string', description: 'ID of the benefit (e.g., friskvard, tjanstebil)' },
-        },
-        required: ['benefitId'],
-    },
-    requiresConfirmation: false,
-    domain: 'loner',
-    keywords: ['förmån', 'detaljer', 'information'],
-    category: 'read',
-    execute: async (params: { benefitId: string }) => {
-        const benefit = await getBenefitDetails(params.benefitId)
-        if (benefit) {
-            return { success: true, data: benefit, message: `Details for ${benefit.name}` }
-        }
-        return { success: false, error: 'Benefit not found' }
-    },
-})
 
 export const suggestUnusedBenefitsTool = defineTool({
     name: 'suggest_unused_benefits',
-    description: 'Suggest tax-free benefits that an employee has not used yet this year.',
+    description: 'Föreslå skattefria förmåner som en anställd inte nyttjat ännu i år.',
     parameters: {
         type: 'object' as const,
         properties: {
-            employeeName: { type: 'string', description: 'Name of the employee' },
-            year: { type: 'number', description: 'Year to check' },
+            employeeName: { type: 'string', description: 'Namn på anställd' },
+            year: { type: 'number', description: 'År att kontrollera' },
         },
         required: ['employeeName', 'year'],
     },
     requiresConfirmation: false,
     domain: 'loner',
-    keywords: ['förmån', 'förslag', 'outnyttjad'],
+    keywords: ['förmån', 'förslag', 'outnyttjad', 'skattefri'],
     category: 'read',
     execute: async (params: { employeeName: string; year: number }) => {
         const suggestions = await suggestUnusedBenefits(params.employeeName, params.year)
@@ -117,14 +37,14 @@ export const suggestUnusedBenefitsTool = defineTool({
             success: true,
             data: suggestions,
             message: suggestions.length > 0
-                ? `${suggestions.length} unused tax-free benefits available`
-                : 'All tax-free benefits have been used',
+                ? `${suggestions.length} outnyttjade skattefria förmåner för ${params.employeeName}`
+                : `${params.employeeName} nyttjar redan alla tillgängliga skattefria förmåner`,
         }
     },
 })
 
 // =============================================================================
-// Benefits Write Tools
+// Assign Benefit
 // =============================================================================
 
 export interface AssignBenefitParams {
@@ -139,14 +59,14 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
     description: 'Tilldela en förmån till en anställd. Kräver bekräftelse.',
     category: 'write',
     requiresConfirmation: true,
-  allowedCompanyTypes: [],
-  domain: 'loner',
+    allowedCompanyTypes: [],
+    domain: 'loner',
     keywords: ['tilldela', 'förmån', 'anställd'],
     parameters: {
         type: 'object',
         properties: {
             employeeName: { type: 'string', description: 'Namn på anställd' },
-            benefitId: { type: 'string', description: 'ID för förmånen' },
+            benefitId: { type: 'string', description: 'ID för förmånen (t.ex. friskvard, tjanstebil)' },
             amount: { type: 'number', description: 'Belopp i kronor' },
             year: { type: 'number', description: 'År (standard: nuvarande)' },
         },
@@ -154,8 +74,16 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
     },
     execute: async (params, context) => {
         const year = params.year || new Date().getFullYear()
+        const benefit = await getBenefitDetails(params.benefitId)
 
-        // If confirmed, persist to DB
+        const benefitName = benefit?.name ?? params.benefitId
+        const taxStatus = benefit?.taxFree
+            ? benefit.maxAmount
+                ? `Skattefritt (≤ ${benefit.maxAmount.toLocaleString('sv-SE')} kr)`
+                : 'Skattefritt'
+            : 'Skattepliktigt — läggs på bruttolön'
+        const account = benefit?.basAccount ?? '7690 Personalvård'
+
         if (context?.isConfirmed) {
             const result = await assignBenefit({
                 employeeName: params.employeeName,
@@ -168,7 +96,7 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
                 return {
                     success: true,
                     data: { success: true },
-                    message: `Förmån ${params.benefitId} tilldelad ${params.employeeName}. Belopp: ${params.amount.toLocaleString('sv-SE')} kr.`,
+                    message: `${benefitName} tilldelad ${params.employeeName} — ${params.amount.toLocaleString('sv-SE')} kr.`,
                 }
             }
             return { success: false, error: 'Kunde inte tilldela förmånen.' }
@@ -176,11 +104,13 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
 
         const confirmationRequest: AIConfirmationRequest = {
             title: 'Tilldela förmån',
-            description: `Tilldela ${params.benefitId} till ${params.employeeName}`,
+            description: `${params.employeeName} — ${benefitName}`,
             summary: [
                 { label: 'Anställd', value: params.employeeName },
-                { label: 'Förmån', value: params.benefitId },
-                { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr` },
+                { label: 'Förmån', value: benefitName },
+                { label: 'Belopp', value: `${params.amount.toLocaleString('sv-SE')} kr / år` },
+                { label: 'Skatteeffekt', value: taxStatus },
+                { label: 'Konto', value: account },
                 { label: 'År', value: String(year) },
             ],
             action: { toolName: 'assign_benefit', params },
@@ -190,16 +120,13 @@ export const assignBenefitTool = defineTool<AssignBenefitParams, { success: bool
         return {
             success: true,
             data: { success: true },
-            message: `Förmån ${params.benefitId} förberedd för ${params.employeeName}. Belopp: ${params.amount} kr.`,
+            message: `${benefitName} förberedd för ${params.employeeName} — ${params.amount.toLocaleString('sv-SE')} kr. Bekräfta för att tilldela.`,
             confirmationRequired: confirmationRequest,
         }
     },
 })
 
 export const benefitsTools = [
-    getAvailableBenefitsTool,
-    listBenefitsTool,
-    getBenefitDetailsTool,
     suggestUnusedBenefitsTool,
     assignBenefitTool,
 ]

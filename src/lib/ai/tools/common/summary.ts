@@ -6,8 +6,8 @@
  */
 
 import { defineTool } from '../registry'
-import { verificationService } from '@/services/accounting/verification-service'
-import { getEvents } from '@/services/common/event-service'
+import { verificationService } from '@/services/accounting'
+import { getEvents } from '@/services/common'
 import { formatCurrency } from '@/lib/utils'
 
 export interface SummaryParams {

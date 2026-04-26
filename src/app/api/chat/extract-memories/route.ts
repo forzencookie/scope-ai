@@ -14,7 +14,7 @@
 
 import { NextResponse } from 'next/server'
 import { withAuth, ApiResponse } from "@/lib/database/auth-server"
-import { userMemoryService } from '@/services/common/user-memory-service'
+import { userMemoryService } from '@/services/common'
 
 // Maximum active memories before consolidation triggers
 const MEMORY_CAP = 20

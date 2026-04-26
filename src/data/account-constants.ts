@@ -9,7 +9,7 @@
  */
 
 // Re-export existing constants from bookkeeping types
-export { VAT_ACCOUNTS, PAYMENT_ACCOUNTS, DEFAULT_ACCOUNTS } from '@/lib/bookkeeping/types'
+export { VAT_ACCOUNTS, PAYMENT_ACCOUNTS, DEFAULT_ACCOUNTS } from '@/services/accounting'
 
 // =============================================================================
 // Equity accounts (from use-dividends.ts, use-dividend-logic.ts)

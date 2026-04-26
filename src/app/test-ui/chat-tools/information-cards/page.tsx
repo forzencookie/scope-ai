@@ -176,7 +176,42 @@ export default function InformationCardsPage() {
 
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
-                                <h3 className="text-sm font-semibold">Förmåner</h3>
+                                <h3 className="text-sm font-semibold">Kommande möten</h3>
+                                <span className="text-xs text-muted-foreground">Schemalagda med status</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Möten",
+                                    description: "2 kommande · 1 signering väntar",
+                                    rows: [
+                                        { icon: "report", title: "Styrelsemöte",         description: "Anta årsredovisning 2025 · 28 apr", status: "Signering" },
+                                        { icon: "report", title: "Ordinarie bolagsstämma", description: "Räkenskapsår 2025 · 2 maj",        status: "Planerad" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Möteshistorik</h3>
+                                <span className="text-xs text-muted-foreground">Genomförda möten med protokollstatus</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Möteshistorik",
+                                    description: "3 möten 2025",
+                                    rows: [
+                                        { icon: "report", title: "Ordinarie bolagsstämma 2025", description: "Räkenskapsår 2024 · 15 maj 2025", status: "Godkänd" },
+                                        { icon: "report", title: "Extra bolagsstämma",           description: "Ny firmatecknare · 3 sep 2025",  status: "Godkänd" },
+                                        { icon: "report", title: "Styrelsemöte",                 description: "Budgetgenomgång Q3 · 12 okt 2025", status: "Godkänd" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Förmåner — aktiva</h3>
                                 <span className="text-xs text-muted-foreground">Skattefria och skattepliktiga</span>
                             </div>
                             <div className="max-w-lg">
@@ -187,6 +222,42 @@ export default function InformationCardsPage() {
                                         { icon: "benefit", title: "Anna Lindberg", description: "Friskvårdsbidrag · Skattefritt", amount: 5000,  status: "OK" },
                                         { icon: "benefit", title: "Johan Berg",    description: "Friskvårdsbidrag · Skattefritt", amount: 5000,  status: "OK" },
                                         { icon: "benefit", title: "Johan Berg",    description: "Tjänstebil Volvo XC40",          amount: 4200,  status: "Förmånsvärde" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Förmåner — kvarvarande budget</h3>
+                                <span className="text-xs text-muted-foreground">Outnyttjat friskvårdsbidrag per anställd</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Friskvårdsbudget 2026",
+                                    description: "Limit 5 000 kr/person · 3 anställda",
+                                    rows: [
+                                        { icon: "benefit", title: "Anna Lindberg", description: "Nyttjat 1 800 kr", amount: 3200, status: "Kvar" },
+                                        { icon: "benefit", title: "Johan Berg",    description: "Nyttjat 5 000 kr", amount: 0,    status: "Fullt" },
+                                        { icon: "benefit", title: "Sara Ek",       description: "Nyttjat 0 kr",     amount: 5000, status: "Kvar" },
+                                    ],
+                                }} />
+                            </div>
+                        </div>
+
+                        <div className="space-y-2">
+                            <div className="flex items-baseline gap-2">
+                                <h3 className="text-sm font-semibold">Förmåner — skatteeffekt</h3>
+                                <span className="text-xs text-muted-foreground">Förmånsvärde och kostnadseffekt per anställd</span>
+                            </div>
+                            <div className="max-w-lg">
+                                <Block block={{
+                                    title: "Skatteeffekt förmåner — Johan Berg",
+                                    rows: [
+                                        { icon: "benefit", title: "Bruttolön",           amount: 45000, highlight: false },
+                                        { icon: "benefit", title: "Förmånsvärde tjänstebil", amount: 4200, highlight: false },
+                                        { icon: "benefit", title: "Beskattningsbar lön", amount: 49200, highlight: true },
+                                        { icon: "benefit", title: "Arbetsgivaravgift (31.42%)", amount: 15457, highlight: false },
                                     ],
                                 }} />
                             </div>

@@ -13,9 +13,10 @@ import { AiProcessingState } from "@/components/shared/ai-processing-state"
 import { AuditCard } from "@/components/ai/cards/information-cards/audit-card"
 import { Block } from "@/components/ai/cards/rows/block"
 import { BuyCreditsPrompt, type BuyCreditsPromptProps } from "@/components/ai/cards/BuyCreditsCard"
+import { BatchBookingCard } from "@/components/ai/cards/action-cards/batch-booking-card"
 import { SkillBadge } from "@/components/ai/skill-picker"
 import type { Message } from "@/lib/chat/chat-types"
-import { useState } from "react"
+import { useState, useCallback } from "react"
 
 // Attachment preview with image error fallback
 interface AttachmentData {
@@ -73,6 +74,42 @@ const AttachmentPreview = React.memo(function AttachmentPreview({ attachment }: 
     )
 })
 
+
+// Wrapper gives the BatchBookingCard its own isDone/isLoading state per message
+function BatchBookingCardWrapper({
+    title, description, items, totalAmount, isLoadingExternal, onConfirm, onCancel,
+}: {
+    title: string
+    description?: string
+    items: Parameters<typeof BatchBookingCard>[0]['items']
+    totalAmount: string
+    isLoadingExternal: boolean
+    onConfirm: () => void
+    onCancel: () => void
+}) {
+    const [isDone, setIsDone] = useState(false)
+    const [isLoading, setIsLoading] = useState(false)
+
+    const handleConfirm = useCallback(() => {
+        setIsLoading(true)
+        onConfirm()
+        setTimeout(() => { setIsLoading(false); setIsDone(true) }, 800)
+    }, [onConfirm])
+
+    return (
+        <BatchBookingCard
+            title={title}
+            description={description}
+            items={items}
+            totalAmount={totalAmount}
+            isDone={isDone}
+            isLoading={isLoading || (isLoadingExternal && !isDone)}
+            completedAction="booked"
+            onConfirm={handleConfirm}
+            onCancel={onCancel}
+        />
+    )
+}
 
 interface ChatMessageListProps {
     messages: Message[]
@@ -191,6 +228,24 @@ export const ChatMessageList = React.memo(function ChatMessageList({
                         <Block block={message.display.data} />
                     </div>
                 )}
+
+                {/* Batch booking card — preflight confirmation for bulk_book_transactions */}
+                {message.display?.type === 'BatchBookingCard' && (() => {
+                    const d = message.display.data
+                    return (
+                        <div className="my-2">
+                            <BatchBookingCardWrapper
+                                title={d.title}
+                                description={d.description}
+                                items={d.items}
+                                totalAmount={d.totalAmount}
+                                isLoadingExternal={isLoading && isLast}
+                                onConfirm={() => onConfirm(message.id)}
+                                onCancel={() => onCancelConfirmation(message.id)}
+                            />
+                        </div>
+                    )
+                })()}
 
                 {/* Audit card — always visible, no overlay */}
                 {message.display?.type === 'BalanceAuditCard' && (

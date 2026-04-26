@@ -6,8 +6,8 @@
  */
 
 import { defineTool } from '../registry'
-import { companyService } from '@/services/company/company-service.server'
-import { CompanyInfo } from '@/services/company/company-service'
+import { companyService } from '@/services/company'
+import { CompanyInfo } from '@/services/company'
 
 // Helper to get base URL for API calls
 function getBaseUrl() {

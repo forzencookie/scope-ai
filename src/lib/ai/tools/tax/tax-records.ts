@@ -1,5 +1,5 @@
 import { defineTool } from '../registry'
-import { taxDeclarationService } from '@/services/tax/tax-declaration-service'
+import { taxDeclarationService } from '@/services/tax'
 
 export interface GetDeclarationsParams {
     taxYear?: number

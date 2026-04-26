@@ -5,8 +5,8 @@
  */
 
 import { defineTool, AIConfirmationRequest } from '../registry'
-import { inventarieService, type Inventarie } from '@/services/accounting/inventarie-service'
-import { verificationService } from '@/services/accounting/verification-service'
+import { inventarieService, type Inventarie } from '@/services/accounting'
+import { verificationService } from '@/services/accounting'
 
 // =============================================================================
 // Get Assets Tool

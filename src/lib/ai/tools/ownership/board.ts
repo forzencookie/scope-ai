@@ -11,7 +11,7 @@ import {
     BoardMember,
     BoardMeetingMinutes,
     CompanyMeeting
-} from '@/services/corporate/board-service'
+} from '@/services/corporate'
 
 // =============================================================================
 // Get Board Members Tool
@@ -386,6 +386,98 @@ export const scheduleMeetingTool = defineTool<ScheduleMeetingParams, CompanyMeet
     },
 })
 
+// =============================================================================
+// Record Board Decision Tool
+// =============================================================================
+
+export interface RecordBoardDecisionParams {
+    decisionType: 'appoint_ceo' | 'approve_contract' | 'other'
+    description: string
+    personName?: string
+    role?: string
+    salary?: number
+    effectiveDate?: string
+    contractCounterparty?: string
+    contractAmount?: number
+    meetingDate?: string
+}
+
+export const recordBoardDecisionTool = defineTool<RecordBoardDecisionParams, { id: string; title: string }>({
+    name: 'record_board_decision',
+    description: 'Dokumentera ett styrelsebeslut — utse VD, godkänn avtal, eller annat. Skapar ett styrelsemötesprotokoll. Kräver bekräftelse. Endast AB.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: ['ab'],
+    domain: 'parter',
+    keywords: ['styrelsebeslut', 'VD', 'avtal', 'protokoll', 'styrelse'],
+    parameters: {
+        type: 'object',
+        properties: {
+            decisionType: { type: 'string', description: 'Typ: appoint_ceo | approve_contract | other' },
+            description: { type: 'string', description: 'Beskrivning av beslutet' },
+            personName: { type: 'string', description: 'Person som berörs (VD, firmatecknare etc.)' },
+            role: { type: 'string', description: 'Roll/titel' },
+            salary: { type: 'number', description: 'Lön i kr/mån (om relevant)' },
+            effectiveDate: { type: 'string', description: 'Startdatum (YYYY-MM-DD)' },
+            contractCounterparty: { type: 'string', description: 'Motpart (om avtalsbeslut)' },
+            contractAmount: { type: 'number', description: 'Avtalsbelopp (om avtalsbeslut)' },
+            meetingDate: { type: 'string', description: 'Mötesdatum (YYYY-MM-DD, standard: idag)' },
+        },
+        required: ['decisionType', 'description'],
+    },
+    execute: async (params, context) => {
+        const titleMap: Record<RecordBoardDecisionParams['decisionType'], string> = {
+            appoint_ceo: `Utse VD${params.personName ? ` — ${params.personName}` : ''}`,
+            approve_contract: `Godkänn avtal${params.contractCounterparty ? ` — ${params.contractCounterparty}` : ''}`,
+            other: params.description,
+        }
+        const title = titleMap[params.decisionType]
+        const date = params.meetingDate ?? new Date().toISOString().split('T')[0]
+
+        if (context?.isConfirmed) {
+            try {
+                const meeting = await boardService.createMeeting({
+                    title: `Styrelsebeslut: ${title}`,
+                    type: 'board_meeting_minutes',
+                    meetingCategory: 'styrelsemote',
+                    date,
+                    agenda: [{ title, decision: params.description }],
+                    status: 'draft',
+                })
+                return {
+                    success: true,
+                    data: { id: meeting.id, title: meeting.title },
+                    message: `Styrelsebeslut dokumenterat: ${title}.`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte spara styrelsebeslut.' }
+            }
+        }
+
+        const summary: Array<{ label: string; value: string }> = [
+            { label: 'Beslut', value: title },
+            { label: 'Datum', value: date },
+        ]
+        if (params.personName) summary.push({ label: 'Person', value: params.personName })
+        if (params.role) summary.push({ label: 'Roll', value: params.role })
+        if (params.salary) summary.push({ label: 'Lön', value: `${params.salary.toLocaleString('sv-SE')} kr/mån` })
+        if (params.contractCounterparty) summary.push({ label: 'Motpart', value: params.contractCounterparty })
+        if (params.effectiveDate) summary.push({ label: 'Gäller från', value: params.effectiveDate })
+
+        return {
+            success: true,
+            data: { id: '', title },
+            message: `Styrelsebeslut förberett: ${title}. Bekräfta för att spara protokollet.`,
+            confirmationRequired: {
+                title: 'Styrelsebeslut',
+                description: title,
+                summary,
+                action: { toolName: 'record_board_decision', params },
+            },
+        }
+    },
+})
+
 export const boardTools = [
     getBoardMembersTool,
     getBoardMeetingMinutesTool,
@@ -393,4 +485,5 @@ export const boardTools = [
     getAnnualMeetingDeadlineTool,
     assignBoardMemberTool,
     scheduleMeetingTool,
+    recordBoardDecisionTool,
 ]

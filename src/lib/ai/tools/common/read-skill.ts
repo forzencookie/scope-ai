@@ -11,13 +11,14 @@ const KNOWLEDGE_FILES: Record<string, string> = {
     'accounting/prisbasbelopp': 'accounting/prisbasbelopp.json',
     'accounting/arbetsgivaravgift': 'accounting/arbetsgivaravgift.md',
     'accounting/egenavgifter': 'accounting/egenavgifter.md',
+    'accounting/formaner': 'accounting/formaner.md',
 }
 
 const SKILL_FILES = ['shared', 'ab', 'ef', 'hb', 'forening']
 
 export const readSkillTool = defineTool<{ name: string }, { content: string }>({
     name: 'read_skill',
-    description: 'Ladda en skill-fil eller kunskapsdokument. Anropa INNAN du gör bokförings-, skatte- eller bolagsrättsliga uppgifter. Skills: shared, ab, ef, hb, forening. Kunskap: accounting/bas-accounts, accounting/vat-rates, accounting/prisbasbelopp, accounting/arbetsgivaravgift, accounting/egenavgifter.',
+    description: 'Ladda en skill-fil eller kunskapsdokument. Anropa INNAN du gör bokförings-, skatte- eller bolagsrättsliga uppgifter. Skills: shared, ab, ef, hb, forening. Kunskap: accounting/bas-accounts, accounting/vat-rates, accounting/prisbasbelopp, accounting/arbetsgivaravgift, accounting/egenavgifter, accounting/formaner.',
     category: 'read',
     domain: 'common',
     coreTool: true,
@@ -29,7 +30,7 @@ export const readSkillTool = defineTool<{ name: string }, { content: string }>({
         properties: {
             name: {
                 type: 'string',
-                description: 'Fil att ladda. Skills: shared | ab | ef | hb | forening. Kunskap: accounting/bas-accounts | accounting/vat-rates | accounting/prisbasbelopp | accounting/arbetsgivaravgift | accounting/egenavgifter.',
+                description: 'Fil att ladda. Skills: shared | ab | ef | hb | forening. Kunskap: accounting/bas-accounts | accounting/vat-rates | accounting/prisbasbelopp | accounting/arbetsgivaravgift | accounting/egenavgifter | accounting/formaner.',
             },
         },
         required: ['name'],

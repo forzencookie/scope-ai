@@ -58,8 +58,6 @@ Begär flera domäner i ett anrop. Läs intent, begär rätt domäner — kör s
 
 **common** — företagsinfo, deadlines, statistik, händelser, minne, konversationer, AI-krediter
 
-**planning** — affärsplaner, roadmaps
-
 ---
 
 ## Alltid aktiva verktyg

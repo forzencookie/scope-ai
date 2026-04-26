@@ -22,7 +22,7 @@ export type Employee = {
     personalNumber?: string
     role?: string
     monthlySalary: number
-    taxTable: number
+    taxTable: number | null
     startDate?: string
     email?: string
     status: 'Aktiv' | 'Inaktiv'
@@ -66,7 +66,7 @@ function mapRowToEmployee(e: EmployeeRow): Employee {
         personalNumber: nullToUndefined(e.personal_number),
         role: nullToUndefined(e.role),
         monthlySalary: Number(e.monthly_salary) || 0,
-        taxTable: e.tax_table_number || 33,
+        taxTable: e.tax_table_number ?? null,
         startDate: nullToUndefined(e.start_date),
         email: nullToUndefined(e.email),
         status: (e.status as Employee['status']) || 'Aktiv',
@@ -276,8 +276,37 @@ export const payrollService = {
             .select('*, employees(name)')
             .not('status', 'eq', 'sent')
             .order('period', { ascending: false })
-        
+
         if (error) throw error
         return (data || []).map(mapRowToPayslip)
-    }
+    },
+
+    async updateEmployee(id: string, updates: {
+        name?: string
+        role?: string
+        monthlySalary?: number
+        status?: string
+        kommun?: string
+        email?: string
+    }): Promise<Employee> {
+        const supabase = createBrowserClient()
+
+        const patch: Record<string, unknown> = { updated_at: new Date().toISOString() }
+        if (updates.name !== undefined) patch.name = updates.name
+        if (updates.role !== undefined) patch.role = updates.role
+        if (updates.monthlySalary !== undefined) patch.monthly_salary = updates.monthlySalary
+        if (updates.status !== undefined) patch.status = updates.status
+        if (updates.kommun !== undefined) patch.kommun = updates.kommun
+        if (updates.email !== undefined) patch.email = updates.email
+
+        const { data, error } = await supabase
+            .from('employees')
+            .update(patch)
+            .eq('id', id)
+            .select()
+            .single()
+
+        if (error) throw error
+        return mapRowToEmployee(data)
+    },
 }

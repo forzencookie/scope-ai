@@ -6,7 +6,7 @@
  */
 
 import { AITool, AIToolResult, ActionAuditLog, PendingConfirmation, InteractionContext, AIToolDomain } from './types'
-import { aiAuditService } from '@/services/common/ai-audit-service'
+import { aiAuditService } from '@/services/common'
 
 // Re-export types that tools may need
 export type { AIConfirmationRequest } from './types'

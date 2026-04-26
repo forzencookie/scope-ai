@@ -36,10 +36,13 @@ export function calculateTaxAdjustments(
   }
 
   // Representation (partially non-deductible)
+  // Default assumption: 50% non-deductible per IL 20:23.
+  // This is a simplification — actual deductibility depends on business purpose.
+  // Flag large amounts for manual review.
+  const REPRESENTATION_NON_DEDUCTIBLE_RATIO = 0.5
   const representationCost = Math.abs(sumAccountRange(balances, 6070, 6079))
   if (representationCost > 0) {
-    // Assume 50% non-deductible for simplicity
-    const nonDeductible = Math.round(representationCost * 0.5)
+    const nonDeductible = Math.round(representationCost * REPRESENTATION_NON_DEDUCTIBLE_RATIO)
     if (nonDeductible > 0) {
       fields.push({ code: 7653, value: nonDeductible })
     }
@@ -54,7 +57,7 @@ export function calculateTaxAdjustments(
   // Calculate taxable result
   const bookProfit = typeof profitField?.value === 'number' ? profitField.value : 0
   const bookLoss = typeof lossField?.value === 'number' ? lossField.value : 0
-  const addBacks = taxExpense + Math.round((representationCost || 0) * 0.5)
+  const addBacks = taxExpense + Math.round((representationCost || 0) * REPRESENTATION_NON_DEDUCTIBLE_RATIO)
 
   const taxableResult = (bookProfit - bookLoss) + addBacks - taxExemptDividends
 

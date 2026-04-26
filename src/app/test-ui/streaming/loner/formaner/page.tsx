@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, type ComponentProps } from "react"
-import { Gift, Car } from "lucide-react"
+import { Gift, Car, Route, Cookie } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
 import { ActionConfirmCard } from "@/components/ai/cards/action-cards/action-confirm-card"
 import { Block } from "@/components/ai/cards/rows/block"
@@ -47,7 +47,7 @@ const tilldelaFriskvard: SimScript = [
                         properties={[
                             { label: "Anställd", value: "Anna Lindberg" },
                             { label: "Förmån", value: "Friskvårdsbidrag" },
-                            { label: "Belopp", value: "5 000 kr/år" },
+                            { label: "Belopp", value: "5 000 kr / år" },
                             { label: "Skatteeffekt", value: "Skattefritt (≤ 5 000 kr)" },
                             { label: "Konto", value: "7690 Personalvård" },
                         ]}
@@ -198,6 +198,173 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
     },
 ]
 
+const milersattning: SimScript = [
+    { role: "user", content: "Vi körde 150 km med privatbil på kundbesök i Göteborg" },
+    {
+        role: "scooby",
+        elements: [
+            { type: "thinking", duration: 600 },
+            {
+                type: "stream",
+                text: `Milersättning för privat bil i tjänsten är **25 kr/km** skattefritt (2026). 150 km ger **3 750 kr**.
+
+Bokförs som bilersättning på konto **7331**.`,
+                speed: 12,
+            },
+            {
+                type: "card",
+                delay: 300,
+                content: (
+                    <InteractiveActionConfirmCard
+                        title="Bokför milersättning"
+                        description="Kundbesök Göteborg — 150 km"
+                        properties={[
+                            { label: "Körda km", value: "150 km" },
+                            { label: "Sats 2026", value: "25 kr/km (skattefritt)" },
+                            { label: "Ersättning", value: "3 750 kr" },
+                            { label: "Konto debet", value: "7331 Bilersättningar" },
+                            { label: "Konto kredit", value: "1930 Företagskonto" },
+                            { label: "Datum", value: "2026-04-26" },
+                        ]}
+                        confirmLabel="Bokför"
+                        icon={Route}
+                        accent="blue"
+                        completedAction="booked"
+                        completedTitle="Milersättning bokförd"
+                        onCancel={() => {}}
+                        triggerEvent="sim:milersattning-confirm"
+                    />
+                ),
+            },
+        ],
+    },
+    { role: "user", content: "Ja", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:milersattning-confirm" },
+            { type: "tool", name: "book_expense", duration: 800, resultLabel: "Milersättning bokförd" },
+            {
+                type: "stream",
+                text: `3 750 kr bokfört på 7331 Bilersättningar. Spara körjournalen — Skatteverket kan begära den.`,
+                speed: 12,
+            },
+        ],
+    },
+]
+
+const julgava: SimScript = [
+    { role: "user", content: "Vi vill ge alla 4 anställda en julklapp för 500 kr styck" },
+    {
+        role: "scooby",
+        elements: [
+            { type: "thinking", duration: 700 },
+            {
+                type: "stream",
+                text: `Julgåvor upp till **550 kr/person** är skattefria. 500 kr per person är inom gränsen — helt OK.
+
+Totalt 4 × 500 kr = **2 000 kr**. Bokförs på konto **7690 Personalvård**.
+
+Obs: Gränsen är absolut — 551 kr gör hela beloppet skattepliktigt, inte bara de 1 kr över.`,
+                speed: 11,
+            },
+            {
+                type: "card",
+                delay: 300,
+                content: (
+                    <InteractiveActionConfirmCard
+                        title="Bokför julgåvor"
+                        description="4 anställda · 500 kr/person"
+                        properties={[
+                            { label: "Antal anställda", value: "4 st" },
+                            { label: "Per person", value: "500 kr (limit 550 kr)" },
+                            { label: "Totalt", value: "2 000 kr" },
+                            { label: "Skatteeffekt", value: "Skattefritt — inom gränsen" },
+                            { label: "Konto", value: "7690 Personalvård" },
+                            { label: "Moms", value: "Ej avdragsgill på gåvor" },
+                        ]}
+                        confirmLabel="Bokför"
+                        icon={Gift}
+                        accent="green"
+                        completedAction="booked"
+                        completedTitle="Julgåvor bokförda"
+                        onCancel={() => {}}
+                        triggerEvent="sim:julgava-confirm"
+                    />
+                ),
+            },
+        ],
+    },
+    { role: "user", content: "Perfekt, bokför", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:julgava-confirm" },
+            { type: "tool", name: "book_expense", duration: 800, resultLabel: "Julgåvor bokförda" },
+            {
+                type: "stream",
+                text: `2 000 kr bokfört på 7690 Personalvård. Alla 4 anställda är under gränsen — inga skattekonsekvenser.`,
+                speed: 12,
+            },
+        ],
+    },
+]
+
+const personalvard: SimScript = [
+    { role: "user", content: "Vi köpte fika till kontoret för 890 kr" },
+    {
+        role: "scooby",
+        elements: [
+            { type: "thinking", duration: 500 },
+            {
+                type: "stream",
+                text: `Fika och personalvård på kontoret är **skattefritt** utan beloppsgräns — så länge det är tillgängligt för alla anställda på arbetsplatsen.
+
+890 kr bokförs på konto **7690 Personalvård**. Momsen (178 kr) är avdragsgill.`,
+                speed: 12,
+            },
+            {
+                type: "card",
+                delay: 300,
+                content: (
+                    <InteractiveActionConfirmCard
+                        title="Bokför personalvård"
+                        description="Fika till kontoret"
+                        properties={[
+                            { label: "Beskrivning", value: "Fika — kontoret" },
+                            { label: "Belopp exkl. moms", value: "712 kr" },
+                            { label: "Moms (25%)", value: "178 kr" },
+                            { label: "Totalt", value: "890 kr" },
+                            { label: "Skatteeffekt", value: "Skattefritt personalvård" },
+                            { label: "Konto", value: "7690 Personalvård" },
+                        ]}
+                        confirmLabel="Bokför"
+                        icon={Cookie}
+                        accent="green"
+                        completedAction="booked"
+                        completedTitle="Personalvård bokförd"
+                        onCancel={() => {}}
+                        triggerEvent="sim:fika-confirm"
+                    />
+                ),
+            },
+        ],
+    },
+    { role: "user", content: "Tack, bokför", delay: 2000 },
+    {
+        role: "scooby",
+        elements: [
+            { type: "fire-event", eventName: "sim:fika-confirm" },
+            { type: "tool", name: "book_expense", duration: 700, resultLabel: "Personalvård bokförd" },
+            {
+                type: "stream",
+                text: `890 kr bokfört på 7690 Personalvård. Ingående moms 178 kr registrerad på konto 2641.`,
+                speed: 12,
+            },
+        ],
+    },
+]
+
 export default function FormanerStreamingPage() {
     const [openWalkthrough, setOpenWalkthrough] = useState<WalkthroughType | null>(null)
     const visaFormanerScript = buildVisaFormanerScript(setOpenWalkthrough)
@@ -205,7 +372,7 @@ export default function FormanerStreamingPage() {
     return (
         <ScenarioPage
             title="Förmåner"
-            subtitle="Hur Scooby tilldelar och visar förmåner som friskvård och tjänstebil."
+            subtitle="Hur Scooby tilldelar och bokför förmåner — friskvård, tjänstebil, milersättning, julgåvor och personalvård."
             backHref="/test-ui/streaming/loner"
             backLabel="Löner"
         >
@@ -217,8 +384,20 @@ export default function FormanerStreamingPage() {
                 <SimulatedConversation script={visaFormanerScript} />
             </Scenario>
 
-            <Scenario title="Lägg till tjänstebil" description="Skriv-scenario — förmån med förmånsvärde och skatteeffekt" badges={["Alla"]}>
+            <Scenario title="Lägg till tjänstebil" description="Skriv-scenario — förmån med förmånsvärde och skatteeffekt" badges={["AB", "HB"]}>
                 <SimulatedConversation script={tjanstebil} />
+            </Scenario>
+
+            <Scenario title="Milersättning" description="Skriv-scenario — privat bil i tjänsten, 25 kr/km" badges={["Alla"]}>
+                <SimulatedConversation script={milersattning} />
+            </Scenario>
+
+            <Scenario title="Julgåvor" description="Skriv-scenario — gåvor under 550 kr/person är skattefria" badges={["Alla"]}>
+                <SimulatedConversation script={julgava} />
+            </Scenario>
+
+            <Scenario title="Personalvård / Fika" description="Skriv-scenario — obegränsat skattefritt för hela kontoret" badges={["Alla"]}>
+                <SimulatedConversation script={personalvard} />
             </Scenario>
 
             <WalkthroughOverlay type={openWalkthrough} onClose={() => setOpenWalkthrough(null)} />
