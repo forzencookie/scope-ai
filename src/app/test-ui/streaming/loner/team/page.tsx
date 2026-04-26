@@ -89,7 +89,7 @@ const laggTillAnstalld: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "payslip", title: "Lisa Nilsson", description: "Sedan apr 2026", amount: 26427, status: "Granskning", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "payslip", title: "Lisa Nilsson", description: "Sedan apr 2026", amount: 26427, status: "Granskning" }] }} />
                 ),
             },
         ],

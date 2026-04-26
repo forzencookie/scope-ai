@@ -76,10 +76,10 @@ export function Block({ block, className }: BlockProps) {
                         key={i}
                         title={row.title}
                         description={row.description}
+                        detail={row.detail}
                         timestamp={row.timestamp}
                         status={row.status}
                         amount={row.amount}
-                        isNew={row.isNew}
                         highlight={row.highlight}
                         style={{ animationDelay: `${i * 60}ms` }}
                         className="animate-in fade-in slide-in-from-bottom-1 duration-200 fill-mode-both"

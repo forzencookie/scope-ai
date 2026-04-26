@@ -172,8 +172,8 @@ function buildVisaTransaktionerScript(onOpen: (type: WalkthroughType) => void): 
                 delay: 200,
                 content: (
                     <Block block={{ rows: [
-                        { icon: "verification", title: "Kjell & Company förbrukningsinventarier", description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true },
-                        { icon: "verification", title: "Clas Ohlson kontorsmaterial",             description: "A-50", amount: 349,  timestamp: "2026-03-20", isNew: true },
+                        { icon: "verification", title: "Kjell & Company förbrukningsinventarier", description: "A-49", amount: 2499, timestamp: "2026-03-25" },
+                        { icon: "verification", title: "Clas Ohlson kontorsmaterial",             description: "A-50", amount: 349,  timestamp: "2026-03-20" },
                     ]}} />
                 ),
             },
@@ -240,7 +240,7 @@ const bokforKvitto: SimScript = [
                 type: "card",
                 delay: 300,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Kjell & Company kontorsmaterial", description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Kjell & Company kontorsmaterial", description: "A-49", amount: 2499, timestamp: "2026-03-25" }] }} />
                 ),
             },
         ],
@@ -305,9 +305,9 @@ const batchBokforing: SimScript = [
                 delay: 200,
                 content: (
                     <Block block={{ rows: [
-                        { icon: "verification", title: "Kjell & Company",  description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true },
-                        { icon: "verification", title: "Clas Ohlson",      description: "A-50", amount: 349,  timestamp: "2026-03-20", isNew: true },
-                        { icon: "verification", title: "Spotify Business", description: "A-51", amount: 169,  timestamp: "2026-03-18", isNew: true },
+                        { icon: "verification", title: "Kjell & Company",  description: "A-49", amount: 2499, timestamp: "2026-03-25" },
+                        { icon: "verification", title: "Clas Ohlson",      description: "A-50", amount: 349,  timestamp: "2026-03-20" },
+                        { icon: "verification", title: "Spotify Business", description: "A-51", amount: 169,  timestamp: "2026-03-18" },
                     ]}} />
                 ),
             },

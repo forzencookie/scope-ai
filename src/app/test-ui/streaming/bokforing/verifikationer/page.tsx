@@ -149,7 +149,7 @@ const makuleraVerifikation: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Rättelsepost — makulering A-42", description: "A-48", amount: 1250, timestamp: "2026-03-28", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Rättelsepost — makulering A-42", description: "A-48", amount: 1250, timestamp: "2026-03-28" }] }} />
                 ),
             },
         ],

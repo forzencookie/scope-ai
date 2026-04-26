@@ -237,10 +237,10 @@ export const DataRowSchema = z.object({
     icon: DataRowIconSchema,
     title: z.string(),
     description: z.string().optional(),
+    detail: z.string().optional(),
     timestamp: z.string().optional(),
     status: z.string().optional(),
     amount: z.coerce.number().optional(),
-    isNew: z.boolean().optional(),
     highlight: z.boolean().optional(),
 })
 export type DataRow = z.infer<typeof DataRowSchema>

@@ -173,7 +173,7 @@ const betalaUtdelning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "shareholder", title: "Anders Richnau", description: "Utdelning 2025 · Netto 105 000 kr", amount: 150000, status: "Betald", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "shareholder", title: "Anders Richnau", description: "Utdelning 2025 · Netto 105 000 kr", amount: 150000, status: "Betald" }] }} />
                 ),
             },
         ],

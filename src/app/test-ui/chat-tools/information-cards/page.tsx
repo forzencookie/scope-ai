@@ -71,13 +71,15 @@ export default function InformationCardsPage() {
                         <div className="space-y-2">
                             <div className="flex items-baseline gap-2">
                                 <h3 className="text-sm font-semibold">Verifikationer</h3>
-                                <span className="text-xs text-muted-foreground">Nyligen skapade (isNew)</span>
+                                <span className="text-xs text-muted-foreground">Nyligen skapade</span>
                             </div>
                             <div className="max-w-lg">
                                 <Block block={{
+                                    title: "Verifikationer",
+                                    description: "2 skapade denna vecka",
                                     rows: [
-                                        { icon: "verification", title: "Kjell & Company kontorsmaterial", description: "A-49", amount: 2499, timestamp: "2026-03-25", isNew: true },
-                                        { icon: "verification", title: "Clas Ohlson kontorsmaterial",     description: "A-50", amount: 349,  timestamp: "2026-03-20", isNew: true },
+                                        { icon: "verification", title: "Kjell & Company kontorsmaterial", description: "A-49", amount: 2499, timestamp: "2026-03-25" },
+                                        { icon: "verification", title: "Clas Ohlson kontorsmaterial",     description: "A-50", amount: 349,  timestamp: "2026-03-20" },
                                     ],
                                 }} />
                             </div>
@@ -92,9 +94,9 @@ export default function InformationCardsPage() {
                                 <Block block={{
                                     title: "Lönekörning april 2026",
                                     rows: [
-                                        { icon: "payslip", title: "Anna Lindberg", description: "April 2026", amount: 28392, status: "Betald" },
-                                        { icon: "payslip", title: "Johan Berg",    description: "April 2026", amount: 31250, status: "Betald" },
-                                        { icon: "payslip", title: "Sara Ek",       description: "April 2026", amount: 25108, status: "Betald" },
+                                        { icon: "payslip", title: "Anna Lindberg", amount: 28392, status: "Betald", timestamp: "25 apr" },
+                                        { icon: "payslip", title: "Johan Berg",    amount: 31250, status: "Betald", timestamp: "25 apr" },
+                                        { icon: "payslip", title: "Sara Ek",       amount: 25108, status: "Betald", timestamp: "25 apr" },
                                     ],
                                 }} />
                             </div>
@@ -128,8 +130,8 @@ export default function InformationCardsPage() {
                                 <Block block={{
                                     title: "Aktiebok — Scope Consulting AB",
                                     rows: [
-                                        { icon: "shareholder", title: "Anders Richnau",     description: "800 A-aktier · 8 000 röster", status: "80%" },
-                                        { icon: "shareholder", title: "Invest Partner AB",  description: "200 B-aktier · 200 röster",   status: "20%" },
+                                        { icon: "shareholder", title: "Anders Richnau",    status: "80%", detail: "800 A-aktier", timestamp: "8 000 röster" },
+                                        { icon: "shareholder", title: "Invest Partner AB", status: "20%", detail: "200 B-aktier", timestamp: "200 röster" },
                                     ],
                                 }} />
                             </div>
@@ -179,6 +181,8 @@ export default function InformationCardsPage() {
                             </div>
                             <div className="max-w-lg">
                                 <Block block={{
+                                    title: "Förmåner",
+                                    description: "3 registrerade",
                                     rows: [
                                         { icon: "benefit", title: "Anna Lindberg", description: "Friskvårdsbidrag · Skattefritt", amount: 5000,  status: "OK" },
                                         { icon: "benefit", title: "Johan Berg",    description: "Friskvårdsbidrag · Skattefritt", amount: 5000,  status: "OK" },

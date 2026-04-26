@@ -89,7 +89,7 @@ Vill du lägga till ett **utdelningsbeslut** i punkt 5?`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "report", title: "Ordinarie bolagsstämma 2026", description: "Räkenskapsår 2025 · PDF genererad", status: "Signering", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "report", title: "Ordinarie bolagsstämma 2026", description: "Räkenskapsår 2025 · PDF genererad", status: "Signering" }] }} />
                 ),
             },
             {
@@ -169,7 +169,7 @@ Du har **37 550 kr kvar** av gränsbeloppet som kan sparas till nästa år.`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "shareholder", title: "Anders Richnau", description: "Utdelning 2025 · Konto 2091 → 2898", amount: 150000, status: "Beslutad", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "shareholder", title: "Anders Richnau", description: "Utdelning 2025 · Konto 2091 → 2898", amount: 150000, status: "Beslutad" }] }} />
                 ),
             },
         ],

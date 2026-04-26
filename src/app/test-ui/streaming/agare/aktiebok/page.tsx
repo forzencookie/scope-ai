@@ -139,7 +139,7 @@ Jag antar att 100 **A-aktier** ska överlåtas. Resultat efter överlåtelse:
                 content: (
                     <Block block={{ rows: [
                         { icon: "shareholder", title: "Anders Richnau",  description: "700 A-aktier · 8 000 röster", status: "70%" },
-                        { icon: "shareholder", title: "Lisa Nilsson",    description: "100 A-aktier · 1 000 röster", status: "10%", isNew: true },
+                        { icon: "shareholder", title: "Lisa Nilsson",    description: "100 A-aktier · 1 000 röster", status: "10%" },
                     ]}} />
                 ),
             },

@@ -78,7 +78,7 @@ const tilldelaFriskvard: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "benefit", title: "Anna Lindberg", description: "Friskvårdsbidrag · Skattefritt", amount: 5000, status: "OK", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "benefit", title: "Anna Lindberg", description: "Friskvårdsbidrag · Skattefritt", amount: 5000, status: "OK" }] }} />
                 ),
             },
         ],
@@ -191,7 +191,7 @@ Förmånsvärdet beskattas som lön — Saras nettolön minskar.`,
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "benefit", title: "Sara Ek", description: "Tjänstebil Tesla Model 3 · Förmånsvärde", amount: 3800, status: "Förmånsvärde", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "benefit", title: "Sara Ek", description: "Tjänstebil Tesla Model 3 · Förmånsvärde", amount: 3800, status: "Förmånsvärde" }] }} />
                 ),
             },
         ],

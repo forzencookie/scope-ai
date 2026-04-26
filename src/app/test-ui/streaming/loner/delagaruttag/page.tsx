@@ -80,7 +80,7 @@ const registreraUttag: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Privat uttag Erik Svensson", description: "A-51", amount: 30000, timestamp: "2026-04-06", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Privat uttag Erik Svensson", description: "A-51", amount: 30000, timestamp: "2026-04-06" }] }} />
                 ),
             },
         ],
@@ -199,7 +199,7 @@ const registreraInsattning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Privat insättning Erik Svensson", description: "A-52", amount: 20000, timestamp: "2026-04-06", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Privat insättning Erik Svensson", description: "A-52", amount: 20000, timestamp: "2026-04-06" }] }} />
                 ),
             },
         ],

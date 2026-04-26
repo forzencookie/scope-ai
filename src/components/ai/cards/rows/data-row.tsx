@@ -23,10 +23,10 @@ export interface DataRowProps {
     icon?: DataRowIcon
     title: string
     description?: string
+    detail?: string
     timestamp?: string
     status?: string
     amount?: number
-    isNew?: boolean
     highlight?: boolean
     className?: string
     style?: React.CSSProperties
@@ -35,10 +35,10 @@ export interface DataRowProps {
 export function DataRow({
     title,
     description,
+    detail,
     timestamp,
     status,
     amount,
-    isNew,
     highlight,
     className,
     style,
@@ -54,12 +54,6 @@ export function DataRow({
             )}
             style={style}
         >
-            {isNew && (
-                <span className="absolute -top-1.5 right-2 bg-background px-1.5 py-0.5 rounded text-[10px] font-medium text-blue-600 dark:text-blue-400">
-                    Ny
-                </span>
-            )}
-
             <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
                     <span className={cn("text-sm font-medium truncate", highlight && "text-foreground")}>
@@ -81,6 +75,9 @@ export function DataRow({
                     <span className={cn("text-sm tabular-nums", highlight ? "font-semibold text-foreground" : "text-muted-foreground")}>
                         {formatCurrency(amount)}
                     </span>
+                )}
+                {detail && (
+                    <span className="text-sm text-muted-foreground">{detail}</span>
                 )}
                 {timestamp && (
                     <span className="text-[10px] text-muted-foreground">{timestamp}</span>

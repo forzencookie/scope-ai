@@ -116,7 +116,7 @@ function buildVisaInventarierScript(onOpen: (type: WalkthroughType) => void): Si
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Avskrivning april 2026", description: "A-54", amount: 2014, timestamp: "2026-04-30", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Avskrivning april 2026", description: "A-54", amount: 2014, timestamp: "2026-04-30" }] }} />
                 ),
             },
         ],
@@ -178,7 +178,7 @@ const registreraInventarie: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "asset", title: "Kontorsstol IKEA", description: "142 kr/mån · 60 mån", amount: 8500, isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "asset", title: "Kontorsstol IKEA", description: "142 kr/mån · 60 mån", amount: 8500 }] }} />
                 ),
             },
         ],
@@ -240,7 +240,7 @@ const korAvskrivning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Avskrivning mars 2026", description: "A-49", amount: 2083, timestamp: "2026-03-31", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Avskrivning mars 2026", description: "A-49", amount: 2083, timestamp: "2026-03-31" }] }} />
                 ),
             },
         ],

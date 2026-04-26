@@ -128,7 +128,7 @@ const skapaFaktura: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "invoice", title: "Acme Consulting AB", description: "#2026-043", amount: 62500, status: "Utkast", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "invoice", title: "Acme Consulting AB", description: "#2026-043", amount: 62500, status: "Utkast" }] }} />
                 ),
             },
         ],
@@ -195,7 +195,7 @@ const registreraBetalning: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "verification", title: "Betalning faktura #2026-042", description: "A-53", amount: 37500, timestamp: "2026-04-06", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "verification", title: "Betalning faktura #2026-042", description: "A-53", amount: 37500, timestamp: "2026-04-06" }] }} />
                 ),
             },
         ],
@@ -249,7 +249,7 @@ const makuleraFaktura: SimScript = [
                 type: "card",
                 delay: 200,
                 content: (
-                    <Block block={{ rows: [{ icon: "invoice", title: "Nordic Design — Kreditnota", description: "#2026-K001", amount: -25000, status: "Makulerad", isNew: true }] }} />
+                    <Block block={{ rows: [{ icon: "invoice", title: "Nordic Design — Kreditnota", description: "#2026-K001", amount: -25000, status: "Makulerad" }] }} />
                 ),
             },
         ],
