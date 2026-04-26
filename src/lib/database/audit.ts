@@ -1,11 +1,6 @@
-/**
- * Server-side audit logging — inserts into the events table.
- * Called from services (verification-service, correction-service, etc.)
- * which run in server context inside API route handlers.
- */
-
-import { createServerClient } from '@/lib/database/server'
-import type { Json } from '@/types/database'
+import { createBrowserClient } from '@/lib/database/client'
+import type { Json, Database } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export type AuditAction =
     | 'created'
@@ -30,9 +25,9 @@ export async function logAuditEntry(params: {
     entityId?: string
     entityName?: string
     metadata?: Record<string, unknown>
-}): Promise<void> {
+}, client?: SupabaseClient<Database>): Promise<void> {
     try {
-        const supabase = await createServerClient()
+        const supabase = client || createBrowserClient()
         const { data: { user } } = await supabase.auth.getUser()
         if (!user) return
 

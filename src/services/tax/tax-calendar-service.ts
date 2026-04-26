@@ -1,4 +1,6 @@
-import { createServerClient } from "@/lib/database/server"
+import { createBrowserClient } from '@/lib/database/client'
+import type { Database } from '@/types/database'
+import type { SupabaseClient } from '@supabase/supabase-js'
 
 export interface TaxCalendarItem {
   id: string
@@ -8,9 +10,16 @@ export interface TaxCalendarItem {
   status: string
 }
 
+/**
+ * Internal helper to get the correct Supabase client.
+ */
+function getSupabase(client?: SupabaseClient<Database>) {
+  return client || createBrowserClient()
+}
+
 export const taxCalendarService = {
-  async getPendingDeadlines(limit = 10): Promise<TaxCalendarItem[]> {
-    const supabase = await createServerClient()
+  async getPendingDeadlines(limit = 10, client?: SupabaseClient<Database>): Promise<TaxCalendarItem[]> {
+    const supabase = getSupabase(client)
     const { data, error } = await supabase
       .from("tax_calendar")
       .select("id, title, due_date, deadline_type, status")

@@ -6,7 +6,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { boardService, Signatory as BoardSignatory } from '@/services/corporate'
-import { companyService } from '@/services/company'
+import { companyService } from '@/services/company/company-service.server'
 import { taxService } from '@/services/tax'
 import { nullToUndefined } from '@/lib/utils'
 

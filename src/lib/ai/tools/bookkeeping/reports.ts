@@ -7,7 +7,7 @@
 
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { reportingService } from '@/services/reporting'
-import { companyService } from '@/services/company'
+import { companyService } from '@/services/company/company-service.server'
 import { taxService } from '@/services/tax'
 
 // =============================================================================

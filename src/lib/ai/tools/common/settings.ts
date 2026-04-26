@@ -8,7 +8,7 @@
  */
 
 import { defineTool } from '../registry'
-import { settingsService } from '@/services/company'
+import { settingsService } from '@/services/company/settings-service.server'
 import { 
     updateNotificationPreference,
     getNotificationPreferences,

@@ -7,7 +7,7 @@
 import { defineTool, AIConfirmationRequest } from '../registry'
 import { payrollService, type Payslip, type Employee, type AGIReport } from '@/services/payroll'
 import type { Block } from '@/lib/ai/schema'
-import { companyService } from '@/services/company'
+import { companyService } from '@/services/company/company-service.server'
 import { taxService } from '@/services/tax'
 import { getEmployeeBenefits } from '@/services/payroll'
 import { createSalaryEntry, createVacationAccrual, calculateEmployerContributions } from '@/services/accounting'
