@@ -17,17 +17,16 @@ import { SettingsOverlay } from "@/components/installningar/settings-overlay"
 import { ScopeAILogo } from "@/components/ui"
 import { nullToUndefined } from "@/lib/utils"
 
-function DashboardContentInner({ children }: { children: React.ReactNode }) {
+function AppContentInner({ children }: { children: React.ReactNode }) {
     const { shouldRedirect, isLoading } = useOnboarding()
     const router = useRouter()
     const pathname = usePathname()
     const searchParams = useSearchParams()
-    
+
     const settingsParam = searchParams?.get("settings")
     const [settingsOpen, setSettingsOpen] = useState(!!settingsParam)
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
 
-    // Auto-collapse sidebar on small screens
     useEffect(() => {
         const mq = window.matchMedia('(max-width: 1024px)')
         setSidebarCollapsed(mq.matches)
@@ -69,7 +68,6 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
         return () => window.removeEventListener('ai-navigate', handleAINavigate as EventListener)
     }, [router])
 
-    // 1. Mandatory Onboarding Check — show nothing until we know status, or while redirecting
     if (isLoading || shouldRedirect) {
         return (
             <div className="h-screen w-screen flex items-center justify-center bg-background">
@@ -83,14 +81,12 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
     return (
         <ChatProvider>
             <div className="flex h-screen bg-background dark:bg-[oklch(0.12_0_0)]">
-                {/* Chat History Sidebar — left, on grey background */}
                 <ChatHistorySidebar
                     collapsed={sidebarCollapsed}
                     onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
                     onOpenSettings={() => setSettingsOpen(true)}
                 />
 
-                {/* Main Content Area — keyed per conversation for fresh chat state */}
                 <ChatSessionGate>
                     <MainContentArea>
                         {children}
@@ -107,34 +103,30 @@ function DashboardContentInner({ children }: { children: React.ReactNode }) {
     )
 }
 
-function DashboardContent({ children }: { children: React.ReactNode }) {
+function AppContent({ children }: { children: React.ReactNode }) {
     return (
         <Suspense fallback={
             <div className="h-screen w-screen flex items-center justify-center bg-background">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
             </div>
         }>
-            <DashboardContentInner>
+            <AppContentInner>
                 {children}
-            </DashboardContentInner>
+            </AppContentInner>
         </Suspense>
     )
 }
 
-export default function DashboardLayout({
-    children,
-}: {
-    children: React.ReactNode
-}) {
+export default function AppLayout({ children }: { children: React.ReactNode }) {
     return (
         <AuthGuard showLoading={false}>
             <QueryProvider>
                 <ModelProvider>
                     <CompanyProvider>
                         <ToastProvider>
-                            <DashboardContent>
+                            <AppContent>
                                 {children}
-                            </DashboardContent>
+                            </AppContent>
                         </ToastProvider>
                     </CompanyProvider>
                 </ModelProvider>

@@ -32,8 +32,7 @@ const walkthroughs = [
     { href: "/test-ui/ai-overlays/walkthroughs/bolagsstamma", label: "Bolagsstamma", icon: Landmark, description: "Stammer, styrelsemoten och protokoll", color: "from-indigo-500/20 to-indigo-500/5", iconColor: "text-indigo-600 dark:text-indigo-400", iconBg: "bg-indigo-100 dark:bg-indigo-900/40" },
     { href: "/test-ui/ai-overlays/walkthroughs/medlemsregister", label: "Medlemsregister", icon: UserPlus, description: "Foreningsmedlemmar och arsavgifter", color: "from-green-500/20 to-green-500/5", iconColor: "text-green-600 dark:text-green-400", iconBg: "bg-green-100 dark:bg-green-900/40" },
     { href: "/test-ui/ai-overlays/walkthroughs/kund", label: "Kund", icon: Building, description: "Kunddossier med fakturor och betalhistorik", color: "from-teal-500/20 to-teal-500/5", iconColor: "text-teal-600 dark:text-teal-400", iconBg: "bg-teal-100 dark:bg-teal-900/40" },
-    { href: "/test-ui/ai-overlays/walkthroughs/plan", label: "Plan", icon: Calendar, description: "Kvartalplan med uppgifter och deadlines", color: "from-orange-500/20 to-orange-500/5", iconColor: "text-orange-600 dark:text-orange-400", iconBg: "bg-orange-100 dark:bg-orange-900/40" },
-    { href: "/test-ui/ai-overlays/walkthroughs/foretagsstatistik", label: "Foretagsstatistik", icon: TrendingUp, description: "Omsattning, marginaler och tillvaxt YoY", color: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-900/40" },
+{ href: "/test-ui/ai-overlays/walkthroughs/foretagsstatistik", label: "Foretagsstatistik", icon: TrendingUp, description: "Omsattning, marginaler och tillvaxt YoY", color: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-600 dark:text-emerald-400", iconBg: "bg-emerald-100 dark:bg-emerald-900/40" },
 ]
 
 const documents = [

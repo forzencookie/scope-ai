@@ -40,7 +40,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
     } = useChatContext()
 
     const messagesEndRef = useRef<HTMLDivElement>(null)
-    const isDashboardRoot = pathname === "/dashboard"
+    const isDashboardRoot = pathname === "/ny"
 
     // Scroll to bottom when messages change
     useEffect(() => {
@@ -76,7 +76,7 @@ export function MainContentArea({ children }: { children?: React.ReactNode }) {
                             variant="ghost"
                             size="sm"
                             className="gap-1.5 text-muted-foreground hover:text-foreground -ml-2"
-                            onClick={() => router.push("/dashboard")}
+                            onClick={() => router.push("/ny")}
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Tillbaka

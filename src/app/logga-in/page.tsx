@@ -65,7 +65,7 @@ function LoggaInContent() {
             if (plan && ["pro", "max"].includes(plan)) {
                 redirectToCheckout(plan)
             } else {
-                router.push("/dashboard")
+                router.push("/ny")
             }
         }
     }, [isAuthenticated, authLoading, router, plan])
@@ -87,10 +87,10 @@ function LoggaInContent() {
             if (data.url) {
                 window.location.href = data.url
             } else {
-                router.push("/dashboard")
+                router.push("/ny")
             }
         } catch {
-            router.push("/dashboard")
+            router.push("/ny")
         }
     }
 
@@ -114,7 +114,7 @@ function LoggaInContent() {
                     if (plan && ["pro", "max"].includes(plan)) {
                         await redirectToCheckout(plan)
                     } else {
-                        router.push("/dashboard")
+                        router.push("/ny")
                     }
                 }
             } else {
@@ -128,7 +128,7 @@ function LoggaInContent() {
                         setError(error.message)
                     }
                 } else {
-                    router.push("/dashboard")
+                    router.push("/ny")
                 }
             }
         } catch {

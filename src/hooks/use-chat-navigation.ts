@@ -9,8 +9,8 @@ export function useChatNavigation() {
     return {
         navigateToAI: (options: { prompt: string, returnTo?: string }) => {
             // Change route to /dashboard if we are not already there
-            if (pathname !== "/dashboard") {
-                router.push("/dashboard")
+            if (!pathname.startsWith("/ny") && !pathname.startsWith("/k/")) {
+                router.push("/ny")
             }
             
             navigateToAI({

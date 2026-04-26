@@ -131,7 +131,7 @@ export function ChatHistorySidebar({ collapsed, onToggleCollapse, onOpenSettings
                         /* Expanded: logo restarts, separate collapse button */
                         <>
                             <button
-                                onClick={() => window.location.href = '/dashboard'}
+                                onClick={() => window.location.href = '/ny'}
                                 className="flex items-center gap-2 rounded-lg px-1.5 py-1 hover:bg-accent transition-colors"
                             >
                                 <Image src="/scope-ai-logo.svg" alt="Scope" width={24} height={24} />

@@ -86,12 +86,12 @@ function ReturnContent() {
 
                 <div className="flex flex-col gap-3">
                     <Button asChild>
-                        <Link href="/dashboard/settings">
+                        <Link href="/ny?settings=Konto">
                             Gå till inställningar
                         </Link>
                     </Button>
                     <Button variant="ghost" asChild>
-                        <Link href="/dashboard">
+                        <Link href="/ny">
                             Gå till dashboard
                         </Link>
                     </Button>
