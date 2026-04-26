@@ -246,6 +246,7 @@ export const DataRowSchema = z.object({
 export type DataRow = z.infer<typeof DataRowSchema>
 
 export const BlockSchema = z.object({
+    icon: DataRowIconSchema.optional(),
     title: z.string().optional(),
     description: z.string().optional(),
     rows: z.array(DataRowSchema).default([]),

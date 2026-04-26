@@ -217,9 +217,180 @@ export const getAnnualMeetingDeadlineTool = defineTool<{ fiscalYearEnd?: string 
     },
 })
 
+// =============================================================================
+// assign_board_member
+// =============================================================================
+
+export interface AssignBoardMemberParams {
+    name: string
+    personnummer?: string
+    role: 'ordförande' | 'ledamot' | 'suppleant' | 'vd' | 'revisor'
+    email?: string
+    startDate?: string
+}
+
+export const assignBoardMemberTool = defineTool<AssignBoardMemberParams, BoardMember>({
+    name: 'assign_board_member',
+    description: 'Tilldelar en ny styrelseroll (styrelseledamot, ordförande, VD, etc.). Kräver bekräftelse.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: ['ab', 'forening'],
+    domain: 'parter',
+    keywords: ['styrelseledamot', 'ordförande', 'VD', 'styrelse', 'tilldela roll'],
+    parameters: {
+        type: 'object',
+        properties: {
+            name: { type: 'string', description: 'Personens fullständiga namn' },
+            personnummer: { type: 'string', description: 'Personnummer (YYYYMMDD-XXXX)' },
+            role: { type: 'string', enum: ['ordförande', 'ledamot', 'suppleant', 'vd', 'revisor'], description: 'Styrelseroll' },
+            email: { type: 'string', description: 'E-postadress' },
+            startDate: { type: 'string', description: 'Startdatum (YYYY-MM-DD), standard: idag' },
+        },
+        required: ['name', 'role'],
+    },
+    execute: async (params, context) => {
+        const roleLabels: Record<AssignBoardMemberParams['role'], string> = {
+            ordförande: 'Ordförande',
+            ledamot: 'Ledamot',
+            suppleant: 'Suppleant',
+            vd: 'VD',
+            revisor: 'Revisor',
+        }
+        const roleLabel = roleLabels[params.role]
+        const date = params.startDate ?? new Date().toISOString().split('T')[0]
+        if (context?.isConfirmed) {
+            try {
+                const { shareholderService } = await import('@/services/corporate/shareholder-service')
+                const member = await shareholderService.addShareholder({
+                    name: params.name,
+                    personalOrOrgNumber: params.personnummer ?? '',
+                    sharesCount: 0,
+                    shareClass: 'A',
+                    email: params.email,
+                    isBoardMember: true,
+                    boardRole: roleLabel,
+                })
+                return {
+                    success: true,
+                    data: {
+                        id: member.id,
+                        name: member.name,
+                        personalNumber: member.personalOrOrgNumber ?? null,
+                        role: roleLabel,
+                        email: member.email ?? null,
+                        phone: member.phone ?? null,
+                        appointedDate: date,
+                        isSignatory: params.role === 'ordförande' || params.role === 'vd',
+                    },
+                    message: `${params.name} tilldelad rollen ${roleLabel} från ${date}.`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte tilldela styrelseroll.' }
+            }
+        }
+        const summaryItems: Array<{ label: string; value: string }> = [
+            { label: 'Namn', value: params.name },
+            { label: 'Roll', value: roleLabel },
+            { label: 'Startdatum', value: date },
+        ]
+        if (params.personnummer) summaryItems.push({ label: 'Personnummer', value: params.personnummer })
+        if (params.email) summaryItems.push({ label: 'E-post', value: params.email })
+        return {
+            success: true,
+            data: { id: '', name: params.name, personalNumber: params.personnummer ?? null, role: roleLabel, email: params.email ?? null, phone: null, appointedDate: date, isSignatory: params.role === 'ordförande' || params.role === 'vd' },
+            message: `Förbereder tilldelning av rollen ${roleLabel} till ${params.name}.`,
+            confirmationRequired: {
+                title: 'Tilldela styrelseroll',
+                description: `Lägger till ${params.name} i styrelsen med rollen ${roleLabel}.`,
+                summary: summaryItems,
+                action: { toolName: 'assign_board_member', params },
+            },
+        }
+    },
+})
+
+// =============================================================================
+// schedule_meeting
+// =============================================================================
+
+export interface ScheduleMeetingParams {
+    meetingType: 'styrelseprotokoll' | 'bolagsstamma' | 'extrastamma'
+    date: string
+    location?: string
+    agenda?: string[]
+}
+
+export const scheduleMeetingTool = defineTool<ScheduleMeetingParams, CompanyMeeting>({
+    name: 'schedule_meeting',
+    description: 'Schemalägger ett styrelsemöte, bolagsstämma eller extrastämma. Kräver bekräftelse.',
+    category: 'write',
+    requiresConfirmation: true,
+    allowedCompanyTypes: ['ab', 'forening'],
+    domain: 'parter',
+    keywords: ['boka möte', 'styrelsesammanträde', 'bolagsstämma', 'extrastämma'],
+    parameters: {
+        type: 'object',
+        properties: {
+            meetingType: { type: 'string', enum: ['styrelseprotokoll', 'bolagsstamma', 'extrastamma'], description: 'Typ av möte' },
+            date: { type: 'string', description: 'Datum för mötet (YYYY-MM-DD)' },
+            location: { type: 'string', description: 'Plats för mötet' },
+            agenda: { type: 'array', items: { type: 'string' }, description: 'Dagordningspunkter' },
+        },
+        required: ['meetingType', 'date'],
+    },
+    execute: async (params, context) => {
+        const typeMap: Record<ScheduleMeetingParams['meetingType'], { dbType: 'board_meeting_minutes' | 'general_meeting_minutes'; label: string; category: 'bolagsstamma' | 'styrelsemote' }> = {
+            styrelseprotokoll: { dbType: 'board_meeting_minutes', label: 'Styrelsemöte', category: 'styrelsemote' },
+            bolagsstamma: { dbType: 'general_meeting_minutes', label: 'Bolagsstämma', category: 'bolagsstamma' },
+            extrastamma: { dbType: 'general_meeting_minutes', label: 'Extrastämma', category: 'bolagsstamma' },
+        }
+        const { dbType, label, category } = typeMap[params.meetingType]
+        const agendaItems = params.agenda?.map(item => ({ title: item }))
+        if (context?.isConfirmed) {
+            try {
+                const meeting = await boardService.createMeeting({
+                    title: `${label} ${params.date}`,
+                    type: dbType,
+                    meetingCategory: category,
+                    date: params.date,
+                    location: params.location,
+                    agenda: agendaItems,
+                    status: 'draft',
+                })
+                return {
+                    success: true,
+                    data: meeting,
+                    message: `${label} schemalagd till ${params.date}${params.location ? ` — plats: ${params.location}` : ''}.`,
+                }
+            } catch {
+                return { success: false, error: 'Kunde inte schemalägga mötet.' }
+            }
+        }
+        const summaryItems: Array<{ label: string; value: string }> = [
+            { label: 'Typ', value: label },
+            { label: 'Datum', value: params.date },
+        ]
+        if (params.location) summaryItems.push({ label: 'Plats', value: params.location })
+        if (params.agenda?.length) summaryItems.push({ label: 'Dagordning', value: `${params.agenda.length} punkter` })
+        return {
+            success: true,
+            data: { id: '', title: `${label} ${params.date}`, date: params.date, year: new Date(params.date).getFullYear(), type: params.meetingType === 'extrastamma' ? 'extra' : 'ordinarie', meetingType: 'bolagsstamma', meetingCategory: category, status: 'planerad', location: params.location ?? 'Ej angivet', chairperson: '', secretary: '', attendeesCount: 0, attendees: [], decisions: [] },
+            message: `Förbereder schemaläggning av ${label} den ${params.date}.`,
+            confirmationRequired: {
+                title: `Schemalägg ${label}`,
+                description: 'Skapar ett nytt möte i systemet.',
+                summary: summaryItems,
+                action: { toolName: 'schedule_meeting', params },
+            },
+        }
+    },
+})
+
 export const boardTools = [
     getBoardMembersTool,
     getBoardMeetingMinutesTool,
     getCompanyMeetingsTool,
     getAnnualMeetingDeadlineTool,
+    assignBoardMemberTool,
+    scheduleMeetingTool,
 ]

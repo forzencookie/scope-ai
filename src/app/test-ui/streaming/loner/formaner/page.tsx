@@ -3,9 +3,9 @@
 import { useState, type ComponentProps } from "react"
 import { Gift, Car } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, useSimEvent, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { Block } from "@/components/ai/chat-tools/rows/block"
-import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { ActionConfirmCard } from "@/components/ai/cards/action-cards/action-confirm-card"
+import { Block } from "@/components/ai/cards/rows/block"
+import { WalkthroughOpenerCard } from "@/components/ai/cards/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
 function InteractiveActionConfirmCard(

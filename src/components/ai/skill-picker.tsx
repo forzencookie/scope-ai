@@ -24,6 +24,7 @@ import {
 } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { skills, SKILL_CATEGORY_LABELS, SKILL_CATEGORY_ORDER, type Skill, type SkillCategory } from "@/data/skills"
+export type { SkillCategory }
 
 // =============================================================================
 // Icon map — maps icon name strings from skills data to Lucide components

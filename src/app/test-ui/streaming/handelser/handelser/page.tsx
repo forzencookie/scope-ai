@@ -11,7 +11,7 @@
 
 import { CalendarCheck } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
+import { ActionConfirmCard } from "@/components/ai/cards/action-cards/action-confirm-card"
 import { CardRenderer } from "@/components/ai/card-renderer"
 
 // ─── Scenario 1: READ — "Vad behöver jag göra?" ───

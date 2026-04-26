@@ -373,6 +373,7 @@ export interface BulkCategorizeResult {
     categorized: number
     skipped: number
     errors: number
+    totalBooked: number
 }
 
 export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, BulkCategorizeResult>({
@@ -405,26 +406,21 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
             },
         },
     },
-    execute: async (params) => {
-        // Fetch uncategorized transactions if no IDs provided
+    execute: async (params, context) => {
+        const baseUrl = getBaseUrl()
         let transactions: Transaction[] = []
 
         try {
-            const baseUrl = getBaseUrl()
             const queryParams = new URLSearchParams()
             queryParams.set('status', 'pending')
             queryParams.set('limit', '100')
-
             const res = await fetch(`${baseUrl}/api/transactions?${queryParams}`, {
                 cache: 'no-store',
                 headers: { 'Content-Type': 'application/json' }
             })
-
             if (res.ok) {
                 const data = await res.json()
                 transactions = data.transactions || []
-
-                // Filter by pattern if provided
                 if (params.pattern) {
                     const pattern = params.pattern.toLowerCase()
                     transactions = transactions.filter(t =>
@@ -432,8 +428,6 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
                         (t as Transaction & { description?: string }).description?.toLowerCase().includes(pattern)
                     )
                 }
-
-                // Filter by specific IDs if provided
                 if (params.transactionIds && params.transactionIds.length > 0) {
                     transactions = transactions.filter(t => params.transactionIds!.includes(t.id))
                 }
@@ -443,20 +437,59 @@ export const bulkCategorizeTransactionsTool = defineTool<BulkCategorizeParams, B
         }
 
         const count = transactions.length
-        const confirmationSummary = [
-            { label: 'Antal transaktioner', value: String(count) },
-        ]
 
-        if (params.pattern) {
-            confirmationSummary.push({ label: 'Mönster', value: params.pattern })
+        if (context?.isConfirmed) {
+            let categorized = 0
+            let booked = 0
+            let errors = 0
+
+            for (const tx of transactions) {
+                try {
+                    const patchRes = await fetch(`${baseUrl}/api/transactions/${tx.id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ category: params.pattern ?? 'Kategoriserad', account: params.account ?? null, status: 'review' }),
+                    })
+                    if (!patchRes.ok) { errors++; continue }
+                    categorized++
+
+                    if (params.account) {
+                        const txAmount = Math.abs(Number(tx.amount || 0))
+                        const txDate = (tx as Transaction & { date?: string; transaction_date?: string }).date
+                            ?? (tx as Transaction & { transaction_date?: string }).transaction_date
+                            ?? new Date().toISOString().split('T')[0]
+                        const txDesc = tx.name ?? (tx as Transaction & { description?: string }).description ?? `Transaktion ${tx.id}`
+                        const isExpense = Number(tx.amount || 0) < 0
+                        const entries = isExpense
+                            ? [{ account: params.account, debit: txAmount, credit: 0, description: txDesc }, { account: '1930', debit: 0, credit: txAmount, description: 'Bank' }]
+                            : [{ account: '1930', debit: txAmount, credit: 0, description: 'Bank' }, { account: params.account, debit: 0, credit: txAmount, description: txDesc }]
+                        try {
+                            const { verificationService } = await import('@/services/accounting/verification-service')
+                            await verificationService.createVerification({ date: txDate, description: txDesc, entries, sourceType: 'bulk_categorize' })
+                            booked++
+                        } catch {
+                            // categorization still counted, booking failed silently
+                        }
+                    }
+                } catch {
+                    errors++
+                }
+            }
+
+            return {
+                success: true,
+                data: { categorized, skipped: count - categorized - errors, errors, totalBooked: booked },
+                message: `${categorized} transaktioner konterade${booked > 0 ? `, ${booked} bokförda` : ''}${errors > 0 ? `, ${errors} fel` : ''}.`,
+            }
         }
-        if (params.account) {
-            confirmationSummary.push({ label: 'Konto', value: params.account })
-        }
+
+        const confirmationSummary = [{ label: 'Antal transaktioner', value: String(count) }]
+        if (params.pattern) confirmationSummary.push({ label: 'Mönster', value: params.pattern })
+        if (params.account) confirmationSummary.push({ label: 'Konto', value: params.account })
 
         return {
             success: true,
-            data: { categorized: count, skipped: 0, errors: 0 },
+            data: { categorized: count, skipped: 0, errors: 0, totalBooked: 0 },
             message: `${count} transaktioner förberedda för kontering.`,
             confirmationRequired: {
                 title: 'Masskontering av transaktioner',

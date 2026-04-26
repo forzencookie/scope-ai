@@ -13,9 +13,9 @@
 import { useState } from "react"
 import { TrendingUp, Scale, Receipt, PieChart, Send } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
-import { ActionConfirmCard } from "@/components/ai/chat-tools/action-cards/action-confirm-card"
-import { AuditCard } from "@/components/ai/chat-tools/information-cards/audit-card"
-import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { ActionConfirmCard } from "@/components/ai/cards/action-cards/action-confirm-card"
+import { AuditCard } from "@/components/ai/cards/information-cards/audit-card"
+import { WalkthroughOpenerCard } from "@/components/ai/cards/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
 // ─── Script builders ─────────────────────────────────────────────────────────

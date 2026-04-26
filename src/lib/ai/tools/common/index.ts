@@ -17,6 +17,7 @@ export * from './reconcile-status'
 export * from './summary'
 export * from './date-events'
 export * from './conversations'
+export * from './customers'
 
 import { requestToolsTools } from './request-tools'
 import { readSkillTools } from './read-skill'
@@ -31,6 +32,7 @@ import { reconcileTools } from './reconcile-status'
 import { summaryTools } from './summary'
 import { dateEventTools } from './date-events'
 import { conversationTools } from './conversations'
+import { customerTools } from './customers'
 
 export const commonTools = [
     ...requestToolsTools,
@@ -46,4 +48,5 @@ export const commonTools = [
     ...summaryTools,
     ...dateEventTools,
     ...conversationTools,
+    ...customerTools,
 ]

@@ -36,6 +36,7 @@ export interface CompanyInfo {
     hasEmployees: boolean
     hasMomsRegistration: boolean
     totalShares: number
+    shareCapital?: number
     scoobyInstructions?: string | null
     createdAt: string
     updatedAt: string

@@ -4,7 +4,7 @@ import { useState } from "react"
 import { Calculator } from "lucide-react"
 import { SimulatedConversation, Scenario, ScenarioPage, type SimScript } from "../../_shared/simulation"
 import { CardRenderer } from "@/components/ai/card-renderer"
-import { WalkthroughOpenerCard } from "@/components/ai/chat-tools/link-cards/walkthrough-opener-card"
+import { WalkthroughOpenerCard } from "@/components/ai/cards/link-cards/walkthrough-opener-card"
 import { WalkthroughOverlay, type WalkthroughType } from "@/components/ai/overlays/walkthroughs/walkthrough-overlay"
 
 function buildVisaEgenavgifterScript(onOpen: (type: WalkthroughType) => void): SimScript {
