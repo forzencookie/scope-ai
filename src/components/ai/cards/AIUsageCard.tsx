@@ -1,6 +1,6 @@
 "use client"
 
-import { Zap, TrendingUp, AlertTriangle } from "lucide-react"
+import { TrendingUp, AlertTriangle } from "lucide-react"
 import { cn } from "@/lib/utils"
 import { Progress } from "@/components/ui"
 
@@ -24,36 +24,31 @@ function formatTokens(tokens: number): string {
 }
 
 export function AIUsageCard({ usage }: AIUsageCardProps) {
-  const getStatusColor = () => {
+  const remainingPercent = Math.max(0, 100 - usage.usagePercent)
+
+  const getIndicatorColor = () => {
     switch (usage.thresholdLevel) {
       case 'exceeded':
-        return 'text-red-600 dark:text-red-400'
       case 'critical':
-        return 'text-red-600 dark:text-red-400'
-      case 'high':
-        return 'text-blue-600 dark:text-blue-400'
+        return 'bg-red-500'
       default:
-        return 'text-blue-600 dark:text-blue-400'
+        return 'bg-blue-500'
     }
   }
 
-  const getProgressColor = () => {
+  const getStatusColor = () => {
     switch (usage.thresholdLevel) {
       case 'exceeded':
-        return 'bg-red-500'
       case 'critical':
-        return 'bg-red-500'
-      case 'high':
-        return 'bg-blue-500'
+        return 'text-red-600 dark:text-red-400'
       default:
-        return 'bg-blue-500'
+        return 'text-foreground'
     }
   }
 
   const getAlertBg = () => {
     switch (usage.thresholdLevel) {
       case 'exceeded':
-        return 'bg-red-500/10'
       case 'critical':
         return 'bg-red-500/10'
       default:
@@ -64,18 +59,15 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
   return (
     <div className="rounded-lg border bg-card p-4 space-y-4">
       <div className="flex items-center justify-between">
-        <h4 className="font-semibold flex items-center gap-2">
-          <Zap className="h-4 w-4 text-blue-500" />
-          AI-användning
-        </h4>
+        <h4 className="font-semibold">AI-användning</h4>
         <span className={cn("text-sm font-medium", getStatusColor())}>
-          {usage.usagePercent}%
+          {remainingPercent}% kvar
         </span>
       </div>
 
       <Progress
         value={Math.min(100, usage.usagePercent)}
-        className={cn("h-2", getProgressColor())}
+        indicatorClassName={getIndicatorColor()}
       />
 
       <div className="grid grid-cols-3 gap-4 text-sm">
@@ -89,9 +81,7 @@ export function AIUsageCard({ usage }: AIUsageCardProps) {
         </div>
         <div>
           <div className="text-muted-foreground">Kvar</div>
-          <div className={cn("font-medium", getStatusColor())}>
-            {formatTokens(Math.max(0, usage.totalAvailable - usage.tokensUsed))}
-          </div>
+          <div className="font-medium">{formatTokens(Math.max(0, usage.totalAvailable - usage.tokensUsed))}</div>
         </div>
       </div>
 

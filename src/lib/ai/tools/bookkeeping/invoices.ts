@@ -165,7 +165,6 @@ export const createInvoiceTool = defineTool<CreateInvoiceParams, CreatedInvoice>
                         description: params.description,
                         amount: totalAmount,
                         status: "Utkast",
-                        isNew: true,
                     }],
                 }
                 return {
